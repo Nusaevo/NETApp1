@@ -1,0 +1,70 @@
+@once
+    <script>
+        window.addEventListener('notify-swal', function(e) {
+            let data = e.detail;
+            let title = data.title;
+            let message = data.message;
+            let type = data.type;
+
+            Swal.fire(title, message, type);
+        });
+    </script>
+@endonce
+
+@if (session()->has('success'))
+<div class="rounded p-10 pb-0 d-flex flex-column">
+    <div class="alert alert-dismissible bg-success d-flex flex-column flex-sm-row p-5 mb-10">
+        <i class="bi bi-check-circle-fill fs-3tx text-light me-4 mb-5 mb-sm-0"></i>
+        <div class="d-flex flex-column text-light pe-0 pe-sm-10">
+            <h4 class="mb-2 text-light">Berhasil</h4>
+            <span>{!! session('success') !!}</span>
+        </div>
+        <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+            <i class="bi bi-x-circle text-danger"></i>
+        </button>
+    </div>
+</div>
+@endif
+@if (session()->has('warning'))
+<div class="rounded p-10 pb-0 d-flex flex-column">
+    <div class="alert alert-dismissible bg-warning d-flex flex-column flex-sm-row p-5 mb-10">
+        <i class="bi bi-exclamation-circle-fill fs-3tx text-light me-4 mb-5 mb-sm-0"></i>
+        <div class="d-flex flex-column pe-0 pe-sm-10">
+            <h4 class="mb-2">Perhatian</h4>
+            <span>{!! session('warning') !!}</span>
+        </div>
+        <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+            <i class="bi bi-x-circle text-danger"></i>
+        </button>
+    </div>
+</div>
+@endif
+@if (session()->has('error'))
+<div class="rounded p-10 pb-0 d-flex flex-column">
+    <div class="alert alert-dismissible bg-danger d-flex flex-column flex-sm-row p-5 mb-10">
+        <i class="bi bi-x-circle-fill fs-3tx text-light me-4 mb-5 mb-sm-0"></i>
+        <div class="d-flex flex-column text-light pe-0 pe-sm-10">
+            <h4 class="mb-2 text-light">Kesalahan</h4>
+            <span>{!! session('error') !!}</span>
+        </div>
+        <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+            <i class="bi bi-x-circle text-light"></i>
+        </button>
+    </div>
+</div>
+@endif
+@if (session()->has('info'))
+<div class="rounded p-10 pb-0 d-flex flex-column">
+    <div class="alert alert-dismissible bg-primary d-flex flex-column flex-sm-row p-5 mb-10">
+        <i class="bi bi-info-circle-fill fs-3tx text-light me-4 mb-5 mb-sm-0"></i>
+        <div class="d-flex flex-column text-light pe-0 pe-sm-10">
+            <h4 class="mb-2 text-light">Info</h4>
+            <span>{!! session('info') !!}</span>
+        </div>
+        <button type="button" class="position-absolute position-sm-relative m-2 m-sm-0 top-0 end-0 btn btn-icon ms-sm-auto" data-bs-dismiss="alert">
+            <i class="bi bi-x-circle text-danger"></i>
+        </button>
+    </div>
+</div>
+@endif
+

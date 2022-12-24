@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Http\Livewire\Masters\Suppliers;
+
+use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use Rappasoft\LaravelLivewireTables\Views\Column;
+use App\Models\Supplier;
+use Illuminate\Database\Eloquent\Builder;
+use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+
+class IndexDataTable extends DataTableComponent
+{
+    protected $model = Supplier::class;
+
+    public function configure(): void
+    {
+        $this->setPrimaryKey('id');
+    }
+
+    protected $listeners = [
+        'master_supplier_refresh' => 'render',
+    ];
+
+    public function columns(): array
+    {
+        return [
+            Column::make("Nama", "name")
+                ->searchable()
+                ->sortable(),
+            Column::make("Nama Contact", "contact_name")
+                ->searchable()
+                ->sortable(),
+            Column::make("No Contact", "contact_number")
+                ->sortable(),
+            Column::make('Aksi','id')
+                ->format(
+                    fn($value, $row, Column $column) => view('livewire.masters.suppliers.index-data-table-action')->withRow($row)
+                ),
+        ];
+    }
+
+    public function filters(): array
+    {
+        return [
+            SelectFilter::make('Tampilkan Terhapus')
+                ->options([
+                    '0' => 'Tidak',
+                    '1' => 'Saja',
+                    '2' => 'Semua',
+                ])->filter(function(Builder $builder, string $value) {
+                    if ($value === '0') $builder->withoutTrashed();
+                    else if ($value === '1') $builder->onlyTrashed()->select('*');
+                    else if ($value === '2') $builder->withTrashed()->select('*');
+                }),
+        ];
+    }
+
+}
