@@ -77,7 +77,7 @@
       var page =document.getElementById("print");
         var newWin=window.open('','Print-Window');
         newWin.document.open();
-        newWin.document.write('<html><link rel="stylesheet" href="https://tigaputrajombang.com/css/invoice.css"><body onload="window.print()">'+page.innerHTML+'</body></html>');
+        newWin.document.write('<html><link rel="stylesheet" href="https://pos-onlinejombang.com/css/invoice.css"><body onload="window.print()">'+page.innerHTML+'</body></html>');
         newWin.document.close();
         setTimeout(function(){newWin.close();},10);
      }

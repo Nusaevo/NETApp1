@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('adjustments', function (Blueprint $table) {
             $table->id();
             $table->date('adjustment_date');
-            $table->foreignId('warehouse_id')->constrained();
+            $table->foreignId('store_id')->constrained();
             $table->timestamps();
         });
     }

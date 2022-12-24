@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('price_categories', function (Blueprint $table) {
+        Schema::create('category_variants', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->timestamps();
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('price_categories');
+        Schema::dropIfExists('category_items');
     }
 };

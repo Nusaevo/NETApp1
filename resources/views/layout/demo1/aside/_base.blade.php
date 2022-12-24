@@ -1,8 +1,8 @@
 @php
-    $logoFileName = 'logo-tigaputra-dark.svg';
+    $logoFileName = 'logo-pos-online-dark.svg';
 
     if (theme()->getOption('layout', 'aside/theme') === 'light') {
-        $logoFileName = 'logo-tigaputra.svg';
+        $logoFileName = 'logo-pos-online.svg';
     }
 @endphp
 

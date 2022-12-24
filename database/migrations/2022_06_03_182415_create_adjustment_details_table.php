@@ -16,9 +16,12 @@ return new class extends Migration
         Schema::create('adjustment_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('adjustment_id')->constrained();
-            $table->foreignId('item_warehouse_id')->constrained();
+            $table->foreignId('item_store_id')->constrained();
+            $table->decimal('qty_before', 20, 8);
+            $table->decimal('qty_defect_before', 20, 8);
             $table->decimal('qty', 20, 8);
             $table->decimal('qty_defect', 20, 8);
+            $table->decimal('price', 20, 8);
             $table->string('remark');
             $table->softDeletes();
             $table->timestamps();

@@ -64,7 +64,7 @@
 
                         <div class="mb-10">
                             <label class="required form-label">Email</label>
-                            <input wire:model.debounce.1s="inputs.email" type="email" class="form-control @error('inputs.email') is-invalid @enderror" placeholder="tigaputra@gmail.com"/>
+                            <input wire:model.debounce.1s="inputs.email" type="email" class="form-control @error('inputs.email') is-invalid @enderror" placeholder="pos-online@gmail.com"/>
                             @error('inputs.email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 

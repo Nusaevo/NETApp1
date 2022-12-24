@@ -13,14 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('item_units', function (Blueprint $table) {
+        Schema::create('stores', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_id')->constrained();
-            $table->unsignedBigInteger('unit_id');
-            $table->foreign('unit_id')->references('id')->on('units');
-            $table->unsignedBigInteger('to_unit_id');
-            $table->foreign('to_unit_id')->references('id')->on('units');
-            $table->foreignId('multiplier');
+            $table->string('name');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -33,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('item_units');
+        Schema::dropIfExists('warehouses');
     }
 };

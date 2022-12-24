@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('sales_order_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_warehouse_id')->constrained();
+            $table->foreignId('item_store_id')->constrained();
             $table->foreignId('sales_order_id')->constrained();
             $table->decimal('qty', 20, 5)->default(0);
             $table->decimal('qty_wo', 20, 5)->default(0);

@@ -13,12 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('item_warehouses', function (Blueprint $table) {
+        Schema::create('item_stores', function (Blueprint $table) {
             $table->id();
-            $table->decimal('qty',20,8)->default(0);
-            $table->decimal('qty_defect',20,8)->default(0);
-            $table->foreignId('item_unit_id')->constrained();
-            $table->foreignId('warehouse_id')->constrained();
+            $table->foreignId('item_variant_id')->constrained();
+            $table->foreignId('store_id')->constrained();
+            $table->decimal('qty', 20, 8)->default(0);
+            $table->decimal('qty_defect', 20, 8)->default(0);
+            $table->decimal('price', 20, 8)->default(0);
             $table->softDeletes();
             $table->timestamps();
         });

@@ -16,9 +16,9 @@ return new class extends Migration
         Schema::create('sales_return_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('sales_order_details_id')->constrained();
-            $table->foreignId('item_warehouse_id')->constrained();
+            $table->foreignId('item_store_id')->constrained();
             $table->foreignId('sales_return_id')->constrained();
-            $table->decimal('qty',20,8)->default(0);
+            $table->decimal('qty', 20, 8)->default(0);
             $table->string('remark'); //rusak, cacat, normal
             $table->timestamps();
             $table->softDeletes();

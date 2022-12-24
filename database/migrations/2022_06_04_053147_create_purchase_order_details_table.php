@@ -15,12 +15,12 @@ return new class extends Migration
     {
         Schema::create('purchase_order_details', function (Blueprint $table) {
             $table->id();
-            $table->decimal('qty',20,5)->default(0);
-            $table->decimal('price',20,5)->default(0);
-            $table->decimal('discount',20,5)->default(0);
+            $table->decimal('qty', 20, 5)->default(0);
+            $table->decimal('price', 20, 5)->default(0);
+            $table->decimal('discount', 20, 5)->default(0);
             $table->string('item_name');
             $table->string('unit_name');
-            $table->foreignId('item_warehouse_id')->constrained();
+            $table->foreignId('item_store_id')->constrained();
             $table->foreignId('purchase_order_id')->constrained();
             $table->timestamps();
             $table->softDeletes();
