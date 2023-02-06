@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('total_discount', 20, 5)->default(0);
             $table->decimal('tax_percentage', 20, 5)->default(0);
             $table->string('customer_name');
-            $table->foreignId('payment_method')->constrained();
+            $table->foreignId('payment_id')->constrained();
             $table->foreignId('customer_id')->constrained();
             $table->boolean('is_finished')->default(0);
             $table->timestamps();

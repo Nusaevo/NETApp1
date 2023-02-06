@@ -316,18 +316,13 @@ return array(
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(
-                        'title'  => 'Kategori Harga',
-                        'path'   => 'price_category',
+                        'title'  => 'Kategori Varian',
+                        'path'   => 'variant_category',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(
-                        'title'  => 'Satuan',
-                        'path'   => 'unit',
-                        'bullet' => '<span class="bullet bullet-dot"></span>',
-                    ),
-                    array(
-                        'title'  => 'Gudang',
-                        'path'   => 'warehouse',
+                        'title'  => 'Toko',
+                        'path'   => 'store',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(

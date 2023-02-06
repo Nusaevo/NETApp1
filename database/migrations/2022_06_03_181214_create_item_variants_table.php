@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('item_variants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('item_id')->constrained();
-            $table->foreignId('variant_id')->constrained();
+            $table->foreignId('category_variants_id')->constrained();
             $table->string('variant_name');
             $table->timestamps();
             $table->softDeletes();

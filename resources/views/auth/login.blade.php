@@ -8,7 +8,7 @@
         <div class="text-center mb-10">
             <!--begin::Title-->
             <h1 class="text-dark mb-3">
-                Tiga Putra
+                POS Online System
             </h1>
             <!--end::Title-->
 

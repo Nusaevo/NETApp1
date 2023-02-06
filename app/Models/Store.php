@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Warehouse extends Model
+class Store extends Model
 {
     use HasFactory;
     use SoftDeletes;
     use ModelTrait;
 
-    protected $fillable = ['name', 'purpose'];
+    protected $fillable = ['name'];
 
     public function warehouse_items()
     {

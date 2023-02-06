@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Units;
+namespace App\Http\Livewire\Masters\VariantCategories;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Unit;
+use App\Models\CategoryVariant;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = Unit::class;
+    protected $model = CategoryVariant::class;
 
     public function configure(): void
     {
@@ -18,7 +18,7 @@ class IndexDataTable extends DataTableComponent
     }
 
     protected $listeners = [
-        'master_unit_refresh' => 'render',
+        'master_variant_category_refresh' => 'render',
     ];
 
     public function columns(): array
@@ -27,9 +27,9 @@ class IndexDataTable extends DataTableComponent
             Column::make("Nama", "name")
                 ->searchable()
                 ->sortable(),
-            Column::make('Aksi','id')
+            Column::make('Aksi', 'id')
                 ->format(
-                    fn($value, $row, Column $column) => view('livewire.masters.units.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.masters.variant-categories.index-data-table-action')->withRow($row)
                 ),
         ];
     }
@@ -42,12 +42,11 @@ class IndexDataTable extends DataTableComponent
                     '0' => 'Tidak',
                     '1' => 'Saja',
                     '2' => 'Semua',
-                ])->filter(function(Builder $builder, string $value) {
+                ])->filter(function (Builder $builder, string $value) {
                     if ($value === '0') $builder->withoutTrashed();
                     else if ($value === '1') $builder->onlyTrashed()->select('*');
                     else if ($value === '2') $builder->withTrashed()->select('*');
                 }),
         ];
     }
-
 }

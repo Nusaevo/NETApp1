@@ -1,32 +1,32 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Warehouses;
+namespace App\Http\Livewire\Masters\Stores;
 
 use Livewire\Component;
-use App\Models\Warehouse;
+use App\Models\Store;
 use App\Traits\LivewireTrait;
 
 class Index extends Component
 {
     use LivewireTrait;
 
-    public $warehouse;
+    public $store;
     public $inputs = ['name' => '', 'purpose' => 'is_out'];
 
     public function render()
     {
-        return view('livewire.masters.warehouses.index');
+        return view('livewire.masters.stores.index');
     }
 
     protected $listeners = [
-        'master_warehouse_edit_mode'     => 'setEditMode',
-        'master_warehouse_edit'          => 'edit',
-        'master_warehouse_delete'        => 'delete',
-        'master_warehouse_destroy'       => 'destroy'
+        'master_store_edit_mode'     => 'setEditMode',
+        'master_store_edit'          => 'edit',
+        'master_store_delete'        => 'delete',
+        'master_store_destroy'       => 'destroy'
     ];
 
     protected $rules = [
-        'inputs.name'           => 'required|string|min:1|max:128|unique:warehouses,name',
+        'inputs.name'           => 'required|string|min:1|max:128|unique:stores,name',
         'inputs.purpose'        => 'required|string|in:is_out,is_receive',
     ];
 
@@ -47,20 +47,19 @@ class Index extends Component
     public function store()
     {
         $this->validate();
-        Warehouse::create([
+        Store::create([
             'name' => $this->inputs['name'],
-            'purpose'=>  $this->inputs['purpose']
+            'purpose' =>  $this->inputs['purpose']
         ]);
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil menambah gudang {$this->inputs['name']}."]);
-        $this->emit('master_warehouse_idt_refresh');
+        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil menambah gudang {$this->inputs['name']}."]);
+        $this->emit('master_store_idt_refresh');
         $this->reset('inputs');
     }
 
     public function edit($id)
     {
-        $this->warehouse = Warehouse::findOrFail($id);
-        $this->inputs['name'] = $this->warehouse->name;
-        $this->inputs['purpose'] = $this->warehouse->purpose;
+        $this->store = Store::findOrFail($id);
+        $this->inputs['name'] = $this->store->name;
         $this->setEditMode(true);
     }
 
@@ -68,27 +67,26 @@ class Index extends Component
     {
         $this->validate();
 
-        $this->warehouse->update([
+        $this->store->update([
             'name' => $this->inputs['name'],
-            'purpose'=>  $this->inputs['purpose']
+            'purpose' =>  $this->inputs['purpose']
         ]);
         $this->setEditMode(false);
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil mengubah gudang {$this->warehouse->name}."]);
-        $this->emit('master_warehouse_idt_refresh');
+        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil mengubah toko {$this->store->name}."]);
+        $this->emit('master_store_idt_refresh');
         $this->reset('inputs');
     }
 
     public function delete($id)
     {
         $this->setEditMode(false);
-        $this->warehouse = Warehouse::findOrFail($id);
+        $this->store = Store::findOrFail($id);
     }
 
     public function destroy()
     {
-        $this->warehouse->delete();
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil menghapus gudang {$this->warehouse->name}."]);
-        $this->emit('master_warehouse_idt_refresh');
+        $this->store->delete();
+        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil menghapus toko {$this->store->name}."]);
+        $this->emit('master_store_idt_refresh');
     }
-
 }

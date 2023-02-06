@@ -17,10 +17,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('purchase_return_id')->constrained();
             $table->foreignId('purchase_order_details_id')->constrained();
-            $table->foreignId('item_warehouse_id')->constrained();
+            $table->foreignId('item_store_id')->constrained();
             $table->string('item_name');
             $table->string('unit_name');
-            $table->decimal('qty',20,8)->default(0);
+            $table->decimal('qty', 20, 8)->default(0);
             $table->string('remark');
             $table->timestamps();
             $table->softDeletes();

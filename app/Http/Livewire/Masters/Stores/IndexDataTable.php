@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Warehouses;
+namespace App\Http\Livewire\Masters\Stores;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Warehouse;
+use App\Models\Store;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = Warehouse::class;
+    protected $model = Store::class;
 
     public function configure(): void
     {
@@ -18,7 +18,7 @@ class IndexDataTable extends DataTableComponent
     }
 
     protected $listeners = [
-        'master_warehouse_idt_refresh' => 'render',
+        'master_store_idt_refresh' => 'render',
     ];
 
     public function columns(): array
@@ -27,11 +27,9 @@ class IndexDataTable extends DataTableComponent
             Column::make("Nama", "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Pemakaian Gudang", "purpose")
-                ->sortable(),
-            Column::make('Aksi','id')
+            Column::make('Aksi', 'id')
                 ->format(
-                    fn($value, $row, Column $column) => view('livewire.masters.warehouses.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.masters.stores.index-data-table-action')->withRow($row)
                 ),
         ];
     }
@@ -44,12 +42,11 @@ class IndexDataTable extends DataTableComponent
                     '0' => 'Tidak',
                     '1' => 'Saja',
                     '2' => 'Semua',
-                ])->filter(function(Builder $builder, string $value) {
+                ])->filter(function (Builder $builder, string $value) {
                     if ($value === '0') $builder->withoutTrashed();
                     else if ($value === '1') $builder->onlyTrashed()->select('*');
                     else if ($value === '2') $builder->withTrashed()->select('*');
                 }),
         ];
     }
-
 }

@@ -16,52 +16,13 @@ class CategoryItemsSeeder extends Seeder
     public function run()
     {
         DB::table('category_Items')->insert([
-            'name' => 'BISCUIT'
+            'name' => 'Elektronik'
         ]);
         DB::table('category_Items')->insert([
-            'name' => 'SNACK'
+            'name' => 'Fashion'
         ]);
         DB::table('category_Items')->insert([
-            'name' => 'PERMEN'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'MIE INSTANT'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'SUSU'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'MINUMAN'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'MINUMAN BOTOL'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'MINYAK'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'BERAS'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'GARAM'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'TISSUE'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'PLASTIC'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'TAS KONDANGAN'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'KOPI'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'MAINAN'
-        ]);
-        DB::table('category_Items')->insert([
-            'name' => 'JELLY'
+            'name' => 'Rumah Tangga'
         ]);
     }
 }

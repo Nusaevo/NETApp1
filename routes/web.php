@@ -16,12 +16,11 @@ use App\Http\Livewire\Masters\ItemPrices\Index as ItemPriceIndex;
 use App\Http\Livewire\Masters\Items\Detail as ItemDetail;
 
 use App\Http\Livewire\Masters\Payments\Index as PaymentIndex;
-use App\Http\Livewire\Masters\Units\Index as UnitIndex;
 use App\Http\Livewire\Masters\CategoryItems\Index as CategoryItemIndex;
-use App\Http\Livewire\Masters\PriceCategories\Index as PriceCategoryIndex;
+use App\Http\Livewire\Masters\VariantCategories\Index as VariantCategoryIndex;
 
-use App\Http\Livewire\Masters\Warehouses\Index as WarehouseIndex;
-use App\Http\Livewire\Transactions\Transfers\Index as WarehouseTransfer;
+use App\Http\Livewire\Masters\Stores\Index as StoreIndex;
+use App\Http\Livewire\Masters\Stores\Transfer as WarehouseTransfer;
 
 
 use App\Http\Livewire\Transactions\Sales\Orders\Index as SalesOrderIndex;
@@ -94,33 +93,29 @@ Route::middleware('auth')->group(function () {
         Route::get('/detail/{id}', ItemDetail::class)->name('detail');
         Route::get('/price', ItemPriceIndex::class)->name('price');
     });
-    Route::prefix('unit')->name('unit.')->group(function () {
-        Route::get('/', UnitIndex::class)->name('index');
-    });
     Route::prefix('payment')->name('payment.')->group(function () {
         Route::get('/', PaymentIndex::class)->name('index');
     });
     Route::prefix('item_category')->name('item_category.')->group(function () {
         Route::get('/', CategoryItemIndex::class)->name('index');
     });
-    Route::prefix('price_category')->name('price_category.')->group(function () {
-        Route::get('/', PriceCategoryIndex::class)->name('index');
+    Route::prefix('variant_category')->name('price_category.')->group(function () {
+        Route::get('/', VariantCategoryIndex::class)->name('index');
     });
-    Route::prefix('warehouse')->name('warehouse.')->group(function () {
-        Route::get('/', WarehouseIndex::class)->name('index');
-        Route::get('/transfer', WarehouseTransfer::class)->name('index');
+    Route::prefix('store')->name('warehouse.')->group(function () {
+        Route::get('/', StoreIndex::class)->name('index');
     });
     Route::prefix('inventory')->name('inventory.')->group(function () {
         Route::get('/stock_opname', StockOpnameIndex::class)->name('index');
     });
-    Route::prefix('sales')->name('sales.')->group(function () {
-        Route::prefix('order')->name('order.')->group(function () {
-            Route::get('/', SalesOrderIndex::class)->name('index');
-            Route::get('/create', SalesOrderCreate::class)->name('create');
-            Route::get('/detail/{id}', SalesOrderDetail::class)->name('detail');
-            Route::get('/printpdf/{id}', SalesOrderPrintpdf::class)->name('printpdf');
-        });
-    });
+    // Route::prefix('sales')->name('sales.')->group(function () {
+    //     Route::prefix('order')->name('order.')->group(function () {
+    //         Route::get('/', SalesOrderIndex::class)->name('index');
+    //         Route::get('/create', SalesOrderCreate::class)->name('create');
+    //         Route::get('/detail/{id}', SalesOrderDetail::class)->name('detail');
+    //         Route::get('/printpdf/{id}', SalesOrderPrintpdf::class)->name('printpdf');
+    //     });
+    // });
 });
 
 Route::resource('users', UsersController::class);

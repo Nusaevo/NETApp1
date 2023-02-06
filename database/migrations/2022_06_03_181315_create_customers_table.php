@@ -22,7 +22,6 @@ return new class extends Migration
             $table->string('contact_name')->nullable();
             $table->string('contact_number')->nullable();
             $table->string('email')->nullable();
-            $table->foreignId('price_category_id')->constrained();
             $table->timestamps();
             $table->softDeletes();
         });

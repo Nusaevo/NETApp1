@@ -17,18 +17,18 @@
 
                         <div class="mb-10">
                             <label class="required form-label">Nama Penyuplai</label>
-                            <input wire:model.debounce.1s="inputs.name" type="text" class="form-control @error('inputs.name') is-invalid @enderror" placeholder="CV Maju Unggul"/>
+                            <input wire:model.debounce.1s="inputs.name" type="text" class="form-control @error('inputs.name') is-invalid @enderror" placeholder="CV Maju Unggul" required/>
                             @error('inputs.name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                         <div class="mb-10">
                             <label class="required form-label">Nama</label>
-                            <input wire:model.debounce.1s="inputs.contact_name" type="text" class="form-control @error('inputs.contact_name') is-invalid @enderror" placeholder="Christopher"/>
+                            <input wire:model.debounce.1s="inputs.contact_name" type="text" class="form-control @error('inputs.contact_name') is-invalid @enderror" placeholder="Christopher" required/>
                             @error('inputs.contact_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="mb-10">
                             <label class="required form-label">Telepon</label>
-                            <input wire:model.debounce.1s="inputs.contact_number" type="number" class="form-control @error('inputs.contact_number') is-invalid @enderror" placeholder="8123456789"/>
+                            <input wire:model.debounce.1s="inputs.contact_number" type="number" class="form-control @error('inputs.contact_number') is-invalid @enderror" placeholder="8123456789" required/>
                             @error('inputs.contact_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 

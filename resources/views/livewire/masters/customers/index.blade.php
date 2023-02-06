@@ -33,11 +33,11 @@
                             @error('inputs.city') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
-                        <div class="mb-10">
+                        {{-- <div class="mb-10">
                             <label class="required form-label">NPWP</label>
                             <input wire:model.debounce.1s="inputs.npwp" type="number" class="form-control @error('inputs.npwp') is-invalid @enderror" placeholder="123123445656"/>
                             @error('inputs.npwp') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+                        </div> --}}
 
                         <div class="mb-10">
                             <label class="required form-label">Nama Kontak</label>
@@ -49,17 +49,6 @@
                             <label class="required form-label">Nomor Kontak</label>
                             <input wire:model.debounce.1s="inputs.contact_number" type="number" class="form-control @error('inputs.contact_number') is-invalid @enderror" placeholder="8123456789"/>
                             @error('inputs.contact_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="mb-10">
-                            <label class="required form-label">Kategori</label>
-                            <select class="form-select @error('inputs.price_category_id') is-invalid @enderror" wire:model.lazy="inputs.price_category_id">
-                                <option selected value="" >-- Pilih Salah Satu --</option>
-                                @foreach($category as $category)
-                                    <option value="{{$category->id}}">{{$category->name}}</option>
-                                @endforeach
-                            </select>
-                            @error('inputs.price_category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
                         <div class="mb-10">

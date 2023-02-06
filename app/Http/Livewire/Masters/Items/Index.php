@@ -8,24 +8,21 @@ use App\Models\Item;
 use App\Models\ItemWarehouse;
 use App\Models\Warehouse;
 use App\Traits\LivewireTrait;
-use App\Models\ItemUnit;
-use App\Models\Unit;
 use App\Models\ItemPrice;
 use App\Models\PriceCategory;
+
 class Index extends Component
 {
     use LivewireTrait;
 
     public $item;
     public $category;
-    public $unit;
     public $inputs = ['name' => ''];
 
 
     public function mount()
     {
         $this->category = CategoryItem::orderByName()->get();
-        $this->unit = Unit::orderByName()->get();
     }
 
     public function render()
@@ -47,11 +44,11 @@ class Index extends Component
     }
     protected function rules()
     {
-            $_unique_exception = $this->is_edit_mode ? ','.$this->item->id : '';
-            return [
-                'inputs.name'             => 'required|string|min:1|max:128|unique:items,name'. $_unique_exception,
-                'inputs.category_item_id'           => 'required|integer'
-            ];
+        $_unique_exception = $this->is_edit_mode ? ',' . $this->item->id : '';
+        return [
+            'inputs.name'             => 'required|string|min:1|max:128|unique:items,name' . $_unique_exception,
+            'inputs.category_item_id'           => 'required|integer'
+        ];
     }
     protected $messages = [
         'inputs.*.required'       => ':attribute harus diisi.',
@@ -71,7 +68,7 @@ class Index extends Component
         $this->validate();
         $item = Item::create([
             'name' => $this->inputs['name'],
-            'category_item_id'=> $this->inputs['category_item_id'],
+            'category_item_id' => $this->inputs['category_item_id'],
         ]);
         // $itemUnit = ItemUnit::create([
         //     'item_id' =>  $item->id,
@@ -102,10 +99,10 @@ class Index extends Component
         //         ]
         //     );
         // }
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil menambah item <b>{$this->inputs['name']}.<b>"]);
+        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil menambah item <b>{$this->inputs['name']}.<b>"]);
         $this->emit('master_item_refresh');
         $this->reset('inputs');
-        return redirect()->route('item.detail',['id'=>$item->id]);
+        return redirect()->route('item.detail', ['id' => $item->id]);
     }
 
     public function edit($id)
@@ -125,7 +122,7 @@ class Index extends Component
             'category_item_id' => $this->inputs['category_item_id']
         ]);
         $this->setEditMode(false);
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>   "Berhasil mengubah item <b>{$this->inputs['name']}.<b>"]);
+        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>   "Berhasil mengubah item <b>{$this->inputs['name']}.<b>"]);
         $this->emit('master_item_refresh');
         $this->reset('inputs');
     }
@@ -139,8 +136,7 @@ class Index extends Component
     public function destroy()
     {
         $this->item->delete();
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil menghapus item <b>{$this->item->name}.<b>"]);
+        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil menghapus item <b>{$this->item->name}.<b>"]);
         $this->emit('master_item_refresh');
     }
-
 }

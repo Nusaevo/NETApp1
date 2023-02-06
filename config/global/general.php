@@ -198,7 +198,7 @@ return array(
 
     // Meta
     'meta'    => array(
-        'title'       => 'Tiga Putra',
+        'title'       => 'POS Online System',
         'description' => '',
         'keywords'    => '',
         'canonical'   => '',

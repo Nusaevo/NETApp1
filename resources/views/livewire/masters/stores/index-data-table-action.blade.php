@@ -3,7 +3,7 @@
     'allow_details' => false,
     'allow_edit' => true,
     'allow_delete' => true,
-    'wire_click_edit' => "\$emit('master_warehouse_edit',  $row->id)",
-    'wire_click_delete' => "\$emit('master_warehouse_delete',  $row->id)",
+    'wire_click_edit' => "\$emit('master_store_edit',  $row->id)",
+    'wire_click_delete' => "\$emit('master_store_delete',  $row->id)",
     ]
 )

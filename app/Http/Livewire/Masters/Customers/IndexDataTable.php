@@ -31,19 +31,13 @@ class IndexDataTable extends DataTableComponent
                 ->sortable(),
             Column::make("Kota", "city")
                 ->sortable(),
-            Column::make("NPWP", "npwp")
-                ->sortable(),
-            Column::make("Nama Contact", "contact_name")
-                ->sortable(),
             Column::make("Nomor Contact", "contact_number")
                 ->sortable(),
             Column::make("Email", "email")
                 ->sortable(),
-            Column::make("Kategori", "price_category.name")
-                ->sortable(),
-            Column::make('Aksi','id')
+            Column::make('Aksi', 'id')
                 ->format(
-                    fn($value, $row, Column $column) => view('livewire.masters.customers.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.masters.customers.index-data-table-action')->withRow($row)
                 ),
         ];
     }
@@ -56,12 +50,11 @@ class IndexDataTable extends DataTableComponent
                     '0' => 'Tidak',
                     '1' => 'Saja',
                     '2' => 'Semua',
-                ])->filter(function(Builder $builder, string $value) {
+                ])->filter(function (Builder $builder, string $value) {
                     if ($value === '0') $builder->withoutTrashed();
                     else if ($value === '1') $builder->onlyTrashed()->select('*');
                     else if ($value === '2') $builder->withTrashed()->select('*');
                 }),
         ];
     }
-
 }
