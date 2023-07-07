@@ -33,16 +33,6 @@
                             <input wire:model.debounce.1s="inputs.multiplier" type="Number" class="form-control @error('inputs.multiplier') is-invalid @enderror"/>
                             @error('inputs.multiplier') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
-                        <div class="mb-10">
-                            <label class="form-label">To</label>
-                            <select class="form-select @error('inputs.unit_to') is-invalid @enderror" wire:model.lazy="inputs.unit_to">
-                                <option selected value="" >-- Pilih Salah Satu --</option>
-                                @foreach($unit_to as $unit)
-                                    <option value="{{$unit->id}}">{{$unit->name}}</option>
-                                @endforeach
-                            </select>
-                            @error('inputs.unit_to') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
                     </div>
                     <div class="card-footer">
                         @include('layout.customs.button-submit')
@@ -69,7 +59,7 @@
                                 </tr>
                             </thead>
                             <tbody >
-                                <div>
+                                {{-- <div>
                                     @foreach ($list_item_unit as $item_unit)
                                     <tr>
                                         <td>{{ $item_unit->from_unit->name }}</td>
@@ -77,10 +67,10 @@
                                         <td>{{ $item_unit->to_unit->name }} </td>
                                         <td>
                                             <a href="#"  wire:click="$emit('master_item_unit_detail_edit', {{ $item_unit->id}})" class="btn btn-primary btn-sm"><i class="bi bi-pencil-square fs-2 me-2"></i></a>
-                                            {{--  <a href="#" wire:click="$emit('master_item_unit_detail_delete',  {{ $item_unit->id}})" class="btn btn-primary btn-sm"><i class="bi bi-trash-fill fs-2 me-2"></i></a></td>  --}}
+
                                         </tr>
                                     @endforeach
-                                </div>
+                                </div> --}}
                             </tbody>
                         </table>
                     </div>

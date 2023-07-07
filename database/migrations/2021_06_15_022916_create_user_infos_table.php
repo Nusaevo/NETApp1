@@ -3,9 +3,11 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Traits\DefaultColumnsTrait;
 
 class CreateUserInfosTable extends Migration
 {
+    use DefaultColumnsTrait;
     /**
      * Run the migrations.
      *
@@ -14,7 +16,8 @@ class CreateUserInfosTable extends Migration
     public function up()
     {
         Schema::create('user_infos', function (Blueprint $table) {
-            $table->id();
+            $this->generateDefaultColumns($table);
+
             $table->unsignedBigInteger('user_id');
             $table->text('avatar')->nullable();
             $table->string('company')->nullable();
@@ -26,7 +29,7 @@ class CreateUserInfosTable extends Migration
             $table->string('currency')->nullable();
             $table->string('communication')->nullable();
             $table->tinyInteger('marketing')->nullable();
-            $table->timestamps();
+            $this->generateDefaultTimeStamp($table);
         });
     }
 
@@ -37,6 +40,6 @@ class CreateUserInfosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_infos');
+        Schema::dropIfExists('User_Infos');
     }
 }

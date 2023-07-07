@@ -5,5 +5,5 @@
     <div>
         @include('layout.customs.notification')
     </div>
-   @livewire('masters.items.details.item-unit-detail', ['item' => $item])
+   @livewire('masters.items.details.item-variant-detail', ['item' => $item])
 </div>

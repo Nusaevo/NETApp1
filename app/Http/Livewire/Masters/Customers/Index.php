@@ -2,9 +2,7 @@
 
 namespace App\Http\Livewire\Masters\Customers;
 
-
 use Livewire\Component;
-use App\Models\PriceCategory;
 use App\Models\Customer;
 use App\Traits\LivewireTrait;
 
@@ -12,13 +10,14 @@ class Index extends Component
 {
     use LivewireTrait;
 
-    public $category;
     public $customer;
-    public $inputs = ['name' => ''];
+    public $is_edit_mode = false;
 
     public function mount()
     {
+        $this->customer = new Customer();
     }
+
     public function render()
     {
         return view('livewire.masters.customers.index');
@@ -33,100 +32,102 @@ class Index extends Component
 
     protected function rules()
     {
-        $_unique_exception = $this->is_edit_mode ? ',' . $this->customer->id : '';
+        $uniqueRule = $this->is_edit_mode ? "unique:customers,object_name" : 'unique:customers,object_name';
+
         return [
-            'inputs.name'             => 'required|string|min:1|max:128|unique:customers,name' . $_unique_exception,
-            'inputs.address'           =>  'nullable|string|min:3|max:128',
-            'inputs.city'      =>  'nullable|string|min:3|max:128',
-            'inputs.npwp'       => 'nullable|integer',
-            'inputs.contact_name'       => 'nullable|string|min:3|max:128',
-            'inputs.contact_number'       => 'nullable|integer|digits_between:9,14',
-            'inputs.email'           =>  'nullable|string|min:3|max:128'
+            'customer.object_name' => 'required|string|min:1|max:128|' . $uniqueRule,
+            'customer.email'       => 'nullable|email|min:3|max:128',
+            'customer.phone'       => 'nullable|string|min:3|max:128',
+            'customer.address'     => 'nullable|string|min:3|max:128',
         ];
     }
 
     protected $messages = [
-        'inputs.*.required'       => ':attribute harus diisi.',
-        'inputs.*.string'         => ':attribute harus berupa teks.',
-        'inputs.*.integer'        => ':attribute harus berupa angka dan tidak ada nol didepan.',
-        'inputs.*.min'            => ':attribute tidak boleh kurang dari :min karakter.',
-        'inputs.*.max'            => ':attribute tidak boleh lebih dari :max karakter.',
-        'inputs.*.unique'         => ':attribute sudah ada.',
-        'inputs.*.boolean'        => ':attribute harus Benar atau Salah.',
-        'inputs.*.digits_between' => ':attribute harus diantara :min dan :max karakter.',
-        'inputs.*.exists'         => ':attribute tidak ada di master'
+        'customer.object_name.required' => 'Nama customer harus diisi.',
+        'customer.object_name.string'   => 'Nama customer harus berupa teks.',
+        'customer.object_name.min'      => 'Nama customer tidak boleh kurang dari :min karakter.',
+        'customer.object_name.max'      => 'Nama customer tidak boleh lebih dari :max karakter.',
+        'customer.object_name.unique'   => 'Nama customer sudah ada.',
+        'customer.email.email'          => 'Format email tidak valid.',
+        'customer.email.min'            => 'Email tidak boleh kurang dari :min karakter.',
+        'customer.email.max'            => 'Email tidak boleh lebih dari :max karakter.',
+        'customer.phone.string'         => 'Nomor telepon harus berupa teks.',
+        'customer.phone.min'            => 'Nomor telepon tidak boleh kurang dari :min karakter.',
+        'customer.phone.max'            => 'Nomor telepon tidak boleh lebih dari :max karakter.',
+        'customer.address.string'       => 'Alamat harus berupa teks.',
+        'customer.address.min'          => 'Alamat tidak boleh kurang dari :min karakter.',
+        'customer.address.max'          => 'Alamat tidak boleh lebih dari :max karakter.',
     ];
 
     protected $validationAttributes = [
-        'inputs.name'           => 'Nama customer',
-        'inputs.address'           => 'Alamat',
-        'inputs.city'      => 'Nama Kota',
-        'inputs.npwp'       => 'No NPWP',
-        'inputs.contact_name'       => 'Nama Kontak',
-        'inputs.contact_number'       => 'No Kontak',
-        'inputs.email'       => 'Email'
-
+        'customer.object_name' => 'Nama customer',
+        'customer.email'       => 'Email',
+        'customer.phone'       => 'Nomor Telepon',
+        'customer.address'     => 'Alamat',
     ];
 
     public function store()
     {
         $this->validate();
         Customer::create([
-            'name' => $this->inputs['name'],
-            'address' => $this->inputs['address'] ?? null,
-            'city' => $this->inputs['city'] ?? null,
-            'npwp' => $this->inputs['npwp'] ?? null,
-            'contact_name' => $this->inputs['contact_name'] ?? null,
-            'email' => $this->inputs['email'] ?? null
+            'object_name' => $this->customer->object_name,
+            'email'       => $this->customer->email,
+            'phone'       => $this->customer->phone,
+            'address'     => $this->customer->address,
         ]);
-        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil menambah customer {$this->inputs['name']}."]);
+
+        $this->dispatchBrowserEvent('notify-swal', [
+            'type'    => 'success',
+            'title'   => 'Berhasil',
+            'message' => "Berhasil menambah customer {$this->customer->object_name}."
+        ]);
+
         $this->emit('master_customer_refresh');
-        $this->reset('inputs');
+        $this->reset('customer');
     }
 
     public function edit($id)
     {
         $this->customer = Customer::findOrFail($id);
-        $this->inputs['name'] = $this->customer->name;
-        $this->inputs['contact_name'] = $this->customer->contact_name;
-        $this->inputs['contact_number'] = $this->customer->contact_number;
-        $this->inputs['address'] = $this->customer->address;
-        $this->inputs['city'] = $this->customer->city;
-        $this->inputs['npwp'] = $this->customer->npwp;
-        $this->inputs['price_category_id'] = $this->customer->price_category_id;
-        $this->inputs['email'] = $this->customer->email;
-        $this->setEditMode(true);
+        $this->is_edit_mode = true;
     }
 
     public function update()
     {
         $this->validate();
         $this->customer->update([
-            'name' => $this->inputs['name'],
-            'contact_name' => $this->inputs['contact_name'],
-            'contact_number' => $this->inputs['contact_number'],
-            'address' => $this->inputs['address'],
-            'city' => $this->inputs['city'],
-            'npwp' => $this->inputs['npwp'],
-            'price_category_id' => $this->inputs['price_category_id'],
-            'email' => $this->inputs['email']
+            'object_name' => $this->customer->object_name,
+            'email'       => $this->customer->email,
+            'phone'       => $this->customer->phone,
+            'address'     => $this->customer->address,
         ]);
-        $this->setEditMode(false);
-        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil mengubah customer {$this->customer->name}."]);
+
+        $this->is_edit_mode = false;
+        $this->dispatchBrowserEvent('notify-swal', [
+            'type'    => 'success',
+            'title'   => 'Berhasil',
+            'message' => "Berhasil mengubah customer {$this->customer->object_name}."
+        ]);
+
         $this->emit('master_customer_refresh');
-        $this->reset('inputs');
+        $this->reset('customer');
     }
 
     public function delete($id)
     {
-        $this->setEditMode(false);
+        $this->is_edit_mode = false;
         $this->customer = Customer::findOrFail($id);
     }
 
     public function destroy()
     {
         $this->customer->delete();
-        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil mengahapus customer {$this->customer->name}."]);
+        $this->dispatchBrowserEvent('notify-swal', [
+            'type'    => 'success',
+            'title'   => 'Berhasil',
+            'message' => "Berhasil menghapus customer {$this->customer->object_name}."
+        ]);
+
         $this->emit('master_customer_refresh');
     }
 }

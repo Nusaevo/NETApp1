@@ -9,10 +9,11 @@ use App\Models\Item;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use DB;
-class ItemUnitDetailDataTable extends DataTableComponent
+
+class ItemVariantDetailDataTable extends DataTableComponent
 {
     protected $model = ItemUnit::class;
-   // public Item $item;
+    // public Item $item;
     public function configure(): void
     {
         $this->setPrimaryKey('id');
@@ -24,15 +25,15 @@ class ItemUnitDetailDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("From", "from_unit.name")
-                ->sortable(),
-            Column::make("Multiplier", "multiplier")
-                ->sortable(),
-            Column::make("To", "to_unit.name")
-                ->sortable(),
-            Column::make('Aksi','id')
+            // Column::make("From", "from_unit.name")
+            //     ->sortable(),
+            // Column::make("Multiplier", "multiplier")
+            //     ->sortable(),
+            // Column::make("To", "to_unit.name")
+            //     ->sortable(),
+            Column::make('Aksi', 'id')
                 ->format(
-                    fn($value, $row, Column $column) => view('livewire.masters.items.details.itemunitdetail-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.masters.items.details.itemvariantdetail-data-table-action')->withRow($row)
                 ),
         ];
     }
@@ -45,12 +46,11 @@ class ItemUnitDetailDataTable extends DataTableComponent
                     '0' => 'Tidak',
                     '1' => 'Saja',
                     '2' => 'Semua',
-                ])->filter(function(Builder $builder, string $value) {
+                ])->filter(function (Builder $builder, string $value) {
                     if ($value === '0') $builder->withoutTrashed();
                     else if ($value === '1') $builder->onlyTrashed()->select('*');
                     else if ($value === '2') $builder->withTrashed()->select('*');
                 }),
         ];
     }
-
 }

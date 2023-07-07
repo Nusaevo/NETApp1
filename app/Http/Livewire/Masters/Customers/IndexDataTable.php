@@ -24,14 +24,10 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Nama", "name")
+            Column::make("Nama", "object_name")
                 ->searchable()
                 ->sortable(),
             Column::make("Alamat", "address")
-                ->sortable(),
-            Column::make("Kota", "city")
-                ->sortable(),
-            Column::make("Nomor Contact", "contact_number")
                 ->sortable(),
             Column::make("Email", "email")
                 ->sortable(),

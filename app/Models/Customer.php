@@ -13,7 +13,7 @@ class Customer extends Model
     use SoftDeletes;
     use ModelTrait;
 
-    protected $fillable = ['name', 'address','city','npwp','contact_name','contact_number','email','price_category_id'];
+    protected $fillable = ['object_name','object_number','email','phone','address'];
 
     public function sales_orders(){
         return $this->hasMany('App\Models\SalesOrder');
