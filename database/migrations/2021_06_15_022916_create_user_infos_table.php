@@ -1,45 +1,76 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use App\Traits\DefaultColumnsTrait;
+namespace App\Models;
 
-class CreateUserInfosTable extends Migration
+use App\Core\Traits\SpatieLogsActivity;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+
+class UserInfo extends Model
 {
-    use DefaultColumnsTrait;
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
-    {
-        Schema::create('user_infos', function (Blueprint $table) {
-            $this->generateDefaultColumns($table);
+    use SpatieLogsActivity;
 
-            $table->unsignedBigInteger('user_id');
-            $table->text('avatar')->nullable();
-            $table->string('company')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('website')->nullable();
-            $table->string('country')->nullable();
-            $table->string('language')->nullable();
-            $table->string('timezone')->nullable();
-            $table->string('currency')->nullable();
-            $table->string('communication')->nullable();
-            $table->tinyInteger('marketing')->nullable();
-            $this->generateDefaultTimeStamp($table);
-        });
+    protected $fillable = [
+        'user_id',
+        'avatar',
+        'company',
+        'phone',
+        'website',
+        'country',
+        'language',
+        'timezone',
+        'currency',
+        'communication',
+    ];
+
+    /**
+     * Prepare proper error handling for url attribute
+     *
+     * @return string
+     */
+    public function getAvatarUrlAttribute()
+    {
+        // if file avatar exists in storage folder
+        $avatar = public_path(Storage::url($this->avatar));
+        if (is_file($avatar) && file_exists($avatar)) {
+            // get avatar URL from storage
+            return Storage::url($this->avatar);
+        }
+
+        // check if the avatar is an external URL, e.g., an image from Google
+        if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
+            return $this->avatar;
+        }
+
+        // no avatar, return a blank avatar
+        return asset(theme()->getMediaUrlPath().'avatars/blank.png');
     }
 
     /**
-     * Reverse the migrations.
+     * User info relation to user model
      *
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function down()
+    public function user()
     {
-        Schema::dropIfExists('User_Infos');
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Unserialize values by default
+     *
+     * @param $value
+     *
+     * @return mixed|null
+     */
+    public function getCommunicationAttribute($value)
+    {
+        // test to unserialize value and return it as an array
+        $data = @unserialize($value);
+        if ($data !== false) {
+            return $data;
+        } else {
+            return null;
+        }
     }
 }

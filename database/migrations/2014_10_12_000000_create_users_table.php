@@ -22,7 +22,15 @@ class CreateUsersTable extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->rememberToken();
+            $table->string('remember_token', 100)->nullable();
+            $table->string('code', 20)->default('');
+            $table->string('descr', 200)->default('');
+            $table->string('parent_id', 20)->default('');
+            $table->string('grp', 1)->default('');
+            $table->string('type_code', 1)->default('');
+            $table->string('level_code', 1)->default('');
+            $table->string('status_code', 1)->default('A');
+            $table->string('is_active', 1)->default('1');
             $this->generateDefaultTimeStamp($table);
         });
     }

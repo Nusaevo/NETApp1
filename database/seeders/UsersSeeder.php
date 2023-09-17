@@ -18,26 +18,22 @@ class UsersSeeder extends Seeder
     public function run(Generator $faker)
     {
         $demoUser = User::create([
-            'object_name'       => "admin",
             'first_name'        => $faker->firstName,
             'last_name'         => $faker->lastName,
             'email'             => 'demo@demo.com',
             'password'          => Hash::make('demo'),
-            'created_user_id'   => "SYSTEM",
-            'updated_user_id'   => "SYSTEM",
+            'created_user_id'     => "SYSTEM",
             'email_verified_at' => now(),
         ]);
 
         $this->addDummyInfo($faker, $demoUser);
 
         $demoUser2 = User::create([
-            'object_name'       => "admin2",
             'first_name'        => $faker->firstName,
             'last_name'         => $faker->lastName,
             'email'             => 'demo2@demo.com',
             'password'          => Hash::make('demo'),
-            'created_user_id'   => "SYSTEM",
-            'updated_user_id'   => "SYSTEM",
+            'created_user_id'     => "SYSTEM",
             'email_verified_at' => now(),
         ]);
 
@@ -56,6 +52,9 @@ class UsersSeeder extends Seeder
             'website'  => $faker->url,
             'language' => $faker->languageCode,
             'country'  => $faker->countryCode,
+            'timezone'  => $faker->timezone,
+            'currency'  => $faker->currencyCode,
+            'communication'  => '',
         ];
 
         $info = new UserInfo();

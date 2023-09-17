@@ -8,29 +8,31 @@ use App\Http\Controllers\Logs\SystemLogsController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\UsersController;
 
-use App\Http\Livewire\Masters\Suppliers\Index as SupplierIndex;
-use App\Http\Livewire\Masters\Customers\Index as CustomerIndex;
+use App\Http\Livewire\Settings\Users\Index as UsersIndex;
+use App\Http\Livewire\Settings\Users\Detail as UsersDetail;
 
-use App\Http\Livewire\Masters\Items\Index as ItemIndex;
-use App\Http\Livewire\Masters\ItemPrices\Index as ItemPriceIndex;
-use App\Http\Livewire\Masters\Items\Detail as ItemDetail;
+use App\Http\Livewire\Settings\ConfigGroups\Index as ConfigGroupIndex;
+use App\Http\Livewire\Settings\ConfigGroups\Detail as ConfigGroupDetail;
+use App\Http\Livewire\Settings\ConfigMenus\Index as ConfigMenuIndex;
+use App\Http\Livewire\Settings\ConfigMenus\Detail as ConfigMenuDetail;
 
-use App\Http\Livewire\Masters\Payments\Index as PaymentIndex;
-use App\Http\Livewire\Masters\CategoryItems\Index as CategoryItemIndex;
-use App\Http\Livewire\Masters\VariantCategories\Index as VariantCategoryIndex;
+// use App\Http\Livewire\Masters\Suppliers\Index as SupplierIndex;
+// use App\Http\Livewire\Masters\Customers\Index as CustomerIndex;
 
-use App\Http\Livewire\Masters\Stores\Index as StoreIndex;
-use App\Http\Livewire\Masters\Stores\Transfer as WarehouseTransfer;
+// use App\Http\Livewire\Masters\Items\Index as ItemIndex;
+// use App\Http\Livewire\Masters\ItemPrices\Index as ItemPriceIndex;
+// use App\Http\Livewire\Masters\Items\Detail as ItemDetail;
 
+// use App\Http\Livewire\Masters\Payments\Index as PaymentIndex;
+// use App\Http\Livewire\Masters\CategoryItems\Index as CategoryItemIndex;
+// use App\Http\Livewire\Masters\VariantCategories\Index as VariantCategoryIndex;
 
-use App\Http\Livewire\Transactions\Sales\Orders\Index as SalesOrderIndex;
-use App\Http\Livewire\Transactions\Sales\Orders\Create as SalesOrderCreate;
-use App\Http\Livewire\Transactions\Sales\Orders\Detail as SalesOrderDetail;
-use App\Http\Livewire\Transactions\Sales\Orders\PrintPdf as SalesOrderPrintPdf;
+// use App\Http\Livewire\Masters\Stores\Index as StoreIndex;
+// use App\Http\Livewire\Masters\Stores\Transfer as WarehouseTransfer;
 
-use App\Http\Livewire\Inventory\StockOpname\Index as StockOpnameIndex;
-use App\Http\Controllers\CustomerSearchController;
-use App\Http\Controllers\ItemSearchController;
+// use App\Http\Livewire\Inventory\StockOpname\Index as StockOpnameIndex;
+// use App\Http\Controllers\CustomerSearchController;
+// use App\Http\Controllers\ItemSearchController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -81,50 +83,29 @@ Route::middleware('auth')->group(function () {
         Route::resource('system', SystemLogsController::class)->only(['index', 'destroy']);
         Route::resource('audit', AuditLogsController::class)->only(['index', 'destroy']);
     });
-    Route::prefix('supplier')->name('supplier.')->group(function () {
-        Route::get('/', SupplierIndex::class)->name('index');
-    });
-    Route::prefix('customer')->name('customer.')->group(function () {
-        Route::get('/', CustomerIndex::class)->name('index');
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', UsersIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', UsersDetail::class)->name('detail');
     });
 
-    Route::prefix('item')->name('item.')->group(function () {
-        Route::get('/', ItemIndex::class)->name('index');
-        Route::get('/detail/{id}', ItemDetail::class)->name('detail');
-        Route::get('/price', ItemPriceIndex::class)->name('price');
+    Route::prefix('config_groups')->name('config_groups.')->group(function () {
+        Route::get('/', ConfigGroupIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigGroupDetail::class)->name('detail');
     });
-    Route::prefix('payment')->name('payment.')->group(function () {
-        Route::get('/', PaymentIndex::class)->name('index');
+
+    Route::prefix('config_menus')->name('config_menus.')->group(function () {
+        Route::get('/', ConfigMenuIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigMenuDetail::class)->name('detail');
     });
-    Route::prefix('item_category')->name('item_category.')->group(function () {
-        Route::get('/', CategoryItemIndex::class)->name('index');
-    });
-    Route::prefix('variant_category')->name('price_category.')->group(function () {
-        Route::get('/', VariantCategoryIndex::class)->name('index');
-    });
-    Route::prefix('store')->name('warehouse.')->group(function () {
-        Route::get('/', StoreIndex::class)->name('index');
-    });
-    Route::prefix('inventory')->name('inventory.')->group(function () {
-        Route::get('/stock_opname', StockOpnameIndex::class)->name('index');
-    });
-    // Route::prefix('sales')->name('sales.')->group(function () {
-    //     Route::prefix('order')->name('order.')->group(function () {
-    //         Route::get('/', SalesOrderIndex::class)->name('index');
-    //         Route::get('/create', SalesOrderCreate::class)->name('create');
-    //         Route::get('/detail/{id}', SalesOrderDetail::class)->name('detail');
-    //         Route::get('/printpdf/{id}', SalesOrderPrintpdf::class)->name('printpdf');
-    //     });
-    // });
 });
 
-Route::resource('users', UsersController::class);
+// Route::resource('users', UsersController::class);
 
-/**
- * Socialite login using Google service
- * https://laravel.com/docs/8.x/socialite
- */
-Route::get('/auth/redirect/{provider}', [SocialiteLoginController::class, 'redirect']);
-Route::get('search-customer', [CustomerSearchController::class, 'selectSearch']);
-Route::get('search-item', [ItemSearchController::class, 'selectSearch']);
+// /**
+//  * Socialite login using Google service
+//  * https://laravel.com/docs/8.x/socialite
+//  */
+// Route::get('/auth/redirect/{provider}', [SocialiteLoginController::class, 'redirect']);
+// Route::get('search-customer', [CustomerSearchController::class, 'selectSearch']);
+// Route::get('search-item', [ItemSearchController::class, 'selectSearch']);
 require __DIR__ . '/auth.php';

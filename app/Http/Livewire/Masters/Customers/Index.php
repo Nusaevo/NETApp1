@@ -32,10 +32,9 @@ class Index extends Component
 
     protected function rules()
     {
-        $uniqueRule = $this->is_edit_mode ? "unique:customers,object_name" : 'unique:customers,object_name';
-
+        $_unique_exception = $this->is_edit_mode ? ','.$this->customer->id : '';
         return [
-            'customer.object_name' => 'required|string|min:1|max:128|' . $uniqueRule,
+            'customer.object_name' => 'required|string|min:1|max:128|unique:customers,object_name'. $_unique_exception,
             'customer.email'       => 'nullable|email|min:3|max:128',
             'customer.phone'       => 'nullable|string|min:3|max:128',
             'customer.address'     => 'nullable|string|min:3|max:128',

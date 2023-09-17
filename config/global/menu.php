@@ -229,74 +229,69 @@ return array(
                         'title'  => 'Suppliers',
                         'path'   => 'supplier',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
-                    ),
-                    array(
-                        'title'  => 'Produk',
-                        'path'   => 'item',
-                        'bullet' => '<span class="bullet bullet-dot"></span>',
                     )
                 ),
             ),
         ),
         // Stock Management
-        array(
-            'title'      => 'Inventory',
-            'icon'       => array(
-                'svg'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen017.svg", "svg-icon-2"),
-                'font' => '<i class="bi bi-person fs-2"></i>',
-            ),
-            'classes'    => array('item' => 'menu-accordion'),
-            'attributes' => array(
-                "data-kt-menu-trigger" => "click",
-            ),
-            'sub'        => array(
-                'class' => 'menu-sub-accordion menu-active-bg',
-                'items' => array(
-                    array(
-                        'title'  => 'Stock Produk',
-                        'path'   => 'inventory/stock_opname',
-                        'bullet' => '<span class="bullet bullet-dot"></span>',
-                    ),
-                    array(
-                        'title'  => 'Harga Produk',
-                        'path'   => 'item/price',
-                        'bullet' => '<span class="bullet bullet-dot"></span>',
-                    )
-                    // array(
-                    //     'title'  => 'Transfer Item',
-                    //     'path'   => 'warehouse/adjustment',
-                    //     'bullet' => '<span class="bullet bullet-dot"></span>',
-                    // )
-                ),
-            ),
-        ),
+        // array(
+        //     'title'      => 'Inventory',
+        //     'icon'       => array(
+        //         'svg'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen017.svg", "svg-icon-2"),
+        //         'font' => '<i class="bi bi-person fs-2"></i>',
+        //     ),
+        //     'classes'    => array('item' => 'menu-accordion'),
+        //     'attributes' => array(
+        //         "data-kt-menu-trigger" => "click",
+        //     ),
+        //     'sub'        => array(
+        //         'class' => 'menu-sub-accordion menu-active-bg',
+        //         'items' => array(
+        //             array(
+        //                 'title'  => 'Stock Produk',
+        //                 'path'   => 'inventory/stock_opname',
+        //                 'bullet' => '<span class="bullet bullet-dot"></span>',
+        //             ),
+        //             array(
+        //                 'title'  => 'Harga Produk',
+        //                 'path'   => 'item/price',
+        //                 'bullet' => '<span class="bullet bullet-dot"></span>',
+        //             )
+        //             // array(
+        //             //     'title'  => 'Transfer Item',
+        //             //     'path'   => 'warehouse/adjustment',
+        //             //     'bullet' => '<span class="bullet bullet-dot"></span>',
+        //             // )
+        //         ),
+        //     ),
+        // ),
         // Transaction
-        array(
-            'title'      => 'Transaction',
-            'icon'       => array(
-                'svg'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen032.svg", "svg-icon-2"),
-                'font' => '<i class="bi bi-person fs-2"></i>',
-            ),
-            'classes'    => array('item' => 'menu-accordion'),
-            'attributes' => array(
-                "data-kt-menu-trigger" => "click",
-            ),
-            'sub'        => array(
-                'class' => 'menu-sub-accordion menu-active-bg',
-                'items' => array(
-                    array(
-                        'title'  => 'Purchase Order',
-                        'path'   => 'purchase_order',
-                        'bullet' => '<span class="bullet bullet-dot"></span>',
-                    ),
-                    array(
-                        'title'  => 'Sales Order',
-                        'path'   => 'sales/order',
-                        'bullet' => '<span class="bullet bullet-dot"></span>',
-                    ),
-                ),
-            ),
-        ),
+        // array(
+        //     'title'      => 'Transaction',
+        //     'icon'       => array(
+        //         'svg'  => theme()->getSvgIcon("demo1/media/icons/duotune/general/gen032.svg", "svg-icon-2"),
+        //         'font' => '<i class="bi bi-person fs-2"></i>',
+        //     ),
+        //     'classes'    => array('item' => 'menu-accordion'),
+        //     'attributes' => array(
+        //         "data-kt-menu-trigger" => "click",
+        //     ),
+        //     'sub'        => array(
+        //         'class' => 'menu-sub-accordion menu-active-bg',
+        //         'items' => array(
+        //             array(
+        //                 'title'  => 'Purchase Order',
+        //                 'path'   => 'purchase_order',
+        //                 'bullet' => '<span class="bullet bullet-dot"></span>',
+        //             ),
+        //             array(
+        //                 'title'  => 'Sales Order',
+        //                 'path'   => 'sales/order',
+        //                 'bullet' => '<span class="bullet bullet-dot"></span>',
+        //             ),
+        //         ),
+        //     ),
+        // ),
         array(
             'title'      => 'Setting',
             'icon'       => array(
@@ -311,25 +306,25 @@ return array(
                 'class' => 'menu-sub-accordion menu-active-bg',
                 'items' => array(
                     array(
-                        'title'  => 'Kategori Produk',
-                        'path'   => 'item_category',
+                        'title'  => 'User',
+                        'path'   => 'users',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(
-                        'title'  => 'Kategori Varian',
-                        'path'   => 'variant_category',
+                        'title'  => 'Group',
+                        'path'   => 'config_groups',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(
-                        'title'  => 'Toko',
+                        'title'  => 'Application',
                         'path'   => 'store',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(
-                        'title'  => 'Metode Pembayaran',
-                        'path'   => 'payment',
+                        'title'  => 'Menu',
+                        'path'   => 'config_menus',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
-                    ),
+                    )
                 ),
             ),
         ),

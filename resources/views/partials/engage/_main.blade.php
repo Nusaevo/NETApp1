@@ -1,4 +1,4 @@
-<!--begin::Engage drawers-->
+{{-- <!--begin::Engage drawers-->
 @if(theme()->getOption('layout', 'engage/demos/enabled'))
     {{ theme()->getView('partials/engage/demos/_main') }}
 @endif
@@ -22,4 +22,4 @@
         {{ theme()->getView('partials/engage/purchase/_main') }}
     @endif
 </div>
-<!--end::Engage toolbar-->
+<!--end::Engage toolbar--> --}}
