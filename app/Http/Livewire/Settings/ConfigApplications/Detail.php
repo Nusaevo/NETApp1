@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Settings\ConfigGroups;
+namespace App\Http\Livewire\Settings\ConfigApplications;
 
 use Livewire\Component;
 use App\Models\ConfigGroup;

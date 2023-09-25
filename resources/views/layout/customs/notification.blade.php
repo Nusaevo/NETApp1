@@ -5,7 +5,6 @@
             let title = data.title;
             let message = data.message;
             let type = data.type;
-
             Swal.fire(title, message, type);
         });
     </script>
