@@ -5,7 +5,8 @@ namespace App\Http\Livewire\Settings\Users;
 use Livewire\Component;
 use App\Models\User; // Import the User model
 use App\Traits\LivewireTrait;
-
+use Lang;
+use Exception;
 class Index extends Component
 {
     use LivewireTrait;
@@ -23,27 +24,41 @@ class Index extends Component
     }
 
     protected $listeners = [
-        'settings_user_edit'  => 'edit',
-        'settings_user_delete'  => 'delete',
-        'settings_user_detail'  => 'view',
+        'settings_user_edit'  => 'Edit',
+        'settings_user_delete'  => 'Delete',
+        'settings_user_detail'  => 'View',
     ];
 
 
-    public function view($id)
+    public function View($id)
     {
         return redirect()->route('users.detail', ['action' => 'View', 'objectId' => $id]);
     }
 
-    public function edit($id)
+    public function Edit($id)
     {
         return redirect()->route('users.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
-    public function delete($id)
+    public function Delete($id)
     {
-        $this->user = User::findOrFail($id);
-        $this->user->delete();
-        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil mengahapus user {$this->user->id}."]);
+        try {
+            $this->user = User::findOrFail($id);
+            $this->user->delete();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.delete', ['object' => "User " . $this->user->name])
+            ]);
+        } catch (Exception $e) {
+            // Handle the exception
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.delete', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
+            ]);
+        }
+
         $this->emit('settings_user_refresh');
     }
 }

@@ -77,14 +77,9 @@
                         <div class="row">
                             <!--begin::Col-->
                             <div class="col-lg-6 fv-row">
-                                <input type="text" name="first_name" class="form-control form-control-lg form-control-solid mb-3 mb-lg-0" placeholder="First name" value="{{ old('first_name', auth()->user()->first_name ?? '') }}"/>
+                                <input type="text" name="name" class="form-control form-control-lg form-control-solid mb-3 mb-lg-0" placeholder="name" value="{{ old('name', auth()->user()->name ?? '') }}"/>
                             </div>
                             <!--end::Col-->
-
-                            <!--begin::Col-->
-                            <div class="col-lg-6 fv-row">
-                                <input type="text" name="last_name" class="form-control form-control-lg form-control-solid" placeholder="Last name" value="{{ old('last_name', auth()->user()->last_name ?? '') }}"/>
-                            </div>
                             <!--end::Col-->
                         </div>
                         <!--end::Row-->

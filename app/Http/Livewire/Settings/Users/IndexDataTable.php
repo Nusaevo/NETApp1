@@ -24,12 +24,11 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("First Name", "first_name")
+            Column::make("Name", "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Last Name", "last_name")
-                ->sortable(),
             Column::make("Email", "email")
+                ->searchable()
                 ->sortable(),
             Column::make('Actions', 'id')
                 ->format(
@@ -37,8 +36,4 @@ class IndexDataTable extends DataTableComponent
                 ),
         ];
     }
-
-    // Update the filters as needed
-
-    // ... Rest of the component
 }

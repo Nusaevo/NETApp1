@@ -1,12 +1,16 @@
 <?php
 
 return [
-    'button_submit' => 'Simpan',
-    'button_cancel' => 'Batal',
-    'button_wait' => 'Harap Tunggu...',
-
-    'select_default' => '-- Pilih Salah Satu --',
-
-    'branch_create' => 'Buat Cabang Baru',
-    'branch_edit' => 'Sunting Cabang :name',
+    'success' => [
+        'title' => 'Success',
+        'create' => 'Successfully created :object.',
+        'update' => 'Successfully updated :object.',
+        'delete' => 'Successfully deleted :object.',
+    ],
+    'error' => [
+        'title' => 'Failed',
+        'create' => "Failed to create :object,\nError message: :message",
+        'update' => "Failed to update :object,\nError message: :message",
+        'delete' => "Failed to delete :object,\nError message: :message",
+    ],
 ];

@@ -27,4 +27,14 @@ class ConfigGroup extends Model
         'last_user',
         'last_user_id',
     ];
+
+    public function scopeGetConfigGroup()
+    {
+        return $this->orderBy('note1', 'asc')->get();
+    }
+
+    public function user()
+    {
+        return $this->belongsTo('App\Models\User', 'code');
+    }
 }

@@ -83,6 +83,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('system', SystemLogsController::class)->only(['index', 'destroy']);
         Route::resource('audit', AuditLogsController::class)->only(['index', 'destroy']);
     });
+
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', UsersIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', UsersDetail::class)->name('detail');

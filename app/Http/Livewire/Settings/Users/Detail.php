@@ -4,7 +4,12 @@ namespace App\Http\Livewire\Settings\Users;
 
 use Livewire\Component;
 use App\Models\User;
+use App\Models\UserInfo;
+use App\Models\ConfigGroup;
 use App\Traits\LivewireTrait;
+use Lang;
+use Exception;
+use DB;
 
 class Detail extends Component
 {
@@ -14,19 +19,30 @@ class Detail extends Component
     public $action = 'Create'; // Default to Create
     public $objectId;
     public $inputs = ['name' => ''];
+    public $group_codes;
+    public $languages;
 
     public function mount($action, $objectId = null)
     {
         $this->action = $action;
         $this->objectId = $objectId;
+        $this->group_codes = ConfigGroup::GetConfigGroup();
+
+        $this->languages = [
+            ['id' => 'EN', 'name' => 'English (EN)'],
+            ['id' => 'ID', 'name' => 'Indonesian (ID)'],
+        ];
+        $this->inputs['group_codes'] = 0;
+        $this->inputs['language'] = 0;
+
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
             $this->user = User::find($this->objectId);
-            $this->inputs['first_name'] = $this->user->first_name;
-            $this->inputs['last_name'] = $this->user->last_name;
+            $this->inputs['name'] = $this->user->name;
             $this->inputs['email'] = $this->user->email;
             $this->inputs['company'] = $this->user->info->company;
             $this->inputs['phone'] = $this->user->info->phone;
-
+            $this->inputs['language'] = $this->user->info->language;
+            $this->inputs['group_codes'] = $this->user->code;
         } else {
             $this->user = new User();
         }
@@ -37,9 +53,8 @@ class Detail extends Component
     {
         $_unique_exception = $this->action === 'Edit' ? ',' . $this->objectId : '';
         return [
-            'inputs.first_name' => 'required|string|min:1|max:128',
-            'inputs.last_name' => 'required|string|min:1|max:128',
-            'inputs.email' => $this->action === 'Create' ? 'required|string|min:3|max:128|unique:users,email' . $_unique_exception : 'nullable|string|min:3|max:128|unique:users,email' . $_unique_exception,
+            'inputs.name' => 'required|string|min:1|max:128',
+            'inputs.email' => 'required|string|min:1|max:128',
         ];
     }
 
@@ -56,44 +71,106 @@ class Detail extends Component
     ];
 
     protected $validationAttributes = [
-        'inputs.first_name'           => 'First Name',
-        'inputs.last_name'           => 'Last Name',
+        'inputs.name'           => 'Name',
         'inputs.email'       => 'Email'
 
     ];
 
-    public function store()
+    public function Create()
     {
-        $this->validate();
+        try {
+            $this->validate();
 
-        if ($this->action === 'Create') {
-            User::create([
-                'first_name' => $this->inputs['first_name'],
-                'last_name' => $this->inputs['last_name'],
+
+            DB::beginTransaction();
+            $newUser =   User::create([
+                'name' => $this->inputs['name'],
                 'email' => $this->inputs['email'],
+                'code' => $this->inputs['group_codes'],
                 'password' => bcrypt($this->inputs['password']),
             ]);
-        }
+            $index = 0;
+            $newUserInfo = UserInfo::create([
+                'user_id' => $newUser->id,
+                'company'   => $this->inputs['company'],
+                'phone'              => $this->inputs['phone'],
+                'language'              => $this->inputs['language']
+            ]);
 
-        $this->reset(['user', 'action', 'objectId']);
+            DB::commit();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.create', ['object' => "User " . $this->user->name])
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.create', ['object' => "User ", 'message' => $e->getMessage()])
+            ]);
+        }
     }
 
-
-    public function update()
+    public function Edit()
     {
-        $this->validate();
-        if ($this->action === 'Edit') {
-            if ($this->user) {
-                $this->user->update([
-                    'first_name' => $this->inputs['first_name'],
-                    'last_name' => $this->inputs['last_name'],
-                    'email' => $this->inputs['email'],
-                    'password' => bcrypt($this->inputs['password']),
-                ]);
+        try {
+            $this->validate();
+
+            $password = "";
+
+            if (!empty($this->inputs['password'])) {
+                if ($this->inputs['password'] != $this->inputs['newpassword']) {
+                    $this->dispatchBrowserEvent('notify-swal', [
+                        'type' => 'error',
+                        'title' => Lang::get('generic.error.title'),
+                        'message' => "Password tidak sama!"
+                    ]);
+                    $password = $this->inputs['password'];
+                } else {
+                    $password = bcrypt($this->inputs['password']);
+                }
             }
+
+            DB::beginTransaction();
+
+            if ($this->user) {
+                $userUpdateData = [
+                    'name' => $this->inputs['name'],
+                    'email' => $this->inputs['email'],
+                ];
+
+                if (!empty($password)) {
+                    $userUpdateData['password'] = $password;
+                }
+
+                $this->user->update($userUpdateData);
+
+                if ($this->user->info) {
+                    $this->user->info->update([
+                        'company' => $this->inputs['company'],
+                        'phone' => $this->inputs['phone'],
+                        'language' => $this->inputs['language'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.update', ['object' => "User " . $this->user->name])
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.create', ['object' => "User ", 'message' => $e->getMessage()])
+            ]);
         }
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil mengubah user {$this->user->first_name}."]);
-        $this->reset(['user', 'action', 'objectId']);
     }
 
 
