@@ -1,274 +1,126 @@
 <?php
 return array(
-    // Product
-    'product' => array(
-        'name'        => 'Metronic',
-        'description' => 'Metronic - Bootstrap 5 HTML, VueJS, React, Angular & Laravel Admin Dashboard Theme',
-        'preview'     => 'https://preview.keenthemes.com/metronic8/laravel',
-        'home'        => 'https://keenthemes.com/metronic',
-        'purchase'    => 'https://1.envato.market/EA4JP',
-        'licenses'    => array(
-            'terms' => 'https://themeforest.net/licenses/standard',
-            'types' => array(
-                array(
-                    'title'       => 'Regular License',
-                    'description' => 'For single end product used by you or one client',
-                    'tooltip'     => 'Use, by you or one client in a single end product which end users are not charged for',
-                    'price'       => '39',
-                ),
-                array(
-                    'title'       => 'Extended License',
-                    'description' => 'For single SaaS app with paying users',
-                    'tooltip'     => 'Use, by you or one client, in a single end product which end users can be charged for.',
-                    'price'       => '939',
-                ),
+    // Refer to config/global/general.php
+
+    // Assets
+    'assets' => array(
+        'favicon' => 'media/logos/favicon.ico',
+        'fonts'   => array(
+            'google' => array(
+                'Poppins:300,400,500,600,700',
             ),
         ),
-        'demos'       => array(
-            'demo1' => array(
-                'title'       => 'Demo 1',
-                'description' => 'Default Dashboard',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo1.png',
-            ),
-
-            'demo2' => array(
-                'title'       => 'Demo 2',
-                'description' => 'SaaS Application',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo2.png',
-            ),
-
-            'demo3' => array(
-                'title'       => 'Demo 3',
-                'description' => 'New Trend',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo3.png',
-            ),
-
-            'demo4' => array(
-                'title'       => 'Demo 4',
-                'description' => 'Intranet Application',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo4.png',
-            ),
-
-            'demo5' => array(
-                'title'       => 'Demo 5',
-                'description' => 'Support Forum',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo5.png',
-            ),
-
-            'demo6' => array(
-                'title'       => 'Demo 6',
-                'description' => 'Admin Backend',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo6.png',
-            ),
-
-            'demo7' => array(
-                'title'       => 'Demo 7',
-                'description' => 'CRM Dashboard',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo7.png',
-            ),
-
-            'demo8' => array(
-                'title'       => 'Demo 8',
-                'description' => 'Core Dashboard',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo8.png',
-            ),
-
-            'demo9' => array(
-                'title'       => 'Demo 9',
-                'description' => 'Fancy Dashboard',
-                'published'   => true,
-                'thumbnail'   => 'demos/demo9.png',
-            ),
-
-            'demo10' => array(
-                'title'       => 'Demo 10',
-                'description' => 'Project Grid',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo10.png',
-            ),
-
-            'demo11' => array(
-                'title'       => 'Demo 11',
-                'description' => 'Light Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo11.png',
-            ),
-
-            'demo12' => array(
-                'title'       => 'Demo 12',
-                'description' => 'Creative Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo12.png',
-            ),
-
-            'demo13' => array(
-                'title'       => 'Demo 13',
-                'description' => 'Classic Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo13.png',
-            ),
-
-            'demo14' => array(
-                'title'       => 'Demo 14',
-                'description' => 'Interactive Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo14.png',
-            ),
-
-            'demo15' => array(
-                'title'       => 'Demo 15',
-                'description' => 'Member Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo15.png',
-            ),
-
-            'demo16' => array(
-                'title'       => 'Demo 16',
-                'description' => 'Modern Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo16.png',
-            ),
-
-            'demo17' => array(
-                'title'       => 'Demo 17',
-                'description' => 'Fancy Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo17.png',
-            ),
-
-            'demo18' => array(
-                'title'       => 'Demo 18',
-                'description' => 'Minimalistic Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo18.png',
-            ),
-
-            'demo19' => array(
-                'title'       => 'Demo 19',
-                'description' => 'Futuristic Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo19.png',
-            ),
-
-            'demo20' => array(
-                'title'       => 'Demo 20',
-                'description' => 'Advanced Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo20.png',
-            ),
-
-            'demo21' => array(
-                'title'       => 'Demo 21',
-                'description' => 'Monochrome Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo21.png',
-            ),
-
-            'demo22' => array(
-                'title'       => 'Demo 22',
-                'description' => 'Social Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo22.png',
-            ),
-
-            'demo23' => array(
-                'title'       => 'Demo 23',
-                'description' => 'SaaS Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo23.png',
-            ),
-
-            'demo24' => array(
-                'title'       => 'Demo 24',
-                'description' => 'Compact Dashboard',
-                'published'   => false,
-                'thumbnail'   => 'demos/demo24.png',
-            ),
-
+        'css'     => array(
+            'plugins/global/plugins.bundle.css',
+            'plugins/global/plugins-custom.bundle.css',
+            'css/style.bundle.css',
         ),
-    ),
-
-    // Meta
-    'meta'    => array(
-        'title'       => 'POS Online System',
-        'description' => '',
-        'keywords'    => '',
-        'canonical'   => '',
-    ),
-
-    // General
-    'general' => array(
-        'website'             => 'https://keenthemes.com',
-        'about'               => 'https://keenthemes.com',
-        'contact'             => 'mailto:support@keenthemes.com',
-        'support'             => 'https://keenthemes.com/support',
-        'bootstrap-docs-link' => 'https://getbootstrap.com/docs/5.0',
-        'licenses'            => 'https://keenthemes.com/licensing',
-        'social-accounts'     => array(
-            array(
-                'name' => 'Youtube', 'url' => 'https://www.youtube.com/c/KeenThemesTuts/videos', 'logo' => 'svg/social-logos/youtube.svg', "class" => "h-20px",
-            ),
-            array(
-                'name' => 'Github', 'url' => 'https://github.com/KeenthemesHub', 'logo' => 'svg/social-logos/github.svg', "class" => "h-20px",
-            ),
-            array(
-                'name' => 'Twitter', 'url' => 'https://twitter.com/keenthemes', 'logo' => 'svg/social-logos/twitter.svg', "class" => "h-20px",
-            ),
-            array(
-                'name' => 'Instagram', 'url' => 'https://www.instagram.com/keenthemes', 'logo' => 'svg/social-logos/instagram.svg', "class" => "h-20px",
-            ),
-
-            array(
-                'name' => 'Facebook', 'url' => 'https://www.facebook.com/keenthemes', 'logo' => 'svg/social-logos/facebook.svg', "class" => "h-20px",
-            ),
-            array(
-                'name' => 'Dribbble', 'url' => 'https://dribbble.com/keenthemes', 'logo' => 'svg/social-logos/dribbble.svg', "class" => "h-20px",
-            ),
+        'js'      => array(
+            'plugins/global/plugins.bundle.js',
+            'js/scripts.bundle.js',
+            'js/custom/widgets.js',
         ),
     ),
 
     // Layout
-    'layout'  => array(
-        // Docs
-        'docs'          => array(
-            'logo-path'  => array(
-                'default' => 'logos/logo-1.svg',
-                'dark'    => 'logos/logo-1-dark.svg',
-            ),
-            'logo-class' => 'h-25px',
+    'layout' => array(
+        // Main
+        'main'       => array(
+            'base'              => 'default', // Set base layout: default|docs
+            'type'              => 'default', // Set layout type: default|blank|none
+            'dark-mode-enabled' => true, // Enable optional dark mode mode
+            'primary-color'     => '#009EF7',  // Primary color used in email templates
         ),
 
-        // Illustration
-        'illustrations' => array(
-            'set' => 'sketchy-1',
+        // Loader
+        'loader'     => array(
+            'display' => false,
+            'type'    => 'default' // Set default|spinner-message|spinner-logo to hide or show page loader
         ),
 
-        // Engage
-        'engage'        => array(
-            'demos'    => array(
-                'enabled'   => true,
-                'direction' => 'end',
+        // Header
+        'header'     => array(
+            'display'   => true, // Display header
+            'width'     => 'fluid', // Set header width(fixed|fluid)
+            'left'      => 'menu', // Set left part content(menu|page-title)
+            'fixed'     => array(
+                'desktop'           => true,  // Set fixed header for desktop
+                'tablet-and-mobile' => true // Set fixed header for talet & mobile
             ),
-            'explore'  => array(
-                'enabled'   => true,
-                'direction' => 'end',
+            'menu-icon' => 'svg' // Menu icon type(svg|font)
+        ),
+
+        // Toolbar
+        'toolbar'    => array(
+            'display' => true, // Display toolbar
+            'width'   => 'fluid', // Set toolbar container width(fluid|fixed)
+            'fixed'   => array(
+                'desktop'           => true,  // Set fixed header for desktop
+                'tablet-and-mobile' => false // Set fixed header for talet & mobile
             ),
-            'help'     => array(
-                'enabled'   => true,
-                'direction' => 'end',
+            'layout'  => 'toolbar-1', // Set toolbar type
+            'layouts' => array(
+                'toolbar-1' => array(
+                    'height'                   => '55px',
+                    'height-tablet-and-mobile' => '55px',
+                ),
+                'toolbar-2' => array(
+                    'height'                   => '75px',
+                    'height-tablet-and-mobile' => '65px',
+                ),
+                'toolbar-3' => array(
+                    'height'                   => '55px',
+                    'height-tablet-and-mobile' => '55px',
+                ),
+                'toolbar-4' => array(
+                    'height'                   => '65px',
+                    'height-tablet-and-mobile' => '65px',
+                ),
+                'toolbar-5' => array(
+                    'height'                   => '75px',
+                    'height-tablet-and-mobile' => '65px',
+                ),
             ),
-            'purchase' => array(
-                'enabled' => true,
-            ),
+        ),
+
+        // Page title
+        'page-title' => array(
+            'display'               => true, // Display page title
+            'breadcrumb'            => true, // Display breadcrumb
+            'description'           => false, // Display description
+            'layout'                => 'default', // Set layout(default|select)
+            'direction'             => 'row', // Flex direction(column|row))
+            'responsive'            => true, // Move page title to cotnent on mobile mode
+            'responsive-breakpoint' => 'lg', // Responsive breakpoint value(e.g: md, lg, or 300px)
+            'responsive-target'     => '#kt_toolbar_container' // Responsive target selector
+        ),
+
+        // Aside
+        'aside'      => array(
+            'display'   => true, // Display aside
+            'theme'     => 'dark', // Set aside theme(dark|light)
+            'menu'      => 'main', // Set aside menu(main|documentation)
+            'fixed'     => true,  // Enable aside fixed mode
+            'minimized' => false, // Set aside minimized by default
+            'minimize'  => true, // Allow aside minimize toggle
+            'hoverable' => true, // Allow aside hovering when minimized
+            'menu-icon' => 'svg' // Menu icon type(svg|font)
+        ),
+
+        // Content
+        'content'    => array(
+            'width'  => 'fixed', // Set content width(fixed|fluid)
+            'layout' => 'default'  // Set content layout(default|documentation)
+        ),
+
+        // Footer
+        'footer'     => array(
+            'width' => 'fluid' // Set fixed|fluid to change width type
+        ),
+
+        // Scrolltop
+        'scrolltop'  => array(
+            'display' => true // Display scrolltop
         ),
     ),
-
 );

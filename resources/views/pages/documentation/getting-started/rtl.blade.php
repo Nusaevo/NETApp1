@@ -56,7 +56,7 @@
             </li>
 
             <li class="py-3">
-                Change the CSS files reference in <code>config/demo1/general.php</code>
+                Change the CSS files reference in <code>config/global/general.php</code>
 
                 <div class="py-5">
                     <?php util()->highlight("
