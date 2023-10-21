@@ -13,8 +13,11 @@ class UIDropdownSelect extends Component
     public $required;
     public $optionValueProperty;
     public $optionLabelProperty;
+    public $enabled;
+    public $visible;
+    public $action;
 
-    public function __construct($label, $name, $options, $selectedValue = null, $required = false, $optionValueProperty = 'value', $optionLabelProperty = 'label')
+    public function __construct($label, $name, $options, $selectedValue = null, $required = false, $optionValueProperty = 'value', $optionLabelProperty = 'label', $enabled = true, $visible = true, $action = '')
     {
         $this->label = $label;
         $this->name = $name;
@@ -23,6 +26,13 @@ class UIDropdownSelect extends Component
         $this->required = $required;
         $this->optionValueProperty = $optionValueProperty;
         $this->optionLabelProperty = $optionLabelProperty;
+        if($action === 'View')
+        {
+            $this->enabled = false;
+        }else{
+            $this->enabled = $enabled;
+        }
+        $this->visible = $visible;
     }
 
     public function render()

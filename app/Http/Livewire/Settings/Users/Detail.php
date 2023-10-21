@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\User;
 use App\Models\UserInfo;
 use App\Models\ConfigGroup;
+use Illuminate\Validation\Rule;
 use Lang;
 use Exception;
 use DB;
@@ -48,18 +49,9 @@ class Detail extends Component
     }
 
     // Validation rules and other methods...
-    protected function rules()
-    {
-        $_unique_exception = $this->action === 'Edit' ? ',' . $this->objectId : '';
-        return [
-            'inputs.name' => 'required|string|min:1|max:1',
-            'inputs.email' => 'required|string|min:1|max:128',
-        ];
-    }
-
-    protected $validationAttributes = [
-        'inputs.name'           => 'Name',
-        'inputs.email'       => 'Email'
+    protected $rules = [
+        'inputs.name'           => 'required|string|min:1|max:128|unique:users,name',
+        'inputs.email'        => 'required|string|min:1|max:128|unique:users,email',
     ];
 
     public function Create()

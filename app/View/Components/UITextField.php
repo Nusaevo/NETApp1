@@ -9,17 +9,24 @@ class UITextField extends Component
     public $model;
     public $type;
     public $labelClass;
-    public $disabled;
+    public $enabled;
     public $required;
+    public $visible;
 
-    public function __construct($label, $model, $type = 'text', $labelClass = '', $action = '', $required = false)
+    public function __construct($label, $model, $type = 'text', $labelClass = '', $action = '', $required = false, $enabled = true, $visible = true)
     {
         $this->label = $label;
         $this->model = $model;
         $this->type = $type;
         $this->labelClass = $labelClass;
-        $this->disabled = ($action === 'View');
+        if($action === 'View')
+        {
+            $this->enabled = false;
+        }else{
+            $this->enabled = $enabled;
+        }
         $this->required = $required;
+        $this->visible = $visible;
     }
 
     public function render()

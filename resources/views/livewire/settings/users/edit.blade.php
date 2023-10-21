@@ -33,7 +33,8 @@
                         :optionValueProperty="'group_code'"
                         :optionLabelProperty="'note1'"
                         :selectedValue="$inputs['group_codes']"
-                        :required="true" />
+                        :required="true"
+                        :action="$action" />
                     </x-ui-expandable-card>
                 </form>
             </div>
@@ -49,7 +50,8 @@
                         :optionValueProperty="'id'"
                         :optionLabelProperty="'name'"
                         :selectedValue="$inputs['language']"
-                        :required="true" />
+                        :required="true"
+                        :action="$action"/>
                     </x-ui-expandable-card>
                 </form>
             </div>
@@ -63,10 +65,8 @@
             </div>
         </x-uitab-view-content>
 
-        @if ($action !== 'View')
-        <div class="card-footer">
-            <x-ui-button click-event="{{ $action }}" button-name="Submit" :loading="true" />
+        <div class="card-footer d-flex justify-content-end">
+            <x-ui-button click-event="{{ $action }}" button-name="Submit" :loading="true" :action="$action"/>
         </div>
-        @endif
     </x-ui-page-card>
 </div>

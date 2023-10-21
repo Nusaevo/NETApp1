@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Settings\Users;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use App\Models\User; // Import the User model
 use Illuminate\Database\Eloquent\Builder;
 
@@ -30,6 +31,11 @@ class IndexDataTable extends DataTableComponent
             Column::make("Email", "email")
                 ->searchable()
                 ->sortable(),
+            Column::make('Status',"deleted_at")
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return is_null($row->deleted_at) ? 'Activated' : 'Deactivated';
+            }),
             Column::make('Actions', 'id')
                 ->format(
                     fn ($value, $row, Column $column) => view('livewire.settings.users.index-data-table-action')->withRow($row)
