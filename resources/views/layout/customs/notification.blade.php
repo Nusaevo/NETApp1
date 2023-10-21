@@ -7,6 +7,11 @@
             let type = data.type;
             Swal.fire(title, message, type);
         });
+        window.addEventListener('refresh', function(e) {
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        });
     </script>
 @endonce
 

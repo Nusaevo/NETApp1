@@ -35,11 +35,6 @@
                         :selectedValue="$inputs['group_codes']"
                         :required="true" />
                     </x-ui-expandable-card>
-                    @if ($action !== 'View')
-                    <div class="card-footer">
-                        <x-ui-button click-event="{{ $action }}" button-name="Submit" />
-                    </div>
-                    @endif
                 </form>
             </div>
             <div class="tab-pane fade" id="detail" role="tabpanel" aria-labelledby="detail-tab">
@@ -56,27 +51,22 @@
                         :selectedValue="$inputs['language']"
                         :required="true" />
                     </x-ui-expandable-card>
-                    @if ($action !== 'View')
-                    <div class="card-footer">
-                        <x-ui-button click-event="{{ $action }}" button-name="Submit" />
-                    </div>
-                    @endif
                 </form>
             </div>
-            @if ($action !== 'View')
             <div class="tab-pane fade" id="credential" role="tabpanel" aria-labelledby="credential-tab">
                 <form wire:submit.prevent="{{ $action }}" class="form w-100">
                     <x-ui-expandable-card id="UserPassword" title="User Credential" :isOpen="true">
                         <x-ui-text-field label="Password" model="inputs.passsword" type="password" :action="$action" />
                         <x-ui-text-field label="Confirm Password" model="inputs.newpasssword" type="password" :action="$action" />
                     </x-ui-expandable-card>
-                    <div class="card-footer">
-                        <x-ui-button click-event="{{ $action }}" button-name="Submit" />
-                    </div>
                 </form>
             </div>
-            @endif
         </x-uitab-view-content>
 
+        @if ($action !== 'View')
+        <div class="card-footer">
+            <x-ui-button click-event="{{ $action }}" button-name="Submit" :loading="true" />
+        </div>
+        @endif
     </x-ui-page-card>
 </div>

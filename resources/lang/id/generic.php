@@ -1,16 +1,15 @@
 <?php
-
 return [
     'success' => [
-        'title' => 'Success',
-        'create' => 'Successfully created :object.',
-        'update' => 'Successfully updated :object.',
-        'delete' => 'Successfully deleted :object.',
+        'title' => 'Berhasil',
+        'create' => 'Berhasil membuat :object.',
+        'update' => 'Berhasil memperbarui :object.',
+        'delete' => 'Berhasil menghapus :object.',
     ],
     'error' => [
-        'title' => 'Failed',
-        'create' => "Failed to create :object,\nError message: :message",
-        'update' => "Failed to update :object,\nError message: :message",
-        'delete' => "Failed to delete :object,\nError message: :message",
+        'title' => 'Gagal',
+        'create' => "Gagal membuat :object,\nPesan kesalahan: :message",
+        'update' => "Gagal memperbarui :object,\nPesan kesalahan: :message",
+        'delete' => "Gagal menghapus :object,\nPesan kesalahan: :message",
     ],
 ];

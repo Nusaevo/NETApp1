@@ -1,76 +1,44 @@
 <?php
 
-namespace App\Models;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use App\Traits\DefaultColumnsTrait;
 
-use App\Core\Traits\SpatieLogsActivity;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
-
-class UserInfo extends Model
+class CreateUserInfosTable extends Migration
 {
-    use SpatieLogsActivity;
-
-    protected $fillable = [
-        'user_id',
-        'avatar',
-        'company',
-        'phone',
-        'website',
-        'country',
-        'language',
-        'timezone',
-        'currency',
-        'communication',
-    ];
-
+    use DefaultColumnsTrait;
     /**
-     * Prepare proper error handling for url attribute
+     * Run the migrations.
      *
-     * @return string
+     * @return void
      */
-    public function getAvatarUrlAttribute()
+    public function up()
     {
-        // if file avatar exists in storage folder
-        $avatar = public_path(Storage::url($this->avatar));
-        if (is_file($avatar) && file_exists($avatar)) {
-            // get avatar URL from storage
-            return Storage::url($this->avatar);
-        }
-
-        // check if the avatar is an external URL, e.g., an image from Google
-        if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
-            return $this->avatar;
-        }
-
-        // no avatar, return a blank avatar
-        return asset(theme()->getMediaUrlPath().'avatars/blank.png');
+        Schema::create('user_infos', function (Blueprint $table) {
+            $table->id();
+            $table->bigInteger('user_id')->unsigned();
+            $table->text('avatar')->nullable();
+            $table->string('company', 255);
+            $table->string('phone', 255);
+            $table->string('website', 255);
+            $table->string('country', 255);
+            $table->string('language', 255);
+            $table->string('timezone', 255);
+            $table->string('currency', 255);
+            $table->string('communication', 255);
+            $this->generateDefaultTimeStamp($table);
+        });
     }
 
     /**
-     * User info relation to user model
+     * Reverse the migrations.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return void
      */
-    public function user()
+    public function down()
     {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Unserialize values by default
-     *
-     * @param $value
-     *
-     * @return mixed|null
-     */
-    public function getCommunicationAttribute($value)
-    {
-        // test to unserialize value and return it as an array
-        $data = @unserialize($value);
-        if ($data !== false) {
-            return $data;
-        } else {
-            return null;
-        }
+        Schema::dropIfExists('user_infos');
     }
 }
+

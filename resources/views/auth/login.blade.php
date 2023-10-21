@@ -63,13 +63,13 @@
         <!--end::Input group-->
 
         <!--begin::Input group-->
-        <div class="fv-row mb-10">
+        {{-- <div class="fv-row mb-10">
             <label class="form-check form-check-custom form-check-solid">
                 <input class="form-check-input" type="checkbox" name="remember"/>
                 <span class="form-check-label fw-bold text-gray-700 fs-6">{{ __('Remember me') }}
             </span>
             </label>
-        </div>
+        </div> --}}
         <!--end::Input group-->
 
         <!--begin::Actions-->
@@ -81,11 +81,11 @@
             <!--end::Submit button-->
 
             <!--begin::Separator-->
-            <div class="text-center text-muted text-uppercase fw-bolder mb-5">or</div>
+            {{-- <div class="text-center text-muted text-uppercase fw-bolder mb-5">or</div> --}}
             <!--end::Separator-->
 
             <!--begin::Google link-->
-            <a href="{{ url('/auth/redirect/google') }}?redirect_uri={{ url()->previous() }}" class="btn btn-flex flex-center btn-light btn-lg w-100 mb-5">
+            {{-- <a href="{{ url('/auth/redirect/google') }}?redirect_uri={{ url()->previous() }}" class="btn btn-flex flex-center btn-light btn-lg w-100 mb-5">
                 <img alt="Logo" src="{{ asset(theme()->getMediaUrlPath() . 'svg/brand-logos/google-icon.svg') }}" class="h-20px me-3"/>
                 {{ __('Continue with Google') }}
             </a>
@@ -95,7 +95,7 @@
             <a href="{{ url('/auth/redirect/facebook') }}?redirect_uri={{ url()->previous() }}" class="btn btn-flex flex-center btn-light btn-lg w-100 mb-5">
                 <img alt="Logo" src="{{ asset(theme()->getMediaUrlPath() . 'svg/brand-logos/facebook-4.svg') }}" class="h-20px me-3"/>
                 {{ __('Continue with Facebook') }}
-            </a>
+            </a> --}}
             <!--end::Facebook link-->
         </div>
         <!--end::Actions-->

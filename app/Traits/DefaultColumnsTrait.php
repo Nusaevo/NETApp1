@@ -11,8 +11,9 @@ trait DefaultColumnsTrait
 
     protected function generateDefaultTimeStamp($table)
     {
-        $table->string('created_user_id')->nullable();
-        $table->string('updated_user_id')->nullable();
+        $table->integer('version_number')->default(1);
+        $table->string('created_by')->default(DB::raw('CURRENT_USER'));
+        $table->string('updated_by')->nullable();
         $table->timestamps();
         $table->softDeletes();
     }

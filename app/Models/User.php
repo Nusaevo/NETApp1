@@ -8,13 +8,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-
+use App\Traits\BaseTrait;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
     use SpatieLogsActivity;
     use HasRoles;
+    use BaseTrait;
 
+    public static function boot()
+    {
+        parent::boot();
+    }
     /**
      * The attributes that are mass assignable.
      *
@@ -48,9 +53,9 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var array
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    // protected $casts = [
+    //     'email_verified_at' => 'datetime',
+    // ];
 
     public function getRememberToken()
     {

@@ -1,7 +1,7 @@
 <?php
 return array(
     '' => array(
-        'title'       => 'Dashboard',
+        'title'       => 'Home',
         'description' => '',
         'view'        => 'index',
         'layout'      => array(

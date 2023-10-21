@@ -8,7 +8,7 @@
 <!--begin::Toolbar wrapper-->
 <div class="d-flex align-items-stretch flex-shrink-0">
     <!--begin::Search-->
-    <div class="d-flex align-items-stretch {{ $itemClass }}">
+    {{-- <div class="d-flex align-items-stretch {{ $itemClass }}">
         {{ theme()->getView('partials/search/_base') }}
     </div>
     <!--end::Search-->
@@ -31,11 +31,11 @@
         </div>
     {{ theme()->getView('partials/topbar/_notifications-menu') }}
     <!--end::Menu wrapper-->
-    </div>
+    </div> --}}
     <!--end::Notifications-->
 
     <!--begin::Chat-->
-    <div class="d-flex align-items-center {{ $itemClass }}">
+    {{-- <div class="d-flex align-items-center {{ $itemClass }}">
         <!--begin::Menu wrapper-->
         <div class="{{ $btnClass }} position-relative" id="kt_drawer_chat_toggle">
             {!! theme()->getSvgIcon("icons/duotune/communication/com012.svg", $btnIconClass) !!}
@@ -61,7 +61,7 @@
     <!--begin::Theme mode-->
     <div class="d-flex align-items-center {{ $itemClass }}">
         {{ theme()->getView('partials/theme-mode/_main', compact('btnClass')) }}
-    </div>
+    </div> --}}
     <!--end::Theme mode-->
 
     @if (auth()->check())

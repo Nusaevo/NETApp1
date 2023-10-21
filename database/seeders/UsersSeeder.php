@@ -20,9 +20,8 @@ class UsersSeeder extends Seeder
         $demoUser = User::create([
             'name'        => $faker->name,
             'email'             => 'demo@demo.com',
-            'password'          => Hash::make('demo'),
-            'created_user_id'     => "SYSTEM",
-            'email_verified_at' => now(),
+            'password'          => Hash::make('secret'),
+            'created_by'     => "SYSTEM",
         ]);
 
         $this->addDummyInfo($faker, $demoUser);
@@ -30,9 +29,8 @@ class UsersSeeder extends Seeder
         $demoUser2 = User::create([
             'name'        => $faker->name,
             'email'             => 'demo2@demo.com',
-            'password'          => Hash::make('demo'),
-            'created_user_id'     => "SYSTEM",
-            'email_verified_at' => now(),
+            'password'          => Hash::make('secret'),
+            'created_by'     => "SYSTEM",
         ]);
 
         $this->addDummyInfo($faker, $demoUser2);
