@@ -5,17 +5,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ConfigRight extends Model
+class ConfigVar extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'config_rights';
+    protected $table = 'config_vars';
 
     protected $fillable = [
         'appl_code',
-        'group_code',
-        'menu_code',
-        'menu_seq',
-        'trustee'
+        'var_group',
+        'var_code',
+        'descr',
+        'seq',
+        'type_code',
+        'default_value'
     ];
 }

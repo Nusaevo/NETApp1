@@ -24,10 +24,8 @@ abstract class BootstrapBase
             theme()->addHtmlAttributes('body', theme()->getOption('layout', 'main/body/attributes'));
         }
 
-        if (theme()->getOption('layout', 'loader/display') === true) {
-            theme()->addHtmlClass('body', 'page-loading-enabled');
-            theme()->addHtmlClass('body', 'page-loading');
-        }
+        theme()->addHtmlClass('body', 'page-loading-enabled');
+        theme()->addHtmlClass('body', 'page-loading');
     }
 
     public static function run()

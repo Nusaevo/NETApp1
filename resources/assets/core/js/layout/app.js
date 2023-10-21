@@ -192,7 +192,7 @@ var KTApp = function () {
         var elements = [].slice.call(document.querySelectorAll('[data-kt-daterangepicker="true"]'));
         var start = moment().subtract(29, 'days');
         var end = moment();
-        
+
         elements.map(function (element) {
             var display = element.querySelector('div');
             var attrOpens  = element.hasAttribute('data-kt-daterangepicker-opens') ? element.getAttribute('data-kt-daterangepicker-opens') : 'left';
@@ -272,16 +272,16 @@ var KTApp = function () {
 
         if (select2FocusFixInitialized === false) {
             select2FocusFixInitialized = true;
-            
+
             $(document).on('select2:open', function(e) {
                 var elements = document.querySelectorAll('.select2-container--open .select2-search__field');
                 if (elements.length > 0) {
                     elements[elements.length - 1].focus();
-                }                
+                }
             });
-        }        
+        }
     }
-    
+
     var initModal = function() {
         // Apply fix for Firefox's known bug with Flatpickr and other inputs focus state
         if (navigator.userAgent.toLowerCase().indexOf('firefox') !== -1) {
@@ -447,7 +447,7 @@ var KTApp = function () {
                     // An example returning different values based on whether the clicked link was in the header nav or not
                     if (anchor.hasAttribute('data-kt-scroll-offset')) {
                         var val = KTUtil.getResponsiveValue(anchor.getAttribute('data-kt-scroll-offset'));
-                        
+
                         return val;
                     } else {
                         return 0;
@@ -464,12 +464,12 @@ var KTApp = function () {
                 var oldLink = document.querySelector("link[href*='" + fileName + "']");
                 var link = document.createElement('link');
                 var href = oldLink.href.replace(fileName, newFileName);
-                
+
                 link.rel = 'stylesheet';
                 link.type = 'text/css';
                 link.href = href;
 
-                document.head.insertBefore(link, oldLink);               
+                document.head.insertBefore(link, oldLink);
 
                 // Important success and error for the promise
                 link.onload = function() {
@@ -521,7 +521,7 @@ var KTApp = function () {
             }).catch(function() {
                 // error
             });
-        }             
+        }
     }
 
     return {
@@ -587,7 +587,7 @@ var KTApp = function () {
 
         initBootstrapScrollSpy: function () {
             initBootstrapScrollSpy();
-        },        
+        },
 
         initBootstrapToast: function () {
             initBootstrapToast();

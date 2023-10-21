@@ -16,6 +16,6 @@
             </div>
         </div>
     </div>
-
+<!--end::Page loading-->
     @include('layout.customs.modal-delete', ['destroy_listener' => 'master_customer_destroy'])
 </div>

@@ -14,13 +14,18 @@ class ConfigAppls extends Model
 
     protected $fillable = [
         'appl_code',
+        'appl_ver',
         'appl_name',
-        'status_code',
-        'is_active',
-        'created_user_id',
-        'updated_user_id',
-        'created_at',
-        'updated_at',
-        'deleted_at',
+        'appl_desc',
+        'status_code'
+    ];
+
+    // If you want to specify default values for some columns, you can use the $attributes property:
+    protected $attributes = [
+        'appl_code' => '',
+        'appl_ver' => '',
+        'appl_name' => '',
+        'appl_desc' => '',
+        'status_code' => 'A', // Set the default status code
     ];
 }

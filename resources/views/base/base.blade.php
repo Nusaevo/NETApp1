@@ -58,9 +58,13 @@
 {{-- begin::Body --}}
 <body {!! theme()->printHtmlAttributes('body') !!} {!! theme()->printHtmlClasses('body') !!} {!! theme()->printCssVariables('body') !!}>
 
-@if (theme()->getOption('layout', 'loader/display') === true)
-    {{ theme()->getView('layout/_loader') }}
-@endif
+{{-- @if (theme()->getOption('layout', 'loader/display') === true) --}}
+    {{-- <div class="page-loader">
+        <span class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </span>
+    </div> --}}
+{{-- @endif --}}
 
 @yield('content')
 
@@ -96,6 +100,35 @@
 
 @yield('scripts')
 @livewireScripts
+
+<div id="loader-container">
+    <div class="page-loader">
+        <span class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </span>
+    </div>
+</div>
+
 </body>
-{{-- end::Body --}}
 </html>
+<script>
+     // Show the loader immediately when the page starts loading
+     function showLoader() {
+        document.getElementById('loader-container').style.display = 'block';
+    }
+
+    // Hide the loader when the page content is ready
+    function hideLoader() {
+        document.getElementById('loader-container').style.display = 'none';
+    }
+
+    // Attach an event listener to hide the loader when the DOM is ready
+    document.addEventListener('DOMContentLoaded', hideLoader);
+
+    // Ensure the loader is shown even if the page loading is extremely fast
+    setTimeout(showLoader, 100);
+
+    // Delay the hiding of the loader for demonstration (adjust this as needed)
+    setTimeout(hideLoader, 2000);
+    loadData();
+</script>

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +9,7 @@ class ConfigGroup extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'config_groups';
+    protected $table = 'config_groups'; // Update the table name
 
     protected $fillable = [
         'appl_code',
@@ -18,14 +17,7 @@ class ConfigGroup extends Model
         'user_code',
         'note1',
         'status_code',
-        'is_active',
-        'created_by',
-        'updated_by',
-        'created_at',
-        'updated_at',
-        'deleted_at',
-        'last_user',
-        'last_user_id',
+        'is_active'
     ];
 
     public function scopeGetConfigGroup()
@@ -35,6 +27,6 @@ class ConfigGroup extends Model
 
     public function user()
     {
-        return $this->belongsTo('App\Models\User', 'code');
+        return $this->belongsTo(User::class, 'user_code', 'code');
     }
 }

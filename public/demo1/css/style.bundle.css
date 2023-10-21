@@ -45591,24 +45591,23 @@ code:not([class*=language-]) {
     opacity: 0;
   }
 }
-.page-loading * {
-  transition: none !important;
+
+#loader-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    /* Add other styles like z-index and centering as needed */
 }
 
 .page-loader {
-  background: #ffffff;
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  display: none;
-}
-.page-loading .page-loader {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .scrolltop {

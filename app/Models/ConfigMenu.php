@@ -10,18 +10,13 @@ class ConfigMenu extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'config_menus';
+    protected $table = 'config_menus'; // Update the table name
 
     protected $fillable = [
         'appl_code',
         'menu_code',
         'menu_caption',
         'status_code',
-        'is_active',
-        'created_by',
-        'updated_by',
-        'created_at',
-        'updated_at',
-        'deleted_at',
+        'is_active'
     ];
 }
