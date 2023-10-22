@@ -1,8 +1,8 @@
 @php
-    $logoFileName = 'logo-pos-online-dark.svg';
+    $logoFileName = 'logo.png';
 
     if (theme()->getOption('layout', 'aside/theme') === 'light') {
-        $logoFileName = 'logo-pos-online.svg';
+        $logoFileName = 'logo.png';
     }
 @endphp
 
@@ -23,7 +23,7 @@
     <div class="aside-logo flex-column-auto" id="kt_aside_logo">
         {{--begin::Logo--}}
         <a href="{{ theme()->getPageUrl('') }}">
-            <img alt="Logo" src="{{ asset(theme()->getMediaUrlPath() . 'logos/' . $logoFileName) }}" class="h-25px logo"/>
+            <img alt="Logo" src="{{ asset('images/'. $logoFileName) }}" class="h-50px logo"/>
         </a>
         {{--end::Logo--}}
 

@@ -2,6 +2,7 @@
     <div>
         @include('layout.customs.notification')
     </div>
+
     <div>
         <a href="{{ route('users.index') }}" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
             <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Kembali
@@ -66,13 +67,17 @@
         </x-uitab-view-content>
 
         <div class="card-footer d-flex justify-content-end">
-            <div style="padding-right: 10px;">
-                @if ($status  === 'Active')
-                    <x-ui-button click-event="Disable" button-name="Disable" :loading="true" :action="$action" cssClass="btn-danger" iconPath="images/disable-icon.svg" />
-                @else
-                    <x-ui-button click-event="Enable" button-name="Enable" :loading="true" :action="$action" cssClass="btn-success" iconPath="images/enable-icon.png" />
-                @endif
-            </div>
+
+            @if ($action  !== 'Create' && auth()->user()->id !== $user->id)
+                <div style="padding-right: 10px;">
+                    @if ($status  === 'Active')
+                        <x-ui-button click-event="Disable" button-name="Disable" :loading="true" :action="$action" cssClass="btn-danger" iconPath="images/disable-icon.svg" />
+                    @else
+                        <x-ui-button click-event="Enable" button-name="Enable" :loading="true" :action="$action" cssClass="btn-success" iconPath="images/enable-icon.png" />
+                    @endif
+                </div>
+            @endif
+
             <div>
                 <x-ui-button click-event="{{ $action }}" button-name="Save" :loading="true" :action="$action" cssClass="btn-primary" iconPath="images/save-icon.png"/>
             </div>

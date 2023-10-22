@@ -195,10 +195,11 @@
 
     <!--begin::Menu item-->
     <div class="menu-item px-5 my-1">
-        <a href="{{ theme()->getPageUrl('settings.index') }}" class="menu-link px-5">
+        <a href="{{ route('users.detail', ['action' => 'Edit', 'objectId' => auth()->user()->id]) }}" class="menu-link px-5">
             {{ __('Account Settings') }}
         </a>
     </div>
+
     <!--end::Menu item-->
 
     <!--begin::Menu item-->

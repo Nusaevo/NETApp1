@@ -368,10 +368,10 @@ return array(
     // Horizontal menu
     'horizontal'    => array(
         // Dashboard
-        array(
-            'title'   => 'Dashboard',
-            'path'    => '',
-            'classes' => array('item' => 'me-lg-1'),
-        ),
+        // array(
+        //     'title'   => 'Dashboard',
+        //     'path'    => '',
+        //     'classes' => array('item' => 'me-lg-1'),
+        // ),
     ),
 );

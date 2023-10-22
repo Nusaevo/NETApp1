@@ -1,7 +1,27 @@
 <x-base-layout>
+    <div class="container">
+        <!-- Header or navigation can go here -->
+
+        <!-- Card with Welcome Message and Link -->
+        <div class="card mt-5 bg-dark text-white">
+            <div class="card-header text-white">
+                <h1 class="mt-3 text-white">Welcome, {{ auth()->user()->name }}</h1>
+            </div>
+            <div class="card-body">
+                <p class="card-text lead">
+                    Thank you for joining our platform. We're excited to have you here!
+                </p>
+                <a href="#" class="btn btn-secondary btn-lg">Go to Your Sales Application</a>
+            </div>
+        </div>
+    </div>
+</x-base-layout>
+
 
     <!--begin::Row-->
-    <div class="row gy-5 g-xl-8">
+    {{--
+        <x-base-layout>
+             <div class="row gy-5 g-xl-8">
         <!--begin::Col-->
         <div class="col-xxl-4">
             {{ theme()->getView('partials/widgets/mixed/_widget-2', array('class' => 'card-xxl-stretch', 'chartColor' => 'danger', 'chartHeight' => '200px')) }}
@@ -76,6 +96,5 @@
         </div>
         <!--end::Col-->
     </div>
+</x-base-layout> --}}
     <!--end::Row-->
-
-</x-base-layout>
