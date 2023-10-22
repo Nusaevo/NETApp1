@@ -8,7 +8,7 @@
         </a>
     </div>
 
-    <x-ui-page-card title="{{ $action }} User">
+    <x-ui-page-card title="{{ $action }} User" status="{{  $status  }}">
         <x-uitab-view id="myTab" class="nav nav-tabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="true">General</button>
@@ -66,7 +66,16 @@
         </x-uitab-view-content>
 
         <div class="card-footer d-flex justify-content-end">
-            <x-ui-button click-event="{{ $action }}" button-name="Submit" :loading="true" :action="$action"/>
+            <div style="padding-right: 10px;">
+                @if ($status  === 'Active')
+                    <x-ui-button click-event="Disable" button-name="Disable" :loading="true" :action="$action" cssClass="btn-danger" iconPath="images/disable-icon.svg" />
+                @else
+                    <x-ui-button click-event="Enable" button-name="Enable" :loading="true" :action="$action" cssClass="btn-success" iconPath="images/enable-icon.png" />
+                @endif
+            </div>
+            <div>
+                <x-ui-button click-event="{{ $action }}" button-name="Save" :loading="true" :action="$action" cssClass="btn-primary" iconPath="images/save-icon.png"/>
+            </div>
         </div>
     </x-ui-page-card>
 </div>

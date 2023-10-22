@@ -1,5 +1,8 @@
-<button wire:click="{{ $clickEvent }}" wire:loading.attr="disabled" class="btn btn-primary" @if (!$enabled) disabled @endif @if (!$visible) style="display: none;" @endif>
+<button wire:click="{{ $clickEvent }}" wire:loading.attr="disabled" class="btn {{ $cssClass ?? '' }}" @if (!$enabled) disabled @endif @if (!$visible) style="display: none;" @endif>
     <span wire:loading.remove>
+        @if ($iconPath)
+            <img src="{{  asset($iconPath) }}" alt="Icon" style="width: 24px; height: 24px;">
+        @endif
         {{ $buttonName ?? 'button' }}
     </span>
     <span wire:loading>

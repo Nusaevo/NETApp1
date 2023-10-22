@@ -7,7 +7,7 @@
             <div class="card">
                 <div class="card-body">
                     <a href="{{ route('users.detail', ['action' => 'Create']) }}" class="btn btn-success mb-5">
-                        <i class="bi bi-file-earmark-plus-fill fs-2 me-2"></i> Tambah
+                        <i class="bi bi-file-earmark-plus-fill fs-2 me-2"></i> Create
                     </a>
                     <div class="table-responsive">
                         @livewire('settings.users.index-data-table')
@@ -16,6 +16,5 @@
             </div>
         </div>
     </div>
-<!--end::Page loading-->
-    @include('layout.customs.modal-delete', ['destroy_listener' => 'master_customer_destroy'])
+    @include('layout.customs.modal', ['modal_listener' => 'settings_user_disable'])
 </div>

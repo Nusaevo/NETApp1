@@ -7,14 +7,16 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\SoftDeletes;
+// use Spatie\Permission\Traits\HasRoles;
 use App\Traits\BaseTrait;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
     use SpatieLogsActivity;
-    use HasRoles;
+    // use HasRoles;
     use BaseTrait;
+    use SoftDeletes;
 
     public static function boot()
     {

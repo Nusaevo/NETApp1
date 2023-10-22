@@ -130,5 +130,5 @@
 
     // Delay the hiding of the loader for demonstration (adjust this as needed)
     setTimeout(hideLoader, 2000);
-    loadData();
+    //loadData();
 </script>

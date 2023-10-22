@@ -3,22 +3,22 @@
         $(document).on('click', '.btn-delete', function(e) {
             e.preventDefault();
             Swal.fire({
-                title: "Apakah Anda Yakin ingin mengahpus data ini?",
-                text: "Tindakan ini tidak dapat diurungkan.",
+                title: "Apakah Anda Yakin ingin melanjutkannya?",
+                text: "",
                 icon: "question",
                 buttonsStyling: false,
                 showConfirmButton: true,
                 showCancelButton: true,
-                confirmButtonText: "Hapus",
-                cancelButtonText: "Batalkan",
+                confirmButtonText: "Yes",
+                cancelButtonText: "No",
                 closeOnConfirm: false,
                 customClass: {
-                    confirmButton: "btn btn-danger",
+                    confirmButton: "btn btn-primary",
                     cancelButton: 'btn btn-secondary'
                 }
             }).then(confirm => {
                 if (confirm.isConfirmed) {
-                    Livewire.emit('{{ $destroy_listener }}');
+                    Livewire.emit('{{ $modal_listener }}');
                 }
             });
         });

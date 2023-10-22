@@ -24,9 +24,11 @@ class Index extends Component
     }
 
     protected $listeners = [
+        'settings_user_detail'  => 'View',
         'settings_user_edit'  => 'Edit',
         'settings_user_delete'  => 'Delete',
-        'settings_user_detail'  => 'View',
+        'settings_user_disable'  => 'Disable',
+        'settings_user_select'  => 'SelectUser',
     ];
 
 
@@ -40,25 +42,31 @@ class Index extends Component
         return redirect()->route('users.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
-    // public function Delete($id)
-    // {
-    //     try {
-    //         $this->user = User::findOrFail($id);
-    //         $this->user->delete();
-    //         $this->dispatchBrowserEvent('notify-swal', [
-    //             'type' => 'success',
-    //             'title' => Lang::get('generic.success.title'),
-    //             'message' => Lang::get('generic.success.delete', ['object' => "User " . $this->user->name])
-    //         ]);
-    //     } catch (Exception $e) {
-    //         // Handle the exception
-    //         $this->dispatchBrowserEvent('notify-swal', [
-    //             'type' => 'error',
-    //             'title' => Lang::get('generic.error.title'),
-    //             'message' => Lang::get('generic.error.delete', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
-    //         ]);
-    //     }
+    public function SelectUser($id)
+    {
 
-    //     $this->emit('settings_user_refresh');
-    // }
+        $this->user = User::findOrFail($id);
+
+    }
+
+    public function Disable()
+    {
+        try {
+            $this->user->updateObject($this->user->VersioNumber);
+            $this->user->delete();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.disable', ['object' => "User " . $this->user->name])
+            ]);
+        } catch (Exception $e) {
+            // Handle the exception
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.disable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
+            ]);
+        }
+        $this->emit('settings_user_refresh');
+    }
 }

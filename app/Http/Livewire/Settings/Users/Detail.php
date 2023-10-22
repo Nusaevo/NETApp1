@@ -20,6 +20,7 @@ class Detail extends Component
     public $inputs = ['name' => ''];
     public $group_codes;
     public $languages;
+    public $status = '';
 
     public function mount($action, $objectId = null)
     {
@@ -35,7 +36,8 @@ class Detail extends Component
         $this->inputs['language'] = 0;
 
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->user = User::find($this->objectId);
+            $this->user = User::withTrashed()->find($this->objectId);
+            $this->status = $this->user->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->user->version_number;
             $this->inputs['name'] = $this->user->name;
             $this->inputs['email'] = $this->user->email;
@@ -58,8 +60,6 @@ class Detail extends Component
     {
         try {
             $this->validate();
-
-
             DB::beginTransaction();
             $newUser =   User::create([
                 'name' => $this->inputs['name'],
@@ -154,6 +154,47 @@ class Detail extends Component
         }
     }
 
+    public function Disable()
+    {
+        try {
+            $this->user->updateObject($this->VersioNumber);
+            $this->user->delete();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.disable', ['object' => "User " . $this->user->name])
+            ]);
+        } catch (Exception $e) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.disable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
+            ]);
+        }
+        $this->dispatchBrowserEvent('refresh');
+    }
+
+    public function Enable()
+    {
+        try {
+            $this->user->updateObject($this->VersioNumber);
+            $this->user->deleted_at = null;
+            $this->user->save();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.enable', ['object' => "User " . $this->user->name])
+            ]);
+        } catch (Exception $e) {
+            // Handle the exception
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.enable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
+            ]);
+        }
+        $this->dispatchBrowserEvent('refresh');
+    }
 
     public function render()
     {

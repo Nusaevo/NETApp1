@@ -7,10 +7,12 @@ use Illuminate\View\Component;
 class UIPageCard extends Component
 {
     public $title;
+    public $status;
 
-    public function __construct($title = '')
+    public function __construct($title = '',$status='')
     {
         $this->title = $title;
+        $this->status = $status;
     }
 
     public function render()
