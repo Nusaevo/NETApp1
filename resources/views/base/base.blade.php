@@ -112,8 +112,8 @@
 </body>
 </html>
 <script>
-     // Show the loader immediately when the page starts loading
-     function showLoader() {
+    // Show the loader immediately when the page starts loading
+    function showLoader() {
         document.getElementById('loader-container').style.display = 'block';
     }
 
@@ -123,12 +123,10 @@
     }
 
     // Attach an event listener to hide the loader when the DOM is ready
-    document.addEventListener('DOMContentLoaded', hideLoader);
+    document.addEventListener('DOMContentLoaded', showLoader);
 
-    // Ensure the loader is shown even if the page loading is extremely fast
-    setTimeout(showLoader, 100);
-
-    // Delay the hiding of the loader for demonstration (adjust this as needed)
-    setTimeout(hideLoader, 2000);
-    //loadData();
+    // Attach an event listener to hide the loader when the page is fully loaded
+    window.onload = function () {
+        hideLoader();
+    };
 </script>

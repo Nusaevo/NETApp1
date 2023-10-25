@@ -52,7 +52,7 @@ class Index extends Component
     public function Disable()
     {
         try {
-            $this->user->updateObject($this->user->VersioNumber);
+            $this->user->updateObject($this->user->version_number);
             $this->user->delete();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',

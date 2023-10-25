@@ -43,6 +43,8 @@ class Detail extends Component
             $this->inputs['email'] = $this->user->email;
             $this->inputs['dept'] = $this->user->dept;
             $this->inputs['phone'] = $this->user->phone;
+            $this->inputs['password'] = "";
+            $this->inputs['newpassword'] = "";
         } else {
             $this->user = new ConfigUser();
         }
@@ -74,8 +76,8 @@ class Detail extends Component
                         // You can add additional conditions here if needed.
                     }),
             ],
+            'inputs.password' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
         ];
-        
         return $rules;
     }
 
@@ -86,13 +88,17 @@ class Detail extends Component
         'inputs.code'      => 'Login ID',
         'inputs.email'       => 'Email User',
         'inputs.dept'       => 'Department',
-        'inputs.phone'       => 'No HP'
+        'inputs.phone'       => 'No HP',
+        'inputs.password' => 'Password',
     ];
 
     public function Create()
     {
         try {
             $this->validate();
+            if (!$this->validatePassword()) {
+                return;
+            }
             //DB::beginTransaction();
             $newUser =   ConfigUser::create([
                 'name' => $this->inputs['name'],
@@ -112,10 +118,8 @@ class Detail extends Component
             //DB::commit();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => "User " . $this->user->name])
+                'message' => Lang::get('generic.success.create', ['object' => "User " . $this->inputs['name']])
             ]);
-
-            $this->notifier->notifySuccess(Lang::get('generic.success.create', ['object' => "User " . $this->user->name]));
 
             $this->dispatchBrowserEvent('refresh');
         } catch (Exception $e) {
@@ -131,23 +135,9 @@ class Detail extends Component
     {
         try {
             $this->validate();
-
-            $password = "";
-
-            if (!empty($this->inputs['password'])) {
-                if ($this->inputs['password'] != $this->inputs['newpassword']) {
-                    $this->dispatchBrowserEvent('notify-swal', [
-                        'type' => 'error',
-                        'title' => Lang::get('generic.error.title'),
-                        'message' => "Password tidak sama!"
-                    ]);
-                    $password = $this->inputs['password'];
-                } else {
-                    $password = bcrypt($this->inputs['password']);
-                }
+            if (!$this->validatePassword()) {
+                return;
             }
-
-            //DB::beginTransaction();
 
             if ($this->user) {
                 $this->user->updateObject($this->VersioNumber);
@@ -159,8 +149,8 @@ class Detail extends Component
                     'phone' => $this->inputs['phone'],
                 ];
 
-                if (!empty($password)) {
-                    $userUpdateData['password'] = $password;
+                if (!empty($this->inputs['password'])) {
+                    $userUpdateData['password'] = bcrypt($this->inputs['password']);
                 }
 
                 $this->user->update($userUpdateData);
@@ -218,6 +208,21 @@ class Detail extends Component
             ]);
         }
         $this->dispatchBrowserEvent('refresh');
+    }
+
+    protected function validatePassword()
+    {
+        if (!empty($this->inputs['password'])) {
+            if ($this->inputs['password'] !== $this->inputs['newpassword']) {
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'error',
+                    'title' => Lang::get('generic.error.title'),
+                    'message' => Lang::get('generic.error.password_mismatch')
+                ]);
+                return false;
+            }
+        }
+        return true;
     }
 
     public function render()

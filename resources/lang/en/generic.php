@@ -16,5 +16,7 @@ return [
         'delete' => "Failed to delete :object,\nError message: :message",
         'disable' => "Failed to disable :object,\nError message: :message",
         'enable' => "Failed to enable :object,\nError message: :message",
+        'password_mismatch' => "Password mismatch. Please make sure your new password matches the confirmation password.",
+        'password_must_be_filled' => "Password must be filled.",
     ],
 ];
