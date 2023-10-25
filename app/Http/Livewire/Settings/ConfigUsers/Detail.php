@@ -12,7 +12,7 @@ use DB;
 
 class Detail extends Component
 {
-    public $user;
+    public $object;
     public $VersioNumber;
     public $action = 'Create'; // Default to Create
     public $objectId;
@@ -26,28 +26,32 @@ class Detail extends Component
         $this->action = $action;
         $this->objectId = $objectId;
         //$this->group_codes = ConfigGroup::GetConfigGroup();
-
-        $this->languages = [
-            ['id' => 'EN', 'name' => 'English (EN)'],
-            ['id' => 'ID', 'name' => 'Indonesian (ID)'],
-        ];
-        $this->inputs['language'] = 0;
-        $this->inputs['group_codes'] = 0;
+        // $this->languages = [
+        //     ['id' => 'EN', 'name' => 'English (EN)'],
+        //     ['id' => 'ID', 'name' => 'Indonesian (ID)'],
+        // ];
+        // $this->inputs['language'] = 0;
+        // $this->inputs['group_codes'] = 0;
 
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->user = ConfigUser::withTrashed()->find($this->objectId);
-            $this->status = $this->user->deleted_at ? 'Non-Active' : 'Active';
-            $this->VersioNumber = $this->user->version_number;
-            $this->inputs['code'] = $this->user->code;
-            $this->inputs['name'] = $this->user->name;
-            $this->inputs['email'] = $this->user->email;
-            $this->inputs['dept'] = $this->user->dept;
-            $this->inputs['phone'] = $this->user->phone;
+            $this->object = ConfigUser::withTrashed()->find($this->objectId);
+            $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
+            $this->VersioNumber = $this->object->version_number;
+            $this->inputs['code'] = $this->object->code;
+            $this->inputs['name'] = $this->object->name;
+            $this->inputs['email'] = $this->object->email;
+            $this->inputs['dept'] = $this->object->dept;
+            $this->inputs['phone'] = $this->object->phone;
             $this->inputs['password'] = "";
             $this->inputs['newpassword'] = "";
         } else {
-            $this->user = new ConfigUser();
+            $this->object = new ConfigUser();
         }
+    }
+
+    public function render()
+    {
+        return view('livewire.settings.config-users.edit');
     }
 
     protected function rules()
@@ -60,7 +64,7 @@ class Detail extends Component
                 'min:1',
                 'max:255',
                 Rule::unique('config_users', 'email')
-                    ->ignore($this->user->id)
+                    ->ignore($this->object->id)
                     ->where(function ($query) {
                         // You can add additional conditions here if needed.
                     }),
@@ -71,7 +75,7 @@ class Detail extends Component
                 'min:1',
                 'max:50',
                 Rule::unique('config_users', 'code')
-                    ->ignore($this->user->id)
+                    ->ignore($this->object->id)
                     ->where(function ($query) {
                         // You can add additional conditions here if needed.
                     }),
@@ -92,6 +96,16 @@ class Detail extends Component
         'inputs.password' => 'Password',
     ];
 
+    protected function populateObjectArray()
+    {
+        return [
+            'name' => $this->inputs['name'],
+            'email' => $this->inputs['email'],
+            'code' => $this->inputs['code'],
+            'dept' => $this->inputs['dept'],
+            'phone' => $this->inputs['phone']
+        ];
+    }
     public function Create()
     {
         try {
@@ -100,14 +114,9 @@ class Detail extends Component
                 return;
             }
             //DB::beginTransaction();
-            $newUser =   ConfigUser::create([
-                'name' => $this->inputs['name'],
-                'email' => $this->inputs['email'],
-                'code' => $this->inputs['code'],
-                'dept' => $this->inputs['dept'],
-                'phone' => $this->inputs['phone'],
-                'password' => bcrypt($this->inputs['password']),
-            ]);
+            $objectData = $this->populateObjectArray();
+            $objectData['password'] = $this->hashPassword($this->inputs['password']);
+            $this->object = ConfigUser::create($objectData);
             // $newUserInfo = ConfigUser::create([
             //     'user_id' => $newUser->id,
             //     'company'   => $this->inputs['company'],
@@ -118,7 +127,7 @@ class Detail extends Component
             //DB::commit();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => "User " . $this->inputs['name']])
+                'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
             ]);
 
             $this->dispatchBrowserEvent('refresh');
@@ -126,7 +135,7 @@ class Detail extends Component
             //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "User ", 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => "User", 'message' => $e->getMessage()])
             ]);
         }
     }
@@ -139,35 +148,29 @@ class Detail extends Component
                 return;
             }
 
-            if ($this->user) {
-                $this->user->updateObject($this->VersioNumber);
-                $userUpdateData = [
-                    'name' => $this->inputs['name'],
-                    'email' => $this->inputs['email'],
-                    'code' => $this->inputs['code'],
-                    'dept' => $this->inputs['dept'],
-                    'phone' => $this->inputs['phone'],
-                ];
+            if ($this->object) {
+                $this->object->updateObject($this->VersioNumber);
+                $objectData = $this->populateObjectArray();
 
                 if (!empty($this->inputs['password'])) {
-                    $userUpdateData['password'] = bcrypt($this->inputs['password']);
+                    $objectData['password'] = bcrypt($this->inputs['password']);
                 }
 
-                $this->user->update($userUpdateData);
+                $this->object->update($objectData);
             }
 
             //DB::commit();
 
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.update', ['object' => "User " . $this->user->name])
+                'message' => Lang::get('generic.success.update', ['object' => $this->object->name])
             ]);
             $this->dispatchBrowserEvent('refresh');
         } catch (Exception $e) {
             //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "User ", 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }
     }
@@ -175,16 +178,16 @@ class Detail extends Component
     public function Disable()
     {
         try {
-            $this->user->updateObject($this->VersioNumber);
-            $this->user->delete();
+            $this->object->updateObject($this->VersioNumber);
+            $this->object->delete();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => "User " . $this->user->name])
+                'message' => Lang::get('generic.success.disable', ['object' => $this->object->name])
             ]);
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.disable', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }
         $this->dispatchBrowserEvent('refresh');
@@ -193,18 +196,18 @@ class Detail extends Component
     public function Enable()
     {
         try {
-            $this->user->updateObject($this->VersioNumber);
-            $this->user->deleted_at = null;
-            $this->user->save();
+            $this->object->updateObject($this->VersioNumber);
+            $this->object->deleted_at = null;
+            $this->object->save();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.enable', ['object' => "User " . $this->user->name])
+                'message' => Lang::get('generic.success.enable', ['object' => $this->object->name])
             ]);
         } catch (Exception $e) {
             // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.enable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.enable', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }
         $this->dispatchBrowserEvent('refresh');
@@ -223,10 +226,5 @@ class Detail extends Component
             }
         }
         return true;
-    }
-
-    public function render()
-    {
-        return view('livewire.settings.config-users.edit');
     }
 }

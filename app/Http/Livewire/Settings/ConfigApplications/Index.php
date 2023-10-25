@@ -3,48 +3,67 @@
 namespace App\Http\Livewire\Settings\ConfigApplications;
 
 use Livewire\Component;
-use App\Models\ConfigGroup; // Import the ConfigGroup model
+use App\Models\ConfigAppl; // Import the ConfigGroup model
 use App\Traits\LivewireTrait;
-
+use Lang;
+use Exception;
 class Index extends Component
 {
     use LivewireTrait;
 
-    public $configGroups;
+    public $configAppls;
 
     public function mount()
     {
-        $this->configGroups = ConfigGroup::all(); // Retrieve all ConfigGroups
+        $this->configAppls = ConfigAppl::all();
     }
 
     public function render()
     {
-        return view('livewire.settings.config-groups.index', [
-            'configGroups' => $this->configGroups, // Pass the ConfigGroups data to the view
-        ]);
+        return view('livewire.settings.config-applications.index');
     }
 
     protected $listeners = [
-        'settings_config_group_edit'  => 'edit',
-        'settings_config_group_delete'  => 'delete',
-        'settings_config_group_detail'  => 'view',
+        'viewData'  => 'View',
+        'editData'  => 'Edit',
+        'deleteData'  => 'Delete',
+        'disableData'  => 'Disable',
+        'selectData'  => 'SelectObject',
     ];
 
-    public function view($id)
+    public function View($id)
     {
-        return redirect()->route('config_groups.detail', ['action' => 'View', 'objectId' => $id]);
+        return redirect()->route('config_applications.detail', ['action' => 'View', 'objectId' => $id]);
     }
 
-    public function edit($id)
+    public function Edit($id)
     {
-        return redirect()->route('config_groups.detail', ['action' => 'Edit', 'objectId' => $id]);
+        return redirect()->route('config_applications.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
-    public function delete($id)
+    public function SelectObject($id)
     {
-        $configGroup = ConfigGroup::findOrFail($id);
-        $configGroup->delete();
-        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil menghapus konfigurasi grup {$configGroup->group_code}."]);
-        $this->emit('settings_config_group_refresh');
+        $this->configAppls = ConfigAppl::findOrFail($id);
+    }
+
+    public function Disable()
+    {
+        try {
+            $this->user->updateObject($this->user->version_number);
+            $this->user->delete();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.disable', ['object' => $this->configAppls->name])
+            ]);
+        } catch (Exception $e) {
+            // Handle the exception
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.disable', ['object' => $this->configAppls->name, 'message' => $e->getMessage()])
+            ]);
+        }
+        $this->emit('refreshData');
     }
 }

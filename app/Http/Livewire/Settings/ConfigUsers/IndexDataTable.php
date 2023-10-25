@@ -24,7 +24,7 @@ class IndexDataTable extends DataTableComponent
     }
 
     protected $listeners = [
-        'settings_user_refresh' => 'render',
+        'refreshData' => 'render',
     ];
 
     public function columns(): array
@@ -51,7 +51,7 @@ class IndexDataTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Tampilkan Terhapus')
+            SelectFilter::make('Filter')
                 ->options([
                     '0' => 'Active',
                     '1' => 'Non Active'

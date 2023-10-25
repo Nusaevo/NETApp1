@@ -10,8 +10,7 @@ use Exception;
 class Index extends Component
 {
     use LivewireTrait;
-
-    public $user;
+    public $object;
 
     public function mount()
     {
@@ -24,11 +23,11 @@ class Index extends Component
     }
 
     protected $listeners = [
-        'settings_user_detail'  => 'View',
-        'settings_user_edit'  => 'Edit',
-        'settings_user_delete'  => 'Delete',
-        'settings_user_disable'  => 'Disable',
-        'settings_user_select'  => 'SelectUser',
+        'viewData'  => 'View',
+        'editData'  => 'Edit',
+        'deleteData'  => 'Delete',
+        'disableData'  => 'Disable',
+        'selectData'  => 'SelectObject',
     ];
 
 
@@ -42,31 +41,29 @@ class Index extends Component
         return redirect()->route('config_users.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
-    public function SelectUser($id)
+    public function SelectObject($id)
     {
-
-        $this->user = ConfigUser::findOrFail($id);
-
+        $this->object = ConfigUser::findOrFail($id);
     }
 
     public function Disable()
     {
         try {
-            $this->user->updateObject($this->user->version_number);
+            $this->user->updateObject($this->object->version_number);
             $this->user->delete();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'title' => Lang::get('generic.success.title'),
-                'message' => Lang::get('generic.success.disable', ['object' => "User " . $this->user->name])
+                'message' => Lang::get('generic.success.disable', ['object' => $this->object->name])
             ]);
         } catch (Exception $e) {
             // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
                 'title' => Lang::get('generic.error.title'),
-                'message' => Lang::get('generic.error.disable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.disable', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }
-        $this->emit('settings_user_refresh');
+        $this->emit('refreshData');
     }
 }

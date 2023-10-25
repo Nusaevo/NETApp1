@@ -14,6 +14,8 @@ use App\Http\Livewire\Settings\ConfigGroups\Index as ConfigGroupIndex;
 use App\Http\Livewire\Settings\ConfigGroups\Detail as ConfigGroupDetail;
 use App\Http\Livewire\Settings\ConfigMenus\Index as ConfigMenuIndex;
 use App\Http\Livewire\Settings\ConfigMenus\Detail as ConfigMenuDetail;
+use App\Http\Livewire\Settings\ConfigApplications\Index as ConfigApplicationIndex;
+use App\Http\Livewire\Settings\ConfigApplications\Detail as ConfigApplicationDetail;
 
 // use App\Http\Livewire\Masters\Suppliers\Index as SupplierIndex;
 // use App\Http\Livewire\Masters\Customers\Index as CustomerIndex;
@@ -96,6 +98,11 @@ Route::middleware('auth')->group(function () {
     Route::prefix('config_menus')->name('config_menus.')->group(function () {
         Route::get('/', ConfigMenuIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', ConfigMenuDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_applications')->name('config_applications.')->group(function () {
+        Route::get('/', ConfigApplicationIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigApplicationDetail::class)->name('detail');
     });
 });
 

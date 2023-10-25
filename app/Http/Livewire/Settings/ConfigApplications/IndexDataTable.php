@@ -4,47 +4,65 @@ namespace App\Http\Livewire\Settings\ConfigApplications;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\ConfigGroup; // Import the ConfigGroup model
+use App\Models\ConfigAppl;
 use Illuminate\Database\Eloquent\Builder;
-
+use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = ConfigGroup::class; // Use the ConfigGroup model
+    protected $model = ConfigAppl::class;
+
+
+    public function builder(): Builder
+    {
+        return ConfigAppl::query()
+            ->withTrashed()
+            ->select();
+    }
 
     public function configure(): void
     {
         $this->setPrimaryKey('id');
     }
 
-    // Update the listeners and columns for the ConfigGroup model
     protected $listeners = [
-        'settings_config_group_refresh' => 'render',
+        'refreshData' => 'render',
     ];
 
     public function columns(): array
     {
         return [
-            Column::make("Appl Code", "appl_code")
+            Column::make("Application Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Group Code", "group_code")
+            Column::make("Name", "name")
+                ->searchable()
                 ->sortable(),
-            Column::make("User Code", "user_code")
+            Column::make("Version", "version")
+                ->searchable()
                 ->sortable(),
-            Column::make("Note1", "note1")
-                ->sortable(),
-            Column::make("Status Code", "status_code")
-                ->sortable(),
-            Column::make("Is Active", "is_active")
-                ->sortable(),
+            Column::make('Status', 'deleted_at')
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return is_null($row->deleted_at) ? 'Active' : 'Non-Active';
+                }),
             Column::make('Actions', 'id')
                 ->format(
-                    fn ($value, $row, Column $column) => view('livewire.settings.config-groups.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.settings.config-applications.index-data-table-action')->withRow($row)
                 ),
         ];
     }
 
-    // Update the filters as needed
-
-    // ... Rest of the component
+    public function filters(): array
+    {
+        return [
+            SelectFilter::make('Filter')
+                ->options([
+                    '0' => 'Active',
+                    '1' => 'Non Active'
+                ])->filter(function (Builder $builder, string $value) {
+                    if ($value === '0') $builder->withoutTrashed();
+                    else if ($value === '1') $builder->onlyTrashed();
+                }),
+        ];
+    }
 }

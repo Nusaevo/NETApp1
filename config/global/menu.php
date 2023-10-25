@@ -317,7 +317,7 @@ return array(
                     ),
                     array(
                         'title'  => 'Application',
-                        'path'   => 'store',
+                        'path'   => 'config_applications',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(

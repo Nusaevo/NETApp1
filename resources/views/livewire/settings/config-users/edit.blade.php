@@ -48,7 +48,7 @@
             </x-uitab-view-content>
         </form>
         <div class="card-footer d-flex justify-content-end">
-            @if ($action !== 'Create' && auth()->user()->id !== $user->id)
+            @if ($action !== 'Create' && auth()->user()->id !== $object->id)
                 <div style="padding-right: 10px;">
                     @if ($status === 'Active')
                         <x-ui-button click-event="Disable" button-name="Disable" :loading="true" :action="$action" cssClass="btn-danger" iconPath="images/disable-icon.svg" />
