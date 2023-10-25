@@ -13,7 +13,7 @@ class AddApiTokenColumn extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('config_users', function (Blueprint $table) {
             $table->string('api_token', 80)->after('password')
                 ->unique()
                 ->nullable()

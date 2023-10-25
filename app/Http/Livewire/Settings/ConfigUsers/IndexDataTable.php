@@ -1,9 +1,9 @@
 <?php
-namespace App\Http\Livewire\Settings\Users;
+namespace App\Http\Livewire\Settings\ConfigUsers;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\User;
+use App\Models\ConfigUser;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
@@ -13,7 +13,7 @@ class IndexDataTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return User::query()
+        return ConfigUser::query()
             ->withTrashed()
             ->select();
     }
@@ -43,7 +43,7 @@ class IndexDataTable extends DataTableComponent
                 }),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
-                    return view('livewire.settings.users.index-data-table-action')->withRow($row);
+                    return view('livewire.settings.config-users.index-data-table-action')->withRow($row);
                 }),
         ];
     }

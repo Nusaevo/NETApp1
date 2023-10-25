@@ -228,5 +228,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
     ],
-
+    'config' => [
+        'global.string' => require_once base_path('\config\resource\string.php'),
+    ],
 ];

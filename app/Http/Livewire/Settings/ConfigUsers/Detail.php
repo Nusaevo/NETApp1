@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\Settings\Users;
+namespace App\Http\Livewire\Settings\ConfigUsers;
 
 use Livewire\Component;
-use App\Models\User;
-use App\Models\UserInfo;
-use App\Models\ConfigGroup;
+use App\Models\ConfigUser;
+use App\Models\ConfigUserInfo;
 use Illuminate\Validation\Rule;
 use Lang;
 use Exception;
@@ -26,67 +25,103 @@ class Detail extends Component
     {
         $this->action = $action;
         $this->objectId = $objectId;
-        $this->group_codes = ConfigGroup::GetConfigGroup();
+        //$this->group_codes = ConfigGroup::GetConfigGroup();
 
         $this->languages = [
             ['id' => 'EN', 'name' => 'English (EN)'],
             ['id' => 'ID', 'name' => 'Indonesian (ID)'],
         ];
-        $this->inputs['group_codes'] = 0;
         $this->inputs['language'] = 0;
+        $this->inputs['group_codes'] = 0;
 
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->user = User::withTrashed()->find($this->objectId);
+            $this->user = ConfigUser::withTrashed()->find($this->objectId);
             $this->status = $this->user->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->user->version_number;
+            $this->inputs['code'] = $this->user->code;
             $this->inputs['name'] = $this->user->name;
             $this->inputs['email'] = $this->user->email;
-            $this->inputs['company'] = $this->user->info->company;
-            $this->inputs['phone'] = $this->user->info->phone;
-            $this->inputs['language'] = $this->user->info->language;
-            $this->inputs['group_codes'] = $this->user->code;
+            $this->inputs['dept'] = $this->user->dept;
+            $this->inputs['phone'] = $this->user->phone;
         } else {
-            $this->user = new User();
+            $this->user = new ConfigUser();
         }
     }
 
-    // Validation rules and other methods...
-    protected $rules = [
-        'inputs.name'           => 'required|string|min:1|max:128|unique:users,name',
-        'inputs.email'        => 'required|string|min:1|max:128|unique:users,email',
+    protected function rules()
+    {
+        $rules = [
+            'inputs.name' => 'required|string|min:1|max:100',
+            'inputs.email' => [
+                'required',
+                'string',
+                'min:1',
+                'max:255',
+                Rule::unique('config_users', 'email')
+                    ->ignore($this->user->id)
+                    ->where(function ($query) {
+                        // You can add additional conditions here if needed.
+                    }),
+            ],
+            'inputs.code' => [
+                'required',
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('config_users', 'code')
+                    ->ignore($this->user->id)
+                    ->where(function ($query) {
+                        // You can add additional conditions here if needed.
+                    }),
+            ],
+        ];
+        
+        return $rules;
+    }
+
+    protected $validationAttributes = [
+        'inputs'                => 'Input User',
+        'inputs.*'              => 'Input User',
+        'inputs.name'           => 'Nama User',
+        'inputs.code'      => 'Login ID',
+        'inputs.email'       => 'Email User',
+        'inputs.dept'       => 'Department',
+        'inputs.phone'       => 'No HP'
     ];
 
     public function Create()
     {
         try {
             $this->validate();
-            DB::beginTransaction();
-            $newUser =   User::create([
+            //DB::beginTransaction();
+            $newUser =   ConfigUser::create([
                 'name' => $this->inputs['name'],
                 'email' => $this->inputs['email'],
-                'code' => $this->inputs['group_codes'],
+                'code' => $this->inputs['code'],
+                'dept' => $this->inputs['dept'],
+                'phone' => $this->inputs['phone'],
                 'password' => bcrypt($this->inputs['password']),
             ]);
-            $index = 0;
-            $newUserInfo = UserInfo::create([
-                'user_id' => $newUser->id,
-                'company'   => $this->inputs['company'],
-                'phone'              => $this->inputs['phone'],
-                'language'              => $this->inputs['language']
-            ]);
+            // $newUserInfo = ConfigUser::create([
+            //     'user_id' => $newUser->id,
+            //     'company'   => $this->inputs['company'],
+            //     'phone'              => $this->inputs['phone'],
+            //     'language'              => $this->inputs['language']
+            // ]);
 
-            DB::commit();
+            //DB::commit();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'title' => Lang::get('generic.success.title'),
                 'message' => Lang::get('generic.success.create', ['object' => "User " . $this->user->name])
             ]);
+
+            $this->notifier->notifySuccess(Lang::get('generic.success.create', ['object' => "User " . $this->user->name]));
+
             $this->dispatchBrowserEvent('refresh');
         } catch (Exception $e) {
-            DB::rollBack();
+            //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'title' => Lang::get('generic.error.title'),
                 'message' => Lang::get('generic.error.create', ['object' => "User ", 'message' => $e->getMessage()])
             ]);
         }
@@ -112,13 +147,16 @@ class Detail extends Component
                 }
             }
 
-            DB::beginTransaction();
+            //DB::beginTransaction();
 
             if ($this->user) {
                 $this->user->updateObject($this->VersioNumber);
                 $userUpdateData = [
                     'name' => $this->inputs['name'],
                     'email' => $this->inputs['email'],
+                    'code' => $this->inputs['code'],
+                    'dept' => $this->inputs['dept'],
+                    'phone' => $this->inputs['phone'],
                 ];
 
                 if (!empty($password)) {
@@ -126,29 +164,19 @@ class Detail extends Component
                 }
 
                 $this->user->update($userUpdateData);
-
-                if ($this->user->info) {
-                    $this->user->info->update([
-                        'company' => $this->inputs['company'],
-                        'phone' => $this->inputs['phone'],
-                        'language' => $this->inputs['language'],
-                    ]);
-                }
             }
 
-            DB::commit();
+            //DB::commit();
 
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'title' => Lang::get('generic.success.title'),
                 'message' => Lang::get('generic.success.update', ['object' => "User " . $this->user->name])
             ]);
             $this->dispatchBrowserEvent('refresh');
         } catch (Exception $e) {
-            DB::rollBack();
+            //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'title' => Lang::get('generic.error.title'),
                 'message' => Lang::get('generic.error.create', ['object' => "User ", 'message' => $e->getMessage()])
             ]);
         }
@@ -161,13 +189,11 @@ class Detail extends Component
             $this->user->delete();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'title' => Lang::get('generic.success.title'),
                 'message' => Lang::get('generic.success.disable', ['object' => "User " . $this->user->name])
             ]);
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'title' => Lang::get('generic.error.title'),
                 'message' => Lang::get('generic.error.disable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
             ]);
         }
@@ -182,14 +208,12 @@ class Detail extends Component
             $this->user->save();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'title' => Lang::get('generic.success.title'),
                 'message' => Lang::get('generic.success.enable', ['object' => "User " . $this->user->name])
             ]);
         } catch (Exception $e) {
             // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'title' => Lang::get('generic.error.title'),
                 'message' => Lang::get('generic.error.enable', ['object' => "User " . $this->user->name, 'message' => $e->getMessage()])
             ]);
         }
@@ -198,6 +222,6 @@ class Detail extends Component
 
     public function render()
     {
-        return view('livewire.settings.users.edit');
+        return view('livewire.settings.config-users.edit');
     }
 }

@@ -7,6 +7,7 @@ trait DefaultColumnsTrait
     protected function generateDefaultColumns($table)
     {
         $table->id();
+        $table->string('code', 50)->unique();
     }
 
     protected function generateDefaultTimeStamp($table)

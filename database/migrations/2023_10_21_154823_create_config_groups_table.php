@@ -18,7 +18,6 @@ class CreateConfigGroupsTable extends Migration
             $table->string('user_code', 50)->default('');
             $table->string('note1', 200)->default('');
             $table->string('status_code', 1)->default('A');
-            $table->string('is_active', 1)->default('1');
             $this->generateDefaultTimeStamp($table);
         });
     }

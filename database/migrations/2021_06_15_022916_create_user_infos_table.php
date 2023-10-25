@@ -15,20 +15,20 @@ class CreateUserInfosTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_infos', function (Blueprint $table) {
-            $table->id();
-            $table->bigInteger('user_id')->unsigned();
-            $table->text('avatar')->nullable();
-            $table->string('company', 255);
-            $table->string('phone', 255);
-            $table->string('website', 255);
-            $table->string('country', 255);
-            $table->string('language', 255);
-            $table->string('timezone', 255);
-            $table->string('currency', 255);
-            $table->string('communication', 255);
-            $this->generateDefaultTimeStamp($table);
-        });
+        // Schema::create('user_infos', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->bigInteger('user_id')->unsigned();
+        //     $table->text('avatar')->nullable();
+        //     $table->string('company', 255);
+        //     $table->string('phone', 255);
+        //     $table->string('website', 255);
+        //     $table->string('country', 255);
+        //     $table->string('language', 255);
+        //     $table->string('timezone', 255);
+        //     $table->string('currency', 255);
+        //     $table->string('communication', 255);
+        //     $this->generateDefaultTimeStamp($table);
+        // });
     }
 
     /**
@@ -38,7 +38,7 @@ class CreateUserInfosTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_infos');
+        // Schema::dropIfExists('user_infos');
     }
 }
 

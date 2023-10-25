@@ -12,7 +12,8 @@ class CreateConfigAuditsTable extends Migration
     public function up()
     {
         Schema::create('config_audits', function (Blueprint $table) {
-            $table->bigIncrements('id');
+            $table->id();
+            $table->string('name');
             $table->string('appl_code', 20)->default('');
             $table->string('key_code', 30)->default('');
             $table->timestamp('log_time')->default(now());

@@ -8,9 +8,8 @@ use App\Http\Controllers\Logs\SystemLogsController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\UsersController;
 
-use App\Http\Livewire\Settings\Users\Index as UsersIndex;
-use App\Http\Livewire\Settings\Users\Detail as UsersDetail;
-
+use App\Http\Livewire\Settings\ConfigUsers\Index as ConfigUsersIndex;
+use App\Http\Livewire\Settings\ConfigUsers\Detail as ConfigUsersDetail;
 use App\Http\Livewire\Settings\ConfigGroups\Index as ConfigGroupIndex;
 use App\Http\Livewire\Settings\ConfigGroups\Detail as ConfigGroupDetail;
 use App\Http\Livewire\Settings\ConfigMenus\Index as ConfigMenuIndex;
@@ -84,9 +83,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('audit', AuditLogsController::class)->only(['index', 'destroy']);
     });
 
-    Route::prefix('users')->name('users.')->group(function () {
-        Route::get('/', UsersIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', UsersDetail::class)->name('detail');
+    Route::prefix('config_users')->name('config_users.')->group(function () {
+        Route::get('/', ConfigUsersIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigUsersDetail::class)->name('detail');
     });
 
     Route::prefix('config_groups')->name('config_groups.')->group(function () {

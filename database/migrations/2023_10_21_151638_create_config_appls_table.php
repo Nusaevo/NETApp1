@@ -13,11 +13,10 @@ class CreateConfigApplsTable extends Migration
     public function up()
     {
         Schema::create('config_appls', function (Blueprint $table) {
-            $table->id();
-            $table->string('appl_code', 20)->default('');
-            $table->string('appl_ver', 15)->default('');
-            $table->string('appl_name', 100)->default('');
-            $table->string('appl_desc', 500)->default('');
+            $this->generateDefaultColumns($table);
+            $table->string('name', 100)->default('');
+            $table->string('version', 15)->default('');
+            $table->string('descr', 500)->default('');
             $table->string('status_code', 1)->default('A');
             $this->generateDefaultTimeStamp($table);
         });

@@ -12,7 +12,7 @@ var KTPasswordResetGeneral = function() {
         validator = FormValidation.formValidation(
 			form,
 			{
-				fields: {					
+				fields: {
 					'email': {
                         validators: {
 							notEmpty: {
@@ -22,7 +22,7 @@ var KTPasswordResetGeneral = function() {
 								message: 'The value is not a valid email address'
 							}
 						}
-					} 
+					}
 				},
 				plugins: {
 					trigger: new FormValidation.plugins.Trigger(),
@@ -33,7 +33,7 @@ var KTPasswordResetGeneral = function() {
                     })
 				}
 			}
-		);		
+		);
 
         submitButton.addEventListener('click', function (e) {
             e.preventDefault();
@@ -44,7 +44,7 @@ var KTPasswordResetGeneral = function() {
                     // Show loading indication
                     submitButton.setAttribute('data-kt-indicator', 'on');
 
-                    // Disable button to avoid multiple click 
+                    // Disable button to avoid multiple click
                     submitButton.disabled = true;
 
                     // Simulate ajax request
@@ -65,12 +65,12 @@ var KTPasswordResetGeneral = function() {
                                 confirmButton: "btn btn-primary"
                             }
                         }).then(function (result) {
-                            if (result.isConfirmed) { 
-                                form.querySelector('[name="email"]').value= "";                          
+                            if (result.isConfirmed) {
+                                form.querySelector('[name="code"]').value= "";
                                 //form.submit();
                             }
                         });
-                    }, 1500);   						
+                    }, 1500);
                 } else {
                     // Show error popup. For more info check the plugin's official documentation: https://sweetalert2.github.io/
                     Swal.fire({
@@ -83,7 +83,7 @@ var KTPasswordResetGeneral = function() {
                         }
                     });
                 }
-            });  
+            });
 		});
     }
 

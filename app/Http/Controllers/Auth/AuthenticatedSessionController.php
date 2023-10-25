@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Providers\RouteServiceProvider;
-use App\Models\User;
+use App\Models\ConfigUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -49,13 +49,13 @@ class AuthenticatedSessionController extends Controller
      */
     public function apiStore(LoginRequest $request)
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (!Auth::attempt($request->only('code', 'password'))) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect']
+                'code' => ['The provided credentials are incorrect']
             ]);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = ConfigUser::where('code', $request->email)->first();
         return response($user);
     }
 
@@ -72,7 +72,7 @@ class AuthenticatedSessionController extends Controller
             'api_token' => 'required'
         ]);
 
-        $user = User::where('api_token', $request->api_token)->first();
+        $user = ConfigUser::where('api_token', $request->api_token)->first();
 
         if(!$user){
             throw ValidationException::withMessages([

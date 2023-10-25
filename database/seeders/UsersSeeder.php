@@ -2,8 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\UserInfo;
+use App\Models\ConfigUser;
 use Faker\Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -17,47 +16,34 @@ class UsersSeeder extends Seeder
      */
     public function run(Generator $faker)
     {
-        $demoUser = User::create([
-            'name'        => $faker->name,
-            'email'             => 'demo@demo.com',
-            'password'          => Hash::make('secret'),
-            'created_by'     => "SYSTEM",
+        // Create a demo user
+        ConfigUser::create([
+            'code'    => $faker->unique()->userName,
+            'password'    => Hash::make('secret'),
+            'name'    => $faker->name,
+            'dept'         => 'Demo Department',
+            'phone'        => $faker->phoneNumber,
+            'email'        => 'demo@demo.com',
+            'status_code'  => 'A',
+            'created_by'   => "SYSTEM",
+            'updated_by'   => "SYSTEM",
+            'version_number' => 1,
         ]);
 
-        $this->addDummyInfo($faker, $demoUser);
-
-        $demoUser2 = User::create([
-            'name'        => $faker->name,
-            'email'             => 'demo2@demo.com',
-            'password'          => Hash::make('secret'),
-            'created_by'     => "SYSTEM",
-        ]);
-
-        $this->addDummyInfo($faker, $demoUser2);
-
-        User::factory(100)->create()->each(function (User $user) use ($faker) {
-            $this->addDummyInfo($faker, $user);
-        });
-    }
-
-    private function addDummyInfo(Generator $faker, User $user)
-    {
-        $dummyInfo = [
-            'company'  => $faker->company,
-            'phone'    => $faker->phoneNumber,
-            'website'  => $faker->url,
-            'language' => $faker->languageCode,
-            'country'  => $faker->countryCode,
-            'timezone'  => $faker->timezone,
-            'currency'  => $faker->currencyCode,
-            'communication'  => '',
-        ];
-
-        $info = new UserInfo();
-        foreach ($dummyInfo as $key => $value) {
-            $info->$key = $value;
+        // Create additional demo users
+        for ($i = 0; $i < 100; $i++) {
+            ConfigUser::create([
+                'code'    => $faker->unique()->userName,
+                'password'    => Hash::make('secret'),
+                'name'    => $faker->name,
+                'dept'         => $faker->word,
+                'phone'        => $faker->phoneNumber,
+                'email'        => $faker->unique()->safeEmail,
+                'status_code'  => 'A',
+                'created_by'   => "SYSTEM",
+                'updated_by'   => "SYSTEM",
+                'version_number' => 1,
+            ]);
         }
-        $info->user()->associate($user);
-        $info->save();
     }
 }

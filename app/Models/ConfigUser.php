@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 // use Spatie\Permission\Traits\HasRoles;
 use App\Traits\BaseTrait;
-class User extends Authenticatable implements MustVerifyEmail
+class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
     use SpatieLogsActivity;
@@ -28,16 +28,16 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $fillable = [
-        'name',
-        'email',
         'code',
-        'descr',
-        'parent_id',
-        'grp',
-        'type_code',
-        'level_code',
+        'password',
+        'name',
+        'dept',
+        'phone',
+        'email',
         'status_code',
-        'is_active',
+        'created_by',
+        'updated_by',
+        'version_number',
     ];
 
     /**
@@ -87,8 +87,8 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
-    public function info()
-    {
-        return $this->hasOne(UserInfo::class);
-    }
+    // public function info()
+    // {
+    //     return $this->hasOne(UserInfo::class);
+    // }
 }

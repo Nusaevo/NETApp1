@@ -12,12 +12,10 @@ class CreateConfigMenusTable extends Migration
     public function up()
     {
         Schema::create('config_menus', function (Blueprint $table) {
-            $table->id();
+            $this->generateDefaultColumns($table);
             $table->string('appl_code', 20)->default('');
-            $table->string('menu_code', 100)->default('');
             $table->string('menu_caption', 100)->default('');
             $table->string('status_code', 1)->default('A');
-            $table->string('is_active', 1)->default('1');
             $this->generateDefaultTimeStamp($table);
         });
     }

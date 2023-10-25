@@ -307,7 +307,7 @@ return array(
                 'items' => array(
                     array(
                         'title'  => 'User',
-                        'path'   => 'users',
+                        'path'   => 'config_users',
                         'bullet' => '<span class="bullet bullet-dot"></span>',
                     ),
                     array(

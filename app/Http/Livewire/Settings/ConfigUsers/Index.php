@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Livewire\Settings\Users;
+namespace App\Http\Livewire\Settings\ConfigUsers;
 
 use Livewire\Component;
-use App\Models\User; // Import the User model
+use App\Models\ConfigUser; // Import the User model
 use App\Traits\LivewireTrait;
 use Lang;
 use Exception;
@@ -20,7 +20,7 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.settings.users.index'); // Update the view path
+        return view('livewire.settings.config-users.index'); // Update the view path
     }
 
     protected $listeners = [
@@ -34,18 +34,18 @@ class Index extends Component
 
     public function View($id)
     {
-        return redirect()->route('users.detail', ['action' => 'View', 'objectId' => $id]);
+        return redirect()->route('config_users.detail', ['action' => 'View', 'objectId' => $id]);
     }
 
     public function Edit($id)
     {
-        return redirect()->route('users.detail', ['action' => 'Edit', 'objectId' => $id]);
+        return redirect()->route('config_users.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
     public function SelectUser($id)
     {
 
-        $this->user = User::findOrFail($id);
+        $this->user = ConfigUser::findOrFail($id);
 
     }
 

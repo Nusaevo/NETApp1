@@ -29,11 +29,11 @@
         <!--begin::Input group-->
         <div class="fv-row mb-10">
             <!--begin::Label-->
-            <label class="form-label fs-6 fw-bolder text-dark">{{ __('Email') }}</label>
+            <label class="form-label fs-6 fw-bolder text-dark">{{ __('Username') }}</label>
             <!--end::Label-->
 
             <!--begin::Input-->
-            <input class="form-control form-control-lg form-control-solid" type="email" name="email" autocomplete="off" value="" required autofocus/>
+            <input class="form-control form-control-lg form-control-solid" type="text" name="code" autocomplete="off" value="" required autofocus/>
             <!--end::Input-->
         </div>
         <!--end::Input group-->
@@ -47,11 +47,11 @@
                 <!--end::Label-->
 
                 <!--begin::Link-->
-                @if (Route::has('password.request'))
+                {{-- @if (Route::has('password.request'))
                     <a href="{{ theme()->getPageUrl('password.request') }}" class="link-primary fs-6 fw-bolder">
                         {{ __('Forgot Password ?') }}
                     </a>
-            @endif
+                @endif --}}
             <!--end::Link-->
             </div>
             <!--end::Wrapper-->
@@ -76,7 +76,7 @@
         <div class="text-center">
             <!--begin::Submit button-->
             <button type="submit" id="kt_sign_in_submit" class="btn btn-lg btn-primary w-100 mb-5">
-                @include('partials.general._button-indicator', ['label' => __('Continue')])
+                @include('partials.general._button-indicator', ['label' => __('Log in')])
             </button>
             <!--end::Submit button-->
 

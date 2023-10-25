@@ -1,18 +1,27 @@
 @once
-    <script>
-        window.addEventListener('notify-swal', function(e) {
-            let data = e.detail;
-            let title = data.title;
-            let message = data.message;
-            let type = data.type;
-            Swal.fire(title, message, type);
-        });
-        window.addEventListener('refresh', function(e) {
-            setTimeout(function() {
-                window.location.reload();
-            }, 1000);
-        });
-    </script>
+<script>
+    window.addEventListener('notify-swal', function(e) {
+        let data = e.detail;
+        let title = data.title;
+        let message = data.message;
+        let type = data.type;
+
+        // Map the type to "Failed" for error and "Success" for success
+        if (type === 'error') {
+            title = 'Failed';
+        } else if (type === 'success') {
+            title = 'Success';
+        }
+
+        Swal.fire(title, message, type);
+    });
+
+    window.addEventListener('refresh', function(e) {
+        setTimeout(function() {
+            window.location.reload();
+        }, 1000);
+    });
+</script>
 @endonce
 
 @if (session()->has('success'))
