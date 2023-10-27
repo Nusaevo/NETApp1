@@ -49,18 +49,16 @@ class Index extends Component
     public function Disable()
     {
         try {
-            $this->user->updateObject($this->object->version_number);
-            $this->user->delete();
+            $this->object->updateObject($this->object->version_number);
+            $this->object->delete();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'title' => Lang::get('generic.success.title'),
                 'message' => Lang::get('generic.success.disable', ['object' => $this->object->name])
             ]);
         } catch (Exception $e) {
             // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'title' => Lang::get('generic.error.title'),
                 'message' => Lang::get('generic.error.disable', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }

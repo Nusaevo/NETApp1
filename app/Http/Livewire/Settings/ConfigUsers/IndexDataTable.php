@@ -3,10 +3,10 @@ namespace App\Http\Livewire\Settings\ConfigUsers;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\ConfigUser;
-use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\ConfigUser;
 class IndexDataTable extends DataTableComponent
 {
     protected $model = User::class;
@@ -21,6 +21,15 @@ class IndexDataTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id');
+        $this->setThAttributes(function(Column $column) {
+            if ($column->isField('name')) {
+              return [
+                'class' => 'text-center',
+              ];
+            }
+
+            return [];
+          });
     }
 
     protected $listeners = [

@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 // use Spatie\Permission\Traits\HasRoles;
 use App\Traits\BaseTrait;
+use Illuminate\Support\Facades\Auth;
 class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
@@ -21,6 +22,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     public static function boot()
     {
         parent::boot();
+        self::bootUpdatesCreatedByAndUpdatedAt();
     }
     /**
      * The attributes that are mass assignable.

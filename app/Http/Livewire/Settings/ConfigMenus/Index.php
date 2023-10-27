@@ -1,49 +1,69 @@
 <?php
+
 namespace App\Http\Livewire\Settings\ConfigMenus;
 
 use Livewire\Component;
-use App\Models\ConfigMenu;
+use App\Models\ConfigMenu; // Import the ConfigGroup model
 use App\Traits\LivewireTrait;
-
+use Lang;
+use Exception;
 class Index extends Component
 {
     use LivewireTrait;
 
-    public $configMenus;
+    public $configAppls;
 
     public function mount()
     {
-        $this->configMenus = ConfigMenu::all(); // Retrieve all ConfigMenus
+        $this->configAppls = ConfigAppl::all();
     }
 
     public function render()
     {
-        return view('livewire.settings.config-menus.index', [
-            'configMenus' => $this->configMenus, // Pass the ConfigMenus data to the view
-        ]);
+        return view('livewire.settings.config-applications.index');
     }
 
     protected $listeners = [
-        'settings_config_menu_edit'  => 'edit',
-        'settings_config_menu_delete'  => 'delete',
-        'settings_config_menu_detail'  => 'view',
+        'viewData'  => 'View',
+        'editData'  => 'Edit',
+        'deleteData'  => 'Delete',
+        'disableData'  => 'Disable',
+        'selectData'  => 'SelectObject',
     ];
 
-    public function view($id)
+    public function View($id)
     {
-        return redirect()->route('config_menus.detail', ['action' => 'View', 'objectId' => $id]);
+        return redirect()->route('config_applications.detail', ['action' => 'View', 'objectId' => $id]);
     }
 
-    public function edit($id)
+    public function Edit($id)
     {
-        return redirect()->route('config_menus.detail', ['action' => 'Edit', 'objectId' => $id]);
+        return redirect()->route('config_applications.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
-    public function delete($id)
+    public function SelectObject($id)
     {
-        $configMenu = ConfigMenu::findOrFail($id);
-        $configMenu->delete();
-        $this->dispatchBrowserEvent('notify-swal', ['type' => 'success', 'title' => 'Berhasil', 'message' =>  "Berhasil menghapus konfigurasi menu {$configMenu->menu_code}."]);
-        $this->emit('settings_config_menu_refresh');
+        $this->configAppls = ConfigAppl::findOrFail($id);
+    }
+
+    public function Disable()
+    {
+        try {
+            $this->object->updateObject($this->user->version_number);
+            $this->object->delete();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'title' => Lang::get('generic.success.title'),
+                'message' => Lang::get('generic.success.disable', ['object' => $this->configAppls->name])
+            ]);
+        } catch (Exception $e) {
+            // Handle the exception
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'title' => Lang::get('generic.error.title'),
+                'message' => Lang::get('generic.error.disable', ['object' => $this->configAppls->name, 'message' => $e->getMessage()])
+            ]);
+        }
+        $this->emit('refreshData');
     }
 }

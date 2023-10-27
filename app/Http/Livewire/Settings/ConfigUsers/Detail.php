@@ -98,13 +98,19 @@ class Detail extends Component
 
     protected function populateObjectArray()
     {
-        return [
+        $objectData = [
             'name' => $this->inputs['name'],
             'email' => $this->inputs['email'],
             'code' => $this->inputs['code'],
             'dept' => $this->inputs['dept'],
-            'phone' => $this->inputs['phone']
+            'phone' => $this->inputs['phone'],
         ];
+
+        if (!empty($this->inputs['password'])) {
+            $objectData['password'] = bcrypt($this->inputs['password']);
+        }
+
+        return $objectData;
     }
     public function Create()
     {
@@ -115,7 +121,6 @@ class Detail extends Component
             }
             //DB::beginTransaction();
             $objectData = $this->populateObjectArray();
-            $objectData['password'] = $this->hashPassword($this->inputs['password']);
             $this->object = ConfigUser::create($objectData);
             // $newUserInfo = ConfigUser::create([
             //     'user_id' => $newUser->id,
@@ -151,11 +156,6 @@ class Detail extends Component
             if ($this->object) {
                 $this->object->updateObject($this->VersioNumber);
                 $objectData = $this->populateObjectArray();
-
-                if (!empty($this->inputs['password'])) {
-                    $objectData['password'] = bcrypt($this->inputs['password']);
-                }
-
                 $this->object->update($objectData);
             }
 
