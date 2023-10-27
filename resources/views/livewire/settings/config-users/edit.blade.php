@@ -4,11 +4,8 @@
     </div>
 
     <div>
-        <a href="{{ route('config_users.index') }}" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
-            <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Back
-        </a>
+        <x-ui-button click-event="{{ route('config_users.index') }}" type="Back" button-name="Back"/>
     </div>
-
     <x-ui-page-card title="{{ $action }} User" status="{{ $status }}">
         <x-uitab-view id="myTab" class="nav nav-tabs" role="tablist">
             <li class="nav-item" role="presentation">
@@ -29,20 +26,45 @@
                             <x-ui-text-field label="Login ID" model="inputs.code" type="text" :action="$action" :required="true" :enabled="false" placeHolder="Enter Login ID" />
                         @endif
 
-                        <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$action" :required="true" placeHolder="Enter Name (e.g., John Doe)" />
-                        <x-ui-text-field label="Email" model="inputs.email" type="email" :action="$action" :required="true" placeHolder="Enter Email (e.g., johndoe@example.com)" />
-                        <x-ui-text-field label="Phone" model="inputs.phone" type="text" :action="$action" placeHolder="Enter Phone (optional)" />
-                        <x-ui-text-field label="Department" model="inputs.dept" type="text" :action="$action" placeHolder="Enter Department (optional)" />
+                        <x-ui-text-field label="Nama" model="inputs.name" type="text" span="Full" :action="$action" :required="true" placeHolder="Enter Name (e.g., John Doe)" />
+                        {{-- <x-ui-text-field label="Email" model="inputs.email" type="email" span="Half" :action="$action" :required="true" placeHolder="Enter Email (e.g., johndoe@example.com)" />
+                        <x-ui-text-field label="Phone" model="inputs.phone" type="text" span="Half" :action="$action" placeHolder="Enter Phone (optional)"/>
+                         --}}
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="flex: 1; padding-right: 5px;">
+                                <x-ui-text-field
+                                    label="Email"
+                                    model="inputs.email"
+                                    type="email"
+                                    span="Half"
+                                    :action="$action"
+                                    :required="true"
+                                    placeHolder="Enter Email (e.g., johndoe@example.com)"
+                                />
+                            </div>
+                            <div style="flex: 1; padding-left: 5px;">
+                                <x-ui-text-field
+                                    label="Phone"
+                                    model="inputs.phone"
+                                    type="text"
+                                    span="Half"
+                                    :action="$action"
+                                    placeHolder="Enter Phone (optional)"
+                                />
+                            </div>
+                        </div>
+
+                        <x-ui-text-field label="Department" model="inputs.dept" type="text" span="Full" :action="$action" placeHolder="Enter Department (optional)" />
                     </x-ui-expandable-card>
                 </div>
                 <div class="tab-pane fade" id="credential" role="tabpanel" aria-labelledby="credential-tab">
                     <x-ui-expandable-card id="UserPassword" title="User Credential" :isOpen="true">
                         @if ($action == 'Create')
-                            <x-ui-text-field label="Password" model="inputs.password" type="password" :action="$action" placeHolder="Enter a secure password with at least 8 characters, including lowercase, uppercase, and numbers. (e.g., Password123)" :required="true" />
+                            <x-ui-text-field label="Password" model="inputs.password" type="password" span="Full" :action="$action" placeHolder="Enter a secure password with at least 8 characters, including lowercase, uppercase, and numbers. (e.g., Password123)" :required="true" />
                         @else
-                            <x-ui-text-field label="Password" model="inputs.password" type="password" :action="$action" placeHolder="Enter a secure password with at least 8 characters, including lowercase, uppercase, and numbers. (e.g., Password123)" />
+                            <x-ui-text-field label="Password" model="inputs.password" type="password" span="Full" :action="$action" placeHolder="Enter a secure password with at least 8 characters, including lowercase, uppercase, and numbers. (e.g., Password123)" />
                         @endif
-                        <x-ui-text-field label="Confirm Password" model="inputs.newpassword" type="password" :action="$action" placeHolder="Enter same Password" />
+                        <x-ui-text-field label="Confirm Password" model="inputs.newpassword" type="password" span="Full" :action="$action" placeHolder="Enter same Password" />
                     </x-ui-expandable-card>
                 </div>
             </x-uitab-view-content>

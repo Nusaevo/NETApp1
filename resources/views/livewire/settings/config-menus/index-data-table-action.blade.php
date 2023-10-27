@@ -1,9 +1,10 @@
-@include('layout.customs.data-table-action-detail-edit-delete', [
+@include('layout.customs.data-table-action', [
     'enable_this_row' => true,
     'allow_details' => true,
     'allow_edit' => true,
-    'allow_delete' => true,
-    'wire_click_show' => "\$emit('settings_config_menu_detail', $row->id)",
-    'wire_click_edit' => "\$emit('settings_config_menu_edit', $row->id)",
-    'wire_click_delete' => "\$emit('settings_config_menu_delete', $row->id)",
+    'allow_disable' => !$row->trashed(),
+    'allow_delete' => false,
+    'wire_click_show' => "\$emit('viewData',  $row->id)",
+    'wire_click_edit' => "\$emit('editData',  $row->id)",
+    'wire_click_disable' => "\$emit('selectData',  $row->id)",
 ])

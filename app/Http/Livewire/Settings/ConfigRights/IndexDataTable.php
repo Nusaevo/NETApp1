@@ -1,25 +1,25 @@
 <?php
-namespace App\Http\Livewire\Settings\ConfigUsers;
+
+namespace App\Http\Livewire\Settings\ConfigRights;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
-
+use App\Models\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\ConfigUser;
+use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = User::class;
+    protected $model = ConfigRight::class;
+
 
     public function builder(): Builder
     {
-        return ConfigUser::query()
+        return ConfigRight::query()
             ->withTrashed()
             ->select();
     }
 
-    public function configure(): void
+     public function configure(): void
     {
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
@@ -50,10 +50,16 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Name", "name")
+            Column::make("Application Name", "configGroups.name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Email", "email")
+            Column::make("Group Name", "configGroups.name")
+                ->searchable()
+                ->sortable(),
+            Column::make("Menu Caption", "configMenus.menu_caption")
+                ->searchable()
+                ->sortable(),
+            Column::make("Seq", "menu_seq")
                 ->searchable()
                 ->sortable(),
             Column::make('Status', 'deleted_at')
@@ -62,9 +68,9 @@ class IndexDataTable extends DataTableComponent
                     return is_null($row->deleted_at) ? 'Active' : 'Non-Active';
                 }),
             Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    return view('livewire.settings.config-users.index-data-table-action')->withRow($row);
-                }),
+                ->format(
+                    fn ($value, $row, Column $column) => view('livewire.settings.config-rights.index-data-table-action')->withRow($row)
+                ),
         ];
     }
 

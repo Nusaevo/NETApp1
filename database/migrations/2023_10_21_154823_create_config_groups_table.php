@@ -12,11 +12,12 @@ class CreateConfigGroupsTable extends Migration
     public function up()
     {
         Schema::create('config_groups', function (Blueprint $table) {
-            $table->id();
-            $table->string('appl_code', 20)->default('');
-            $table->string('group_code', 50)->default('');
+            $this->generateDefaultColumns($table);
+            $table->foreignId('user_id')->constrained('config_users');
             $table->string('user_code', 50)->default('');
-            $table->string('note1', 200)->default('');
+            $table->foreignId('appl_id')->constrained('config_appls');
+            $table->string('appl_code', 20)->default('');
+            $table->string('name', 200)->default('');
             $table->string('status_code', 1)->default('A');
             $this->generateDefaultTimeStamp($table);
         });

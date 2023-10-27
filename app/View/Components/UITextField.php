@@ -13,7 +13,9 @@ class UITextField extends Component
     public $required;
     public $visible;
     public $placeHolder;
-    public function __construct($label, $model, $type = 'text', $labelClass = '', $action = '', $required = false, $enabled = true, $visible = true, $placeHolder = true)
+    public $span;
+    public function __construct($label, $model, $type = 'text', $labelClass = '', $action = '',
+    $required = false, $enabled = true, $visible = true, $placeHolder = true, $span = 'Full')
     {
         $this->label = $label;
         $this->model = $model;
@@ -28,6 +30,7 @@ class UITextField extends Component
         $this->required = $required;
         $this->visible = $visible;
         $this->placeHolder = $placeHolder;
+        $this->span = $span;
     }
 
     public function render()

@@ -2,68 +2,57 @@
     <div>
         @include('layout.customs.notification')
     </div>
+
     <div>
         <a href="{{ route('config_menus.index') }}" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
             <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Back
         </a>
     </div>
 
-    <div id="kt_content_container" class="container-xxl mb-5" wire:ignore>
-        <div class="card shadow-sm">
-            <div>
-                <h3>{{ $action }} Config Menu</h3>
-            </div>
-            <form wire:submit.prevent="{{ $action === 'Edit' ? 'update' : 'store' }}" class="form w-100">
+    <x-ui-page-card title="{{ $action }} Menu" status="{{ $status }}">
+        <x-uitab-view id="myTab" class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab" aria-controls="general" aria-selected="true">General</button>
+            </li>
+        </x-uitab-view>
 
-                <div class="card-header collapsible cursor-pointer rotate" data-bs-toggle="collapse" data-bs-target="#config_menu_general_tab" wire:ignore.self>
-                    <h3 class="card-title">Config Menu General Info</h3>
-                    <div class="card-toolbar rotate-180">
-                        <i class="bi bi-arrow-bar-down"></i>
-                    </div>
+        <form wire:submit.prevent="{{ $action }}" class="form w-100">
+            <x-uitab-view-content id="myTabContent" class="tab-content">
+                <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                    <x-ui-expandable-card id="UserCard" title="Menu" :isOpen="true">
+                        @if ($action == 'Create')
+                            <x-ui-text-field label="Menu Code" model="inputs.code" type="text" :action="$action" :required="true" placeHolder="Enter Menu Code (e.g., app01)" />
+                        @else
+                            <x-ui-text-field label="Menu Code" model="inputs.code" type="text" :action="$action" :required="true" :enabled="false" placeHolder="Enter Menu Code (e.g., app01)" />
+                        @endif
+                        <x-uidropdown-select label="Application Code"
+                        name="inputs.applications"
+                        :options="$applications"
+                        :selectedValue="$inputs['applications']"
+                        :required="true"
+                        :action="$action" />
+                        <x-ui-text-field label="Menu Header" model="inputs.name" type="text" :action="$action" :required="true" placeHolder="Enter Menu Header" />
+                        <x-ui-text-field label="Sub Menu" model="inputs.sub_menu" type="text" :action="$action" :required="false" placeHolder="Enter Sub Menu" />
+                        <x-ui-text-field label="Menu Caption" model="inputs.menu_caption" type="text" :action="$action" :required="true" placeHolder="Enter Menu Caption" />
+                        <x-ui-text-field label="Link" model="inputs.link" type="text" :action="$action" :required="true" placeHolder="Enter Menu Link" />
+                    </x-ui-expandable-card>
                 </div>
-
-                <div id="config_menu_general_tab" class="collapse show" wire:ignore.self>
-                    <div class="card-body">
-                        <div class="mb-10">
-                            <label class="required form-label">Appl Code</label>
-                            <input wire:model.defer="inputs.appl_code" type="text" class="form-control @error('configMenu.appl_code') is-invalid @enderror" {{ $action === 'View' ? 'disabled' : '' }}/>
-                            @error('configMenu.appl_code') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="mb-10">
-                            <label class="required form-label">Menu Code</label>
-                            <input wire:model.defer="inputs.menu_code" type="text" class="form-control @error('configMenu.menu_code') is-invalid @enderror" {{ $action === 'View' ? 'disabled' : '' }}/>
-                            @error('configMenu.menu_code') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="mb-10">
-                            <label class="required form-label">Menu Caption</label>
-                            <input wire:model.defer="inputs.menu_caption" type="text" class="form-control @error('configMenu.menu_caption') is-invalid @enderror" {{ $action === 'View' ? 'disabled' : '' }}/>
-                            @error('configMenu.menu_caption') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="mb-10">
-                            <label class="required form-label">Status Code</label>
-                            <input wire:model.defer="inputs.status_code" type="text" class="form-control @error('configMenu.status_code') is-invalid @enderror" {{ $action === 'View' ? 'disabled' : '' }}/>
-                            @error('configMenu.status_code') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="mb-10">
-                            <label class="required form-label">Is Active</label>
-                            <input wire:model.defer="inputs.is_active" type="text" class="form-control @error('configMenu.is_active') is-invalid @enderror" {{ $action === 'View' ? 'disabled' : '' }}/>
-                            @error('configMenu.is_active') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-footer">
-                    @if ($action === 'Edit')
-                        <button wire:click="update" class="btn btn-primary">Update</button>
-                    @elseif ($action === 'Create')
-                        <button wire:click="store" class="btn btn-success">Create</button>
+            </x-uitab-view-content>
+        </form>
+        <div class="card-footer d-flex justify-content-end">
+            @if ($action !== 'Create')
+                <div style="padding-right: 10px;">
+                    @if ($status === 'Active')
+                        <x-ui-button click-event="Disable" button-name="Disable" :loading="true" :action="$action" cssClass="btn-danger" iconPath="images/disable-icon.svg" />
+                    @else
+                        <x-ui-button click-event="Enable" button-name="Enable" :loading="true" :action="$action" cssClass="btn-success" iconPath="images/enable-icon.png" />
                     @endif
                 </div>
-            </form>
+            @endif
+
+            <div>
+                <x-ui-button click-event="{{ $action }}" button-name="Save" :loading="true" :action="$action" cssClass="btn-primary" iconPath="images/save-icon.png" />
+            </div>
         </div>
-    </div>
+    </x-ui-page-card>
 </div>

@@ -23,14 +23,27 @@ trait BaseTrait
 
     public static function bootUpdatesCreatedByAndUpdatedAt()
     {
-        static::creating(function ($model) {
-            $model->updated_by = Auth::user()->code;
-            $model->updated_at = now();
-        });
+        if(Auth::user() == null)
+        {
+            static::creating(function ($model) {
+                $model->updated_by = "SYSTEM";
+                $model->updated_at = now();
+            });
 
-        static::updating(function ($model) {
-            $model->updated_at = now();
-            $model->updated_by = Auth::user()->code;
-        });
+            static::updating(function ($model) {
+                $model->updated_at = now();
+                $model->updated_by = "SYSTEM";
+            });
+        }else{
+            static::creating(function ($model) {
+                $model->updated_by = Auth::user()->code;
+                $model->updated_at = now();
+            });
+
+            static::updating(function ($model) {
+                $model->updated_at = now();
+                $model->updated_by = Auth::user()->code;
+            });
+        }
     }
 }

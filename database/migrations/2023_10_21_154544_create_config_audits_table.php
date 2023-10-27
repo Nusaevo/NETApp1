@@ -14,6 +14,7 @@ class CreateConfigAuditsTable extends Migration
         Schema::create('config_audits', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->foreignId('appl_id')->constrained('config_appls');
             $table->string('appl_code', 20)->default('');
             $table->string('key_code', 30)->default('');
             $table->timestamp('log_time')->default(now());

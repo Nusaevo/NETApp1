@@ -27,7 +27,7 @@
                         @endif
 
                         <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$action" :required="true" placeHolder="Enter Name (e.g., POS Indo)" />
-                        <x-ui-text-field label="Description" model="inputs.descr" type="textarea" :action="$action" :required="true" placeHolder="Enter Description (e.g., Application's information)" />
+                        <x-ui-text-field label="Description" model="inputs.descr" type="textarea" :action="$action" placeHolder="Enter Description (e.g., Application's information)" />
                         <x-ui-text-field label="Version" model="inputs.version" type="text" :action="$action" placeHolder="Enter Version (optional)" />
                     </x-ui-expandable-card>
                 </div>

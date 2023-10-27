@@ -12,10 +12,15 @@ class CreateConfigRightsTable extends Migration
     public function up()
     {
         Schema::create('config_rights', function (Blueprint $table) {
-            $this->generateDefaultColumns($table);
+            $table->id();
+
+            $table->string('group_code', 20)->default('');
+            $table->foreignId('group_id')->constrained('config_groups');
             $table->string('appl_code', 20)->default('');
-            $table->string('group_code', 50)->default('');
-            $table->string('menu_code', 100)->default('');
+            $table->foreignId('appl_id')->constrained('config_appls');
+            $table->foreignId('menu_id')->constrained('config_menus');
+            $table->string('menu_code', 20)->default('');
+
             $table->smallInteger('menu_seq')->default(0);
             $table->string('trustee', 5)->default('');
             $this->generateDefaultTimeStamp($table);

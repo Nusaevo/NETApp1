@@ -4,29 +4,35 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use App\Traits\BaseTrait;
 class ConfigGroup extends Model
 {
     use HasFactory, SoftDeletes;
+    use BaseTrait;
 
     protected $table = 'config_groups'; // Update the table name
 
-    protected $fillable = [
-        'appl_code',
-        'group_code',
-        'user_code',
-        'note1',
-        'status_code',
-        'is_active'
-    ];
-
-    public function scopeGetConfigGroup()
+    public static function boot()
     {
-        return $this->orderBy('note1', 'asc')->get();
+        parent::boot();
+        self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
-    public function user()
+    protected $fillable = [
+        'code',
+        'appl_id',
+        'appl_code',
+        'name',
+        'status_code'
+    ];
+
+    public function scopeGetActiveData()
     {
-        return $this->belongsTo(User::class, 'user_code', 'code');
+        return $this->orderBy('code', 'asc')->get();
+    }
+
+    public function configAppls()
+    {
+        return $this->belongsTo('App\Models\ConfigAppl', 'appl_id', 'id');
     }
 }

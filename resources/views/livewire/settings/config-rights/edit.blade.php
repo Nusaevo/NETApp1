@@ -4,7 +4,7 @@
     </div>
 
     <div>
-        <a href="{{ route('config_groups.index') }}" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
+        <a href="{{ route('config_rights.index') }}" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
             <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Back
         </a>
     </div>
@@ -20,18 +20,36 @@
             <x-uitab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="UserCard" title="Group" :isOpen="true">
-                        @if ($action == 'Create')
-                            <x-ui-text-field label="Group Code" model="inputs.code" type="text" :action="$action" :required="true" placeHolder="Enter Group Code (e.g., app01)" />
-                        @else
-                            <x-ui-text-field label="Group Code" model="inputs.code" type="text" :action="$action" :required="true" :enabled="false" placeHolder="Enter Group Code (e.g., app01)" />
-                        @endif
+
                         <x-uidropdown-select label="Application Code"
                         name="inputs.applications"
                         :options="$applications"
                         :selectedValue="$inputs['applications']"
                         :required="true"
+                        :action="$action"
+                        :onChanged="'loadGroupsAndMenus'"/>
+
+                        <x-uidropdown-select label="Group Code"
+                        name="inputs.groups"
+                        :options="$groups"
+                        :selectedValue="$inputs['groups']"
+                        :required="true"
                         :action="$action" />
-                        <x-ui-text-field label="Group Name" model="inputs.name" type="text" :action="$action" :required="true" placeHolder="Enter Menu Header" />
+
+                        <x-uidropdown-select label="Menu Code"
+                        name="inputs.menus"
+                        :options="$menus"
+                        :selectedValue="$inputs['menus']"
+                        :required="true"
+                        :action="$action" />
+
+                        <x-ui-checklist label="Application Code"
+                        label="Access :"
+                        name="inputs.trustee"
+                        :options="$trustee"
+                        :action="$action"/>
+
+                        <x-ui-text-field label="Menu Seq" model="inputs.menu_seq" type="number" :action="$action" :required="true" placeHolder="Enter Menu Seq" />
                     </x-ui-expandable-card>
                 </div>
             </x-uitab-view-content>

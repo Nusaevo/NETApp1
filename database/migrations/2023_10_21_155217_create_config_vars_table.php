@@ -12,6 +12,7 @@ class CreateConfigVarsTable extends Migration
     {
         Schema::create('config_vars', function (Blueprint $table) {
             $this->generateDefaultColumns($table);
+            $table->foreignId('appl_id')->constrained('config_appls');
             $table->string('appl_code', 20)->default('');
             $table->string('var_group', 50)->default('');
             $table->string('descr', 200)->default('');

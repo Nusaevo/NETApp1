@@ -14,6 +14,7 @@ class CreateConfigSnumsTable extends Migration
         Schema::create('config_snums', function (Blueprint $table) {
             $this->generateDefaultColumns($table);
             $table->string('snum_group', 50)->default('');
+            $table->foreignId('appl_id')->constrained('config_appls');
             $table->string('appl_code', 20)->default('');
             $table->bigInteger('last_cnt')->default(0);
             $table->bigInteger('wrap_low')->default(0);

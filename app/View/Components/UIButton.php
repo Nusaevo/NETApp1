@@ -13,9 +13,11 @@ class UIButton extends Component
     public $visible;
     public $action;
     public $cssClass;
-    public $iconPath; // Add the iconPath property
+    public $iconPath;
+    public $type;
 
-    public function __construct($clickEvent, $buttonName, $loading = false, $enabled = true, $visible = true, $action = '', $cssClass = '', $iconPath = null)
+    public function __construct($clickEvent, $buttonName, $loading = false, $enabled = true, $visible = true,
+     $action = '', $cssClass = '', $iconPath = null, $type="")
     {
         $this->clickEvent = $clickEvent;
         $this->buttonName = $buttonName;
@@ -28,6 +30,7 @@ class UIButton extends Component
         $this->cssClass = $cssClass;
         $this->enabled = $enabled;
         $this->iconPath = $iconPath;
+        $this->type = $type;
     }
 
     public function render()

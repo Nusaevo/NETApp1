@@ -16,6 +16,8 @@ use App\Http\Livewire\Settings\ConfigMenus\Index as ConfigMenuIndex;
 use App\Http\Livewire\Settings\ConfigMenus\Detail as ConfigMenuDetail;
 use App\Http\Livewire\Settings\ConfigApplications\Index as ConfigApplicationIndex;
 use App\Http\Livewire\Settings\ConfigApplications\Detail as ConfigApplicationDetail;
+use App\Http\Livewire\Settings\ConfigRights\Index as ConfigRightIndex;
+use App\Http\Livewire\Settings\ConfigRights\Detail as ConfigRightDetail;
 
 // use App\Http\Livewire\Masters\Suppliers\Index as SupplierIndex;
 // use App\Http\Livewire\Masters\Customers\Index as CustomerIndex;
@@ -64,12 +66,6 @@ array_walk($menu, function ($val) {
     }
 });
 
-// Documentations pages
-Route::prefix('documentation')->group(function () {
-    Route::get('getting-started/references', [ReferencesController::class, 'index']);
-    Route::get('getting-started/changelog', [PagesController::class, 'index']);
-});
-
 Route::middleware('auth')->group(function () {
     // Account pages
     // Route::prefix('account')->group(function () {
@@ -103,6 +99,11 @@ Route::middleware('auth')->group(function () {
     Route::prefix('config_applications')->name('config_applications.')->group(function () {
         Route::get('/', ConfigApplicationIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', ConfigApplicationDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_rights')->name('config_rights.')->group(function () {
+        Route::get('/', ConfigRightIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigRightDetail::class)->name('detail');
     });
 });
 

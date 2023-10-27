@@ -52,6 +52,10 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
+    public function configGroups()
+    {
+        return $this->belongsTo('App\Models\ConfigGroup', 'group_code', 'code');
+    }
     /**
      * The attributes that should be cast to native types.
      *

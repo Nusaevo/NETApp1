@@ -2475,10 +2475,10 @@ progress {
 .form-control {
   display: block;
   width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 1.1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1;
   color: #5E6278;
   background-color: #ffffff;
   background-clip: padding-box;
@@ -4963,7 +4963,7 @@ textarea.form-control-lg {
 }
 
 .card-footer {
-  padding: 0.5rem 1rem;
+  padding-top   : 0.5rem;
   background-color: #ffffff;
   border-top: 1px solid #EFF2F5;
 }
@@ -37253,7 +37253,7 @@ a:hover {
   padding: 2rem 2.25rem;
 }
 .card .card-footer {
-  padding: 2rem 2.25rem;
+  padding-top: 2rem;
   background-color: transparent;
   border-top: 1px solid #EFF2F5;
 }

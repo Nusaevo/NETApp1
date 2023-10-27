@@ -1,4 +1,4 @@
-<div class="text-left">
+<div class="text-center">
     @if ($enable_this_row)
         @if ($allow_details)
             <button class="btn btn-secondary icon-button" wire:click="{{ $wire_click_show }}"

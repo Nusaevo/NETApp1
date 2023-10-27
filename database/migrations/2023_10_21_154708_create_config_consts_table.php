@@ -13,9 +13,14 @@ class CreateConfigConstsTable extends Migration
     {
         Schema::create('config_consts', function (Blueprint $table) {
             $this->generateDefaultColumns($table);
+
+            $table->string('group_code', 20)->default('');
+            $table->foreignId('group_id')->constrained('config_groups');
             $table->string('appl_code', 20)->default('');
-            $table->string('group_code', 50)->default('');
+            $table->foreignId('appl_id')->constrained('config_appls');
             $table->string('user_code', 50)->default('');
+            $table->foreignId('user_id')->constrained('config_users');
+
             $table->smallInteger('seq')->default(1);
             $table->string('str1', 10)->default('');
             $table->string('str2', 20)->default('');

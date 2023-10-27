@@ -19,9 +19,28 @@ class IndexDataTable extends DataTableComponent
             ->select();
     }
 
-    public function configure(): void
+     public function configure(): void
     {
         $this->setPrimaryKey('id');
+        $this->setTableAttributes([
+            'class' => 'data-table',
+        ]);
+
+        $this->setTheadAttributes([
+            'class' => 'data-table-header',
+        ]);
+
+        $this->setTbodyAttributes([
+            'class' => 'data-table-body',
+        ]);
+        $this->setTdAttributes(function(Column $column, $row, $columnIndex, $rowIndex) {
+            if ($column->isField('deleted_at')) {
+              return [
+                'class' => 'text-center',
+              ];
+            }
+            return [];
+        });
     }
 
     protected $listeners = [

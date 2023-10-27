@@ -5,7 +5,9 @@ namespace App\Http\Livewire\Settings\ConfigUsers;
 use Livewire\Component;
 use App\Models\ConfigUser;
 use App\Models\ConfigUserInfo;
+use App\Models\ConfigGroup;
 use Illuminate\Validation\Rule;
+
 use Lang;
 use Exception;
 use DB;
@@ -17,7 +19,7 @@ class Detail extends Component
     public $action = 'Create'; // Default to Create
     public $objectId;
     public $inputs = ['name' => ''];
-    public $group_codes;
+    public $groups;
     public $languages;
     public $status = '';
 
@@ -25,13 +27,6 @@ class Detail extends Component
     {
         $this->action = $action;
         $this->objectId = $objectId;
-        //$this->group_codes = ConfigGroup::GetConfigGroup();
-        // $this->languages = [
-        //     ['id' => 'EN', 'name' => 'English (EN)'],
-        //     ['id' => 'ID', 'name' => 'Indonesian (ID)'],
-        // ];
-        // $this->inputs['language'] = 0;
-        // $this->inputs['group_codes'] = 0;
 
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
             $this->object = ConfigUser::withTrashed()->find($this->objectId);
@@ -93,8 +88,28 @@ class Detail extends Component
         'inputs.email'       => 'Email User',
         'inputs.dept'       => 'Department',
         'inputs.phone'       => 'No HP',
-        'inputs.password' => 'Password',
+        'inputs.password' => 'Password'
     ];
+    protected $messages = [
+        'inputs.*.required'       => ':attribute harus diisi.',
+        'inputs.*.string'         => ':attribute harus berupa teks.',
+        'inputs.*.min'            => ':attribute tidak boleh kurang dari :min karakter.',
+        'inputs.*.max'            => ':attribute tidak boleh lebih dari :max karakter.',
+        'inputs.*.unique'         => ':attribute sudah ada.'
+    ];
+
+    public function validateForms()
+    {
+        try {
+            $this->validate();
+        } catch (Exception $e) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
+            ]);
+            throw $e;
+        }
+    }
 
     protected function populateObjectArray()
     {
@@ -102,8 +117,8 @@ class Detail extends Component
             'name' => $this->inputs['name'],
             'email' => $this->inputs['email'],
             'code' => $this->inputs['code'],
-            'dept' => $this->inputs['dept'],
-            'phone' => $this->inputs['phone'],
+            'dept' => $this->inputs['dept'] ?? "",
+            'phone' => $this->inputs['phone'] ?? ""
         ];
 
         if (!empty($this->inputs['password'])) {
@@ -114,41 +129,34 @@ class Detail extends Component
     }
     public function Create()
     {
+        $this->validateForms();
         try {
-            $this->validate();
             if (!$this->validatePassword()) {
                 return;
             }
             //DB::beginTransaction();
             $objectData = $this->populateObjectArray();
             $this->object = ConfigUser::create($objectData);
-            // $newUserInfo = ConfigUser::create([
-            //     'user_id' => $newUser->id,
-            //     'company'   => $this->inputs['company'],
-            //     'phone'              => $this->inputs['phone'],
-            //     'language'              => $this->inputs['language']
-            // ]);
-
             //DB::commit();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
             ]);
-
-            $this->dispatchBrowserEvent('refresh');
+            $this->reset('inputs');
         } catch (Exception $e) {
             //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
                 'message' => Lang::get('generic.error.create', ['object' => "User", 'message' => $e->getMessage()])
             ]);
+            throw $e;
         }
     }
 
     public function Edit()
     {
+        $this->validateForms();
         try {
-            $this->validate();
             if (!$this->validatePassword()) {
                 return;
             }
@@ -159,19 +167,18 @@ class Detail extends Component
                 $this->object->update($objectData);
             }
 
-            //DB::commit();
-
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.update', ['object' => $this->object->name])
             ]);
-            $this->dispatchBrowserEvent('refresh');
+            $this->VersioNumber = $this->object->version_number;
         } catch (Exception $e) {
             //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
                 'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
+            throw $e;
         }
     }
 
@@ -215,6 +222,16 @@ class Detail extends Component
 
     protected function validatePassword()
     {
+        if ($this->action == 'Create') {
+            if (empty($this->inputs['password'])) {
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'error',
+                    'title' => Lang::get('generic.error.title'),
+                    'message' => Lang::get('generic.error.password_must_be_filled')
+                ]);
+                return false;
+            }
+        }
         if (!empty($this->inputs['password'])) {
             if ($this->inputs['password'] !== $this->inputs['newpassword']) {
                 $this->dispatchBrowserEvent('notify-swal', [

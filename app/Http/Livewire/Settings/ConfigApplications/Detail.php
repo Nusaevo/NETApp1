@@ -15,7 +15,7 @@ class Detail extends Component
     public $VersioNumber;
     public $action = 'Create';
     public $objectId;
-    public $inputs = ['name' => ''];
+    public $inputs = [];
     public $group_codes;
     public $languages;
     public $status = '';
@@ -30,7 +30,8 @@ class Detail extends Component
             $this->VersioNumber = $this->object->version_number;
             $this->inputs['code'] = $this->object->code;
             $this->inputs['name'] = $this->object->name;
-
+            $this->inputs['descr'] = $this->object->descr;
+            $this->inputs['version'] = $this->object->version;
         } else {
             $this->object = new ConfigAppl();
         }
@@ -45,6 +46,8 @@ class Detail extends Component
     {
         $rules = [
             'inputs.name' => 'required|string|min:1|max:100',
+            'inputs.version' => 'string|min:1|max:15',
+            'inputs.descr' => 'string|min:1|max:500',
             'inputs.code' => [
                 'required',
                 'string',
@@ -63,7 +66,9 @@ class Detail extends Component
         'inputs'                => 'Input Application',
         'inputs.*'              => 'Input Application',
         'inputs.name'           => 'Application Name',
-        'inputs.code'      => 'Application Code'
+        'inputs.code'      => 'Application Code',
+        'inputs.version' => 'Application Version',
+        'inputs.descr' => 'Description',
     ];
 
     protected function populateObjectArray()
@@ -71,8 +76,8 @@ class Detail extends Component
         return [
             'name' => $this->inputs['name'],
             'code' => $this->inputs['code'],
-            'version' => $this->inputs['version'],
-            'descr' => $this->inputs['descr'],
+            'version' => $this->inputs['version'] ?? "",
+            'descr' => $this->inputs['descr'] ?? "",
         ];
     }
 
@@ -86,7 +91,7 @@ class Detail extends Component
                 'type' => 'success',
                 'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
             ]);
-            $this->dispatchBrowserEvent('refresh');
+            $this->inputs = [];
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
@@ -112,7 +117,7 @@ class Detail extends Component
                 'type' => 'success',
                 'message' => Lang::get('generic.success.update', ['object' => $this->object->name])
             ]);
-            $this->dispatchBrowserEvent('refresh');
+            $this->VersioNumber = $this->object->version_number;
         } catch (Exception $e) {
             //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [

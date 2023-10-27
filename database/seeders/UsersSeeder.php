@@ -18,7 +18,7 @@ class UsersSeeder extends Seeder
     {
         // Create a demo user
         ConfigUser::create([
-            'code'    => $faker->unique()->userName,
+            'code'    => 'andryhuang',
             'password'    => Hash::make('secret'),
             'name'    => $faker->name,
             'dept'         => 'Demo Department',
@@ -31,7 +31,7 @@ class UsersSeeder extends Seeder
         ]);
 
         // Create additional demo users
-        for ($i = 0; $i < 100; $i++) {
+        for ($i = 0; $i < 9; $i++) {
             ConfigUser::create([
                 'code'    => $faker->unique()->userName,
                 'password'    => Hash::make('secret'),
