@@ -33,6 +33,9 @@
                         </div>
 
                         <x-ui-text-field label="Department" model="inputs.dept" type="text" span="Full" :action="$action" placeHolder="Enter Department (optional)" />
+                        {{-- <x-ui-text-field-search label="Test" model="inputs.dept"
+                        :options="$applications" span="Full" name="Application" :action="$action" placeHolder="Search application" /> --}}
+
                     </x-ui-expandable-card>
                 </div>
                 <div class="tab-pane fade" id="credential" role="tabpanel" aria-labelledby="credential-tab">

@@ -14,6 +14,7 @@ class UITextField extends Component
     public $visible;
     public $placeHolder;
     public $span;
+
     public function __construct($label, $model, $type = 'text', $labelClass = '', $action = '',
     $required = false, $enabled = true, $visible = true, $placeHolder = true, $span = 'Full')
     {

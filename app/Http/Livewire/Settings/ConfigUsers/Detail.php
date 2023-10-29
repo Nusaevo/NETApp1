@@ -7,6 +7,7 @@ use App\Models\ConfigUser;
 use App\Models\ConfigUserInfo;
 use App\Models\ConfigGroup;
 use Illuminate\Validation\Rule;
+use App\Models\ConfigAppl;
 
 use Lang;
 use Exception;
@@ -14,6 +15,7 @@ use DB;
 
 class Detail extends Component
 {
+    public $search = '';
     public $object;
     public $VersioNumber;
     public $action = 'Create'; // Default to Create
@@ -27,6 +29,15 @@ class Detail extends Component
     {
         $this->action = $action;
         $this->objectId = $objectId;
+
+        // $applicationsData = ConfigAppl::GetActiveData();
+        // $this->applications = $applicationsData->map(function ($data) {
+        //     return [
+        //         'label' => $data->code . ' - ' . $data->name,
+        //         'value' => $data->code,
+        //     ];
+        // })->toArray();
+        // $this->inputs['applications'] = '';
 
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
             $this->object = ConfigUser::withTrashed()->find($this->objectId);
@@ -43,6 +54,17 @@ class Detail extends Component
             $this->object = new ConfigUser();
         }
     }
+
+    // protected $listeners = [
+    //     'refreshSelectApplication'  => 'refreshSelectApplication'
+
+    // ];
+
+    // public function refreshSelectApplication($value)
+    // {
+    //     $this->inputs['applications']  = $value;
+    //     $this->emit('refreshSelect'); // Emit an event to refresh Select2
+    // }
 
     public function render()
     {
@@ -127,8 +149,10 @@ class Detail extends Component
 
         return $objectData;
     }
+
     public function Create()
     {
+        dd(   $this->inputs['applications'] );
         $this->validateForms();
         try {
             if (!$this->validatePassword()) {

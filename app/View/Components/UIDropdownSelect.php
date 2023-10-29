@@ -9,11 +9,11 @@ class UIDropdownSelect extends Component
     public $label;
     public $name;
     public $options;
-    public $selectedValue;
     public $required;
     public $enabled;
     public $visible;
     public $action;
+    public $selectedValue;
     public $onChanged;
 
     public function __construct($label, $name, $options, $selectedValue = null, $required = false, $enabled = true, $visible = true, $action = '', $onChanged = '')
