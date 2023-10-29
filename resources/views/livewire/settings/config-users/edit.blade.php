@@ -27,31 +27,9 @@
                         @endif
 
                         <x-ui-text-field label="Nama" model="inputs.name" type="text" span="Full" :action="$action" :required="true" placeHolder="Enter Name (e.g., John Doe)" />
-                        {{-- <x-ui-text-field label="Email" model="inputs.email" type="email" span="Half" :action="$action" :required="true" placeHolder="Enter Email (e.g., johndoe@example.com)" />
-                        <x-ui-text-field label="Phone" model="inputs.phone" type="text" span="Half" :action="$action" placeHolder="Enter Phone (optional)"/>
-                         --}}
-                        <div style="display: flex; justify-content: space-between;">
-                            <div style="flex: 1; padding-right: 5px;">
-                                <x-ui-text-field
-                                    label="Email"
-                                    model="inputs.email"
-                                    type="email"
-                                    span="Half"
-                                    :action="$action"
-                                    :required="true"
-                                    placeHolder="Enter Email (e.g., johndoe@example.com)"
-                                />
-                            </div>
-                            <div style="flex: 1; padding-left: 5px;">
-                                <x-ui-text-field
-                                    label="Phone"
-                                    model="inputs.phone"
-                                    type="text"
-                                    span="Half"
-                                    :action="$action"
-                                    placeHolder="Enter Phone (optional)"
-                                />
-                            </div>
+                        <div class="text-field-half">
+                            <x-ui-text-field label="Email" model="inputs.email" type="email" span="Half" :action="$action" :required="true" placeHolder="Enter Email (e.g., johndoe@example.com)" />
+                            <x-ui-text-field label="Phone" model="inputs.phone" type="text" span="Half" :action="$action" placeHolder="Enter Phone (optional)" />
                         </div>
 
                         <x-ui-text-field label="Department" model="inputs.dept" type="text" span="Full" :action="$action" placeHolder="Enter Department (optional)" />

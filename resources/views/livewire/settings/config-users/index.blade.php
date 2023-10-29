@@ -11,7 +11,8 @@
                     cssClass="btn btn-success mb-5"
                     type="Route"
                     :loading="true"
-                    iconPath="images/create-icon.png" />
+                    iconPath="images/create-icon.png"
+                    button-name="Create" />
 
                     <div class="table-responsive">
                         @livewire('settings.config-users.index-data-table')

@@ -43,3 +43,7 @@
   .text-left{
     text-align: left;
   }
+
+  .text-field-half{
+    display: flex; justify-content: space-between;
+  }
