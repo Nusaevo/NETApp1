@@ -6,26 +6,41 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use App\Traits\BaseTrait;
 class Item extends Model
 {
     use HasFactory;
     use SoftDeletes;
     use ModelTrait;
+    use BaseTrait;
 
-    public static function boot()
+    protected static function boot()
     {
         parent::boot();
-
-        // static::deleting(function ($Item) {
-        //     foreach ($Item->item_units as $itemunit) {
-        //         $itemunit->delete();
-        //     }
-        //     //  $Item->item_units->delete();
-        // });
+        self::bootUpdatesCreatedByAndUpdatedAt();
+        static::deleting(function ($item) {
+            $item->item_units->each(function ($item_unit) {
+                $item_unit->item_warehouses()->delete();
+                $item_unit->item_prices()->delete();
+                $item_unit->delete();
+            });
+        });
     }
 
     protected $fillable = ['name', 'category_item_id'];
+
+    public function getAllColumns()
+    {
+        return $this->fillable;
+    }
+
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
 
     public function category_item()
     {
@@ -40,16 +55,6 @@ class Item extends Model
     public function item_units()
     {
         return $this->hasMany('App\Models\ItemUnit');
-    }
-
-    public function item_prices()
-    {
-        return $this->hasMany('App\Models\ItemPrice');
-    }
-
-    public function warehouse_items()
-    {
-        return $this->hasMany('App\Models\WarehouseItem');
     }
 
     public function transfer_items()

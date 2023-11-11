@@ -7,13 +7,34 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use App\Traits\BaseTrait;
 class CategoryItem extends Model
 {
     use HasFactory;
     use SoftDeletes;
     use ModelTrait;
+    use BaseTrait;
 
     protected $fillable = ['name'];
+
+    protected static function boot()
+    {
+        parent::boot();
+        self::bootUpdatesCreatedByAndUpdatedAt();
+    }
+
+    public function getAllColumns()
+    {
+        return $this->fillable;
+    }
+
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
 
     public function items(){
         return $this->hasMany('App\Models\Item');

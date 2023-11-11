@@ -12,7 +12,7 @@ class SalesOrderDetail extends Model
     use HasFactory;
     use SoftDeletes;
     use ModelTrait;
-    protected $fillable = ['price', 'qty', 'qty_wo', 'discount', 'item_warehouse_id', 'item_name', 'unit_name', 'sales_order_id'];
+    protected $fillable = ['discount', 'price', 'qty', 'qty_wo', 'discount', 'item_warehouse_id', 'item_name', 'unit_name', 'sales_order_id'];
 
     public function sales_order()
     {
@@ -21,6 +21,6 @@ class SalesOrderDetail extends Model
 
     public function item_warehouse()
     {
-        return $this->belongsTo('App\Models\ItemWarehouse');
+        return $this->belongsTo('App\Models\ItemWarehouse')->withTrashed();
     }
 }

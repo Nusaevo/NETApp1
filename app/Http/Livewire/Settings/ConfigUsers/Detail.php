@@ -15,62 +15,37 @@ use DB;
 
 class Detail extends Component
 {
-    public $search = '';
     public $object;
     public $VersioNumber;
-    public $action = 'Create'; // Default to Create
+    public $action = 'Create';
     public $objectId;
     public $inputs = ['name' => ''];
     public $groups;
-    public $languages;
     public $status = '';
 
     public function mount($action, $objectId = null)
     {
         $this->action = $action;
         $this->objectId = $objectId;
-
-        // $applicationsData = ConfigAppl::GetActiveData();
-        // $this->applications = $applicationsData->map(function ($data) {
-        //     return [
-        //         'label' => $data->code . ' - ' . $data->name,
-        //         'value' => $data->code,
-        //     ];
-        // })->toArray();
-        // $this->inputs['applications'] = '';
-
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
             $this->object = ConfigUser::withTrashed()->find($this->objectId);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
-            $this->inputs['code'] = $this->object->code;
-            $this->inputs['name'] = $this->object->name;
-            $this->inputs['email'] = $this->object->email;
-            $this->inputs['dept'] = $this->object->dept;
-            $this->inputs['phone'] = $this->object->phone;
-            $this->inputs['password'] = "";
+            $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['newpassword'] = "";
+            $this->inputs['confirmnewpassword'] = "";
         } else {
             $this->object = new ConfigUser();
         }
     }
-
-    // protected $listeners = [
-    //     'refreshSelectApplication'  => 'refreshSelectApplication'
-
-    // ];
-
-    // public function refreshSelectApplication($value)
-    // {
-    //     $this->inputs['applications']  = $value;
-    //     $this->emit('refreshSelect'); // Emit an event to refresh Select2
-    // }
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
 
     public function render()
     {
         return view('livewire.settings.config-users.edit');
     }
-
     protected function rules()
     {
         $rules = [
@@ -97,7 +72,7 @@ class Detail extends Component
                         // You can add additional conditions here if needed.
                     }),
             ],
-            'inputs.password' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
+            'inputs.newpassword' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
         ];
         return $rules;
     }
@@ -110,15 +85,9 @@ class Detail extends Component
         'inputs.email'       => 'Email User',
         'inputs.dept'       => 'Department',
         'inputs.phone'       => 'No HP',
-        'inputs.password' => 'Password'
+        'inputs.newpassword' => 'Password'
     ];
-    protected $messages = [
-        'inputs.*.required'       => ':attribute harus diisi.',
-        'inputs.*.string'         => ':attribute harus berupa teks.',
-        'inputs.*.min'            => ':attribute tidak boleh kurang dari :min karakter.',
-        'inputs.*.max'            => ':attribute tidak boleh lebih dari :max karakter.',
-        'inputs.*.unique'         => ':attribute sudah ada.'
-    ];
+
 
     public function validateForms()
     {
@@ -135,24 +104,16 @@ class Detail extends Component
 
     protected function populateObjectArray()
     {
-        $objectData = [
-            'name' => $this->inputs['name'],
-            'email' => $this->inputs['email'],
-            'code' => $this->inputs['code'],
-            'dept' => $this->inputs['dept'] ?? "",
-            'phone' => $this->inputs['phone'] ?? ""
-        ];
-
-        if (!empty($this->inputs['password'])) {
-            $objectData['password'] = bcrypt($this->inputs['password']);
+        $objectData =  populateModelFromForm($this->object, $this->inputs);
+        if (!empty($this->inputs['newpassword'])) {
+            $objectData['password'] = bcrypt($this->inputs['newpassword']);
         }
-
         return $objectData;
     }
 
+
     public function Create()
     {
-        dd(   $this->inputs['applications'] );
         $this->validateForms();
         try {
             if (!$this->validatePassword()) {
@@ -171,9 +132,8 @@ class Detail extends Component
             //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "User", 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
             ]);
-            throw $e;
         }
     }
 
@@ -196,58 +156,50 @@ class Detail extends Component
                 'message' => Lang::get('generic.success.update', ['object' => $this->object->name])
             ]);
             $this->VersioNumber = $this->object->version_number;
+            $this->inputs['newpassword'] = "";
+            $this->inputs['confirmnewpassword'] = "";
         } catch (Exception $e) {
             //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
                 'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
-            throw $e;
         }
     }
 
-    public function Disable()
+    public function changeStatus()
     {
         try {
             $this->object->updateObject($this->VersioNumber);
-            $this->object->delete();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => $this->object->name])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => $this->object->name, 'message' => $e->getMessage()])
-            ]);
-        }
-        $this->dispatchBrowserEvent('refresh');
-    }
 
-    public function Enable()
-    {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-            $this->object->deleted_at = null;
+            if ($this->object->deleted_at) {
+                $this->object->deleted_at = null;
+                $messageKey = 'generic.success.enable';
+            } else {
+                $this->object->delete();
+                $messageKey = 'generic.success.disable';
+            }
+
             $this->object->save();
+
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.enable', ['object' => $this->object->name])
+                'message' => Lang::get($messageKey, ['object' => $this->object->name])
             ]);
         } catch (Exception $e) {
-            // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.enable', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }
+
         $this->dispatchBrowserEvent('refresh');
     }
 
     protected function validatePassword()
     {
         if ($this->action == 'Create') {
-            if (empty($this->inputs['password'])) {
+            if (empty($this->inputs['newpassword'])) {
                 $this->dispatchBrowserEvent('notify-swal', [
                     'type' => 'error',
                     'title' => Lang::get('generic.error.title'),
@@ -256,8 +208,8 @@ class Detail extends Component
                 return false;
             }
         }
-        if (!empty($this->inputs['password'])) {
-            if ($this->inputs['password'] !== $this->inputs['newpassword']) {
+        if (!empty($this->inputs['newpassword'])) {
+            if ($this->inputs['newpassword'] !== $this->inputs['confirmnewpassword']) {
                 $this->dispatchBrowserEvent('notify-swal', [
                     'type' => 'error',
                     'title' => Lang::get('generic.error.title'),

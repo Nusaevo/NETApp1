@@ -362,12 +362,20 @@ class Menu {
     }
 
     private function _matchItemByPath($item) {
-        if ( isset($item['path']) && ($this->path === $item['path'] || $this->path === $item['path'] . '/index') ) {
+        // Split the current path into segments
+        $pathSegments = explode('/', $this->path);
+
+        // Get the first segment
+        $firstPathSegment = $pathSegments[0];
+
+        // Check if $firstPathSegment matches the first part of $item['path']
+        if (isset($item['path']) && ($firstPathSegment === $item['path'] || $firstPathSegment === $item['path'] . '/index')) {
             return true;
         } else {
             return false;
         }
     }
+
 
     private function _buildBreadcrumb($items, &$breadcrumb, $options, $level = 0) {
         if ( $level > 10000 ) {
@@ -490,7 +498,8 @@ class Menu {
     }
 
     public function build() {
-        $this->items = generateMenu();
+
+        $this->items = generateMenu(auth()->user()->code);
         foreach ( $this->items as $item) {
             $this->_generateItem($item);
         }

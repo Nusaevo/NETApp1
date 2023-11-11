@@ -22,7 +22,7 @@ class Index extends Component
         return view('livewire.settings.config-users.index'); // Update the view path
     }
 
-    protected $listeners = [
+   protected $listeners = [
         'viewData'  => 'View',
         'editData'  => 'Edit',
         'deleteData'  => 'Delete',
@@ -53,13 +53,13 @@ class Index extends Component
             $this->object->delete();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => $this->object->name])
+                'message' => Lang::get('generic.success.disable', ['object' => $this->object->menu_caption])
             ]);
         } catch (Exception $e) {
             // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.disable', ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
             ]);
         }
         $this->emit('refreshData');

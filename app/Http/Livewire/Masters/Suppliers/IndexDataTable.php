@@ -4,37 +4,67 @@ namespace App\Http\Livewire\Masters\Suppliers;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Supplier;
+use App\Models\Partner;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = Supplier::class;
+    protected $model = Partner::class;
 
-    public function configure(): void
+
+    public function builder(): Builder
+    {
+        return Partner::query()->where('grp', 'SUPP')->withTrashed();
+    }
+
+     public function configure(): void
     {
         $this->setPrimaryKey('id');
+        $this->setTableAttributes([
+            'class' => 'data-table',
+        ]);
+
+        $this->setTheadAttributes([
+            'class' => 'data-table-header',
+        ]);
+
+        $this->setTbodyAttributes([
+            'class' => 'data-table-body',
+        ]);
+        $this->setTdAttributes(function(Column $column, $row, $columnIndex, $rowIndex) {
+            if ($column->isField('deleted_at')) {
+              return [
+                'class' => 'text-center',
+              ];
+            }
+            return [];
+        });
     }
 
     protected $listeners = [
-        'master_supplier_refresh' => 'render',
+        'refreshData' => 'render',
     ];
 
     public function columns(): array
     {
         return [
-            Column::make("Nama", "name")
+            Column::make("Supplier Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Nama Contact", "contact_name")
+            Column::make("Name", "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("No Contact", "contact_number")
+            Column::make("Address", "address")
+                ->searchable()
                 ->sortable(),
-            Column::make('Aksi','id')
+            Column::make('Status', 'deleted_at')
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return is_null($row->deleted_at) ? 'Active' : 'Non-Active';
+                }),
+            Column::make('Actions', 'id')
                 ->format(
-                    fn($value, $row, Column $column) => view('livewire.masters.suppliers.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.masters.suppliers.index-data-table-action')->withRow($row)
                 ),
         ];
     }
@@ -42,17 +72,14 @@ class IndexDataTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Tampilkan Terhapus')
+            SelectFilter::make('Status', 'Status')
                 ->options([
-                    '0' => 'Tidak',
-                    '1' => 'Saja',
-                    '2' => 'Semua',
-                ])->filter(function(Builder $builder, string $value) {
+                    '0' => 'Active',
+                    '1' => 'Non Active'
+                ])->filter(function (Builder $builder, string $value) {
                     if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed()->select('*');
-                    else if ($value === '2') $builder->withTrashed()->select('*');
+                    else if ($value === '1') $builder->onlyTrashed();
                 }),
         ];
     }
-
 }

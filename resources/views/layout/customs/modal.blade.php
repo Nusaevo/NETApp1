@@ -1,6 +1,6 @@
 <script>
     document.addEventListener('livewire:load', function() {
-        $(document).on('click', '.btn-delete', function(e) {
+        $(document).on('click', '.btn-dialog-box', function(e) {
             e.preventDefault();
             Swal.fire({
                 title: "Apakah Anda Yakin ingin melanjutkannya?",

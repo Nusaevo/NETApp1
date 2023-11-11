@@ -1,15 +1,21 @@
 <div id="page-card" class="container-xxl mb-5" >
     <div class="card shadow-sm">
-         <h3 class="p-5">{{ $title }}</h3>
+        @isset($title)
+            <h3 class="p-5">{{ $title }}</h3>
+        @endisset
         <div class="card-body">
-            @if (!empty($status))
-                <div class="d-flex justify-content-end">
-                    <div>
-                        <strong><h3>Status : {{ $status ?? 'Active' }}</h3></strong>
+            @isset($status)
+                @if (!empty($status))
+                    <div class="d-flex justify-content-end">
+                        <div>
+                            <strong><h3>Status : {{ $status }}</h3></strong>
+                        </div>
                     </div>
-                </div>
-            @endif
-            {{ $slot }}
+                @endif
+            @endisset
+            @isset($slot)
+                {{ $slot }}
+            @endisset
         </div>
     </div>
 </div>

@@ -71,7 +71,7 @@ class IndexDataTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Filter')
+            SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
                     '1' => 'Non Active'

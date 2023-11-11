@@ -54,9 +54,15 @@ class IndexDataTable extends DataTableComponent
                 ->searchable()
                 ->sortable(),
             Column::make("Application Code", "configAppls.code")
-                    ->searchable()
-                    ->sortable(),
+                 ->searchable()
+                 ->sortable(),
             Column::make("Application Name", "configAppls.name")
+                ->searchable()
+                ->sortable(),
+            Column::make("Login ID", "ConfigUsers.code")
+                ->searchable()
+                ->sortable(),
+            Column::make("User Name", "ConfigUsers.name")
                 ->searchable()
                 ->sortable(),
             Column::make("Name", "name")
@@ -77,7 +83,7 @@ class IndexDataTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Filter')
+            SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
                     '1' => 'Non Active'

@@ -5,17 +5,10 @@ namespace App\Models;
 use App\Core\Traits\SpatieLogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
-use App\Traits\BaseTrait;
+
 class UserInfo extends Model
 {
     use SpatieLogsActivity;
-    use BaseTrait;
-
-    protected $fillable = [
-        'company',
-        'phone',
-        'language',
-    ];
 
     /**
      * Prepare proper error handling for url attribute

@@ -7,10 +7,12 @@
             <div class="card">
                 <div class="card-body">
                     <x-ui-button
+                    visible="true"
+                    enabled="true"
                     click-event="{{ route('config_users.detail', ['action' => 'Create'])  }}"
                     cssClass="btn btn-success mb-5"
                     type="Route"
-                    :loading="true"
+                    loading="true"
                     iconPath="images/create-icon.png"
                     button-name="Create" />
 

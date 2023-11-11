@@ -3,15 +3,19 @@
 namespace App\Http\Livewire\Masters\Suppliers;
 
 use Livewire\Component;
-use App\Models\Supplier;
+use App\Models\Partner; // Import the ConfigGroup model
 use App\Traits\LivewireTrait;
-
+use Lang;
+use Exception;
 class Index extends Component
 {
     use LivewireTrait;
 
-    public $supplier;
-    public $inputs = ['name' => ''];
+    public $object;
+
+    public function mount()
+    {
+    }
 
     public function render()
     {
@@ -19,87 +23,44 @@ class Index extends Component
     }
 
     protected $listeners = [
-        'master_supplier_edit_mode'     => 'setEditMode',
-        'master_supplier_edit'          => 'edit',
-        'master_supplier_delete'        => 'delete',
-        'master_supplier_destroy'       => 'destroy'
+        'viewData'  => 'View',
+        'editData'  => 'Edit',
+        'deleteData'  => 'Delete',
+        'disableData'  => 'Disable',
+        'selectData'  => 'SelectObject',
     ];
 
-    protected function rules()
+    public function View($id)
     {
-            $_unique_exception = $this->is_edit_mode ? ','.$this->supplier->id : '';
-            return [
-                'inputs.name'             => 'required|string|min:1|max:128|unique:suppliers,name'. $_unique_exception,
-                'inputs.owner'          => 'nullable|string|min:3|max:128',
-                'inputs.phone'          => 'nullable|integer|digits_between:9,14'
-            ];
-    }
-    protected $messages = [
-        'inputs.*.required'       => ':attribute harus diisi.',
-        'inputs.*.string'         => ':attribute harus berupa teks.',
-        'inputs.*.integer'        => ':attribute harus berupa angka dan tidak ada nol didepan.',
-        'inputs.*.min'            => ':attribute tidak boleh kurang dari :min karakter.',
-        'inputs.*.max'            => ':attribute tidak boleh lebih dari :max karakter.',
-        'inputs.*.unique'         => ':attribute sudah ada.',
-        'inputs.*.boolean'        => ':attribute harus Benar atau Salah.',
-        'inputs.*.digits_between' => ':attribute harus diantara :min dan :max karakter.',
-        'inputs.*.exists'         => ':attribute tidak ada di master'
-    ];
-
-    protected $validationAttributes = [
-        'inputs.name'           => 'Nama Supplier',
-        'inputs.contact_name'      => 'Nama Kontak',
-        'inputs.contact_number'       => 'No Kontak'
-    ];
-
-    public function store()
-    {
-        $this->validate();
-        Supplier::create([
-            'name' => $this->inputs['name'],
-            'contact_name'=> $this->inputs['contact_name'],
-            'contact_number'=> $this->inputs['contact_number']
-        ]);
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil menambah penyuplai {$this->inputs['name']}."]);
-        $this->emit('master_supplier_refresh');
-        $this->reset('inputs');
+        return redirect()->route('suppliers.detail', ['action' => 'View', 'objectId' => $id]);
     }
 
-    public function edit($id)
+    public function Edit($id)
     {
-        $this->supplier = Supplier::findOrFail($id);
-        $this->inputs['name'] = $this->supplier->name;
-        $this->inputs['contact_name'] = $this->supplier->contact_name;
-        $this->inputs['contact_number'] = $this->supplier->contact_number;
-        $this->setEditMode(true);
+        return redirect()->route('suppliers.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
-    public function update()
+    public function SelectObject($id)
     {
-        $this->validate();
-
-        $this->supplier->update([
-            'name' => $this->inputs['name'],
-            'contact_name'=> $this->inputs['contact_name'],
-            'contact_number'=> $this->inputs['contact_number']
-        ]);
-        $this->setEditMode(false);
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil mengubah penyuplai {$this->supplier->name}."]);
-        $this->emit('master_supplier_refresh');
-        $this->reset('inputs');
+        $this->object = Partner::findOrFail($id);
     }
 
-    public function delete($id)
+    public function Disable()
     {
-        $this->setEditMode(false);
-        $this->supplier = Supplier::findOrFail($id);
+        try {
+            $this->object->updateObject($this->object->version_number);
+            $this->object->delete();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => Lang::get('generic.success.disable', ['object' => $this->object->name])
+            ]);
+        } catch (Exception $e) {
+            // Handle the exception
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => Lang::get('generic.error.disable', ['object' => $this->object->name, 'message' => $e->getMessage()])
+            ]);
+        }
+        $this->emit('refreshData');
     }
-
-    public function destroy()
-    {
-        $this->supplier->delete();
-        $this->dispatchBrowserEvent('notify-swal',['type' => 'success','title' => 'Berhasil','message' =>  "Berhasil menghapus penyuplai {$this->supplier->name}."]);
-        $this->emit('master_supplier_refresh');
-    }
-
 }

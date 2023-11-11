@@ -17,7 +17,6 @@ class Detail extends Component
     public $objectId;
     public $inputs = [];
     public $group_codes;
-    public $languages;
     public $status = '';
 
     public function mount($action, $objectId = null)
@@ -28,10 +27,7 @@ class Detail extends Component
             $this->object = ConfigAppl::withTrashed()->find($this->objectId);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
-            $this->inputs['code'] = $this->object->code;
-            $this->inputs['name'] = $this->object->name;
-            $this->inputs['descr'] = $this->object->descr;
-            $this->inputs['version'] = $this->object->version;
+            $this->inputs = populateArrayFromModel($this->object);
         } else {
             $this->object = new ConfigAppl();
         }
@@ -42,22 +38,26 @@ class Detail extends Component
         return view('livewire.settings.config-applications.edit');
     }
 
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
+
     protected function rules()
     {
         $rules = [
             'inputs.name' => 'required|string|min:1|max:100',
             'inputs.version' => 'string|min:1|max:15',
             'inputs.descr' => 'string|min:1|max:500',
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('config_appls', 'code')
-                    ->ignore($this->object->id)
-                    ->where(function ($query) {
-                    }),
-            ],
+            // 'inputs.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('config_appls', 'code')
+            //         ->ignore($this->object->id)
+            //         ->where(function ($query) {
+            //         }),
+            // ],
         ];
         return $rules;
     }
@@ -73,12 +73,8 @@ class Detail extends Component
 
     protected function populateObjectArray()
     {
-        return [
-            'name' => $this->inputs['name'],
-            'code' => $this->inputs['code'],
-            'version' => $this->inputs['version'] ?? "",
-            'descr' => $this->inputs['descr'] ?? "",
-        ];
+        $objectData =  populateModelFromForm($this->object, $this->inputs);
+        return $objectData;
     }
 
     public function Create()
@@ -127,40 +123,32 @@ class Detail extends Component
         }
     }
 
-    public function Disable()
+    public function changeStatus()
     {
         try {
             $this->object->updateObject($this->VersioNumber);
-            $this->object->delete();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => $this->object->name])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => $this->object->name, 'message' => $e->getMessage()])
-            ]);
-        }
-        $this->dispatchBrowserEvent('refresh');
-    }
 
-    public function Enable()
-    {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-            $this->object->deleted_at = null;
+            if ($this->object->deleted_at) {
+                $this->object->deleted_at = null;
+                $messageKey = 'generic.success.enable';
+            } else {
+                $this->object->delete();
+                $messageKey = 'generic.success.disable';
+            }
+
             $this->object->save();
+
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.enable', ['object' => $this->object->name])
+                'message' => Lang::get($messageKey, ['object' => $this->object->name])
             ]);
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.enable', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }
+
         $this->dispatchBrowserEvent('refresh');
     }
 }

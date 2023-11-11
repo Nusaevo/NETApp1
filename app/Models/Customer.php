@@ -13,19 +13,29 @@ class Customer extends Model
     use SoftDeletes;
     use ModelTrait;
 
-    protected $fillable = ['object_name','object_number','email','phone','address'];
+    protected $fillable = ['name', 'address', 'city', 'npwp', 'contact_name', 'contact_number', 'email', 'price_category_id'];
 
-    public function sales_orders(){
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($customer) {
+            $customer->price_category()->delete();
+        });
+    }
+
+    public function sales_orders()
+    {
         return $this->hasMany('App\Models\SalesOrder');
     }
 
-    public function price_category(){
+    public function price_category()
+    {
         return $this->belongsTo('App\Models\PriceCategory');
     }
 
-    public function sales_returns(){
+    public function sales_returns()
+    {
         return $this->hasMany('App\Models\SalesReturn');
     }
-
-
 }

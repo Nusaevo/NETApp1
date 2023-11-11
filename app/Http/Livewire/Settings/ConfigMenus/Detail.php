@@ -25,27 +25,12 @@ class Detail extends Component
     {
         $this->action = $action;
         $this->objectId = $objectId;
-
-        $applicationsData = ConfigAppl::GetActiveData();
-
-        $this->applications = $applicationsData->map(function ($data) {
-            return [
-                'label' => $data->code . ' - ' . $data->name,
-                'value' => $data->code,
-            ];
-        })->toArray();
-        $this->inputs['applications'] = $this->applications[0]['value'];
-
+        $this->refreshApplication();
         if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
             $this->object = ConfigMenu::withTrashed()->find($this->objectId);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
-            $this->inputs['code'] = $this->object->code;
-            $this->inputs['applications']  =  $this->object->appl_code;
-            $this->inputs['menu_header'] = $this->object->menu_header;
-            $this->inputs['sub_menu'] = $this->object->sub_menu;
-            $this->inputs['menu_caption'] = $this->object->menu_caption;
-            $this->inputs['link'] = $this->object->link;
+            $this->inputs = populateArrayFromModel($this->object);
         } else {
             $this->object = new ConfigMenu();
         }
@@ -56,20 +41,24 @@ class Detail extends Component
         return view('livewire.settings.config-menus.edit');
     }
 
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
+
     protected function rules()
     {
         $rules = [
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('config_appls', 'code')
-                    ->ignore($this->object->id)
-                    ->where(function ($query) {
-                    }),
-            ],
-            'inputs.applications' => 'required|string|min:1|max:50',
+            // 'inputs.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('config_appls', 'code')
+            //         ->ignore($this->object->id)
+            //         ->where(function ($query) {
+            //         }),
+            // ],
+            'inputs.appl_id' => 'required',
             'inputs.menu_header' => 'required|string|min:1|max:100',
             'inputs.sub_menu' => 'string|min:1|max:100',
             'inputs.menu_caption' => 'required|string|min:1|max:100',
@@ -82,29 +71,56 @@ class Detail extends Component
         'inputs'                => 'Input Menu',
         'inputs.*'              => 'Input Menu',
         'inputs.code'           => 'Menu Code',
-        'inputs.applications'      => 'Menu Application Code',
+        'inputs.appl_id'      => 'Menu Application',
         'inputs.menu_header'      => 'Menu Header',
         'inputs.sub_menu'      => 'Sub Menu',
         'inputs.menu_caption'      => 'Menu Caption',
         'inputs.link'      => 'Menu link'
     ];
 
+    public function refreshApplication()
+    {
+        $applicationsData = ConfigAppl::GetActiveData();
+        if (!$applicationsData->isEmpty()) {
+            $this->applications = $applicationsData->map(function ($data) {
+                return [
+                    'label' => $data->code . ' - ' . $data->name,
+                    'value' => $data->id,
+                ];
+            })->toArray();
+
+            $this->inputs['appl_id'] = $this->applications[0]['value'];
+        } else {
+            $this->applications = [];
+            $this->inputs['appl_id'] = null;
+        }
+    }
+
     protected function populateObjectArray()
     {
-        return [
-            'code' => $this->inputs['code'],
-            'appl_code' => $this->inputs['applications'],
-            'menu_header' => $this->inputs['menu_header'],
-            'sub_menu' => $this->inputs['sub_menu'] ?? "",
-            'menu_caption' => $this->inputs['menu_caption'],
-            'link' => $this->inputs['link']
-        ];
+        $objectData =  populateModelFromForm($this->object, $this->inputs);
+        $application = ConfigAppl::find($this->inputs['appl_id']);
+        $objectData['appl_code'] = $application->code;
+        return $objectData;
+    }
+
+    public function validateForms()
+    {
+        try {
+            $this->validate();
+        } catch (Exception $e) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
+            ]);
+            throw $e;
+        }
     }
 
     public function Create()
     {
+        $this->validateForms();
         try {
-            $this->validate();
             $objectData = $this->populateObjectArray();
             $this->object = ConfigMenu::create($objectData);
             $this->dispatchBrowserEvent('notify-swal', [
@@ -112,7 +128,7 @@ class Detail extends Component
                 'message' => Lang::get('generic.success.create', ['object' => $this->inputs['menu_caption']])
             ]);
             $this->inputs = [];
-            $this->inputs['applications'] = $this->applications[0]['value'];
+            $this->refreshApplication();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
@@ -123,9 +139,8 @@ class Detail extends Component
 
     public function Edit()
     {
+        $this->validateForms();
         try {
-            $this->validate();
-
             if ($this->object) {
                 $this->object->updateObject($this->VersioNumber);
                 $objectData = $this->populateObjectArray();
@@ -147,40 +162,32 @@ class Detail extends Component
         }
     }
 
-    public function Disable()
+    public function changeStatus()
     {
         try {
             $this->object->updateObject($this->VersioNumber);
-            $this->object->delete();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => $this->object->menu_caption])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
-            ]);
-        }
-        $this->dispatchBrowserEvent('refresh');
-    }
 
-    public function Enable()
-    {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-            $this->object->deleted_at = null;
+            if ($this->object->deleted_at) {
+                $this->object->deleted_at = null;
+                $messageKey = 'generic.success.enable';
+            } else {
+                $this->object->delete();
+                $messageKey = 'generic.success.disable';
+            }
+
             $this->object->save();
+
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.enable', ['object' => $this->object->menu_caption])
+                'message' => Lang::get($messageKey, ['object' => $this->object->name])
             ]);
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.enable', ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
             ]);
         }
+
         $this->dispatchBrowserEvent('refresh');
     }
 }

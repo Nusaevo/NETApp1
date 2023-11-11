@@ -11,7 +11,7 @@
                 <p class="card-text lead">
                     Thank you for joining our platform. We're excited to have you here!
                 </p>
-                <a href="#" class="btn btn-secondary btn-lg">Go to Your Sales Application</a>
+                {{-- <a href="#" class="btn btn-secondary btn-lg">Go to Your Sales Application</a> --}}
             </div>
         </div>
     </div>

@@ -1,9 +1,10 @@
-@include('layout.customs.data-table-action-detail-edit-delete', [
-    'enable_this_row' => !$row->trashed(),
-    'allow_details' => false,
+@include('layout.customs.data-table-action', [
+    'enable_this_row' => true,
+    'allow_details' => true,
     'allow_edit' => true,
-    'allow_delete' => true,
-    'wire_click_edit' => "\$emit('master_supplier_edit',  $row->id)",
-    'wire_click_delete' => "\$emit('master_supplier_delete',  $row->id)",
-    ]
-)
+    'allow_disable' => !$row->trashed(),
+    'allow_delete' => false,
+    'wire_click_show' => "\$emit('viewData',  $row->id)",
+    'wire_click_edit' => "\$emit('editData',  $row->id)",
+    'wire_click_disable' => "\$emit('selectData',  $row->id)",
+])

@@ -450,7 +450,7 @@ class Theme extends \App\Core\Theme
      */
     public function getMenu()
     {
-        $menus =  generateMenu();
+        $menus =  generateMenu("");
 
         $output = [];
 

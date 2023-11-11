@@ -16,6 +16,10 @@ class ConfigAppl extends Model
     {
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
+        static::creating(function ($model) {
+            $maxId = static::max('id') ?? 0;
+            $model->code = 'APPL' . ($maxId + 1);
+        });
     }
 
     protected $fillable = [
@@ -25,6 +29,19 @@ class ConfigAppl extends Model
         'descr',
         'status_code'
     ];
+
+    public function getAllColumns()
+    {
+        return $this->fillable;
+    }
+
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
 
     public function scopeGetActiveData()
     {

@@ -17,6 +17,10 @@ class ConfigMenu extends Model
     {
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
+        static::creating(function ($model) {
+            $maxId = static::max('id') ?? 0;
+            $model->code = 'MENU' . ($maxId + 1);
+        });
     }
 
     protected $fillable = [
@@ -29,6 +33,19 @@ class ConfigMenu extends Model
         'link',
         'status_code'
     ];
+
+    public function getAllColumns()
+    {
+        return $this->fillable;
+    }
+
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
 
     public function scopeGetActiveData()
     {

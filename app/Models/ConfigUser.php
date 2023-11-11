@@ -36,10 +36,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         'dept',
         'phone',
         'email',
-        'status_code',
-        'created_by',
-        'updated_by',
-        'version_number',
+        'status_code'
     ];
 
     /**
@@ -56,6 +53,20 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsTo('App\Models\ConfigGroup', 'group_code', 'code');
     }
+
+    public function getAllColumns()
+    {
+        return $this->fillable;
+    }
+
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
+
     /**
      * The attributes that should be cast to native types.
      *
@@ -88,6 +99,10 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         return asset(theme()->getMediaUrlPath().'avatars/blank.png');
     }
 
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('name', 'asc')->get();
+    }
     /**
      * User relation to info model
      *

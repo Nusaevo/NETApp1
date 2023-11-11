@@ -1,14 +1,15 @@
 <?php
 
 use App\Models\ConfigMenu;
+use Illuminate\Database\QueryException;
 
 if (!function_exists('generateMenu')) {
-    function generateMenu() {
+    function generateMenu($authCode) {
         $mainMenu = [
             [
                 'title' => 'Home',
-                'path'  => '',
-                'icon'  => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
+                'path' => '',
+                'icon' => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
             ],
             [
                 'classes' => ['content' => 'pt-8 pb-2'],
@@ -16,46 +17,75 @@ if (!function_exists('generateMenu')) {
             ],
         ];
 
-        //Retrieve menu items from the 'config_menus' table using the ConfigMenu model
-        $configMenus = ConfigMenu::all();
-        $uniqueMenuHeaders = [];
-        // Iterate through the $configMenus and create menu items
-        foreach ($configMenus as $configMenu) {
-            $menuHeader = $configMenu->menu_header;
+        try {
+            $configMenus = ConfigMenu::all();
 
-            // Check if the menu header is unique and hasn't been added before
-            if (!in_array($menuHeader, $uniqueMenuHeaders)) {
-                $uniqueMenuHeaders[] = $menuHeader;
+            if ($configMenus->isEmpty()) {
+                return $mainMenu;
+            }
 
-                $menuItem = [
-                    'title' => $menuHeader,
-                    'icon'  => [
-                        'svg'  => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
-                        'font' => '<i class="bi bi-person fs-2"></i>',
-                    ],
-                    'classes'    => ['item' => 'menu-accordion'],
-                    'attributes' => [
-                        'data-kt-menu-trigger' => 'click',
-                    ],
-                    'sub' => [
-                        'class' => 'menu-sub-accordion menu-active-bg',
-                        'items' => [],
-                    ],
-                ];
+            $uniqueMenuHeaders = [];
 
-                // Iterate through sub-menu items
-                foreach ($configMenus as $subMenu) {
-                    if ($subMenu->menu_header === $menuHeader) {
-                        $menuItem['sub']['items'][] = [
-                            'title'  => $subMenu->menu_caption,
-                            'path'   => $subMenu->link,
-                            'bullet' => '<span class="bullet bullet-dot"></span>',
+            foreach ($configMenus as $configMenu) {
+                $menuHeader = $configMenu->menu_header;
+
+                // Check permissions based on auth code
+                $allowed = false;
+
+                if ($authCode === 'andryhuang') {
+                    $allowed = true; // Show all menus
+                } elseif ($authCode === 'admingudang' && $menuHeader === 'Inventory') {
+                    $allowed = true;
+                } elseif ($authCode === 'admin' && in_array($menuHeader, ['Master', 'Setting', 'Transaction'])) {
+                    $allowed = true; // Show Master, Setting, Transaction headers
+                } elseif ($authCode === 'kasir' && $menuHeader === 'Transaction') {
+                    $allowed = true; // Show Transaction header
+                } elseif ($authCode === 'owner' && $menuHeader !== 'Config') {
+                    $allowed = true; // Show all except Config header
+                }
+
+                if ($allowed) {
+                    // Check if the menu header already exists in $uniqueMenuHeaders
+                    if (!in_array($menuHeader, $uniqueMenuHeaders)) {
+                        $uniqueMenuHeaders[] = $menuHeader;
+
+                        // Create and add the menu item
+                        $menuItem = [
+                            'title' => $menuHeader,
+                            'icon' => [
+                                'svg' => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
+                                'font' => '<i class="bi bi-person fs-2"></i>',
+                            ],
+                            'classes' => ['item' => 'menu-accordion'],
+                            'attributes' => [
+                                'data-kt-menu-trigger' => 'click',
+                            ],
+                            'sub' => [
+                                'class' => 'menu-sub-accordion menu-active-bg',
+                                'items' => [],
+                            ],
                         ];
+
+                        foreach ($configMenus as $subMenu) {
+                            if ($subMenu->menu_header === $menuHeader) {
+                                $menuItem['sub']['items'][] = [
+                                    'title' => $subMenu->menu_caption,
+                                    'path' => $subMenu->link,
+                                    'bullet' => '<span class="bullet bullet-dot"></span>',
+                                ];
+                            }
+                        }
+
+                        $mainMenu[] = $menuItem;
                     }
                 }
-                $mainMenu[] = $menuItem;
             }
+        } catch (QueryException $e) {
+            // Handle the case where the config_menus table doesn't exist
+            // You can log this error or handle it as needed
+            // Example: Log::error('Database table not found: ' . $e->getMessage());
         }
+
         return $mainMenu;
     }
 }

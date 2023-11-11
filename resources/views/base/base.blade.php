@@ -10,7 +10,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <link rel="shortcut icon" href="{{ asset(theme()->getDemo() . '/' .theme()->getOption('assets', 'favicon')) }}"/>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('css/pagebase.css') }}">
+
+    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/pagebase.css') }}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
@@ -116,20 +117,20 @@
 </html>
 <script>
     // Show the loader immediately when the page starts loading
-    function showLoader() {
-        document.getElementById('loader-container').style.display = 'block';
-    }
+    // function showLoader() {
+    //     document.getElementById('loader-container').style.display = 'block';
+    // }
 
-    // Hide the loader when the page content is ready
-    function hideLoader() {
-        document.getElementById('loader-container').style.display = 'none';
-    }
+    // // Hide the loader when the page content is ready
+    // function hideLoader() {
+    //     document.getElementById('loader-container').style.display = 'none';
+    // }
 
-    // Attach an event listener to hide the loader when the DOM is ready
-    document.addEventListener('DOMContentLoaded', showLoader);
+    // // Attach an event listener to hide the loader when the DOM is ready
+    // document.addEventListener('DOMContentLoaded', showLoader);
 
-    // Attach an event listener to hide the loader when the page is fully loaded
-    window.onload = function () {
-        hideLoader();
-    };
+    // // Attach an event listener to hide the loader when the page is fully loaded
+    // window.onload = function () {
+    //     hideLoader();
+    // };
 </script>

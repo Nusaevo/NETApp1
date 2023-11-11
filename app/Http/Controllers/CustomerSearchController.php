@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 
 class CustomerSearchController extends Controller
@@ -25,8 +26,9 @@ class CustomerSearchController extends Controller
         // ->get();
         if ($request->has('q')) {
             $search = $request->q;
-            $customer = Customer::select("id", "name", "price_category_id")
+            $customer = Partner::select("id", "name", "price_category_id")
                 ->where('name', 'LIKE', "%$search%")
+                ->where('grp', '=', "CUST")
                 ->get();
         }
         return response()->json($customer);

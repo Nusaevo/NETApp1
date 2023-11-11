@@ -5,6 +5,7 @@ use Illuminate\View\Component;
 
 class UITextFieldSearch extends Component
 {
+    public $clickEvent;
     public $label;
     public $model;
     public $enabled;
@@ -15,12 +16,15 @@ class UITextFieldSearch extends Component
     public $options;
     public $selectedValue;
     public $name;
+    public $action;
 
-    public function __construct($label, $model, $name, $enabled = true, $required = false, $visible = true,
-    $placeHolder = '', $options = [], $selectedValue = '', $span = 'Full')
+    public function __construct($clickEvent, $label ='', $model, $name, $enabled = 'true', $required = 'false', $visible = 'true',
+    $placeHolder = '', $options = [], $selectedValue = '', $span = 'Full', $action = '')
     {
+        $this->clickEvent = $clickEvent;
         $this->label = $label;
         $this->model = $model;
+        $this->action = $action;
         $this->enabled = $enabled;
         $this->required = $required;
         $this->visible = $visible;

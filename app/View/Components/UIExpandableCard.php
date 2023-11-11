@@ -11,7 +11,7 @@ class UIExpandableCard extends Component
     public $title;
     public $isOpen;
 
-    public function __construct($title = '',$id='' , $isOpen = false)
+    public function __construct($title = '',$id='' , $isOpen = "true")
     {
         $this->id = $id;
         $this->title = $title;

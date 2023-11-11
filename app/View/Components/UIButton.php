@@ -16,17 +16,14 @@ class UIButton extends Component
     public $iconPath;
     public $type;
 
-    public function __construct($clickEvent, $buttonName, $loading = false, $enabled = true, $visible = true,
-     $action = '', $cssClass = '', $iconPath = null, $type="")
+    public function __construct($clickEvent, $buttonName, $loading = 'true', $enabled = 'true',
+    $visible = 'true', $action = '', $cssClass = '', $iconPath = null, $type = "")
     {
         $this->clickEvent = $clickEvent;
         $this->buttonName = $buttonName;
-        $this->loading = $loading;
-        if ($action === 'View') {
-            $this->visible = false;
-        } else {
-            $this->visible = $visible;
-        }
+        $this->loading = $loading ?? "true";
+        $this->action = $action;
+        $this->visible = $visible;
         $this->cssClass = $cssClass;
         $this->enabled = $enabled;
         $this->iconPath = $iconPath;

@@ -18,7 +18,7 @@ class UIChecklist extends Component
         $this->label = $label;
         $this->options = $options;
         $this->name = $name;
-        if($action === 'View')
+        if($action == 'View')
         {
             $this->enabled = false;
         }else{

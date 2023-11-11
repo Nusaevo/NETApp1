@@ -6,9 +6,16 @@
         <div id="kt_content_container" class="container-xxl">
             <div class="card">
                 <div class="card-body">
-                    <a href="{{ route('config_rights.detail', ['action' => 'Create']) }}" class="btn btn-success mb-5">
-                        <i class="bi bi-file-earmark-plus-fill fs-2 me-2"></i> Create
-                    </a>
+                    <x-ui-button
+                    visible="true"
+                    enabled="true"
+                    click-event="{{ route('config_rights.detail', ['action' => 'Create'])  }}"
+                    cssClass="btn btn-success mb-5"
+                    type="Route"
+                    loading="true"
+                    iconPath="images/create-icon.png"
+                    button-name="Create" />
+
                     <div class="table-responsive">
                         @livewire('settings.config-rights.index-data-table')
                     </div>

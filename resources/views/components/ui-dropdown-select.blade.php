@@ -1,13 +1,54 @@
-<div class="mb-10" @if (!$visible) style="display: none;" @endif>
-    <label class="@if($required) required @endif">{{ $label }}</label>
-    <select name="{{ $name }}" wire:model="{{ $name }}" @if ($onChanged) wire:change="{{ $onChanged }}" @endif class="form-select @error($name) is-invalid @enderror" @if (!$enabled) disabled @endif @if ($required) required @endif>
-        @if (!is_null($options))
-            @foreach ($options as $option)
-                <option value="{{ $option['value'] }}" @if ($selectedValue == $option['value']) selected @endif>
-                    {{ $option['label'] }}
-                </option>
-            @endforeach
+<div wire:ignore.self
+    @if ((!empty($action) && $action !== 'View') || (isset($enabled) && $enabled !== 'false'))
+        class="mb-3 responsive-field full-width"
+    @else
+        class="mb-3" style="display: none;"
+    @endisset
+>
+    <!-- Label -->
+    @isset($label)
+        @if (!empty($label))
+            <div class="responsive-label">
+                <label class="@if(isset($required) && $required === 'true') required @endif">{{ $label }} :</label>
+            </div>
         @endif
-    </select>
-    @error($name) <div class="invalid-feedback">{{ $message }}</div> @enderror
+    @endisset
+
+    <div class="responsive-input-container">
+        <!-- Select Element -->
+        <select name="{{ isset($model) ? $model : '' }}" wire:model="{{ isset($model) ? $model : '' }}" @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif class="form-select @error($model) is-invalid @enderror" @if (isset($action) && $action === 'View' || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif>
+                @if (!is_null($options))
+                    @isset($selectedValue)
+                        @foreach ($options as $option)
+                            <option value="{{ $option['value'] }}" @if (isset($selectedValue) && $selectedValue == $option['value']) selected @endif>
+                                {{ $option['label'] }}
+                            </option>
+                        @endforeach
+                    @endisset
+                @endif
+        </select>
+
+        <!-- Refresh Button -->
+        @isset($clickEvent)
+        @if ((!empty($action) && $action !== 'View') || (isset($enabled) && $enabled !== 'false'))
+            <button type="button" wire:click="{{ $clickEvent }}" class="btn btn-secondary btn-sm"
+            data-toggle="tooltip" title="Refresh your search to get the latest data">
+                <span wire:loading.remove>
+                    <i class="bi bi-arrow-repeat"></i> <!-- Bootstrap refresh icon -->
+                </span>
+                <span wire:loading>
+                    <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+                </span>
+            </button>
+        @endif
+        @endisset
+    </div>
+
+    @isset($model)
+        @error($model)
+            <div class="responsive-error">
+                <span class="error text-danger">{{ $message }}</span>
+            </div>
+        @enderror
+    @endisset
 </div>
