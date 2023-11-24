@@ -11,6 +11,7 @@ class ConfigAppl extends Model
     use HasFactory, SoftDeletes;
     use BaseTrait;
     protected $table = 'config_appls';
+    protected $connection = 'config';
 
     public static function boot()
     {

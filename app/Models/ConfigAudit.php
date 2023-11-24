@@ -10,7 +10,8 @@ class ConfigAudit extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'config_audits'; // Update the table name
+    protected $table = 'config_audits';
+    protected $connection = 'config';
 
     protected $fillable = [
         'appl_code',

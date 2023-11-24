@@ -12,6 +12,7 @@ class ConfigMenu extends Model
     use BaseTrait;
 
     protected $table = 'config_menus';
+    protected $connection = 'config';
 
     public static function boot()
     {

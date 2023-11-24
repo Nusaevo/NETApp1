@@ -10,6 +10,7 @@ class ConfigRight extends Model
     use HasFactory, SoftDeletes;
     use BaseTrait;
     protected $table = 'config_rights';
+    protected $connection = 'config';
 
     public static function boot()
     {

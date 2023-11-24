@@ -10,6 +10,7 @@ class ConfigVar extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'config_vars';
+    protected $connection = 'config';
 
     protected $fillable = [
         'appl_code',

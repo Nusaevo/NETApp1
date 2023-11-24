@@ -10,7 +10,7 @@ class ConfigSnum extends Model
     use HasFactory, SoftDeletes;
 
     protected $table = 'config_snums';
-
+    protected $connection = 'config';
     protected $fillable = [
         'appl_code',
         'snum_group',

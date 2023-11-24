@@ -18,7 +18,8 @@ if (!function_exists('generateMenu')) {
         ];
 
         try {
-            $configMenus = ConfigMenu::all();
+            $appName = env('APP_NAME', 'DefaultAppName');
+            $configMenus = ConfigMenu::where('appl_code', $appName)->get();
 
             if ($configMenus->isEmpty()) {
                 return $mainMenu;
@@ -32,7 +33,7 @@ if (!function_exists('generateMenu')) {
                 // Check permissions based on auth code
                 $allowed = false;
 
-                if ($authCode === 'andryhuang' && $menuHeader === 'Config') {
+                if ($authCode === 'andryhuang') {
                     $allowed = true; // Show all menus
                 }
 

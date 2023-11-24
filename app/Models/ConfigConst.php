@@ -12,6 +12,7 @@ class ConfigConst extends Model
     use BaseTrait;
 
     protected $table = 'config_consts';
+    protected $connection = 'config';
 
     public static function boot()
     {

@@ -10,7 +10,8 @@ class ConfigGroup extends Model
     use HasFactory, SoftDeletes;
     use BaseTrait;
 
-    protected $table = 'config_groups'; // Update the table name
+    protected $table = 'config_groups';
+    protected $connection = 'config';
 
     public static function boot()
     {

@@ -132,41 +132,38 @@
         margin-left: 5px;
     }
 
-      /* Styles for half-width fields */
-      .responsive-field[span="Half"] {
+    .responsive-field[span="Half"] {
         float: left;
         width: 50%;
         box-sizing: border-box;
-        padding-right: 1%; /* Spacing between inline fields */
+        padding-right: 1%;
     }
 
-    /* Clear fix for half-width fields */
     .responsive-field[span="Half"]:nth-of-type(2n)::after {
         content: "";
         display: table;
         clear: both;
     }
 
-    /* Styles for full-width fields */
     .responsive-field[span="Full"] {
         width: 100%;
-        clear: both; /* Clear floats to ensure the field takes full width */
-        float: none; /* Avoid floating for full-width fields */
+        clear: both;
+        float: none;
         box-sizing: border-box;
     }
 
-    /* Ensures that the element following a full-width field starts on a new line */
     .responsive-field[span="Full"] + .responsive-field {
         clear: both;
     }
 }
-
-
-
-/* Error Messages */
 .error-message {
     color: #dc3545;
     font-size: 0.75rem;
     margin-top: 0.1rem;
     display: block;
+}
+.disabled-gray {
+    color: #808080;
+    background-color: #f0f0f0;
+    border-color: #d3d3d3;
 }
