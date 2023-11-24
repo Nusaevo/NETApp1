@@ -8,6 +8,7 @@ use App\Models\ConfigAppl;
 use App\Models\ConfigMenu;
 use App\Models\ConfigRight;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
@@ -16,8 +17,8 @@ class Detail extends Component
 {
     public $object;
     public $VersioNumber;
-    public $action = 'Create';
-    public $objectId;
+    public $actionValue = 'Create';
+    public $objectIdValue;
     public $inputs = [];
     public $applications;
     public $groups;
@@ -27,8 +28,7 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
+         $this->actionValue = Crypt::decryptString($action);
 
         $applicationsData = ConfigAppl::GetActiveData();
         $this->applications = $applicationsData->map(function ($data) {
@@ -53,8 +53,9 @@ class Detail extends Component
             'D' => false,
         ];
 
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = ConfigRight::withTrashed()->find($this->objectId);
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = ConfigRight::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs['application_code'] = $this->object->application_code;

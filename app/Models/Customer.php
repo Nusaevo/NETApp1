@@ -29,11 +29,6 @@ class Customer extends Model
         return $this->hasMany('App\Models\SalesOrder');
     }
 
-    public function price_category()
-    {
-        return $this->belongsTo('App\Models\PriceCategory');
-    }
-
     public function sales_returns()
     {
         return $this->hasMany('App\Models\SalesReturn');

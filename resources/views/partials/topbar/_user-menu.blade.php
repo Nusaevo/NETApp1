@@ -195,7 +195,7 @@
 
     <!--begin::Menu item-->
     <div class="menu-item px-5 my-1">
-        <a href="{{ route('config_users.detail', ['action' => 'Edit', 'objectId' => auth()->user()->id]) }}" class="menu-link px-5">
+        <a href="{{ route('config_users.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' =>Crypt::encryptString(auth()->user()->id)]) }}" class="menu-link px-5">
             {{ __('Account Settings') }}
         </a>
     </div>

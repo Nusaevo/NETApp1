@@ -5,20 +5,20 @@
 
     <div>
         <div>
-            <x-ui-button click-event="{{ route('config_groups.index') }}" type="Back" button-name="Back"/>
+            <x-ui-button click-event="" type="Back" button-name="Back"/>
         </div>
     </div>
 
-    <x-ui-page-card title="{{ $action }} Group" status="{{ $status }}">
+    <x-ui-page-card title="{{ $actionValue }} Group" status="{{ $status }}">
 
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
 
-        <form wire:submit.prevent="{{ $action }}" class="form w-100">
+        <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="UserCard" title="Group" :isOpen="true">
-                        <x-ui-text-field label="Group Code" model="inputs.code" type="text" :action="$action" required="true" enabled="false" placeHolder="" visible="true" span="Full"/>
-                        <x-ui-text-field label="Group Name" model="inputs.name" type="text" :action="$action" required="true" placeHolder="Enter Group Name" visible="true" span="Full"/>
+                        <x-ui-text-field label="Group Code" model="inputs.code" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="" visible="true" span="Full"/>
+                        <x-ui-text-field label="Group Name" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Group Name" visible="true" span="Full"/>
 
                         <x-ui-dropdown-select label="Application"
                         click-event="refreshApplication"
@@ -26,7 +26,7 @@
                         :options="$applications"
                         :selectedValue="$inputs['appl_id']"
                         required="true"
-                        :action="$action"
+                        :action="$actionValue"
                         span="Full"/>
 
                         <x-ui-text-field-search
@@ -37,7 +37,8 @@
                         placeHolder="Search User"
                         :options="$users"
                         :selectedValue="$inputs['user_id']"
-                        :action="$action"
+                        :action="$actionValue"
+                        required="true"
                         span="Full"/>
 
                     </x-ui-expandable-card>

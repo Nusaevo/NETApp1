@@ -15,8 +15,10 @@ class ItemSearchController extends Controller
             $search = $request->q;
             $item = Item::leftJoin('item_units', 'items.id', '=', 'item_units.item_id')
                 ->leftJoin('units', 'units.id', '=', 'item_units.unit_id')
-                ->where('items.name', 'LIKE', "%$search%")
                 ->select("item_units.id", DB::raw("CONCAT(items.name,'-',units.name) AS name"))
+                ->where('items.name', 'LIKE', "%$search%")
+                ->whereNull('items.deleted_at')
+                ->whereNull('item_units.deleted_at')
                 ->get();
         }
         return response()->json($item);

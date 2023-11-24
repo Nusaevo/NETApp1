@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\ConfigMenu;
 use App\Models\ConfigAppl;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
@@ -14,8 +15,8 @@ class Detail extends Component
 {
     public $object;
     public $VersioNumber;
-    public $action = 'Create';
-    public $objectId;
+    public $actionValue = 'Create';
+    public $objectIdValue;
     public $inputs = [];
     public $applications;
     public $languages;
@@ -23,11 +24,11 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
+        $this->actionValue = Crypt::decryptString($action);
         $this->refreshApplication();
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = ConfigMenu::withTrashed()->find($this->objectId);
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = ConfigMenu::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
@@ -48,16 +49,6 @@ class Detail extends Component
     protected function rules()
     {
         $rules = [
-            // 'inputs.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('config_appls', 'code')
-            //         ->ignore($this->object->id)
-            //         ->where(function ($query) {
-            //         }),
-            // ],
             'inputs.appl_id' => 'required',
             'inputs.menu_header' => 'required|string|min:1|max:100',
             'inputs.sub_menu' => 'string|min:1|max:100',
@@ -127,7 +118,7 @@ class Detail extends Component
                 'type' => 'success',
                 'message' => Lang::get('generic.success.create', ['object' => $this->inputs['menu_caption']])
             ]);
-            $this->inputs = [];
+            $this->reset('inputs');
             $this->refreshApplication();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [

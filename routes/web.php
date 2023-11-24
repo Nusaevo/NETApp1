@@ -10,15 +10,6 @@ use App\Http\Controllers\UsersController;
 
 use App\Http\Livewire\Settings\ConfigUsers\Index as ConfigUsersIndex;
 use App\Http\Livewire\Settings\ConfigUsers\Detail as ConfigUsersDetail;
-use App\Http\Livewire\Settings\ConfigGroups\Index as ConfigGroupIndex;
-use App\Http\Livewire\Settings\ConfigGroups\Detail as ConfigGroupDetail;
-use App\Http\Livewire\Settings\ConfigMenus\Index as ConfigMenuIndex;
-use App\Http\Livewire\Settings\ConfigMenus\Detail as ConfigMenuDetail;
-use App\Http\Livewire\Settings\ConfigApplications\Index as ConfigApplicationIndex;
-use App\Http\Livewire\Settings\ConfigApplications\Detail as ConfigApplicationDetail;
-use App\Http\Livewire\Settings\ConfigRights\Index as ConfigRightIndex;
-use App\Http\Livewire\Settings\ConfigRights\Detail as ConfigRightDetail;
-
 
 use App\Http\Livewire\Masters\Customers\Index as CustomerIndex;
 use App\Http\Livewire\Masters\Customers\Detail as CustomerDetail;
@@ -41,8 +32,8 @@ use App\Http\Livewire\Transactions\PurchasesOrders\Detail as PurchasesOrderDetai
 use App\Http\Livewire\Transactions\PurchasesDeliveries\Index as PurchasesDeliveryIndex;
 use App\Http\Livewire\Transactions\PurchasesDeliveries\Detail as PurchasesDeliveryDetail;
 
-use App\Http\Livewire\Masters\Items\Index as ItemIndex;
-use App\Http\Livewire\Masters\Items\Detail as ItemDetail;
+use App\Http\Livewire\Masters\Materials\Index as MaterialIndex;
+use App\Http\Livewire\Masters\Materials\Detail as MaterialDetail;
 
 use App\Http\Livewire\Masters\ItemPrices\Index as ItemPriceIndex;
 use App\Http\Livewire\Masters\ItemPriceLogs\Index as ItemPriceLogIndex;
@@ -122,25 +113,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/detail/{action}/{objectId?}', ConfigUsersDetail::class)->name('detail');
     });
 
-    Route::prefix('config_groups')->name('config_groups.')->group(function () {
-        Route::get('/', ConfigGroupIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', ConfigGroupDetail::class)->name('detail');
-    });
-
-    Route::prefix('config_menus')->name('config_menus.')->group(function () {
-        Route::get('/', ConfigMenuIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', ConfigMenuDetail::class)->name('detail');
-    });
-
-    Route::prefix('config_applications')->name('config_applications.')->group(function () {
-        Route::get('/', ConfigApplicationIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', ConfigApplicationDetail::class)->name('detail');
-    });
-
-    Route::prefix('config_rights')->name('config_rights.')->group(function () {
-        Route::get('/', ConfigRightIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', ConfigRightDetail::class)->name('detail');
-    });
 
     Route::prefix('customers')->name('customers.')->group(function () {
         Route::get('/', CustomerIndex::class)->name('index');
@@ -152,9 +124,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/detail/{action}/{objectId?}', SupplierDetail::class)->name('detail');
     });
 
-    Route::prefix('items')->name('items.')->group(function () {
-        Route::get('/', ItemIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', ItemDetail::class)->name('detail');
+    Route::prefix('materials')->name('materials.')->group(function () {
+        Route::get('/', MaterialIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', MaterialDetail::class)->name('detail');
         // Route::prefix('detail')->name('detail.')->group(function () {
         //     Route::get('/printbarcode/{id}', ItemPrintBarcode::class)->name('print_barcode');
         // });

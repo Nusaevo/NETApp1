@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Customers;
+namespace App\Http\Livewire\Masters\Materials;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Partner;
+use App\Models\Material;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = Partner::class;
+    protected $model = Material::class;
 
 
-    public function builder(): Builder
+    public function mount(): void
     {
-        return Partner::query()->where('grp', 'CUST')->withTrashed();
+        $this->setSort('id', 'desc');
     }
 
      public function configure(): void
@@ -48,13 +48,10 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Customer Code", "code")
+            Column::make("Id", "id")
                 ->searchable()
                 ->sortable(),
             Column::make("Name", "name")
-                ->searchable()
-                ->sortable(),
-            Column::make("Address", "address")
                 ->searchable()
                 ->sortable(),
             Column::make('Status', 'deleted_at')
@@ -72,14 +69,14 @@ class IndexDataTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Status', 'Status')
-                ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
-                }),
+            // SelectFilter::make('Status', 'Status')
+            //     ->options([
+            //         '0' => 'Active',
+            //         '1' => 'Non Active'
+            //     ])->filter(function (Builder $builder, string $value) {
+            //         if ($value === '0') $builder->withoutTrashed();
+            //         else if ($value === '1') $builder->onlyTrashed();
+            //     }),
         ];
     }
 }

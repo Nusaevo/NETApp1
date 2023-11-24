@@ -13,7 +13,6 @@ class CreatePartnersTable extends Migration
         Schema::create('partners', function (Blueprint $table) {
             $this->generateDefaultColumns($table);
             $table->string('grp', 5)->default('');
-            $table->string('code', 20)->default('');
             $table->string('name', 50)->default('');
             $table->string('name_prefix', 5)->default('');
             $table->string('type_code', 5)->default('');
@@ -37,7 +36,6 @@ class CreatePartnersTable extends Migration
             $table->decimal('amt_bal', 19, 4)->default(0);
             $table->string('status_code', 1)->default('');
             $table->unique(['grp', 'code']);
-            $table->foreignId('price_category_id')->constrained();
             $this->generateDefaultTimeStamp($table);
         });
     }

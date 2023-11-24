@@ -23,11 +23,12 @@
                         :options="$applications"
                         :selectedValue="$inputs['appl_id']"
                         required="true"
-                        :action="$actionValue"/>
-                        <x-ui-text-field label="Menu Header" model="inputs.menu_header" type="text" :action="$actionValue" required="true" placeHolder="Enter Menu Header" visible="true" span="Full"/>
-                        <x-ui-text-field label="Sub Menu" model="inputs.sub_menu" type="text" :action="$actionValue" required="false" placeHolder="Enter Sub Menu" visible="true" span="Full"/>
-                        <x-ui-text-field label="Menu Caption" model="inputs.menu_caption" type="text" :action="$actionValue" required="true" placeHolder="Enter Menu Caption" visible="true" span="Full"/>
-                        <x-ui-text-field label="Link" model="inputs.link" type="text" :action="$actionValue" required="true" placeHolder="Enter Menu Link" visible="true" span="Full"/>
+                        :action="$actionValue" />
+                        <x-ui-text-field label="Str1" model="inputs.str1" type="text" :action="$actionValue" required="true" placeHolder="" visible="true" span="Full"/>
+                        <x-ui-text-field label="Str2" model="inputs.str2" type="text" :action="$actionValue" required="true" placeHolder="" visible="true" span="Full"/>
+                        <x-ui-text-field label="Num1" model="inputs.num1" type="number" :action="$actionValue" required="false" placeHolder="" visible="true" span="Full"/>
+                        <x-ui-text-field label="Num2" model="inputs.num2" type="number" :action="$actionValue" required="false" placeHolder="" visible="true" span="Full"/>
+                        <x-ui-text-field label="Note1" model="inputs.note1" type="textarea" :action="$actionValue" required="false" placeHolder="" visible="true" span="Full"/>
                     </x-ui-expandable-card>
                 </div>
             </x-ui-tab-view-content>

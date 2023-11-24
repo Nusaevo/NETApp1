@@ -9,7 +9,7 @@
                     <x-ui-button
                     visible="true"
                     enabled="true"
-                    click-event="{{ route('config_groups.detail', ['action' => Crypt::encryptString('Create')])  }}"
+                    click-event="{{ route('materials.detail', ['action' => 'Create'])  }}"
                     cssClass="btn btn-success mb-5"
                     type="Route"
                     loading="true"
@@ -17,7 +17,7 @@
                     button-name="Create" />
 
                     <div class="table-responsive">
-                        @livewire('settings.config-groups.index-data-table')
+                        @livewire('masters.materials.index-data-table')
                     </div>
                 </div>
             </div>

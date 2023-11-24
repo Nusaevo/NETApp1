@@ -7,7 +7,7 @@
     </a>
 @elseif(isset($type) && $type == 'Back')
     <div>
-        <a href="{{ isset($clickEvent) ? $clickEvent : '' }}" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
+        <a href="javascript:history.back()" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
             <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Back
         </a>
     </div>

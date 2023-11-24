@@ -8,6 +8,7 @@ use App\Models\ConfigUserInfo;
 use App\Models\ConfigGroup;
 use Illuminate\Validation\Rule;
 use App\Models\ConfigAppl;
+use Illuminate\Support\Facades\Crypt;
 
 use Lang;
 use Exception;
@@ -17,18 +18,18 @@ class Detail extends Component
 {
     public $object;
     public $VersioNumber;
-    public $action = 'Create';
-    public $objectId;
+    public $actionValue = 'Create';
+    public $objectIdValue;
     public $inputs = ['name' => ''];
     public $groups;
     public $status = '';
 
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = ConfigUser::withTrashed()->find($this->objectId);
+        $this->actionValue = Crypt::decryptString($action);
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
@@ -198,7 +199,7 @@ class Detail extends Component
 
     protected function validatePassword()
     {
-        if ($this->action == 'Create') {
+        if ($this->actionValue == 'Create') {
             if (empty($this->inputs['newpassword'])) {
                 $this->dispatchBrowserEvent('notify-swal', [
                     'type' => 'error',

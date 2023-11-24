@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Settings\ConfigApplications;
 use Livewire\Component;
 use App\Models\ConfigAppl;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
@@ -13,18 +14,18 @@ class Detail extends Component
 {
     public $object;
     public $VersioNumber;
-    public $action = 'Create';
-    public $objectId;
+    public $actionValue = 'Create';
+    public $objectIdValue;
     public $inputs = [];
     public $group_codes;
     public $status = '';
 
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = ConfigAppl::withTrashed()->find($this->objectId);
+        $this->actionValue = Crypt::decryptString($action);
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = ConfigAppl::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
@@ -87,7 +88,7 @@ class Detail extends Component
                 'type' => 'success',
                 'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
             ]);
-            $this->inputs = [];
+            $this->reset('inputs');
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

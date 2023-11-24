@@ -7,6 +7,7 @@ use App\Models\ConfigGroup;
 use App\Models\ConfigAppl;
 use App\Models\ConfigUser;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
@@ -15,8 +16,8 @@ class Detail extends Component
 {
     public $object;
     public $VersioNumber;
-    public $action = 'Create';
-    public $objectId;
+    public $actionValue = 'Create';
+    public $objectIdValue;
     public $inputs = [];
     public $status = '';
     public $applications;
@@ -24,13 +25,13 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
+        $this->actionValue = Crypt::decryptString($action);
 
         $this->refreshApplication();
         $this->refreshUser();
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = ConfigGroup::withTrashed()->find($this->objectId);
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
@@ -67,7 +68,7 @@ class Detail extends Component
                     'value' => $data->id,
                 ];
             })->toArray();
-            $this->inputs['user_id'] = '';
+            $this->inputs['user_id']='';
         } else {
             $this->users = [];
             $this->inputs['user_id'] = null;
@@ -87,19 +88,9 @@ class Detail extends Component
     protected function rules()
     {
         $rules = [
-            'inputs.appl_id' => 'required',
-            'inputs.user_id' => 'required',
+            'inputs.appl_id' =>  'required',
+            'inputs.user_id' =>  'required',
             'inputs.name' => 'required|string|min:1|max:100',
-            // 'inputs.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('config_groups', 'code')
-            //         ->ignore($this->object->id)
-            //         ->where(function ($query) {
-            //         }),
-            // ],
         ];
         return $rules;
     }

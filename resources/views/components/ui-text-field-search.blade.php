@@ -1,9 +1,4 @@
-<div wire:ignore.self
-    @if ((!empty($action) && $action !== 'View') || (isset($enabled) && $enabled !== 'false'))
-        class="mb-3 responsive-field full-width"
-    @else
-        class="mb-3" style="display: none;"
-    @endisset
+<div class="mb-3 responsive-field"
 >
     <!-- Label -->
     @isset($label)
@@ -14,82 +9,55 @@
         @endif
     @endisset
 
-    <div class="responsive-input-container">
-        <!-- Select Element -->
-        <select id="{{ isset($name) ? $name : '' }}" wire:key="select-{{ isset($name) ? $name : '' }}"
-            class="form-select responsive-input
-            @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false') ||
-            (isset($action) && $action !== 'View' && empty($enabled))) disabled @endif"
-            wire:ignore data-toggle="tooltip" title="Select an option"
-            @if (isset($enabled) && $enabled === 'false') disabled @endif>
-            <option selected value="">-- Select option --</option>
-            @if (!is_null($options))
-                @isset($selectedValue)
+    <!-- Select Element -->
+    <div class="text-field-container">
+        <div class="responsive-input-container">
+            <select id="{{ isset($name) ? $name : 'defaultSelect' }}"
+                    class="form-select responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
+                    wire:model="{{ $model }}" data-toggle="tooltip" title="Select an option"
+                    @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
+                @if (!is_null($options))
                     @foreach ($options as $option)
-                        <option value="{{ $option['value'] }}"
-                        @if(isset($selectedValue) && $option['value'] == $selectedValue) selected @endif>
-                            {{ $option['label'] }}
-                        </option>
+                        <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
                     @endforeach
-                @endisset
-            @endif
-        </select>
+                @endif
+            </select>
+
+            @error($model)
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
         <!-- Refresh Button -->
-        @isset($clickEvent)
-        @if ((!empty($action) && $action !== 'View') || (isset($enabled) && $enabled !== 'false'))
-            <button type="button" wire:click="{{ $clickEvent }}" class="btn btn-secondary btn-sm"
-            data-toggle="tooltip" title="Refresh your search to get the latest data">
-                <span wire:loading.remove>
-                    <i class="bi bi-arrow-repeat"></i> <!-- Bootstrap refresh icon -->
-                </span>
-                <span wire:loading>
-                    <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
-                </span>
+        @if (isset($clickEvent) && $clickEvent !== '')
+            <button id="refreshButton" type="button" wire:click="{{ $clickEvent }}" class="btn btn-secondary btn-sm"
+                    data-toggle="tooltip" title="Refresh your search to get the latest data"
+                    @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
+                <i class="bi bi-arrow-repeat"></i>
             </button>
         @endif
-        @endisset
     </div>
-
-    @isset($model)
-        @error($model)
-            <div class="responsive-error">
-                <span class="error text-danger">{{ $message }}</span>
-            </div>
-        @enderror
-    @endisset
 </div>
+
 <script>
-    document.addEventListener('livewire:load', function () {
+    document.addEventListener('livewire:load', function() {
+        var initializeSelect2 = function() {
+            var selectId = '{{ isset($name) ? $name : 'defaultSelect' }}';
+            var isEnabled = '{{ isset($action) && $action === 'View' || (isset($enabled) && $enabled === 'false') }}';
+
+            if (!isEnabled) {
+                $('#' + selectId).select2();
+                $('#' + selectId).on('change', function(e) {
+                    var data = $(this).select2("val");
+                    @this.set('{{ $model }}', data);
+                });
+            }
+        };
+
         initializeSelect2();
 
         Livewire.hook('message.processed', (message, component) => {
             initializeSelect2();
         });
-
-        function initializeSelect2() {
-            var selectElement = $('#{{ isset($name) ? $name : '' }}');
-            var placeholder = '{{ isset($placeHolder) ? $placeHolder : '' }}';
-
-            if ($.data(selectElement[0], 'select2')) {
-                selectElement.select2('destroy');
-            }
-
-            @if ((!empty($action) && $action !== 'View') || (isset($enabled) && $enabled !== 'false'))
-            selectElement.select2({
-                placeholder: placeholder,
-            }).on('change', function(e) {
-                @if(isset($model))
-                    @this.set('{{ $model }}', e.target.value);
-                @endif
-            });
-            @endif
-
-            @isset($clickEvent)
-                selectElement.on('click', function() {
-                    Livewire.emit('{{ $clickEvent }}');
-                });
-            @endisset
-        }
     });
 </script>

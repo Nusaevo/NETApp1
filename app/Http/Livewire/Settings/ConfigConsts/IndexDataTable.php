@@ -1,20 +1,27 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Customers;
+namespace App\Http\Livewire\Settings\ConfigConsts;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Partner;
+use App\Models\ConfigConst;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = Partner::class;
+    protected $model = ConfigConst::class;
 
+    public function mount(): void
+    {
+        $this->setSort('id', 'desc');
+        $this->setFilter('Status', 0);
+    }
 
     public function builder(): Builder
     {
-        return Partner::query()->where('grp', 'CUST')->withTrashed();
+        return ConfigConst::query()
+            ->withTrashed()
+            ->select();
     }
 
      public function configure(): void
@@ -48,15 +55,27 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Customer Code", "code")
+            Column::make("Const Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Name", "name")
+            Column::make("Application Code", "configAppls.name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Address", "address")
+            Column::make("Seq", "seq")
                 ->searchable()
                 ->sortable(),
+            Column::make("Str1", "str1")
+                ->searchable()
+                ->sortable(),
+            Column::make("Str2", "str2")
+                ->searchable()
+                ->sortable(),
+           Column::make("Num1", "num1")
+                 ->searchable()
+                 ->sortable(),
+            Column::make("Num2", "num2")
+                 ->searchable()
+                 ->sortable(),
             Column::make('Status', 'deleted_at')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
@@ -64,7 +83,7 @@ class IndexDataTable extends DataTableComponent
                 }),
             Column::make('Actions', 'id')
                 ->format(
-                    fn ($value, $row, Column $column) => view('livewire.masters.customers.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.settings.config-consts.index-data-table-action')->withRow($row)
                 ),
         ];
     }

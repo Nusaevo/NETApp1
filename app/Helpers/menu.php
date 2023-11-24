@@ -32,16 +32,8 @@ if (!function_exists('generateMenu')) {
                 // Check permissions based on auth code
                 $allowed = false;
 
-                if ($authCode === 'andryhuang') {
+                if ($authCode === 'andryhuang' && $menuHeader === 'Config') {
                     $allowed = true; // Show all menus
-                } elseif ($authCode === 'admingudang' && $menuHeader === 'Inventory') {
-                    $allowed = true;
-                } elseif ($authCode === 'admin' && in_array($menuHeader, ['Master', 'Setting', 'Transaction'])) {
-                    $allowed = true; // Show Master, Setting, Transaction headers
-                } elseif ($authCode === 'kasir' && $menuHeader === 'Transaction') {
-                    $allowed = true; // Show Transaction header
-                } elseif ($authCode === 'owner' && $menuHeader !== 'Config') {
-                    $allowed = true; // Show all except Config header
                 }
 
                 if ($allowed) {

@@ -11,6 +11,11 @@ class IndexDataTable extends DataTableComponent
 {
     protected $model = ConfigMenu::class;
 
+    public function mount(): void
+    {
+        $this->setSort('id', 'desc');
+        $this->setFilter('Status', 0);
+    }
 
     public function builder(): Builder
     {

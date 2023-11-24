@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Settings\ConfigUsers;
 use Livewire\Component;
 use App\Models\ConfigUser; // Import the User model
 use App\Traits\LivewireTrait;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 class Index extends Component
@@ -33,12 +34,12 @@ class Index extends Component
 
     public function View($id)
     {
-        return redirect()->route('config_users.detail', ['action' => 'View', 'objectId' => $id]);
+        return redirect()->route('config_users.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);
     }
 
     public function Edit($id)
     {
-        return redirect()->route('config_users.detail', ['action' => 'Edit', 'objectId' => $id]);
+        return redirect()->route('config_users.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' => Crypt::encryptString($id)]);
     }
 
     public function SelectObject($id)

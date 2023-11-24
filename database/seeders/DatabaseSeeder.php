@@ -14,10 +14,10 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            UsersSeeder::class,
-            ConfigApplsTableSeeder::class,
-            ConfigGroupsTableSeeder::class,
-            ConfigMenusTableSeeder::class
+            // UsersSeeder::class,
+            // ConfigApplsTableSeeder::class,
+            // ConfigGroupsTableSeeder::class,
+            // ConfigMenusTableSeeder::class
         ]);
     }
 }

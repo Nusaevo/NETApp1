@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\Settings\ConfigApplications;
+namespace App\Http\Livewire\Masters\Materials;
 
 use Livewire\Component;
-use App\Models\ConfigAppl; // Import the ConfigGroup model
+use App\Models\Material;
 use App\Traits\LivewireTrait;
-use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 class Index extends Component
@@ -20,7 +19,7 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.settings.config-applications.index');
+        return view('livewire.masters.materials.index');
     }
 
     protected $listeners = [
@@ -33,17 +32,17 @@ class Index extends Component
 
     public function View($id)
     {
-        return redirect()->route('config_applications.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('materials.detail', ['action' => 'View', 'objectId' => $id]);
     }
 
     public function Edit($id)
     {
-        return redirect()->route('config_applications.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('materials.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
     public function SelectObject($id)
     {
-        $this->object = ConfigAppl::findOrFail($id);
+        $this->object = Material::findOrFail($id);
     }
 
     public function Disable()

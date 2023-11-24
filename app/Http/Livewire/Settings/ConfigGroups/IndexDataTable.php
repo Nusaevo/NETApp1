@@ -11,6 +11,11 @@ class IndexDataTable extends DataTableComponent
 {
     protected $model = ConfigGroups::class;
 
+    public function mount(): void
+    {
+        $this->setSort('id', 'desc');
+        $this->setFilter('Status', 0);
+    }
 
     public function builder(): Builder
     {
@@ -19,7 +24,7 @@ class IndexDataTable extends DataTableComponent
             ->select();
     }
 
-     public function configure(): void
+    public function configure(): void
     {
         $this->setPrimaryKey('id');
         $this->setTableAttributes([

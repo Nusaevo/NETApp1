@@ -12,6 +12,12 @@ class IndexDataTable extends DataTableComponent
 {
     protected $model = User::class;
 
+    public function mount(): void
+    {
+        $this->setSort('id', 'desc');
+        $this->setFilter('Status', 0);
+    }
+
     public function builder(): Builder
     {
         return ConfigUser::query()
@@ -50,6 +56,9 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
+            Column::make("Username", "code")
+                ->searchable()
+                ->sortable(),
             Column::make("Name", "name")
                 ->searchable()
                 ->sortable(),

@@ -29,6 +29,7 @@ class CustomerSearchController extends Controller
             $customer = Partner::select("id", "name", "price_category_id")
                 ->where('name', 'LIKE', "%$search%")
                 ->where('grp', '=', "CUST")
+                ->whereNull('deleted_at')
                 ->get();
         }
         return response()->json($customer);

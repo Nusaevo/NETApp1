@@ -22,14 +22,6 @@
 
                         <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$action" required="true" placeHolder="Enter Name" />
 
-                        <x-ui-dropdown-select label="Price Category"
-                        click-event="refreshPriceCategory"
-                        model="inputs.price_category_id"
-                        :options="$price_categories"
-                        :selectedValue="$inputs['price_category_id']"
-                        required="true"
-                        :action="$action"/>
-
                         <x-ui-text-field label="Address" model="inputs.address" type="textarea" :action="$action" placeHolder="" />
                         <x-ui-text-field label="City" model="inputs.city" type="text" :action="$action" placeHolder="" />
                         <x-ui-text-field label="Country" model="inputs.country" type="text" action="$action" placeHolder="" />
