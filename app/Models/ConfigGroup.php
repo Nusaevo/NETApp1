@@ -19,7 +19,7 @@ class ConfigGroup extends Model
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
             $maxId = static::max('id') ?? 0;
-            $model->code = 'GROUP' . ($maxId + 1);
+            $model->code = 'GROUP' ."_". ($maxId + 1);
         });
     }
 

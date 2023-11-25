@@ -19,7 +19,7 @@ class ConfigAppl extends Model
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
             $maxId = static::max('id') ?? 0;
-            $model->code = 'APPL' . ($maxId + 1);
+            $model->code = 'APPL' ."_". ($maxId + 1);
         });
     }
 

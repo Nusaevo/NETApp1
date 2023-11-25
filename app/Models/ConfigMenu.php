@@ -20,7 +20,7 @@ class ConfigMenu extends Model
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
             $maxId = static::max('id') ?? 0;
-            $model->code = 'MENU' . ($maxId + 1);
+            $model->code = 'MENU' ."_". ($maxId + 1);
         });
     }
 

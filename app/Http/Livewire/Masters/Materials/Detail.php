@@ -109,7 +109,6 @@ class Detail extends Component
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
-
     }
 
 
@@ -125,6 +124,7 @@ class Detail extends Component
             throw $e;
         }
     }
+
     public function validateUnits()
     {
         if (!empty($this->input_details)) {
@@ -144,7 +144,6 @@ class Detail extends Component
             }
         }
     }
-
 
     public function Create()
     {
@@ -199,9 +198,6 @@ class Detail extends Component
             ]);
         }
     }
-
-
-
 
     public function Edit()
     {

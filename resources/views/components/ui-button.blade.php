@@ -6,11 +6,23 @@
         {{ isset($buttonName) ? $buttonName : 'button' }}
     </a>
 @elseif(isset($type) && $type == 'Back')
-    <div>
-        <a href="javascript:history.back()" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2">
-            <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Back
-        </a>
-    </div>
+<div>
+    <a onclick="backToPreviousUrl()" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2" id="backButton">
+        <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Back
+    </a>
+</div>
+<script>
+    var backButton = document.getElementById("backButton");
+
+    function backToPreviousUrl() {
+        if (!backButton.disabled) {
+            backButton.disabled = true;
+            var previousUrl = document.referrer;
+            history.back();
+        }
+    }
+</script>
+
 @else
     @if (isset($action) && $action !== 'View')
         @if (isset($loading) && $loading === 'true')
