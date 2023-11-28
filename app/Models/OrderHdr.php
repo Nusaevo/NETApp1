@@ -32,7 +32,6 @@ class OrderHdr extends Model
         'deliv_by',
         'payment_term_id',
         'payment_term',
-        'amt',
         'discount',
         'curr_id',
         'curr_code',

@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Transactions\PurchasesOrders;
 use Livewire\Component;
 use App\Models\OrderHdr;
 use App\Traits\LivewireTrait;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 class Index extends Component
@@ -32,12 +33,12 @@ class Index extends Component
 
     public function View($id)
     {
-        return redirect()->route('purchases_orders.detail', ['action' => 'View', 'objectId' => $id]);
+        return redirect()->route('purchases_orders.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);
     }
 
     public function Edit($id)
     {
-        return redirect()->route('purchases_orders.detail', ['action' => 'Edit', 'objectId' => $id]);
+        return redirect()->route('purchases_orders.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' => Crypt::encryptString($id)]);
     }
 
     public function SelectObject($id)

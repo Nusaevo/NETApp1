@@ -35,33 +35,7 @@ use App\Http\Livewire\Transactions\PurchasesDeliveries\Detail as PurchasesDelive
 use App\Http\Livewire\Masters\Materials\Index as MaterialIndex;
 use App\Http\Livewire\Masters\Materials\Detail as MaterialDetail;
 
-use App\Http\Livewire\Masters\ItemPrices\Index as ItemPriceIndex;
-use App\Http\Livewire\Masters\ItemPriceLogs\Index as ItemPriceLogIndex;
 
-use App\Http\Livewire\Masters\Items\Details\PrintBarcode as ItemPrintBarcode;
-
-
-use App\Http\Livewire\Masters\Payments\Index as PaymentIndex;
-use App\Http\Livewire\Masters\Payments\Detail as PaymentDetail;
-
-use App\Http\Livewire\Masters\Warehouses\Index as WarehouseIndex;
-use App\Http\Livewire\Masters\Warehouses\Detail as WarehousesDetail;
-use App\Http\Livewire\Transactions\Transfers\Index as WarehouseTransfer;
-use App\Http\Livewire\Inventory\StockOpname\Index as StockOpnameIndex;
-use App\Http\Livewire\Inventory\StockOpnameLog\Index as StockOpnameLogIndex;
-use App\Http\Livewire\Transactions\Sales\Orders\Index as SalesOrderIndex;
-use App\Http\Livewire\Transactions\Sales\Orders\Create as SalesOrderCreate;
-use App\Http\Livewire\Transactions\Sales\Orders\Detail as SalesOrderDetail;
-use App\Http\Livewire\Transactions\Sales\Orders\PrintPdf as SalesOrderPrintPdf;
-
-use App\Http\Livewire\Transactions\Sales\WarehouseOrders\Index as WareHouseOrderIndex;
-use App\Http\Livewire\Transactions\Sales\WarehouseOrders\Create as WareHouseOrderCreate;
-use App\Http\Livewire\Transactions\Sales\WarehouseOrders\PrintPdf as WareHouseOrderPrintPdf;
-
-use App\Http\Livewire\Transactions\Sales\FinishedOrders\Index as FinishedOrderIndex;
-use App\Http\Livewire\Transactions\Sales\FinishedOrders\Edit as FinishedOrderEdit;
-use App\Http\Livewire\Transactions\Sales\FinishedOrders\PrintSmallPdf as FinishedOrderPrintSmallPdf;
-use App\Http\Livewire\Transactions\Sales\FinishedOrders\PrintBigPdf as FinishedOrderPrintBigPdf;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\CustomerSearchController;
@@ -132,48 +106,6 @@ Route::middleware('auth')->group(function () {
         // });
     });
 
-    Route::prefix('units')->name('units.')->group(function () {
-        Route::get('/', UnitIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', UnitDetail::class)->name('detail');
-    });
-
-    Route::prefix('payments')->name('payments.')->group(function () {
-        Route::get('/', PaymentIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', PaymentDetail::class)->name('detail');
-    });
-
-    Route::prefix('item_category')->name('item_category.')->group(function () {
-        Route::get('/', CategoryItemIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', CategoryItemDetail::class)->name('detail');
-    });
-
-    Route::prefix('price_category')->name('price_category.')->group(function () {
-        Route::get('/', PriceCategoryIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', PriceCategoryDetail::class)->name('detail');
-    });
-
-    Route::prefix('warehouses')->name('warehouses.')->group(function () {
-        Route::get('/', WarehouseIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', WarehousesDetail::class)->name('detail');
-        // Route::get('/transfer', WarehouseTransfer::class)->name('index');
-    });
-
-    Route::prefix('inventory_stock_opname')->name('inventory_stock_opname.')->group(function () {
-        Route::get('/', StockOpnameIndex::class)->name('index');
-    });
-
-    Route::prefix('inventory_stock_opname_log')->name('inventory_stock_opname_log.')->group(function () {
-        Route::get('/', StockOpnameLogIndex::class)->name('index');
-    });
-
-    Route::prefix('item_price')->name('inventory_stock_opname.')->group(function () {
-        Route::get('/', ItemPriceIndex::class)->name('index');
-    });
-
-    Route::prefix('item_price_log')->name('inventory_stock_opname_log.')->group(function () {
-        Route::get('/', ItemPriceLogIndex::class)->name('index');
-    });
-
     Route::prefix('purchases_orders')->name('purchases_orders.')->group(function () {
         Route::get('/', PurchasesOrderIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', PurchasesOrderDetail::class)->name('detail');
@@ -184,25 +116,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/detail/{action}/{objectId?}', PurchasesDeliveryDetail::class)->name('detail');
     });
 
-    Route::prefix('sales_order')->name('sales_order.')->group(function () {
-        Route::get('/', SalesOrderIndex::class)->name('index');
-        Route::get('/create', SalesOrderCreate::class)->name('create');
-        Route::get('/detail/{id}', SalesOrderDetail::class)->name('detail');
-        Route::get('/printpdf/{id}', SalesOrderPrintpdf::class)->name('printpdf');
-    });
 
-    Route::prefix('sales_order_warehouse')->name('sales_order_warehouse.')->group(function () {
-        Route::get('/', WareHouseOrderIndex::class)->name('index');
-        Route::get('/create/{id}', WareHouseOrderCreate::class)->name('create');
-        Route::get('/printpdf/{id}', WareHouseOrderPrintPdf::class)->name('printpdf');
-    });
-
-    Route::prefix('sales_order_final')->name('sales_order_final.')->group(function () {
-        Route::get('/', FinishedOrderIndex::class)->name('index');
-        Route::get('/printsmallpdf/{id}', FinishedOrderPrintSmallPdf::class)->name('printsmallpdf');
-        Route::get('/printbigpdf/{id}', FinishedOrderPrintBigPdf::class)->name('printbigpdf');
-        Route::get('/edit/{id}', FinishedOrderEdit::class)->name('edit');
-    });
     // Route::prefix('supplier')->name('supplier.')->group(function () {
     //     Route::get('/', ConfigRightIndex::class)->name('index');
     //     Route::get('/detail/{action}/{objectId?}', ConfigRightDetail::class)->name('detail');

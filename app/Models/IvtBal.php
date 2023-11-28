@@ -6,34 +6,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-class ConfigConst extends Model
+use Illuminate\Support\Str;
+
+class IvtBal extends Model
 {
     use HasFactory, SoftDeletes;
     use BaseTrait;
 
-    protected $table = 'config_consts';
-    protected $connection = 'config';
+    protected $table = 'ivt_bals';
 
     public static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
     protected $fillable = [
-        'const_group',
-        'appl_id',
-        'appl_code',
-        'group_id',
-        'group_code',
-        'user_id',
-        'user_code',
-        'seq',
-        'str1',
-        'str2',
-        'num1',
-        'num2',
-        'note1',
+        'matl_id',
+        'matl_uom',
+        'wh_id',
+        'wh_code',
+        'batch_code',
+        'qty_oh',
+        'wh_bin',
     ];
 
     public function getAllColumns()
@@ -54,15 +48,14 @@ class ConfigConst extends Model
         return $this->orderBy('code', 'asc')->get();
     }
 
-    public function configAppls()
+    public function scopeGetByGrp($query, $grp)
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'appl_id', 'id');
+        return $query->where('grp', $grp)->get();
     }
 
-    public function scopeGetWarehouse()
+    public function scopeFindItemWarehouse($query, $matl_id, $warehouse_id)
     {
-        return $this->where('const_group', 'WAREHOUSE_LOC')
-                    ->orderBy('seq', 'asc')
-                    ->get();
+        return $query->where('matl_id', $matl_id)->where('wh_id', $warehouse_id);
     }
+
 }

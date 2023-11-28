@@ -21,7 +21,7 @@ class Partner extends Model
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
             $maxId = static::max('id') ?? 0;
-            $model->code = 'PARTNER' . ($maxId + 1);
+            $model->code = 'PARTNER' ."_". ($maxId + 1);
         });
     }
 
@@ -49,8 +49,7 @@ class Partner extends Model
         'info',
         'amt_limit',
         'amt_bal',
-        'status_code',
-        'price_category_id'
+        'status_code'
     ];
 
     public function getAllColumns()
@@ -79,11 +78,6 @@ class Partner extends Model
     public function configUsers()
     {
         return $this->belongsTo('App\Models\PriceCategory', 'user_id', 'id');
-    }
-
-    public function priceCategories()
-    {
-        return $this->belongsTo('App\Models\PriceCategory', 'price_category_id', 'id');
     }
 
 }

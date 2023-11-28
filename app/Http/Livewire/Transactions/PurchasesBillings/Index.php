@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Materials;
+namespace App\Http\Livewire\Transactions\PurchasesBillings;
 
 use Livewire\Component;
-use App\Models\Material;
+use App\Models\OrderHdr;
 use App\Traits\LivewireTrait;
-use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 class Index extends Component
@@ -20,7 +19,7 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.masters.materials.index');
+        return view('livewire.transactions.purchases-deliveries.index');
     }
 
     protected $listeners = [
@@ -33,17 +32,17 @@ class Index extends Component
 
     public function View($id)
     {
-        return redirect()->route('materials.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('purchases_deliveries.detail', ['action' => 'View', 'objectId' => $id]);
     }
 
     public function Edit($id)
     {
-        return redirect()->route('materials.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('purchases_deliveries.detail', ['action' => 'Edit', 'objectId' => $id]);
     }
 
     public function SelectObject($id)
     {
-        $this->object = Material::findOrFail($id);
+        $this->object = OrderHdr::findOrFail($id);
     }
 
     public function Disable()

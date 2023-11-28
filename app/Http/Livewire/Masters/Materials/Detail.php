@@ -5,50 +5,51 @@ namespace App\Http\Livewire\Masters\Materials;
 use Livewire\Component;
 use App\Models\Material;
 use App\Models\ItemUnit;
-use App\Models\CategoryItem;
+use App\Models\ConfigConst;
+use App\Models\IvtBal;
+use App\Models\Attachment;
 use Illuminate\Validation\Rule;
-use App\Models\Unit;
-use App\Models\Warehouse;
-use App\Models\ItemWarehouse;
-use App\Models\PriceCategory;
-use App\Models\ItemPrice;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
+use Livewire\WithFileUploads;
 
 class Detail extends Component
 {
+    use WithFileUploads;
     public $object;
     public $object_detail;
     public $VersioNumber;
     public $action = 'Create';
     public $objectId;
-    public $inputs = [];
-    public $input_details = [];
+    public $materials = [];
+    public $material_details = [];
     public $status = '';
 
-    public $item_categories;
-    public $units;
+    public $actionValue = 'Create';
+    public $objectIdValue;
 
     public $unit_row = 0;
-    public $deletedItems = [];
-    public $newItems = [];
+    public $attachment ;
+    public $attachments = [];
+
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
-        //$this->refreshItemCategory();
+        $this->actionValue = Crypt::decryptString($action);
 
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = Material::withTrashed()->find($this->objectId);
-            $this->object_detail = ItemUnit::ItemId($this->object->id)->get();
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $this->objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = Material::withTrashed()->find($this->objectIdValue);
+            // $this->object_detail = ItemUnit::ItemId($this->object->id)->get();
+            //$this->attachments = $this->object->attachments;
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
-            $this->inputs = populateArrayFromModel($this->object);
-            foreach ($this->object_detail as $index => $detail) {
-                $this->input_details[$index] = populateArrayFromModel($detail);
-                $this->input_details[$index]['id'] = $detail->id;
-            }
+            $this->materials = populateArrayFromModel($this->object);
+            // foreach ($this->object_detail as $index => $detail) {
+            //     $this->material_details[$index] = populateArrayFromModel($detail);
+            //     $this->material_details[$index]['id'] = $detail->id;
+            // }
         } else {
             $this->object = new Material();
         }
@@ -67,50 +68,55 @@ class Detail extends Component
     protected function rules()
     {
         $rules = [
-            'inputs.name' => 'required|string|min:1|max:50',
-            'inputs.category_item_id' => 'required',
+            'materials.name' => 'required|string|min:1|max:50'
         ];
         return $rules;
     }
 
     protected $validationAttributes = [
-        'inputs'                => 'Input Menu',
-        'inputs.*'              => 'Input Menu',
-        'inputs.name'      => 'Name',
-        'inputs.category_item_id'      => 'Kategori Harga'
+        'materials'                => 'Input Menu',
+        'materials.*'              => 'Input Menu',
+        'materials.name'      => 'Name'
     ];
 
     protected function populateObjectArray()
     {
-        $objectData =  populateModelFromForm($this->object, $this->inputs);
+        $objectData =  populateModelFromForm($this->object, $this->materials);
         return $objectData;
     }
 
-    public function addDetails()
-    {
-        if (!empty($this->units)) {
-            $unitDetail = [
-                'unit_id' => $this->units[0]['value'],
-                'multiplier' => 1,
-                'to_unit_id' => $this->units[0]['value'],
-            ];
+    // public function addAttachment()
+    // {
+    //     $this->validate([
+    //         'attachments.*' => 'file|max:10240',
+    //     ]);
 
-            array_push($this->input_details, $unitDetail);
-        }
-        $newDetail = end($this->input_details);
-        $this->newItems[] = $newDetail;
-        $this->unit_row++;
-    }
+    //     foreach ($this->attachments as $attachment) {
+    //         $attachmentData = [
+    //             'name' => $attachment->getClientOriginalName(),
+    //             'path' => $attachment->store('attachments'),
+    //             'content_type' => $attachment->getClientMimeType(),
+    //             'extension' => $attachment->getClientOriginalExtension(),
+    //             'descr' => 'Attachment description',
+    //             'attached_objectid' => $this->object->id,
+    //             'attached_objecttype' => 'Material',
+    //         ];
 
-    public function deleteDetails($index)
-    {
-        if (isset($this->input_details[$index]['id'])) {
-            $this->deletedItems[] = $this->input_details[$index]['id'];
-        }
-        unset($this->input_details[$index]);
-        $this->input_details = array_values($this->input_details);
-    }
+    //         Attachment::create($attachmentData);
+    //     }
 
+    //     // Clear the attachments array after adding them
+    //     $this->attachments = [];
+
+    //     // Reload attachments in case you want to display the updated list
+    //     $this->attachments = $this->object->attachments;
+
+    //     // Optionally, you can show a success message
+    //     $this->dispatchBrowserEvent('notify-swal', [
+    //         'type' => 'success',
+    //         'message' => 'Attachments added successfully.',
+    //     ]);
+    // }
 
     public function validateForms()
     {
@@ -125,70 +131,29 @@ class Detail extends Component
         }
     }
 
-    public function validateUnits()
-    {
-        if (!empty($this->input_details)) {
-            foreach ($this->input_details as $index => $detail) {
-                if ($detail['unit_id'] == $detail['to_unit_id']) {
-                    throw new Exception("Unit Dari dan Unit Ke tidak boleh sama untuk Satuan Barang baris " . ($index + 1));
-                }
-            }
-            $unitIds = array_column($this->input_details, 'unit_id');
-            $toUnitIds = array_column($this->input_details, 'to_unit_id');
-
-            if (count($unitIds) !== count(array_flip($unitIds))) {
-                throw new Exception("Ditemukan duplikasi 'Unit Dari' dalam  Satuan Barang.");
-            }
-            if (count($toUnitIds) !== count(array_flip($toUnitIds))) {
-                throw new Exception("Ditemukan duplikasi 'Unit Ke' dalam  Satuan Barang.");
-            }
-        }
-    }
-
     public function Create()
     {
         $this->validateForms();
         DB::beginTransaction();
         try {
-            $this->validateUnits();
             $objectData = $this->populateObjectArray();
             $this->object = Material::create($objectData);
-
-            foreach ($this->input_details as $inputDetail) {
-                $inputDetail['item_id'] = $this->object->id;
-                $newItemUnit = ItemUnit::create($inputDetail);
-
-                // Create related records in Warehouse and ItemPrice
-                $warehouse = Warehouse::all();
-                foreach ($warehouse as $warehouse) {
-                    ItemWarehouse::firstOrCreate(
-                        [
-                            'item_unit_id' => $newItemUnit->id,
-                            'warehouse_id' => $warehouse->id,
-                            'qty' => 0,
-                            'qty_defect' => 0,
-                        ]
-                    );
-                }
-
-                $priceCategory = PriceCategory::all();
-                foreach ($priceCategory as $priceCategory) {
-                    ItemPrice::firstOrCreate(
-                        [
-                            'price' => 0,
-                            'item_unit_id' => $newItemUnit->id,
-                            'price_category_id' => $priceCategory->id
-                        ]
-                    );
-                }
+            $warehouse = ConfigConst::GetWarehouse();
+            foreach ($warehouse as $warehouse) {
+                IvtBal::firstOrCreate(
+                    [
+                        'matl_id' => $this->object->id,
+                        'wh_id' => $warehouse->id,
+                        'wh_code' =>  $warehouse->str2
+                    ]
+                );
             }
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
+                'message' => Lang::get('generic.success.create', ['object' => $this->materials['name']])
             ]);
-            $this->reset('inputs');
-            $this->reset('input_details');
-            $this->refreshItemCategory();
+            // $this->reset('materials');
+            // $this->reset('material_details');
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();
@@ -204,50 +169,9 @@ class Detail extends Component
         $this->validateForms();
         DB::beginTransaction();
         try {
-            $this->validateUnits();
             if ($this->object) {
                 $objectData = $this->populateObjectArray();
                 $this->object->update($objectData);
-                foreach ($this->deletedItems as $deletedId) {
-                    ItemWarehouse::where('item_unit_id', $deletedId)->delete();
-                    ItemPrice::where('item_unit_id', $deletedId)->delete();
-                    ItemUnit::where('id', $deletedId)->delete();
-                }
-                $this->deletedItems = [];
-
-                foreach ($this->input_details as $inputDetail) {
-                    if (isset($inputDetail['id']) && !in_array($inputDetail['id'], $this->deletedItems)) {
-                        $detail = ItemUnit::find($inputDetail['id']);
-                        $detail->update($inputDetail);
-                    } elseif (!isset($inputDetail['id'])) {
-                        $inputDetail['item_id'] = $this->object->id;
-                        $newItemUnit = ItemUnit::create($inputDetail);
-
-                        $warehouse = Warehouse::all();
-                        foreach ($warehouse as $warehouse) {
-                            ItemWarehouse::firstOrCreate(
-                                [
-                                    'item_unit_id' => $newItemUnit->id,
-                                    'warehouse_id' => $warehouse->id,
-                                    'qty' => 0,
-                                    'qty_defect' => 0,
-                                ]
-                            );
-                        }
-
-                        $priceCategory = PriceCategory::all();
-                        foreach ($priceCategory as $priceCategory) {
-                            ItemPrice::firstOrCreate(
-                                [
-                                    'price' => 0,
-                                    'item_unit_id' => $newItemUnit->id,
-                                    'price_category_id' => $priceCategory->id
-                                ]
-                            );
-                        }
-                    }
-                }
-                $this->newItems = [];
 
                 DB::commit();
                 $this->dispatchBrowserEvent('notify-swal', [

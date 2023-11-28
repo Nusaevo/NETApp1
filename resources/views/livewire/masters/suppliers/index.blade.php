@@ -9,7 +9,7 @@
                     <x-ui-button
                     visible="true"
                     enabled="true"
-                    click-event="{{ route('suppliers.detail', ['action' => 'Create'])  }}"
+                    click-event="{{ route('suppliers.detail', ['action' => Crypt::encryptString('Create')])  }}"
                     cssClass="btn btn-success mb-5"
                     type="Route"
                     loading="true"

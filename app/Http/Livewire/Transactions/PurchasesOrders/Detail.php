@@ -9,7 +9,11 @@ use App\Models\ItemUnit;
 use App\Models\Partner;
 use App\Models\Payment;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Crypt;
 use App\Models\Unit;
+use App\Models\Material;
+use App\Models\ConfigConst;
+use App\Models\IvtBal;
 use Lang;
 use Exception;
 use DB;
@@ -17,12 +21,15 @@ use DB;
 class Detail extends Component
 {
     public $object;
+    public $material;
     public $object_detail;
     public $VersioNumber;
     public $action = 'Create';
     public $objectId;
     public $inputs = [];
     public $input_details = [];
+    public $materials = [];
+    public $material_details = [];
     public $status = '';
 
     public $suppliers;
@@ -34,14 +41,17 @@ class Detail extends Component
 
     public $total_amount = 0;
     public $trType = "PO";
+
+
+    public $actionValue = 'Create';
+    public $objectIdValue;
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
+        $this->actionValue = Crypt::decryptString($action);
         $this->refreshSupplier();
-        $this->refreshPayment();
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = OrderHdr::withTrashed()->find($this->objectId);
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $this->objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->get();
             $this->status = $this->object->status_code;
             $this->VersioNumber = $this->object->version_number;
@@ -49,15 +59,21 @@ class Detail extends Component
             foreach ($this->object_detail as $index => $detail) {
                 $this->input_details[$index] = populateArrayFromModel($detail);
                 $this->input_details[$index]['id'] = $detail->id;
-                $this->input_details[$index]['price'] = round($detail->price, 0);
-                $this->input_details[$index]['qty'] = round($detail->qty, 0);
-                $this->input_details[$index]['amt'] = round($detail->amt, 0);
-                $this->input_details[$index]['sub_total'] = rupiah($detail->amt);
-                $this->input_details[$index]['detail_item_name'] = $detail->item_name . '-' . $detail->unit_name;
+                $this->input_details[$index]['price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$index]['qty'] = ceil(currencyToNumeric($detail->qty));
+                $this->input_details[$index]['amt'] = ceil(currencyToNumeric($detail->amt));
+                $this->input_details[$index]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$index]['matl_id'] = $detail->matl_id;
+                $this->input_details[$index]['matl_id'] = $detail->matl_id ;
+                $this->input_details[$index]['matl_code'] = $detail->matl_code ;
+                $this->input_details[$index]['matl_descr'] = $detail->matl_descr ;
+
             }
             $this->countTotalAmount();
             $this->dispatchBrowserEvent('reApplySelect2');
         } else {
+
+            $this->material = new Material();
             $this->object = new OrderHdr();
             $this->inputs['tr_date']  = date('Y-m-d');
             $this->inputs['tr_type']  = $this->trType;
@@ -74,30 +90,6 @@ class Detail extends Component
         'changeItem'  => 'changeItem'
     ];
 
-    protected function rules()
-    {
-        $rules = [
-            'inputs.tr_date' => 'required',
-            'inputs.partner_id' => 'required',
-            'inputs.payment_term_id' => 'required',
-            'input_details.*.item_unit_id' => 'required',
-            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
-            // 'input_details.*.price' => 'required|integer|min:0|max:9999999999',
-        ];
-        return $rules;
-    }
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input',
-        'inputs.*'              => 'Input',
-        'inputs.tr_date'      => 'Tanggal Transaksi',
-        'inputs.partner_id'      => 'Supplier',
-        'inputs.payment_term_id'      => 'Payment',
-        'input_details.*'              => 'Inputan Barang',
-        'input_details.*.item_unit_id' => 'Item',
-        'input_details.*.qty' => 'Item Qty',
-        // 'input_details.*.price' => 'Item Price',
-    ];
 
     public function refreshSupplier()
     {
@@ -116,40 +108,74 @@ class Detail extends Component
         }
     }
 
-    public function refreshPayment()
-    {
-        $paymentsData = Payment::All();
-        if (!$paymentsData->isEmpty()) {
-            $this->payments = $paymentsData->map(function ($data) {
-                return [
-                    'label' => $data->name,
-                    'value' => $data->id,
-                ];
-            })->toArray();
-            $this->inputs['payment_term_id'] = $this->payments[0]['value'];
-        } else {
-            $this->payments = [];
-            $this->inputs['payment_term_id'] = null;
-        }
-    }
     protected function populateObjectArray()
     {
         $objectData =  populateModelFromForm($this->object, $this->inputs);
         return $objectData;
     }
 
-    public function addDetails()
+    protected function populateItemArray()
+    {
+        $objectData =  populateModelFromForm($this->material, $this->materials);
+        return $objectData;
+    }
+
+    public function addDetails($material = null)
     {
         $detail = [
             'tr_seq' => $this->unit_row + 1,
-            'tr_type' => $this->trType
+            'tr_type' => $this->trType,
         ];
+
+        // If a material is provided, add it to the detail
+        if ($material) {
+            $detail['matl_id'] = $material->id;
+            $detail['matl_code'] = $material->code;
+            $detail['matl_descr'] = $material->name;
+        }
         array_push($this->input_details, $detail);
 
         $newDetail = end($this->input_details);
         $this->newItems[] = $newDetail;
         $this->unit_row++;
         $this->dispatchBrowserEvent('reApplySelect2');
+    }
+
+    public function addItem()
+    {
+        $this->validateMaterials();
+        DB::beginTransaction();
+        try {
+            $objectData = $this->populateItemArray();
+            $this->object = Material::create($objectData);
+            $warehouse = ConfigConst::GetWarehouse();
+            foreach ($warehouse as $warehouse) {
+                IvtBal::firstOrCreate(
+                    [
+                        'matl_id' => $this->object->id,
+                        'wh_id' => $warehouse->id,
+                        'wh_code' =>  $warehouse->str2
+                    ]
+                );
+            }
+
+            // Call addDetails method with or without material information
+            $this->addDetails($this->object);
+
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => Lang::get('generic.success.create', ['object' => $this->materials['name']])
+            ]);
+            $this->reset('materials');
+            $this->reset('material_details');
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => Lang::get('generic.error.create', ['object' => "Material", 'message' => $e->getMessage()])
+            ]);
+        }
     }
 
     public function deleteDetails($index)
@@ -161,6 +187,7 @@ class Detail extends Component
         $this->unit_row = $this->unit_row - 1;
         $this->input_details = array_values($this->input_details);
     }
+
 
     public function changeItem($id, $value, $index)
     {
@@ -176,13 +203,11 @@ class Detail extends Component
             }
         }
         if ($duplicated == false) {
-            $itemUnit = ItemUnit::findorFail($value);
-            $this->input_details[$param[1]]['item_unit_id'] = $itemUnit->id;
-            $this->input_details[$param[1]]['detail_item_name'] = $itemUnit->item->name . '-' . $itemUnit->from_unit->name;
-            $this->input_details[$param[1]]['item_name'] = $itemUnit->item->name;
-            $this->input_details[$param[1]]['unit_name'] = $itemUnit->from_unit->name;
+            $material = Material::findorFail($value);
+            $this->input_details[$param[1]]['matl_id'] = $material->id;
+            $this->input_details[$param[1]]['matl_code'] = $material->code;
+            $this->input_details[$param[1]]['matl_descr'] = $material->name;
             $indexOfInputs = count($this->input_details) - 1;
-
             if ($index ==  $indexOfInputs) {
                 $this->addDetails();
             }
@@ -217,18 +242,57 @@ class Detail extends Component
     {
         $this->total_amount = 0;
         foreach ($this->input_details as $item_id => $input_details) {
-            if (isset($input_details['item_unit_id'])) {
+            if (isset($input_details['matl_id'])) {
                 if (isset($input_details['qty']) && isset($input_details['price']))
                     $this->total_amount += $input_details['price'] * $input_details['qty'];
             }
         }
         $this->inputs['amt']  =  $this->total_amount;
     }
-
-    public function validateForms()
+    public function validateMaterials()
     {
+        $rules = [
+            'materials.name' => 'required|string|min:1|max:50'
+        ];
+
+        $attributes = [
+            'materials' => 'Input Menu',
+            'materials.*' => 'Input Menu',
+            'materials.name' => 'Name'
+        ];
+
         try {
-            $this->validate();
+            $this->validate($rules, $attributes);
+        } catch (Exception $e) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => Lang::get('generic.error.create', ['object' => "Maeterial", 'message' => $e->getMessage()])
+            ]);
+            throw $e;
+        }
+    }
+
+    public function valdiateOrders()
+    {
+        $rules = [
+            'inputs.tr_date' => 'required',
+            'input_details.*.matl_id' => 'required',
+            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
+            'input_details.*.price' => 'required|integer|min:0|max:9999999999',
+        ];
+        $attributes = [
+            'inputs'                => 'Input',
+            'inputs.*'              => 'Input',
+            'inputs.tr_date'      => 'Tanggal Transaksi',
+            'inputs.partner_id'      => 'Supplier',
+            'input_details.*'              => 'Inputan Barang',
+            'input_details.*.matl_id' => 'Item',
+            'input_details.*.qty' => 'Item Qty',
+            'input_details.*.price' => 'Item Price',
+        ];
+
+        try {
+            $this->validate($rules, $attributes);
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
@@ -237,6 +301,8 @@ class Detail extends Component
             throw $e;
         }
     }
+
+
     public function validateUnits()
     {
         if (empty($this->input_details)) {
@@ -255,9 +321,9 @@ class Detail extends Component
     // Refactor Create and Edit to support draft versions
     public function save($status_code, $isDraft = false)
     {
-        $messageAction = $this->action === 'Create' ? 'create' : 'update';
+        $messageAction = $this->actionValue === 'Create' ? 'create' : 'update';
         // Run validations first
-        $this->validateForms();
+        $this->valdiateOrders();
 
         // Wrap operations in a transaction for atomicity
         DB::beginTransaction();
@@ -271,20 +337,19 @@ class Detail extends Component
             $objectData['status_code'] = $status_code;
 
             // Create or Update the OrderHdr based on the action
-            if ($this->action === 'Create') {
+            if ($this->actionValue === 'Create') {
                 $this->object = OrderHdr::create($objectData);
-            } elseif ($this->action === 'Edit') {
+            } elseif ($this->actionValue === 'Edit') {
                 $this->object->update($objectData);
             }
 
             // Handle the details of the order
             foreach ($this->input_details as $inputDetail) {
-                // If detail id is set and we're editing, find and update
                 if (isset($inputDetail['id']) && $this->action === 'Edit') {
                     $detail = OrderDtl::find($inputDetail['id']);
                     $detail->update($inputDetail);
-                } else { // else, we create new details
-                    $inputDetail['trhdr_id'] = $this->object->id; // link to header
+                } else {
+                    $inputDetail['trhdr_id'] = $this->object->id;
                     $inputDetail['qty_reff'] = $inputDetail['qty']; // additional operations or calculations
                     OrderDtl::create($inputDetail);
                 }
@@ -305,7 +370,7 @@ class Detail extends Component
                 'message' => Lang::get("generic.success.$messageAction", ['object' => "PO"])
             ]);
 
-            if ($this->action === 'Create') {
+            if ($this->actionValue === 'Create') {
                 $this->postOrderProcessing();
             }
         } catch (Exception $e) {
@@ -317,17 +382,6 @@ class Detail extends Component
             ]);
         }
     }
-
-    public function CreateDraft()
-    {
-        $this->save('Draft', true);
-    }
-
-    public function EditDraft()
-    {
-        $this->save('Draft', true);
-    }
-
     public function Create()
     {
         $this->save('Open', false);
@@ -343,7 +397,6 @@ class Detail extends Component
         $this->reset('inputs');
         $this->reset('input_details');
         $this->refreshSupplier();
-        $this->refreshPayment();
         $this->total_amount = 0;
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;

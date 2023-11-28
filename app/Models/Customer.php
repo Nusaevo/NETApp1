@@ -13,15 +13,11 @@ class Customer extends Model
     use SoftDeletes;
     use ModelTrait;
 
-    protected $fillable = ['name', 'address', 'city', 'npwp', 'contact_name', 'contact_number', 'email', 'price_category_id'];
+    protected $fillable = ['name', 'address', 'city', 'npwp', 'contact_name', 'contact_number', 'email'];
 
     protected static function boot()
     {
         parent::boot();
-
-        static::deleting(function ($customer) {
-            $customer->price_category()->delete();
-        });
     }
 
     public function sales_orders()

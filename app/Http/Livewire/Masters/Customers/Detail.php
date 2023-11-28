@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Partner;
 use App\Models\PriceCategory;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
@@ -14,19 +15,17 @@ class Detail extends Component
 {
     public $object;
     public $VersioNumber;
-    public $action = 'Create';
-    public $objectId;
+    public $actionValue = 'Create';
+    public $objectIdValue;
     public $inputs = [];
     public $status = '';
 
-    public $price_categories;
-
     public function mount($action, $objectId = null)
     {
-        $this->action = $action;
-        $this->objectId = $objectId;
-        if (($this->action === 'Edit' || $this->action === 'View') && $this->objectId) {
-            $this->object = Partner::withTrashed()->find($this->objectId);
+        $this->actionValue = Crypt::decryptString($action);
+        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
+            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
@@ -101,6 +100,7 @@ class Detail extends Component
                 'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
             ]);
             $this->inputs = [];
+            $this->refreshPriceCategory();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

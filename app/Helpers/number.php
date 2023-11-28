@@ -16,6 +16,17 @@ if (!function_exists('qty')) {
     }
 }
 
+if (!function_exists('currencyToNumeric')) {
+    function currencyToNumeric($formattedCurrency)
+    {
+        // Remove currency symbol and commas
+        $numericValue = (float) str_replace(['$', ','], '', $formattedCurrency);
+
+        return $numericValue;
+    }
+}
+
+
 if (!function_exists('int_qty')) {
     function int_qty($qty = 0)
     {

@@ -5,25 +5,25 @@
 
     <div>
         <div>
-            <x-ui-button click-event="{{ route('suppliers.index') }}" type="Back" button-name="Back"/>
+            <x-ui-button click-event="" type="Back" button-name="Back"/>
         </div>
     </div>
 
-    <x-ui-page-card title="{{ $action }} Supplier" status="{{ $status }}">
+    <x-ui-page-card title="{{ $actionValue }} Supplier" status="{{ $status }}">
 
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
 
-        <form wire:submit.prevent="{{ $action }}" class="form w-100">
+        <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="UserCard" title="Supplier General Info" :isOpen="true">
-                        <x-ui-text-field label="Supplier Code" model="inputs.code" type="text" :action="$action" required="true" enabled="false" placeHolder="" />
-                        <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$action" required="true" placeHolder="Enter Name" />
-                        <x-ui-text-field label="Address" model="inputs.address" type="textarea" :action="$action" placeHolder="" />
-                        <x-ui-text-field label="City" model="inputs.city" type="text" :action="$action" placeHolder="" />
-                        <x-ui-text-field label="Country" model="inputs.country" type="text" :action="$action" placeHolder="" />
-                        <x-ui-text-field label="Postal Code" model="inputs.postal_code" type="text" :action="$action" placeHolder="" />
-                        <x-ui-text-field label="Contact Person" model="inputs.contact_person" type="text" :action="$action" placeHolder="" />
+                        <x-ui-text-field label="Supplier Code" model="inputs.code" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="" />
+                        <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
+                        <x-ui-text-field label="Address" model="inputs.address" type="textarea" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="City" model="inputs.city" type="text" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="Country" model="inputs.country" type="text" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="Postal Code" model="inputs.postal_code" type="text" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="Contact Person" model="inputs.contact_person" type="text" :action="$actionValue" placeHolder="" />
                     </x-ui-expandable-card>
                 </div>
             </x-ui-tab-view-content>

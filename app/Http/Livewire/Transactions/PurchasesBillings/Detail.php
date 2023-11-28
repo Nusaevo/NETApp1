@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Transactions\PurchasesDeliveries;
+namespace App\Http\Livewire\Transactions\PurchasesBillings;
 
 use Livewire\Component;
 use App\Models\DelivHdr;
@@ -75,7 +75,7 @@ class Detail extends Component
                 $this->input_details[$index]['matl_id'] = $detail->matl_id;
                 $this->input_details[$index]['matl_code'] = $detail->matl_code ;
                 $this->input_details[$index]['matl_descr'] = $detail->matl_descr ;
-                $this->input_details[$index]['warehouse_id'] =  $this->warehouses[0]['value'];
+                $this->input_details[$index]['warehouse_id'] =  $this->warehouses[0];
                 $this->input_details[$index]['reffdtl_id'] = $detail->id;
                 $this->input_details[$index]['reffhdrtr_type'] = $detail->tr_type;
                 $this->input_details[$index]['reffhdrtr_id'] =  $this->object->id;
