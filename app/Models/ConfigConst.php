@@ -22,8 +22,8 @@ class ConfigConst extends Model
 
     protected $fillable = [
         'const_group',
-        'appl_id',
-        'appl_code',
+        'app_id',
+        'app_code',
         'group_id',
         'group_code',
         'user_id',
@@ -51,12 +51,12 @@ class ConfigConst extends Model
 
     public function scopeGetActiveData()
     {
-        return $this->orderBy('code', 'asc')->get();
+        return $this->orderBy('str1', 'asc')->get();
     }
 
     public function configAppls()
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'appl_id', 'id');
+        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
     }
 
     public function scopeGetWarehouse()

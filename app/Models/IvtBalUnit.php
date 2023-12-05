@@ -1,37 +1,34 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-use App\Helpers\SequenceUtility;
-class ConfigGroup extends Model
+use Illuminate\Support\Str;
+
+class IvtBalUnit extends Model
 {
     use HasFactory, SoftDeletes;
     use BaseTrait;
 
-    protected $table = 'config_groups';
-    protected $connection = 'config';
+    protected $table = 'ivt_bal_units';
 
     public static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
-        static::creating(function ($model) {
-            $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'GROUP' ."_". ($maxId + 1);
-        });
     }
 
     protected $fillable = [
-        'code',
-        'app_id',
-        'app_code',
-        'user_id',
-        'user_code',
-        'name',
-        'status_code'
+        'ivt_id',
+        'matl_id',
+        'matl_uom_id',
+        'uom',
+        'wh_id',
+        'batch_code',
+        'qty_oh',
+        'status_code',
     ];
 
     public function getAllColumns()
@@ -52,13 +49,14 @@ class ConfigGroup extends Model
         return $this->orderBy('code', 'asc')->get();
     }
 
-    public function configAppls()
+    public function scopeGetByGrp($query, $grp)
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
+        return $query->where('grp', $grp)->get();
     }
 
-    public function configUsers()
+    public function scopeFindItemWarehouse($query, $matl_id, $warehouse_id)
     {
-        return $this->belongsTo('App\Models\ConfigUser', 'user_id', 'id');
+        return $query->where('matl_id', $matl_id)->where('wh_id', $warehouse_id);
     }
+
 }

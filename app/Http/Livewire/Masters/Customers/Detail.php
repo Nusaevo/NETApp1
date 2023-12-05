@@ -100,7 +100,6 @@ class Detail extends Component
                 'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
             ]);
             $this->inputs = [];
-            $this->refreshPriceCategory();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

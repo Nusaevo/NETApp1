@@ -1,38 +1,45 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-use App\Helpers\SequenceUtility;
-class ConfigGroup extends Model
+class MatlBom extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
+    use SoftDeletes;
+    use ModelTrait;
     use BaseTrait;
 
-    protected $table = 'config_groups';
-    protected $connection = 'config';
+    protected $table = 'matl_boms';
 
-    public static function boot()
+    protected static function boot()
     {
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
             $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'GROUP' ."_". ($maxId + 1);
+            $model->code = 'UOM' ."_". ($maxId + 1);
         });
     }
 
     protected $fillable = [
-        'code',
-        'app_id',
-        'app_code',
-        'user_id',
-        'user_code',
-        'name',
-        'status_code'
+        'matl_id',
+        'matl_code',
+        'base_matl_id',
+        'base_matl_code',
+        'seq',
+        'jwl_sides_carat',
+        'jwl_sides_cnt',
+        'jwl_sides_matl',
+        'jwl_sides_parcel',
+        'jwl_sides_price',
+        'jwl_sides_amt'
     ];
+
 
     public function getAllColumns()
     {
@@ -45,20 +52,5 @@ class ConfigGroup extends Model
             return $this->attributes[$attribute];
         }
         return null;
-    }
-
-    public function scopeGetActiveData()
-    {
-        return $this->orderBy('code', 'asc')->get();
-    }
-
-    public function configAppls()
-    {
-        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
-    }
-
-    public function configUsers()
-    {
-        return $this->belongsTo('App\Models\ConfigUser', 'user_id', 'id');
     }
 }

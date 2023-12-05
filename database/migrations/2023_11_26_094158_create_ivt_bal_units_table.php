@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateIvtBalUnitsTable extends Migration
+return new class extends Migration
 {
     public function up()
     {
@@ -17,7 +17,7 @@ class CreateIvtBalUnitsTable extends Migration
             $table->string('batch_code', 50)->default('');
             $table->string('unit_code', 100)->default('');
             $table->decimal('qty_oh', 18, 2)->default(0);
-            $table->string('status_code', 1)->default('');
+            $table->string('status_code', 25)->default('');
             $table->timestamps();
 
             $table->foreign('ivt_id')->references('id')->on('ivt_bals');
@@ -28,4 +28,4 @@ class CreateIvtBalUnitsTable extends Migration
     {
         Schema::dropIfExists('ivt_bal_units');
     }
-}
+};

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
+use App\Helpers\SequenceUtility;
 class ConfigAppl extends Model
 {
     use HasFactory, SoftDeletes;
@@ -18,8 +19,8 @@ class ConfigAppl extends Model
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
-            $maxId = static::max('id') ?? 0;
-            $model->code = 'APPL' ."_". ($maxId + 1);
+            $maxId = SequenceUtility::getCurrentSequenceValue($model);
+            $model->code = 'APP' ."_". ($maxId + 1);
         });
     }
 
@@ -51,6 +52,6 @@ class ConfigAppl extends Model
 
     public function configMenus()
     {
-        return $this->hasMany('App\Models\ConfigMenu', 'appl_id', 'id');
+        return $this->hasMany('App\Models\ConfigMenu', 'app_id', 'id');
     }
 }

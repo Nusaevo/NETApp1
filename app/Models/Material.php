@@ -7,6 +7,8 @@ use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
+use App\Helpers\SequenceUtility;
+use DB;
 class Material extends Model
 {
     use HasFactory;
@@ -21,8 +23,16 @@ class Material extends Model
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
-            $maxId = static::max('id') ?? 0;
+            $maxId = SequenceUtility::getCurrentSequenceValue($model);
             $model->code = 'MATL' ."_". ($maxId + 1);
+        });
+        static::deleting(function ($material) {
+            $material->uoms->each(function ($uoms) {
+                $uoms->delete();
+            });
+            $material->boms->each(function ($boms) {
+                $boms->delete();
+            });
         });
     }
 
@@ -52,7 +62,6 @@ class Material extends Model
         'jwl_price_markup_id',
         'jwl_price_markup_code',
         'jwl_selling_price',
-        'uom',
         'brand',
         'dimension',
         'wgt',
@@ -62,6 +71,14 @@ class Material extends Model
         'status_code',
     ];
 
+    public static function getNextSequenceValue()
+    {
+        $sequenceName = 'materials_id_seq';
+
+        $currentSequenceValue = DB::select("SELECT last_value FROM $sequenceName")[0]->last_value;
+
+        return $currentSequenceValue;
+    }
 
     public function getAllColumns()
     {
@@ -71,24 +88,28 @@ class Material extends Model
     public function getAllColumnValues($attribute)
     {
         if (array_key_exists($attribute, $this->attributes)) {
+            if ($attribute == "jwl_selling_price") {
+                return int_qty($this->attributes[$attribute]);
+            }
             return $this->attributes[$attribute];
         }
         return null;
     }
 
-    public function category_item()
+    public function attachments()
     {
-        return $this->belongsTo('App\Models\CategoryItem');
+        return $this->hasMany(Attachment::class, 'attached_objectid')
+                    ->where('attached_objecttype', class_basename($this));
     }
 
-    public function unit()
+    public function uoms()
     {
-        return $this->belongsTo('App\Models\Unit', 'standard_unit_id');
+        return $this->hasMany(MatlUom::class, 'matl_id');
     }
 
-    public function item_units()
+    public function boms()
     {
-        return $this->hasMany('App\Models\ItemUnit');
+        return $this->hasMany(MatlUom::class, 'matl_id');
     }
 
     public function transfer_items()

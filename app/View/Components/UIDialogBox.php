@@ -6,18 +6,12 @@ use Illuminate\View\Component;
 
 class UIDialogBox extends Component
 {
-    public $title;
-    public $body;
-    public $cancelAction;
-    public $continueAction;
+    public $id;
     public $visible;
 
-    public function __construct($title, $body, $cancelAction = null, $continueAction = null, $visible = 'false')
+    public function __construct($id = null, $visible = 'false')
     {
-        $this->title = $title;
-        $this->body = $body;
-        $this->cancelAction = $cancelAction;
-        $this->continueAction = $continueAction;
+        $this->id = $id;
         $this->visible = $visible;
     }
 

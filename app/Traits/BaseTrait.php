@@ -3,7 +3,8 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Auth;
-
+use App\Enums\Status;
+use Illuminate\Support\Facades\Schema;
 trait BaseTrait
 {
     public function updateObject($versionNumberFromPage)
@@ -23,27 +24,21 @@ trait BaseTrait
 
     public static function bootUpdatesCreatedByAndUpdatedAt()
     {
-        if(Auth::user() == null)
-        {
-            static::creating(function ($model) {
-                $model->created_by = "SYSTEM";
-                $model->created_at = now();
-            });
+        static::creating(function ($model) {
+            $userId = Auth::check() ? Auth::user()->code : 'SYSTEM';
+            $model->created_by = $userId;
+            $model->created_at = now();
 
-            static::updating(function ($model) {
-                $model->updated_at = now();
-                $model->updated_by = "SYSTEM";
-            });
-        }else{
-            static::creating(function ($model) {
-                $model->created_by = Auth::user()->code;
-                $model->created_at = now();
-            });
+            if (Schema::hasColumn($model->getTable(), 'status_code')) {
+                $model->status_code = Status::ACTIVE;
+            }
+        });
 
-            static::updating(function ($model) {
-                $model->updated_at = now();
-                $model->updated_by = Auth::user()->code;
-            });
-        }
+        static::updating(function ($model) {
+            $userId = Auth::check() ? Auth::user()->code : 'SYSTEM';
+            $model->updated_by = $userId;
+            $model->updated_at = now();
+        });
     }
+
 }

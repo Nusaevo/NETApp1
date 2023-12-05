@@ -13,23 +13,23 @@ class ConfigGroupsTableSeeder extends Seeder
         $applications = [
             // [
             //     'code' => 'Admin01',
-            //     'appl_id' => '1',
-            //     'appl_code' => 'app1',
+            //     'app_id' => '1',
+            //     'app_code' => 'app1',
             //     'name' => 'Super Admin',
             //     'status_code' => 'A',
             // ],
             // [
             //     'code' => 'Admin02',
-            //     'appl_id' => '2',
-            //     'appl_code' => 'app2',
+            //     'app_id' => '2',
+            //     'app_code' => 'app2',
             //     'name' => 'Admin',
             //     'status_code' => 'A',
 
             // ],
             // [
             //     'code' => 'User01',
-            //     'appl_id' => '1',
-            //     'appl_code' => 'app1',
+            //     'app_id' => '1',
+            //     'app_code' => 'app1',
             //     'name' => 'Normal User',
             //     'status_code' => 'A',
             // ],

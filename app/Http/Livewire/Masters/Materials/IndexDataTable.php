@@ -59,10 +59,13 @@ class IndexDataTable extends DataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return is_null($row->deleted_at) ? 'Active' : 'Non-Active';
                 }),
+            Column::make('Created Date', 'created_at')
+                ->sortable(),
             Column::make('Actions', 'id')
                 ->format(
                     fn ($value, $row, Column $column) => view('livewire.masters.customers.index-data-table-action')->withRow($row)
                 ),
+
         ];
     }
 

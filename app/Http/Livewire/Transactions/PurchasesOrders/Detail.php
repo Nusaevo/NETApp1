@@ -45,6 +45,8 @@ class Detail extends Component
 
     public $actionValue = 'Create';
     public $objectIdValue;
+
+    public $materialDialogVisible = false;
     public function mount($action, $objectId = null)
     {
         $this->actionValue = Crypt::decryptString($action);
@@ -249,28 +251,6 @@ class Detail extends Component
         }
         $this->inputs['amt']  =  $this->total_amount;
     }
-    public function validateMaterials()
-    {
-        $rules = [
-            'materials.name' => 'required|string|min:1|max:50'
-        ];
-
-        $attributes = [
-            'materials' => 'Input Menu',
-            'materials.*' => 'Input Menu',
-            'materials.name' => 'Name'
-        ];
-
-        try {
-            $this->validate($rules, $attributes);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "Maeterial", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
-        }
-    }
 
     public function valdiateOrders()
     {
@@ -400,5 +380,15 @@ class Detail extends Component
         $this->total_amount = 0;
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
+    }
+
+    public function openModal()
+    {
+        $this->materialDialogVisible = true;
+    }
+
+    public function closeModal()
+    {
+        $this->materialDialogVisible = false;
     }
 }

@@ -13,8 +13,8 @@ class ConfigMenusTableSeeder extends Seeder
         $menus = [
             [
                 'code' => 'menu1',
-                'appl_id' => '1',
-                'appl_code' => 'app1',
+                'app_id' => '1',
+                'app_code' => 'app1',
                 'menu_header' => 'Setting',
                 'sub_menu' => '',
                 'menu_caption' => 'User',
@@ -23,8 +23,8 @@ class ConfigMenusTableSeeder extends Seeder
             ],
             [
                 'code' => 'menu2',
-                'appl_id' => '1',
-                'appl_code' => 'app1',
+                'app_id' => '1',
+                'app_code' => 'app1',
                 'menu_header' => 'Setting',
                 'sub_menu' => '',
                 'menu_caption' => 'Group',
@@ -33,8 +33,8 @@ class ConfigMenusTableSeeder extends Seeder
             ],
             [
                 'code' => 'menu3',
-                'appl_id' => '1',
-                'appl_code' => 'app1',
+                'app_id' => '1',
+                'app_code' => 'app1',
                 'menu_header' => 'Setting',
                 'sub_menu' => '',
                 'menu_caption' => 'Application',
@@ -43,8 +43,8 @@ class ConfigMenusTableSeeder extends Seeder
             ],
             [
                 'code' => 'menu4',
-                'appl_id' => '1',
-                'appl_code' => 'app1',
+                'app_id' => '1',
+                'app_code' => 'app1',
                 'menu_header' => 'Setting',
                 'sub_menu' => '',
                 'menu_caption' => 'Menu',
@@ -53,8 +53,8 @@ class ConfigMenusTableSeeder extends Seeder
             ],
             [
                 'code' => 'menu5',
-                'appl_id' => '1',
-                'appl_code' => 'app1',
+                'app_id' => '1',
+                'app_code' => 'app1',
                 'menu_header' => 'Setting',
                 'sub_menu' => '',
                 'menu_caption' => 'Rights',
@@ -63,8 +63,8 @@ class ConfigMenusTableSeeder extends Seeder
             ],
             [
                 'code' => 'menu6',
-                'appl_id' => '2',
-                'appl_code' => 'app2',
+                'app_id' => '2',
+                'app_code' => 'app2',
                 'menu_header' => 'Menu Header 2',
                 'sub_menu' => 'Sub Menu 2',
                 'menu_caption' => 'Menu Caption 2',

@@ -18,8 +18,12 @@ if (!function_exists('generateMenu')) {
         ];
 
         try {
-            $appName = env('APP_NAME', 'DefaultAppName');
-            $configMenus = ConfigMenu::where('appl_code', $appName)->get();
+            $appCode = env('APP_NAME', 'DefaultAppName');
+            $configMenus = ConfigMenu::where('app_code', $appCode)
+                            ->orderBy('menu_header')
+                            ->orderBy('menu_caption')
+                            ->get();
+
 
             if ($configMenus->isEmpty()) {
                 return $mainMenu;

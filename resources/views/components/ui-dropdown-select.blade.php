@@ -1,4 +1,4 @@
-<div wire:ignore.self class="mb-3 responsive-field"
+<div wire:ignore.self class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}"@endif
 >
     <!-- Label -->
     @isset($label)
@@ -12,7 +12,7 @@
     <div class="text-field-container">
         <div class="responsive-input-container">
             <select name="{{ isset($model) ? $model : '' }}" wire:model="{{ isset($model) ? $model : '' }}" @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif
-                class="form-select @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"
+                class="form-control @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"
                 @if (isset($action) && $action === 'View' || (isset($enabled) && $enabled === 'false')) disabled @endif
                 @if (isset($required) && $required === 'true') required @endif>
                 @if (!is_null($options))

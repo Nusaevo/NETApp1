@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use Illuminate\Support\Str;
+use App\Helpers\SequenceUtility;
 
 class Partner extends Model
 {
@@ -20,7 +21,7 @@ class Partner extends Model
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
-            $maxId = static::max('id') ?? 0;
+            $maxId = SequenceUtility::getCurrentSequenceValue($model);
             $model->code = 'PARTNER' ."_". ($maxId + 1);
         });
     }

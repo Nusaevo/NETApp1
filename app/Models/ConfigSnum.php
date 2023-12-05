@@ -12,7 +12,7 @@ class ConfigSnum extends Model
     protected $table = 'config_snums';
     protected $connection = 'config';
     protected $fillable = [
-        'appl_code',
+        'app_code',
         'snum_group',
         'last_cnt',
         'wrap_low',

@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Traits\DefaultColumnsTrait;
 
-class CreatePartnersTable extends Migration
+return new class extends Migration
 {
     use DefaultColumnsTrait;
     public function up()
@@ -34,8 +34,9 @@ class CreatePartnersTable extends Migration
             $table->string('info', 8000)->default('');
             $table->decimal('amt_limit', 19, 4)->default(0);
             $table->decimal('amt_bal', 19, 4)->default(0);
-            $table->string('status_code', 1)->default('');
+            $table->string('status_code', 25)->default('');
             $table->unique(['grp', 'code']);
+            $table->unique(['grp', 'name']);
             $this->generateDefaultTimeStamp($table);
         });
     }
@@ -44,4 +45,4 @@ class CreatePartnersTable extends Migration
     {
         Schema::dropIfExists('partners');
     }
-}
+};

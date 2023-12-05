@@ -1,4 +1,4 @@
-<div class="mb-3 responsive-field"
+<div class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}"@endif
 >
     <!-- Label -->
     @isset($label)
@@ -13,7 +13,7 @@
     <div class="text-field-container">
         <div class="responsive-input-container">
             <select id="{{ isset($name) ? $name : 'defaultSelect' }}"
-                    class="form-select responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
+                    class="form-control responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                     wire:model="{{ $model }}" data-toggle="tooltip" title="Select an option"
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
                 @if (!is_null($options))

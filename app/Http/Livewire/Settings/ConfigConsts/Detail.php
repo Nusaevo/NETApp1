@@ -49,7 +49,7 @@ class Detail extends Component
     protected function rules()
     {
         $rules = [
-            'inputs.appl_id' => 'required',
+            'inputs.app_id' => 'required',
             'inputs.str1' => 'required|string|min:1|max:50',
             'inputs.str2' => 'string|min:1|max:50'
         ];
@@ -60,7 +60,7 @@ class Detail extends Component
         'inputs'                => 'Input Menu',
         'inputs.*'              => 'Input Menu',
         'inputs.code'           => 'Menu Code',
-        'inputs.appl_id'      => 'Menu Application',
+        'inputs.app_id'      => 'Menu Application',
         'inputs.str1'      => 'Str1',
         'inputs.str2'      => 'Str2'
     ];
@@ -76,18 +76,18 @@ class Detail extends Component
                 ];
             })->toArray();
 
-            $this->inputs['appl_id'] = $this->applications[0]['value'];
+            $this->inputs['app_id'] = $this->applications[0]['value'];
         } else {
             $this->applications = [];
-            $this->inputs['appl_id'] = null;
+            $this->inputs['app_id'] = null;
         }
     }
 
     protected function populateObjectArray()
     {
         $objectData =  populateModelFromForm($this->object, $this->inputs);
-        $application = ConfigAppl::find($this->inputs['appl_id']);
-        $objectData['appl_code'] = $application->code;
+        $application = ConfigAppl::find($this->inputs['app_id']);
+        $objectData['app_code'] = $application->code;
         $objectData['group_id'] = 1;
         $objectData['user_id'] = 1;
         return $objectData;

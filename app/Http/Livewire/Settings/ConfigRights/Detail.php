@@ -86,7 +86,7 @@ class Detail extends Component
 
     public function populateApplication($appcode)
     {
-        $groupsData = ConfigGroup::where('appl_code', $appcode)->get();
+        $groupsData = ConfigGroup::where('app_code', $appcode)->get();
         $this->groups = $groupsData->map(function ($data) {
             return [
                 'label' => $data->code . ' - ' . $data->name,
@@ -95,7 +95,7 @@ class Detail extends Component
         })->toArray();
         $this->inputs['groups'] = $this->groups[0]['value'];
 
-        $menusData = ConfigMenu::where('appl_code', $appcode)->get();
+        $menusData = ConfigMenu::where('app_code', $appcode)->get();
         $this->menus = $menusData->map(function ($data) {
             return [
                 'label' => $data->code . ' - ' . $data->menu_caption,
@@ -163,7 +163,7 @@ class Detail extends Component
         }
 
         return [
-            'appl_code' => $this->inputs['applications'],
+            'app_code' => $this->inputs['applications'],
             'group_code' => $this->inputs['groups'],
             'menu_code' => $this->inputs['menus'],
             'menu_seq' => $this->inputs['menu_seq'],

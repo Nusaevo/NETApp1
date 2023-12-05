@@ -14,7 +14,7 @@ class ConfigAudit extends Model
     protected $connection = 'config';
 
     protected $fillable = [
-        'appl_code',
+        'app_code',
         'key_code',
         'log_time',
         'action_code',
@@ -23,7 +23,7 @@ class ConfigAudit extends Model
 
     // If you want to specify default values for some columns, you can use the $attributes property:
     protected $attributes = [
-        'appl_code' => '',
+        'app_code' => '',
         'key_code' => '',
         'action_code' => '',
         'audit_trail' => '',

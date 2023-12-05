@@ -51,7 +51,8 @@
             "app/helpers.php",
             "app/Helpers/number.php",
             "app/Helpers/menu.php",
-            "app/Helpers/global.php"
+            "app/Helpers/global.php",
+            "app/Helpers/SequenceUtility.php"
         ],
         "psr-4": {
             "App\\": "app/",

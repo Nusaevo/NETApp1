@@ -19,10 +19,10 @@ class ConfigRight extends Model
     }
 
     protected $fillable = [
-        'appl_id',
+        'app_id',
         'group_id',
         'menu_id',
-        'appl_code',
+        'app_code',
         'group_code',
         'menu_code',
         'menu_seq',
@@ -36,7 +36,7 @@ class ConfigRight extends Model
 
     public function configAppls()
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'appl_id', 'id');
+        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
     }
 
     public function configMenus()

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
+use App\Helpers\SequenceUtility;
 class ConfigMenu extends Model
 {
     use HasFactory, SoftDeletes;
@@ -19,15 +20,15 @@ class ConfigMenu extends Model
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
-            $maxId = static::max('id') ?? 0;
+            $maxId = SequenceUtility::getCurrentSequenceValue($model);
             $model->code = 'MENU' ."_". ($maxId + 1);
         });
     }
 
     protected $fillable = [
         'code',
-        'appl_id',
-        'appl_code',
+        'app_id',
+        'app_code',
         'menu_header',
         'sub_menu',
         'menu_caption',
@@ -55,6 +56,6 @@ class ConfigMenu extends Model
 
     public function configAppls()
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'appl_id', 'id');
+        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
     }
 }
