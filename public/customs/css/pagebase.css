@@ -1,8 +1,26 @@
+/* Base Styles */
+.error-message {
+    color: #dc3545;
+    font-size: 0.75rem;
+    margin-top: 0.1rem;
+    display: block;
+}
+
+.disabled-gray {
+    color: #808080;
+    background-color: #f0f0f0;
+    border-color: #d3d3d3;
+}
+
 /* Table Styles */
 .data-table {
     border-collapse: collapse;
     width: 100%;
     border: 2px solid #ccc;
+}
+
+.data-table thead {
+    background-color: #e0e0e0;
 }
 
 .data-table th,
@@ -25,10 +43,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.data-table thead {
-    background-color: #e0e0e0;
 }
 
 .data-table tbody {
@@ -55,13 +69,11 @@
     margin-bottom: 1rem;
 }
 
-/* Label Styles */
 .responsive-label {
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
 }
 
-/* Input and Textarea */
 .responsive-input,
 .responsive-textarea {
     width: 100%;
@@ -70,21 +82,88 @@
     border-radius: 0.25rem;
 }
 
-/* Form Control */
 .form-control,
 .form-select {
     font-size: 0.9rem;
 }
 
-/* Container for fields with buttons */
-.text-field-container{
+.text-field-container {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     width: 100%;
 }
 
-/* Mobile Responsive Adjustments */
+/* Photo Upload Styles */
+.photo-upload-container {
+    position: relative;
+    text-align: left;
+}
+
+.photo-upload-box {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border: 1px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f3f3;
+    margin-left: 0;
+}
+
+.image-upload-label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.image-preview {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+}
+
+.fullscreen-btn {
+    background-color: white;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    width: 200px;
+}
+
+.loading-overlay {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 5;
+    width: 100%;
+    height: 100%;
+}
+
+/* Show the loading overlay only when the photo is being uploaded */
+div[wire\:loading].loading-overlay {
+    display: flex;
+}
+
+/* Responsive Styles */
 @media (max-width: 767px) {
     .responsive-input-container {
         display: flex;
@@ -103,9 +182,12 @@
     .half-width {
         width: 100%;
     }
+
+    .custom-modal .modal-dialog {
+        width: 100%; /* Full width on smaller screens */
+    }
 }
 
-/* Tablet and Up Responsive Adjustments */
 @media (min-width: 768px) {
     .responsive-field {
         flex-direction: row;
@@ -155,112 +237,38 @@
     .responsive-field[span="Full"] + .responsive-field {
         clear: both;
     }
-}
-.error-message {
-    color: #dc3545;
-    font-size: 0.75rem;
-    margin-top: 0.1rem;
-    display: block;
-}
-.disabled-gray {
-    color: #808080;
-    background-color: #f0f0f0;
-    border-color: #d3d3d3;
-}
 
-.photo-upload-container {
-    position: relative;
-    text-align: left;
-}
-
-.photo-upload-box {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    border: 1px dashed #ccc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f3f3f3;
-    margin-left: 0;
-}
-
-.image-upload-label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.image-preview {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.image-preview img {
-    width: 100%;
-    height: 100%;
-}
-
-.fullscreen-btn {
-    background-color: white;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-    width: 200px;
-}
-
-
-/* Other styles remain the same */
-
-/* Ensure the button is visible when there is an image */
-/* This selector targets the button when a photo is loaded */
-.image-preview + .fullscreen-btn {
-    display: block;
-}
-
-
-.loading-overlay {
-    display: none; /* Hidden by default */
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    z-index: 5;
-    width: 100%;
-    height: 100%;
-}
-
-/* Show the loading overlay only when the photo is being uploaded */
-div[wire\:loading].loading-overlay {
-    display: flex;
-}
-
-/* Ensure the button is visible when there is an image */
-div[wire\:loading].fullscreen-btn,
-.image-preview+.fullscreen-btn {
-    display: block;
-}
-
-
-.custom-modal .modal-dialog {
-    max-width: none;
-    width: 1000px !important;
-    height: 300px !important;
-}
-
-@media (max-width: 576px) {
     .custom-modal .modal-dialog {
-        width: 100%; /* Full width on smaller screens */
+        max-width: none;
+        width: 1000px !important;
+        height: 300px !important;
+    }
+}
+
+/* Material Info Container Styles */
+.material-info-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.photo-container {
+    flex-basis: 200px;
+    flex-grow: 1;
+    margin-right: 20px;
+}
+
+.fields-container {
+    flex-grow: 10;
+}
+
+@media (max-width: 768px) {
+    .material-info-container {
+        flex-direction: column;
+    }
+
+    .photo-container {
+        margin-right: 0;
+        margin-bottom: 20px;
     }
 }

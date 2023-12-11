@@ -62,6 +62,7 @@ class Material extends Model
         'jwl_price_markup_id',
         'jwl_price_markup_code',
         'jwl_selling_price',
+        'jwl_buying_price',
         'brand',
         'dimension',
         'wgt',
@@ -91,6 +92,9 @@ class Material extends Model
             if ($attribute == "jwl_selling_price") {
                 return int_qty($this->attributes[$attribute]);
             }
+            if ($attribute == "jwl_buying_price") {
+                return int_qty($this->attributes[$attribute]);
+            }
             return $this->attributes[$attribute];
         }
         return null;
@@ -109,7 +113,7 @@ class Material extends Model
 
     public function boms()
     {
-        return $this->hasMany(MatlUom::class, 'matl_id');
+        return $this->hasMany(MatlBom::class, 'matl_id');
     }
 
     public function transfer_items()

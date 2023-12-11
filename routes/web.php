@@ -32,6 +32,12 @@ use App\Http\Livewire\Transactions\PurchasesOrders\Detail as PurchasesOrderDetai
 use App\Http\Livewire\Transactions\PurchasesDeliveries\Index as PurchasesDeliveryIndex;
 use App\Http\Livewire\Transactions\PurchasesDeliveries\Detail as PurchasesDeliveryDetail;
 
+use App\Http\Livewire\Transactions\SalesOrders\Index as SalesOrderIndex;
+use App\Http\Livewire\Transactions\SalesOrders\Detail as SalesOrderDetail;
+
+use App\Http\Livewire\Transactions\SalesDeliveries\Index as SalesDeliveryIndex;
+use App\Http\Livewire\Transactions\SalesDeliveries\Detail as SalesDeliveryDetail;
+
 use App\Http\Livewire\Masters\Materials\Index as MaterialIndex;
 use App\Http\Livewire\Masters\Materials\Detail as MaterialDetail;
 
@@ -114,6 +120,16 @@ Route::middleware('auth')->group(function () {
     Route::prefix('purchases_deliveries')->name('purchases_deliveries.')->group(function () {
         Route::get('/', PurchasesDeliveryIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', PurchasesDeliveryDetail::class)->name('detail');
+    });
+
+    Route::prefix('sales_orders')->name('sales_orders.')->group(function () {
+        Route::get('/', SalesOrderIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', SalesOrderDetail::class)->name('detail');
+    });
+
+    Route::prefix('sales_deliveries')->name('sales_deliveries.')->group(function () {
+        Route::get('/', SalesDeliveryIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', SalesDeliveryDetail::class)->name('detail');
     });
 
 

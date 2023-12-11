@@ -1,20 +1,27 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Materials;
+namespace App\Http\Livewire\Transactions\SalesOrders;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Material;
+use App\Models\OrderHdr;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = Material::class;
-
+    protected $model = OrderHdr::class;
 
     public function mount(): void
     {
         $this->setSort('id', 'desc');
+    }
+
+    public function builder(): Builder
+    {
+        return OrderHdr::query()
+            ->withTrashed()
+            ->where('tr_type', 'SO')
+            ->select();
     }
 
      public function configure(): void
@@ -48,24 +55,28 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Code", "code")
-                ->searchable()
-                ->sortable(),
-            Column::make("Description", "descr")
-                ->searchable()
-                ->sortable(),
-            Column::make('Status', 'deleted_at')
+            Column::make("Id", "id")
                 ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return is_null($row->deleted_at) ? 'Active' : 'Non-Active';
-                }),
+                ->searchable(),
+            Column::make("Tanggal", "tr_date")
+                ->searchable()
+                ->sortable(),
+            Column::make("Supplier", "partners.name")
+                ->searchable()
+                ->sortable(),
+            Column::make("Status", "status_code")
+                ->searchable()
+                ->sortable(),
             Column::make('Created Date', 'created_at')
                 ->sortable(),
             Column::make('Actions', 'id')
                 ->format(
-                    fn ($value, $row, Column $column) => view('livewire.masters.customers.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.transactions.sales-orders.index-data-table-action')->withRow($row)
                 ),
-
+            Column::make('', 'id')
+                ->format(
+                    fn ($value, $row, Column $column) => view('livewire.transactions.sales-orders.order-action')->withRow($row)
+                ),
         ];
     }
 

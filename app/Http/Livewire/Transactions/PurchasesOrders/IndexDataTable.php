@@ -16,6 +16,14 @@ class IndexDataTable extends DataTableComponent
         $this->setSort('id', 'desc');
     }
 
+    public function builder(): Builder
+    {
+        return OrderHdr::query()
+            ->withTrashed()
+            ->where('tr_type', 'PD')
+            ->select();
+    }
+
      public function configure(): void
     {
         $this->setPrimaryKey('id');
@@ -58,6 +66,8 @@ class IndexDataTable extends DataTableComponent
                 ->sortable(),
             Column::make("Status", "status_code")
                 ->searchable()
+                ->sortable(),
+            Column::make('Created Date', 'created_at')
                 ->sortable(),
             Column::make('Actions', 'id')
                 ->format(

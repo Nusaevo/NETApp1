@@ -16,6 +16,14 @@ class IndexDataTable extends DataTableComponent
         $this->setSort('id', 'desc');
     }
 
+    public function builder(): Builder
+    {
+        return DelivHdr::query()
+            ->withTrashed()
+            ->where('tr_type', 'PD')
+            ->select();
+    }
+
      public function configure(): void
     {
         $this->setPrimaryKey('id');

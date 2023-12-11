@@ -5,11 +5,11 @@
 
     <div>
         <div>
-            <x-ui-button click-event="{{ route('purchases_orders.index') }}" type="Back" button-name="Back" />
+            <x-ui-button click-event="{{ route('sales_orders.index') }}" type="Back" button-name="Back" />
         </div>
     </div>
 
-    <x-ui-page-card title="{{ $actionValue }} Puchase Order" status="{{ $status }}">
+    <x-ui-page-card title="{{ $actionValue }} Sales Order" status="{{ $status }}">
 
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
 
@@ -27,29 +27,15 @@
 
                         <div class="card-body p-2 mt-10">
                             <h2 class="mb-2 text-center">Barang</h2>
-                            @if($actionValue === "Create")
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
-                                Tambah
-                            </button>
-                            @endif
 
-                            <x-ui-dialog-box id="MaterialDialogBox" :visible="$materialDialogVisible">
-                                <x-slot name="title">
-                                    <h2>My Dialog Title</h2>
-                                </x-slot>
-
-                                <x-slot name="body">
-                                    @livewire('panels.material-form', ['materialActionValue' => $actionValue])
-                                </x-slot>
-                            </x-ui-dialog-box>
-                            {{-- <x-ui-button click-event="openModal" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" /> --}}
+                           <x-ui-button click-event="addDetails" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" />
 
                             <div class="table-responsive mt-5">
                                 <table id="tbl" class="table table-striped table-hover gy-7 gs-7">
                                     <thead>
                                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
                                             <th class="min-w-50px">No</th>
-                                            <th class="min-w-100px">Image</th>
+                                            <th class="min-w-300px">Nama</th>
                                             <th class="min-w-300px">Barang</th>
                                             <th class="min-w-100px">Harga</th>
                                             <th class="min-w-100px">Qty</th>
@@ -64,9 +50,16 @@
                                                 {{$key+1}}
                                             </td>
                                             <td class="border" rowspan="3">
-                                                @if(isset($input_details[$key]['image_path']) && !empty($input_details[$key]['image_path']))
-                                                    <img src="{{ Storage::url($input_details[$key]['image_path']) }}" alt="Material Photo" style="height: 200px; width: 200px;">
-                                                @endif
+                                                <div>
+                                                    <input type="hidden" wire:model.defer='input_details.{{ $key }}.matl_id'>
+                                                    <div wire:ignore class="input-form ">
+                                                        <select class="form-select itemsearch form-control p-2" id="item-{{$key}}">
+                                                            @if(isset($input_details[$key]['matl_descr']))
+                                                            <option value='input_details.{{ $key }}.matl_id'>{{$input_details[$key]['matl_descr']}}</option>
+                                                            @endif
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td class="border">
                                                 <input type="hidden" wire:model.defer='input_details.{{ $key }}.matl_id'>

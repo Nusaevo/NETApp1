@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Transactions\PurchasesDeliveries;
+namespace App\Http\Livewire\Transactions\SalesDeliveries;
 
 use Livewire\Component;
 use App\Models\DelivHdr;

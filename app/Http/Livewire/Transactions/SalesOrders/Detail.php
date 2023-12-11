@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Transactions\PurchasesOrders;
+namespace App\Http\Livewire\Transactions\SalesOrders;
 
 use Livewire\Component;
 use App\Models\OrderHdr;
@@ -85,7 +85,7 @@ class Detail extends Component
 
     public function render()
     {
-        return view('livewire.transactions.purchases-orders.edit');
+        return view('livewire.transactions.sales-orders.edit');
     }
 
     protected $listeners = [
@@ -177,32 +177,32 @@ class Detail extends Component
     }
 
 
-    // public function changeItem($id, $value, $index)
-    // {
-    //     $duplicated = false;
-    //     $param = explode("-", $id);
-    //     foreach ($this->input_details as $item_id => $input_details) {
-    //         if ($item_id != $param[1]) {
-    //             if (isset($input_details['item_unit_id'])) {
-    //                 if ($input_details['item_unit_id'] == $value) {
-    //                     $duplicated = true;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     if ($duplicated == false) {
-    //         $material = Material::findorFail($value);
-    //         $this->input_details[$param[1]]['matl_id'] = $material->id;
-    //         $this->input_details[$param[1]]['matl_code'] = $material->code;
-    //         $this->input_details[$param[1]]['matl_descr'] = $material->descr;
-    //         $indexOfInputs = count($this->input_details) - 1;
-    //         if ($index ==  $indexOfInputs) {
-    //             $this->addDetails();
-    //         }
-    //     } else {
-    //         $this->dispatchBrowserEvent('notify-swal', ['type' => 'error', 'title' => 'Gagal', 'message' =>  "Produk dan satuan telah dibuat sebelumnya, mohon dicek kembali!"]);
-    //     }
-    // }
+    public function changeItem($id, $value, $index)
+    {
+        $duplicated = false;
+        $param = explode("-", $id);
+        foreach ($this->input_details as $item_id => $input_details) {
+            if ($item_id != $param[1]) {
+                if (isset($input_details['item_unit_id'])) {
+                    if ($input_details['item_unit_id'] == $value) {
+                        $duplicated = true;
+                    }
+                }
+            }
+        }
+        if ($duplicated == false) {
+            $material = Material::findorFail($value);
+            $this->input_details[$param[1]]['matl_id'] = $material->id;
+            $this->input_details[$param[1]]['matl_code'] = $material->code;
+            $this->input_details[$param[1]]['matl_descr'] = $material->descr;
+            $indexOfInputs = count($this->input_details) - 1;
+            if ($index ==  $indexOfInputs) {
+                $this->addDetails();
+            }
+        } else {
+            $this->dispatchBrowserEvent('notify-swal', ['type' => 'error', 'title' => 'Gagal', 'message' =>  "Produk dan satuan telah dibuat sebelumnya, mohon dicek kembali!"]);
+        }
+    }
 
     public function changeQty($id, $value)
     {

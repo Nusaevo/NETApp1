@@ -20,10 +20,6 @@ class MatlBom extends Model
     {
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
-        static::creating(function ($model) {
-            $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'UOM' ."_". ($maxId + 1);
-        });
     }
 
     protected $fillable = [
@@ -44,6 +40,11 @@ class MatlBom extends Model
     public function getAllColumns()
     {
         return $this->fillable;
+    }
+
+    public function baseMaterials()
+    {
+        return $this->belongsTo('App\Models\ConfigConst', 'base_matl_id', 'id');
     }
 
     public function getAllColumnValues($attribute)
