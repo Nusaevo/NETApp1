@@ -21,9 +21,9 @@
 
 
                     <x-ui-expandable-card id="UserCard" title="Puchase Order Info" :isOpen="true">
-                        <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" />
+                        <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half"/>
 
-                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" />
+                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" span="Half" />
 
                         <div class="card-body p-2 mt-10">
                             <h2 class="mb-2 text-center">Barang</h2>
@@ -44,66 +44,44 @@
                             </x-ui-dialog-box>
                             {{-- <x-ui-button click-event="openModal" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" /> --}}
 
-                            <div class="table-responsive mt-5">
-                                <table id="tbl" class="table table-striped table-hover gy-7 gs-7">
-                                    <thead>
-                                        <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                            <th class="min-w-50px">No</th>
-                                            <th class="min-w-100px">Image</th>
-                                            <th class="min-w-300px">Barang</th>
-                                            <th class="min-w-100px">Harga</th>
-                                            <th class="min-w-100px">Qty</th>
-                                            <th class="min-w-15px">Sub Total</th>
-                                            <th class="min-w-15px">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($input_details as $key => $detail)
-                                        <tr>
-                                            <td class="border" rowspan="3">
-                                                {{$key+1}}
-                                            </td>
-                                            <td class="border" rowspan="3">
-                                                @if(isset($input_details[$key]['image_path']) && !empty($input_details[$key]['image_path']))
-                                                    <img src="{{ Storage::url($input_details[$key]['image_path']) }}" alt="Material Photo" style="height: 200px; width: 200px;">
-                                                @endif
-                                            </td>
-                                            <td class="border">
-                                                <input type="hidden" wire:model.defer='input_details.{{ $key }}.matl_id'>
-                                                <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='Code' type="text" :action="$actionValue" placeHolder="Material Code" enabled="false"/>
-                                            </td>
-                                            <td class="border" rowspan="3">
-                                                <x-ui-text-field model="input_details.{{ $key }}.price" label='' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" enabled="false" />
-                                            </td>
-                                            <td class="border" rowspan="3">
-                                                <x-ui-text-field model="input_details.{{ $key }}.qty" label='' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" />
-                                            </td>
-                                            <td class="border" rowspan="3">
-                                                <x-ui-text-field model="input_details.{{ $key }}.amt" label='' type="text" :action="$actionValue" enabled="false" placeHolder="" />
-                                            </td>
-                                            <td rowspan="3">
-                                                <x-ui-button button-name="Delete" click-event="deleteDetails({{ $key }})" :action="$actionValue" cssClass="btn-danger" />
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="border">
-                                                <x-ui-text-field model="input_details.{{ $key }}.barcode" label='Barcode' type="text" :action="$actionValue" placeHolder="Barcode" enabled="false" />
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="border">
-                                                <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='Description' type="text" :action="$actionValue" placeHolder="Description" enabled="false" />
-                                            </td>
-                                        </tr>
-                                        @endforeach
+                            <div class="card-body p-2 mt-10">
+                                <div class="list-group mt-5" style="max-height: 600px; overflow-y: auto;" id="scroll-container">
+                                    @foreach($input_details as $key => $detail)
+                                        <div class="list-group-item">
+                                            <div class="row">
+                                                <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                                    <span>{{$key+1}}</span>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    @if(isset($detail['image_path']) && !empty($detail['image_path']))
+                                                        <img src="{{ Storage::url($detail['image_path']) }}" alt="Material Photo" class="img-fluid">
+                                                    @endif
+                                                </div>
+                                                <div class="col-md-9">
+                                                     <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='Description' type="text" :action="$actionValue" placeHolder="Description" enabled="false" span="Full"/>
 
-                                        <tr>
-                                            <td align="right" colspan="5">Total Harga</td>
-                                            <td align="left" colspan="5"> {{ rupiah($total_amount) }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                                     <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='Code' type="text" :action="$actionValue" placeHolder="Material Code" enabled="false" span="Half"/>
+
+                                                     <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='Selling Price' type="text" :action="$actionValue" placeHolder="Selling Price" enabled="false" span="Half"/>
+
+                                                     <x-ui-text-field model="input_details.{{ $key }}.buying_price" label='Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder=""/>
+                                                     <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" />
+                                                     <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false" placeHolder="" />
+                                                </div>
+                                                <div class="position-absolute top-0 end-0 mt-2 me-2">
+                                                    <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
+                                                       X
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <div class="d-flex justify-content-end mt-4">
+                                    <h3>Total Price: {{ rupiah($total_amount) }}</h3>
+                                </div>
                             </div>
+
                         </div>
                     </x-ui-expandable-card>
             </div>

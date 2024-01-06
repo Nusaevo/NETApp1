@@ -36,6 +36,26 @@ class MatlBom extends Model
         'jwl_sides_amt'
     ];
 
+    /**
+     * Retrieve the JSON attribute as an array.
+     *
+     * @return array|null
+     */
+    public function getDetailsAttribute()
+    {
+        return $this->attributes['details'] ? json_decode($this->attributes['details'], true) : null;
+    }
+
+    /**
+     * Set the JSON attribute.
+     *
+     * @param  array  $value
+     * @return void
+     */
+    public function setDetailsAttribute($value)
+    {
+        $this->attributes['details'] = $value ? json_encode($value) : null;
+    }
 
     public function getAllColumns()
     {

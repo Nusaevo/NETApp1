@@ -44,6 +44,9 @@ class MaterialForm extends Component
     public $baseMaterials;
     public $selectedBomKey;
 
+    public $deletedItems = [];
+    public $newItems = [];
+    public $bom_row = 0;
     public function mount($materialActionValue, $materialIDValue = null)
     {
         $this->appCode =  env('APP_NAME', 'DefaultAppName');
@@ -72,6 +75,7 @@ class MaterialForm extends Component
             $this->object = new Material();
             $this->object_uoms = new MatlUom();
             $this->object_boms = new MatlBom();
+            $this->matl_boms_array = [];
         }
     }
 
@@ -167,16 +171,16 @@ class MaterialForm extends Component
             //         ->where(function ($query) {
             //         }),
             // ],
-            'materials.descr' => [
-                'required',
-                'string',
-                'min:1',
-                'max:200',
-                Rule::unique('materials', 'descr')
-                    ->ignore($this->object->id)
-                    ->where(function ($query) {
-                    }),
-            ],
+            // 'materials.descr' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:200',
+            //     Rule::unique('materials', 'descr')
+            //         ->ignore($this->object->id)
+            //         ->where(function ($query) {
+            //         }),
+            // ],
         ];
         return $rules;
     }
@@ -264,7 +268,6 @@ class MaterialForm extends Component
             DB::commit();
             $this->emit('materialCreated', $this->object->id);
         } catch (Exception $e) {
-            dd("ss");
             DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
@@ -414,6 +417,26 @@ class MaterialForm extends Component
         }
     }
 
+    public function addBoms()
+    {
+        $bomsDetail = new MatlBom();
+        array_push($this->matl_boms_array, $bomsDetail);
+        $newDetail = end($this->matl_boms_array);
+        $this->newItems[] = $newDetail;
+        $this->bom_row++;
+        $this->emit('itemAdded');
+    }
+
+    public function deleteBoms($index)
+    {
+        if (isset($this->matl_boms_array[$index]['id'])) {
+            $this->deletedItems[] = $this->matl_boms_array[$index]['id'];
+        }
+        unset($this->matl_boms_array[$index]);
+        $this->matl_boms_array = array_values($this->matl_boms_array);
+
+    }
+
     public function saveBoms()
     {
         $this->validateBoms();
@@ -454,23 +477,6 @@ class MaterialForm extends Component
                 'type' => 'error',
                 'message' => Lang::get('generic.error.create', ['object' => "Material Detail", 'message' => $e->getMessage()])
             ]);
-        }
-    }
-
-
-    public function deleteBoms($key)
-    {
-        if (array_key_exists($key, $this->matl_boms_array)) {
-            unset($this->matl_boms_array[$key]);
-            $this->matl_boms_array = array_values($this->matl_boms_array);
-        }
-    }
-
-    public function editBoms($key)
-    {
-        if (array_key_exists($key, $this->matl_boms_array)) {
-            $this->selectedBomKey = $key;
-            $this->matl_boms = $this->matl_boms_array[$key];
         }
     }
 

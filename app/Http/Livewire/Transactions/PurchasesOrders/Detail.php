@@ -137,10 +137,11 @@ class Detail extends Component
         if ($material) {
             $detail['matl_id'] = $material->id;
             $detail['matl_code'] = $material->code;
-            $detail['matl_descr'] = $material->descr;
-            $detail['image_path'] = $material->attachments[0]->path;
+            $detail['matl_descr'] = $material->descr ?? "";
+            $detail['image_path'] = (isset($material->attachments[0]) && isset($material->attachments[0]->path)) ? $material->attachments[0]->path : null;
             $detail['barcode'] = $material->uoms[0]->barcode;
-            $detail['price'] = $material->jwl_buying_price ?? 0;
+            $detail['buying_price'] = $material->jwl_buying_price ?? 0;
+            $detail['selling_price'] = $material->jwl_selling_price ?? 0;
         }
         array_push($this->input_details, $detail);
 

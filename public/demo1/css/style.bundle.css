@@ -2475,10 +2475,10 @@ progress {
 .form-control {
   display: block;
   width: 100%;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.5;
   color: #5E6278;
   background-color: #ffffff;
   background-clip: padding-box;
@@ -4963,7 +4963,7 @@ textarea.form-control-lg {
 }
 
 .card-footer {
-  padding-top   : 0.5rem;
+  padding: 0.5rem 1rem;
   background-color: #ffffff;
   border-top: 1px solid #EFF2F5;
 }
@@ -37253,7 +37253,7 @@ a:hover {
   padding: 2rem 2.25rem;
 }
 .card .card-footer {
-  padding-top: 2rem;
+  padding: 2rem 2.25rem;
   background-color: transparent;
   border-top: 1px solid #EFF2F5;
 }
@@ -45591,23 +45591,24 @@ code:not([class*=language-]) {
     opacity: 0;
   }
 }
-
-#loader-container {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.9);
-    /* Add other styles like z-index and centering as needed */
+.page-loading * {
+  transition: none !important;
 }
 
 .page-loader {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+  background: #ffffff;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: none;
+}
+.page-loading .page-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .scrolltop {

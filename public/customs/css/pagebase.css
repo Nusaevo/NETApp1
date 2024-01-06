@@ -272,3 +272,27 @@ div[wire\:loading].loading-overlay {
         margin-bottom: 20px;
     }
 }
+.list-group-item {
+    position: relative;
+    padding: 16px; /* Adjust as needed, but make sure this is less than the height of the .delete-button */
+    /* ... other styles ... */
+}
+
+.delete-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0; /* No padding for the button */
+}
+
+.delete-button a {
+    display: block;
+    padding: 8px; /* Padding to make the target area larger for clicking, adjust as needed */
+    margin: -8px; /* Negative margin to counteract the padding in the .list-group-item */
+}
+
+.delete-button img {
+    display: block; /* Ensures the image does not have extra space around it */
+    width: 16px; /* Adjust as needed */
+    height: 16px; /* Adjust as needed */
+}
