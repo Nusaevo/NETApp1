@@ -10,7 +10,11 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
 {
     protected $model = Partner::class;
-
+    
+    public function mount(): void
+    {
+        $this->setSort('created_at', 'desc');
+    }
 
     public function builder(): Builder
     {

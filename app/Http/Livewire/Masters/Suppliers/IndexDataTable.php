@@ -11,7 +11,11 @@ class IndexDataTable extends DataTableComponent
 {
     protected $model = Partner::class;
 
-
+    public function mount(): void
+    {
+        $this->setSort('created_at', 'desc');
+    }
+    
     public function builder(): Builder
     {
         return Partner::query()->where('grp', 'SUPP')->withTrashed();

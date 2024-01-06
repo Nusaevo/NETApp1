@@ -1,11 +1,13 @@
 <?php
-namespace App\Models;
+namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-class ConfigRight extends Model
+use App\Models\BaseModel;
+
+class ConfigRight extends BaseModel
 {
     use HasFactory, SoftDeletes;
     use BaseTrait;
@@ -15,7 +17,6 @@ class ConfigRight extends Model
     public static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
     protected $fillable = [
@@ -31,16 +32,16 @@ class ConfigRight extends Model
 
     public function configGroups()
     {
-        return $this->belongsTo('App\Models\ConfigGroup', 'group_id', 'id');
+        return $this->belongsTo('App\Models\Settings\ConfigGroup', 'group_id', 'id');
     }
 
     public function configAppls()
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
+        return $this->belongsTo('App\Models\Settings\ConfigAppl', 'app_id', 'id');
     }
 
     public function configMenus()
     {
-        return $this->belongsTo('App\Models\ConfigMenu', 'menu_id', 'id');
+        return $this->belongsTo('App\Models\Settings\ConfigMenu', 'menu_id', 'id');
     }
 }

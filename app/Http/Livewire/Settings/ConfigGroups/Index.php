@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Settings\ConfigGroups;
 
 use Livewire\Component;
-use App\Models\ConfigGroup;
+use App\Models\Settings\ConfigGroup;
 use App\Traits\LivewireTrait;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

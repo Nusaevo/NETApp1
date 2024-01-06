@@ -6,7 +6,7 @@ use Livewire\Component;
 use App\Models\Material;
 use App\Models\MatlUom;
 use App\Models\MatlBom;
-use App\Models\ConfigConst;
+use App\Models\Settings\ConfigConst;
 use App\Models\IvtBal;
 use App\Models\IvtBalUnit;
 

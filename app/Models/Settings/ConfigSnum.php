@@ -1,14 +1,13 @@
 <?php
-namespace App\Models;
+namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\BaseModel;
 
-class ConfigSnum extends Model
+class ConfigSnum extends BaseModel
 {
-    use HasFactory, SoftDeletes;
-
     protected $table = 'config_snums';
     protected $connection = 'config';
     protected $fillable = [

@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Settings\ConfigConsts;
 
 use Livewire\Component;
-use App\Models\ConfigMenu; // Import the ConfigGroup model
+use App\Models\Settings\ConfigMenu; // Import the ConfigGroup model
 use App\Traits\LivewireTrait;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

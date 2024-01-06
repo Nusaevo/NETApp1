@@ -1,27 +1,24 @@
 <?php
-
-namespace App\Models;
+namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
-class ConfigMenu extends Model
-{
-    use HasFactory, SoftDeletes;
-    use BaseTrait;
+use App\Models\BaseModel;
 
-    protected $table = 'config_menus';
+class ConfigGroup extends BaseModel
+{
+    protected $table = 'config_groups';
     protected $connection = 'config';
 
     public static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
             $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'MENU' ."_". ($maxId + 1);
+            $model->code = 'GROUP' ."_". ($maxId + 1);
         });
     }
 
@@ -29,25 +26,11 @@ class ConfigMenu extends Model
         'code',
         'app_id',
         'app_code',
-        'menu_header',
-        'sub_menu',
-        'menu_caption',
-        'link',
+        'user_id',
+        'user_code',
+        'name',
         'status_code'
     ];
-
-    public function getAllColumns()
-    {
-        return $this->fillable;
-    }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
 
     public function scopeGetActiveData()
     {
@@ -56,6 +39,11 @@ class ConfigMenu extends Model
 
     public function configAppls()
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
+        return $this->belongsTo('App\Models\Settings\ConfigAppl', 'app_id', 'id');
+    }
+
+    public function configUsers()
+    {
+        return $this->belongsTo('App\Models\Settings\ConfigUser', 'user_id', 'id');
     }
 }

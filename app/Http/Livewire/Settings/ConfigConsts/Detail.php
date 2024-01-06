@@ -3,8 +3,8 @@
 namespace App\Http\Livewire\Settings\ConfigConsts;
 
 use Livewire\Component;
-use App\Models\ConfigConst;
-use App\Models\ConfigAppl;
+use App\Models\Settings\ConfigConst;
+use App\Models\Settings\ConfigAppl;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\BaseModel;
 
-class ConfigAudit extends Model
+class ConfigAudit extends BaseModel
 {
     use HasFactory, SoftDeletes;
 

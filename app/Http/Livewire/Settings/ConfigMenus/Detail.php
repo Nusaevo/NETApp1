@@ -3,8 +3,8 @@
 namespace App\Http\Livewire\Settings\ConfigMenus;
 
 use Livewire\Component;
-use App\Models\ConfigMenu;
-use App\Models\ConfigAppl;
+use App\Models\Settings\ConfigMenu;
+use App\Models\Settings\ConfigAppl;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

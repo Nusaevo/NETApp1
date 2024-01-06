@@ -7,14 +7,14 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\ConfigUser;
+use App\Models\Settings\ConfigUser;
 class IndexDataTable extends DataTableComponent
 {
     protected $model = User::class;
 
     public function mount(): void
     {
-        $this->setSort('id', 'desc');
+        $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
     }
 

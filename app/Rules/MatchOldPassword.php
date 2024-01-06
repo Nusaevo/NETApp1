@@ -2,7 +2,7 @@
 
 namespace App\Rules;
 
-use App\Models\ConfigUser;
+use App\Models\Settings\ConfigUser;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 

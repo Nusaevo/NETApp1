@@ -1,5 +1,5 @@
 <div class="card-footer d-flex justify-content-end">
-    @if ($actionValue !== 'Create' && (!$object instanceof App\Models\ConfigUser || auth()->user()->id !== $object->id))
+    @if ($actionValue !== 'Create' && (!$object instanceof App\Models\Settings\ConfigUser || auth()->user()->id !== $object->id))
         <div style="padding-right: 10px;">
             @if ($status === 'Active')
                 <x-ui-button button-name="Disable" click-event="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="images/disable-icon.svg" />

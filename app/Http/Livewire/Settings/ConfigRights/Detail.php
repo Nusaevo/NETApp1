@@ -3,10 +3,10 @@
 namespace App\Http\Livewire\Settings\ConfigRights;
 
 use Livewire\Component;
-use App\Models\ConfigGroup;
-use App\Models\ConfigAppl;
-use App\Models\ConfigMenu;
-use App\Models\ConfigRight;
+use App\Models\Settings\ConfigGroup;
+use App\Models\Settings\ConfigAppl;
+use App\Models\Settings\ConfigMenu;
+use App\Models\Settings\ConfigRight;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

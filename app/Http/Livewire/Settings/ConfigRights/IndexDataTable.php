@@ -4,7 +4,7 @@ namespace App\Http\Livewire\Settings\ConfigRights;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\ConfigRight;
+use App\Models\Settings\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent

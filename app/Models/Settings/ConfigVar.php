@@ -1,13 +1,14 @@
 <?php
-namespace App\Models;
+namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
+use App\Models\BaseModel;
 
-class ConfigVar extends Model
+class ConfigVar extends BaseModel
 {
     use HasFactory, SoftDeletes;
     use BaseTrait;
@@ -35,19 +36,6 @@ class ConfigVar extends Model
         });
     }
 
-    public function getAllColumns()
-    {
-        return $this->fillable;
-    }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
-
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();
@@ -55,6 +43,6 @@ class ConfigVar extends Model
 
     public function configAppls()
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
+        return $this->belongsTo('App\Models\Settings\ConfigAppl', 'app_id', 'id');
     }
 }

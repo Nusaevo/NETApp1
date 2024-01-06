@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\ConfigMenu;
+use App\Models\Settings\ConfigMenu;
 use Illuminate\Database\QueryException;
 
 if (!function_exists('generateMenu')) {

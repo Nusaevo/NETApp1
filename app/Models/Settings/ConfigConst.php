@@ -1,23 +1,21 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-class ConfigConst extends Model
-{
-    use HasFactory, SoftDeletes;
-    use BaseTrait;
+use App\Models\BaseModel;
 
+class ConfigConst extends BaseModel
+{
     protected $table = 'config_consts';
     protected $connection = 'config';
 
     public static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
     protected $fillable = [
@@ -36,19 +34,6 @@ class ConfigConst extends Model
         'note1',
     ];
 
-    public function getAllColumns()
-    {
-        return $this->fillable;
-    }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
-
     public function scopeGetActiveData()
     {
         return $this->orderBy('str1', 'asc')->get();
@@ -56,7 +41,7 @@ class ConfigConst extends Model
 
     public function configAppls()
     {
-        return $this->belongsTo('App\Models\ConfigAppl', 'app_id', 'id');
+        return $this->belongsTo('App\Models\Settings\ConfigAppl', 'app_id', 'id');
     }
 
     public function scopeGetWarehouse()

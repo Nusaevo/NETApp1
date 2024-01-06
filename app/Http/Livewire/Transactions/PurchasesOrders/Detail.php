@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\Unit;
 use App\Models\Material;
-use App\Models\ConfigConst;
+use App\Models\Settings\ConfigConst;
 use App\Models\IvtBal;
 use Lang;
 use Exception;

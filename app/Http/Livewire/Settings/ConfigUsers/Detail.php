@@ -3,11 +3,11 @@
 namespace App\Http\Livewire\Settings\ConfigUsers;
 
 use Livewire\Component;
-use App\Models\ConfigUser;
-use App\Models\ConfigUserInfo;
-use App\Models\ConfigGroup;
+use App\Models\Settings\ConfigUser;
+use App\Models\Settings\ConfigUserInfo;
+use App\Models\Settings\ConfigGroup;
 use Illuminate\Validation\Rule;
-use App\Models\ConfigAppl;
+use App\Models\Settings\ConfigAppl;
 use Illuminate\Support\Facades\Crypt;
 
 use Lang;

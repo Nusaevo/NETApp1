@@ -9,7 +9,7 @@ use App\Models\OrderHdr;
 use App\Models\OrderDtl;
 use App\Models\ItemUnit;
 use App\Models\Partner;
-use App\Models\ConfigConst;
+use App\Models\Settings\ConfigConst;
 use App\Models\ItemWarehouse;
 use App\Models\IvtBal;
 use Illuminate\Validation\Rule;

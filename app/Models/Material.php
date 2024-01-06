@@ -8,24 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
+use App\Models\BaseModel;
 use DB;
-class Material extends Model
-{
-    use HasFactory;
-    use SoftDeletes;
-    use ModelTrait;
-    use BaseTrait;
 
+
+class Material extends BaseModel
+{
     protected $table = 'materials';
 
     protected static function boot()
     {
-        parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
+        parent::boot(); // Call the parent class's boot method
+
         static::creating(function ($model) {
             $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'MATL' ."_". ($maxId + 1);
+            $model->code = 'MATL' . "_" . ($maxId + 1);
         });
+
         static::deleting(function ($material) {
             $material->uoms->each(function ($uoms) {
                 $uoms->delete();
@@ -79,11 +78,6 @@ class Material extends Model
         $currentSequenceValue = DB::select("SELECT last_value FROM $sequenceName")[0]->last_value;
 
         return $currentSequenceValue;
-    }
-
-    public function getAllColumns()
-    {
-        return $this->fillable;
     }
 
     public function getAllColumnValues($attribute)

@@ -5,7 +5,7 @@ namespace App\Http\Livewire\Masters\Materials;
 use Livewire\Component;
 use App\Models\Material;
 use App\Models\ItemUnit;
-use App\Models\ConfigConst;
+use App\Models\Settings\ConfigConst;
 use App\Models\IvtBal;
 use App\Models\Attachment;
 use Illuminate\Validation\Rule;

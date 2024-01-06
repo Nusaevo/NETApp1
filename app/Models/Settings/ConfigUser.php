@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Settings;
 
 use App\Core\Traits\SpatieLogsActivity;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -52,7 +52,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
 
     public function configGroups()
     {
-        return $this->belongsTo('App\Models\ConfigGroup', 'group_code', 'code');
+        return $this->belongsTo('App\Models\Settings\ConfigGroup', 'group_code', 'code');
     }
 
     public function getAllColumns()

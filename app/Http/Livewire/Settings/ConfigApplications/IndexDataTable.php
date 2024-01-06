@@ -4,7 +4,7 @@ namespace App\Http\Livewire\Settings\ConfigApplications;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\ConfigAppl;
+use App\Models\Settings\ConfigAppl;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
@@ -13,7 +13,7 @@ class IndexDataTable extends DataTableComponent
 
     public function mount(): void
     {
-        $this->setSort('id', 'desc');
+        $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
     }
 

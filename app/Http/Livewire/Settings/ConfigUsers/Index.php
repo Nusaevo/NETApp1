@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Settings\ConfigUsers;
 
 use Livewire\Component;
-use App\Models\ConfigUser; // Import the User model
+use App\Models\Settings\ConfigUser; // Import the User model
 use App\Traits\LivewireTrait;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

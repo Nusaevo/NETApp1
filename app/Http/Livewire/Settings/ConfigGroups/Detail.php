@@ -3,9 +3,9 @@
 namespace App\Http\Livewire\Settings\ConfigGroups;
 
 use Livewire\Component;
-use App\Models\ConfigGroup;
-use App\Models\ConfigAppl;
-use App\Models\ConfigUser;
+use App\Models\Settings\ConfigGroup;
+use App\Models\Settings\ConfigAppl;
+use App\Models\Settings\ConfigUser;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

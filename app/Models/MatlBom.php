@@ -64,7 +64,7 @@ class MatlBom extends Model
 
     public function baseMaterials()
     {
-        return $this->belongsTo('App\Models\ConfigConst', 'base_matl_id', 'id');
+        return $this->belongsTo('App\Models\Settings\ConfigConst', 'base_matl_id', 'id');
     }
 
     public function getAllColumnValues($attribute)
