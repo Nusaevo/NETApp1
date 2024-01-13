@@ -33,7 +33,6 @@ class Detail extends Component
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
-            $this->object = new ConfigConst();
         }
     }
 
@@ -50,6 +49,8 @@ class Detail extends Component
     {
         $rules = [
             'inputs.app_id' => 'required',
+            'inputs.const_group' => 'required|string|min:1|max:50',
+            'inputs.seq' =>  'required|integer|min:0|max:9999999999',
             'inputs.str1' => 'required|string|min:1|max:50',
             'inputs.str2' => 'string|min:1|max:50'
         ];
@@ -57,10 +58,12 @@ class Detail extends Component
     }
 
     protected $validationAttributes = [
-        'inputs'                => 'Input Menu',
-        'inputs.*'              => 'Input Menu',
-        'inputs.code'           => 'Menu Code',
-        'inputs.app_id'      => 'Menu Application',
+        'inputs'                => 'Input',
+        'inputs.*'              => 'Input',
+        'inputs.code'           => 'Const Code',
+        'inputs.const_group'           => 'Const Group',
+        'inputs.seq'      => 'Const Seq',
+        'inputs.app_id'      => 'Const Application',
         'inputs.str1'      => 'Str1',
         'inputs.str2'      => 'Str2'
     ];
@@ -83,71 +86,54 @@ class Detail extends Component
         }
     }
 
-    protected function populateObjectArray()
+    public function resetForm()
     {
-        $objectData =  populateModelFromForm($this->object, $this->inputs);
-        $application = ConfigAppl::find($this->inputs['app_id']);
-        $objectData['app_code'] = $application->code;
-        $objectData['group_id'] = 1;
-        $objectData['user_id'] = 1;
-        return $objectData;
+        if ($this->actionValue == 'Create') {
+            $this->reset('inputs');
+            $this->refreshApplication();
+        }elseif ($this->actionValue == 'Edit') {
+            $this->VersioNumber = $this->object->version_number;
+        }
     }
 
-    public function validateForms()
+    public function Save()
+    {
+        $this->validateForm();
+
+        try {
+            $application = ConfigAppl::find($this->inputs['app_id']);
+            $this->inputs['app_code'] = $application->code;
+            if ($this->actionValue == 'Create') {
+                $this->object = ConfigConst::create($this->inputs);
+            } elseif ($this->actionValue == 'Edit') {
+                if ($this->object) {
+                    $this->object->updateObject($this->VersioNumber);
+                    $this->object->update($this->inputs);
+                }
+            }
+            $this->resetForm();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
+            ]);
+        } catch (Exception $e) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => Lang::get('generic.error.save', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
+            ]);
+        }
+    }
+
+    public function validateForm()
     {
         try {
             $this->validate();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' =>"", 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' =>"object", 'message' => $e->getMessage()])
             ]);
             throw $e;
-        }
-    }
-
-    public function Create()
-    {
-        $this->validateForms();
-        try {
-            $objectData = $this->populateObjectArray();
-            $this->object = ConfigConst::create($objectData);
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => ""])
-            ]);
-            $this->reset('inputs');
-            $this->refreshApplication();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "", 'message' => $e->getMessage()])
-            ]);
-        }
-    }
-
-    public function Edit()
-    {
-        $this->validateForms();
-        try {
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $objectData = $this->populateObjectArray();
-                $this->object->update($objectData);
-            }
-            //DB::commit();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.update', ['object' => ""])
-            ]);
-            $this->VersioNumber = $this->object->version_number;
-        } catch (Exception $e) {
-            //DB::rollBack();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "", 'message' => $e->getMessage()])
-            ]);
         }
     }
 

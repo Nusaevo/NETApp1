@@ -147,7 +147,7 @@ class Detail extends Component
         return $objectData;
     }
 
-    public function validateForms()
+    public function validateForm()
     {
         try {
             $this->validate();
@@ -169,7 +169,7 @@ class Detail extends Component
     {
         $messageAction = $this->action === 'Create' ? 'create' : 'update';
         // Run validations first
-        $this->validateForms();
+        $this->validateForm();
 
         // Wrap operations in a transaction for atomicity
         DB::beginTransaction();

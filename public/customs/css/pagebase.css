@@ -1,6 +1,5 @@
 
-/* Base Styles */
-
+/*Loader css*/
 .custom-loader-container {
     display: none; /* initially hidden */
     position: fixed; /* Overlay the entire screen */
@@ -20,6 +19,9 @@
     height: 3rem;
     /* Add any additional styling for the spinner here */
 }
+
+
+/*Error Message css*/
 .error-message {
     color: #dc3545;
     font-size: 0.75rem;
@@ -33,7 +35,7 @@
     border-color: #d3d3d3;
 }
 
-/* Table Styles */
+/* DataTable Styles */
 .data-table {
     border-collapse: collapse;
     width: 100%;
@@ -83,7 +85,7 @@
     text-align: left;
 }
 
-/* Field Layout */
+/* UITextField Layout */
 .responsive-field {
     display: flex;
     flex-direction: column;
@@ -179,12 +181,10 @@
     height: 100%;
 }
 
-/* Show the loading overlay only when the photo is being uploaded */
 div[wire\:loading].loading-overlay {
     display: flex;
 }
 
-/* Responsive Styles */
 @media (max-width: 767px) {
     .responsive-input-container {
         display: flex;
@@ -317,4 +317,58 @@ div[wire\:loading].loading-overlay {
     color: white; /* Text color inside the button */
     font-weight: bold;
     font-size: 16px; /* Adjust the font size as needed */
+}
+
+
+/*UISeparator css*/
+.col {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Styles for the separator */
+.styled-separator {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+/* Horizontal separator */
+.styled-separator.horizontal {
+    height: 1px; /* Adjust the height for the thickness of the separator */
+    background-color: #d9d9d9; /* Separator color */
+}
+
+/* Vertical separator */
+.styled-separator.vertical {
+    width: 1px; /* Adjust the width for the thickness of the separator */
+    height: 100%; /* Full height of the container */
+    background-color: #d9d9d9; /* Separator color */
+}
+
+/* Title (caption) */
+.styled-separator h5 {
+    margin: 0;
+    font-size: 1rem; /* Adjust font size as needed */
+    color: #333; /* Font color */
+    white-space: nowrap; /* Ensures the text doesn't wrap */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Orientation styles */
+.styled-separator.left h5 {
+    margin-right: auto;
+}
+
+.styled-separator.right h5 {
+    margin-left: auto;
+}
+
+.styled-separator.center h5 {
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
 }

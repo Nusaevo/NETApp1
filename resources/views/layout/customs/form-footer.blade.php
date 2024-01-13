@@ -10,6 +10,6 @@
         @include('layout.customs.modal', ['modal_listener' => 'changeStatus'])
     @endif
     <div>
-        <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+        <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
     </div>
 </div>

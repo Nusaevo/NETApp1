@@ -28,9 +28,9 @@
         @if (isset($loading) && $loading === 'true')
         <button type="button" wire:click="{{ isset($clickEvent) ? $clickEvent : '' }}" wire:loading.attr="disabled" class="btn {{ isset($cssClass) ? $cssClass : '' }}" @if (isset($enabled) && $enabled === 'false') disabled @endif @if (isset($visible) && $visible === 'false') style="display: none;" @endif style="padding: 5px 10px; font-size: 16px;">
             <span wire:loading.remove>
-                @if (isset($iconPath) && $iconPath)
+                {{-- @if (isset($iconPath) && $iconPath)
                     <img src="{{ asset($iconPath) }}" alt="Icon" style="width: 24px; height: 24px;">
-                @endif
+                @endif --}}
                 {{ isset($buttonName) ? $buttonName : '' }}
             </span>
             <span wire:loading>
@@ -39,9 +39,9 @@
         </button>
         @else
         <button type="button" wire:click="{{ isset($clickEvent) ? $clickEvent : '' }}" class="btn {{ isset($cssClass) ? $cssClass : '' }}" @if (isset($enabled) && $enabled === 'false') disabled @endif @if (isset($visible) && $visible === 'false') style="display: none;" @endif style="padding: 5px 10px; font-size: 16px;">
-            @if (isset($iconPath) && $iconPath)
+            {{-- @if (isset($iconPath) && $iconPath)
                 <img src="{{ asset($iconPath) }}" alt="Icon" style="width: 24px; height: 24px;">
-            @endif
+            @endif --}}
             {{ isset($buttonName) ? $buttonName : '' }}
         </button>
         @endif

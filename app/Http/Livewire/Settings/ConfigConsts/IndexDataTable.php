@@ -55,10 +55,10 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Const Code", "code")
+            Column::make("Application", "configAppls.name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Application Code", "configAppls.name")
+            Column::make("Const Group", "const_group")
                 ->searchable()
                 ->sortable(),
             Column::make("Seq", "seq")
@@ -74,6 +74,9 @@ class IndexDataTable extends DataTableComponent
                  ->searchable()
                  ->sortable(),
             Column::make("Num2", "num2")
+                 ->searchable()
+                 ->sortable(),
+            Column::make("Note1", "note1")
                  ->searchable()
                  ->sortable(),
             Column::make('Status', 'deleted_at')

@@ -1,26 +1,25 @@
 <?php
 
-namespace App\Http\Livewire\Settings\ConfigMenus;
+namespace App\Http\Livewire\Settings\ConfigVars;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Settings\ConfigMenu;
+use App\Models\Settings\ConfigVar;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
 {
-    protected $model = ConfigMenu::class;
+    protected $model = ConfigVar::class;
 
     public function mount(): void
     {
-        $this->setSort('menu_header', 'asc');
-        $this->setSort('seq', 'asc');
+        $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
     }
 
     public function builder(): Builder
     {
-        return ConfigMenu::query()
+        return ConfigVar::query()
             ->withTrashed()
             ->select();
     }
@@ -56,24 +55,21 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Menu Code", "code")
+            Column::make("Application", "configAppls.name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Application Code", "configAppls.name")
+            Column::make("Var Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Menu Header", "menu_header")
+            Column::make("Var Group", "var_group")
                 ->searchable()
                 ->sortable(),
-            Column::make("Sub Menu", "sub_menu")
+            Column::make("Seq", "seq")
                 ->searchable()
                 ->sortable(),
-            Column::make("Menu Seq", "seq")
-                    ->searchable()
-                    ->sortable(),
-            Column::make("Menu Caption", "menu_caption")
-                ->searchable()
-                ->sortable(),
+            Column::make("Default Value", "default_value")
+                 ->searchable()
+                 ->sortable(),
             Column::make('Status', 'deleted_at')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
@@ -81,7 +77,7 @@ class IndexDataTable extends DataTableComponent
                 }),
             Column::make('Actions', 'id')
                 ->format(
-                    fn ($value, $row, Column $column) => view('livewire.settings.config-menus.index-data-table-action')->withRow($row)
+                    fn ($value, $row, Column $column) => view('livewire.settings.config-vars.index-data-table-action')->withRow($row)
                 ),
         ];
     }

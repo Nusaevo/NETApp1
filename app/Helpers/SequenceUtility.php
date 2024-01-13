@@ -11,9 +11,8 @@ class SequenceUtility
     {
         $primaryKey = $model->getKeyName();
         $table = $model->getTable();
-        $sequenceName = $table . '_' . $primaryKey . '_seq';
 
-        $result = DB::select("SELECT last_value FROM $sequenceName");
-        return isset($result[0]->last_value) ? $result[0]->last_value : null;
+        $result = DB::table($table)->max($primaryKey);
+        return $result;
     }
 }

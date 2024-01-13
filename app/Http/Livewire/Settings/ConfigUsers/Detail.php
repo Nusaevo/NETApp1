@@ -90,80 +90,59 @@ class Detail extends Component
     ];
 
 
-    public function validateForms()
+    public function validateForm()
     {
         try {
             $this->validate();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
             ]);
             throw $e;
         }
     }
 
-    protected function populateObjectArray()
+    public function resetForm()
     {
-        $objectData =  populateModelFromForm($this->object, $this->inputs);
-        if (!empty($this->inputs['newpassword'])) {
-            $objectData['password'] = bcrypt($this->inputs['newpassword']);
-        }
-        return $objectData;
-    }
-
-
-    public function Create()
-    {
-        $this->validateForms();
-        try {
-            if (!$this->validatePassword()) {
-                return;
-            }
-            //DB::beginTransaction();
-            $objectData = $this->populateObjectArray();
-            $this->object = ConfigUser::create($objectData);
-            //DB::commit();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
-            ]);
+        if ($this->actionValue == 'Create') {
             $this->reset('inputs');
-        } catch (Exception $e) {
-            //DB::rollBack();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
-            ]);
-        }
-    }
-
-    public function Edit()
-    {
-        $this->validateForms();
-        try {
-            if (!$this->validatePassword()) {
-                return;
-            }
-
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $objectData = $this->populateObjectArray();
-                $this->object->update($objectData);
-            }
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.update', ['object' => $this->object->name])
-            ]);
+        }elseif ($this->actionValue == 'Edit') {
             $this->VersioNumber = $this->object->version_number;
             $this->inputs['newpassword'] = "";
             $this->inputs['confirmnewpassword'] = "";
+        }
+    }
+
+    public function Save()
+    {
+        $this->validateForm();
+        try {
+            if (!empty($this->inputs['newpassword'])) {
+                $this->inputs['password'] = bcrypt($this->inputs['newpassword']);
+            }
+
+            if (!$this->validatePassword()) {
+                return;
+            }
+
+            if ($this->actionValue == 'Create') {
+                $this->object = ConfigUser::create($this->inputs);
+            } elseif ($this->actionValue == 'Edit') {
+                if ($this->object) {
+                    $this->object->updateObject($this->VersioNumber);
+                    $this->object->update($this->inputs);
+                }
+            }
+            $this->resetForm();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
+            ]);
         } catch (Exception $e) {
-            //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.save', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
             ]);
         }
     }
@@ -185,12 +164,12 @@ class Detail extends Component
 
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => $this->object->name])
+                'message' => Lang::get($messageKey, ['object' => $this->inputs['name']])
             ]);
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
             ]);
         }
 

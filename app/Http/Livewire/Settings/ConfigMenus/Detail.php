@@ -33,7 +33,6 @@ class Detail extends Component
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
-            $this->object = new ConfigMenu();
         }
     }
 
@@ -51,7 +50,6 @@ class Detail extends Component
         $rules = [
             'inputs.app_id' => 'required',
             'inputs.menu_header' => 'required|string|min:1|max:100',
-            'inputs.sub_menu' => 'string|min:1|max:100',
             'inputs.menu_caption' => 'required|string|min:1|max:100',
             'inputs.link' => 'required|string|min:1|max:100',
         ];
@@ -66,6 +64,7 @@ class Detail extends Component
         'inputs.menu_header'      => 'Menu Header',
         'inputs.sub_menu'      => 'Sub Menu',
         'inputs.menu_caption'      => 'Menu Caption',
+        'inputs.seq'      => 'Menu Seq',
         'inputs.link'      => 'Menu link'
     ];
 
@@ -87,68 +86,53 @@ class Detail extends Component
         }
     }
 
-    protected function populateObjectArray()
-    {
-        $objectData =  populateModelFromForm($this->object, $this->inputs);
-        $application = ConfigAppl::find($this->inputs['app_id']);
-        $objectData['app_code'] = $application->code;
-        return $objectData;
-    }
-
-    public function validateForms()
+    public function validateForm()
     {
         try {
             $this->validate();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => "menu", 'message' => $e->getMessage()])
             ]);
             throw $e;
         }
     }
 
-    public function Create()
+    public function resetForm()
     {
-        $this->validateForms();
-        try {
-            $objectData = $this->populateObjectArray();
-            $this->object = ConfigMenu::create($objectData);
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => $this->inputs['menu_caption']])
-            ]);
+        if ($this->actionValue == 'Create') {
             $this->reset('inputs');
             $this->refreshApplication();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "User", 'message' => $e->getMessage()])
-            ]);
+        }elseif ($this->actionValue == 'Edit') {
+            $this->VersioNumber = $this->object->version_number;
         }
     }
 
-    public function Edit()
+    public function Save()
     {
-        $this->validateForms();
-        try {
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $objectData = $this->populateObjectArray();
-                $this->object->update($objectData);
-            }
-            //DB::commit();
+        $this->validateForm();
 
+        try {
+            $application = ConfigAppl::find($this->inputs['app_id']);
+            $this->inputs['app_code'] = $application->code;
+            if ($this->actionValue == 'Create') {
+                $this->object = ConfigMenu::create($this->inputs);
+            } elseif ($this->actionValue == 'Edit') {
+                if ($this->object) {
+                    $this->object->updateObject($this->VersioNumber);
+                    $this->object->update($this->inputs);
+                }
+            }
+            $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.update', ['object' => $this->object->menu_caption])
+                'message' => Lang::get('generic.success.save', ['object' => "menu"])
             ]);
-            $this->VersioNumber = $this->object->version_number;
         } catch (Exception $e) {
-            //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.save', ['object' => "menu", 'message' => $e->getMessage()])
             ]);
         }
     }
@@ -170,7 +154,7 @@ class Detail extends Component
 
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => $this->object->name])
+                'message' => Lang::get($messageKey, ['object' => $this->inputs['name']])
             ]);
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [

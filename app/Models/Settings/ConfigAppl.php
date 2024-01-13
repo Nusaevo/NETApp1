@@ -14,6 +14,7 @@ class ConfigAppl extends BaseModel
     protected $table = 'config_appls';
     protected $connection = 'config';
 
+
     public static function boot()
     {
         parent::boot();

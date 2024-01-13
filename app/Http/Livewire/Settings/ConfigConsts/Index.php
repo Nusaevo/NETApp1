@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Settings\ConfigConsts;
 
 use Livewire\Component;
-use App\Models\Settings\ConfigMenu; // Import the ConfigGroup model
+use App\Models\Settings\ConfigConst; // Import the ConfigGroup model
 use App\Traits\LivewireTrait;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
@@ -43,7 +43,7 @@ class Index extends Component
 
     public function SelectObject($id)
     {
-        $this->object = ConfigMenu::findOrFail($id);
+        $this->object = ConfigConst::findOrFail($id);
     }
 
     public function Disable()
@@ -53,13 +53,13 @@ class Index extends Component
             $this->object->delete();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => $this->object->menu_caption])
+                'message' => Lang::get('generic.success.disable', ['object' => $this->object->str1])
             ]);
         } catch (Exception $e) {
             // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.disable', ['object' => $this->object->str1, 'message' => $e->getMessage()])
             ]);
         }
         $this->emit('refreshData');

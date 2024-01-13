@@ -6,8 +6,11 @@
         @endphp
 
         @foreach ($tabItems as $tab)
+            @php
+                $tabWithoutSpaces = str_replace(' ', '', $tab);
+            @endphp
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="{{ $tab }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tab }}" type="button" role="tab" aria-controls="{{ $tab }}">{{ ucfirst($tab) }}</button>
+                <button class="nav-link" id="{{ $tabWithoutSpaces }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tabWithoutSpaces }}" type="button" role="tab" aria-controls="{{ $tabWithoutSpaces }}">{{ ucfirst($tab) }}</button>
             </li>
         @endforeach
     </ul>

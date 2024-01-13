@@ -32,12 +32,15 @@ class ConfigMenu extends BaseModel
         'sub_menu',
         'menu_caption',
         'link',
-        'status_code'
+        'status_code',
+        'seq'
     ];
 
     public function scopeGetActiveData()
     {
-        return $this->orderBy('code', 'asc')->get();
+        return $this->orderBy('menu_header', 'asc')
+                    ->orderBy('seq', 'asc')
+                    ->get();
     }
 
     public function configAppls()

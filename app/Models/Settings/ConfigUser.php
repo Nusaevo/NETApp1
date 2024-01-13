@@ -18,7 +18,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     // use HasRoles;
     use BaseTrait;
     use SoftDeletes;
-    protected $connection = 'config';
+    
 
     public static function boot()
     {

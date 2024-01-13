@@ -207,7 +207,7 @@ class MaterialForm extends Component
         return $objectData;
     }
 
-    public function validateForms()
+    public function validateForm()
     {
         try {
             $this->validate();
@@ -222,7 +222,7 @@ class MaterialForm extends Component
 
     public function Save()
     {
-        $this->validateForms();
+        $this->validateForm();
         DB::beginTransaction();
         try {
             // Determine if it's a create or edit operation

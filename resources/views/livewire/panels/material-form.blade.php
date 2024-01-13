@@ -1,4 +1,4 @@
-<x-ui-page-card title="{{ $actionValue }} Material" status="{{ $status }}">
+<x-ui-page-card title="{{ $actionValue }} Master Produk" status="{{ $status }}">
     <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
         <x-ui-tab-view id="materialTab" tabs="material"> </x-ui-tab-view>
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
@@ -7,37 +7,30 @@
 
                     <div class="material-info-container">
                         <!-- Photo Container -->
-                        <div class="photo-container">
-                            <div class="photo-upload-box" onclick="document.getElementById('photo').click();">
-                                <input type="file" wire:model="photo" id="photo" accept="image/*" capture="camera" style="display: none;">
-                                <span wire:loading.remove></span>
-                                <span wire:loading>
-                                    <div class="loading-overlay">Loading...</div>
-                                </span>
-                                @if ($photo)
-                                <div class="image-preview" wire:loading.remove wire:target="photo">
-                                    <img src="{{ $photo->temporaryUrl() }}" alt="Material Photo">
-                                </div>
-                                @elseif($actionValue == 'Edit' && $object && $object->attachments->first())
-                                    <div class="image-preview" wire:loading.remove wire:target="photo">
-                                        <img src="{{ Storage::url($object->attachments->first()->path) }}" alt="Material Photo">
-                                    </div>
-                                @else
-                                    <div class="image-placeholder" wire:loading.remove wire:target="photo">
-                                        Click to Upload photo
-                                    </div>
-                                @endif
+                        <div class="multiple-photo-container">
+                            <!-- Photo boxes -->
+                            <div class="photo-box">
+                                <img src="path_to_photo1.jpg" alt="Photo 1">
                             </div>
-                            <button type="button" onclick="viewFullscreen('preview')" class="fullscreen-btn btn btn-primary">View Fullscreen</button>
+                            <div class="photo-box">
+                                <img src="path_to_photo2.jpg" alt="Photo 2">
+                            </div>
+                            <div class="photo-box">
+                                <img src="path_to_photo2.jpg" alt="Photo 2">
+                            </div>
+                            <div class="photo-box">
+                                <img src="path_to_photo2.jpg" alt="Photo 2">
+                            </div>
+                            <div class="button-container">
+                                <button type="button" class="btn">Add from Camera</button>
+                                <button type="button" class="btn">Add from Gallery</button>
+                            </div>
                         </div>
 
                         <div class="fields-container">
                             <x-ui-text-field label="Material Code" model="materials.code" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="" />
-                            {{-- <x-ui-text-field label="Name" model="materials.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
-                            <x-ui-dropdown-select label="Category" click-event="refreshCategories" model="materials.jwl_category" :options="$materialCategories" :selectedValue="$materials['jwl_category']" required="true" :action="$actionValue" span="Half" />--}}
+                            {{-- <x-ui-dropdown-select label="Category" model="materials.jwl_category" :options="$materialCategories" :selectedValue="$materials['jwl_category']" required="true" :action="$actionValue" span="Half" /> --}}
                             <x-ui-dropdown-select label="UOM" click-event="refreshUOMs" model="matl_uoms.name" :options="$materialUOMs" :selectedValue="$matl_uoms['name']" required="true" :action="$actionValue" span="Full" />
-                            <x-ui-text-field label="Barcode" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" />
-                            <x-ui-button click-event="runExe" cssClass="btn btn-secondary" button-name="Scan" :action="$actionValue" />
                             <x-ui-text-field label="Description" model="materials.descr" type="textarea" :action="$actionValue" required="true" enabled="false" placeHolder="Enter Description" span="Full" />
 
                             <x-ui-text-field label="Selling Price" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Selling Price" span="Half" />
@@ -81,6 +74,10 @@
                         </div>
                     </div>
 
+
+                 <x-ui-text-field label="Barcode" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
+                 <x-ui-button click-event="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" />
+                 <x-ui-button click-event="printLabel" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
 
                 </x-ui-expandable-card>
             </div>
@@ -133,11 +130,11 @@
                 </x-ui-expandable-card>
             </div> --}}
 
-
         </x-ui-tab-view-content>
 
         <div class="card-footer d-flex justify-content-end">
             <div>
+
                 <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
             </div>
         </div>

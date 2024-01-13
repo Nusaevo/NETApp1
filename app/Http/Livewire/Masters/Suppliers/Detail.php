@@ -29,6 +29,7 @@ class Detail extends Component
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
+            $this->inputs['grp'] = 'SUPP';
             $this->object = new Partner();
         }
     }
@@ -67,14 +68,7 @@ class Detail extends Component
         'inputs.contact_person'      => 'Contact'
     ];
 
-    protected function populateObjectArray()
-    {
-        $objectData =  populateModelFromForm($this->object, $this->inputs);
-        $objectData['grp'] = 'SUPP';
-        return $objectData;
-    }
-
-    public function validateForms()
+    public function validateForm()
     {
         try {
             $this->validate();
@@ -87,46 +81,37 @@ class Detail extends Component
         }
     }
 
-    public function Create()
+    public function resetForm()
     {
-        $this->validateForms();
-        try {
-            $objectData = $this->populateObjectArray();
-            $this->object = Partner::create($objectData);
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => $this->inputs['name']])
-            ]);
-            $this->inputs = [];
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "User", 'message' => $e->getMessage()])
-            ]);
+        if ($this->actionValue == 'Create') {
+            $this->reset('inputs');
+        }elseif ($this->actionValue == 'Edit') {
+            $this->VersioNumber = $this->object->version_number;
         }
     }
 
-    public function Edit()
+    public function Save()
     {
-        $this->validateForms();
-        try {
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $objectData = $this->populateObjectArray();
-                $this->object->update($objectData);
-            }
-            //DB::commit();
+        $this->validateForm();
 
+        try {
+            if ($this->actionValue == 'Create') {
+                $this->object = Partner::create($this->inputs);
+            } elseif ($this->actionValue == 'Edit') {
+                if ($this->object) {
+                    $this->object->updateObject($this->VersioNumber);
+                    $this->object->update($this->inputs);
+                }
+            }
+            $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.update', ['object' => $this->object->name])
+                'message' => Lang::get('generic.success.save', ['object' => $this->object->name])
             ]);
-            $this->VersioNumber = $this->object->version_number;
         } catch (Exception $e) {
-            //DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.save', ['object' => $this->object->name, 'message' => $e->getMessage()])
             ]);
         }
     }
