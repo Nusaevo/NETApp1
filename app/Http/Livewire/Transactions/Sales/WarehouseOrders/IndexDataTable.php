@@ -22,7 +22,7 @@ class IndexDataTable extends DataTableComponent
 
     public function mount(): void
     {
-        $this->setSort('created_at', 'desc');
+        $this->setSort('id', 'desc');
         $this->setFilter('is_finished', '1');
     }
 

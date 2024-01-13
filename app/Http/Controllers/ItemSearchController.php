@@ -21,8 +21,9 @@ class ItemSearchController extends Controller
             //     ->whereNull('item_units.deleted_at')
             //     ->get();
             dd("sdsd");
-            $item = Material::select('id', 'descr')
+            $item = Material::select('id', 'code')
             ->whereRaw('LOWER(descr) LIKE ?', ["%$search%"])
+            ->whereRaw('LOWER(code) LIKE ?', ["%$search%"])
             ->whereNull('deleted_at')
             ->get();
 

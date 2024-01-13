@@ -13,15 +13,7 @@ class IndexDataTable extends DataTableComponent
 
     public function mount(): void
     {
-        $this->setSort('created_at', 'desc');
-    }
-
-    public function builder(): Builder
-    {
-        return OrderHdr::query()
-            ->withTrashed()
-            ->where('tr_type', 'PD')
-            ->select();
+        $this->setSort('id', 'desc');
     }
 
      public function configure(): void

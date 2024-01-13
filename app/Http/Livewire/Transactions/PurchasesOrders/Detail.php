@@ -91,8 +91,7 @@ class Detail extends Component
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'changeItem'  => 'changeItem',
-        'materialCreated' => 'materialCreated',
-        'materialUpdated' => 'materialUpdated'
+        'materialSaved' => 'materialSaved'
     ];
 
 
@@ -151,7 +150,7 @@ class Detail extends Component
         $this->dispatchBrowserEvent('reApplySelect2');
     }
 
-    public function materialCreated($material_id)
+    public function materialSaved($material_id)
     {
         DB::beginTransaction();
         try {
@@ -216,16 +215,16 @@ class Detail extends Component
         }
     }
 
-    // public function changePrice($id, $value)
-    // {
-    //     if (isset($this->input_details[$id]['qty'])) {
-    //         $total = $this->input_details[$id]['qty'] * $value;
-    //         $this->input_details[$id]['amt'] = $total;
-    //         $this->input_details[$id]['sub_total'] = rupiah($total);
-    //         $this->countTotalAmount();
-    //         $this->dispatchBrowserEvent('reApplySelect2');
-    //     }
-    // }
+    public function changePrice($id, $value)
+    {
+        if (isset($this->input_details[$id]['qty'])) {
+            $total = $this->input_details[$id]['qty'] * $value;
+            $this->input_details[$id]['amt'] = $total;
+            $this->input_details[$id]['sub_total'] = rupiah($total);
+            $this->countTotalAmount();
+            $this->dispatchBrowserEvent('reApplySelect2');
+        }
+    }
 
     public function countTotalAmount()
     {

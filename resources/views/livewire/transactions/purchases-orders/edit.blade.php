@@ -28,9 +28,9 @@
                         <div class="card-body p-2 mt-10">
                             <h2 class="mb-2 text-center">Barang</h2>
                             @if($actionValue === "Create")
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
-                                Tambah
-                            </button>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+                                    Tambah
+                                </button>
                             @endif
 
                             <x-ui-dialog-box id="MaterialDialogBox" :visible="$materialDialogVisible">
@@ -45,10 +45,10 @@
                             {{-- <x-ui-button click-event="openModal" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" /> --}}
 
                             <div class="card-body p-2 mt-10">
-                                <div class="list-group mt-5" style="max-height: 600px; overflow-y: auto;" id="scroll-container">
+                                <div class="list-group mt-5" style="max-height: 500px; overflow-y: auto;" id="scroll-container">
                                     @foreach($input_details as $key => $detail)
                                         <div class="list-group-item">
-                                            <div class="row">
+                                            <div class="d-flex justify-content-between align-items-start">
                                                 <div class="col-md-1 d-flex align-items-center justify-content-center">
                                                     <span>{{$key+1}}</span>
                                                 </div>
@@ -68,18 +68,19 @@
                                                      <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" />
                                                      <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false" placeHolder="" />
                                                 </div>
-                                                <div class="position-absolute top-0 end-0 mt-2 me-2">
-                                                    <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
-                                                       X
-                                                    </a>
-                                                </div>
+                                            </div>
+                                            <!-- Updated delete button with rounded "X" -->
+                                            <div class="close-button">
+                                                <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
+                                                    X
+                                                 </a>
                                             </div>
                                         </div>
                                     @endforeach
                                 </div>
-                                <div class="d-flex justify-content-end mt-4">
-                                    <h3>Total Price: {{ rupiah($total_amount) }}</h3>
-                                </div>
+                                {{-- <div class="d-flex justify-content-end mt-4">
+                                    <h3>Total Price: {{ rupiah($total_prices) }}</h3>
+                                </div> --}}
                             </div>
 
                         </div>

@@ -18,14 +18,14 @@
                                 <div class="image-preview" wire:loading.remove wire:target="photo">
                                     <img src="{{ $photo->temporaryUrl() }}" alt="Material Photo">
                                 </div>
-                                @elseif($object && $object->attachments->first())
-                                <div class="image-preview" wire:loading.remove wire:target="photo">
-                                    <img src="{{ Storage::url($object->attachments->first()->path) }}" alt="Material Photo">
-                                </div>
+                                @elseif($actionValue == 'Edit' && $object && $object->attachments->first())
+                                    <div class="image-preview" wire:loading.remove wire:target="photo">
+                                        <img src="{{ Storage::url($object->attachments->first()->path) }}" alt="Material Photo">
+                                    </div>
                                 @else
-                                <div class="image-placeholder" wire:loading.remove wire:target="photo">
-                                    Click to Upload photo
-                                </div>
+                                    <div class="image-placeholder" wire:loading.remove wire:target="photo">
+                                        Click to Upload photo
+                                    </div>
                                 @endif
                             </div>
                             <button type="button" onclick="viewFullscreen('preview')" class="fullscreen-btn btn btn-primary">View Fullscreen</button>
@@ -35,22 +35,24 @@
                             <x-ui-text-field label="Material Code" model="materials.code" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="" />
                             {{-- <x-ui-text-field label="Name" model="materials.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
                             <x-ui-dropdown-select label="Category" click-event="refreshCategories" model="materials.jwl_category" :options="$materialCategories" :selectedValue="$materials['jwl_category']" required="true" :action="$actionValue" span="Half" />--}}
-                            <x-ui-dropdown-select label="UOM" click-event="refreshUOMs" model="matl_uoms.name" :options="$materialUOMs" :selectedValue="$matl_uoms['name']" required="true" :action="$actionValue" span="Half" />
-                            <x-ui-text-field label="Barcode" model="matl_uoms.barcode" type="number" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Full" />
-                            <x-ui-text-field label="Selling Price" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Selling Price" span="Full" />
-                            <x-ui-text-field label="Buying Price" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Full" />
+                            <x-ui-dropdown-select label="UOM" click-event="refreshUOMs" model="matl_uoms.name" :options="$materialUOMs" :selectedValue="$matl_uoms['name']" required="true" :action="$actionValue" span="Full" />
+                            <x-ui-text-field label="Barcode" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" />
+                            <x-ui-button click-event="runExe" cssClass="btn btn-secondary" button-name="Scan" :action="$actionValue" />
                             <x-ui-text-field label="Description" model="materials.descr" type="textarea" :action="$actionValue" required="true" enabled="false" placeHolder="Enter Description" span="Full" />
+
+                            <x-ui-text-field label="Selling Price" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Selling Price" span="Half" />
+                            <x-ui-text-field label="Buying Price" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Half" />
                         </div>
                     </div>
 
-                    <div class="card-body p-2 mt-10">
+                      <div class="card-body p-2 mt-10">
                         <h2 class="mb-2 text-center">Side Materials</h2>
 
                         <x-ui-button
                             click-event="addBoms"
                             cssClass="btn btn-success"
                             iconPath="images/create-icon.png"
-                            button-name="Tambah"
+                            button-name="Add"
                             :action="$actionValue" />
 
                         <div class="list-group mt-5" style="max-height: 500px; overflow-y: auto;" id="scroll-container">
@@ -59,25 +61,26 @@
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <h5 class="mb-1">No. {{$key+1}}</h5>
-                                            <x-ui-dropdown-select label="Base Material" click-event="refreshBaseMaterials" model="matl_boms.base_matl_id" :options="$baseMaterials" :selectedValue="$matl_boms['base_matl_id']" required="true" :action="$actionValue" span="Full" />
-                                            <x-ui-text-field label="Sides Material" model="matl_boms.jwl_sides_matl" type="text" :action="$actionValue" required="false" placeHolder="Enter Sides Material" span="Half" />
-                                            <x-ui-text-field label="Sides Carat" model="matl_boms.jwl_sides_carat" type="text" :action="$actionValue" required="false" placeHolder="Enter Sides Carat" span="Half" />
-                                            <x-ui-text-field label="Sides Count" model="matl_boms.jwl_sides_cnt" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Count" span="Half" />
-                                            <x-ui-text-field label="Sides Parcel" model="matl_boms.jwl_sides_parcel" type="text" :action="$actionValue" required="false" placeHolder="Enter Sides Parcel" span="Half" />
-                                            <x-ui-text-field label="Sides Price" model="matl_boms.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Price" span="Half" />
-                                            <x-ui-text-field label="Document" model="" type="document" :action="$actionValue" required="false" placeHolder="Upload document" span="Full" />
+                                            <x-ui-dropdown-select label="Category" click-event="" model="matl_boms.{{ $key }}.base_category_id" :options="$materialCategories" :selectedValue="$matl_boms[$key]['base_category_id']" required="true" :action="$actionValue" span="Half" />
+                                            <x-ui-dropdown-select label="Material" click-event="" model="matl_boms.{{ $key }}.base_matl_id" onChanged="generateSpecs(1)" :options="$baseMaterials" :selectedValue="$matl_boms[$key]['base_matl_id']" required="true" :action="$actionValue" span="Half" />
+                                            <x-ui-text-field label="Carat" model="matl_boms.{{ $key }}.jwl_sides_carat" type="text" :action="$actionValue" required="false" placeHolder="Enter Sides Carat" span="Half" />
+                                            <x-ui-text-field label="Count" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Count" span="Half" />
+                                            <x-ui-text-field label="Parcel" model="matl_boms.{{ $key }}.jwl_sides_parcel" type="text" :action="$actionValue" required="false" placeHolder="Enter Sides Parcel" span="Half" />
+                                            <x-ui-text-field label="Price" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Price" span="Half" />
+                                            {{-- <x-ui-text-field label="Document" model="" type="document" :action="$actionValue" required="false" placeHolder="Upload document" span="Full" /> --}}
                                         </div>
-                                        <!-- Updated delete button with "X" icon -->
-                                        <div class="position-absolute top-0 end-0 mt-2 me-2">
-                                            <a href="#" wire:click="deleteBoms({{ $key }})" class="btn btn-link">
-                                              x
-                                            </a>
-                                        </div>
+                                    </div>
+                                    <!-- Updated delete button with rounded "X" -->
+                                    <div class="close-button">
+                                        <a href="#" wire:click.prevent="deleteBoms({{ $key }})">
+                                            X
+                                        </a>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
                     </div>
+
 
                 </x-ui-expandable-card>
             </div>
@@ -135,7 +138,7 @@
 
         <div class="card-footer d-flex justify-content-end">
             <div>
-                <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+                <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
             </div>
         </div>
 

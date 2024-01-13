@@ -41,6 +41,7 @@ use App\Http\Livewire\Transactions\SalesDeliveries\Detail as SalesDeliveryDetail
 use App\Http\Livewire\Masters\Materials\Index as MaterialIndex;
 use App\Http\Livewire\Masters\Materials\Detail as MaterialDetail;
 
+use App\Http\Livewire\Masters\Materials\Catalogue as MaterialCatalogue;
 
 use Illuminate\Support\Facades\Route;
 
@@ -112,6 +113,10 @@ Route::middleware('auth')->group(function () {
         // });
     });
 
+    Route::prefix('catalogues')->name('materials.')->group(function () {
+        Route::get('/', MaterialCatalogue::class)->name('index');
+    });
+
     Route::prefix('purchases_orders')->name('purchases_orders.')->group(function () {
         Route::get('/', PurchasesOrderIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', PurchasesOrderDetail::class)->name('detail');
@@ -131,7 +136,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/', SalesDeliveryIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', SalesDeliveryDetail::class)->name('detail');
     });
-
 
     // Route::prefix('supplier')->name('supplier.')->group(function () {
     //     Route::get('/', ConfigRightIndex::class)->name('index');

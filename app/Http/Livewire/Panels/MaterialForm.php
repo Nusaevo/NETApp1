@@ -53,51 +53,31 @@ class MaterialForm extends Component
         $this->actionValue = $materialActionValue;
         $this->objectIdValue = $materialIDValue;
         $this->populateDropdowns();
+
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $this->objectIdValue) {
             $this->object = Material::withTrashed()->find($this->objectIdValue);
             // $this->object_detail = ItemUnit::ItemId($this->object->id)->get();
             //$this->attachments = $this->object->attachments;
 
-            $this->object_uoms = $this->object->uoms;
+            $this->object_uoms = $this->object->uoms[0];
             $this->object_boms = $this->object->boms;
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->materials = populateArrayFromModel($this->object);
-            $this->matl_uoms = populateArrayFromModel($this->object_uoms[0]);
-
-
-            foreach ($this->object_boms as $detail) {
+            $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+            foreach ($this->object_boms as $key => $detail) {
+                $this->refreshCategories($this->bom_row);
+                $this->refreshBaseMaterials($this->bom_row);
                 $formattedDetail = populateArrayFromModel($detail);
-                $formattedDetail['base_matl_name'] = $detail->baseMaterials->str1;
-                $this->matl_boms_array[] = $formattedDetail;
+                array_push($this->matl_boms_array, $formattedDetail);
+                $this->matl_boms[$key] =  $formattedDetail;
+                $this->bom_row++;
             }
         } else {
             $this->object = new Material();
             $this->object_uoms = new MatlUom();
-            $this->object_boms = new MatlBom();
+            $this->object_boms = [];
             $this->matl_boms_array = [];
-        }
-    }
-
-    public function refreshCategories()
-    {
-        $materialCategories = ConfigConst::where('app_code', $this->appCode)
-        ->where('const_group', 'MATL_JWL_CATEGORY')
-        ->orderBy('seq')
-        ->get();
-
-        if (!$materialCategories->isEmpty()) {
-            $this->materialCategories = $materialCategories->map(function ($data) {
-                return [
-                    'label' => $data->str1,
-                    'value' => $data->str1,
-                ];
-            })->toArray();
-
-            $this->materials['jwl_category'] = $this->materialCategories[0]['value'];
-        } else {
-            $this->materialCategories = [];
-            $this->materials['jwl_category'] = null;
         }
     }
 
@@ -122,7 +102,28 @@ class MaterialForm extends Component
         }
     }
 
-    public function refreshBaseMaterials()
+    public function refreshCategories($key)
+    {
+        $materialCategories = ConfigConst::where('app_code', $this->appCode)
+        ->where('const_group', 'MATL_JWL_CATEGORY')
+        ->orderBy('seq')
+        ->get();
+
+        if (!$materialCategories->isEmpty()) {
+            $this->materialCategories = $materialCategories->map(function ($data) {
+                return [
+                    'label' => $data->str1,
+                    'value' => $data->id,
+                ];
+            })->toArray();
+            $this->matl_boms[$key]['base_category_id'] = $this->materialCategories[0]['value'];
+        } else {
+            $this->materialCategories = [];
+            $this->matl_boms[$key]['base_category_id'] = null;
+        }
+    }
+
+    public function refreshBaseMaterials($key)
     {
         $baseMaterials = ConfigConst::where('app_code', $this->appCode)
         ->where('const_group', 'MATL_JWL_BASE_MATL')
@@ -136,10 +137,10 @@ class MaterialForm extends Component
                     'value' => $data->id,
                 ];
             })->toArray();
-            $this->matl_boms['base_matl_id'] = $this->baseMaterials[0]['value'];
+            $this->matl_boms[$key]['base_matl_id'] = $this->baseMaterials[0]['value'];
         } else {
             $this->baseMaterials = [];
-            $this->matl_boms['base_matl_id'] = null;
+            $this->matl_boms[$key]['base_matl_id'] = null;
         }
     }
 
@@ -150,13 +151,13 @@ class MaterialForm extends Component
 
 
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
+        'changeStatus'  => 'changeStatus'
     ];
 
     protected function rules()
     {
         $rules = [
-            'materials.jwl_category' => 'required|string|min:1|max:50',
+            // 'materials.jwl_category' => 'required|string|min:1|max:50',
             'materials.jwl_buying_price' => 'required|integer|min:0|max:9999999999',
             'materials.jwl_selling_price' =>'required|integer|min:0|max:9999999999',
             'matl_uoms.barcode' =>'required|integer|min:0|max:9999999999',
@@ -189,14 +190,15 @@ class MaterialForm extends Component
         'materials'                => 'Input Material',
         'materials.*'              => 'Input Material',
         // 'materials.name'      => 'Nama Material',
-        'materials.descr'      => 'Description Material'
+        'materials.descr'      => 'Description Material',
+        'matl_uoms.barcode'      => 'Barcode Material',
+        'materials.jwl_buying_price'      => 'Buying Price Material',
+        'materials.jwl_selling_price'      => 'Selling Price Material'
     ];
 
     protected function populateDropdowns()
     {
-        $this->refreshCategories();
         $this->refreshUOMs();
-        $this->refreshBaseMaterials();
     }
 
     protected function populateObjectArray($object,$formArray)
@@ -218,152 +220,172 @@ class MaterialForm extends Component
         }
     }
 
-    public function Create()
+    public function Save()
     {
         $this->validateForms();
         DB::beginTransaction();
         try {
-            $materialData = $this->populateObjectArray($this->object,$this->materials);
-            $this->object = Material::create($materialData);
+            // Determine if it's a create or edit operation
+            $isNewMaterial = $this->object->isNew();
 
-            $this->saveAttachment();
-            $materialUOMData = $this->populateObjectArray($this->object_uoms,$this->matl_uoms);
-            $materialUOMData['matl_id'] = $this->object->id;
-            $materialUOMData['matl_code'] = $this->object->code;
-            $this->object_uoms = MatlUom::create($materialUOMData);
-
-            foreach ($this->matl_boms_array as $index => $bomData) {
-                $bomData['matl_id'] = $this->object->id;
-                $bomData['seq'] = $index + 1;
-                MatlBom::create($bomData);
+            // Populate Material Data
+            $this->materials['descr'] = $this->getMaterialDescriptionsFromBOMs();
+            $materialData = $this->populateObjectArray($this->object, $this->materials);
+            if ($this->object->isNew()) {
+                $this->object = Material::create($materialData);
+            } else {
+                $this->object->updateObject($this->VersioNumber);
+                $this->object->update($materialData);
             }
 
-            $warehouse = ConfigConst::GetWarehouse();
-            foreach ($warehouse as $warehouse) {
-                $inventoryBal = IvtBal::firstOrCreate(
-                    [
+            // Save Attachment
+            $this->saveAttachment();
+
+            // Populate and Save/Update Material UOMs
+            $materialUOMData = $this->populateObjectArray($this->object_uoms, $this->matl_uoms);
+            $materialUOMData['matl_id'] = $this->object->id;
+            $materialUOMData['matl_code'] = $this->object->code;
+
+            if ($isNewMaterial) {
+                $this->object_uoms = MatlUom::create($materialUOMData);
+            } else {
+                $this->object_uoms->updateObject($this->VersioNumber);
+                $this->object_uoms->update($materialUOMData);
+            }
+
+            // Handle BOMs
+            foreach ($this->matl_boms as $index => $bomData) {
+                if($isNewMaterial)
+                {
+                    $this->object_boms[$index] =  new MatlBom();
+                }
+                $bomData = $this->populateObjectArray($this->object_boms[$index], $bomData);
+                $bomData['matl_id'] = $this->object->id;
+                $bomData['matl_code'] = $this->object->id;
+                $bomData['seq'] = $index + 1;
+                $bom = MatlBom::find($this->object_boms[$index]->id);
+                if ($bom) {
+                    $bom->updateObject($this->VersioNumber);
+                    $bom->update($bomData);
+                } else {
+                    MatlBom::create($bomData);
+                }
+            }
+
+            // Handle Deleted BOMs for Edit operation
+            if (!$isNewMaterial) {
+                foreach ($this->deletedItems as $deletedItemId) {
+                    MatlBom::find($deletedItemId)->delete();
+                }
+            }
+
+            // Handle Warehouses - only for new materials
+            if ($isNewMaterial) {
+                $warehouse = ConfigConst::GetWarehouse();
+                foreach ($warehouse as $warehouse) {
+                    $inventoryBal = IvtBal::firstOrCreate([
                         'matl_id' => $this->object->id,
                         'wh_id' => $warehouse->id,
-                        'wh_code' =>  $warehouse->str2
-                    ]
-                );
-                IvtBalUnit::firstOrCreate(
-                    [
-                        'ivt_id' =>  $inventoryBal->id,
+                        'wh_code' => $warehouse->str2
+                    ]);
+                    IvtBalUnit::firstOrCreate([
+                        'ivt_id' => $inventoryBal->id,
                         'matl_id' => $this->object->id,
                         'wh_id' => $warehouse->id,
                         'matl_uom_id' =>$this->object_uoms->id,
                         'uom' =>$this->object_uoms->name,
-                    ]
-                );
+                    ]);
+                }
             }
 
+            // Dispatch success notification
+            $message = $isNewMaterial ? 'generic.success.create' : 'generic.success.update';
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.create', ['object' => "Material"])
+                'message' => Lang::get($message, ['object' => "Material"])
             ]);
-            $this->reset('materials');
-            $this->reset('matl_uoms');
-            $this->populateDropdowns();
+
+            // Reset and repopulate dropdowns
+
             DB::commit();
-            $this->emit('materialCreated', $this->object->id);
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "Material", 'message' => $e->getMessage()])
-            ]);
-        }
-    }
-
-    public function Edit()
-    {
-        $this->validateForms();
-        DB::beginTransaction();
-
-        try {
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $materialData = $this->populateObjectArray($this->object, $this->materials);
-                $this->object->update($materialData);
-                $this->saveAttachment();
-
-                $materialUOMData = $this->populateObjectArray($this->object_uoms[0], $this->matl_uoms);
-                $this->object_uoms[0]->update($materialUOMData);
-
-                $existingBoms = MatlBom::withTrashed()
-                    ->where('matl_id', $this->object->id)
-                    ->get()
-                    ->keyBy(function($item) {
-                        return $item->seq . '-' . $item->matl_id;
-                    });
-
-                foreach ($this->matl_boms_array as $index => $bomData) {
-                    $sequence = $index + 1;
-                    $bomData['seq'] = $sequence;
-
-                    $bomKey = $sequence . '-' . $this->object->id;
-
-                    if (isset($existingBoms[$bomKey])) {
-                        // Restore if trashed and update
-                        if ($existingBoms[$bomKey]->trashed()) {
-                            $existingBoms[$bomKey]->restore();
-                        }
-                        $existingBoms[$bomKey]->update($bomData);
-                        unset($existingBoms[$bomKey]);
-                    } else {
-                        // Create new BOM
-                        MatlBom::create($bomData + [
-                            'matl_id' => $this->object->id,
-                            'matl_code' => $this->object->code
-                        ]);
-                    }
-                }
-
-                foreach ($existingBoms as $bomToDelete) {
-                    $bomToDelete->delete();
-                }
-
-                DB::commit();
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'success',
-                    'message' => Lang::get('generic.success.update', ['object' => $this->object->name])
-                ]);
-                $this->VersioNumber = $this->object->version_number;
-                $this->populateDropdowns();
-                $this->emit('materialUpdated', $this->object->id);
+            $this->emit('materialSaved', $this->object->id);
+            if ($isNewMaterial) {
+                $this->resetMaterialForm();
             }
         } catch (Exception $e) {
             DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.update', ['object' => $this->object->name, 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.update', ['object' => "Material", 'message' => $e->getMessage()])
             ]);
         }
     }
 
+    public function getMaterialDescriptionsFromBOMs()
+    {
+        $materialDescriptions = "";
+
+        // Check if there are any BOMs
+        if ($this->matl_boms && count($this->matl_boms) > 0) {
+            foreach ($this->matl_boms as $bomData) {
+
+                $baseMaterials = ConfigConst::find($bomData['base_matl_id']);
+                $jwlSidesCnt = $bomData['jwl_sides_cnt'] ?? 0;
+                $jwlSidesCarat = $bomData['jwl_sides_carat'] ?? 0;
+
+                $description = "$jwlSidesCnt $baseMaterials->str1:$jwlSidesCarat";
+                $materialDescriptions .= $description . "  ";
+            }
+
+            return $materialDescriptions;
+        }
+
+        // Return an empty string or a default value if there are no BOMs
+        return $materialDescriptions;
+    }
+
+
+
+
+    protected function resetMaterialForm()
+    {
+        $this->reset('materials');
+        $this->reset('matl_uoms');
+        $this->reset('matl_boms');
+
+        $this->object = new Material();
+        $this->object_uoms = new MatlUom();
+        $this->object_boms = [];
+        $this->matl_boms_array = [];
+        $this->deletedItems = [];
+        $this->newItems = [];
+        $this->bom_row = 0;
+        $this->populateDropdowns();
+    }
 
     public function saveAttachment()
     {
         if ($this->photo) {
-            $attachmentsPath = storage_path('attachments');
+            $attachmentsPath = storage_path('attachments/' . $this->object->id);
             if (!file_exists($attachmentsPath)) {
                 mkdir($attachmentsPath, 0777, true);
             }
+
             $filename = $this->photo->getClientOriginalName();
-            $filePath = 'attachments/' . $filename;
+            $filePath = 'attachments/' . $this->object->id . '/' . $filename;
             $fullPath = $attachmentsPath . '/' . $filename;
+
             $counter = 1;
             while (file_exists($fullPath)) {
                 $filename = pathinfo($this->photo->getClientOriginalName(), PATHINFO_FILENAME)
                             . '_' . $counter . '.'
                             . $this->photo->getClientOriginalExtension();
-                $filePath = 'attachments/' . $filename;
+                $filePath = 'attachments/' . $this->object->id . '/' . $filename;
                 $fullPath = $attachmentsPath . '/' . $filename;
                 $counter++;
             }
 
-            $this->photo->storeAs('attachments', $filename, 'public');
+            $this->photo->storeAs('attachments/' . $this->object->id, $filename, 'public');
 
             $attachmentData = [
                 'name' => $filename,
@@ -371,7 +393,7 @@ class MaterialForm extends Component
                 'seq' => 1,
                 'content_type' => $this->photo->getClientMimeType(),
                 'extension' => $this->photo->getClientOriginalExtension(),
-                'attached_objectid' =>  $this->object->id,
+                'attached_objectid' => $this->object->id,
                 'attached_objecttype' => class_basename($this->object)
             ];
 
@@ -383,9 +405,11 @@ class MaterialForm extends Component
                 $existingAttachment->update($attachmentData);
             } else {
                 Attachment::create($attachmentData);
+                $this->photo = null;
             }
         }
     }
+
 
     public function validateBoms()
     {
@@ -421,10 +445,18 @@ class MaterialForm extends Component
     {
         $bomsDetail = new MatlBom();
         array_push($this->matl_boms_array, $bomsDetail);
+        array_push($this->object_boms, $bomsDetail);
+        $this->refreshCategories($this->bom_row);
+        $this->refreshBaseMaterials($this->bom_row);
         $newDetail = end($this->matl_boms_array);
         $this->newItems[] = $newDetail;
-        $this->bom_row++;
         $this->emit('itemAdded');
+        $this->bom_row++;
+    }
+
+    public function generateSpecs($value)
+    {
+
     }
 
     public function deleteBoms($index)
@@ -437,60 +469,20 @@ class MaterialForm extends Component
 
     }
 
-    public function saveBoms()
+    public function runExe()
     {
-        $this->validateBoms();
-        DB::beginTransaction();
-        try {
-            if ($this->selectedBomKey === null) {
-                foreach ($this->matl_boms_array as $detail) {
-                    if ($detail['base_matl_id'] == $this->matl_boms['base_matl_id']) {
-                        throw new Exception("Base material tidak boleh sama");
-                    }
-                }
-            }
+        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
 
-            $matlBom = new MatlBom();
-            $materialBOMData = $this->populateObjectArray($matlBom, $this->matl_boms);
+        // Define the arguments
+        $maxScannedTagLimit = 1;
+        $timeoutSeconds = 1;
 
-            $baseMaterial = ConfigConst::where('app_code', $this->appCode)
-                ->where('const_group', 'MATL_JWL_BASE_MATL')
-                ->where('id', $materialBOMData['base_matl_id'])
-                ->orderBy('seq')
-                ->first();
-            $materialBOMData['base_matl_name'] = $baseMaterial->str1 ?? '';
+        // Append arguments to the command
+        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
 
-            if (isset($this->selectedBomKey)) {
-                $this->matl_boms_array[$this->selectedBomKey] = $materialBOMData;
-            } else {
-                $this->matl_boms_array[] = $materialBOMData;
-            }
-
-            $this->reset('matl_boms');
-            $this->refreshBaseMaterials();
-            $this->selectedBomKey = null;
-
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "Material Detail", 'message' => $e->getMessage()])
-            ]);
-        }
+        exec($command, $output, $returnValue);
+        $this->matl_uoms['barcode'] = $output[0];
     }
-
-    // public function runExe()
-    // {
-    //     $exePath = 'C:\\Users\\USER\\Downloads\\UHFAPP for windows\\v1.3.7 UHFAPP\\v1.3.7 UHFAPP\\UHFAPP.exe';
-
-    //     // Escape the command if there are spaces in the path
-    //     $exePath = '"' . $exePath . '"';
-
-    //     // Execute the command and capture output
-    //     exec($exePath, $output, $returnValue);
-    //     $this->output = implode("\n", $output);
-    //     $this->returnValue = $returnValue;
-    // }
 
 }

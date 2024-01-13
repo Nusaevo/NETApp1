@@ -31,4 +31,10 @@ class BaseModel extends Model
         }
         return null;
     }
+
+    public function isNew()
+    {
+        $isNewMaterial = empty($this->id);
+        return  $isNewMaterial;
+    }
 }

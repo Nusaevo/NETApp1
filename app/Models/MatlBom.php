@@ -7,26 +7,20 @@ use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-class MatlBom extends Model
+class MatlBom extends BaseModel
 {
-    use HasFactory;
-    use SoftDeletes;
-    use ModelTrait;
-    use BaseTrait;
-
     protected $table = 'matl_boms';
 
     protected static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
     protected $fillable = [
         'matl_id',
         'matl_code',
         'base_matl_id',
-        'base_matl_code',
+        'base_category_id',
         'seq',
         'jwl_sides_carat',
         'jwl_sides_cnt',
@@ -36,6 +30,23 @@ class MatlBom extends Model
         'jwl_sides_amt'
     ];
 
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            if ($attribute == "jwl_sides_carat") {
+                return int_qty($this->attributes[$attribute]);
+            }
+            if ($attribute == "jwl_sides_cnt") {
+                return int_qty($this->attributes[$attribute]);
+            }
+            if ($attribute == "jwl_sides_price") {
+                return int_qty($this->attributes[$attribute]);
+            }
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
+
     /**
      * Retrieve the JSON attribute as an array.
      *
@@ -43,7 +54,7 @@ class MatlBom extends Model
      */
     public function getDetailsAttribute()
     {
-        return $this->attributes['details'] ? json_decode($this->attributes['details'], true) : null;
+        return $this->attributes['specs'] ? json_decode($this->attributes['details'], true) : null;
     }
 
     /**
@@ -54,24 +65,11 @@ class MatlBom extends Model
      */
     public function setDetailsAttribute($value)
     {
-        $this->attributes['details'] = $value ? json_encode($value) : null;
-    }
-
-    public function getAllColumns()
-    {
-        return $this->fillable;
+        $this->attributes['specs'] = $value ? json_encode($value) : null;
     }
 
     public function baseMaterials()
     {
         return $this->belongsTo('App\Models\Settings\ConfigConst', 'base_matl_id', 'id');
-    }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
     }
 }
