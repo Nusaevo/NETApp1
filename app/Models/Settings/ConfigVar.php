@@ -2,7 +2,6 @@
 namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
@@ -41,8 +40,8 @@ class ConfigVar extends BaseModel
         return $this->orderBy('code', 'asc')->get();
     }
 
-    public function configAppls()
+    public function ConfigAppl()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigAppl', 'app_id', 'id');
+        return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
     }
 }

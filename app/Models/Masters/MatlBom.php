@@ -1,12 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Masters;
+use App\Models\BaseModel;
+use App\Models\Settings\ConfigConst;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\ModelTrait;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
 class MatlBom extends BaseModel
 {
     protected $table = 'matl_boms';
@@ -68,8 +65,8 @@ class MatlBom extends BaseModel
         $this->attributes['specs'] = $value ? json_encode($value) : null;
     }
 
-    public function baseMaterials()
+    public function ConfigConst()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigConst', 'base_matl_id', 'id');
+        return $this->belongsTo(ConfigConst::class, 'base_matl_id', 'id');
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admins\ConfigUser;
+use App\Models\Settings\ConfigUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
@@ -63,7 +63,7 @@ class PasswordResetLinkController extends Controller
             'email' => 'required|email',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = ConfigUser::where('email', $request->email)->first();
 
         if(!$user){
             throw ValidationException::withMessages([

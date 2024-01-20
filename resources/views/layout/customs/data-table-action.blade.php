@@ -48,3 +48,5 @@
     @endif
     @endif
 </div>
+
+@include('layout.customs.modal', ['modal_listener' => 'disableData'])

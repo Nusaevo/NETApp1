@@ -2,7 +2,6 @@
 namespace App\Models\Settings;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Models\BaseModel;
@@ -30,18 +29,18 @@ class ConfigRight extends BaseModel
         'trustee'
     ];
 
-    public function configGroups()
+    public function ConfigGroup()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigGroup', 'group_id', 'id');
+        return $this->belongsTo(ConfigGroup::class, 'group_id', 'id');
     }
 
-    public function configAppls()
+    public function ConfigAppl()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigAppl', 'app_id', 'id');
+        return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
     }
 
-    public function configMenus()
+    public function ConfigMenu()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigMenu', 'menu_id', 'id');
+        return $this->belongsTo(ConfigMenu::class, 'menu_id', 'id');
     }
 }

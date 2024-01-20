@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admins\ConfigUser;
+use App\Models\Settings\ConfigUser;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -41,7 +41,7 @@ class RegisteredUserController extends Controller
             'password'   => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
+        $user = ConfigUser::create([
             'name' => $request->name,
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
@@ -73,7 +73,7 @@ class RegisteredUserController extends Controller
         ]);
 
         $token = Str::random(60);
-        $user = User::create([
+        $user = ConfigUser::create([
             'name' => $request->name,
             'email'      => $request->email,
             'password'   => Hash::make($request->password),

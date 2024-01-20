@@ -266,60 +266,6 @@ div[wire\:loading].loading-overlay {
     }
 }
 
-/* Material Info Container Styles */
-.material-info-container {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-
-.photo-container {
-    flex-basis: 200px;
-    flex-grow: 1;
-    margin-right: 20px;
-}
-
-.fields-container {
-    flex-grow: 10;
-}
-
-@media (max-width: 768px) {
-    .material-info-container {
-        flex-direction: column;
-    }
-
-    .photo-container {
-        margin-right: 0;
-        margin-bottom: 20px;
-    }
-}
-.list-group-item {
-    position: relative;
-    /* ... your existing styles ... */
-}
-
-.close-button {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 24px; /* Adjust the size of the rounded button as needed */
-    height: 24px; /* Adjust the size of the rounded button as needed */
-    border-radius: 50%; /* Make the button rounded */
-    background-color: red; /* Button background color */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1; /* Ensure the button appears above the content */
-}
-
-.close-button a {
-    text-decoration: none;
-    color: white; /* Text color inside the button */
-    font-weight: bold;
-    font-size: 16px; /* Adjust the font size as needed */
-}
-
-
 /*UISeparator css*/
 .col {
     display: flex;
@@ -372,3 +318,163 @@ div[wire\:loading].loading-overlay {
     margin-left: auto;
     margin-right: auto;
 }
+
+.close-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: red;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.close-button a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+
+
+
+
+
+
+
+
+
+/* Material Info Container Styles */
+.material-info-container {
+    width: 100%;
+}
+
+.multiple-photo-container {
+    float: left; /* Float the photo container to the left */
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-right: 20px;
+    max-width: 75%;
+    margin-bottom: 20px;
+}
+
+.button-container {
+    width: 20%;
+    display: flex;
+    flex-direction: column;
+    padding-top: 50px;
+}
+
+.button-container button {
+    padding-top: 200px;
+}
+
+
+.photo-box {
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    display: inline-block;
+}
+
+.photo-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+}
+
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+@media (max-width: 768px) {
+    .multiple-photo-container,
+    .button-container {
+        float: none; /* Remove float on small screens */
+        width: 100%; /* Full width on small screens */
+    }
+
+    .photo-box {
+        margin-right: 0;
+        margin-bottom: 20px;
+    }
+}
+
+    /* Adjustments for the main content to match the uploaded design */
+    .main-content {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* Adjust the number of columns as needed */
+        grid-gap: 20px;
+        padding: 20px;
+    }
+
+    .list-group-item {
+        display: flex;
+        flex-direction: column; /* Stack children vertically */
+        align-items: center;
+        background-color: #f7f7f7;
+        border: none;
+        border-radius: 5px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.2s; /* Optional: Adds a nice hover effect */
+    }
+
+    .list-group-item:hover {
+        transform: translateY(-5px); /* Optional: Adds a nice hover effect */
+    }
+
+    .image-container {
+        width: 100%; /* Take full width */
+        /* Adjust height as needed, or remove height to let content dictate size */
+    }
+
+    .image-container img {
+        width: 100%; /* Full width of the container */
+        object-fit: cover; /* Cover the area without stretching */
+    }
+
+    .material-info {
+        text-align: center;
+        padding: 10px;
+        background: #eee;
+        width: 100%; /* Full width of the container */
+        margin-top: auto; /* Push to the bottom */
+    }
+    /* Adjusting styles for the filter sidebar */
+    .filter-sidebar {
+        background-color: #f7f7f7;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .filter-item {
+        background-color: #fff;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .filter-item input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        box-sizing: border-box; /* Ensures padding doesn't affect overall width */
+    }
+
+    .filter-item label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }

@@ -3,12 +3,7 @@
 namespace App\Http\Livewire\Masters\Materials;
 
 use Livewire\Component;
-use App\Models\Material;
-use App\Models\ItemUnit;
-use App\Models\Settings\ConfigConst;
-use App\Models\IvtBal;
-use App\Models\Attachment;
-use Illuminate\Validation\Rule;
+use App\Models\Masters\Material;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;

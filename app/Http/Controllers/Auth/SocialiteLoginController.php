@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admins\ConfigUser;
-use App\Models\Admins\ConfigUserInfo;
+use App\Models\Settings\ConfigUser;
+use App\Models\Settings\ConfigUserInfo;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;

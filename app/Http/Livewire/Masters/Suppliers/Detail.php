@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Masters\Suppliers;
 
 use Livewire\Component;
-use App\Models\Partner;
+use App\Models\Masters\Partner;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
@@ -103,11 +103,11 @@ class Detail extends Component
                     $this->object->update($this->inputs);
                 }
             }
-            $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.save', ['object' => $this->object->name])
             ]);
+            $this->resetForm();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

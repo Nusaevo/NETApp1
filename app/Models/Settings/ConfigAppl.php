@@ -1,11 +1,6 @@
 <?php
 
 namespace App\Models\Settings;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
 use App\Models\BaseModel;
 
@@ -37,8 +32,8 @@ class ConfigAppl extends BaseModel
         return $this->orderBy('code', 'asc')->get();
     }
 
-    public function configMenus()
+    public function ConfigMenu()
     {
-        return $this->hasMany('App\Models\Settings\ConfigMenu', 'app_id', 'id');
+        return $this->hasMany(ConfigMenu::class, 'app_id', 'id');
     }
 }

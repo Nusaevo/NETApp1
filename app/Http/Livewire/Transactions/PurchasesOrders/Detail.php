@@ -3,17 +3,11 @@
 namespace App\Http\Livewire\Transactions\PurchasesOrders;
 
 use Livewire\Component;
-use App\Models\OrderHdr;
-use App\Models\OrderDtl;
-use App\Models\ItemUnit;
-use App\Models\Partner;
-use App\Models\Payment;
-use Illuminate\Validation\Rule;
+use App\Models\Transactions\OrderHdr;
+use App\Models\Transactions\OrderDtl;
+use App\Models\Masters\Partner;
 use Illuminate\Support\Facades\Crypt;
-use App\Models\Unit;
-use App\Models\Material;
-use App\Models\Settings\ConfigConst;
-use App\Models\IvtBal;
+use App\Models\Masters\Material;
 use Lang;
 use Exception;
 use DB;

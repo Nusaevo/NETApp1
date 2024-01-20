@@ -8,7 +8,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
-use DB;
 
 class Detail extends Component
 {

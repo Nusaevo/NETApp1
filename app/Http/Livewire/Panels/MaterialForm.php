@@ -3,21 +3,17 @@
 namespace App\Http\Livewire\Panels;
 
 use Livewire\Component;
-use App\Models\Material;
-use App\Models\MatlUom;
-use App\Models\MatlBom;
+use App\Models\Masters\Material;
+use App\Models\Masters\MatlUom;
+use App\Models\Masters\MatlBom;
 use App\Models\Settings\ConfigConst;
-use App\Models\IvtBal;
-use App\Models\IvtBalUnit;
-
-use App\Models\Attachment;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Crypt;
+use App\Models\Inventories\IvtBal;
+use App\Models\Inventories\IvtBalUnit;
+use App\Models\Bases\Attachment;
 use Lang;
 use Exception;
 use DB;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Storage;
 
 class MaterialForm extends Component
 {
@@ -47,6 +43,8 @@ class MaterialForm extends Component
     public $deletedItems = [];
     public $newItems = [];
     public $bom_row = 0;
+
+    public $capturedImages = [];
     public function mount($materialActionValue, $materialIDValue = null)
     {
         $this->appCode =  env('APP_NAME', 'DefaultAppName');
@@ -59,8 +57,8 @@ class MaterialForm extends Component
             // $this->object_detail = ItemUnit::ItemId($this->object->id)->get();
             //$this->attachments = $this->object->attachments;
 
-            $this->object_uoms = $this->object->uoms[0];
-            $this->object_boms = $this->object->boms;
+            $this->object_uoms = $this->object->MatlUom[0];
+            $this->object_boms = $this->object->MatlBom;
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->materials = populateArrayFromModel($this->object);
@@ -151,8 +149,16 @@ class MaterialForm extends Component
 
 
     protected $listeners = [
-        'changeStatus'  => 'changeStatus'
+        'changeStatus'  => 'changeStatus',
+        'imagesCaptured'  => 'imagesCaptured',
+        'runExe'  => 'runExe'
     ];
+
+    public function imagesCaptured($imageDataUrl)
+    {
+        $this->capturedImages[] = $imageDataUrl;
+    }
+
 
     protected function rules()
     {
@@ -471,18 +477,18 @@ class MaterialForm extends Component
 
     public function runExe()
     {
-        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
-        $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
+        // $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        // $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
 
-        // Define the arguments
-        $maxScannedTagLimit = 1;
-        $timeoutSeconds = 1;
+        // // Define the arguments
+        // $maxScannedTagLimit = 1;
+        // $timeoutSeconds = 1;
 
-        // Append arguments to the command
-        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+        // // Append arguments to the command
+        // $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
 
-        exec($command, $output, $returnValue);
-        $this->matl_uoms['barcode'] = $output[0];
+        // exec($command, $output, $returnValue);
+        $this->matl_uoms['barcode'] = "12345";
     }
 
 }

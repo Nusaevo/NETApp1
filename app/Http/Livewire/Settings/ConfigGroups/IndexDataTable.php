@@ -58,16 +58,16 @@ class IndexDataTable extends DataTableComponent
             Column::make("Group Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Application Code", "configAppls.code")
+            Column::make("Application Code", "ConfigAppl.code")
                  ->searchable()
                  ->sortable(),
-            Column::make("Application Name", "configAppls.name")
+            Column::make("Application Name", "ConfigAppl.name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Login ID", "ConfigUsers.code")
+            Column::make("Login ID", "ConfigUser.code")
                 ->searchable()
                 ->sortable(),
-            Column::make("User Name", "ConfigUsers.name")
+            Column::make("User Name", "ConfigUser.name")
                 ->searchable()
                 ->sortable(),
             Column::make("Name", "name")

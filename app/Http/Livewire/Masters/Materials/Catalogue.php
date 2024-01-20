@@ -3,7 +3,7 @@ namespace App\Http\Livewire\Masters\Materials;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Material;
+use App\Models\Masters\Material;
 use Illuminate\Support\Facades\Crypt;
 
 class Catalogue extends Component
@@ -13,7 +13,7 @@ class Catalogue extends Component
     public $searchDescr = '';
     public $searchPrice = '';
     public $searchCode = '';
-    
+
     public function render()
     {
         $query = Material::query();
@@ -35,7 +35,6 @@ class Catalogue extends Component
 
     public function View($id)
     {
-        dd("sd");
         return redirect()->route('materials.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);
     }
 

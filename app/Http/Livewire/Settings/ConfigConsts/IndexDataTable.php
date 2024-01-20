@@ -55,7 +55,7 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Application", "configAppls.name")
+            Column::make("Application", "ConfigAppl.name")
                 ->searchable()
                 ->sortable(),
             Column::make("Const Group", "const_group")

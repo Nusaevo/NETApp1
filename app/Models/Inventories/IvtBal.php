@@ -1,18 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Inventories;
+use App\Models\BaseModel;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
-use Illuminate\Support\Str;
-
-class IvtBal extends Model
+class IvtBal extends BaseModel
 {
-    use HasFactory, SoftDeletes;
-    use BaseTrait;
-
     protected $table = 'ivt_bals';
 
     public static function boot()
@@ -29,19 +21,6 @@ class IvtBal extends Model
         'qty_oh',
         'wh_bin',
     ];
-
-    public function getAllColumns()
-    {
-        return $this->fillable;
-    }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
 
     public function scopeGetActiveData()
     {

@@ -1,10 +1,5 @@
 <?php
 namespace App\Models\Settings;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
 use App\Models\BaseModel;
 
@@ -37,13 +32,13 @@ class ConfigGroup extends BaseModel
         return $this->orderBy('code', 'asc')->get();
     }
 
-    public function configAppls()
+    public function ConfigAppl()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigAppl', 'app_id', 'id');
+        return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
     }
 
-    public function configUsers()
+    public function ConfigUser()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigUser', 'user_id', 'id');
+        return $this->belongsTo(ConfigUser::class, 'user_id', 'id');
     }
 }

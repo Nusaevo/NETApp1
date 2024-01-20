@@ -4,9 +4,8 @@ namespace App\Http\Livewire\Transactions\PurchasesOrders;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\OrderHdr;
-use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use App\Models\Transactions\OrderHdr;
+
 class IndexDataTable extends DataTableComponent
 {
     protected $model = OrderHdr::class;

@@ -1,25 +1,20 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Masters;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-use Illuminate\Support\Str;
 use App\Helpers\SequenceUtility;
+use App\Models\BaseModel;
 
-class Partner extends Model
+class Partner extends BaseModel
 {
-    use HasFactory, SoftDeletes;
-    use BaseTrait;
-
     protected $table = 'partners';
 
     public static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
         static::creating(function ($model) {
             $maxId = SequenceUtility::getCurrentSequenceValue($model);
             $model->code = 'PARTNER' ."_". ($maxId + 1);
@@ -53,19 +48,6 @@ class Partner extends Model
         'status_code'
     ];
 
-    public function getAllColumns()
-    {
-        return $this->fillable;
-    }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
-
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();
@@ -74,11 +56,6 @@ class Partner extends Model
     public function scopeGetByGrp($query, $grp)
     {
         return $query->where('grp', $grp)->get();
-    }
-
-    public function configUsers()
-    {
-        return $this->belongsTo('App\Models\PriceCategory', 'user_id', 'id');
     }
 
 }

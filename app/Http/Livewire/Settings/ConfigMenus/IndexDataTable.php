@@ -59,7 +59,7 @@ class IndexDataTable extends DataTableComponent
             Column::make("Menu Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Application Code", "configAppls.name")
+            Column::make("Application Code", "ConfigAppl.name")
                 ->searchable()
                 ->sortable(),
             Column::make("Menu Header", "menu_header")

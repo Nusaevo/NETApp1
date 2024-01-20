@@ -8,9 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-// use Spatie\Permission\Traits\HasRoles;
 use App\Traits\BaseTrait;
-use Illuminate\Support\Facades\Auth;
 class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
@@ -18,7 +16,8 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     // use HasRoles;
     use BaseTrait;
     use SoftDeletes;
-    
+    protected $connection = 'config';
+
 
     public static function boot()
     {
@@ -50,9 +49,9 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    public function configGroups()
+    public function ConfigGroup()
     {
-        return $this->belongsTo('App\Models\Settings\ConfigGroup', 'group_code', 'code');
+        return $this->belongsTo(ConfigGroup::class, 'group_code', 'code');
     }
 
     public function getAllColumns()

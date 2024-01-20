@@ -1,14 +1,9 @@
 <?php
 
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\ModelTrait;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
+namespace App\Models\Masters;
 use App\Helpers\SequenceUtility;
 use App\Models\BaseModel;
+use App\Models\Bases\Attachment;
 use DB;
 
 
@@ -94,59 +89,14 @@ class Material extends BaseModel
         return null;
     }
 
-    public function attachments()
-    {
-        return $this->hasMany(Attachment::class, 'attached_objectid')
-                    ->where('attached_objecttype', class_basename($this));
-    }
-
-    public function uoms()
+    public function MatlUom()
     {
         return $this->hasMany(MatlUom::class, 'matl_id');
     }
 
-    public function boms()
+    public function MatlBom()
     {
         return $this->hasMany(MatlBom::class, 'matl_id');
     }
 
-    public function transfer_items()
-    {
-        return $this->hasMany('App\Models\TransferItem');
-    }
-
-    public function adjustment_items()
-    {
-        return $this->hasMany('App\Models\AdjustmentItem');
-    }
-
-    public function purchase_order_details()
-    {
-        return $this->hasMany('App\Models\PurchaseOrderDetail');
-    }
-
-    public function sales_order_details()
-    {
-        return $this->hasMany('App\Models\SalesOrderDetail');
-    }
-
-    public function receive_items()
-    {
-        return $this->hasMany('App\Models\ReceiveItem');
-    }
-
-    public function purchase_return_items()
-    {
-        return $this->belongsTo('App\Models\PurchaseReturnItem');
-    }
-
-    public function sales_return_items()
-    {
-        return $this->hasMany('App\Models\SalesReturnItem');
-    }
-
-    public function delivery_items()
-    {
-        return $this->hasMany('App\Models\DeliveryItem');
-    }
 }

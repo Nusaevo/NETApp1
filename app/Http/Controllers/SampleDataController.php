@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Admins\ConfigUser;
+use App\Models\Settings\ConfigUser;
 use Illuminate\Support\Carbon;
 
 class SampleDataController extends Controller
@@ -34,6 +34,6 @@ class SampleDataController extends Controller
 
     public function getUsers()
     {
-        return User::all();
+        return ConfigUser::all();
     }
 }

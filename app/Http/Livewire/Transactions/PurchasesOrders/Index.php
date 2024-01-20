@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Transactions\PurchasesOrders;
 
 use Livewire\Component;
-use App\Models\OrderHdr;
+use App\Models\Transactions\OrderHdr;
 use App\Traits\LivewireTrait;
 use Illuminate\Support\Facades\Crypt;
 use Lang;

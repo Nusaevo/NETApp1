@@ -7,6 +7,8 @@ use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
+use App\Models\Masters\Material;
+
 class OrderDtl extends Model
 {
     use HasFactory;
