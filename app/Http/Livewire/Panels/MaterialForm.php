@@ -51,7 +51,6 @@ class MaterialForm extends Component
         $this->actionValue = $materialActionValue;
         $this->objectIdValue = $materialIDValue;
         $this->populateDropdowns();
-
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $this->objectIdValue) {
             $this->object = Material::withTrashed()->find($this->objectIdValue);
             // $this->object_detail = ItemUnit::ItemId($this->object->id)->get();
@@ -71,11 +70,18 @@ class MaterialForm extends Component
                 $this->matl_boms[$key] =  $formattedDetail;
                 $this->bom_row++;
             }
+            $attachments = $this->object->Attachment;
+            foreach ($attachments as $attachment) {
+                $path = "storage/".$attachment->path;
+                $url = asset($path);
+                $this->capturedImages[] = $url;
+            }
         } else {
             $this->object = new Material();
             $this->object_uoms = new MatlUom();
             $this->object_boms = [];
             $this->matl_boms_array = [];
+            $this->resetMaterialForm();
         }
     }
 
@@ -100,7 +106,7 @@ class MaterialForm extends Component
         }
     }
 
-    public function refreshCategories($key)
+    public function refreshCategories()
     {
         $materialCategories = ConfigConst::where('app_code', $this->appCode)
         ->where('const_group', 'MATL_JWL_CATEGORY')
@@ -114,10 +120,10 @@ class MaterialForm extends Component
                     'value' => $data->id,
                 ];
             })->toArray();
-            $this->matl_boms[$key]['base_category_id'] = $this->materialCategories[0]['value'];
+            $this->materials['jwl_category'] = $this->materialCategories[0]['value'];
         } else {
             $this->materialCategories = [];
-            $this->matl_boms[$key]['base_category_id'] = null;
+            $this->materials['jwl_category'] = null;
         }
     }
 
@@ -167,7 +173,6 @@ class MaterialForm extends Component
             'materials.jwl_buying_price' => 'required|integer|min:0|max:9999999999',
             'materials.jwl_selling_price' =>'required|integer|min:0|max:9999999999',
             'matl_uoms.barcode' =>'required|integer|min:0|max:9999999999',
-
             // 'materials.name' => [
             //     'required',
             //     'string',
@@ -205,6 +210,23 @@ class MaterialForm extends Component
     protected function populateDropdowns()
     {
         $this->refreshUOMs();
+        $this->refreshCategories();
+    }
+
+    protected function resetMaterialForm()
+    {
+        $this->reset('materials');
+        $this->reset('matl_uoms');
+        $this->reset('matl_boms');
+        $this->object = new Material();
+        $this->object_uoms = new MatlUom();
+        $this->object_boms = [];
+        $this->matl_boms_array = [];
+        $this->deletedItems = [];
+        $this->newItems = [];
+        $this->bom_row = 0;
+        $this->capturedImages = [];
+        $this->populateDropdowns();
     }
 
     protected function populateObjectArray($object,$formArray)
@@ -350,72 +372,57 @@ class MaterialForm extends Component
         return $materialDescriptions;
     }
 
-
-
-
-    protected function resetMaterialForm()
-    {
-        $this->reset('materials');
-        $this->reset('matl_uoms');
-        $this->reset('matl_boms');
-
-        $this->object = new Material();
-        $this->object_uoms = new MatlUom();
-        $this->object_boms = [];
-        $this->matl_boms_array = [];
-        $this->deletedItems = [];
-        $this->newItems = [];
-        $this->bom_row = 0;
-        $this->populateDropdowns();
-    }
-
     public function saveAttachment()
     {
-        if ($this->photo) {
+        if (!empty($this->capturedImages)) {
             $attachmentsPath = storage_path('attachments/' . $this->object->id);
             if (!file_exists($attachmentsPath)) {
                 mkdir($attachmentsPath, 0777, true);
             }
 
-            $filename = $this->photo->getClientOriginalName();
-            $filePath = 'attachments/' . $this->object->id . '/' . $filename;
-            $fullPath = $attachmentsPath . '/' . $filename;
+            foreach ($this->capturedImages as $index => $imageDataUrl) {
+                // Decode the base64 image data
+                $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
+                $imageData = base64_decode($imageData);
 
-            $counter = 1;
-            while (file_exists($fullPath)) {
-                $filename = pathinfo($this->photo->getClientOriginalName(), PATHINFO_FILENAME)
-                            . '_' . $counter . '.'
-                            . $this->photo->getClientOriginalExtension();
-                $filePath = 'attachments/' . $this->object->id . '/' . $filename;
+                // Generate a unique filename
+                $filename = 'image_' . $index . '_' . time() . '.jpg';
+
+                // Define the file path
+                $filePath = 'public/storage/attachments/' . $this->object->id . '/' . $filename;
                 $fullPath = $attachmentsPath . '/' . $filename;
-                $counter++;
+
+                // Save the image
+                file_put_contents($fullPath, $imageData);
+
+                // Prepare attachment data
+                $attachmentData = [
+                    'name' => $filename,
+                    'path' => $filePath,
+                    'seq' => $index + 1,
+                    'content_type' => 'image/jpeg', // You may adjust this based on the image type
+                    'extension' => 'jpg', // You may adjust this based on the image type
+                    'attached_objectid' => $this->object->id,
+                    'attached_objecttype' => class_basename($this->object)
+                ];
+
+                // Create or update attachment
+                $existingAttachment = Attachment::where('attached_objectid', $this->object->id)
+                                                ->where('attached_objecttype', class_basename($this->object))
+                                                ->where('seq', $index + 1)
+                                                ->first();
+
+                if ($existingAttachment) {
+                    $existingAttachment->update($attachmentData);
+                } else {
+                    Attachment::create($attachmentData);
+                }
             }
 
-            $this->photo->storeAs('attachments/' . $this->object->id, $filename, 'public');
-
-            $attachmentData = [
-                'name' => $filename,
-                'path' => $filePath,
-                'seq' => 1,
-                'content_type' => $this->photo->getClientMimeType(),
-                'extension' => $this->photo->getClientOriginalExtension(),
-                'attached_objectid' => $this->object->id,
-                'attached_objecttype' => class_basename($this->object)
-            ];
-
-            $existingAttachment = Attachment::where('attached_objectid', $this->object->id)
-                                            ->where('attached_objecttype', class_basename($this->object))
-                                            ->first();
-
-            if ($existingAttachment) {
-                $existingAttachment->update($attachmentData);
-            } else {
-                Attachment::create($attachmentData);
-                $this->photo = null;
-            }
+            // Clear the capturedImages property after saving
+            $this->capturedImages = [];
         }
     }
-
 
     public function validateBoms()
     {
@@ -451,8 +458,7 @@ class MaterialForm extends Component
     {
         $bomsDetail = new MatlBom();
         array_push($this->matl_boms_array, $bomsDetail);
-        array_push($this->object_boms, $bomsDetail);
-        $this->refreshCategories($this->bom_row);
+        // array_push($this->object_boms, $bomsDetail);
         $this->refreshBaseMaterials($this->bom_row);
         $newDetail = end($this->matl_boms_array);
         $this->newItems[] = $newDetail;

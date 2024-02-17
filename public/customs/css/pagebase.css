@@ -341,16 +341,8 @@ div[wire\:loading].loading-overlay {
 }
 
 
-
-
-
-
-
-
-
-
-/* Material Info Container Styles */
 .material-info-container {
+    margin-bottom: 100px;
     width: 100%;
 }
 

@@ -19,6 +19,7 @@ if (!function_exists('generateMenu')) {
 
         try {
             $appCode = env('APP_NAME', 'DefaultAppName');
+            dd($appCode);
             $configMenus = ConfigMenu::where('app_code', $appCode)
                             ->orderBy('menu_header')
                             ->orderBy('menu_caption')

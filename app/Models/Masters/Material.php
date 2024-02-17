@@ -99,4 +99,10 @@ class Material extends BaseModel
         return $this->hasMany(MatlBom::class, 'matl_id');
     }
 
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attached_objecttype', $this->getBaseClassName(), 'attached_objectid')
+                    ->latest();
+    }
+
 }

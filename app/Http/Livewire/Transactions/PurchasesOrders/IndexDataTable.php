@@ -52,7 +52,7 @@ class IndexDataTable extends DataTableComponent
             Column::make("Tanggal", "tr_date")
                 ->searchable()
                 ->sortable(),
-            Column::make("Supplier", "partners.name")
+            Column::make("Supplier", "Partner.name")
                 ->searchable()
                 ->sortable(),
             Column::make("Status", "status_code")
