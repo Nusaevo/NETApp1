@@ -89,6 +89,7 @@ class IndexDataTable extends DataTableComponent
                             'wire_click_show' => "\$emit('viewData', $row->id)",
                             'wire_click_edit' => "\$emit('editData', $row->id)",
                             'wire_click_disable' => "\$emit('selectData', $row->id)",
+                            'access' => "customers"
                         ]);
                     }),
         ];

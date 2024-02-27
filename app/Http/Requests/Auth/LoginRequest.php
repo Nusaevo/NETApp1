@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Session;
 
 class LoginRequest extends FormRequest
 {
@@ -52,7 +53,9 @@ class LoginRequest extends FormRequest
                 'code' => __('auth.failed'),
             ]);
         }
-
+        $salt = Str::random(40);
+        $appKey = config('app.key');
+        Session::put('session_salt', $salt.$appKey);
         RateLimiter::clear($this->throttleKey());
     }
 

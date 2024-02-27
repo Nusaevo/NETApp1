@@ -10,41 +10,59 @@
     @endif
 </div>
 
-<div class="table-responsive mt-5">
-    <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover">
+<div class="table-responsive mt-5" >
+    <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" >
         <thead>
             <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
                 {{ $headers }}
             </tr>
         </thead>
-        <tbody>
+        <tbody wire:ignore.self >
             {{ $rows }}
         </tbody>
     </table>
 </div>
-{{-- <script>
-    document.addEventListener('livewire:load', function () {
+{{--
+<script>
+    myJQuery(document).ready(function () {
         var checkAndInitializeDataTable = function () {
             var tableId = '{{ isset($id) ? $id : 'defaultTable' }}';
             var tableElement = document.getElementById(tableId);
 
-            myJQuery(tableElement).DataTable();
-            // Check if the table exists in the DOM
-            if (tableElement) {
-                // If DataTable is already initialized, destroy it
+            if (tableElement && myJQuery.fn.DataTable) {
                 if (myJQuery.fn.DataTable.isDataTable('#' + tableId)) {
-                    myJQuery(tableElement).DataTable().destroy().clear();
+                    myJQuery('#' + tableId).DataTable().destroy();
                 }
-                // Reinitialize the DataTable
-                myJQuery(tableElement).DataTable();
+
+                myJQuery('#' + tableId).DataTable({
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'copy',
+                            title: tableId
+                        },
+                        {
+                            extend: 'csv',
+                            title: tableId
+                        },
+                        {
+                            extend: 'excel',
+                            title: tableId
+                        },
+                        {
+                            extend: 'pdf',
+                            title: tableId
+                        },
+                    ],
+                    pagingType: "full_numbers",
+                    stateSave: true,
+                });
             }
         };
 
-        // Initial DataTable initialization
         checkAndInitializeDataTable();
 
-        // Reinitialize DataTable when Livewire finishes updating the DOM
-        Livewire.hook('message.processed', (message, component) => {
+        Livewire.on('refreshDataTable', function () {
             checkAndInitializeDataTable();
         });
     });

@@ -27,7 +27,6 @@ class ConfigMenu extends BaseModel
         'sub_menu',
         'menu_caption',
         'link',
-        'status_code',
         'seq'
     ];
 

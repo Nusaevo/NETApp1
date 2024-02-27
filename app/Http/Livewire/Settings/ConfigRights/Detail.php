@@ -13,6 +13,7 @@ use Lang;
 use Exception;
 use DB;
 
+
 class Detail extends Component
 {
     public $object;
@@ -28,7 +29,7 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-         $this->actionValue = Crypt::decryptString($action);
+         $this->actionValue = decryptWithSessionKey($action);
 
         $applicationsData = ConfigAppl::GetActiveData();
         $this->applications = $applicationsData->map(function ($data) {
@@ -54,7 +55,7 @@ class Detail extends Component
         ];
 
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->objectIdValue = decryptWithSessionKey($objectId);
             $this->object = ConfigRight::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
@@ -84,9 +85,9 @@ class Detail extends Component
         }
     }
 
-    public function populateApplication($appcode)
+    public function populateApplication($appCode)
     {
-        $groupsData = ConfigGroup::where('app_code', $appcode)->get();
+        $groupsData = ConfigGroup::where('app_code', 'app1')->get();
         $this->groups = $groupsData->map(function ($data) {
             return [
                 'label' => $data->code . ' - ' . $data->name,
@@ -95,7 +96,7 @@ class Detail extends Component
         })->toArray();
         $this->inputs['groups'] = $this->groups[0]['value'];
 
-        $menusData = ConfigMenu::where('app_code', $appcode)->get();
+        $menusData = ConfigMenu::where('app_code', 'app1')->get();
         $this->menus = $menusData->map(function ($data) {
             return [
                 'label' => $data->code . ' - ' . $data->menu_caption,

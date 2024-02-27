@@ -11,6 +11,7 @@ use Lang;
 use Exception;
 use DB;
 
+
 class Detail extends Component
 {
     public $object;
@@ -24,15 +25,16 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-        $this->actionValue = Crypt::decryptString($action);
-        $this->refreshApplication();
+        $this->actionValue = decryptWithSessionKey($action);
+        $this->populateDropdowns();
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->objectIdValue = decryptWithSessionKey($objectId);
             $this->object = ConfigMenu::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
+            $this->resetForm();
         }
     }
 
@@ -52,6 +54,7 @@ class Detail extends Component
             'inputs.menu_header' => 'required|string|min:1|max:100',
             'inputs.menu_caption' => 'required|string|min:1|max:100',
             'inputs.link' => 'required|string|min:1|max:100',
+            'inputs.seq' => 'required',
         ];
         return $rules;
     }
@@ -71,39 +74,39 @@ class Detail extends Component
     public function refreshApplication()
     {
         $applicationsData = ConfigAppl::GetActiveData();
-        if (!$applicationsData->isEmpty()) {
-            $this->applications = $applicationsData->map(function ($data) {
-                return [
-                    'label' => $data->code . ' - ' . $data->name,
-                    'value' => $data->id,
-                ];
-            })->toArray();
-
-            $this->inputs['app_id'] = $this->applications[0]['value'];
-        } else {
-            $this->applications = [];
-            $this->inputs['app_id'] = null;
-        }
+        $this->applications = $applicationsData->map(function ($data) {
+            return [
+                'label' => $data->code . ' - ' . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+        $this->inputs['app_id'] = null;
     }
 
-    public function validateForm()
+
+    protected function populateDropdowns()
+    {
+        $this->refreshApplication();
+    }
+
+    protected function validateForm()
     {
         try {
             $this->validate();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "menu", 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => "object", 'message' => $e->getMessage()])
             ]);
             throw $e;
         }
     }
 
-    public function resetForm()
+    protected function resetForm()
     {
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
-            $this->refreshApplication();
+            $this->populateDropdowns();
         }elseif ($this->actionValue == 'Edit') {
             $this->VersioNumber = $this->object->version_number;
         }
@@ -124,11 +127,11 @@ class Detail extends Component
                     $this->object->update($this->inputs);
                 }
             }
-            $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.save', ['object' => "menu"])
             ]);
+            $this->resetForm();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

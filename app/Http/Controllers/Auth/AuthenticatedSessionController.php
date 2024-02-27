@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Session;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -91,8 +92,8 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
+        Session::forget('session_salt');
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();

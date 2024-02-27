@@ -11,6 +11,7 @@ use Lang;
 use Exception;
 use DB;
 
+
 class Detail extends Component
 {
     public $object;
@@ -24,15 +25,16 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-        $this->actionValue = Crypt::decryptString($action);
-        $this->refreshApplication();
+        $this->actionValue = decryptWithSessionKey($action);
+        $this->populateDropdowns();
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->objectIdValue = decryptWithSessionKey($objectId);
             $this->object = ConfigConst::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
+            $this->resetForm();
         }
     }
 
@@ -70,27 +72,27 @@ class Detail extends Component
 
     public function refreshApplication()
     {
-        $applicationsData = ConfigAppl::GetActiveData();
-        if (!$applicationsData->isEmpty()) {
-            $this->applications = $applicationsData->map(function ($data) {
-                return [
-                    'label' => $data->code . ' - ' . $data->name,
-                    'value' => $data->id,
-                ];
-            })->toArray();
+        $applicationsData = ConfigAppl::GetActiveData()->pluck('name', 'id');
 
-            $this->inputs['app_id'] = $this->applications[0]['value'];
-        } else {
-            $this->applications = [];
-            $this->inputs['app_id'] = null;
-        }
+        $this->applications = $applicationsData->map(function ($name, $id) {
+            return [
+                'label' => $id . ' - ' . $name,
+                'value' => $id,
+            ];
+        })->toArray();
+        $this->inputs['app_id'] = null;
+    }
+
+    protected function populateDropdowns()
+    {
+        $this->refreshApplication();
     }
 
     public function resetForm()
     {
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
-            $this->refreshApplication();
+            $this->populateDropdowns();
         }elseif ($this->actionValue == 'Edit') {
             $this->VersioNumber = $this->object->version_number;
         }
@@ -111,11 +113,11 @@ class Detail extends Component
                     $this->object->update($this->inputs);
                 }
             }
-            $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
             ]);
+            $this->resetForm();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

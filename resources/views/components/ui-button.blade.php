@@ -6,22 +6,35 @@
         {{ isset($buttonName) ? $buttonName : 'button' }}
     </a>
 @elseif(isset($type) && $type == 'Back')
-<div>
-    <a onclick="backToPreviousUrl()" class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2" id="backButton">
-        <i class="bi bi-arrow-left-circle fs-2 me-2"></i> Back
+<div id="backButtonContainer">
+    <a class="btn btn-link btn-color-info btn-active-color-primary me-5 mb-2" id="backButton">
+        <i class="bi bi-arrow-left-circle fs-2 me-2"></i> <span id="backButtonText">Back</span>
+        <span class="spinner-border spinner-border-sm" id="backButtonLoading" role="status" aria-hidden="true" style="display: none;"></span>
     </a>
 </div>
-<script>
-    var backButton = document.getElementById("backButton");
 
-    function backToPreviousUrl() {
-        if (!backButton.disabled) {
-            backButton.disabled = true;
-            var previousUrl = document.referrer;
-            history.back();
-        }
-    }
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('backButton').addEventListener('click', function(event) {
+        event.preventDefault();
+        backToPreviousUrl();
+    });
+});
+
+function backToPreviousUrl() {
+    document.getElementById("backButtonText").style.display = 'none';
+    document.getElementById("backButtonLoading").style.display = '';
+
+    window.history.back();
+
+    setTimeout(() => {
+        document.getElementById("backButtonText").style.display = '';
+        document.getElementById("backButtonLoading").style.display = 'none';
+    }, 1000);
+}
+
 </script>
+
 
 @else
  @if (isset($action) && $action !== 'View')

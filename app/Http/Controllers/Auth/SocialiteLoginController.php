@@ -37,7 +37,7 @@ class SocialiteLoginController extends Controller
         }
 
         // check for existing user
-        $existing_user = User::where('email', $social_info->getEmail())->first();
+        $existing_user = ConfigUser::where('email', $social_info->getEmail())->first();
 
         if ($existing_user) {
             auth()->login($existing_user, true);
@@ -54,21 +54,21 @@ class SocialiteLoginController extends Controller
 
     function createUser(SocialiteUser $social_info)
     {
-        $user = User::where('email', $social_info->email)->first();
+        $user = ConfigUser::where('email', $social_info->email)->first();
 
         $name = explode(' ', $social_info->name);
 
         if (!$user) {
-            $user = User::create([
+            $user = ConfigUser::create([
                 'name' => $name[0] ?? '',
                 'email'      => $social_info->email,
                 'password'   => Hash::make($social_info->id),
             ]);
 
-            $user_info         = new UserInfo;
-            $user_info->avatar = $social_info->getAvatar();
-            $user_info->user()->associate($user);
-            $user_info->save();
+            // $user_info         = new UserInfo;
+            // $user_info->avatar = $social_info->getAvatar();
+            // $user_info->user()->associate($user);
+            // $user_info->save();
 
             if ($user->markEmailAsVerified()) {
                 event(new Verified($user));

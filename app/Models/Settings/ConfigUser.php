@@ -49,10 +49,6 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    public function ConfigGroup()
-    {
-        return $this->belongsTo(ConfigGroup::class, 'group_code', 'code');
-    }
 
     public function getAllColumns()
     {
@@ -103,13 +99,9 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     {
         return $this->orderBy('name', 'asc')->get();
     }
-    /**
-     * User relation to info model
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
-     */
-    // public function info()
-    // {
-    //     return $this->hasOne(UserInfo::class);
-    // }
+
+    public function ConfigGroup()
+    {
+        return $this->belongsToMany(ConfigGroup::class, 'config_user_groups', 'user_id', 'group_id');
+    }
 }

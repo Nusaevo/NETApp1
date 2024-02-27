@@ -34,12 +34,12 @@ class Index extends Component
 
     public function View($id)
     {
-        return redirect()->route('config_rights.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('config_rights.detail', ['action' => encryptWithSessionKey('View'), 'objectId' => encryptWithSessionKey($id)]);
     }
 
     public function Edit($id)
     {
-        return redirect()->route('config_rights.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('config_rights.detail', ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($id)]);
     }
 
     public function SelectObject($id)
@@ -55,14 +55,14 @@ class Index extends Component
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'title' => Lang::get('generic.success.title'),
-                'message' => Lang::get('generic.success.disable', ['object' => $this->inputs['name']])
+                'message' => Lang::get('generic.success.disable', ['object' => "object"])
             ]);
         } catch (Exception $e) {
             // Handle the exception
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
                 'title' => Lang::get('generic.error.title'),
-                'message' => Lang::get('generic.error.disable', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.disable', ['object' => "object", 'message' => $e->getMessage()])
             ]);
         }
         $this->emit('refreshData');

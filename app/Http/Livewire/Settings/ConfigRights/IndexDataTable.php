@@ -7,6 +7,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\Settings\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+
 class IndexDataTable extends DataTableComponent
 {
     protected $model = ConfigRight::class;

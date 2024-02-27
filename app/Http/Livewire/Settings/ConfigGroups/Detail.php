@@ -1,16 +1,18 @@
 <?php
 
 namespace App\Http\Livewire\Settings\ConfigGroups;
-
 use Livewire\Component;
 use App\Models\Settings\ConfigGroup;
 use App\Models\Settings\ConfigAppl;
 use App\Models\Settings\ConfigUser;
+use App\Models\Settings\ConfigMenu;
+use App\Models\Settings\ConfigRight;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
+
 
 class Detail extends Component
 {
@@ -22,58 +24,59 @@ class Detail extends Component
     public $status = '';
     public $applications;
     public $users;
-
+    public $selectedMenus = [];
     public function mount($action, $objectId = null)
     {
-        $this->actionValue = Crypt::decryptString($action);
-
-        $this->refreshApplication();
-        $this->refreshUser();
+        $this->actionValue = decryptWithSessionKey($action);
+        $this->populateDropdowns();
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->objectIdValue = decryptWithSessionKey($objectId);
             $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
+            $this->applicationChanged();
         } else {
+            $this->resetForm();
         }
     }
 
     public function refreshApplication()
     {
         $applicationsData = ConfigAppl::GetActiveData();
-        if (!$applicationsData->isEmpty()) {
-            $this->applications = $applicationsData->map(function ($data) {
-                return [
-                    'label' => $data->code . ' - ' . $data->name,
-                    'value' => $data->id,
-                ];
-            })->toArray();
+        $this->applications = $applicationsData->map(function ($data) {
+            return [
+                'label' => $data->code . ' - ' . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+        $this->inputs['app_id'] = null;
+    }
 
-            $this->inputs['app_id'] = $this->applications[0]['value'];
-        } else {
-            $this->applications = [];
-            $this->inputs['app_id'] = null;
-        }
+    public function applicationChanged()
+    {
+        $this->emit('applicationChanged', $this->inputs['app_id']);
     }
 
     public function refreshUser()
     {
         $usersData = ConfigUser::GetActiveData();
-        if (!$usersData->isEmpty()) {
-            $this->users = $usersData->map(function ($data) {
-                return [
-                    'label' => $data->code . ' - ' . $data->name,
-                    'value' => $data->id,
-                ];
-            })->toArray();
-            $this->inputs['user_id']='';
-        } else {
-            $this->users = [];
-            $this->inputs['user_id'] = null;
-        }
+
+        $this->users = $usersData->map(function ($user) {
+            return [
+                'label' => $user->id . ' - ' . $user->name,
+                'value' => $user->id,
+            ];
+        })->toArray();
+
+        $this->inputs['user_id'] = null;
     }
 
+    protected function populateDropdowns()
+    {
+        $this->refreshApplication();
+        $this->refreshUser();
+    }
 
     public function render()
     {
@@ -82,7 +85,13 @@ class Detail extends Component
 
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
+        'selectedMenus' => 'selectedMenus'
     ];
+
+    public function selectedMenus($selectedMenus)
+    {
+        $this->selectedMenus = $selectedMenus;
+    }
 
     protected function rules()
     {
@@ -103,38 +112,107 @@ class Detail extends Component
         'inputs.name'      => 'Group Name'
     ];
 
-    public function validateForm()
+    protected function validateForm()
     {
         try {
             $this->validate();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => "object", 'message' => $e->getMessage()])
             ]);
             throw $e;
         }
     }
 
-    public function resetForm()
+    protected function resetForm()
     {
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
-            $this->refreshApplication();
-            $this->refreshUser();
+            $this->populateDropdowns();
         }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number;
+            $this->VersioNumber = $this->object->version_number ?? null;
         }
     }
+
+    function prepareTrusteeString($permissions) {
+        $trustee = '';
+        $trustee .= $permissions['create'] ? 'C' : '';
+        $trustee .= $permissions['read'] ? 'R' : '';
+        $trustee .= $permissions['update'] ? 'U' : '';
+        $trustee .= $permissions['delete'] ? 'D' : '';
+        return $trustee;
+    }
+
+    public function saveConfigRights()
+    {
+        $groupId = $this->object->id;
+
+        $existingMenuIds = ConfigRight::where('group_id', $groupId)->pluck('menu_id')->toArray();
+
+        $selectedMenuIds = array_keys($this->selectedMenus);
+
+        $menusToDelete = array_diff($existingMenuIds, $selectedMenuIds);
+
+        ConfigRight::where('group_id', $groupId)
+            ->whereIn('menu_id', $menusToDelete)
+            ->delete();
+        $group = ConfigGroup::find($groupId);
+        foreach ($this->selectedMenus as $menuId => $permissions) {
+            $trustee = $this->prepareTrusteeString($permissions);
+            $configRight = ConfigRight::where('group_id', $groupId)
+                                      ->where('menu_id', $menuId)
+                                      ->first();
+
+            $menu = ConfigMenu::find($menuId);
+            if ($configRight) {
+                $configRight->update([
+                    'trustee' => $trustee,
+                ]);
+            } else {
+                ConfigRight::create([
+                    'group_id' => $groupId,
+                    'menu_id' => $menuId,
+                    'group_code' => $group->code ?? '',
+                    'menu_code' => $menu->code ?? '',
+                    'trustee' => $trustee,
+                ]);
+            }
+        }
+    }
+
+    public function validateApplicationUsers()
+    {
+        // Start building the query
+        $query = ConfigGroup::query()
+            ->where('user_id', $this->inputs['user_id'])
+            ->where('app_id', $this->inputs['app_id']);
+
+        // Check if $this->object is not null and its id property is also not null before adding the condition
+        if ($this->object !== null && !is_null($this->object->id)) {
+            $query->where('id', '!=', $this->object->id);
+        }
+
+        // Execute the query
+        $configGroup = $query->first();
+
+        // If a configGroup is found, it means a record exists that conflicts with the current validation rules
+        if (!empty($configGroup)) {
+            throw new Exception("Group telah dibuat untuk aplikasi dan user ini, Pilihlah user/aplikasi lain");
+        }
+    }
+
 
     public function Save()
     {
         $this->validateForm();
 
+        DB::beginTransaction();
         try {
+            $this->validateApplicationUsers();
             $application = ConfigAppl::find($this->inputs['app_id']);
-            $user = ConfigUser::find($this->inputs['user_id']);
 
+            $user = ConfigUser::find($this->inputs['user_id']);
             $this->inputs['app_code'] = $application->code;
             $this->inputs['user_code'] =  $user->code;
             if ($this->actionValue == 'Create') {
@@ -145,18 +223,24 @@ class Detail extends Component
                     $this->object->update($this->inputs);
                 }
             }
-            $this->resetForm();
+            $this->saveConfigRights();
+
+            DB::commit();
+
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
             ]);
+            $this->resetForm();
         } catch (Exception $e) {
+            DB::rollBack();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
                 'message' => Lang::get('generic.error.save', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
             ]);
         }
     }
+
 
     public function changeStatus()
     {

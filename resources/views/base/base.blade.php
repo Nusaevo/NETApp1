@@ -3,7 +3,7 @@
 {{-- begin::Head --}}
 <head>
     <meta charset="utf-8"/>
-    <title>Laravel Pos System</title>
+    <title>NusaEvo System</title>
     <meta name="description" content="{{ ucfirst(theme()->getOption('meta', 'description')) }}"/>
     <meta name="keywords" content="{{ theme()->getOption('meta', 'keywords') }}"/>
     <link rel="canonical" href="{{ ucfirst(theme()->getOption('meta', 'canonical')) }}"/>
@@ -12,7 +12,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/pagebase.css') }}">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.25/webcam.min.js"></script>
+
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -21,6 +21,18 @@
 
     <script src="https://cdn.datatables.net/scroller/2.3.0/js/dataTables.scroller.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.0.0/css/buttons.dataTables.min.css">
+    <script src="https://cdn.datatables.net/buttons/2.0.0/js/dataTables.buttons.min.js"></script>
+    <!-- JSZip (for PDF/Excel export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <!-- PDFMake (for PDF export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <!-- Buttons extension HTML5 export -->
+    <script src="https://cdn.datatables.net/buttons/2.0.0/js/buttons.html5.min.js"></script>
+
     <script>
         var myJQuery = jQuery;
     </script>
@@ -115,29 +127,45 @@
 @yield('scripts')
 @livewireScripts
 
-
-<div class="custom-loader-container">
-    <div class="custom-page-loader">
+<div id="loader-container">
+    <div class="page-loader">
         <span class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </span>
     </div>
 </div>
 
+
+@php
+    $permissions = App\Models\Settings\ConfigRight::getPermissions();
+    $userId = Auth::check() ? Auth::user()->id : null;
+    $firstSegment = Request::segment(1);
+    if(!is_null($userId) && !is_null($firstSegment) )
+    {
+        if (!array_filter($permissions)) {
+            abort(403, 'You do not have permission to access this page.');
+        }
+    }
+@endphp
+
 </body>
 </html>
 <script>
-function showLoader() {
-    document.querySelector('.custom-loader-container').style.display = 'flex'; // Use flex to enable alignment
-}
+    // Show the loader immediately when the page starts loading
+    // function showLoader() {
+    //     document.getElementById('loader-container').style.display = 'block';
+    // }
 
-function hideLoader() {
-    document.querySelector('.custom-loader-container').style.display = 'none';
-}
+    // // Hide the loader when the page content is ready
+    // function hideLoader() {
+    //     document.getElementById('loader-container').style.display = 'none';
+    // }
 
-document.addEventListener('DOMContentLoaded', showLoader);
-window.onload = function () {
-    hideLoader();
-};
+    // // Attach an event listener to hide the loader when the DOM is ready
+    // document.addEventListener('DOMContentLoaded', showLoader);
 
+    // // Attach an event listener to hide the loader when the page is fully loaded
+    // window.onload = function () {
+    //     hideLoader();
+    // };
 </script>

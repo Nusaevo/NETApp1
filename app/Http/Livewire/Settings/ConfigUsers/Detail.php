@@ -14,6 +14,7 @@ use Lang;
 use Exception;
 use DB;
 
+
 class Detail extends Component
 {
     public $object;
@@ -26,9 +27,9 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-        $this->actionValue = Crypt::decryptString($action);
+        $this->actionValue = decryptWithSessionKey($action);
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->objectIdValue = decryptWithSessionKey($objectId);
             $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
@@ -36,7 +37,7 @@ class Detail extends Component
             $this->inputs['newpassword'] = "";
             $this->inputs['confirmnewpassword'] = "";
         } else {
-            $this->object = new ConfigUser();
+            $this->resetForm();
         }
     }
     protected $listeners = [
@@ -47,8 +48,10 @@ class Detail extends Component
     {
         return view('livewire.settings.config-users.edit');
     }
+
     protected function rules()
     {
+        $userId = optional($this->object)->id;
         $rules = [
             'inputs.name' => 'required|string|min:1|max:100',
             'inputs.email' => [
@@ -57,10 +60,7 @@ class Detail extends Component
                 'min:1',
                 'max:255',
                 Rule::unique('config_users', 'email')
-                    ->ignore($this->object->id)
-                    ->where(function ($query) {
-                        // You can add additional conditions here if needed.
-                    }),
+                    ->ignore($userId)
             ],
             'inputs.code' => [
                 'required',
@@ -68,12 +68,9 @@ class Detail extends Component
                 'min:1',
                 'max:50',
                 Rule::unique('config_users', 'code')
-                    ->ignore($this->object->id)
-                    ->where(function ($query) {
-                        // You can add additional conditions here if needed.
-                    }),
+                    ->ignore($userId)
             ],
-            'inputs.newpassword' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
+            // 'inputs.newpassword' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
         ];
         return $rules;
     }
@@ -97,7 +94,7 @@ class Detail extends Component
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
+                'message' => Lang::get('generic.error.create', ['object' => "object", 'message' => $e->getMessage()])
             ]);
             throw $e;
         }
@@ -134,11 +131,11 @@ class Detail extends Component
                     $this->object->update($this->inputs);
                 }
             }
-            $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
             ]);
+            $this->resetForm();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

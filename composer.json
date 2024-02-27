@@ -9,7 +9,6 @@
     "license": "MIT",
     "require": {
         "anlutro/l4-settings": "^1.0",
-        "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
         "jackiedo/log-reader": "^2.2",
         "laravel/framework": "^9.0",
@@ -52,7 +51,8 @@
             "app/Helpers/number.php",
             "app/Helpers/menu.php",
             "app/Helpers/global.php",
-            "app/Helpers/SequenceUtility.php"
+            "app/Helpers/SequenceUtility.php",
+            "app/Helpers/encryptionHelper.php"
         ],
         "psr-4": {
             "App\\": "app/",

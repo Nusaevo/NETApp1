@@ -1,10 +1,13 @@
 <?php
 
 use App\Models\Settings\ConfigMenu;
+use App\Models\Settings\ConfigGroup;
+use App\Models\Settings\ConfigRight;
 use Illuminate\Database\QueryException;
 
 if (!function_exists('generateMenu')) {
-    function generateMenu($authCode) {
+    function generateMenu($authCode)
+    {
         $mainMenu = [
             [
                 'title' => 'Home',
@@ -17,71 +20,64 @@ if (!function_exists('generateMenu')) {
             ],
         ];
 
-        try {
-            $appCode = env('APP_NAME', 'DefaultAppName');
-            dd($appCode);
-            $configMenus = ConfigMenu::where('app_code', $appCode)
-                            ->orderBy('menu_header')
-                            ->orderBy('menu_caption')
-                            ->get();
+        $userId = Auth::check() ? Auth::user()->id : '';
+        if (!empty($userId)) { // Ensure $userId is not null or empty
+            try {
+                $appCode = config('app.name');
+                $configGroup = ConfigGroup::where('user_id', $userId)
+                    ->where('app_code', $appCode)
+                    ->first();
+                if ($configGroup) {
+                    $menuIds = ConfigRight::where('group_id', $configGroup->id)->pluck('menu_id');
+                    $configMenus = ConfigMenu::whereIn('id', $menuIds)->get()->sortBy('seq');
+                    if ($configMenus->isEmpty()) {
+                        return $mainMenu;
+                    }
 
+                    $uniqueMenuHeaders = [];
 
-            if ($configMenus->isEmpty()) {
-                return $mainMenu;
-            }
+                    foreach ($configMenus as $configMenu) {
+                        $menuHeader = $configMenu->menu_header;
 
-            $uniqueMenuHeaders = [];
+                        if (!in_array($menuHeader, $uniqueMenuHeaders)) {
+                            $uniqueMenuHeaders[] = $menuHeader;
 
-            foreach ($configMenus as $configMenu) {
-                $menuHeader = $configMenu->menu_header;
+                            // Create and add the menu item
+                            $menuItem = [
+                                'title' => $menuHeader,
+                                'icon' => [
+                                    'svg' => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
+                                    'font' => '<i class="bi bi-person fs-2"></i>',
+                                ],
+                                'classes' => ['item' => 'menu-accordion'],
+                                'attributes' => [
+                                    'data-kt-menu-trigger' => 'click',
+                                ],
+                                'sub' => [
+                                    'class' => 'menu-sub-accordion menu-active-bg',
+                                    'items' => [],
+                                ],
+                            ];
 
-                // Check permissions based on auth code
-                $allowed = false;
-
-                if ($authCode === 'andryhuang') {
-                    $allowed = true; // Show all menus
-                }
-
-                if ($allowed) {
-                    // Check if the menu header already exists in $uniqueMenuHeaders
-                    if (!in_array($menuHeader, $uniqueMenuHeaders)) {
-                        $uniqueMenuHeaders[] = $menuHeader;
-
-                        // Create and add the menu item
-                        $menuItem = [
-                            'title' => $menuHeader,
-                            'icon' => [
-                                'svg' => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
-                                'font' => '<i class="bi bi-person fs-2"></i>',
-                            ],
-                            'classes' => ['item' => 'menu-accordion'],
-                            'attributes' => [
-                                'data-kt-menu-trigger' => 'click',
-                            ],
-                            'sub' => [
-                                'class' => 'menu-sub-accordion menu-active-bg',
-                                'items' => [],
-                            ],
-                        ];
-
-                        foreach ($configMenus as $subMenu) {
-                            if ($subMenu->menu_header === $menuHeader) {
-                                $menuItem['sub']['items'][] = [
-                                    'title' => $subMenu->menu_caption,
-                                    'path' => $subMenu->link,
-                                    'bullet' => '<span class="bullet bullet-dot"></span>',
-                                ];
+                            foreach ($configMenus as $subMenu) {
+                                if ($subMenu->menu_header === $menuHeader) {
+                                    $menuItem['sub']['items'][] = [
+                                        'title' => $subMenu->menu_caption,
+                                        'path' => $subMenu->link,
+                                        'bullet' => '<span class="bullet bullet-dot"></span>',
+                                    ];
+                                }
                             }
-                        }
 
-                        $mainMenu[] = $menuItem;
+                            $mainMenu[] = $menuItem;
+                        }
                     }
                 }
+            } catch (QueryException $e) {
+                // Handle the case where the config_menus table doesn't exist
+                // You can log this error or handle it as needed
+                // Example: Log::error('Database table not found: ' . $e->getMessage());
             }
-        } catch (QueryException $e) {
-            // Handle the case where the config_menus table doesn't exist
-            // You can log this error or handle it as needed
-            // Example: Log::error('Database table not found: ' . $e->getMessage());
         }
 
         return $mainMenu;

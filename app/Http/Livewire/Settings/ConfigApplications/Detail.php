@@ -8,6 +8,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
+use DB;
+
 
 class Detail extends Component
 {
@@ -22,14 +24,15 @@ class Detail extends Component
 
     public function mount($action, $objectId = null)
     {
-        $this->actionValue = Crypt::decryptString($action);
+        $this->actionValue = decryptWithSessionKey($action);
         if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
+            $this->objectIdValue = decryptWithSessionKey($objectId);
             $this->object = ConfigAppl::withTrashed()->find($this->objectIdValue);
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
+            $this->resetForm();
         }
     }
 
@@ -71,7 +74,7 @@ class Detail extends Component
         'inputs.descr' => 'Description',
     ];
 
-    public function validateForm()
+    protected function validateForm()
     {
         try {
             $this->validate();
@@ -84,20 +87,18 @@ class Detail extends Component
         }
     }
 
-    public function resetForm()
+    protected function resetForm()
     {
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
-            $this->refreshPriceCategory();
         }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number;
+            $this->VersioNumber = $this->object->version_number ?? null;
         }
     }
 
     public function Save()
     {
         $this->validateForm();
-
         try {
             if ($this->actionValue == 'Create') {
                 $this->object = ConfigAppl::create($this->inputs);
@@ -107,11 +108,11 @@ class Detail extends Component
                     $this->object->update($this->inputs);
                 }
             }
-            $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
             ]);
+            $this->resetForm();
         } catch (Exception $e) {
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

@@ -17,8 +17,10 @@ class UIDropdownSelect extends Component
     public $selectedValue;
     public $onChanged;
     public $span;
+    public $modelType;
 
-    public function __construct($clickEvent = null, $label = '', $model, $options, $selectedValue = null, $required = 'false', $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full')
+    public function __construct($clickEvent = null, $label = '', $model, $options, $selectedValue = null, $required = 'false',
+    $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '')
     {
         $this->clickEvent = $clickEvent;
         $this->label = $label;
@@ -31,6 +33,7 @@ class UIDropdownSelect extends Component
         $this->action = $action;
         $this->onChanged = $onChanged;
         $this->span = $span;
+        $this->modelType = $modelType;
     }
 
     public function render()

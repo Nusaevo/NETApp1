@@ -1,4 +1,4 @@
-<div class="card border border-dark ">
+<div class="card border border-dark " wire:ignore.self>
     @isset($id)
         <div class="card-header collapsible cursor-pointer rotate" data-bs-toggle="collapse" data-bs-target="#{{ $id }}">
             @isset($title)

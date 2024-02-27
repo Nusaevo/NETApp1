@@ -8,8 +8,27 @@ use App\Http\Controllers\Logs\SystemLogsController;
 use App\Http\Controllers\PagesController;
 use App\Http\Controllers\UsersController;
 
+
 use App\Http\Livewire\Settings\ConfigUsers\Index as ConfigUsersIndex;
 use App\Http\Livewire\Settings\ConfigUsers\Detail as ConfigUsersDetail;
+
+use App\Http\Livewire\Settings\ConfigGroups\Index as ConfigGroupIndex;
+use App\Http\Livewire\Settings\ConfigGroups\Detail as ConfigGroupDetail;
+
+use App\Http\Livewire\Settings\ConfigMenus\Index as ConfigMenuIndex;
+use App\Http\Livewire\Settings\ConfigMenus\Detail as ConfigMenuDetail;
+
+use App\Http\Livewire\Settings\ConfigApplications\Index as ConfigApplicationIndex;
+use App\Http\Livewire\Settings\ConfigApplications\Detail as ConfigApplicationDetail;
+
+use App\Http\Livewire\Settings\ConfigRights\Index as ConfigRightIndex;
+use App\Http\Livewire\Settings\ConfigRights\Detail as ConfigRightDetail;
+
+use App\Http\Livewire\Settings\ConfigConsts\Index as ConfigConstIndex;
+use App\Http\Livewire\Settings\ConfigConsts\Detail as ConfigConstDetail;
+
+use App\Http\Livewire\Settings\ConfigVars\Index as ConfigVarIndex;
+use App\Http\Livewire\Settings\ConfigVars\Detail as ConfigVarDetail;
 
 use App\Http\Livewire\Masters\Customers\Index as CustomerIndex;
 use App\Http\Livewire\Masters\Customers\Detail as CustomerDetail;
@@ -89,9 +108,40 @@ Route::middleware('auth')->group(function () {
         Route::resource('audit', AuditLogsController::class)->only(['index', 'destroy']);
     });
 
+
     Route::prefix('config_users')->name('config_users.')->group(function () {
         Route::get('/', ConfigUsersIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', ConfigUsersDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_groups')->name('config_groups.')->group(function () {
+        Route::get('/', ConfigGroupIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigGroupDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_menus')->name('config_menus.')->group(function () {
+        Route::get('/', ConfigMenuIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigMenuDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_applications')->name('config_applications.')->group(function () {
+        Route::get('/', ConfigApplicationIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigApplicationDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_rights')->name('config_rights.')->group(function () {
+        Route::get('/', ConfigRightIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigRightDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_consts')->name('config_consts.')->group(function () {
+        Route::get('/', ConfigConstIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigConstDetail::class)->name('detail');
+    });
+
+    Route::prefix('config_vars')->name('config_vars.')->group(function () {
+        Route::get('/', ConfigVarIndex::class)->name('index');
+        Route::get('/detail/{action}/{objectId?}', ConfigVarDetail::class)->name('detail');
     });
 
 
