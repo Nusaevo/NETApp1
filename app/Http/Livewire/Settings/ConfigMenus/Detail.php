@@ -55,6 +55,13 @@ class Detail extends Component
             'inputs.menu_caption' => 'required|string|min:1|max:100',
             'inputs.link' => 'required|string|min:1|max:100',
             'inputs.seq' => 'required',
+            'inputs.code' => [
+                'required',
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('config.config_menus', 'code')->ignore($this->object ? $this->object->id : null),
+            ],
         ];
         return $rules;
     }

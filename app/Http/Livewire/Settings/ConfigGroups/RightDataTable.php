@@ -199,20 +199,20 @@ class RightDataTable extends DataTableComponent
                     return "<input class='form-check-input' type='checkbox' wire:model='selectedRows.{$row->id}.delete' $isChecked $disabled>";
                 })
                 ->html(),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    return view('layout.customs.data-table-action', [
-                        'enable_this_row' => true,
-                        'allow_details' => true,
-                        'allow_edit' => false,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'wire_click_show' => "\$emit('viewData', $row->id)",
-                        'wire_click_edit' => "\$emit('editData', $row->id)",
-                        'wire_click_disable' => "\$emit('selectData', $row->id)",
-                        'access' => "config_menus"
-                    ]);
-                }),
+            // Column::make('Actions', 'id')
+            //     ->format(function ($value, $row, Column $column) {
+            //         return view('layout.customs.data-table-action', [
+            //             'enable_this_row' => true,
+            //             'allow_details' => true,
+            //             'allow_edit' => false,
+            //             'allow_disable' => false,
+            //             'allow_delete' => false,
+            //             'wire_click_show' => "\$emit('viewData', $row->id)",
+            //             'wire_click_edit' => "\$emit('editData', $row->id)",
+            //             'wire_click_disable' => "\$emit('selectData', $row->id)",
+            //             'access' => "config_menus"
+            //         ]);
+            //     }),
         ];
     }
 

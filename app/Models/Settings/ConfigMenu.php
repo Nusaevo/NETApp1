@@ -13,10 +13,10 @@ class ConfigMenu extends BaseModel
     {
         parent::boot();
         self::bootUpdatesCreatedByAndUpdatedAt();
-        static::creating(function ($model) {
-            $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'MENU' ."_". ($maxId + 1);
-        });
+        // static::creating(function ($model) {
+        //     $maxId = SequenceUtility::getCurrentSequenceValue($model);
+        //     $model->code = 'MENU' ."_". ($maxId + 1);
+        // });
     }
 
     protected $fillable = [

@@ -16,7 +16,7 @@
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="ConstCard" title="Const" :isOpen="true">
-                        <x-ui-text-field label="Const Code" model="inputs.code" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="" visible="true" span="Full"/>
+                        <x-ui-text-field label="Const Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" visible="true" span="Full"/>
                         <x-ui-dropdown-select label="Application"
                         click-event="refreshApplication"
                         model="inputs.app_id"

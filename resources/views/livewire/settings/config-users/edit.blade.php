@@ -11,9 +11,7 @@
         <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                    <x-ui-expandable-card id="UserCard" title="User" :isOpen="true">
-                        <x-ui-text-field label="Login ID" model="inputs.code" type="text" span="Full" :action="$actionValue" required="true" enabled="true" placeHolder="Enter Login ID" visible="true"/>
-
+                        <x-ui-text-field label="Login ID" model="inputs.code" type="code" span="Full" :action="$actionValue" required="true" enabled="true" placeHolder="Enter Login ID" visible="true"/>
                         <x-ui-text-field label="Nama" model="inputs.name" type="text" span="Full" :action="$actionValue" required="true" placeHolder="Enter Name (e.g., John Doe)" visible="true"/>
 
                         <x-ui-text-field label="Email" model="inputs.email" type="email" span="Half" :action="$actionValue" required="true" placeHolder="Enter Email (e.g., johndoe@example.com)" visible="true"/>

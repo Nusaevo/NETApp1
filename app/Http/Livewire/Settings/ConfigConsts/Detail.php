@@ -54,7 +54,14 @@ class Detail extends Component
             'inputs.const_group' => 'required|string|min:1|max:50',
             'inputs.seq' =>  'required|integer|min:0|max:9999999999',
             'inputs.str1' => 'required|string|min:1|max:50',
-            'inputs.str2' => 'string|min:1|max:50'
+            'inputs.str2' => 'string|min:1|max:50',
+            'inputs.code' => [
+                'required',
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+            ],
         ];
         return $rules;
     }

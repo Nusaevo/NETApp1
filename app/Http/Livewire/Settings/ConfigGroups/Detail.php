@@ -99,6 +99,13 @@ class Detail extends Component
             'inputs.app_id' =>  'required',
             'inputs.user_id' =>  'required',
             'inputs.name' => 'required|string|min:1|max:100',
+            'inputs.code' => [
+                'required',
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
+            ],
         ];
         return $rules;
     }
@@ -195,9 +202,8 @@ class Detail extends Component
 
         // Execute the query
         $configGroup = $query->first();
-
         // If a configGroup is found, it means a record exists that conflicts with the current validation rules
-        if (!empty($configGroup)) {
+        if (!empty($configGroup) && ($configGroup->id != $this->object->id)) {
             throw new Exception("Group telah dibuat untuk aplikasi dan user ini, Pilihlah user/aplikasi lain");
         }
     }

@@ -13,10 +13,10 @@ class ConfigAppl extends BaseModel
     public static function boot()
     {
         parent::boot();
-        static::creating(function ($model) {
-            $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'APP' ."_". ($maxId + 1);
-        });
+        // static::creating(function ($model) {
+        //     $maxId = SequenceUtility::getCurrentSequenceValue($model);
+        //     $model->code = 'APP' ."_". ($maxId + 1);
+        // });
     }
 
     protected $fillable = [

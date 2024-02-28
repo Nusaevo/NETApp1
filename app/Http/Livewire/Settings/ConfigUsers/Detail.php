@@ -51,7 +51,6 @@ class Detail extends Component
 
     protected function rules()
     {
-        $userId = optional($this->object)->id;
         $rules = [
             'inputs.name' => 'required|string|min:1|max:100',
             'inputs.email' => [
@@ -59,16 +58,15 @@ class Detail extends Component
                 'string',
                 'min:1',
                 'max:255',
-                Rule::unique('config_users', 'email')
-                    ->ignore($userId)
+                'email'.
+                Rule::unique('config.config_users', 'email')->ignore($this->object ? $this->object->id : null),
             ],
             'inputs.code' => [
                 'required',
                 'string',
                 'min:1',
                 'max:50',
-                Rule::unique('config_users', 'code')
-                    ->ignore($userId)
+                Rule::unique('config.config_users', 'code')->ignore($this->object ? $this->object->id : null),
             ],
             // 'inputs.newpassword' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
         ];

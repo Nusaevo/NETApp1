@@ -51,19 +51,18 @@ class Detail extends Component
             'inputs.name' => 'required|string|min:1|max:100',
             'inputs.version' => 'string|min:1|max:15',
             'inputs.descr' => 'string|min:1|max:500',
-            // 'inputs.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('config_appls', 'code')
-            //         ->ignore($this->object->id)
-            //         ->where(function ($query) {
-            //         }),
-            // ],
+            'inputs.code' => [
+                'required',
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+            ],
+            
         ];
         return $rules;
     }
+    
 
     protected $validationAttributes = [
         'inputs'                => 'Input Application',
