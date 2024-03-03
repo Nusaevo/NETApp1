@@ -25,6 +25,7 @@ class Detail extends Component
     public $applications;
     public $users;
     public $selectedMenus = [];
+    public $selectedUserIds = [];
     public function mount($action, $objectId = null)
     {
         $this->actionValue = decryptWithSessionKey($action);
@@ -36,6 +37,8 @@ class Detail extends Component
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
             $this->applicationChanged();
+            $this->populateSelectedRights();
+            $this->populateSelectedUsers();
         } else {
             $this->resetForm();
         }
@@ -55,7 +58,8 @@ class Detail extends Component
 
     public function applicationChanged()
     {
-        $this->emit('applicationChanged', $this->inputs['app_id']);
+        $this->selectedMenus = [];
+        $this->emit('applicationChanged', $this->inputs['app_id'], $this->selectedMenus);
     }
 
     public function refreshUser()
@@ -85,12 +89,48 @@ class Detail extends Component
 
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
-        'selectedMenus' => 'selectedMenus'
+        'selectedMenus' => 'selectedMenus',
+        'selectedUserIds' => 'selectedUserIds'
     ];
+
+    public function populateSelectedRights()
+    {
+        if (!is_null($this->object->id)) {
+            $configRights = ConfigRight::where('group_id', $this->object->id)->get();
+
+            foreach ($configRights as $configRight) {
+                $this->selectedMenus[$configRight->menu_id] = [
+                    'selected' => true,
+                    'create' => strpos($configRight->trustee, 'C') !== false,
+                    'read' => strpos($configRight->trustee, 'R') !== false,
+                    'update' => strpos($configRight->trustee, 'U') !== false,
+                    'delete' => strpos($configRight->trustee, 'D') !== false,
+                ];
+            }
+        }
+    }
+
+    public function populateSelectedUsers()
+    {
+        if (!is_null($this->object->id)) {
+            $configGroup = ConfigGroup::with('ConfigUser')->find($this->object->id);
+
+            if ($configGroup && $configGroup->ConfigUser) {
+                foreach ($configGroup->ConfigUser as $user) {
+                    $this->selectedUserIds[$user->id]['selected'] = true;
+                }
+            }
+        }
+    }
 
     public function selectedMenus($selectedMenus)
     {
         $this->selectedMenus = $selectedMenus;
+    }
+
+    public function selectedUserIds($selectedUserIds)
+    {
+        $this->selectedUserIds = $selectedUserIds;
     }
 
     protected function rules()
@@ -229,8 +269,11 @@ class Detail extends Component
                     $this->object->update($this->inputs);
                 }
             }
+            $userIds = array_keys(array_filter($this->selectedUserIds, function($value) {
+                return $value['selected'] ?? false;
+            }));
+            $this->object->ConfigUser()->sync($userIds);
             $this->saveConfigRights();
-
             DB::commit();
 
             $this->dispatchBrowserEvent('notify-swal', [

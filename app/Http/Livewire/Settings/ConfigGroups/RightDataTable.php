@@ -22,11 +22,11 @@ class RightDataTable extends DataTableComponent
     public $groupId;
     public $appId;
 
-    public function mount($groupId = null, $appId = null): void // Adjust the mount method
+    public function mount($groupId = null, $appId = null, $selectedMenus = null): void
     {
         $this->groupId = $groupId;
         $this->appId = $appId;
-        $this->populateConfigRights();
+        $this->selectedRows = $selectedMenus;
     }
 
     public function builder(): Builder
@@ -38,31 +38,13 @@ class RightDataTable extends DataTableComponent
             ->select();
     }
 
-    public function applicationChanged($appId)
+    public function applicationChanged($appId, $selectedMenus)
     {
         $this->appId = $appId;
-        $this->selectedRows = [];
+        $this->selectedRows = $selectedMenus;
         $this->render();
-        $this->populateConfigRights();
     }
 
-
-    public function populateConfigRights()
-    {
-        if (!is_null($this->groupId)) {
-            $configRights = ConfigRight::where('group_id', $this->groupId)->get();
-
-            foreach ($configRights as $configRight) {
-                $this->selectedRows[$configRight->menu_id] = [
-                    'selected' => true,
-                    'create' => strpos($configRight->trustee, 'C') !== false,
-                    'read' => strpos($configRight->trustee, 'R') !== false,
-                    'update' => strpos($configRight->trustee, 'U') !== false,
-                    'delete' => strpos($configRight->trustee, 'D') !== false,
-                ];
-            }
-        }
-    }
 
     public function configure(): void
     {

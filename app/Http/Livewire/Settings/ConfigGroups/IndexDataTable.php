@@ -70,21 +70,18 @@ class IndexDataTable extends DataTableComponent
             Column::make("Group Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Application Code", "ConfigAppl.code")
-                 ->searchable()
-                 ->sortable(),
-            Column::make("Application Name", "ConfigAppl.name")
+           Column::make("Application","id")
+                ->format(function($value, $row, Column $column) {
+                    return optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name;
+                })
                 ->searchable()
                 ->sortable(),
-            Column::make("Login ID", "ConfigUser.code")
+            Column::make("Group Name", "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("User Name", "ConfigUser.name")
-                ->searchable()
-                ->sortable(),
-            Column::make("Name", "name")
-                ->searchable()
-                ->sortable(),
+            // Column::make("User LoginID", "ConfigUser.code")
+            //         ->searchable()
+            //         ->sortable(),
             Column::make('Status', 'deleted_at')
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {

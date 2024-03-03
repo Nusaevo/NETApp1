@@ -66,10 +66,13 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Application", "ConfigAppl.name")
+            Column::make("Const Group", "const_group")
                 ->searchable()
                 ->sortable(),
-            Column::make("Const Group", "const_group")
+            Column::make("Application","id")
+                ->format(function($value, $row, Column $column) {
+                    return optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name;
+                })
                 ->searchable()
                 ->sortable(),
             Column::make("Seq", "seq")

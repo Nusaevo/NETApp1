@@ -52,7 +52,7 @@ class Detail extends Component
             'inputs.version' => 'string|min:1|max:15',
             'inputs.descr' => 'string|min:1|max:500',
             'inputs.code' => [
-                'required',
+                'required', 
                 'string',
                 'min:1',
                 'max:50',

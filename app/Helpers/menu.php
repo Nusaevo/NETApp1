@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Settings\ConfigMenu;
+use App\Models\Settings\ConfigUser;
 use App\Models\Settings\ConfigGroup;
 use App\Models\Settings\ConfigRight;
 use Illuminate\Database\QueryException;
@@ -21,14 +22,12 @@ if (!function_exists('generateMenu')) {
         ];
 
         $userId = Auth::check() ? Auth::user()->id : '';
-        if (!empty($userId)) { // Ensure $userId is not null or empty
+        if (!empty($userId)) {
             try {
-                $appCode = config('app.name');
-                $configGroup = ConfigGroup::where('user_id', $userId)
-                    ->where('app_code', $appCode)
-                    ->first();
-                if ($configGroup) {
-                    $menuIds = ConfigRight::where('group_id', $configGroup->id)->pluck('menu_id');
+                $userGroups = ConfigUser::find($userId)->ConfigGroup()->pluck('config_groups.id');
+
+                if ($userGroups) {
+                    $menuIds = ConfigRight::whereIn('group_id', $userGroups)->pluck('menu_id');
                     $configMenus = ConfigMenu::whereIn('id', $menuIds)->get()->sortBy('seq');
                     if ($configMenus->isEmpty()) {
                         return $mainMenu;

@@ -69,16 +69,19 @@ class IndexDataTable extends DataTableComponent
             Column::make("Menu Code", "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Application Code", "ConfigAppl.name")
+            Column::make("Application","id")
+                ->format(function($value, $row, Column $column) {
+                    return optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name;
+                })
                 ->searchable()
                 ->sortable(),
             Column::make("Menu Header", "menu_header")
                 ->searchable()
                 ->sortable(),
-            Column::make("Sequence", "seq")
+            Column::make("Menu Caption", "menu_caption")
                 ->searchable()
                 ->sortable(),
-            Column::make("Menu Caption", "menu_caption")
+            Column::make("Sequence", "seq")
                 ->searchable()
                 ->sortable(),
             Column::make('Status', 'deleted_at')

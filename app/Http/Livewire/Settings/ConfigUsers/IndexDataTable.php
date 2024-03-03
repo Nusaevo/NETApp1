@@ -57,7 +57,7 @@ class IndexDataTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Username", "code")
+            Column::make("LoginID", "code")
                 ->searchable()
                 ->sortable(),
             Column::make("Name", "name")
