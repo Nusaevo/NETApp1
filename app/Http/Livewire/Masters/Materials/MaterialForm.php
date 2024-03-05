@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Panels;
+namespace App\Http\Livewire\Masters\Materials;
 
 use Livewire\Component;
 use App\Models\Masters\Material;
@@ -87,70 +87,67 @@ class MaterialForm extends Component
 
     public function refreshUOMs()
     {
-        $materialUOMs = ConfigConst::where('app_code', $this->appCode)
+        $data = ConfigConst::where('app_code', $this->appCode)
         ->where('const_group', 'MATL_UOM')
         ->orderBy('seq')
         ->get();
 
-        if (!$materialUOMs->isEmpty()) {
-            $this->materialUOMs = $materialUOMs->map(function ($data) {
-                return [
-                    'label' => $data->str1,
-                    'value' => $data->str1,
-                ];
-            })->toArray();
-            $this->matl_uoms['name'] = $this->materialUOMs[0]['value'];
-        } else {
-            $this->materialUOMs = [];
-            $this->matl_uoms['name'] = null;
-        }
+        $this->materialUOMs = $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+
+        $this->matl_uoms['name'] = null;
     }
 
     public function refreshCategories()
     {
-        $materialCategories = ConfigConst::where('app_code', $this->appCode)
+        $data = ConfigConst::where('app_code', $this->appCode)
         ->where('const_group', 'MATL_JWL_CATEGORY')
         ->orderBy('seq')
         ->get();
 
-        if (!$materialCategories->isEmpty()) {
-            $this->materialCategories = $materialCategories->map(function ($data) {
-                return [
-                    'label' => $data->str1,
-                    'value' => $data->id,
-                ];
-            })->toArray();
-            $this->materials['jwl_category'] = $this->materialCategories[0]['value'];
-        } else {
-            $this->materialCategories = [];
-            $this->materials['jwl_category'] = null;
-        }
+        $this->materialCategories = $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+
+        $this->materials['jwl_category'] = null;
     }
 
     public function refreshBaseMaterials($key)
     {
-        $baseMaterials = ConfigConst::where('app_code', $this->appCode)
+        $data = ConfigConst::where('app_code', $this->appCode)
         ->where('const_group', 'MATL_JWL_BASE_MATL')
         ->orderBy('seq')
         ->get();
 
-        if (!$baseMaterials->isEmpty()) {
-            $this->baseMaterials = $baseMaterials->map(function ($data) {
-                return [
-                    'label' => $data->str1,
-                    'value' => $data->id,
-                ];
-            })->toArray();
-            $this->matl_boms[$key]['base_matl_id'] = $this->baseMaterials[0]['value'];
-        } else {
-            $this->baseMaterials = [];
-            $this->matl_boms[$key]['base_matl_id'] = null;
-        }
+        $this->baseMaterials = $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+
+        $this->matl_boms[$key]['base_matl_id'] = null;
     }
+
+    public function deleteImage($index)
+    {
+        // Remove the selected image from the list of captured images
+        unset($this->capturedImages[$index]);
+        // Re-index the array keys
+        $this->capturedImages = array_values($this->capturedImages);
+    }
+
 
     public function render()
     {
-        return view('livewire.panels.material-form');
+        return view('livewire.masters.materials.material-form');
     }
 
 

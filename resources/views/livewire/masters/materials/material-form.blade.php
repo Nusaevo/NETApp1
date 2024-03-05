@@ -8,8 +8,15 @@
                         <div class="photo-and-button-container">
                             <!-- Photo Container -->
                             <div class="multiple-photo-container">
-                                @forelse($capturedImages as $image)
-                                    <img src="{{ $image }}" alt="Captured Image" class="photo-box">
+                                @forelse($capturedImages as $key => $image)
+                                    <div class="photo-box">
+                                        <img src="{{ $image }}" alt="Captured Image" class="photo-box-image">
+                                        <div class="image-close-button">
+                                            <a href="#" wire:click.prevent="deleteImage({{ $key }})">
+                                                X
+                                            </a>
+                                        </div>
+                                    </div>
                                 @empty
                                     <div class="photo-box empty">
                                         <p>No Images Captured</p>
