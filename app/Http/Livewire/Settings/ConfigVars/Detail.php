@@ -34,6 +34,8 @@ class Detail extends Component
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
+            $this->object = new ConfigVar();
+            $this->resetForm();
         }
     }
 
@@ -115,13 +117,10 @@ class Detail extends Component
         try {
             $application = ConfigAppl::find($this->inputs['app_id']);
             $this->inputs['app_code'] = $application->code;
-            if ($this->actionValue == 'Create') {
-                $this->object = ConfigVar::create($this->inputs);
-            } elseif ($this->actionValue == 'Edit') {
-                if ($this->object) {
-                    $this->object->updateObject($this->VersioNumber);
-                    $this->object->update($this->inputs);
-                }
+            if ($this->object) {
+                $this->object->updateObject($this->VersioNumber);
+                $this->object->fill($this->inputs);
+                $this->object->save();
             }
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',

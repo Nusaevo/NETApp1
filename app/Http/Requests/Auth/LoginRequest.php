@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Session;
+use App\Models\Settings\ConfigUser;
+use Illuminate\Support\Facades\Log;
 
 class LoginRequest extends FormRequest
 {
@@ -46,7 +48,7 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('code', 'password'), $this->boolean('remember'))) {
+        if (!Auth::attempt($this->only('code', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -55,7 +57,19 @@ class LoginRequest extends FormRequest
         }
         $salt = Str::random(40);
         $appKey = config('app.key');
-        Session::put('session_salt', $salt.$appKey);
+        Session::put('session_salt', $salt . $appKey);
+        $userId = Auth::check() ? Auth::user()->id : '';
+        $configUser = ConfigUser::where('id', $userId)->first();
+
+        if ($configUser) {
+            $configGroup = $configUser->configGroup()->first();
+
+            if ($configGroup) {
+                $appCode = $configGroup->app_code;
+                Session::put('app_code', $appCode);
+            }
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
@@ -68,7 +82,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited()
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -91,6 +105,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey()
     {
-        return Str::lower($this->input('code')).'|'.$this->ip();
+        return Str::lower($this->input('code')) . '|' . $this->ip();
     }
 }

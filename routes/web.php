@@ -128,12 +128,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', ConfigApplicationIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', ConfigApplicationDetail::class)->name('detail');
     });
-
-    Route::prefix('config_rights')->name('config_rights.')->group(function () {
-        Route::get('/', ConfigRightIndex::class)->name('index');
-        Route::get('/detail/{action}/{objectId?}', ConfigRightDetail::class)->name('detail');
-    });
-
+    
     Route::prefix('config_consts')->name('config_consts.')->group(function () {
         Route::get('/', ConfigConstIndex::class)->name('index');
         Route::get('/detail/{action}/{objectId?}', ConfigConstDetail::class)->name('detail');

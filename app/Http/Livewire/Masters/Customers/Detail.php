@@ -30,8 +30,7 @@ class Detail extends Component
             $this->VersioNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
         } else {
-            $this->inputs['grp'] = 'CUST';
-            $this->object = new Partner();
+            $this->resetForm();
         }
     }
 
@@ -54,6 +53,13 @@ class Detail extends Component
             'inputs.country' => 'string|min:1|max:20',
             'inputs.postal_code' => 'string|min:1|max:10',
             'inputs.contact_person' => 'string|min:1|max:255',
+            'inputs.code' => [
+                'required', 
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('partners', 'code')->ignore($this->object ? $this->object->id : null),
+            ],
         ];
         return $rules;
     }
@@ -87,6 +93,8 @@ class Detail extends Component
     {
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
+            $this->inputs['grp'] = 'CUST';
+            $this->object = new Partner();
         }elseif ($this->actionValue == 'Edit') {
             $this->VersioNumber = $this->object->version_number;
         }
@@ -97,13 +105,10 @@ class Detail extends Component
         $this->validateForm();
 
         try {
-            if ($this->actionValue == 'Create') {
-                $this->object = Partner::create($this->inputs);
-            } elseif ($this->actionValue == 'Edit') {
-                if ($this->object) {
-                    $this->object->updateObject($this->VersioNumber);
-                    $this->object->update($this->inputs);
-                }
+            if ($this->object) {
+                $this->object->updateObject($this->VersioNumber);
+                $this->object->fill($this->inputs);
+                $this->object->save();
             }
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',

@@ -110,4 +110,37 @@ class ConfigRight extends BaseModel
 
         return $permissions;
     }
+
+    public static function saveRights($groupId, $selectedMenus, $groupCode = null)
+    {
+        static::where('group_id', $groupId)
+            ->whereNotIn('menu_id', array_keys($selectedMenus))
+            ->delete();
+
+        foreach ($selectedMenus as $menuId => $permissions) {
+            $trustee = static::prepareTrusteeString($permissions); // Assume prepareTrusteeString is moved or adapted for the model
+
+            // Update or create ConfigRight for each menuId with necessary data
+            static::updateOrCreate(
+                ['group_id' => $groupId, 'menu_id' => $menuId],
+                [
+                    'trustee' => $trustee,
+                    'group_code' => $groupCode ?? ConfigGroup::find($groupId)->code ?? '',
+                    'menu_code' => ConfigMenu::where('id', $menuId)->value('code') ?? '',
+                ]
+            );
+        }
+    }
+
+    // Adapt or move prepareTrusteeString to handle permissions
+    protected static function prepareTrusteeString($permissions)
+    {
+        $trustee = '';
+        $trustee .= $permissions['create'] ? 'C' : '';
+        $trustee .= $permissions['read'] ? 'R' : '';
+        $trustee .= $permissions['update'] ? 'U' : '';
+        $trustee .= $permissions['delete'] ? 'D' : '';
+        return $trustee;
+    }
+
 }

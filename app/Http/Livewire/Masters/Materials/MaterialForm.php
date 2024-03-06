@@ -10,6 +10,7 @@ use App\Models\Settings\ConfigConst;
 use App\Models\Inventories\IvtBal;
 use App\Models\Inventories\IvtBalUnit;
 use App\Models\Bases\Attachment;
+use Illuminate\Support\Facades\Session;
 use Lang;
 use Exception;
 use DB;
@@ -47,7 +48,7 @@ class MaterialForm extends Component
     public $capturedImages = [];
     public function mount($materialActionValue, $materialIDValue = null)
     {
-        $this->appCode =  env('APP_NAME', 'DefaultAppName');
+        $this->appCode =  Session::get('app_code', '');
         $this->actionValue = $materialActionValue;
         $this->objectIdValue = $materialIDValue;
         $this->populateDropdowns();
@@ -55,7 +56,6 @@ class MaterialForm extends Component
             $this->object = Material::withTrashed()->find($this->objectIdValue);
             // $this->object_detail = ItemUnit::ItemId($this->object->id)->get();
             //$this->attachments = $this->object->attachments;
-
             $this->object_uoms = $this->object->MatlUom[0];
             $this->object_boms = $this->object->MatlBom;
             $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
@@ -72,10 +72,11 @@ class MaterialForm extends Component
             }
             $attachments = $this->object->Attachment;
             foreach ($attachments as $attachment) {
-                $path = "storage/".$attachment->path;
-                $url = asset($path);
+                $relativePath = 'attachments/' . $this->object->id . '/' . $attachment->name;
+                $url = asset('storage/' . $relativePath);
                 $this->capturedImages[] = $url;
             }
+            
         } else {
             $this->object = new Material();
             $this->object_uoms = new MatlUom();
@@ -115,7 +116,6 @@ class MaterialForm extends Component
                 'value' => $data->id,
             ];
         })->toArray();
-
         $this->materials['jwl_category'] = null;
     }
 
@@ -132,18 +132,14 @@ class MaterialForm extends Component
                 'value' => $data->id,
             ];
         })->toArray();
-
         $this->matl_boms[$key]['base_matl_id'] = null;
     }
 
     public function deleteImage($index)
     {
-        // Remove the selected image from the list of captured images
         unset($this->capturedImages[$index]);
-        // Re-index the array keys
         $this->capturedImages = array_values($this->capturedImages);
     }
-
 
     public function render()
     {
@@ -162,34 +158,12 @@ class MaterialForm extends Component
         $this->capturedImages[] = $imageDataUrl;
     }
 
-
     protected function rules()
     {
         $rules = [
-            // 'materials.jwl_category' => 'required|string|min:1|max:50',
             'materials.jwl_buying_price' => 'required|integer|min:0|max:9999999999',
             'materials.jwl_selling_price' =>'required|integer|min:0|max:9999999999',
             'matl_uoms.barcode' =>'required|integer|min:0|max:9999999999',
-            // 'materials.name' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('materials', 'name')
-            //         ->ignore($this->object->id)
-            //         ->where(function ($query) {
-            //         }),
-            // ],
-            // 'materials.descr' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:200',
-            //     Rule::unique('materials', 'descr')
-            //         ->ignore($this->object->id)
-            //         ->where(function ($query) {
-            //         }),
-            // ],
         ];
         return $rules;
     }
@@ -372,54 +346,20 @@ class MaterialForm extends Component
     public function saveAttachment()
     {
         if (!empty($this->capturedImages)) {
-            $attachmentsPath = storage_path('attachments/' . $this->object->id);
-            if (!file_exists($attachmentsPath)) {
-                mkdir($attachmentsPath, 0777, true);
-            }
-
             foreach ($this->capturedImages as $index => $imageDataUrl) {
-                // Decode the base64 image data
-                $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
-                $imageData = base64_decode($imageData);
+                $filePath = Attachment::saveAttachmentToStorage($imageDataUrl, $this->object->id, class_basename($this->object));
 
-                // Generate a unique filename
-                $filename = 'image_' . $index . '_' . time() . '.jpg';
-
-                // Define the file path
-                $filePath = 'public/storage/attachments/' . $this->object->id . '/' . $filename;
-                $fullPath = $attachmentsPath . '/' . $filename;
-
-                // Save the image
-                file_put_contents($fullPath, $imageData);
-
-                // Prepare attachment data
-                $attachmentData = [
-                    'name' => $filename,
-                    'path' => $filePath,
-                    'seq' => $index + 1,
-                    'content_type' => 'image/jpeg', // You may adjust this based on the image type
-                    'extension' => 'jpg', // You may adjust this based on the image type
-                    'attached_objectid' => $this->object->id,
-                    'attached_objecttype' => class_basename($this->object)
-                ];
-
-                // Create or update attachment
-                $existingAttachment = Attachment::where('attached_objectid', $this->object->id)
-                                                ->where('attached_objecttype', class_basename($this->object))
-                                                ->where('seq', $index + 1)
-                                                ->first();
-
-                if ($existingAttachment) {
-                    $existingAttachment->update($attachmentData);
+                if ($filePath !== false) {
+                  
                 } else {
-                    Attachment::create($attachmentData);
+                    
                 }
             }
-
-            // Clear the capturedImages property after saving
             $this->capturedImages = [];
         }
     }
+
+    
 
     public function validateBoms()
     {

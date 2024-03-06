@@ -17,9 +17,7 @@
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="UserCard" title="Customer General Info" :isOpen="true">
-
-                        <x-ui-text-field label="Customer Code" model="inputs.code" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="" />
-
+                        <x-ui-text-field label="Customer Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" />
                         <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
                         <x-ui-text-field label="Address" model="inputs.address" type="textarea" :action="$actionValue" placeHolder="" />
                         <x-ui-text-field label="City" model="inputs.city" type="text" :action="$actionValue" placeHolder="" />

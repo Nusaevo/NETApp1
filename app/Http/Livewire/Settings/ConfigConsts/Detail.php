@@ -100,6 +100,7 @@ class Detail extends Component
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
             $this->populateDropdowns();
+            $this->object = new ConfigConst();
         }elseif ($this->actionValue == 'Edit') {
             $this->VersioNumber = $this->object->version_number;
         }
@@ -110,15 +111,10 @@ class Detail extends Component
         $this->validateForm();
 
         try {
-            $application = ConfigAppl::find($this->inputs['app_id']);
-            $this->inputs['app_code'] = $application->code;
-            if ($this->actionValue == 'Create') {
-                $this->object = ConfigConst::create($this->inputs);
-            } elseif ($this->actionValue == 'Edit') {
-                if ($this->object) {
-                    $this->object->updateObject($this->VersioNumber);
-                    $this->object->update($this->inputs);
-                }
+            if ($this->object) {
+                $this->object->updateObject($this->VersioNumber);
+                $this->object->fill($this->inputs);
+                $this->object->save();
             }
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',

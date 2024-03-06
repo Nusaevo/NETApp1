@@ -34,4 +34,49 @@ class Attachment extends Model
         return null;
     }
 
+     /**
+     * Save attachment to storage.
+     *
+     * @param string $imageDataUrl
+     * @param int $objectId
+     * @param string $objectType
+     * @return string|bool
+     */
+    public static function saveAttachmentToStorage($imageDataUrl, $objectId, $objectType)
+    {
+        $attachmentsPath = public_path('storage/attachments/' . $objectId);
+        if (!File::isDirectory($attachmentsPath)) {
+            File::makeDirectory($attachmentsPath, 0777, true, true);
+        }
+        $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
+        $imageData = base64_decode($imageData);
+        $filename = 'image_' . time() . '.jpg';
+        $filePath = 'storage/attachments/' . $objectId . '/' . $filename;
+        $fullPath = $attachmentsPath . '/' . $filename;
+        if (file_put_contents($fullPath, $imageData)) {
+            $attachmentData = [
+                'name' => $filename,
+                'path' => $filePath,
+                'content_type' => 'image/jpeg', 
+                'extension' => 'jpg',
+                'attached_objectid' => $objectId,
+                'attached_objecttype' => $objectType
+            ];
+
+            $existingAttachment = self::where('attached_objectid', $objectId)
+                                       ->where('attached_objecttype', $objectType)
+                                       ->first();
+
+            if ($existingAttachment) {
+                $existingAttachment->update($attachmentData);
+            } else {
+                self::create($attachmentData);
+            }
+
+            return $filePath; 
+        }
+
+        return false;
+    }
+
 }

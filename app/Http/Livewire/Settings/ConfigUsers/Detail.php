@@ -58,7 +58,7 @@ class Detail extends Component
                 'string',
                 'min:1',
                 'max:255',
-                'email'.
+                'email',
                 Rule::unique('config.config_users', 'email')->ignore($this->object ? $this->object->id : null),
             ],
             'inputs.code' => [
@@ -102,6 +102,7 @@ class Detail extends Component
     {
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
+            $this->object = new ConfigUser();
         }elseif ($this->actionValue == 'Edit') {
             $this->VersioNumber = $this->object->version_number;
             $this->inputs['newpassword'] = "";
@@ -121,13 +122,10 @@ class Detail extends Component
                 return;
             }
 
-            if ($this->actionValue == 'Create') {
-                $this->object = ConfigUser::create($this->inputs);
-            } elseif ($this->actionValue == 'Edit') {
-                if ($this->object) {
-                    $this->object->updateObject($this->VersioNumber);
-                    $this->object->update($this->inputs);
-                }
+            if ($this->object) {
+                $this->object->updateObject($this->VersioNumber);
+                $this->object->fill($this->inputs);
+                $this->object->save();
             }
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
@@ -173,7 +171,7 @@ class Detail extends Component
 
     protected function validatePassword()
     {
-        if ($this->actionValue == 'Create') {
+        if ($this->object->isNew()) {
             if (empty($this->inputs['newpassword'])) {
                 $this->dispatchBrowserEvent('notify-swal', [
                     'type' => 'error',

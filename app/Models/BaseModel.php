@@ -35,8 +35,8 @@ class BaseModel extends Model
 
     public function isNew()
     {
-        $isNewMaterial = empty($this->id);
-        return  $isNewMaterial;
+        $isNew = empty($this->id);
+        return  $isNew;
     }
 
     public function Attachment()

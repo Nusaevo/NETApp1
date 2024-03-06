@@ -62,24 +62,24 @@ class Detail extends Component
         $this->emit('applicationChanged', $this->inputs['app_id'], $this->selectedMenus);
     }
 
-    public function refreshUser()
-    {
-        $usersData = ConfigUser::GetActiveData();
+    // public function refreshUser()
+    // {
+    //     $usersData = ConfigUser::GetActiveData();
 
-        $this->users = $usersData->map(function ($user) {
-            return [
-                'label' => $user->id . ' - ' . $user->name,
-                'value' => $user->id,
-            ];
-        })->toArray();
+    //     $this->users = $usersData->map(function ($user) {
+    //         return [
+    //             'label' => $user->id . ' - ' . $user->name,
+    //             'value' => $user->id,
+    //         ];
+    //     })->toArray();
 
-        $this->inputs['user_id'] = null;
-    }
+    //     $this->inputs['user_id'] = null;
+    // }
 
     protected function populateDropdowns()
     {
         $this->refreshApplication();
-        $this->refreshUser();
+        // $this->refreshUser();
     }
 
     public function render()
@@ -137,7 +137,6 @@ class Detail extends Component
     {
         $rules = [
             'inputs.app_id' =>  'required',
-            'inputs.user_id' =>  'required',
             'inputs.name' => 'required|string|min:1|max:100',
             'inputs.code' => [
                 'required',
@@ -155,7 +154,6 @@ class Detail extends Component
         'inputs.*'              => 'Input Group',
         'inputs.code'           => 'Group Code',
         'inputs.app_id'      => 'Application',
-        'inputs.user_id'      => 'User',
         'inputs.name'      => 'Group Name'
     ];
 
@@ -177,77 +175,51 @@ class Detail extends Component
         if ($this->actionValue == 'Create') {
             $this->reset('inputs');
             $this->populateDropdowns();
+            $this->selectedMenus = [];
+            $this->object = new ConfigGroup();
         }elseif ($this->actionValue == 'Edit') {
             $this->VersioNumber = $this->object->version_number ?? null;
         }
     }
 
-    function prepareTrusteeString($permissions) {
-        $trustee = '';
-        $trustee .= $permissions['create'] ? 'C' : '';
-        $trustee .= $permissions['read'] ? 'R' : '';
-        $trustee .= $permissions['update'] ? 'U' : '';
-        $trustee .= $permissions['delete'] ? 'D' : '';
-        return $trustee;
-    }
-
-    public function saveConfigRights()
-    {
-        $groupId = $this->object->id;
-
-        $existingMenuIds = ConfigRight::where('group_id', $groupId)->pluck('menu_id')->toArray();
-
-        $selectedMenuIds = array_keys($this->selectedMenus);
-
-        $menusToDelete = array_diff($existingMenuIds, $selectedMenuIds);
-
-        ConfigRight::where('group_id', $groupId)
-            ->whereIn('menu_id', $menusToDelete)
-            ->delete();
-        $group = ConfigGroup::find($groupId);
-        foreach ($this->selectedMenus as $menuId => $permissions) {
-            $trustee = $this->prepareTrusteeString($permissions);
-            $configRight = ConfigRight::where('group_id', $groupId)
-                                      ->where('menu_id', $menuId)
-                                      ->first();
-
-            $menu = ConfigMenu::find($menuId);
-            if ($configRight) {
-                $configRight->update([
-                    'trustee' => $trustee,
-                ]);
-            } else {
-                ConfigRight::create([
-                    'group_id' => $groupId,
-                    'menu_id' => $menuId,
-                    'group_code' => $group->code ?? '',
-                    'menu_code' => $menu->code ?? '',
-                    'trustee' => $trustee,
-                ]);
-            }
-        }
-    }
-
     public function validateApplicationUsers()
     {
-        // Start building the query
-        $query = ConfigGroup::query()
-            ->where('user_id', $this->inputs['user_id'])
-            ->where('app_id', $this->inputs['app_id']);
-
-        // Check if $this->object is not null and its id property is also not null before adding the condition
-        if ($this->object !== null && !is_null($this->object->id)) {
-            $query->where('id', '!=', $this->object->id);
+        $appId = $this->inputs['app_id'];
+        $userIds = array_keys(array_filter($this->selectedUserIds, function ($value) {
+            return $value['selected'] ?? false;
+        }));
+    
+        // If the object is new, skip the database check
+        if ($this->object->isNew()) {
+            // Get all existing config groups for the given application ID
+            $existingConfigGroups = ConfigGroup::where('app_id', $appId)
+                ->whereHas('ConfigUser', function ($query) use ($userIds) {
+                    $query->whereIn('user_id', $userIds);
+                })
+                ->get();
+        } else {
+            // Check if any of the user IDs are already associated with the given application ID
+            $existingConfigGroups = ConfigGroup::where('app_id', $appId)
+                ->whereHas('ConfigUser', function ($query) use ($userIds) {
+                    $query->whereIn('user_id', $userIds);
+                })
+                ->where('id', '!=', $this->object->id) // Exclude the current object
+                ->get();
         }
-
-        // Execute the query
-        $configGroup = $query->first();
-        // If a configGroup is found, it means a record exists that conflicts with the current validation rules
-        if (!empty($configGroup) && ($configGroup->id != $this->object->id)) {
-            throw new Exception("Group telah dibuat untuk aplikasi dan user ini, Pilihlah user/aplikasi lain");
+        if ($existingConfigGroups->isNotEmpty()) {
+            $existingUserIds = $existingConfigGroups->flatMap(function ($configGroup) {
+                if ($configGroup->ConfigUser) { // Check if users relationship is not null
+                    return $configGroup->ConfigUser->pluck('id');
+                } 
+            })->toArray();
+        
+            if (!empty($existingUserIds)) {
+                $existingUserCodes = ConfigUser::whereIn('id', $existingUserIds)->pluck('code')->implode(', ');
+                throw new Exception("Pengguna dengan loginID: $existingUserCodes sudah terdaftar.");
+            }
         }
+        
     }
-
 
     public function Save()
     {
@@ -257,25 +229,20 @@ class Detail extends Component
         try {
             $this->validateApplicationUsers();
             $application = ConfigAppl::find($this->inputs['app_id']);
-
-            $user = ConfigUser::find($this->inputs['user_id']);
             $this->inputs['app_code'] = $application->code;
-            $this->inputs['user_code'] =  $user->code;
-            if ($this->actionValue == 'Create') {
-                $this->object = ConfigGroup::create($this->inputs);
-            } elseif ($this->actionValue == 'Edit') {
-                if ($this->object) {
-                    $this->object->updateObject($this->VersioNumber);
-                    $this->object->update($this->inputs);
-                }
+            if ($this->object) {
+                $this->object->updateObject($this->VersioNumber);
+                $this->object->fill($this->inputs);
+                $this->object->save();
             }
             $userIds = array_keys(array_filter($this->selectedUserIds, function($value) {
                 return $value['selected'] ?? false;
             }));
-            $this->object->ConfigUser()->sync($userIds);
-            $this->saveConfigRights();
-            DB::commit();
 
+            $this->object->ConfigUser()->sync($userIds);
+            ConfigRight::saveRights($this->object->id, $this->selectedMenus, $this->object->code);
+
+            DB::commit();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
                 'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
