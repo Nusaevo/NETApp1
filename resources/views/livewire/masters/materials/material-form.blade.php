@@ -7,10 +7,11 @@
                     <div class="material-info-container">
                         <div class="photo-and-button-container">
                             <!-- Photo Container -->
+                        <!-- Photo Container -->
                             <div class="multiple-photo-container">
                                 @forelse($capturedImages as $key => $image)
                                     <div class="photo-box">
-                                        <img src="{{ $image }}" alt="Captured Image" class="photo-box-image">
+                                        <img src="{{ $image['url'] }}" alt="Captured Image" class="photo-box-image">
                                         <div class="image-close-button">
                                             <a href="#" wire:click.prevent="deleteImage({{ $key }})">
                                                 X

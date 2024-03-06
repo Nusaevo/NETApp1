@@ -234,13 +234,13 @@ class Detail extends Component
                 $this->object->updateObject($this->VersioNumber);
                 $this->object->fill($this->inputs);
                 $this->object->save();
+                $userIds = array_keys(array_filter($this->selectedUserIds, function($value) {
+                    return $value['selected'] ?? false;
+                }));
+    
+                $this->object->ConfigUser()->sync($userIds);
+                ConfigRight::saveRights($this->object->id, $this->selectedMenus, $this->object->code);
             }
-            $userIds = array_keys(array_filter($this->selectedUserIds, function($value) {
-                return $value['selected'] ?? false;
-            }));
-
-            $this->object->ConfigUser()->sync($userIds);
-            ConfigRight::saveRights($this->object->id, $this->selectedMenus, $this->object->code);
 
             DB::commit();
             $this->dispatchBrowserEvent('notify-swal', [

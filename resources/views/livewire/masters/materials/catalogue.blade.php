@@ -1,19 +1,25 @@
 
 <x-ui-page-card title="Catalogue">
     <div class="container mx-auto">
-        <div class="filter-sidebar">
-            <div class="filter-item">
-                <label for="filterDescription">Description</label>
-                <input type="text" id="filterDescription" placeholder="Enter description...">
-            </div>
-            <div class="filter-item">
-                <label for="filterPrice">Price Range</label>
-                <input type="text" id="filterPrice" placeholder="Enter price range...">
-            </div>
-            <div class="filter-item">
-                <label for="filterCode">Product Code</label>
-                <input type="text" id="filterCode" placeholder="Enter product code...">
-            </div>
+        <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
+            <form wire:submit.prevent="search">
+                <div class="card-body">
+                    <x-ui-text-field label="Cari Nama Barang" model="inputs.description" type="text" action="Edit" placeHolder="" span='Full'/>
+                    <x-ui-text-field label="Harga Jual" model="inputs.selling_price1" type="number" action="Edit" placeHolder="" span='Half'/>
+                    <x-ui-text-field label="" model="inputs.selling_price2" type="number" action="Edit" placeHolder="" span='Half'/>
+                    <x-ui-text-field label="Code Barang" model="inputs.code" type="text" action="Edit" placeHolder="" span='Full'/>
+                    
+                </div>
+
+                <div class="card-footer d-flex justify-content-end">
+                    <div>
+                        <x-ui-button click-event="search" button-name="Search" loading="true" action="Edit" cssClass="btn-primary" />
+                    </div>
+                </div>
+            </form>
+        </x-ui-expandable-card>
+
+       
         </div>
         <!-- Main Content -->
         <div class="main-content">
@@ -21,10 +27,9 @@
                 <div class="list-group-item">
                     <div class="image-container">
                         @if($material->Attachment->first())
-                        <img src="https://via.placeholder.com/300" alt="Material Photo">
-
+                            <img src="{{ $material->Attachment->first()->getUrl() }}" alt="Captured Image" class="photo-box-image" style="max-width: 100%; max-height: 100%;">
                         @else
-                            <img src="{{ asset('path/to/default/image.png') }}" alt="No Material Photo" class="img-fluid">
+                            <img src="https://via.placeholder.com/300" alt="Material Photo" style="max-width: 100%; max-height: 100%;">
                         @endif
                     </div>
                     <div class="material-info">
@@ -32,11 +37,41 @@
                         <div><strong>Code:</strong> {{ $material->code }}</div>
                         <div><strong>Price:</strong> {{ $material->selling_price }}</div>
                     </div>
-                    <div class="button-group">
-                        <button wire:click="addToCart({{ $material->id }})">Add to Cart</button>
+                    <div class="text-right">
+                        <x-ui-button click-event="addToCart({{ $material->id }})" button-name="Add To Cart" loading="true" action="Edit" cssClass="btn-primary" />
                     </div>
                 </div>
             @endforeach
+            </div>
+            <div class="card-footer d-flex justify-content-end">
+                @if ($materials->hasPages())
+                    <nav class="pagination" aria-label="Pagination">
+                        {{-- Previous Page Link --}}
+                        @if ($materials->onFirstPage())
+                            <a class="pagination-previous" disabled>&laquo;</a>
+                        @else
+                            <a wire:click="previousPage" href="javascript:void(0);" rel="prev" class="pagination-previous">&laquo;</a>
+                        @endif
+            
+                        {{-- Pagination Elements --}}
+                        @foreach ($materials->links() as $link)
+                            @if (is_array($link))
+                                <a wire:click="gotoPage({{ $link['url'] }})" href="javascript:void(0);" class="{{ $link['active'] ? 'pagination-link is-current' : 'pagination-link' }}">{{ $link['label'] }}</a>
+                            @endif
+                        @endforeach
+            
+                        {{-- Next Page Link --}}
+                        @if ($materials->hasMorePages())
+                            <a wire:click="nextPage" href="javascript:void(0);" rel="next" class="pagination-next">&raquo;</a>
+                        @else
+                            <a class="pagination-next" disabled>&raquo;</a>
+                        @endif
+                    </nav>
+                @endif
+            </div>
+            
+        
+        
         </div>
     </div>
 </x-ui-page-card>

@@ -15,19 +15,19 @@ class Material extends BaseModel
     {
         parent::boot(); // Call the parent class's boot method
 
-        static::creating(function ($model) {
-            $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'MATL' . "_" . ($maxId + 1);
-        });
+        // static::creating(function ($model) {
+        //     $maxId = SequenceUtility::getCurrentSequenceValue($model);
+        //     $model->code = 'MATL' . "_" . ($maxId + 1);
+        // });
 
-        static::deleting(function ($material) {
-            $material->uoms->each(function ($uoms) {
-                $uoms->delete();
-            });
-            $material->boms->each(function ($boms) {
-                $boms->delete();
-            });
-        });
+        // static::deleting(function ($material) {
+        //     $material->uoms->each(function ($uoms) {
+        //         $uoms->delete();
+        //     });
+        //     $material->boms->each(function ($boms) {
+        //         $boms->delete();
+        //     });
+        // });
     }
 
     protected $fillable = [

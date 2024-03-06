@@ -1,31 +1,36 @@
 <?php
+
 namespace App\Http\Livewire\Masters\Materials;
 
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Masters\Material;
+use App\Models\Masters\Orderh;
 use Illuminate\Support\Facades\Crypt;
 
 class Catalogue extends Component
 {
     use WithPagination;
 
-    public $searchDescr = '';
-    public $searchPrice = '';
-    public $searchCode = '';
+    public $inputs = [
+        'description' => '',
+        'selling_price1' => '',
+        'selling_price2' => '',
+        'code' => ''
+    ];
 
     public function render()
     {
         $query = Material::query();
 
-        if ($this->searchDescr) {
-            $query->where('descr', 'like', '%' . $this->searchDescr . '%');
+        if (!empty($this->inputs['description'])) {
+            $query->where('descr', 'like', '%' . $this->inputs['description'] . '%');
         }
-        if ($this->searchPrice) {
-            $query->where('price', $this->searchPrice); // Adjust as needed
+        if (!empty($this->inputs['selling_price1']) && !empty($this->inputs['selling_price2'])) {
+            $query->whereBetween('selling_price', [$this->inputs['selling_price1'], $this->inputs['selling_price2']]);
         }
-        if ($this->searchCode) {
-            $query->where('code', 'like', '%' . $this->searchCode . '%');
+        if (!empty($this->inputs['code'])) {
+            $query->where('code', 'like', '%' . $this->inputs['code'] . '%');
         }
 
         $materials = $query->paginate(9);
@@ -43,18 +48,13 @@ class Catalogue extends Component
         return redirect()->route('materials.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' => Crypt::encryptString($id)]);
     }
 
-    public function updatingSearchDescr()
+    public function search()
     {
         $this->resetPage();
     }
 
-    public function updatingSearchPrice()
+    public function addToCart($index)
     {
-        $this->resetPage();
-    }
-
-    public function updatingSearchCode()
-    {
-        $this->resetPage();
+        
     }
 }

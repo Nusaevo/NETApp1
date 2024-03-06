@@ -1,13 +1,15 @@
 <?php
+
 namespace App\Models\Bases;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\File;
 
 class Attachment extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $table = 'attachments';
 
@@ -19,6 +21,7 @@ class Attachment extends Model
         'descr',
         'attached_objectid',
         'attached_objecttype',
+        'seq', // Add seq column
     ];
 
     public function getAllColumns()
@@ -34,15 +37,7 @@ class Attachment extends Model
         return null;
     }
 
-     /**
-     * Save attachment to storage.
-     *
-     * @param string $imageDataUrl
-     * @param int $objectId
-     * @param string $objectType
-     * @return string|bool
-     */
-    public static function saveAttachmentToStorage($imageDataUrl, $objectId, $objectType)
+    public static function saveAttachmentByFileName($imageDataUrl, $objectId, $objectType, $filename)
     {
         $attachmentsPath = public_path('storage/attachments/' . $objectId);
         if (!File::isDirectory($attachmentsPath)) {
@@ -50,33 +45,80 @@ class Attachment extends Model
         }
         $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
         $imageData = base64_decode($imageData);
-        $filename = 'image_' . time() . '.jpg';
-        $filePath = 'storage/attachments/' . $objectId . '/' . $filename;
-        $fullPath = $attachmentsPath . '/' . $filename;
-        if (file_put_contents($fullPath, $imageData)) {
-            $attachmentData = [
-                'name' => $filename,
-                'path' => $filePath,
-                'content_type' => 'image/jpeg', 
-                'extension' => 'jpg',
-                'attached_objectid' => $objectId,
-                'attached_objecttype' => $objectType
-            ];
-
-            $existingAttachment = self::where('attached_objectid', $objectId)
-                                       ->where('attached_objecttype', $objectType)
-                                       ->first();
-
-            if ($existingAttachment) {
-                $existingAttachment->update($attachmentData);
-            } else {
+    
+        // Check if attachment with the same filename already exists
+        $existingAttachment = self::where('attached_objectid', $objectId)
+                                    ->where('attached_objecttype', $objectType)
+                                    ->where('name', $filename)
+                                    ->first();
+    
+        if ($existingAttachment) {
+            // Update existing attachment
+            $existingAttachment->path = $filePath;
+            $existingAttachment->content_type = 'image/jpeg';
+            $existingAttachment->extension = 'jpg';
+            $existingAttachment->save();
+            return $existingAttachment->path;
+        } else {
+            // Generate file path
+            $filePath = 'storage/attachments/' . $objectId . '/' . $filename;
+            $fullPath = $attachmentsPath . '/' . $filename;
+    
+            if (file_put_contents($fullPath, $imageData)) {
+                $attachmentData = [
+                    'name' => $filename,
+                    'path' => $filePath,
+                    'content_type' => 'image/jpeg',
+                    'extension' => 'jpg',
+                    'attached_objectid' => $objectId,
+                    'attached_objecttype' => $objectType,
+                ];
                 self::create($attachmentData);
+                return $filePath;
             }
-
-            return $filePath; 
         }
-
+    
         return false;
     }
+    
+    public static function deleteAttachmentByFilename($objectId, $objectType, $filename)
+    {
+        $attachment = self::where('attached_objectid', $objectId)
+            ->where('attached_objecttype', $objectType)
+            ->where('name', $filename)
+            ->first();
+    
+        if ($attachment) {
+            $path = $attachment->path;
+            if (File::exists(public_path($path))) {
+                File::delete(public_path($path));
+            }
+            $attachment->delete();
+            
+            return true;
+        }
+    
+        return false;
+    }
+    
+    protected static function reSortSequences($objectId, $objectType)
+    {
+        $attachments = self::where('attached_objectid', $objectId)
+            ->where('attached_objecttype', $objectType)
+            ->orderBy('id')
+            ->get();
+    
+        $seq = 1;
+        foreach ($attachments as $attachment) {
+            $attachment->seq = $seq;
+            $attachment->save();
+            $seq++;
+        }
+    }
+    
 
+    public function getUrl()
+    {
+        return asset($this->path);
+    }
 }
