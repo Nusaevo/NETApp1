@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Livewire\Masters\Materials;
+namespace App\Http\Livewire\Masters\Catalogues;
 
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use Livewire\WithPagination;
 use App\Models\Masters\Material;
 use App\Models\Transactions\OrderHdr;
@@ -10,7 +10,8 @@ use App\Models\Transactions\OrderDtl;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
-class Catalogue extends Component
+
+class Index extends BaseComponent
 {
     use WithPagination;
 
@@ -37,7 +38,7 @@ class Catalogue extends Component
 
         $materials = $query->paginate(9);
 
-        return view('livewire.masters.materials.catalogue', ['materials' => $materials]);
+        return view('livewire.masters.catalogues.index', ['materials' => $materials]);
     }
 
     public function View($id)

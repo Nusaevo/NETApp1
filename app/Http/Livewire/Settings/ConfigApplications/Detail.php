@@ -5,10 +5,6 @@ namespace App\Http\Livewire\Settings\ConfigApplications;
 use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Settings\ConfigAppl;
 use Illuminate\Validation\Rule;
-use Lang;
-use Exception;
-use DB;
-
 
 class Detail extends BaseComponent
 {

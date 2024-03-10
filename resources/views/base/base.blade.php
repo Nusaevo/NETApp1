@@ -136,19 +136,6 @@
     </div>
 </div>
 
-{{--
-@php
-    $permissions = App\Models\Settings\ConfigRight::getPermissions();
-    $userId = Auth::check() ? Auth::user()->id : null;
-    $firstSegment = Request::segment(1);
-    if(!is_null($userId) && !is_null($firstSegment) )
-    {
-        if (!array_filter($permissions)) {
-            abort(403, 'You do not have permission to access this page.');
-        }
-    }
-@endphp --}}
-
 </body>
 </html>
 <script>

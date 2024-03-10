@@ -5,6 +5,10 @@ use App\Helpers\SequenceUtility;
 use App\Models\BaseModel;
 use App\Models\Bases\Attachment;
 use DB;
+use App\Models\Settings\ConfigConst;
+use App\Models\Inventories\IvtBal;
+use App\Models\Inventories\IvtBalUnit;
+
 
 
 class Material extends BaseModel
@@ -18,6 +22,9 @@ class Material extends BaseModel
         // static::creating(function ($model) {
         //     $maxId = SequenceUtility::getCurrentSequenceValue($model);
         //     $model->code = 'MATL' . "_" . ($maxId + 1);
+        // });
+        // static::created(function ($model) {
+        //     $model->insertIvtBalData();
         // });
 
         // static::deleting(function ($material) {

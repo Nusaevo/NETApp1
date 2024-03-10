@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     ];
 
     $masters = [
+        'Catalogues',
         'Customers',
         'Suppliers',
         'Materials',
@@ -74,7 +75,9 @@ Route::middleware('auth')->group(function () {
             if (class_exists($indexPath)) {
                 Route::get("/$item", $indexPath)->name("$item.Index");
             }
-            Route::get("/$item/detail/{action}/{objectId?}", $detailPath)->name("$item.Detail");
+            if (class_exists($detailPath)) {
+                Route::get("/$item/detail/{action}/{objectId?}", $detailPath)->name("$item.Detail");
+            }
         }
     }
 

@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
+use Illuminate\Support\Facades\Schema;
 class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
@@ -109,5 +110,12 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     {
         $isNew = empty($this->id);
         return  $isNew;
+    }
+
+    public function setStatus($value)
+    {
+        if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'status_code')) {
+            $this->attributes['status_code'] = $value;
+        }
     }
 }

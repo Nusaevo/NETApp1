@@ -7,8 +7,7 @@
             <div class="card">
                 <div class="card-body">
                     @include('layout.customs.buttons.create', [
-                        'clickEvent' => route('Materials.Detail', ['action' => encryptWithSessionKey('Create')]),
-                        'url' => 'Materials'
+                        'clickEvent' => route('Materials.Detail', ['action' => encryptWithSessionKey('Create')])
                     ])
 
 

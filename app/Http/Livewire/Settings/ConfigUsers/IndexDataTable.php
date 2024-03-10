@@ -9,7 +9,7 @@ use App\Models\Settings\ConfigUser;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
-
+use App\Enums\Status;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigUser::class;
@@ -33,10 +33,11 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Email", "email")
                 ->searchable()
                 ->sortable(),
-            Column::make('Status', 'deleted_at')
+            Column::make("Status", "status_code")
+                ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    return is_null($row->deleted_at) ? 'Active' : 'Non-Active';
+                    return Status::getStatusString($value);
                 }),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {

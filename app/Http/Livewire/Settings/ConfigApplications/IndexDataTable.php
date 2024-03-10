@@ -7,6 +7,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\Settings\ConfigAppl;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use App\Enums\Status;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -38,10 +39,11 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Version", "version")
                 ->searchable()
                 ->sortable(),
-            Column::make('Status', 'deleted_at')
+            Column::make("Status", "status_code")
+                ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    return is_null($row->deleted_at) ? 'Active' : 'Non-Active';
+                    return Status::getStatusString($value);
                 }),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {

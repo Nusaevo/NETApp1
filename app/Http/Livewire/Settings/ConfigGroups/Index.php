@@ -2,19 +2,9 @@
 
 namespace App\Http\Livewire\Settings\ConfigGroups;
 
-use Livewire\Component;
-use App\Models\Settings\ConfigGroup;
-use App\Traits\LivewireTrait;
-use Illuminate\Support\Facades\Crypt;
-use Lang;
-use Exception;
-class Index extends Component
+use App\Http\Livewire\Components\BaseComponent;
+class Index extends BaseComponent
 {
-    use LivewireTrait;
-
-    public function mount()
-    {
-    }
 
     public function render()
     {

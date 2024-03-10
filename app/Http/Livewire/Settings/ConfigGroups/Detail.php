@@ -5,7 +5,6 @@ use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Settings\ConfigGroup;
 use App\Models\Settings\ConfigAppl;
 use App\Models\Settings\ConfigUser;
-use App\Models\Settings\ConfigMenu;
 use App\Models\Settings\ConfigRight;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;

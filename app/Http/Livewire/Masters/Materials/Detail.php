@@ -1,29 +1,25 @@
 <?php
 
 namespace App\Http\Livewire\Masters\Materials;
+use App\Http\Livewire\Components\BaseComponent;
 
 use Livewire\Component;
-use App\Models\Masters\Material;
-use Illuminate\Support\Facades\Crypt;
-use Lang;
-use Exception;
-use DB;
-use Livewire\WithFileUploads;
 
-class Detail extends Component
+class Detail extends BaseComponent
 {
-    public $status = '';
-
-    public $actionValue = 'Create';
-    public $objectIdValue;
-
-    public function mount($action, $objectId = null)
+    protected function onLoad()
     {
-        $this->actionValue = Crypt::decryptString($action);
 
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
-        }
+    }
+
+    protected function onPopulateDropdowns()
+    {
+
+    }
+
+    protected function onReset()
+    {
+
     }
 
     public function render()

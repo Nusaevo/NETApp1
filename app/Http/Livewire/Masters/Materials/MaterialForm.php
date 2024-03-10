@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Masters\Materials;
 
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Masters\Material;
 use App\Models\Masters\MatlUom;
 use App\Models\Masters\MatlBom;
@@ -15,22 +15,18 @@ use Lang;
 use Exception;
 use DB;
 use Livewire\WithFileUploads;
+use App\Enums\Status;
+use Illuminate\Validation\Rule;
 
-class MaterialForm extends Component
+class MaterialForm extends BaseComponent
 {
     use WithFileUploads;
-    public $object;
     public $object_uoms;
     public $object_boms;
-    public $VersioNumber;
     public $materials = [];
     public $matl_uoms = [];
     public $matl_boms = [];
     public $matl_boms_array = [];
-    public $status = '';
-
-    public $actionValue = 'Create';
-    public $objectIdValue;
 
     public $unit_row = 0;
     public $photo;
@@ -47,36 +43,25 @@ class MaterialForm extends Component
 
     public $capturedImages = [];
     public $deleteImages = [];
-    public function mount($materialActionValue, $materialIDValue = null)
+
+    protected function onLoad()
     {
-        $this->appCode =  Session::get('app_code', '');
-        $this->actionValue = $materialActionValue;
-        $this->objectIdValue = $materialIDValue;
-        $this->populateDropdowns();
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $this->objectIdValue) {
-            $this->object = Material::withTrashed()->find($this->objectIdValue);
-            // $this->object_detail = ItemUnit::ItemId($this->object->id)->get();
-            //$this->attachments = $this->object->attachments;
-            $this->object_uoms = $this->object->MatlUom[0];
-            $this->object_boms = $this->object->MatlBom;
-            $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
-            $this->VersioNumber = $this->object->version_number;
-            $this->materials = populateArrayFromModel($this->object);
-            $this->matl_uoms = populateArrayFromModel($this->object_uoms);
-            foreach ($this->object_boms as $key => $detail) {
-                $this->refreshBaseMaterials($this->bom_row);
-                $formattedDetail = populateArrayFromModel($detail);
-                array_push($this->matl_boms_array, $formattedDetail);
-                $this->matl_boms[$key] =  $formattedDetail;
-                $this->bom_row++;
-            }
-            $attachments = $this->object->Attachment;
-            foreach ($attachments as $attachment) {
-                $url = $attachment->getUrl();
-                $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
-            }
-        } else {
-            $this->resetMaterialForm();
+        $this->object = Material::withTrashed()->find($this->objectIdValue);
+        $this->object_uoms = $this->object->MatlUom[0];
+        $this->object_boms = $this->object->MatlBom;
+        $this->materials = populateArrayFromModel($this->object);
+        $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+        foreach ($this->object_boms as $key => $detail) {
+            $this->refreshBaseMaterials($this->bom_row);
+            $formattedDetail = populateArrayFromModel($detail);
+            array_push($this->matl_boms_array, $formattedDetail);
+            $this->matl_boms[$key] =  $formattedDetail;
+            $this->bom_row++;
+        }
+        $attachments = $this->object->Attachment;
+        foreach ($attachments as $attachment) {
+            $url = $attachment->getUrl();
+            $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
         }
     }
 
@@ -128,12 +113,18 @@ class MaterialForm extends Component
         $this->matl_boms[$key]['base_matl_id'] = null;
     }
 
+    protected function onPopulateDropdowns()
+    {
+        $this->refreshUOMs();
+        $this->refreshCategories();
+    }
+
     public function imagesCaptured($imageDataUrl)
     {
         $filename = uniqid() . '.jpg';
         $this->capturedImages[] = ['url' => $imageDataUrl, 'filename' => $filename];
     }
-    
+
     public function deleteImage($index)
     {
         if (isset($this->capturedImages[$index])) {
@@ -141,7 +132,7 @@ class MaterialForm extends Component
             unset($this->capturedImages[$index]);
         }
     }
-    
+
     public function saveAttachment()
     {
         $errorMessages = [];
@@ -166,14 +157,12 @@ class MaterialForm extends Component
                 }
             }
         }
-    
+
         Attachment::reSortSequences($this->object->id, class_basename($this->object));
         if (!empty($errorMessages)) {
             $errorMessage = "Failed to save attachments: " . implode(', ', $errorMessages);
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => $errorMessage,
-            ]);
+
+            $this->notify('error', $errorMessage);
         }
     }
 
@@ -184,7 +173,6 @@ class MaterialForm extends Component
 
 
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
         'imagesCaptured'  => 'imagesCaptured',
         'runExe'  => 'runExe'
     ];
@@ -195,6 +183,13 @@ class MaterialForm extends Component
             'materials.jwl_buying_price' => 'required|integer|min:0|max:9999999999',
             'materials.jwl_selling_price' =>'required|integer|min:0|max:9999999999',
             'matl_uoms.barcode' =>'required|integer|min:0|max:9999999999',
+            'materials.code' => [
+                'required',
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+            ],
         ];
         return $rules;
     }
@@ -209,162 +204,59 @@ class MaterialForm extends Component
         'materials.jwl_selling_price'      => 'Selling Price Material'
     ];
 
-    protected function populateDropdowns()
+    protected function onReset()
     {
-        $this->refreshUOMs();
-        $this->refreshCategories();
+        $this->reset('materials');
+        $this->reset('matl_uoms');
+        $this->reset('matl_boms');
+        $this->object = new Material();
+        $this->object_uoms = new MatlUom();
+        $this->object_boms = [];
+        $this->matl_boms_array = [];
+        $this->deletedItems = [];
+        $this->newItems = [];
+        $this->bom_row = 0;
+        $this->capturedImages = [];
     }
 
-    protected function resetMaterialForm()
+    public function onValidateAndSave()
     {
-        if ($this->actionValue == 'Create') {
-            $this->reset('materials');
-            $this->reset('matl_uoms');
-            $this->reset('matl_boms');
-            $this->object = new Material();
-            $this->object_uoms = new MatlUom();
-            $this->object_boms = [];
-            $this->matl_boms_array = [];
-            $this->deletedItems = [];
-            $this->newItems = [];
-            $this->bom_row = 0;
-            $this->capturedImages = [];
-            $this->populateDropdowns();
-        }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number ?? null;
+        $this->materials['descr'] = $this->getMaterialDescriptionsFromBOMs();
+
+        $this->object->fill($this->materials);
+        $this->object->save();
+
+        // Save Attachment
+        $this->saveAttachment();
+        $this->matl_uoms['matl_id'] = $this->object->id;
+        $this->matl_uoms['matl_code'] = $this->object->code;
+        $this->object_uoms->fill($this->matl_uoms);
+        $this->object_uoms->save();
+
+        // Handle BOMs
+        foreach ($this->matl_boms as $index => $bomData) {
+            if(!isset($this->object_boms[$index]))
+            {
+                $this->object_boms[$index] = new MatlBom();
+            }
+            $bomData['matl_id'] = $this->object->id;
+            $bomData['matl_code'] = $this->object->id;
+            $bomData['seq'] = $index + 1;
+            $this->object_boms[$index]->fill($bomData);
+            $this->object_boms[$index]->save();
         }
-    }
 
-    protected function populateObjectArray($object,$formArray)
-    {
-        $objectData =  populateModelFromForm($object, $formArray);
-        return $objectData;
-    }
-
-    public function validateForm()
-    {
-        try {
-            $this->validate();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->object->name ?? "material", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
+        if (!$this->object->isNew()) {
+            foreach ($this->deletedItems as $deletedItemId) {
+                MatlBom::find($deletedItemId)->delete();
+            }
         }
-    }
-
-    public function Save()
-    {
-        $this->validateForm();
-        DB::beginTransaction();
-        try {
-            // Populate Material Data
-            $this->materials['descr'] = $this->getMaterialDescriptionsFromBOMs();
-
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $this->object->fill($this->materials);
-                $this->object->save();
-            }
-
-            // Save Attachment
-            $this->saveAttachment();
-            // Populate and Save/Update Material UOMs
-            $materialUOMData = $this->populateObjectArray($this->object_uoms, $this->matl_uoms);
-            $materialUOMData['matl_id'] = $this->object->id;
-            $materialUOMData['matl_code'] = $this->object->code;
-
-            $this->object_uoms = $this->object->isNew()
-            ? MatlUom::create($materialUOMData)
-            : tap($this->object_uoms)->update($materialUOMData);
-
-         // Handle BOMs
-            foreach ($this->matl_boms as $index => $bomData) {
-                if (!isset($this->object_boms[$index])) {
-                    $this->object_boms[$index] = new MatlBom();
-                }
-
-                if ($this->object_boms[$index]->isNew()) {
-                    $this->object_boms[$index] = new MatlBom();
-                }
-
-                $bomData = $this->populateObjectArray($this->object_boms[$index], $bomData);
-                $bomData['matl_id'] = $this->object->id;
-                $bomData['matl_code'] = $this->object->id;
-                $bomData['seq'] = $index + 1;
-
-                if (isset($this->object_boms[$index]->id)) {
-                    $bom = MatlBom::find($this->object_boms[$index]->id);
-                    if ($bom) {
-                        $bom->update($bomData);
-                    }
-                } else {
-                    MatlBom::create($bomData);
-                }
-            }
-            
-            if (!$this->object->isNew()) {
-                foreach ($this->deletedItems as $deletedItemId) {
-                    MatlBom::find($deletedItemId)->delete();
-                }
-            }
-
-
-            // Handle Warehouses - only for new materials
-            if ($this->object->isNew()) {
-                $warehouseIds = ConfigConst::GetWarehouse()->pluck('id')->toArray();
-                $inventoryBalData = [];
-                foreach ($warehouseIds as $warehouseId) {
-                    $inventoryBalData[] = [
-                        'matl_id' => $this->object->id,
-                        'wh_id' => $warehouseId,
-                        'wh_code' => $warehouseId,
-                    ];
-                }
-                IvtBal::insert($inventoryBalData);
-
-                // Create inventory balance units
-                $inventoryBalUnitsData = [];
-                foreach ($warehouseIds as $warehouseId) {
-                    $inventoryBalUnitsData[] = [
-                        'ivt_id' => $this->object->id,
-                        'matl_id' => $this->object->id,
-                        'wh_id' => $warehouseId,
-                        'matl_uom_id' => $this->object_uoms->id,
-                        'uom' => $this->object_uoms->name,
-                    ];
-                }
-                IvtBalUnit::insert($inventoryBalUnitsData);
-            }
-
-            
-            // Dispatch success notification
-            $message = $this->object->isNew() ? 'generic.success.create' : 'generic.success.update';
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get($message, ['object' => "Material"])
-            ]);
-
-            // Reset and repopulate dropdowns
-
-            DB::commit();
-            $this->emit('materialSaved', $this->object->id);
-            $this->resetMaterialForm();
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.update', ['object' => "Material", 'message' => $e->getMessage()])
-            ]);
-        }
+        $this->emit('materialSaved', $this->object->id);
     }
 
     public function getMaterialDescriptionsFromBOMs()
     {
         $materialDescriptions = "";
-
-        // Check if there are any BOMs
         if ($this->matl_boms && count($this->matl_boms) > 0) {
             foreach ($this->matl_boms as $bomData) {
 
@@ -378,11 +270,9 @@ class MaterialForm extends Component
 
             return $materialDescriptions;
         }
-
-        // Return an empty string or a default value if there are no BOMs
         return $materialDescriptions;
     }
-    
+
     public function validateBoms()
     {
         // $rules = [
@@ -405,11 +295,7 @@ class MaterialForm extends Component
         try {
             // $this->validate($rules, $attributes);
         } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "Material Bom", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
+            $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
 

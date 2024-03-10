@@ -1,12 +1,15 @@
 <div class="card-footer d-flex justify-content-end">
     @if ($actionValue !== 'Create' && (!$object instanceof App\Models\Settings\ConfigUser || auth()->user()->id !== $object->id))
-        <div style="padding-right: 10px;">
-            @if ($status === 'ACTIVE')
-                <x-ui-button button-name="Disable" click-event="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="images/disable-icon.svg" />
-            @else
-                <x-ui-button button-name="Enable" click-event="" loading="true" :action="$actionValue" cssClass="btn-success btn-dialog-box" iconPath="images/enable-icon.png" />
-            @endif
-        </div>
+    @if(isset($permissions['delete']) && $permissions['delete'])
+    <div style="padding-right: 10px;">
+        @if ($status === 'ACTIVE')
+        <x-ui-button button-name="Disable" click-event="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="images/disable-icon.svg" />
+        @else
+        <x-ui-button button-name="Enable" click-event="" loading="true" :action="$actionValue" cssClass="btn-success btn-dialog-box" iconPath="images/enable-icon.png" />
+        @endif
+    </div>
+    @endif
+
     @endif
     <div>
         <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
@@ -17,24 +20,26 @@
         $(document).on('click', '.btn-dialog-box', function(e) {
             e.preventDefault();
             Swal.fire({
-                title: "Apakah Anda Yakin ingin melanjutkannya?",
-                text: "",
-                icon: "question",
-                buttonsStyling: false,
-                showConfirmButton: true,
-                showCancelButton: true,
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
-                closeOnConfirm: false,
-                customClass: {
-                    confirmButton: "btn btn-primary",
-                    cancelButton: 'btn btn-secondary'
+                title: "Apakah Anda Yakin ingin melanjutkannya?"
+                , text: ""
+                , icon: "question"
+                , buttonsStyling: false
+                , showConfirmButton: true
+                , showCancelButton: true
+                , confirmButtonText: "Yes"
+                , cancelButtonText: "No"
+                , closeOnConfirm: false
+                , customClass: {
+                    confirmButton: "btn btn-primary"
+                    , cancelButton: 'btn btn-secondary'
                 }
             }).then(confirm => {
                 if (confirm.isConfirmed) {
-                    Livewire.emitUp('changeStatus');
+                    Livewire.emit('changeStatus');
                 }
             });
         });
     });
+
 </script>
+

@@ -48,7 +48,6 @@ class BaseModel extends Model
         }
     }
 
-
     public function Attachment()
     {
         return $this->hasMany(Attachment::class, 'attached_objectid')

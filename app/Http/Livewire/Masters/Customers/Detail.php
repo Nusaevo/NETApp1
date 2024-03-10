@@ -2,38 +2,23 @@
 
 namespace App\Http\Livewire\Masters\Customers;
 
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Masters\Partner;
-use App\Models\PriceCategory;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
 
-class Detail extends Component
+class Detail extends BaseComponent
 {
-    public $object;
-    public $VersioNumber;
-    public $actionValue = 'Create';
-    public $objectIdValue;
     public $inputs = [];
-    public $status = '';
 
-    public function mount($action, $objectId = null)
+    protected function onLoad()
     {
-        $this->actionValue = Crypt::decryptString($action);
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
-            $this->object = Partner::withTrashed()->find($this->objectIdValue);
-            $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
-            $this->VersioNumber = $this->object->version_number;
-            $this->inputs = populateArrayFromModel($this->object);
-        } else {
-            $this->resetForm();
-        }
+        $this->object = Partner::withTrashed()->find($this->objectIdValue);
+        $this->inputs = populateArrayFromModel($this->object);
     }
-
 
     public function render()
     {
@@ -54,7 +39,7 @@ class Detail extends Component
             'inputs.postal_code' => 'string|min:1|max:10',
             'inputs.contact_person' => 'string|min:1|max:255',
             'inputs.code' => [
-                'required', 
+                'required',
                 'string',
                 'min:1',
                 'max:50',
@@ -76,79 +61,26 @@ class Detail extends Component
         'inputs.contact_person'      => 'Contact',
     ];
 
-    public function validateForm()
+    public function onReset()
     {
-        try {
-            $this->validate();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => $this->object->name, 'message' => $e->getMessage()])
-            ]);
-            throw $e;
-        }
+        $this->reset('inputs');
+        $this->inputs['grp'] = 'CUST';
+        $this->object = new Partner();
     }
 
-    public function resetForm()
+    protected function onPopulateDropdowns()
     {
-        if ($this->actionValue == 'Create') {
-            $this->reset('inputs');
-            $this->inputs['grp'] = 'CUST';
-            $this->object = new Partner();
-        }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number;
-        }
+
     }
 
-    public function Save()
+    public function onValidateAndSave()
     {
-        $this->validateForm();
-
-        try {
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $this->object->fill($this->inputs);
-                $this->object->save();
-            }
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.save', ['object' => $this->object->name])
-            ]);
-            $this->resetForm();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.save', ['object' => $this->object->name, 'message' => $e->getMessage()])
-            ]);
-        }
+        $this->object->fill($this->inputs);
+        $this->object->save();
     }
 
     public function changeStatus()
     {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-
-            if ($this->object->deleted_at) {
-                $this->object->deleted_at = null;
-                $messageKey = 'generic.success.enable';
-            } else {
-                $this->object->delete();
-                $messageKey = 'generic.success.disable';
-            }
-
-            $this->object->save();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => $this->object->name])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
-            ]);
-        }
-
-        $this->dispatchBrowserEvent('refresh');
+        $this->change();
     }
 }

@@ -1,6 +1,3 @@
-@php
-    $permissions = App\Models\Settings\ConfigRight::getPermissionsByMenu($url);
-@endphp
 @if(isset($permissions['create']) && $permissions['create'])
 <x-ui-button
     visible="true"
