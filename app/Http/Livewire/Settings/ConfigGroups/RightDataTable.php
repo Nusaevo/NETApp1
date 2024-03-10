@@ -2,18 +2,16 @@
 
 namespace App\Http\Livewire\Settings\ConfigGroups;
 
-use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use App\Http\Livewire\Components\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\Settings\ConfigMenu;
-use App\Models\Settings\ConfigRight;
-use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 
-class RightDataTable extends DataTableComponent
+class RightDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigMenu::class;
     public int $perPage = 50;
@@ -45,38 +43,7 @@ class RightDataTable extends DataTableComponent
         $this->render();
     }
 
-
-    public function configure(): void
-    {
-        $this->setPrimaryKey('id');
-        $this->setTableAttributes([
-            'class' => 'data-table',
-        ]);
-
-        $this->setTheadAttributes([
-            'class' => 'data-table-header',
-        ]);
-
-        $this->setTbodyAttributes([
-            'class' => 'data-table-body',
-        ]);
-        $this->setTdAttributes(function (Column $column, $row, $columnIndex, $rowIndex) {
-            if ($column->isField('deleted_at')) {
-                return [
-                    'class' => 'text-center',
-                ];
-            }
-            return [];
-        });
-    }
-
     protected $listeners = [
-        'refreshData' => 'render',
-        'viewData'  => 'View',
-        'editData'  => 'Edit',
-        'deleteData'  => 'Delete',
-        'disableData'  => 'Disable',
-        'selectData'  => 'SelectObject',
         'applicationChanged'  => 'applicationChanged',
     ];
 
@@ -196,15 +163,5 @@ class RightDataTable extends DataTableComponent
             //         ]);
             //     }),
         ];
-    }
-
-    public function View($id)
-    {
-        return redirect()->route('config_menus.detail', ['action' => encryptWithSessionKey('View'), 'objectId' => encryptWithSessionKey($id)]);
-    }
-
-    public function Edit($id)
-    {
-        return redirect()->route('config_menus.detail', ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($id)]);
     }
 }

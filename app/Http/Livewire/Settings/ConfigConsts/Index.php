@@ -3,7 +3,6 @@
 namespace App\Http\Livewire\Settings\ConfigConsts;
 
 use Livewire\Component;
-use App\Models\Settings\ConfigConst; // Import the ConfigGroup model
 use App\Traits\LivewireTrait;
 class Index extends Component
 {

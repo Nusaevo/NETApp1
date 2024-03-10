@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Transactions;
+use App\Models\Masters\Material;
+use App\Models\BaseModel;
 
 class OrderDtl extends BaseModel
 {
@@ -14,9 +16,8 @@ class OrderDtl extends BaseModel
         'trhdr_id',
         'tr_type',
         'tr_seq',
-        'item_unit_id',
-        'item_name',
-        'unit_name',
+        'matl_id',
+        'matl_code',
         'qty',
         'qty_reff',
         'discount',
@@ -48,6 +49,6 @@ class OrderDtl extends BaseModel
 
     public function OrderHdr()
     {
-        return $this->belongsTo('App\Models\OrderHdr', 'trhdr_id', 'id');
+        return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id');
     }
 }

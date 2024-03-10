@@ -28,10 +28,9 @@ trait BaseTrait
             $userId = Auth::check() ? Auth::user()->code : 'SYSTEM';
             $model->created_by = $userId;
             $model->created_at = now();
-
-            if (Schema::hasColumn($model->getTable(), 'status_code')) {
-                $model->status_code = Status::ACTIVE;
-            }
+            $model->updated_by = $userId;
+            $model->updated_at = now();
+            $model->setStatus(Status::ACTIVE);
         });
 
         static::updating(function ($model) {

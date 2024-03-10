@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Bases\Attachment;
 use App\Traits\BaseTrait;
+use Illuminate\Support\Facades\Schema;
+
 
 class BaseModel extends Model
 {
@@ -38,6 +40,14 @@ class BaseModel extends Model
         $isNew = empty($this->id);
         return  $isNew;
     }
+
+    public function setStatus($value)
+    {
+        if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'status_code')) {
+            $this->attributes['status_code'] = $value;
+        }
+    }
+
 
     public function Attachment()
     {

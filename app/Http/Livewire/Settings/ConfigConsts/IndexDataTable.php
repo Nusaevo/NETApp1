@@ -2,23 +2,20 @@
 
 namespace App\Http\Livewire\Settings\ConfigConsts;
 
-use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use App\Http\Livewire\Components\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\Settings\ConfigConst;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Illuminate\Support\Facades\Crypt;
-use Lang;
-use Exception;
 
-class IndexDataTable extends DataTableComponent
+class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigConst::class;
 
-    public $object;
 
     public function mount(): void
     {
+        $this->route = 'ConfigConsts.Detail';
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
     }
@@ -29,39 +26,6 @@ class IndexDataTable extends DataTableComponent
             ->withTrashed()
             ->select();
     }
-
-     public function configure(): void
-    {
-        $this->setPrimaryKey('id');
-        $this->setTableAttributes([
-            'class' => 'data-table',
-        ]);
-
-        $this->setTheadAttributes([
-            'class' => 'data-table-header',
-        ]);
-
-        $this->setTbodyAttributes([
-            'class' => 'data-table-body',
-        ]);
-        $this->setTdAttributes(function(Column $column, $row, $columnIndex, $rowIndex) {
-            if ($column->isField('deleted_at')) {
-              return [
-                'class' => 'text-center',
-              ];
-            }
-            return [];
-        });
-    }
-
-    protected $listeners = [
-        'refreshData' => 'render',
-        'viewData'  => 'View',
-        'editData'  => 'Edit',
-        'deleteData'  => 'Delete',
-        'disableData'  => 'Disable',
-        'selectData'  => 'SelectObject',
-    ];
 
     public function columns(): array
     {
@@ -109,7 +73,7 @@ class IndexDataTable extends DataTableComponent
                         'wire_click_show' => "\$emit('viewData', $row->id)",
                         'wire_click_edit' => "\$emit('editData', $row->id)",
                         'wire_click_disable' => "\$emit('selectData', $row->id)",
-                        'access' => "config_consts"
+                        'access' => "ConfigConsts"
                     ]);
                 }),
         ];
@@ -127,39 +91,5 @@ class IndexDataTable extends DataTableComponent
                     else if ($value === '1') $builder->onlyTrashed();
                 }),
         ];
-    }
-
-    public function View($id)
-    {
-        return redirect()->route('config_consts.detail', ['action' => encryptWithSessionKey('View'), 'objectId' => encryptWithSessionKey($id)]);
-    }
-
-    public function Edit($id)
-    {
-        return redirect()->route('config_consts.detail', ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($id)]);
-    }
-
-    public function SelectObject($id)
-    {
-        $this->object = ConfigConst::findOrFail($id);
-    }
-
-    public function Disable()
-    {
-        try {
-            $this->object->updateObject($this->object->version_number);
-            $this->object->delete();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => $this->object->str1])
-            ]);
-        } catch (Exception $e) {
-            // Handle the exception
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => $this->object->str1, 'message' => $e->getMessage()])
-            ]);
-        }
-        $this->emit('refreshData');
     }
 }

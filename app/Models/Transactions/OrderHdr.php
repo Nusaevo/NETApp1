@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Transactions;
+use App\Models\BaseModel;
+use App\Models\Masters\Material;
 class OrderHdr extends BaseModel
 {
     protected static function boot()
@@ -29,11 +31,16 @@ class OrderHdr extends BaseModel
 
     public function Partner()
     {
-        return $this->belongsTo('App\Models\Partner', 'partner_id', 'id');
+        return $this->belongsTo(Material::class, 'partner_id', 'id');
     }
 
     public function OrderDtl()
     {
-        return $this->hasMany('App\Models\OrderDtl', 'trhdr_id', 'id');
+        return $this->hasMany(OrderDtl::class, 'trhdr_id', 'id');
+    }
+
+    public static function getByCreatedByAndTrType($createdBy, $trType)
+    {
+        return self::where('created_by', $createdBy)->where('tr_type', $trType)->get();
     }
 }

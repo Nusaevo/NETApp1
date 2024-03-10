@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Settings\ConfigConsts;
 
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Settings\ConfigConst;
 use App\Models\Settings\ConfigAppl;
 use Illuminate\Validation\Rule;
@@ -12,30 +12,16 @@ use Exception;
 use DB;
 
 
-class Detail extends Component
+class Detail extends BaseComponent
 {
-    public $object;
-    public $VersioNumber;
-    public $actionValue = 'Create';
-    public $objectIdValue;
     public $inputs = [];
     public $applications;
-    public $languages;
     public $status = '';
 
-    public function mount($action, $objectId = null)
+    protected function onLoad()
     {
-        $this->actionValue = decryptWithSessionKey($action);
-        $this->populateDropdowns();
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = decryptWithSessionKey($objectId);
-            $this->object = ConfigConst::withTrashed()->find($this->objectIdValue);
-            $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
-            $this->VersioNumber = $this->object->version_number;
-            $this->inputs = populateArrayFromModel($this->object);
-        } else {
-            $this->resetForm();
-        }
+        $this->object = ConfigConst::withTrashed()->find($this->objectIdValue);
+        $this->inputs = populateArrayFromModel($this->object);
     }
 
     public function render()
@@ -55,13 +41,13 @@ class Detail extends Component
             'inputs.seq' =>  'required|integer|min:0|max:9999999999',
             'inputs.str1' => 'required|string|min:1|max:50',
             'inputs.str2' => 'string|min:1|max:50',
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
-            ],
+            // 'inputs.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+            // ],
         ];
         return $rules;
     }
@@ -90,84 +76,25 @@ class Detail extends Component
         $this->inputs['app_id'] = null;
     }
 
-    protected function populateDropdowns()
+    protected function onPopulateDropdowns()
     {
         $this->refreshApplication();
     }
 
-    public function resetForm()
+    protected function onReset()
     {
-        if ($this->actionValue == 'Create') {
-            $this->reset('inputs');
-            $this->populateDropdowns();
-            $this->object = new ConfigConst();
-        }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number;
-        }
+        $this->reset('inputs');
+        $this->object = new ConfigConst();
     }
 
-    public function Save()
+    public function onValidateAndSave()
     {
-        $this->validateForm();
-
-        try {
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $this->object->fill($this->inputs);
-                $this->object->save();
-            }
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
-            ]);
-            $this->resetForm();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.save', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
-            ]);
-        }
-    }
-
-    public function validateForm()
-    {
-        try {
-            $this->validate();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' =>"object", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
-        }
+        $this->object->fill($this->inputs);
+        $this->object->save();
     }
 
     public function changeStatus()
     {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-
-            if ($this->object->deleted_at) {
-                $this->object->deleted_at = null;
-                $messageKey = 'generic.success.enable';
-            } else {
-                $this->object->delete();
-                $messageKey = 'generic.success.disable';
-            }
-
-            $this->object->save();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => ""])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
-            ]);
-        }
-
-        $this->dispatchBrowserEvent('refresh');
+        $this->change();
     }
 }

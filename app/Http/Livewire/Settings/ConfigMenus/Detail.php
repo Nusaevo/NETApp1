@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Settings\ConfigMenus;
 
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Settings\ConfigMenu;
 use App\Models\Settings\ConfigAppl;
 use Illuminate\Validation\Rule;
@@ -12,30 +12,15 @@ use Exception;
 use DB;
 
 
-class Detail extends Component
+class Detail extends BaseComponent
 {
-    public $object;
-    public $VersioNumber;
-    public $actionValue = 'Create';
-    public $objectIdValue;
     public $inputs = [];
     public $applications;
-    public $languages;
-    public $status = '';
 
-    public function mount($action, $objectId = null)
+    protected function onLoad()
     {
-        $this->actionValue = decryptWithSessionKey($action);
-        $this->populateDropdowns();
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = decryptWithSessionKey($objectId);
-            $this->object = ConfigMenu::withTrashed()->find($this->objectIdValue);
-            $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
-            $this->VersioNumber = $this->object->version_number;
-            $this->inputs = populateArrayFromModel($this->object);
-        } else {
-            $this->resetForm();
-        }
+        $this->object = ConfigMenu::withTrashed()->find($this->objectIdValue);
+        $this->inputs = populateArrayFromModel($this->object);
     }
 
     public function render()
@@ -90,87 +75,27 @@ class Detail extends Component
         $this->inputs['app_id'] = null;
     }
 
-
-    protected function populateDropdowns()
+    protected function onPopulateDropdowns()
     {
         $this->refreshApplication();
     }
 
-    protected function validateForm()
+    protected function onReset()
     {
-        try {
-            $this->validate();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "object", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
-        }
+        $this->reset('inputs');
+        $this->object = new ConfigMenu();
     }
 
-    protected function resetForm()
+    public function onValidateAndSave()
     {
-        if ($this->actionValue == 'Create') {
-            $this->reset('inputs');
-            $this->populateDropdowns();
-            $this->object = new ConfigMenu();
-        }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number;
-        }
-    }
-
-    public function Save()
-    {
-        $this->validateForm();
-
-        try {
-            $application = ConfigAppl::find($this->inputs['app_id']);
-            $this->inputs['app_code'] = $application->code;
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $this->object->fill($this->inputs);
-                $this->object->save();
-            }
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.save', ['object' => "menu"])
-            ]);
-            $this->resetForm();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.save', ['object' => "menu", 'message' => $e->getMessage()])
-            ]);
-        }
+        $application = ConfigAppl::find($this->inputs['app_id']);
+        $this->inputs['app_code'] = $application->code;
+        $this->object->fill($this->inputs);
+        $this->object->save();
     }
 
     public function changeStatus()
     {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-
-            if ($this->object->deleted_at) {
-                $this->object->deleted_at = null;
-                $messageKey = 'generic.success.enable';
-            } else {
-                $this->object->delete();
-                $messageKey = 'generic.success.disable';
-            }
-
-            $this->object->save();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => $this->inputs['name']])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
-            ]);
-        }
-
-        $this->dispatchBrowserEvent('refresh');
+        $this->change();
     }
 }

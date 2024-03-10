@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Settings\ConfigUsers;
 
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Settings\ConfigUser;
 use App\Models\Settings\ConfigUserInfo;
 use App\Models\Settings\ConfigGroup;
@@ -14,8 +14,7 @@ use Lang;
 use Exception;
 use DB;
 
-
-class Detail extends Component
+class Detail extends BaseComponent
 {
     public $object;
     public $VersioNumber;
@@ -25,21 +24,14 @@ class Detail extends Component
     public $groups;
     public $status = '';
 
-    public function mount($action, $objectId = null)
+    protected function onLoad()
     {
-        $this->actionValue = decryptWithSessionKey($action);
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = decryptWithSessionKey($objectId);
-            $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
-            $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
-            $this->VersioNumber = $this->object->version_number;
-            $this->inputs = populateArrayFromModel($this->object);
-            $this->inputs['newpassword'] = "";
-            $this->inputs['confirmnewpassword'] = "";
-        } else {
-            $this->resetForm();
-        }
+        $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
+        $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['newpassword'] = "";
+        $this->inputs['confirmnewpassword'] = "";
     }
+
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
     ];
@@ -84,113 +76,44 @@ class Detail extends Component
         'inputs.newpassword' => 'Password'
     ];
 
-
-    public function validateForm()
+    protected function onReset()
     {
-        try {
-            $this->validate();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "object", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
-        }
+        $this->reset('inputs');
+        $this->object = new ConfigUser();
     }
 
-    public function resetForm()
+    protected function onPopulateDropdowns()
     {
-        if ($this->actionValue == 'Create') {
-            $this->reset('inputs');
-            $this->object = new ConfigUser();
-        }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number;
-            $this->inputs['newpassword'] = "";
-            $this->inputs['confirmnewpassword'] = "";
-        }
     }
 
-    public function Save()
+    public function onValidateAndSave()
     {
-        $this->validateForm();
-        try {
-            if (!empty($this->inputs['newpassword'])) {
-                $this->inputs['password'] = bcrypt($this->inputs['newpassword']);
-            }
-
-            if (!$this->validatePassword()) {
-                return;
-            }
-
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $this->object->fill($this->inputs);
-                $this->object->save();
-            }
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
-            ]);
-            $this->resetForm();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.save', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
-            ]);
+        if (!empty($this->inputs['newpassword'])) {
+            $this->inputs['password'] = bcrypt($this->inputs['newpassword']);
         }
+
+        $this->validatePassword();
+
+        $this->object->fill($this->inputs);
+        $this->object->save();
     }
 
     public function changeStatus()
     {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-
-            if ($this->object->deleted_at) {
-                $this->object->deleted_at = null;
-                $messageKey = 'generic.success.enable';
-            } else {
-                $this->object->delete();
-                $messageKey = 'generic.success.disable';
-            }
-
-            $this->object->save();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => $this->inputs['name']])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
-            ]);
-        }
-
-        $this->dispatchBrowserEvent('refresh');
+       $this->change();
     }
 
     protected function validatePassword()
     {
         if ($this->object->isNew()) {
             if (empty($this->inputs['newpassword'])) {
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'error',
-                    'title' => Lang::get('generic.error.title'),
-                    'message' => Lang::get('generic.error.password_must_be_filled')
-                ]);
-                return false;
+                throw new Exception(Lang::get('generic.error.password_must_be_filled'));
             }
         }
         if (!empty($this->inputs['newpassword'])) {
             if ($this->inputs['newpassword'] !== $this->inputs['confirmnewpassword']) {
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'error',
-                    'title' => Lang::get('generic.error.title'),
-                    'message' => Lang::get('generic.error.password_mismatch')
-                ]);
-                return false;
+                throw new Exception(Lang::get('generic.error.password_mismatch'));
             }
         }
-        return true;
     }
 }

@@ -7,7 +7,6 @@ use App\Traits\LivewireTrait;
 class Index extends Component
 {
     use LivewireTrait;
-    public $object;
 
     public function mount()
     {

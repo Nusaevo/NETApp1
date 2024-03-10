@@ -136,7 +136,7 @@
     </div>
 </div>
 
-
+{{--
 @php
     $permissions = App\Models\Settings\ConfigRight::getPermissions();
     $userId = Auth::check() ? Auth::user()->id : null;
@@ -147,7 +147,7 @@
             abort(403, 'You do not have permission to access this page.');
         }
     }
-@endphp
+@endphp --}}
 
 </body>
 </html>

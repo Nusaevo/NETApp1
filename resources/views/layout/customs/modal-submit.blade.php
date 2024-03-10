@@ -18,7 +18,7 @@
                 }
             }).then(confirm => {
                 if (confirm.isConfirmed) {
-                    Livewire.emit('{{ $destroy_listener }}');
+                    Livewire.emit('destroy_listener');
                 }
             });
         });

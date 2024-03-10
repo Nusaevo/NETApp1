@@ -10,7 +10,7 @@ if ($access !== null) {
 
 <div class="text-center">
     @if($enable_this_row)
-    @if($allow_details)
+    {{-- @if($allow_details)
     @if(isset($permissions['read']) && $permissions['read'])
     <a href="#" wire:click="{{ $wire_click_show }}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" data-bs-toggle="tooltip" data-bs-delay-show="500" data-bs-custom-class="tooltip-dark" data-bs-placement="top" title="Detil">
         <span class="svg-icon svg-icon-3" style="display: flex; align-items: center; justify-content: center;">
@@ -22,7 +22,7 @@ if ($access !== null) {
         </span>
     </a>
     @endif
-    @endif
+    @endif --}}
 
     @if ($allow_edit)
     @if(isset($permissions['update']) && $permissions['update'])
@@ -66,6 +66,29 @@ if ($access !== null) {
     @endif
     @endif
 </div>
-
-@include('layout.customs.modal', ['modal_listener' => 'disableData'])
-
+<script>
+    document.addEventListener('livewire:load', function() {
+        $(document).on('click', '.btn-dialog-box', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: "Apakah Anda Yakin ingin melanjutkannya?",
+                text: "",
+                icon: "question",
+                buttonsStyling: false,
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: "Yes",
+                cancelButtonText: "No",
+                closeOnConfirm: false,
+                customClass: {
+                    confirmButton: "btn btn-primary",
+                    cancelButton: 'btn btn-secondary'
+                }
+            }).then(confirm => {
+                if (confirm.isConfirmed) {
+                    Livewire.emit('disableData');
+                }
+            });
+        });
+    });
+</script>

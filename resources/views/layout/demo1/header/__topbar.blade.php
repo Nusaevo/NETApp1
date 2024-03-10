@@ -69,13 +69,13 @@ $btnIconClass = "svg-icon-1";
     <!--begin::Menu wrapper-->
     <div class="cursor-pointer position-relative symbol {{ $userAvatarClass }}" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="{{ (theme()->isRtl() ? "bottom-start" : "bottom-end") }}" style="width: 40px; height: 40px; line-height: 40px;">
         <!-- Cart icon with adjusted font size and position -->
-        <a href="/your-cart-url"> <!-- Replace with your cart URL -->
+        <a href="{{ route('CartOrders.Detail', ['action' => Crypt::encryptString('Edit')]) }}" class="menu-link px-5">
             <i class="fas fa-shopping-cart" style="font-size: 24px; padding-top: 5px;"></i>
         </a>
 
         <!-- Number badge -->
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            5 <!-- Replace with the actual number of items in the cart -->
+            0
         </span>
     </div>
     <!--end::Menu wrapper-->

@@ -8,8 +8,8 @@
                 <div class="card-body">
 
                     @include('layout.customs.buttons.create', [
-                        'clickEvent' => route('config_consts.detail', ['action' => encryptWithSessionKey('Create')]),
-                        'url' => 'config_consts'
+                        'clickEvent' => route('ConfigConsts.Detail', ['action' => encryptWithSessionKey('Create')]),
+                        'url' => 'ConfigConsts'
                     ])
 
                     <div class="table-responsive">

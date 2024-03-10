@@ -34,7 +34,72 @@ if (!function_exists('generateMenu')) {
                     }
 
                     $uniqueMenuHeaders = [];
+                    // $groupedMenus = [];
 
+                    // foreach ($configMenus as $configMenu) {
+                    //     $appName = $configMenu->ConfigAppl->name;
+                    //     $menuHeader = $configMenu->menu_header;
+
+                    //     if (!isset($groupedMenus[$appName])) {
+                    //         $groupedMenus[$appName] = [];
+                    //     }
+
+                    //     if (!isset($groupedMenus[$appName][$menuHeader])) {
+                    //         $groupedMenus[$appName][$menuHeader] = [];
+                    //     }
+
+                    //     $groupedMenus[$appName][$menuHeader][] = $configMenu;
+                    // }
+
+                    // $mainMenu = [];
+
+                    // foreach ($groupedMenus as $appName => $menuHeaders) {
+                    //     $appMenuItem = [
+                    //         'title' => $appName,
+                    //         'icon' => [
+                    //             'svg' => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
+                    //             'font' => '<i class="bi bi-person fs-2"></i>',
+                    //         ],
+                    //         'classes' => ['item' => 'menu-accordion show'],
+                    //         'attributes' => [
+                    //             'data-kt-menu-trigger' => 'click',
+                    //         ],
+                    //         'sub' => [
+                    //             'class' => 'menu-sub-accordion menu-active-bg',
+                    //             'items' => [],
+                    //         ],
+                    //     ];
+
+                    //     foreach ($menuHeaders as $menuHeader => $configMenus) {
+                    //         $menuItem = [
+                    //             'title' => $menuHeader,
+                    //             'icon' => [
+                    //                 'svg' => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
+                    //                 'font' => '<i class="bi bi-person fs-2"></i>',
+                    //             ],
+                    //             'classes' => ['item' => 'menu-accordion'],
+                    //             'attributes' => [
+                    //                 'data-kt-menu-trigger' => 'click',
+                    //             ],
+                    //             'sub' => [
+                    //                 'class' => 'menu-sub-accordion menu-active-bg',
+                    //                 'items' => [],
+                    //             ],
+                    //         ];
+
+                    //         foreach ($configMenus as $subMenu) {
+                    //             $menuItem['sub']['items'][] = [
+                    //                 'title' => $subMenu->menu_caption,
+                    //                 'path' => $subMenu->link,
+                    //                 'bullet' => '<span class="bullet bullet-dot"></span>',
+                    //             ];
+                    //         }
+
+                    //         $appMenuItem['sub']['items'][] = $menuItem;
+                    //     }
+
+                    //     $mainMenu[] = $appMenuItem;
+                    // }
                     foreach ($configMenus as $configMenu) {
                         $menuHeader = $configMenu->menu_header;
 

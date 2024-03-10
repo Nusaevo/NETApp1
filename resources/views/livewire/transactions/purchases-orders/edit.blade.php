@@ -39,7 +39,7 @@
                                 </x-slot>
 
                                 <x-slot name="body">
-                                    @livewire('panels.material-form', ['materialActionValue' => $actionValue])
+                                    @livewire('masters.materials.material-form', ['materialActionValue' => $actionValue])
                                 </x-slot>
                             </x-ui-dialog-box>
                             {{-- <x-ui-button click-event="openModal" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" /> --}}

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Livewire\Settings\ConfigGroups;
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Settings\ConfigGroup;
 use App\Models\Settings\ConfigAppl;
 use App\Models\Settings\ConfigUser;
@@ -14,34 +14,21 @@ use Exception;
 use DB;
 
 
-class Detail extends Component
+class Detail extends BaseComponent
 {
-    public $object;
-    public $VersioNumber;
-    public $actionValue = 'Create';
-    public $objectIdValue;
     public $inputs = [];
-    public $status = '';
     public $applications;
     public $users;
     public $selectedMenus = [];
     public $selectedUserIds = [];
-    public function mount($action, $objectId = null)
+
+    protected function onLoad()
     {
-        $this->actionValue = decryptWithSessionKey($action);
-        $this->populateDropdowns();
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $objectId) {
-            $this->objectIdValue = decryptWithSessionKey($objectId);
-            $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
-            $this->status = $this->object->deleted_at ? 'Non-Active' : 'Active';
-            $this->VersioNumber = $this->object->version_number;
-            $this->inputs = populateArrayFromModel($this->object);
-            $this->applicationChanged();
-            $this->populateSelectedRights();
-            $this->populateSelectedUsers();
-        } else {
-            $this->resetForm();
-        }
+        $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
+        $this->inputs = populateArrayFromModel($this->object);
+        $this->applicationChanged();
+        $this->populateSelectedRights();
+        $this->populateSelectedUsers();
     }
 
     public function refreshApplication()
@@ -76,10 +63,9 @@ class Detail extends Component
     //     $this->inputs['user_id'] = null;
     // }
 
-    protected function populateDropdowns()
+    protected function onPopulateDropdowns()
     {
         $this->refreshApplication();
-        // $this->refreshUser();
     }
 
     public function render()
@@ -157,29 +143,11 @@ class Detail extends Component
         'inputs.name'      => 'Group Name'
     ];
 
-    protected function validateForm()
+    protected function onReset()
     {
-        try {
-            $this->validate();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "object", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
-        }
-    }
-
-    protected function resetForm()
-    {
-        if ($this->actionValue == 'Create') {
-            $this->reset('inputs');
-            $this->populateDropdowns();
-            $this->selectedMenus = [];
-            $this->object = new ConfigGroup();
-        }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number ?? null;
-        }
+        $this->reset('inputs');
+        $this->selectedMenus = [];
+        $this->object = new ConfigGroup();
     }
 
     public function validateApplicationUsers()
@@ -188,102 +156,52 @@ class Detail extends Component
         $userIds = array_keys(array_filter($this->selectedUserIds, function ($value) {
             return $value['selected'] ?? false;
         }));
-    
-        // If the object is new, skip the database check
+
         if ($this->object->isNew()) {
-            // Get all existing config groups for the given application ID
             $existingConfigGroups = ConfigGroup::where('app_id', $appId)
                 ->whereHas('ConfigUser', function ($query) use ($userIds) {
                     $query->whereIn('user_id', $userIds);
                 })
                 ->get();
         } else {
-            // Check if any of the user IDs are already associated with the given application ID
             $existingConfigGroups = ConfigGroup::where('app_id', $appId)
                 ->whereHas('ConfigUser', function ($query) use ($userIds) {
                     $query->whereIn('user_id', $userIds);
                 })
-                ->where('id', '!=', $this->object->id) // Exclude the current object
+                ->where('id', '!=', $this->object->id)
                 ->get();
         }
         if ($existingConfigGroups->isNotEmpty()) {
             $existingUserIds = $existingConfigGroups->flatMap(function ($configGroup) {
-                if ($configGroup->ConfigUser) { // Check if users relationship is not null
+                if ($configGroup->ConfigUser) {
                     return $configGroup->ConfigUser->pluck('id');
-                } 
+                }
             })->toArray();
-        
+
             if (!empty($existingUserIds)) {
                 $existingUserCodes = ConfigUser::whereIn('id', $existingUserIds)->pluck('code')->implode(', ');
-                throw new Exception("Pengguna dengan loginID: $existingUserCodes sudah terdaftar.");
+                throw new Exception("Pengguna dengan loginID: $existingUserCodes sudah terdaftar pada group lain di aplikasi ini.");
             }
         }
-        
+
     }
 
-    public function Save()
+    public function onValidateAndSave()
     {
-        $this->validateForm();
-
-        DB::beginTransaction();
-        try {
-            $this->validateApplicationUsers();
-            $application = ConfigAppl::find($this->inputs['app_id']);
-            $this->inputs['app_code'] = $application->code;
-            if ($this->object) {
-                $this->object->updateObject($this->VersioNumber);
-                $this->object->fill($this->inputs);
-                $this->object->save();
-                $userIds = array_keys(array_filter($this->selectedUserIds, function($value) {
-                    return $value['selected'] ?? false;
-                }));
-    
-                $this->object->ConfigUser()->sync($userIds);
-                ConfigRight::saveRights($this->object->id, $this->selectedMenus, $this->object->code);
-            }
-
-            DB::commit();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.save', ['object' => $this->inputs['name']])
-            ]);
-            $this->resetForm();
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.save', ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
-            ]);
-        }
+        $this->validateApplicationUsers();
+        $application = ConfigAppl::find($this->inputs['app_id']);
+        $this->inputs['app_code'] = $application->code;
+        $this->object->fill($this->inputs);
+        $this->object->save();
+        $userIds = array_keys(array_filter($this->selectedUserIds, function ($value) {
+            return $value['selected'] ?? false;
+        }));
+        $this->object->ConfigUser()->sync($userIds);
+        ConfigRight::saveRights($this->object->id, $this->selectedMenus, $this->object->code);
     }
-
 
     public function changeStatus()
     {
-        try {
-            $this->object->updateObject($this->VersioNumber);
-
-            if ($this->object->deleted_at) {
-                $this->object->deleted_at = null;
-                $messageKey = 'generic.success.enable';
-            } else {
-                $this->object->delete();
-                $messageKey = 'generic.success.disable';
-            }
-
-            $this->object->save();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => $this->inputs['name']])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['object' => $this->inputs['name'], 'message' => $e->getMessage()])
-            ]);
-        }
-
-        $this->dispatchBrowserEvent('refresh');
+        $this->change();
     }
 }
