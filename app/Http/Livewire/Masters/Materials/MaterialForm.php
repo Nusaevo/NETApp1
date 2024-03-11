@@ -68,9 +68,9 @@ class MaterialForm extends BaseComponent
     public function refreshUOMs()
     {
         $data = ConfigConst::where('app_code', $this->appCode)
-        ->where('const_group', 'MATL_UOM')
-        ->orderBy('seq')
-        ->get();
+            ->where('const_group', 'MATL_UOM')
+            ->orderBy('seq')
+            ->get();
 
         $this->materialUOMs = $data->map(function ($data) {
             return [
@@ -85,9 +85,9 @@ class MaterialForm extends BaseComponent
     public function refreshCategories()
     {
         $data = ConfigConst::where('app_code', $this->appCode)
-        ->where('const_group', 'MATL_JWL_CATEGORY')
-        ->orderBy('seq')
-        ->get();
+            ->where('const_group', 'MATL_JWL_CATEGORY')
+            ->orderBy('seq')
+            ->get();
         $this->materialCategories = $data->map(function ($data) {
             return [
                 'label' => $data->str1,
@@ -100,9 +100,9 @@ class MaterialForm extends BaseComponent
     public function refreshBaseMaterials($key)
     {
         $data = ConfigConst::where('app_code', $this->appCode)
-        ->where('const_group', 'MATL_JWL_BASE_MATL')
-        ->orderBy('seq')
-        ->get();
+            ->where('const_group', 'MATL_JWL_BASE_MATL')
+            ->orderBy('seq')
+            ->get();
 
         $this->baseMaterials = $data->map(function ($data) {
             return [
@@ -181,8 +181,14 @@ class MaterialForm extends BaseComponent
     {
         $rules = [
             'materials.jwl_buying_price' => 'required|integer|min:0|max:9999999999',
-            'materials.jwl_selling_price' =>'required|integer|min:0|max:9999999999',
-            'matl_uoms.barcode' =>'required|integer|min:0|max:9999999999',
+            'materials.jwl_selling_price' => 'required|integer|min:0|max:9999999999',
+            'materials.jwl_category' => 'required|integer|min:0|max:9999999999',
+            'matl_uoms.name' => 'required|string|min:0|max:9999999999',
+            'matl_uoms.barcode' => 'required|integer|min:0|max:9999999999',
+            'matl_boms.*.base_matl_id' => 'required',
+            'matl_boms.*.jwl_sides_cnt' => 'required|integer|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_carat' => 'required|integer|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_price' => 'required|integer|min:0|max:9999999999',
             'materials.code' => [
                 'required',
                 'string',
@@ -197,11 +203,17 @@ class MaterialForm extends BaseComponent
     protected $validationAttributes = [
         'materials'                => 'Input Material',
         'materials.*'              => 'Input Material',
-        // 'materials.name'      => 'Nama Material',
+        'materials.code'      => 'Material Code',
+        'materials.jwl_category'      => 'Material Category',
+        'matl_uoms.name'      => 'Material UOM',
         'materials.descr'      => 'Description Material',
         'matl_uoms.barcode'      => 'Barcode Material',
         'materials.jwl_buying_price'      => 'Buying Price Material',
-        'materials.jwl_selling_price'      => 'Selling Price Material'
+        'materials.jwl_selling_price'      => 'Selling Price Material',
+        'matl_boms.*.base_matl_id' => 'Material',
+        'matl_boms.*.jwl_sides_cnt' => 'Quantity',
+        'matl_boms.*.jwl_sides_carat' => 'Carat',
+        'matl_boms.*.jwl_sides_price' => 'Price',
     ];
 
     protected function onReset()
@@ -221,6 +233,7 @@ class MaterialForm extends BaseComponent
 
     public function onValidateAndSave()
     {
+        $this->validateBoms();
         $this->materials['descr'] = $this->getMaterialDescriptionsFromBOMs();
 
         $this->object->fill($this->materials);
@@ -235,8 +248,7 @@ class MaterialForm extends BaseComponent
 
         // Handle BOMs
         foreach ($this->matl_boms as $index => $bomData) {
-            if(!isset($this->object_boms[$index]))
-            {
+            if (!isset($this->object_boms[$index])) {
                 $this->object_boms[$index] = new MatlBom();
             }
             $bomData['matl_id'] = $this->object->id;
@@ -275,27 +287,9 @@ class MaterialForm extends BaseComponent
 
     public function validateBoms()
     {
-        // $rules = [
-        //     'inputs.tr_date' => 'required',
-        //     'input_details.*.matl_id' => 'required',
-        //     'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
-        //     'input_details.*.price' => 'required|integer|min:0|max:9999999999',
-        // ];
-        // $attributes = [
-        //     'inputs'                => 'Input',
-        //     'inputs.*'              => 'Input',
-        //     'inputs.tr_date'      => 'Tanggal Transaksi',
-        //     'inputs.partner_id'      => 'Supplier',
-        //     'input_details.*'              => 'Inputan Barang',
-        //     'input_details.*.matl_id' => 'Item',
-        //     'input_details.*.qty' => 'Item Qty',
-        //     'input_details.*.price' => 'Item Price',
-        // ];
-
         try {
-            // $this->validate($rules, $attributes);
         } catch (Exception $e) {
-            $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
+            throw new Exception(Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
 
@@ -313,7 +307,6 @@ class MaterialForm extends BaseComponent
 
     public function generateSpecs($value)
     {
-
     }
 
     public function deleteBoms($index)
@@ -323,7 +316,6 @@ class MaterialForm extends BaseComponent
         }
         unset($this->matl_boms_array[$index]);
         $this->matl_boms_array = array_values($this->matl_boms_array);
-
     }
 
     public function runExe()
@@ -341,5 +333,4 @@ class MaterialForm extends BaseComponent
         // exec($command, $output, $returnValue);
         $this->matl_uoms['barcode'] = "12345";
     }
-
 }

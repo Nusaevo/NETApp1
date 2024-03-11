@@ -25,14 +25,13 @@
                                 @endforelse
                             </div>
 
-                            <!-- Button Container -->
                             <div class="button-container">
                                 <x-ui-button click-event="" id="cameraButton" cssClass="btn btn-secondary" iconPath="images/create-icon.png" button-name="Add from Camera" :action="$actionValue" />
                                 <x-ui-button click-event="addFromGallery" cssClass="btn btn-secondary" iconPath="images/create-icon.png" button-name="Add from Gallery" :action="$actionValue" />
                             </div>
                         </div>
                     </div>
-                    <div >
+                    <div style="padding-bottom:250px;">
                         <x-ui-text-field label="Material Code" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" />
                         <x-ui-text-field label="Description" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="Enter Description" span="Half" />
                         <x-ui-dropdown-select label="Category" click-event="" model="materials.jwl_category" :options="$materialCategories" :selectedValue="$materials['jwl_category']" required="true" :action="$actionValue" span="Half" />
@@ -41,9 +40,8 @@
                         <x-ui-text-field label="Buying Price" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Half" />
                     </div>
 
-                    <div style="margin-top: 300px;">
-                        <h2 class="mb-2 text-center">Side Materials</h2>
-
+                    <div >
+                        <h2 class="text-center">Side Materials</h2>
                         <x-ui-button click-event="addBoms" cssClass="btn btn-secondary" iconPath="images/create-icon.png" button-name="Add" :action="$actionValue" />
 
                         <div class="list-group" style="max-height: 500px; overflow-y: auto;" id="scroll-container">
@@ -53,9 +51,9 @@
                                     <div>
                                         <h5 class="mb-1">No. {{$key+1}}</h5>
                                         <x-ui-dropdown-select label="Material" click-event="" model="matl_boms.{{ $key }}.base_matl_id" onChanged="generateSpecs(1)" :options="$baseMaterials" :selectedValue="$matl_boms[$key]['base_matl_id']" required="true" :action="$actionValue" span="Half" />
-                                        <x-ui-text-field label="Quantity" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="false" placeHolder="Enter Quantity" span="Half" />
-                                        <x-ui-text-field label="Carat" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Carat" span="Half" />
-                                        <x-ui-text-field label="Price" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Price" span="Half" />
+                                        <x-ui-text-field label="Quantity" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="true" placeHolder="Enter Quantity" span="Half" />
+                                        <x-ui-text-field label="Carat" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="true" placeHolder="Enter Sides Carat" span="Half" />
+                                        <x-ui-text-field label="Price" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Sides Price" span="Half" />
                                     </div>
                                 </div>
                                 <!-- Updated delete button with rounded "X" -->

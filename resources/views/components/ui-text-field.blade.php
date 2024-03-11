@@ -19,7 +19,7 @@
         @endif
 
         @error($model)
-            <div class="invalid-feedback">{{ $message }}</div>
+            <div class="error-message">{{ $message }}</div>
         @enderror
     </div>
 </div>

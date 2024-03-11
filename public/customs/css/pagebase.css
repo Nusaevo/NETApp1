@@ -20,15 +20,6 @@
     /* Add any additional styling for the spinner here */
 }
 
-
-/*Error Message css*/
-.error-message {
-    color: #dc3545;
-    font-size: 0.75rem;
-    margin-top: 0.1rem;
-    display: block;
-}
-
 .disabled-gray {
     color: #808080;
     background-color: #f0f0f0;
@@ -87,14 +78,17 @@
 
 /* UITextField Layout */
 .responsive-field {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    margin-bottom: 1rem;
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    min-height: 50px;
 }
-
 .responsive-label {
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    margin-right: 0.5rem;
+    flex: 0 0 100px;
+    text-align: right;
 }
 
 .responsive-input,
@@ -104,6 +98,15 @@
     border: 1px solid #ced4da;
     border-radius: 0.25rem;
 }
+.error-message {
+    position: absolute;
+    left: 100px; /* Align with the text field start */
+    width: calc(100% - 10px); /* Take full width minus some padding */
+    z-index: 3; /* Ensure it's above the input fields */
+    font-size: 0.75rem; /* Small font size for error messages */
+    color: #dc3545; /* Red color for visibility */
+}
+
 
 .form-control,
 .form-select {
