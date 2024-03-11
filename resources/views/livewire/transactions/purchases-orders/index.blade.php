@@ -6,16 +6,9 @@
         <div id="kt_content_container" class="container-xxl">
             <div class="card">
                 <div class="card-body">
-                    <x-ui-button
-                    visible="true"
-                    enabled="true"
-                    click-event="{{ route('purchases_orders.detail', ['action' => Crypt::encryptString('Create')])  }}"
-                    cssClass="btn btn-success mb-5"
-                    type="Route"
-                    loading="true"
-                    iconPath="images/create-icon.png"
-                    button-name="Create" />
-
+                    @include('layout.customs.buttons.create', [
+                        'clickEvent' => route('PurchasesOrders.Detail', ['action' => encryptWithSessionKey('Create')])
+                    ])
                     <div class="table-responsive">
                         @livewire('transactions.purchases-orders.index-data-table')
                     </div>
@@ -23,5 +16,4 @@
             </div>
         </div>
     </div>
-    @include('layout.customs.modal', ['modal_listener' => 'disableData'])
 </div>

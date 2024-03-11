@@ -12,8 +12,6 @@
                 </li>
             @endif
 
-            {{-- Pagination Element --}}
-            {{-- Numbered Page Links --}}
             @foreach ($paginator->getUrlRange(1, $paginator->lastPage()) as $page => $url)
                 @if ($page == $paginator->currentPage())
                     <li class="page-item active" aria-current="page">
@@ -24,7 +22,6 @@
                 @endif
             @endforeach
 
-            {{-- Next Page Link --}}
             @if ($paginator->hasMorePages())
                 <li class="page-item">
                     <a class="page-link" href="{{ $paginator->nextPageUrl() }}" rel="next">&raquo;</a>

@@ -1,12 +1,13 @@
 <x-ui-page-card title="{{ $actionValue }} Master Produk" status="{{ $status }}">
+
+    <x-ui-tab-view id="materialTabView" tabs="material"> </x-ui-tab-view>
+
     <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
-        <x-ui-tab-view id="materialTab" tabs="material"> </x-ui-tab-view>
-        <x-ui-tab-view-content id="myTabContent" class="tab-content">
-            <div class="tab-pane fade show active" id="material" role="tabpanel" aria-labelledby="material-tab" wire:ignore.self>
-                <x-ui-expandable-card id="UserCard" title="Material General Info" :isOpen="true">
+        {{-- <x-ui-tab-view-content id="materialTabContent" class="tab-content">
+            <div class="tab-pane fade show active" id="material" role="tabpanel" aria-labelledby="general-tab"> --}}
+                <x-ui-expandable-card id="MaterialCard" title="Material General Info" :isOpen="true">
                     <div class="material-info-container">
                         <div class="photo-and-button-container">
-                            <!-- Photo Container -->
                             <!-- Photo Container -->
                             <div class="multiple-photo-container">
                                 @forelse($capturedImages as $key => $image)
@@ -33,14 +34,14 @@
                     </div>
                     <div style="padding-bottom:250px;">
                         <x-ui-text-field label="Material Code" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" />
-                        <x-ui-text-field label="Description" model="materials.descr" type="text" :action="$actionValue" required="false" enabled="false" placeHolder="Deskripsi dibuat otomatis dari side materials" span="Half" />
+                        <x-ui-text-field label="Description" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="Deskripsi dibuat otomatis dari side materials" span="Half" />
                         <x-ui-dropdown-select label="Category" click-event="" model="materials.jwl_category" :options="$materialCategories" :selectedValue="$materials['jwl_category']" required="true" :action="$actionValue" span="Half" />
                         <x-ui-dropdown-select label="UOM" click-event="" model="matl_uoms.name" :options="$materialUOMs" :selectedValue="$matl_uoms['name']" required="true" :action="$actionValue" span="Half" />
                         <x-ui-text-field label="Selling Price" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Selling Price" span="Half" />
                         <x-ui-text-field label="Buying Price" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Half" />
                     </div>
 
-                    <div >
+                    <div>
                         <h2 class="text-center">Side Materials</h2>
                         <x-ui-button click-event="addBoms" cssClass="btn btn-secondary" iconPath="images/create-icon.png" button-name="Add" :action="$actionValue" />
 
@@ -67,8 +68,8 @@
                         </div>
                     </div>
                 </x-ui-expandable-card>
-            </div>
-        </x-ui-tab-view-content>
+            {{-- </div>
+        </x-ui-tab-view-content> --}}
 
         <div class="d-flex justify-content-end">
             <x-ui-text-field label="Barcode" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
@@ -76,8 +77,8 @@
             <x-ui-button click-event="printLabel" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
             <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
         </div>
-
     </form>
+
 </x-ui-page-card>
 <div id="cameraStream" style="display: none;"></div>
 

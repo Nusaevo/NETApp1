@@ -4,9 +4,7 @@
     </div>
 
     <div>
-        <div>
-            <x-ui-button click-event="{{ route('purchases_orders.index') }}" type="Back" button-name="Back" />
-        </div>
+        <x-ui-button click-event="" type="Back" button-name="Back" />
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Puchase Order" status="{{ $status }}">
@@ -18,28 +16,26 @@
 
                 <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
 
-
-
                     <x-ui-expandable-card id="UserCard" title="Puchase Order Info" :isOpen="true">
-                        <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half"/>
+                        <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
 
                         <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" span="Half" />
 
                         <div class="card-body p-2 mt-10">
                             <h2 class="mb-2 text-center">Barang</h2>
                             @if($actionValue === "Create")
-                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
-                                    Tambah
-                                </button>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+                                Tambah
+                            </button>
                             @endif
 
-                            <x-ui-dialog-box id="MaterialDialogBox" :visible="$materialDialogVisible">
+                            <x-ui-dialog-box id="MaterialDialogBox" :visible="$materialDialogVisible" :width="'2000px'" :height="'2000px'">
                                 <x-slot name="title">
                                     <h2>My Dialog Title</h2>
                                 </x-slot>
 
                                 <x-slot name="body">
-                                    @livewire('masters.materials.material-form', ['materialActionValue' => $actionValue])
+                                    @livewire('masters.materials.material-form', ['action' => $action, 'objectId' => $objectId])
                                 </x-slot>
                             </x-ui-dialog-box>
                             {{-- <x-ui-button click-event="openModal" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" /> --}}
@@ -47,66 +43,67 @@
                             <div class="card-body p-2 mt-10">
                                 <div class="list-group mt-5" style="max-height: 500px; overflow-y: auto;" id="scroll-container">
                                     @foreach($input_details as $key => $detail)
-                                        <div class="list-group-item">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div class="col-md-1 d-flex align-items-center justify-content-center">
-                                                    <span>{{$key+1}}</span>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    @if(isset($detail['image_path']) && !empty($detail['image_path']))
-                                                        <img src="{{ Storage::url($detail['image_path']) }}" alt="Material Photo" class="img-fluid">
-                                                    @endif
-                                                </div>
-                                                <div class="col-md-9">
-                                                     <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='Description' type="text" :action="$actionValue" placeHolder="Description" enabled="false" span="Full"/>
-
-                                                     <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='Code' type="text" :action="$actionValue" placeHolder="Material Code" enabled="false" span="Half"/>
-
-                                                     <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='Selling Price' type="text" :action="$actionValue" placeHolder="Selling Price" enabled="false" span="Half"/>
-
-                                                     <x-ui-text-field model="input_details.{{ $key }}.buying_price" label='Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder=""/>
-                                                     <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" />
-                                                     <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false" placeHolder="" />
-                                                </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                                <span>{{$key+1}}</span>
                                             </div>
-                                            <!-- Updated delete button with rounded "X" -->
-                                            <div class="close-button">
-                                                <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
-                                                    X
-                                                 </a>
+                                            <div class="col-md-2">
+                                                @if(isset($detail['image_path']) && !empty($detail['image_path']))
+                                                <img src="{{ Storage::url($detail['image_path']) }}" alt="Material Photo" class="img-fluid">
+                                                @endif
+                                            </div>
+                                            <div class="col-md-9">
+                                                <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='Description' type="text" :action="$actionValue" placeHolder="Description" enabled="false" span="Full" />
+
+                                                <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='Code' type="text" :action="$actionValue" placeHolder="Material Code" enabled="false" span="Half" />
+
+                                                <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='Selling Price' type="text" :action="$actionValue" placeHolder="Selling Price" enabled="false" span="Half" />
+
+                                                <x-ui-text-field model="input_details.{{ $key }}.buying_price" label='Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" />
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" />
+                                                <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false" placeHolder="" />
                                             </div>
                                         </div>
+                                        <!-- Updated delete button with rounded "X" -->
+                                        <div class="close-button">
+                                            <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
+                                                X
+                                            </a>
+                                        </div>
+                                    </div>
                                     @endforeach
                                 </div>
                                 {{-- <div class="d-flex justify-content-end mt-4">
                                     <h3>Total Price: {{ rupiah($total_prices) }}</h3>
-                                </div> --}}
-                            </div>
-
+                            </div> --}}
                         </div>
-                    </x-ui-expandable-card>
+
             </div>
-        </x-ui-tab-view-content>
-        </form>
-        <div class="card-footer d-flex justify-content-end">
-            @if ($actionValue === 'Edit')
-            <div style="padding-right: 10px;">
-                <x-ui-button click-event="{{ route('purchases_deliveries.detail', ['action' =>  Crypt::encryptString('Create'),
+            </x-ui-expandable-card>
+</div>
+</x-ui-tab-view-content>
+</form>
+<div class="card-footer d-flex justify-content-end">
+    @if ($actionValue === 'Edit')
+    <div style="padding-right: 10px;">
+        <x-ui-button click-event="{{ route('purchases_deliveries.detail', ['action' =>  Crypt::encryptString('Create'),
                 'objectId' =>  Crypt::encryptString($object->id)]) }}" cssClass="btn btn-primary" type="Route" loading="true" iconPath="images/create-icon.png" button-name="Order Terima Gudang" />
-            </div>
-            @endif
-            <div>
-                <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
-            </div>
-        </div>
-    </x-ui-page-card>
+    </div>
+    @endif
+    <div>
+        <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+    </div>
+</div>
+</x-ui-page-card>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        window.livewire.on('closeMaterialDialog', function () {
+    document.addEventListener('DOMContentLoaded', function() {
+        window.livewire.on('closeMaterialDialog', function() {
             $('#MaterialDialogBox').modal('hide');
         });
     });
+
 </script>
 
 <script>

@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Transactions\PurchasesOrders;
 
-use Livewire\Component;
+use App\Http\Livewire\Components\BaseComponent;
 use App\Models\Transactions\OrderHdr;
 use App\Models\Transactions\OrderDtl;
 use App\Models\Masters\Partner;
@@ -12,7 +12,7 @@ use Lang;
 use Exception;
 use DB;
 
-class Detail extends Component
+class Detail extends BaseComponent
 {
     public $object;
     public $material;
@@ -41,40 +41,29 @@ class Detail extends Component
     public $objectIdValue;
 
     public $materialDialogVisible = false;
-    public function mount($action, $objectId = null)
-    {
-        $this->actionValue = Crypt::decryptString($action);
-        $this->refreshSupplier();
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View') && $this->objectId) {
-            $this->objectIdValue = Crypt::decryptString($objectId);
-            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->get();
-            $this->status = $this->object->status_code;
-            $this->VersioNumber = $this->object->version_number;
-            $this->inputs = populateArrayFromModel($this->object);
-            foreach ($this->object_detail as $index => $detail) {
-                $this->input_details[$index] = populateArrayFromModel($detail);
-                $this->input_details[$index]['id'] = $detail->id;
-                $this->input_details[$index]['price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$index]['qty'] = ceil(currencyToNumeric($detail->qty));
-                $this->input_details[$index]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$index]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
-                $this->input_details[$index]['matl_id'] = $detail->matl_id;
-                $this->input_details[$index]['matl_id'] = $detail->matl_id;
-                $this->input_details[$index]['matl_code'] = $detail->matl_code;
-                $this->input_details[$index]['matl_descr'] = $detail->matl_descr;
-                $this->input_details[$index]['barcode'] = $detail->materials->uoms[0]->barcode;
-                $this->input_details[$index]['image_path'] = $detail->materials->attachments[0]->path;
-            }
-            $this->countTotalAmount();
-            $this->dispatchBrowserEvent('reApplySelect2');
-        } else {
 
-            $this->material = new Material();
-            $this->object = new OrderHdr();
-            $this->inputs['tr_date']  = date('Y-m-d');
-            $this->inputs['tr_type']  = $this->trType;
+    protected function onLoad()
+    {
+        $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
+        $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->get();
+        $this->status = $this->object->status_code;
+        $this->VersioNumber = $this->object->version_number;
+        $this->inputs = populateArrayFromModel($this->object);
+        foreach ($this->object_detail as $index => $detail) {
+            $this->input_details[$index] = populateArrayFromModel($detail);
+            $this->input_details[$index]['id'] = $detail->id;
+            $this->input_details[$index]['price'] = ceil(currencyToNumeric($detail->price));
+            $this->input_details[$index]['qty'] = ceil(currencyToNumeric($detail->qty));
+            $this->input_details[$index]['amt'] = ceil(currencyToNumeric($detail->amt));
+            $this->input_details[$index]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+            $this->input_details[$index]['matl_id'] = $detail->matl_id;
+            $this->input_details[$index]['matl_id'] = $detail->matl_id;
+            $this->input_details[$index]['matl_code'] = $detail->matl_code;
+            $this->input_details[$index]['matl_descr'] = $detail->matl_descr;
+            $this->input_details[$index]['barcode'] = $detail->materials->uoms[0]->barcode;
+            $this->input_details[$index]['image_path'] = $detail->materials->attachments[0]->path;
         }
+        $this->countTotalAmount();
     }
 
     public function render()
@@ -92,19 +81,21 @@ class Detail extends Component
     public function refreshSupplier()
     {
         $suppliersData = Partner::GetByGrp('SUPP');
-        if (!$suppliersData->isEmpty()) {
-            $this->suppliers = $suppliersData->map(function ($data) {
-                return [
-                    'label' => $data->name,
-                    'value' => $data->id,
-                ];
-            })->toArray();
-            $this->inputs['partner_id'] = $this->suppliers[0]['value'];
-        } else {
-            $this->suppliers = [];
-            $this->inputs['partner_id'] = null;
-        }
+        $this->suppliers = $suppliersData->map(function ($data) {
+            return [
+                'label' => $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+
+        $this->inputs['partner_id'] = null;
     }
+
+    protected function onPopulateDropdowns()
+    {
+        $this->refreshSupplier();
+    }
+
 
     protected function populateObjectArray()
     {
@@ -275,83 +266,45 @@ class Detail extends Component
         }
     }
 
-    // Inside the Detail class
 
-    // Refactor Create and Edit to support draft versions
-    public function save($status_code, $isDraft = false)
+    public function onValidateAndSave()
     {
-        $messageAction = $this->actionValue === 'Create' ? 'create' : 'update';
-        // Run validations first
         $this->validateOrders();
+        $this->validateUnits();
 
-        // Wrap operations in a transaction for atomicity
-        DB::beginTransaction();
+        // Prepare the data array for creating/updating the OrderHdr
+        $objectData = $this->populateObjectArray();
 
-        try {
-            // Validate if units are correct
-            $this->validateUnits();
+        // Create or Update the OrderHdr based on the action
+        if ($this->actionValue === 'Create') {
+            $this->object = OrderHdr::create($objectData);
+        } elseif ($this->actionValue === 'Edit') {
+            $this->object->update($objectData);
+        }
 
-            // Prepare the data array for creating/updating the OrderHdr
-            $objectData = $this->populateObjectArray();
-            $objectData['status_code'] = $status_code;
-
-            // Create or Update the OrderHdr based on the action
-            if ($this->actionValue === 'Create') {
-                $this->object = OrderHdr::create($objectData);
-            } elseif ($this->actionValue === 'Edit') {
-                $this->object->update($objectData);
+        // Handle the details of the order
+        foreach ($this->input_details as $inputDetail) {
+            if (isset($inputDetail['id']) && $this->action === 'Edit') {
+                $detail = OrderDtl::find($inputDetail['id']);
+                $detail->update($inputDetail);
+            } else {
+                $inputDetail['trhdr_id'] = $this->object->id;
+                $inputDetail['qty_reff'] = $inputDetail['qty']; // additional operations or calculations
+                OrderDtl::create($inputDetail);
             }
+        }
 
-            // Handle the details of the order
-            foreach ($this->input_details as $inputDetail) {
-                if (isset($inputDetail['id']) && $this->action === 'Edit') {
-                    $detail = OrderDtl::find($inputDetail['id']);
-                    $detail->update($inputDetail);
-                } else {
-                    $inputDetail['trhdr_id'] = $this->object->id;
-                    $inputDetail['qty_reff'] = $inputDetail['qty']; // additional operations or calculations
-                    OrderDtl::create($inputDetail);
-                }
-            }
+        if ($this->action === 'Edit' && count($this->deletedItems) > 0) {
+            OrderDtl::destroy($this->deletedItems);
+            $this->deletedItems = [];
+        }
 
-            if ($this->action === 'Edit' && count($this->deletedItems) > 0) {
-                OrderDtl::destroy($this->deletedItems);
-                $this->deletedItems = [];
-            }
-
-            if ($this->action === 'Edit') {
-                $this->VersioNumber = $this->object->version_number;
-            }
-
-            DB::commit();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get("generic.success.$messageAction", ['object' => "PO"])
-            ]);
-
-            if ($this->actionValue === 'Create') {
-                $this->postOrderProcessing();
-            }
-        } catch (Exception $e) {
-            DB::rollBack();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get("generic.error.$messageAction", ['object' => "PO", 'message' => $e->getMessage()])
-            ]);
+        if ($this->action === 'Edit') {
+            $this->VersioNumber = $this->object->version_number;
         }
     }
-    public function Create()
-    {
-        $this->save('Open', false);
-    }
 
-    public function Edit()
-    {
-        $this->save('Open', false);
-    }
-
-    private function postOrderProcessing()
+    protected function onReset()
     {
         $this->reset('inputs');
         $this->reset('input_details');

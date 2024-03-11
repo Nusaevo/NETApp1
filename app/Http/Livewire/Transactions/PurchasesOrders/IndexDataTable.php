@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Transactions\PurchasesOrders;
 
-use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use App\Http\Livewire\Components\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\Transactions\OrderHdr;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
@@ -12,49 +12,16 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
 use Lang;
 use Exception;
-class IndexDataTable extends DataTableComponent
+class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = OrderHdr::class;
-    public $object;
+
     public function mount(): void
     {
+        $this->route = 'PurchasesOrders.Detail';
         $this->setSort('created_at', 'desc');
         $this->setFilter('status_code',  Status::ACTIVE);
     }
-
-     public function configure(): void
-    {
-        $this->setPrimaryKey('id');
-        $this->setTableAttributes([
-            'class' => 'data-table',
-        ]);
-
-        $this->setTheadAttributes([
-            'class' => 'data-table-header',
-        ]);
-
-        $this->setTbodyAttributes([
-            'class' => 'data-table-body',
-        ]);
-        $this->setTdAttributes(function(Column $column, $row, $columnIndex, $rowIndex) {
-            if ($column->isField('deleted_at')) {
-              return [
-                'class' => 'text-center',
-              ];
-            }
-            return [];
-        });
-    }
-
-    protected $listeners = [
-        'refreshData' => 'render',
-        'viewData'  => 'View',
-        'editData'  => 'Edit',
-        'deleteData'  => 'Delete',
-        'disableData'  => 'Disable',
-        'selectData'  => 'SelectObject',
-    ];
-
     public function columns(): array
     {
         return [
@@ -86,28 +53,28 @@ class IndexDataTable extends DataTableComponent
                         'wire_click_show' => "\$emit('viewData', $row->id)",
                         'wire_click_edit' => "\$emit('editData', $row->id)",
                         'wire_click_disable' => "\$emit('selectData', $row->id)",
-                        'access' => "customers"
+                        'access' => "PurchasesOrders"
                     ]);
                 }),
-            LinkColumn::make('')
-                ->title(function ($row) {
-                    return $row->status_code === "ACT" ? 'Nota Terima Supplier' : '';
-                })
-                ->location(function ($row) {
-                    if ($row->status_code === "ACT") {
-                        return route("purchases_deliveries.detail", ["action" => encryptWithSessionKey('Create'), "objectId" => encryptWithSessionKey($row->id)]);
-                    }
-                    return null;
-                })
-                ->attributes(function ($row) {
-                    if ($row->status_code === "ACT") {
-                        return [
-                            'class' => 'btn btn-primary btn-sm',
-                            'style' => 'text-decoration: none;',
-                        ];
-                    }
-                    return [];
-                }),
+            // LinkColumn::make('')
+            //     ->title(function ($row) {
+            //         return $row->status_code === "ACT" ? 'Nota Terima Supplier' : '';
+            //     })
+            //     ->location(function ($row) {
+            //         if ($row->status_code === "ACT") {
+            //             return route("PurchasesDeliveries.detail", ["action" => encryptWithSessionKey('Create'), "objectId" => encryptWithSessionKey($row->id)]);
+            //         }
+            //         return null;
+            //     })
+            //     ->attributes(function ($row) {
+            //         if ($row->status_code === "ACT") {
+            //             return [
+            //                 'class' => 'btn btn-primary btn-sm',
+            //                 'style' => 'text-decoration: none;',
+            //             ];
+            //         }
+            //         return [];
+            //     }),
             // LinkColumn::make('')
             //     ->title(fn ($row) => 'Print Nota')
             //     ->location(fn ($row) => route('purchases_orders.printpdf', ['objectId' => encryptWithSessionKey($row->id)]))
@@ -118,41 +85,6 @@ class IndexDataTable extends DataTableComponent
             //         ];
             //     })
         ];
-    }
-
-
-    public function View($id)
-    {
-        return redirect()->route('purchases_orders.detail', ['action' => encryptWithSessionKey('View'), 'objectId' => encryptWithSessionKey($id)]);
-    }
-
-    public function Edit($id)
-    {
-        return redirect()->route('purchases_orders.detail', ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($id)]);
-    }
-
-    public function SelectObject($id)
-    {
-        $this->object = OrderHdr::findOrFail($id);
-    }
-
-    public function Disable()
-    {
-        try {
-            $this->object->updateObject($this->object->version_number);
-            $this->object->delete();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.success.disable', ['object' => "object"])
-            ]);
-        } catch (Exception $e) {
-            // Handle the exception
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.disable', ['object' => "object", 'message' => $e->getMessage()])
-            ]);
-        }
-        $this->emit('refreshData');
     }
 
     public function filters(): array

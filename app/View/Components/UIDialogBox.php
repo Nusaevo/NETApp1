@@ -8,11 +8,15 @@ class UIDialogBox extends Component
 {
     public $id;
     public $visible;
+    public $width;
+    public $height;
 
-    public function __construct($id = null, $visible = 'false')
+    public function __construct($id = null, $visible = 'false', $width = 'auto', $height = 'auto')
     {
         $this->id = $id;
         $this->visible = $visible;
+        $this->width = $width;
+        $this->height = $height;
     }
 
     public function render()

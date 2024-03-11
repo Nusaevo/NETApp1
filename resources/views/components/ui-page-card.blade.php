@@ -19,3 +19,6 @@
         </div>
     </div>
 </div>
+<div>
+    @include('layout.customs.notification')
+</div>

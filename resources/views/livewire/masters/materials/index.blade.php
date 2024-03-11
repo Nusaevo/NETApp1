@@ -1,21 +1,9 @@
-<div>
-    <div>
-        @include('layout.customs.notification')
+<x-ui-page-card title="Data Materials" status="{{ $status }}">
+    @include('layout.customs.buttons.create', [
+    'clickEvent' => route('Materials.Detail', ['action' => encryptWithSessionKey('Create')])
+    ])
+    <div class="table-responsive">
+        @livewire('masters.materials.index-data-table')
     </div>
-    <div class="post d-flex flex-column-fluid" id="kt_post">
-        <div id="kt_content_container" class="container-xxl">
-            <div class="card">
-                <div class="card-body">
-                    @include('layout.customs.buttons.create', [
-                        'clickEvent' => route('Materials.Detail', ['action' => encryptWithSessionKey('Create')])
-                    ])
+</x-ui-page-card>
 
-
-                    <div class="table-responsive">
-                        @livewire('masters.materials.index-data-table')
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>

@@ -1,21 +1,10 @@
-<div>
-    <div>
-        @include('layout.customs.notification')
-    </div>
-    <div class="post d-flex flex-column-fluid" id="kt_post">
-        <div id="kt_content_container" class="container-xxl">
-            <div class="card">
-                <div class="card-body">
+<x-ui-page-card title="Config Users" status="{{ $status }}">
+    @include('layout.customs.buttons.create', [
+    'clickEvent' => route('ConfigUsers.Detail', ['action' => encryptWithSessionKey('Create')])
+    ])
 
-                    @include('layout.customs.buttons.create', [
-                        'clickEvent' => route('ConfigUsers.Detail', ['action' => encryptWithSessionKey('Create')])
-                    ])
-
-                    <div class="table-responsive">
-                        @livewire('settings.config-users.index-data-table')
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="table-responsive">
+        @livewire('settings.config-users.index-data-table')
     </div>
-</div>
+</x-ui-page-card>
+
