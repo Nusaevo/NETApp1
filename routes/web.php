@@ -80,7 +80,6 @@ Route::middleware('auth')->group(function () {
             }
         }
     }
-
     // Additional non-standard routes go here
 });
 // Route::resource('users', UsersController::class);

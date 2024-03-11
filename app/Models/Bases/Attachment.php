@@ -45,25 +45,26 @@ class Attachment extends Model
         }
         $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
         $imageData = base64_decode($imageData);
-    
+
         // Check if attachment with the same filename already exists
         $existingAttachment = self::where('attached_objectid', $objectId)
                                     ->where('attached_objecttype', $objectType)
                                     ->where('name', $filename)
                                     ->first();
-    
+        $filePath = 'storage/attachments/' . $objectId . '/' . $filename;
+        $fullPath = $attachmentsPath . '/' . $filename;
         if ($existingAttachment) {
             // Update existing attachment
             $existingAttachment->path = $filePath;
+            $existingAttachment->name = $filename;
             $existingAttachment->content_type = 'image/jpeg';
             $existingAttachment->extension = 'jpg';
             $existingAttachment->save();
             return $existingAttachment->path;
         } else {
             // Generate file path
-            $filePath = 'storage/attachments/' . $objectId . '/' . $filename;
-            $fullPath = $attachmentsPath . '/' . $filename;
-    
+
+
             if (file_put_contents($fullPath, $imageData)) {
                 $attachmentData = [
                     'name' => $filename,
@@ -77,37 +78,37 @@ class Attachment extends Model
                 return $filePath;
             }
         }
-    
+
         return false;
     }
-    
+
     public static function deleteAttachmentByFilename($objectId, $objectType, $filename)
     {
         $attachment = self::where('attached_objectid', $objectId)
             ->where('attached_objecttype', $objectType)
             ->where('name', $filename)
             ->first();
-    
+
         if ($attachment) {
             $path = $attachment->path;
             if (File::exists(public_path($path))) {
                 File::delete(public_path($path));
             }
             $attachment->delete();
-            
+
             return true;
         }
-    
+
         return false;
     }
-    
+
     protected static function reSortSequences($objectId, $objectType)
     {
         $attachments = self::where('attached_objectid', $objectId)
             ->where('attached_objecttype', $objectType)
             ->orderBy('id')
             ->get();
-    
+
         $seq = 1;
         foreach ($attachments as $attachment) {
             $attachment->seq = $seq;
@@ -115,7 +116,7 @@ class Attachment extends Model
             $seq++;
         }
     }
-    
+
 
     public function getUrl()
     {

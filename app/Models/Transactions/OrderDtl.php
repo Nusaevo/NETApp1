@@ -21,16 +21,14 @@ class OrderDtl extends BaseModel
         'qty',
         'qty_reff',
         'discount',
-        'price',
-        'amt',
-        'status_code',
+        'price'
     ];
 
     public function getAllColumnValues($attribute)
     {
         if (array_key_exists($attribute, $this->attributes)) {
             if ($attribute == "qty") {
-                return round($this->attributes[$attribute],0);
+                return currencyToNumeric($this->attributes[$attribute]);
             }
             return $this->attributes[$attribute];
         }

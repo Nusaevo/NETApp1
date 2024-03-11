@@ -26,7 +26,6 @@ class MaterialForm extends BaseComponent
     public $materials = [];
     public $matl_uoms = [];
     public $matl_boms = [];
-    public $matl_boms_array = [];
 
     public $unit_row = 0;
     public $photo;
@@ -54,7 +53,6 @@ class MaterialForm extends BaseComponent
         foreach ($this->object_boms as $key => $detail) {
             $this->refreshBaseMaterials($this->bom_row);
             $formattedDetail = populateArrayFromModel($detail);
-            array_push($this->matl_boms_array, $formattedDetail);
             $this->matl_boms[$key] =  $formattedDetail;
             $this->bom_row++;
         }
@@ -224,7 +222,6 @@ class MaterialForm extends BaseComponent
         $this->object = new Material();
         $this->object_uoms = new MatlUom();
         $this->object_boms = [];
-        $this->matl_boms_array = [];
         $this->deletedItems = [];
         $this->newItems = [];
         $this->bom_row = 0;
@@ -296,10 +293,10 @@ class MaterialForm extends BaseComponent
     public function addBoms()
     {
         $bomsDetail = new MatlBom();
-        array_push($this->matl_boms_array, $bomsDetail);
+        array_push($this->matl_boms, $bomsDetail);
         // array_push($this->object_boms, $bomsDetail);
         $this->refreshBaseMaterials($this->bom_row);
-        $newDetail = end($this->matl_boms_array);
+        $newDetail = end($this->matl_boms);
         $this->newItems[] = $newDetail;
         $this->emit('itemAdded');
         $this->bom_row++;
@@ -311,11 +308,11 @@ class MaterialForm extends BaseComponent
 
     public function deleteBoms($index)
     {
-        if (isset($this->matl_boms_array[$index]['id'])) {
-            $this->deletedItems[] = $this->matl_boms_array[$index]['id'];
+        if (isset($this->matl_boms[$index]['id'])) {
+            $this->deletedItems[] = $this->matl_boms[$index]['id'];
         }
-        unset($this->matl_boms_array[$index]);
-        $this->matl_boms_array = array_values($this->matl_boms_array);
+        unset($this->matl_boms[$index]);
+        $this->matl_boms = array_values($this->matl_boms);
     }
 
     public function runExe()

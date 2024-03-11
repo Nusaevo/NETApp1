@@ -1,6 +1,6 @@
 <x-ui-page-card title="{{ $actionValue }} Master Produk" status="{{ $status }}">
-
-    <x-ui-tab-view id="materialTabView" tabs="material"> </x-ui-tab-view>
+{{--
+    <x-ui-tab-view id="materialTabView" tabs="material"> </x-ui-tab-view> --}}
 
     <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
         {{-- <x-ui-tab-view-content id="materialTabContent" class="tab-content">
@@ -32,7 +32,7 @@
                             </div>
                         </div>
                     </div>
-                    <div style="padding-bottom:250px;">
+                    <div >
                         <x-ui-text-field label="Material Code" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" />
                         <x-ui-text-field label="Description" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="Deskripsi dibuat otomatis dari side materials" span="Half" />
                         <x-ui-dropdown-select label="Category" click-event="" model="materials.jwl_category" :options="$materialCategories" :selectedValue="$materials['jwl_category']" required="true" :action="$actionValue" span="Half" />
@@ -46,7 +46,7 @@
                         <x-ui-button click-event="addBoms" cssClass="btn btn-secondary" iconPath="images/create-icon.png" button-name="Add" :action="$actionValue" />
 
                         <div class="list-group" style="max-height: 500px; overflow-y: auto;" id="scroll-container">
-                            @foreach($matl_boms_array as $key => $detail)
+                            @foreach($matl_boms as $key => $detail)
                             <div class="list-group-item">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
@@ -97,10 +97,6 @@
             scrollToBottom();
         });
     });
-
-</script>
-
-<script>
     document.addEventListener('DOMContentLoaded', function() {
         Webcam.set({
             width: 320
