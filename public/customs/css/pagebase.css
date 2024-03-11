@@ -1,16 +1,21 @@
-
 /*Loader css*/
 .custom-loader-container {
-    display: none; /* initially hidden */
-    position: fixed; /* Overlay the entire screen */
+    display: none;
+    /* initially hidden */
+    position: fixed;
+    /* Overlay the entire screen */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.5); /* Semi-transparent white background */
-    z-index: 9999; /* Ensure it's above other elements */
-    align-items: center; /* Center the loader vertically */
-    justify-content: center; /* Center the loader horizontally */
+    background: rgba(255, 255, 255, 0.5);
+    /* Semi-transparent white background */
+    z-index: 9999;
+    /* Ensure it's above other elements */
+    align-items: center;
+    /* Center the loader vertically */
+    justify-content: center;
+    /* Center the loader horizontally */
     text-align: center;
 }
 
@@ -85,6 +90,7 @@
     margin-bottom: 2rem;
     min-height: 50px;
 }
+
 .responsive-label {
     margin-right: 0.5rem;
     flex: 0 0 100px;
@@ -98,13 +104,19 @@
     border: 1px solid #ced4da;
     border-radius: 0.25rem;
 }
+
 .error-message {
     position: absolute;
-    left: 100px; /* Align with the text field start */
-    width: calc(100% - 10px); /* Take full width minus some padding */
-    z-index: 3; /* Ensure it's above the input fields */
-    font-size: 0.75rem; /* Small font size for error messages */
-    color: #dc3545; /* Red color for visibility */
+    left: 100px;
+    /* Align with the text field start */
+    width: calc(100% - 10px);
+    /* Take full width minus some padding */
+    z-index: 3;
+    /* Ensure it's above the input fields */
+    font-size: 0.75rem;
+    /* Small font size for error messages */
+    color: #dc3545;
+    /* Red color for visibility */
 }
 
 
@@ -169,7 +181,8 @@
 }
 
 .loading-overlay {
-    display: none; /* Hidden by default */
+    display: none;
+    /* Hidden by default */
     position: absolute;
     top: 0;
     left: 0;
@@ -208,7 +221,8 @@ div[wire\:loading].loading-overlay {
     }
 
     .custom-modal .modal-dialog {
-        width: 100%; /* Full width on smaller screens */
+        width: 100%;
+        /* Full width on smaller screens */
     }
 }
 
@@ -258,7 +272,7 @@ div[wire\:loading].loading-overlay {
         box-sizing: border-box;
     }
 
-    .responsive-field[span="Full"] + .responsive-field {
+    .responsive-field[span="Full"]+.responsive-field {
         clear: both;
     }
 
@@ -286,23 +300,31 @@ div[wire\:loading].loading-overlay {
 
 /* Horizontal separator */
 .styled-separator.horizontal {
-    height: 1px; /* Adjust the height for the thickness of the separator */
-    background-color: #d9d9d9; /* Separator color */
+    height: 1px;
+    /* Adjust the height for the thickness of the separator */
+    background-color: #d9d9d9;
+    /* Separator color */
 }
 
 /* Vertical separator */
 .styled-separator.vertical {
-    width: 1px; /* Adjust the width for the thickness of the separator */
-    height: 100%; /* Full height of the container */
-    background-color: #d9d9d9; /* Separator color */
+    width: 1px;
+    /* Adjust the width for the thickness of the separator */
+    height: 100%;
+    /* Full height of the container */
+    background-color: #d9d9d9;
+    /* Separator color */
 }
 
 /* Title (caption) */
 .styled-separator h5 {
     margin: 0;
-    font-size: 1rem; /* Adjust font size as needed */
-    color: #333; /* Font color */
-    white-space: nowrap; /* Ensures the text doesn't wrap */
+    font-size: 1rem;
+    /* Adjust font size as needed */
+    color: #333;
+    /* Font color */
+    white-space: nowrap;
+    /* Ensures the text doesn't wrap */
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -350,7 +372,8 @@ div[wire\:loading].loading-overlay {
 }
 
 .multiple-photo-container {
-    float: left; /* Float the photo container to the left */
+    float: left;
+    /* Float the photo container to the left */
     overflow-x: auto;
     white-space: nowrap;
     margin-right: 20px;
@@ -368,6 +391,7 @@ div[wire\:loading].loading-overlay {
 .button-container button {
     padding-top: 200px;
 }
+
 .photo-box {
     position: relative;
     width: 200px;
@@ -387,7 +411,8 @@ div[wire\:loading].loading-overlay {
     position: absolute;
     top: 5px;
     right: 5px;
-    background-color: rgba(255, 255, 255, 0.8); /* Adjust the background color and opacity as needed */
+    background-color: rgba(255, 255, 255, 0.8);
+    /* Adjust the background color and opacity as needed */
     border-radius: 50%;
     padding: 5px;
     z-index: 1;
@@ -406,6 +431,7 @@ div[wire\:loading].loading-overlay {
 }
 
 @media (max-width: 768px) {
+
     .multiple-photo-container,
     .button-container {
         float: none;
@@ -419,90 +445,98 @@ div[wire\:loading].loading-overlay {
 }
 
 
-    /* Adjustments for the main content to match the uploaded design */
-    .main-content {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr); /* Adjust the number of columns as needed */
-        grid-gap: 20px;
-        padding: 20px;
-    }
 
-    .list-group {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-        padding: 20px;
-    }
+.main-content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    /* Adjust the number of columns as needed */
+    grid-gap: 20px;
+    padding: 20px;
+}
 
-    .list-group-item {
-        background-color: #f7f7f7;
-        border: none;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
-    }
+.list-catalogue {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
 
-    .list-group-item:hover {
-        transform: translateY(-5px);
-    }
+.list-catalogue-item {
+    background-color: #f7f7f7;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    width: 100%; /* Ensure full width */
+    max-width: 300px; /* Limit maximum width */
+    overflow: hidden; /* Hide overflow content */
+}
 
 
-    .image-container {
-        width: 100%; /* Take full width */
-        /* Adjust height as needed, or remove height to let content dictate size */
-    }
+.list-catalogue-item:hover {
+    transform: translateY(-5px);
+}
 
-    .image-container img {
-        width: 100%; /* Full width of the container */
-        object-fit: cover; /* Cover the area without stretching */
-    }
+.image-container {
+    width: 100%;
+    height: 200px;
+    overflow: hidden; /* Ensure image overflow is hidden */
+}
 
-    .material-info {
-        text-align: center;
-        padding: 10px;
-        background: #eee;
-        width: 100%; /* Full width of the container */
-        margin-top: auto; /* Push to the bottom */
-    }
+.image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-    .pagination {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-    }
+.material-info {
+    text-align: center;
+    padding: 10px;
+    background: #eee;
+    width: 100%;
+    /* Full width of the container */
+    margin-top: auto;
+    /* Push to the bottom */
+}
 
-    .pagination a {
-        display: inline-block;
-        padding: 8px 12px;
-        margin: 0 4px;
-        border: 1px solid #ddd;
-        color: #333;
-        text-decoration: none;
-        border-radius: 4px;
-    }
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
 
-    .pagination a:hover {
-        background-color: #f0f0f0;
-    }
+.pagination a {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 4px;
+    border: 1px solid #ddd;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+}
 
-    .pagination a.is-current {
-        background-color: #007bff;
-        color: #fff;
-        border-color: #007bff;
-    }
+.pagination a:hover {
+    background-color: #f0f0f0;
+}
 
-    .pagination .pagination-previous,
-    .pagination .pagination-next {
-        padding: 8px 12px;
-        margin: 0 4px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        color: #333;
-        text-decoration: none;
-    }
+.pagination a.is-current {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
 
-    .pagination .pagination-previous[disabled],
-    .pagination .pagination-next[disabled] {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
+.pagination .pagination-previous,
+.pagination .pagination-next {
+    padding: 8px 12px;
+    margin: 0 4px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #333;
+    text-decoration: none;
+}
+
+.pagination .pagination-previous[disabled],
+.pagination .pagination-next[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -3,8 +3,7 @@
     <div>
         @include('layout.customs.notification')
     </div>
-    <div class="container mx-auto">
-        <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
+        <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="false">
             <form wire:submit.prevent="search">
                 <div class="card-body">
                     <x-ui-text-field label="Cari Nama Barang" model="inputs.description" type="text" action="Edit" placeHolder="" span='Full'/>
@@ -21,13 +20,9 @@
                 </div>
             </form>
         </x-ui-expandable-card>
-
-
-        </div>
-        <!-- Main Content -->
         <div class="main-content">
             @foreach($materials as $key => $material)
-                <div class="list-group-item">
+                <div class="list-catalogue-item">
                     <div class="image-container">
                         @if($material->Attachment->first())
                             <img src="{{ $material->Attachment->first()->getUrl() }}" alt="Captured Image" class="photo-box-image" style="max-width: 100%; max-height: 100%;">
@@ -53,34 +48,9 @@
                 </div>
             @endforeach
             </div>
-            <div class="card-footer d-flex justify-content-end">
-                @if ($materials->hasPages())
-                    <nav class="pagination" aria-label="Pagination">
-                        {{-- Previous Page Link --}}
-                        @if ($materials->onFirstPage())
-                            <a class="pagination-previous" disabled>&laquo;</a>
-                        @else
-                            <a wire:click="previousPage" href="javascript:void(0);" rel="prev" class="pagination-previous">&laquo;</a>
-                        @endif
-
-                        {{-- Pagination Elements --}}
-                        @foreach ($materials->links() as $link)
-                            @if (is_array($link))
-                                <a wire:click="gotoPage({{ $link['url'] }})" href="javascript:void(0);" class="{{ $link['active'] ? 'pagination-link is-current' : 'pagination-link' }}">{{ $link['label'] }}</a>
-                            @endif
-                        @endforeach
-
-                        {{-- Next Page Link --}}
-                        @if ($materials->hasMorePages())
-                            <a wire:click="nextPage" href="javascript:void(0);" rel="next" class="pagination-next">&raquo;</a>
-                        @else
-                            <a class="pagination-next" disabled>&raquo;</a>
-                        @endif
-                    </nav>
-                @endif
+            <div class="pagination-container">
+                @include('components.ui-pagination', ['paginator' => $materials])
             </div>
-
-
 
         </div>
     </div>
