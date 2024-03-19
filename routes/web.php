@@ -39,46 +39,55 @@ array_walk($menu, function ($val) {
 });
 
 Route::middleware('auth')->group(function () {
-    $configurations = [
-        'ConfigUsers',
-        'ConfigGroups',
-        'ConfigMenus',
-        'ConfigApplications',
-        'ConfigConsts',
-        'ConfigVars',
-    ];
+    $livewireComponents = [];
+    $livewireDirectory = app_path('Http/Livewire');
+    $namespaceBase = 'App\Http\Livewire';
+    $excludeDirectory = $livewireDirectory . DIRECTORY_SEPARATOR . 'Components';
 
-    $masters = [
-        'Catalogues',
-        'Customers',
-        'Suppliers',
-        'Materials',
-    ];
+    if (File::isDirectory($livewireDirectory)) {
+        $componentFiles = File::allFiles($livewireDirectory, true);
 
-    $transactions = [
-        'PurchasesOrders',
-        'PurchasesDeliveries',
-        'CartOrders',
-        'SalesDeliveries',
-    ];
+        foreach ($componentFiles as $file) {
 
-    $allGroups = [
-        'Settings' => $configurations,
-        'Masters' => $masters,
-        'Transactions' => $transactions,
-    ];
-
-    foreach ($allGroups as $group => $items) {
-        foreach ($items as $item) {
-            $indexPath = "App\\Http\\Livewire\\{$group}\\{$item}\\Index";
-            $detailPath = "App\\Http\\Livewire\\{$group}\\{$item}\\Detail";
-            if (class_exists($indexPath)) {
-                Route::get("/$item", $indexPath)->name("$item.Index");
+            if (Str::startsWith($file->getPath(), $excludeDirectory)) {
+                continue;
             }
-            if (class_exists($detailPath)) {
-                Route::get("/$item/detail/{action}/{objectId?}", $detailPath)->name("$item.Detail");
+
+            $relativeClassPath = Str::after($file->getRealPath(), realpath($livewireDirectory) . DIRECTORY_SEPARATOR);
+            $relativeClassPath = str_replace([DIRECTORY_SEPARATOR, '.php'], ['\\', ''], $relativeClassPath);
+
+            $class = $namespaceBase . '\\' . $relativeClassPath;
+
+            if (class_exists($class)) {
+                $livewireComponents[] = $class;
             }
         }
+    }
+
+    foreach ($livewireComponents as $componentClass) {
+        if (Str::contains($componentClass, 'DataTable')) {
+            continue;
+        }
+        $componentPath = Str::of($componentClass)->after("$namespaceBase\\")->replace('\\', '/');
+        $componentParts = explode('/', $componentPath); // Split the path into parts
+
+        if (count($componentParts) > 1) {
+            array_pop($componentParts); // Remove the last part
+            $componentPath = implode('/', $componentParts); // Re-join the remaining parts
+        }
+
+        $componentName = class_basename($componentClass);
+        $routeName = Str::replace('/', '.', $componentPath);
+        if (Str::endsWith($componentName, 'Index')) {
+            Route::get("/{$componentPath}", $componentClass)->name("{$routeName}");
+        }
+        else if (Str::endsWith($componentName, 'Detail')) {
+            Route::get("/{$componentPath}/Detail/{action}/{objectId?}", $componentClass)->name("{$routeName}.Detail");
+        }
+        else {
+            Route::get("/{$componentPath}", $componentClass)->name("{$routeName}.{$componentName}");
+        }
+
     }
     // Additional non-standard routes go here
 });

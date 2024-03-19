@@ -10,6 +10,7 @@
     @endif
 </div>
 
+
 <div class="table-responsive mt-5" >
     <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" >
         <thead>
@@ -22,7 +23,7 @@
         </tbody>
     </table>
 </div>
-{{--
+@if(isset($enableDataTable) && strcmp($enableDataTable, 'true') === 0)
 <script>
     myJQuery(document).ready(function () {
         var checkAndInitializeDataTable = function () {
@@ -66,4 +67,5 @@
             checkAndInitializeDataTable();
         });
     });
-</script> --}}
+</script>
+@endif

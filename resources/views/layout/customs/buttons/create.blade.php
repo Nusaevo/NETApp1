@@ -2,7 +2,7 @@
 <x-ui-button
     visible="true"
     enabled="true"
-    :click-event="$clickEvent"
+    :click-event="route($route, ['action' => encryptWithSessionKey('Create')])"
     cssClass="btn btn-success mb-5"
     type="Route"
     loading="true"

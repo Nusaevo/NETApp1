@@ -5,34 +5,34 @@ use Illuminate\View\Component;
 
 class UITextFieldSearch extends Component
 {
-    public $clickEvent;
     public $label;
     public $model;
-    public $enabled;
-    public $required;
-    public $visible;
-    public $placeHolder;
-    public $span;
     public $options;
-    public $selectedValue;
-    public $name;
+    public $required;
+    public $enabled;
+    public $visible;
     public $action;
+    public $selectedValue;
+    public $onChanged;
+    public $span;
+    public $modelType;
+    public $clickEvent;
 
-    public function __construct($clickEvent, $label ='', $model, $name, $enabled = 'true', $required = 'false', $visible = 'true',
-    $placeHolder = '', $options = [], $selectedValue = '', $span = 'Full', $action = '')
+    public function __construct($label = '', $model = '', $options, $selectedValue = null, $required = 'false',
+    $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '', $clickEvent = null)
     {
-        $this->clickEvent = $clickEvent;
         $this->label = $label;
         $this->model = $model;
-        $this->action = $action;
-        $this->enabled = $enabled;
-        $this->required = $required;
-        $this->visible = $visible;
-        $this->placeHolder = $placeHolder;
-        $this->span = $span;
         $this->options = $options;
         $this->selectedValue = $selectedValue;
-        $this->name = $name;
+        $this->required = $required;
+        $this->enabled = $enabled;
+        $this->visible = $visible;
+        $this->action = $action;
+        $this->onChanged = $onChanged;
+        $this->span = $span;
+        $this->modelType = $modelType;
+        $this->clickEvent = $clickEvent;
     }
 
     public function render()

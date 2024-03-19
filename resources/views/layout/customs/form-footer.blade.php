@@ -1,5 +1,5 @@
 <div class="card-footer d-flex justify-content-end">
-    @if ($actionValue !== 'Create' && (!$object instanceof App\Models\Settings\ConfigUser || auth()->user()->id !== $object->id))
+    @if ($actionValue !== 'Create' && (!$object instanceof App\Models\Config\ConfigUser || auth()->user()->id !== $object->id))
     @if(isset($permissions['delete']) && $permissions['delete'])
     <div style="padding-right: 10px;">
         @if ($status === 'ACTIVE')

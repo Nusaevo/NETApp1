@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Settings\ConfigMenu;
-use App\Models\Settings\ConfigUser;
-use App\Models\Settings\ConfigGroup;
-use App\Models\Settings\ConfigRight;
+use App\Models\Config\ConfigMenu;
+use App\Models\Config\ConfigUser;
+use App\Models\Config\ConfigGroup;
+use App\Models\Config\ConfigRight;
 use Illuminate\Database\QueryException;
 
 if (!function_exists('generateMenu')) {

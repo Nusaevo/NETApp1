@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models\Inventories;
-use App\Models\BaseModel;
+use App\Models\Base\BaseModel;
 
 class IvtBal extends BaseModel
 {

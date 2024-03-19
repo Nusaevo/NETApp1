@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Settings\ConfigUser;
+use App\Models\Config\ConfigUser;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;

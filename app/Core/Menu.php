@@ -3,7 +3,7 @@
 namespace App\Core;
 
 use App\Core\Adapters\Theme;
-use App\Models\Settings\ConfigMenu;
+use App\Models\Config\ConfigMenu;
 
 class Menu {
     // Menu config
@@ -365,11 +365,18 @@ class Menu {
         // Split the current path into segments
         $pathSegments = explode('/', $this->path);
 
-        // Get the first segment
-        $firstPathSegment = $pathSegments[0];
+        // Identify if 'Detail' is in the path and adjust the path accordingly
+        $detailIndex = array_search('Detail', $pathSegments);
+        if ($detailIndex !== false) {
+            // Keep only the segments before 'Detail'
+            $pathSegments = array_slice($pathSegments, 0, $detailIndex);
+        }
 
-        // Check if $firstPathSegment matches the first part of $item['path']
-        if (isset($item['path']) && ($firstPathSegment === $item['path'] || $firstPathSegment === $item['path'] . '/index')) {
+        // Rebuild the path from the adjusted segments
+        $adjustedPath = implode('/', $pathSegments);
+
+        // Check if $adjustedPath matches $item['path']
+        if (isset($item['path']) && $adjustedPath === $item['path']) {
             return true;
         } else {
             return false;

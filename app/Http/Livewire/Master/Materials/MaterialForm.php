@@ -1,0 +1,333 @@
+<?php
+
+namespace App\Http\Livewire\Master\Materials;
+
+use App\Http\Livewire\Component\BaseComponent;
+use App\Models\Master\Material;
+use App\Models\Master\MatlUom;
+use App\Models\Master\MatlBom;
+use App\Models\Config\ConfigConst;
+use App\Models\Inventories\IvtBal;
+use App\Models\Inventories\IvtBalUnit;
+use App\Models\Base\BaseModels\Attachment;
+use Illuminate\Support\Facades\Session;
+use Lang;
+use Exception;
+use DB;
+use Livewire\WithFileUploads;
+use App\Enums\Status;
+use Illuminate\Validation\Rule;
+
+class MaterialForm extends BaseComponent
+{
+    use WithFileUploads;
+    public $object_uoms;
+    public $object_boms;
+    public $materials = [];
+    public $matl_uoms = [];
+    public $matl_boms = [];
+
+    public $unit_row = 0;
+    public $photo;
+    public $appCode = "";
+
+    public $materialCategories;
+    public $materialUOMs;
+    public $baseMaterials;
+    public $selectedBomKey;
+
+    public $deletedItems = [];
+    public $newItems = [];
+    public $bom_row = 0;
+
+    public $capturedImages = [];
+    public $deleteImages = [];
+
+    protected function onLoad()
+    {
+        $this->object = Material::withTrashed()->find($this->objectIdValue);
+        $this->object_uoms = $this->object->MatlUom[0];
+        $this->object_boms = $this->object->MatlBom;
+        $this->materials = populateArrayFromModel($this->object);
+        $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+        foreach ($this->object_boms as $key => $detail) {
+            $this->refreshBaseMaterials($this->bom_row);
+            $formattedDetail = populateArrayFromModel($detail);
+            $this->matl_boms[$key] =  $formattedDetail;
+            $this->bom_row++;
+        }
+        $attachments = $this->object->Attachment;
+        foreach ($attachments as $attachment) {
+            $url = $attachment->getUrl();
+            $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
+        }
+    }
+
+    public function refreshUOMs()
+    {
+        $data = ConfigConst::where('app_code', $this->appCode)
+            ->where('const_group', 'MATL_UOM')
+            ->orderBy('seq')
+            ->get();
+
+        $this->materialUOMs = $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+
+        $this->matl_uoms['name'] = null;
+    }
+
+    public function refreshCategories()
+    {
+        $data = ConfigConst::where('app_code', $this->appCode)
+            ->where('const_group', 'MATL_JWL_CATEGORY')
+            ->orderBy('seq')
+            ->get();
+        $this->materialCategories = $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+        $this->materials['jwl_category'] = null;
+    }
+
+    public function refreshBaseMaterials($key)
+    {
+        $data = ConfigConst::where('app_code', $this->appCode)
+            ->where('const_group', 'MATL_JWL_BASE_MATL')
+            ->orderBy('seq')
+            ->get();
+
+        $this->baseMaterials = $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['base_matl_id'] = null;
+    }
+
+    protected function onPopulateDropdowns()
+    {
+        $this->refreshUOMs();
+        $this->refreshCategories();
+    }
+
+    public function imagesCaptured($imageDataUrl)
+    {
+        $filename = uniqid() . '.jpg';
+        $this->capturedImages[] = ['url' => $imageDataUrl, 'filename' => $filename];
+    }
+
+    public function deleteImage($index)
+    {
+        if (isset($this->capturedImages[$index])) {
+            $this->deleteImages[] = $this->capturedImages[$index]['filename'];
+            unset($this->capturedImages[$index]);
+        }
+    }
+
+    public function saveAttachment()
+    {
+        $errorMessages = [];
+        // Delete attachments based on deleteImages array
+        if (!empty($this->deleteImages)) {
+            foreach ($this->deleteImages as $filename) {
+                Attachment::deleteAttachmentByFilename($this->object->id, class_basename($this->object), $filename);
+            }
+            $this->deleteImages = [];
+        }
+        // Save new attachments
+        if (!empty($this->capturedImages)) {
+            foreach ($this->capturedImages as $image) {
+                try {
+                    $filePath = Attachment::saveAttachmentByFileName($image['url'], $this->object->id, class_basename($this->object), $image['filename']);
+                    if ($filePath !== false) {
+                    } else {
+                        $errorMessages[] = "Failed to save attachment with filename {$image['filename']}";
+                    }
+                } catch (Exception $e) {
+                    $errorMessages[] = "An error occurred while saving attachment with filename {$image['filename']}: " . $e->getMessage();
+                }
+            }
+        }
+
+        Attachment::reSortSequences($this->object->id, class_basename($this->object));
+        if (!empty($errorMessages)) {
+            $errorMessage = "Failed to save attachments: " . implode(', ', $errorMessages);
+
+            $this->notify('error', $errorMessage);
+        }
+    }
+
+    public function render()
+    {
+        return view('livewire.master.materials.material-form');
+    }
+
+
+    protected $listeners = [
+        'imagesCaptured'  => 'imagesCaptured',
+        'runExe'  => 'runExe'
+    ];
+
+    protected function rules()
+    {
+        $rules = [
+            'materials.jwl_buying_price' => 'required|integer|min:0|max:9999999999',
+            'materials.jwl_selling_price' => 'required|integer|min:0|max:9999999999',
+            'materials.jwl_category' => 'required|integer|min:0|max:9999999999',
+            'matl_uoms.name' => 'required|string|min:0|max:9999999999',
+            'matl_uoms.barcode' => 'required|integer|min:0|max:9999999999',
+            'matl_boms.*.base_matl_id' => 'required',
+            'matl_boms.*.jwl_sides_cnt' => 'required|integer|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_carat' => 'required|integer|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_price' => 'required|integer|min:0|max:9999999999',
+            'materials.code' => [
+                'required',
+                'string',
+                'min:1',
+                'max:50',
+                Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+            ],
+        ];
+        return $rules;
+    }
+
+    protected $validationAttributes = [
+        'materials'                => 'Input Material',
+        'materials.*'              => 'Input Material',
+        'materials.code'      => 'Material Code',
+        'materials.jwl_category'      => 'Material Category',
+        'matl_uoms.name'      => 'Material UOM',
+        'materials.descr'      => 'Description Material',
+        'matl_uoms.barcode'      => 'Barcode Material',
+        'materials.jwl_buying_price'      => 'Buying Price Material',
+        'materials.jwl_selling_price'      => 'Selling Price Material',
+        'matl_boms.*.base_matl_id' => 'Material',
+        'matl_boms.*.jwl_sides_cnt' => 'Quantity',
+        'matl_boms.*.jwl_sides_carat' => 'Carat',
+        'matl_boms.*.jwl_sides_price' => 'Price',
+    ];
+
+    protected function onReset()
+    {
+        $this->reset('materials');
+        $this->reset('matl_uoms');
+        $this->reset('matl_boms');
+        $this->object = new Material();
+        $this->object_uoms = new MatlUom();
+        $this->object_boms = [];
+        $this->deletedItems = [];
+        $this->newItems = [];
+        $this->bom_row = 0;
+        $this->capturedImages = [];
+    }
+
+    public function onValidateAndSave()
+    {
+        $this->validateBoms();
+        $this->materials['descr'] = $this->getMaterialDescriptionsFromBOMs();
+
+        $this->object->fill($this->materials);
+        $this->object->save();
+
+        // Save Attachment
+        $this->saveAttachment();
+        $this->matl_uoms['matl_id'] = $this->object->id;
+        $this->matl_uoms['matl_code'] = $this->object->code;
+        $this->object_uoms->fill($this->matl_uoms);
+        $this->object_uoms->save();
+
+        // Handle BOMs
+        foreach ($this->matl_boms as $index => $bomData) {
+            if (!isset($this->object_boms[$index])) {
+                $this->object_boms[$index] = new MatlBom();
+            }
+            $bomData['matl_id'] = $this->object->id;
+            $bomData['matl_code'] = $this->object->id;
+            $bomData['seq'] = $index + 1;
+            $this->object_boms[$index]->fill($bomData);
+            $this->object_boms[$index]->save();
+        }
+
+        if (!$this->object->isNew()) {
+            foreach ($this->deletedItems as $deletedItemId) {
+                MatlBom::find($deletedItemId)->delete();
+            }
+        }
+        $this->emit('materialSaved', $this->object->id);
+    }
+
+    public function getMaterialDescriptionsFromBOMs()
+    {
+        $materialDescriptions = "";
+        if ($this->matl_boms && count($this->matl_boms) > 0) {
+            foreach ($this->matl_boms as $bomData) {
+
+                $baseMaterials = ConfigConst::find($bomData['base_matl_id']);
+                $jwlSidesCnt = $bomData['jwl_sides_cnt'] ?? 0;
+                $jwlSidesCarat = $bomData['jwl_sides_carat'] ?? 0;
+
+                $description = "$jwlSidesCnt $baseMaterials->str1:$jwlSidesCarat";
+                $materialDescriptions .= $description . "  ";
+            }
+
+            return $materialDescriptions;
+        }
+        return $materialDescriptions;
+    }
+
+    public function validateBoms()
+    {
+        try {
+        } catch (Exception $e) {
+            throw new Exception(Lang::get('generic.error.save', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function addBoms()
+    {
+        $bomsDetail = new MatlBom();
+        array_push($this->matl_boms, $bomsDetail);
+        // array_push($this->object_boms, $bomsDetail);
+        $this->refreshBaseMaterials($this->bom_row);
+        $newDetail = end($this->matl_boms);
+        $this->newItems[] = $newDetail;
+        $this->emit('itemAdded');
+        $this->bom_row++;
+    }
+
+    public function generateSpecs($value)
+    {
+    }
+
+    public function deleteBoms($index)
+    {
+        if (isset($this->matl_boms[$index]['id'])) {
+            $this->deletedItems[] = $this->matl_boms[$index]['id'];
+        }
+        unset($this->matl_boms[$index]);
+        $this->matl_boms = array_values($this->matl_boms);
+    }
+
+    public function runExe()
+    {
+        // $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        // $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
+
+        // // Define the arguments
+        // $maxScannedTagLimit = 1;
+        // $timeoutSeconds = 1;
+
+        // // Append arguments to the command
+        // $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+
+        // exec($command, $output, $returnValue);
+        $this->matl_uoms['barcode'] = "12345";
+    }
+}

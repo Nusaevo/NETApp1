@@ -2,7 +2,7 @@
 
 namespace App\Models\Inventories;
 
-use App\Models\BaseModel;
+use App\Models\Base\BaseModel;
 use Illuminate\Support\Str;
 
 class IvtBalUnit extends BaseModel

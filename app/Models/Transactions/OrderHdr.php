@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Models\Transactions;
-use App\Models\BaseModel;
-use App\Models\Masters\Material;
+use App\Models\Base\BaseModel;
+use App\Models\Master\Material;
 class OrderHdr extends BaseModel
 {
     protected static function boot()

@@ -82,56 +82,11 @@
 }
 
 /* UITextField Layout */
-.responsive-field {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    margin-bottom: 2rem;
-    min-height: 50px;
-}
-
-.responsive-label {
-    margin-right: 0.5rem;
-    flex: 0 0 100px;
-    text-align: right;
-}
-
-.responsive-input,
-.responsive-textarea {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-}
-
-.error-message {
-    position: absolute;
-    left: 100px;
-    /* Align with the text field start */
-    width: calc(100% - 10px);
-    /* Take full width minus some padding */
-    z-index: 3;
-    /* Ensure it's above the input fields */
-    font-size: 0.75rem;
-    /* Small font size for error messages */
-    color: #dc3545;
-    /* Red color for visibility */
-}
-
 
 .form-control,
 .form-select {
     font-size: 0.9rem;
 }
-
-.text-field-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-}
-
 /* Photo Upload Styles */
 .photo-upload-container {
     position: relative;
@@ -201,12 +156,19 @@ div[wire\:loading].loading-overlay {
     display: flex;
 }
 
+.error-message {
+    position: absolute;
+    left: 100px;
+    width: calc(100% - 10px);
+    z-index: 3;
+    font-size: 0.75rem;
+    color: #dc3545;
+}
 @media (max-width: 767px) {
-    .responsive-input-container {
-        display: flex;
-        flex-direction: column;
-    }
 
+    .responsive-label {
+        text-align: left;
+    }
     .responsive-input {
         flex: 1;
     }
@@ -227,9 +189,14 @@ div[wire\:loading].loading-overlay {
 }
 
 @media (min-width: 768px) {
+
     .responsive-field {
+        position: relative;
+        display: flex;
         flex-direction: row;
-        align-items: center;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        min-height: 50px;
     }
 
     .responsive-label {
@@ -242,6 +209,14 @@ div[wire\:loading].loading-overlay {
         flex-direction: column;
         width: 100%;
     }
+
+    .text-field-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
 
     .responsive-input,
     .responsive-textarea {
@@ -445,7 +420,6 @@ div[wire\:loading].loading-overlay {
 }
 
 
-
 .main-content {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -539,4 +513,34 @@ div[wire\:loading].loading-overlay {
 .pagination .pagination-next[disabled] {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Base styling for all pagination buttons */
+.dataTables_paginate .fg-button.ui-button {
+    background-color: #007bff !important; /* Blue background */
+    color: white !important; /* White text */
+    border: 1px solid #007bff !important; /* Blue border */
+    margin-right: 4px !important; /* Spacing between buttons */
+    border-radius: 4px !important; /* Rounded corners */
+    padding: 5px 10px !important; /* Padding inside buttons */
+    text-decoration: none !important; /* Remove underline from links */
+}
+
+/* Styling for buttons on hover */
+.dataTables_paginate .fg-button.ui-button:hover {
+    background-color: #0056b3 !important; /* Darker blue background on hover */
+    border-color: #0056b3 !important; /* Darker blue border on hover */
+}
+
+/* Styling for disabled buttons */
+.dataTables_paginate .fg-button.ui-button.ui-state-disabled {
+    background-color: #cccccc !important; /* Gray background for disabled buttons */
+    border-color: #cccccc !important; /* Gray border for disabled buttons */
+    color: #666666 !important; /* Dark gray text for disabled buttons */
+    cursor: not-allowed !important; /* Show 'not-allowed' cursor for disabled buttons */
+}
+
+/* Remove the focus outline for a cleaner look */
+.dataTables_paginate .fg-button.ui-button:focus {
+    outline: none !important;
 }

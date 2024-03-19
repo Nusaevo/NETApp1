@@ -15,6 +15,7 @@ class UITextField extends Component
     public $span;
     public $onChanged;
     public $action;
+    public $rows; // New parameter for rows
 
     public function __construct(
         $label = '',
@@ -27,7 +28,8 @@ class UITextField extends Component
         $visible = 'true',
         $placeHolder = 'true',
         $span = 'Full',
-        $onChanged = ''
+        $onChanged = '',
+        $rows = 5
     ) {
         $this->label = $label;
         $this->model = $model;
@@ -39,6 +41,7 @@ class UITextField extends Component
         $this->placeHolder = $placeHolder;
         $this->span = $span;
         $this->onChanged = $onChanged;
+        $this->rows = $rows;
     }
 
     public function render()

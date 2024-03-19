@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Settings\ConfigUser;
+use App\Models\Config\ConfigUser;
 use Faker\Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;

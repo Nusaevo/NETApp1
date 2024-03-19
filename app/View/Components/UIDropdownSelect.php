@@ -6,7 +6,6 @@ use Illuminate\View\Component;
 
 class UIDropdownSelect extends Component
 {
-    public $clickEvent;
     public $label;
     public $model;
     public $options;
@@ -18,11 +17,11 @@ class UIDropdownSelect extends Component
     public $onChanged;
     public $span;
     public $modelType;
+    public $clickEvent;
 
-    public function __construct($clickEvent = null, $label = '', $model, $options, $selectedValue = null, $required = 'false',
-    $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '')
+    public function __construct($label = '', $model = '', $options, $selectedValue = null, $required = 'false',
+    $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '', $clickEvent = null)
     {
-        $this->clickEvent = $clickEvent;
         $this->label = $label;
         $this->model = $model;
         $this->options = $options;
@@ -34,6 +33,7 @@ class UIDropdownSelect extends Component
         $this->onChanged = $onChanged;
         $this->span = $span;
         $this->modelType = $modelType;
+        $this->clickEvent = $clickEvent;
     }
 
     public function render()
