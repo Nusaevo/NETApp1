@@ -48,12 +48,6 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Default Value", "default_value")
                  ->searchable()
                  ->sortable(),
-             Column::make("Status", "status_code")
-                 ->searchable()
-                 ->sortable()
-                 ->format(function ($value, $row, Column $column) {
-                     return Status::getStatusString($value);
-                 }),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

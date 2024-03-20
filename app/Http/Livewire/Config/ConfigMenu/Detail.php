@@ -36,10 +36,8 @@ class Detail extends BaseComponent
     {
         $rules = [
             'inputs.app_id' => 'required',
-            'inputs.menu_header' => 'required|string|min:1|max:100',
             'inputs.menu_caption' => 'required|string|min:1|max:100',
-            'inputs.link' => 'required|string|min:1|max:100',
-            'inputs.seq' => 'required',
+            'inputs.menu_link' => 'required|string|min:1|max:100',
             'inputs.code' => [
                 'required',
                 'string',
@@ -57,10 +55,8 @@ class Detail extends BaseComponent
         'inputs.code'           => 'Menu Code',
         'inputs.app_id'      => 'Menu Application',
         'inputs.menu_header'      => 'Menu Header',
-        'inputs.sub_menu'      => 'Sub Menu',
         'inputs.menu_caption'      => 'Menu Caption',
-        'inputs.seq'      => 'Menu Seq',
-        'inputs.link'      => 'Menu link'
+        'inputs.menu_link'      => 'Menu link'
     ];
 
     public function refreshApplication()

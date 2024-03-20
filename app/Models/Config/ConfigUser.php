@@ -103,7 +103,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
 
     public function ConfigGroup()
     {
-        return $this->belongsToMany(ConfigGroup::class, 'config_user_groups', 'user_id', 'group_id');
+        return $this->belongsToMany(ConfigGroup::class, 'config_grpusers', 'user_id', 'group_id');
     }
 
     public function isNew()

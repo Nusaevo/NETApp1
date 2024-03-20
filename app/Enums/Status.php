@@ -9,8 +9,8 @@ class Status
     const PENDING = 'PND';
     const APPROVED = 'APPR';
     const REJECTED = 'RJCT';
-    const ACTIVE = 'ACT';
-    const DEACTIVATED = 'DACT';
+    const ACTIVE = 'A';
+    const DEACTIVATED = 'N';
     const IN_PROGRESS = 'IN_PRG';
     const COMPLETED = 'CMPLT';
     const CANCELED = 'CNCL';

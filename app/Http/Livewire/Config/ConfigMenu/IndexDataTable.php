@@ -49,9 +49,6 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Menu Caption", "menu_caption")
                 ->searchable()
                 ->sortable(),
-            Column::make("Sequence", "seq")
-                ->searchable()
-                ->sortable(),
             Column::make("Status", "status_code")
                 ->searchable()
                 ->sortable()

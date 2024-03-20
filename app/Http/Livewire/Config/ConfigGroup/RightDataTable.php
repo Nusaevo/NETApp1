@@ -32,7 +32,6 @@ class RightDataTable extends BaseDataTableComponent
         return ConfigMenu::query()
             ->where('app_id', $this->appId)
             ->orderBy('menu_header')
-            ->orderBy('seq')
             ->select();
     }
 

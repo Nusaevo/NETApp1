@@ -36,7 +36,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Name", "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Version", "version")
+            Column::make("Latest Version", "latest_version")
                 ->searchable()
                 ->sortable(),
             Column::make("Status", "status_code")

@@ -22,7 +22,7 @@ class ConfigAppl extends BaseModel
     protected $fillable = [
         'code',
         'name',
-        'version',
+        'latest_version',
         'descr',
         'status_code'
     ];

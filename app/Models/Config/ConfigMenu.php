@@ -24,10 +24,8 @@ class ConfigMenu extends BaseModel
         'app_id',
         'app_code',
         'menu_header',
-        'sub_menu',
         'menu_caption',
-        'link',
-        'seq'
+        'menu_link'
     ];
 
     public function scopeGetActiveData()

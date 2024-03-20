@@ -41,7 +41,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make("Group Name", "name")
+            Column::make("Group Name", "descr")
                 ->searchable()
                 ->sortable(),
             // Column::make("User LoginID", "ConfigUser.code")
