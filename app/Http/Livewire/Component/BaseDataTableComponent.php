@@ -9,6 +9,9 @@ use Exception;
 use App\Enums\Status;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Util\GenericExport; // You'll create this export class next
+
 
 abstract class BaseDataTableComponent extends DataTableComponent
 {
@@ -102,4 +105,38 @@ abstract class BaseDataTableComponent extends DataTableComponent
         }
         $this->emit('refreshData');
     }
+
+    public function bulkActions(): array
+    {
+        return [
+            'export' => 'Export excel',
+        ];
+    }
+
+    public function export()
+    {
+        // Start query
+        $query = $this->model::query();
+
+        // Check and apply filters if any
+        if ($filters = $this->getFilters()) {
+            foreach ($filters as $filter => $value) {
+                // Apply the filter to the query. This might require custom logic depending on how your filters are set up.
+                // Example:
+                // if ($filter === 'status' && $value) {
+                //     $query->where('status', $value);
+                // }
+            }
+        }
+
+        // You may need to modify this part to ensure $data contains the results you want to export
+        $data = $query->get();
+
+        // Define the filename based on the model's basename and the current timestamp
+        $filename = class_basename($this->model) . '-export-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+        // Return the Excel download response
+        return Excel::download(new GenericExport($data), $filename);
+    }
+
 }

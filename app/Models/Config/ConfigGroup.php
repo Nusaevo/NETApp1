@@ -21,7 +21,7 @@ class ConfigGroup extends BaseModel
         'code',
         'app_id',
         'app_code',
-        'name',
+        'descr',
         'status_code'
     ];
 

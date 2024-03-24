@@ -96,6 +96,10 @@ class RightDataTable extends BaseDataTableComponent
         $this->performUpdateActions();
     }
 
+    public function bulkActions(): array
+    {
+        return [];
+    }
 
 
     public function columns(): array
@@ -104,7 +108,7 @@ class RightDataTable extends BaseDataTableComponent
             Column::make("", "id")
                 ->format(function ($value, $row, Column $column) {
                     return "<input class='form-check-input' type='checkbox' wire:model.lazy='selectedRows." . $row->id . ".selected'>";
-                })
+                })->sortable()
                 ->html(),
             Column::make("Application Code", "ConfigAppl.name")
                 ->searchable()
@@ -115,6 +119,12 @@ class RightDataTable extends BaseDataTableComponent
             Column::make("Menu Caption", "menu_caption")
                 ->searchable()
                 ->sortable(),
+             Column::make("Sequence", "id")
+                ->format(function ($value, $row, Column $column) {
+                    $sequenceValue = isset($this->selectedRows[$row->id]['sequence']) ? $this->selectedRows[$row->id]['sequence'] : '';
+                    return "<input class='form-control' type='number' wire:model.lazy='selectedRows.{$row->id}.sequence' value='{$sequenceValue}'>";
+                })
+                ->html(),
             Column::make("Create", "id")
                 ->format(function ($value, $row, Column $column) {
                     $isChecked = isset($this->selectedRows[$row->id]['create']) ? 'checked' : '';

@@ -25,6 +25,7 @@ class ConfigRight extends BaseModel
         'group_id',
         'menu_id',
         'group_code',
+        'menu_seq',
         'menu_code',
         'trustee'
     ];
@@ -56,7 +57,7 @@ class ConfigRight extends BaseModel
             $configGroup = ConfigUser::find($userId)->ConfigGroup()->pluck('config_groups.id');
 
             if ($configGroup) {
-                $configMenu = ConfigMenu::where('link', $firstSegment)->first();
+                $configMenu = ConfigMenu::where('menu_link', $firstSegment)->first();
 
                 if ($configMenu) {
                     $configRight = ConfigRight::whereIn('group_id', $configGroup)
@@ -80,7 +81,7 @@ class ConfigRight extends BaseModel
 
     public static function getPermissionsByMenu($menu)
     {
-        $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
+        $permissions = ['create' => true, 'read' => true, 'update' => true, 'delete' => true];
 
         $userId = Auth::check() ? Auth::user()->id : null;
         // $appCode = config('app.name');
@@ -89,7 +90,7 @@ class ConfigRight extends BaseModel
             $configGroup = ConfigUser::find($userId)->ConfigGroup()->pluck('config_groups.id');
 
             if ($configGroup) {
-                $configMenu = ConfigMenu::where('link', $menu)->first();
+                $configMenu = ConfigMenu::where('menu_link', $menu)->first();
 
                 if ($configMenu) {
                     $configRight = ConfigRight::whereIn('group_id', $configGroup)

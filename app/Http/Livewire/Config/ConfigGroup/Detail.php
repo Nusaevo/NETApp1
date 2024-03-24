@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
 use DB;
+use App\Enums\Status;
 
 
 class Detail extends BaseComponent
@@ -122,14 +123,14 @@ class Detail extends BaseComponent
     {
         $rules = [
             'inputs.app_id' =>  'required',
-            'inputs.name' => 'required|string|min:1|max:100',
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
-            ],
+            'inputs.descr' => 'required|string|min:1|max:100',
+            // 'inputs.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
+            // ],
         ];
         return $rules;
     }
@@ -139,7 +140,7 @@ class Detail extends BaseComponent
         'inputs.*'              => 'Input Group',
         'inputs.code'           => 'Group Code',
         'inputs.app_id'      => 'Application',
-        'inputs.name'      => 'Group Name'
+        'inputs.descr'      => 'Group Descr'
     ];
 
     protected function onReset()
@@ -195,7 +196,18 @@ class Detail extends BaseComponent
         $userIds = array_keys(array_filter($this->selectedUserIds, function ($value) {
             return $value['selected'] ?? false;
         }));
-        $this->object->ConfigUser()->sync($userIds);
+
+        $syncData = [];
+        foreach ($userIds as $userId) {
+            $configUser = ConfigUser::find($userId);
+            $syncData[$userId] = [
+                'group_code' =>  $this->object->code,
+                'user_code' => $configUser->code,
+                'status_code' => Status::ACTIVE,
+            ];
+        }
+        $this->object->ConfigUser()->sync($syncData);
+
         ConfigRight::saveRights($this->object->id, $this->selectedMenus, $this->object->code);
     }
 

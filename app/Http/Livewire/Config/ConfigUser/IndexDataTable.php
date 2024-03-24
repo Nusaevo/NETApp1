@@ -39,6 +39,8 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
+            Column::make('Created Date', 'created_at')
+                ->sortable(),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

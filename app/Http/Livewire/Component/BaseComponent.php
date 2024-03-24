@@ -48,7 +48,7 @@ class BaseComponent extends Component
                 return '-' . strtolower($match[1]);
             }, $segment);
         }, explode('.', $this->baseRoute)));
-        
+
         // Convert the entire route to lowercase except the first character of each segment
         $this->renderRoute = implode('.', array_map(function($segment) {
             return lcfirst($segment);
@@ -68,7 +68,7 @@ class BaseComponent extends Component
 
         $fullPath = implode('/', $segments);
         $this->permissions = ConfigRight::getPermissionsByMenu($fullPath);
-        
+
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');
         }

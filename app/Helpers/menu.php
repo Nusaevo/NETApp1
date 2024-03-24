@@ -27,8 +27,11 @@ if (!function_exists('generateMenu')) {
                 $userGroups = ConfigUser::find($userId)->ConfigGroup()->pluck('config_groups.id');
 
                 if ($userGroups) {
-                    $menuIds = ConfigRight::whereIn('group_id', $userGroups)->pluck('menu_id');
-                    $configMenus = ConfigMenu::whereIn('id', $menuIds)->get()->sortBy('seq');
+                    // $menuIds = ConfigRight::whereIn('group_id', $userGroups)->pluck('menu_id');
+                    // $configMenus = ConfigMenu::whereIn('id', $menuIds)->get()->sortBy('seq');
+
+                    $configMenus = ConfigMenu::all()->sortBy('seq');
+
                     if ($configMenus->isEmpty()) {
                         return $mainMenu;
                     }
@@ -102,40 +105,39 @@ if (!function_exists('generateMenu')) {
                     // }
                     foreach ($configMenus as $configMenu) {
                         $menuHeader = $configMenu->menu_header;
+                        // Create and add the menu item
+                        $menuItem = [
+                            'title' => $configMenu->menu_caption,
+                            'path' => $configMenu->menu_link,
+                            'bullet' => '<span class="bullet bullet-dot"></span>',
+                        ];
 
-                        if (!in_array($menuHeader, $uniqueMenuHeaders)) {
-                            $uniqueMenuHeaders[] = $menuHeader;
-
-                            // Create and add the menu item
-                            $menuItem = [
-                                'title' => $menuHeader,
-                                'icon' => [
-                                    'svg' => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
-                                    'font' => '<i class="bi bi-person fs-2"></i>',
-                                ],
-                                'classes' => ['item' => 'menu-accordion'],
-                                'attributes' => [
-                                    'data-kt-menu-trigger' => 'click',
-                                ],
-                                'sub' => [
-                                    'class' => 'menu-sub-accordion menu-active-bg',
-                                    'items' => [],
-                                ],
-                            ];
-
-                            foreach ($configMenus as $subMenu) {
-                                if ($subMenu->menu_header === $menuHeader) {
-                                    $menuItem['sub']['items'][] = [
-                                        'title' => $subMenu->menu_caption,
-                                        'path' => $subMenu->link,
-                                        'bullet' => '<span class="bullet bullet-dot"></span>',
-                                    ];
-                                }
+                        // Check if the menu header is not empty and not a string empty
+                        if (trim($menuHeader) !== '') {
+                            // If the menu header is not already added, create a new top-level menu item
+                            if (!isset($mainMenu[$menuHeader])) {
+                                $mainMenu[$menuHeader] = [
+                                    'title' => $menuHeader,
+                                    'icon' => [
+                                        'svg' => theme()->getSvgIcon("demo1/media/icons/duotune/abstract/abs027.svg", "svg-icon-2"),
+                                        'font' => '<i class="bi bi-person fs-2"></i>',
+                                    ],
+                                    'classes' => ['item' => 'menu-accordion'],
+                                    'attributes' => [
+                                        'data-kt-menu-trigger' => 'click',
+                                    ],
+                                    'sub' => [
+                                        'class' => 'menu-sub-accordion menu-active-bg',
+                                        'items' => [],
+                                    ],
+                                ];
                             }
-
+                            $mainMenu[$menuHeader]['sub']['items'][] = $menuItem;
+                        } else {
                             $mainMenu[] = $menuItem;
                         }
                     }
+
                 }
             } catch (QueryException $e) {
                 // Handle the case where the config_menus table doesn't exist

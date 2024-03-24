@@ -1,4 +1,4 @@
-<!--begin::Toolbar-->
+{{-- <!--begin::Toolbar-->
 <div class="toolbar" id="kt_toolbar">
     <!--begin::Container-->
     <div id="kt_toolbar_container" class="{{ theme()->printHtmlClasses('toolbar-container', false) }} d-flex flex-stack">
@@ -6,7 +6,7 @@
             {{ theme()->getView('layout/page-title/_default') }}
         @endif
 
-		{{-- <!--begin::Actions-->
+		<!--begin::Actions-->
         <div class="d-flex align-items-center py-1">
             <!--begin::Wrapper-->
             <div class="me-4">
@@ -28,8 +28,8 @@
             </div>
             <!--end::Wrapper-->
         </div>
-		<!--end::Actions--> --}}
+		<!--end::Actions-->
     </div>
     <!--end::Container-->
 </div>
-<!--end::Toolbar-->
+<!--end::Toolbar--> --}}
