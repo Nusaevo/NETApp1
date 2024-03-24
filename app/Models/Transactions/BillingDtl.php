@@ -7,7 +7,7 @@ use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
-use App\Models\Master\Material;
+use App\Models\TrdJewel1\Master\Material;
 
 class OrderDtl extends Model
 {

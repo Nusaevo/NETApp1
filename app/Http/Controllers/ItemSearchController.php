@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Master\Material;
+use App\Models\TrdJewel1\Master\Material;
 use Illuminate\Http\Request;
 use DB;
 

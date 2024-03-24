@@ -5,7 +5,7 @@ namespace App\Models\Base;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Base\BaseModels\Attachment;
+use App\Models\Base\Attachment;
 use App\Traits\BaseTrait;
 use Illuminate\Support\Facades\Schema;
 

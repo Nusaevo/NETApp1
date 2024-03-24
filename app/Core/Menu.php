@@ -505,8 +505,7 @@ class Menu {
     }
 
     public function build() {
-
-        $this->items = generateMenu(auth()->user()->code);
+        $this->items = generateMenu(auth()->user()->id);
         foreach ( $this->items as $item) {
             $this->_generateItem($item);
         }

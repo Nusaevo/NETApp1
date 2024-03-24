@@ -21,6 +21,6 @@ class UITabView extends Component
 
     public function render()
     {
-        return view('components.ui-tab-view');
+        return view('component.ui-tab-view');
     }
 }

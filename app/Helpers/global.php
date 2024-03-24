@@ -1,6 +1,9 @@
 <?php
 
-
+use App\Models\Config\ConfigMenu;
+use App\Models\Config\ConfigUser;
+use App\Models\Config\ConfigGroup;
+use App\Models\Config\ConfigRight;
 if (!function_exists('populateArrayFromModel')) {
     /**
      * Populate an array with all column values from a model.
@@ -70,3 +73,27 @@ if (!function_exists('mapDropdownData')) {
     }
 
 }
+
+
+if (!function_exists('getAppIds')) {
+    function getAppIds()
+    {
+        if (Auth::check()) {
+            $userId = Auth::id();
+            $appIds = ConfigUser::where('id', $userId)
+                        ->with(['ConfigGroup' => function($query) {
+                            $query->select('app_id');
+                        }])
+                        ->firstOrFail()
+                        ->ConfigGroup
+                        ->pluck('app_id')
+                        ->unique()
+                        ->toArray();
+
+            return $appIds;
+        }
+
+        return [];
+    }
+}
+

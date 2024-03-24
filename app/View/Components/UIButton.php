@@ -16,9 +16,10 @@ class UIButton extends Component
     public $iconPath;
     public $type;
     public $id;
+    public $onClickJavascript = "";
 
     public function __construct($clickEvent, $buttonName, $loading = 'true', $enabled = 'true',
-    $visible = 'true', $action = '', $cssClass = '', $iconPath = null, $type = "", $id = "")
+    $visible = 'true', $action = '', $cssClass = '', $iconPath = null, $type = "", $id = "", $onClickJavascript = "")
     {
         $this->clickEvent = $clickEvent;
         $this->buttonName = $buttonName;
@@ -30,10 +31,11 @@ class UIButton extends Component
         $this->iconPath = $iconPath;
         $this->type = $type;
         $this->id = $id;
+        $this->onClickJavascript = $onClickJavascript;
     }
 
     public function render()
     {
-        return view('components.ui-button');
+        return view('component.ui-button');
     }
 }

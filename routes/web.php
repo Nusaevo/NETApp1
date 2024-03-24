@@ -65,9 +65,10 @@ Route::middleware('auth')->group(function () {
     }
 
     foreach ($livewireComponents as $componentClass) {
-        if (Str::contains($componentClass, 'DataTable')) {
+        if (Str::contains($componentClass, ['DataTable', 'Component'])) {
             continue;
         }
+
         $componentPath = Str::of($componentClass)->after("$namespaceBase\\")->replace('\\', '/');
         $componentParts = explode('/', $componentPath); // Split the path into parts
 

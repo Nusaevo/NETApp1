@@ -2,7 +2,7 @@
 
 namespace App\Models\Transactions;
 use App\Models\Base\BaseModel;
-use App\Models\Master\Material;
+use App\Models\TrdJewel1\Master\Material;
 class OrderHdr extends BaseModel
 {
     protected static function boot()

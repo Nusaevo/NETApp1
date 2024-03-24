@@ -19,6 +19,6 @@ class UITable extends Component
 
     public function render()
     {
-        return view('components.ui-table');
+        return view('component.ui-table');
     }
 }

@@ -20,6 +20,6 @@ class UIExpandableCard extends Component
 
     public function render()
     {
-        return view('components.ui-expandable-card');
+        return view('component.ui-expandable-card');
     }
 }

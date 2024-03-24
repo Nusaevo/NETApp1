@@ -13,6 +13,6 @@ class UIListBody extends Component
 
     public function render()
     {
-        return view('components.ui-list-body');
+        return view('component.ui-list-body');
     }
 }

@@ -17,6 +17,6 @@ class UIPageCard extends Component
 
     public function render()
     {
-        return view('components.ui-page-card');
+        return view('component.ui-page-card');
     }
 }

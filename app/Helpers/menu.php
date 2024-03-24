@@ -5,14 +5,15 @@ use App\Models\Config\ConfigUser;
 use App\Models\Config\ConfigGroup;
 use App\Models\Config\ConfigRight;
 use Illuminate\Database\QueryException;
-
+use Illuminate\Support\Facades\Route;
 if (!function_exists('generateMenu')) {
-    function generateMenu($authCode)
+    function generateMenu($userId)
     {
+        $app_code = Session::get('app_code');
         $mainMenu = [
             [
                 'title' => 'Home',
-                'path' => '',
+                'path' => $app_code ? $app_code.'/Home' : '',
                 'icon' => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
             ],
             [
@@ -21,21 +22,27 @@ if (!function_exists('generateMenu')) {
             ],
         ];
 
-        $userId = Auth::check() ? Auth::user()->id : '';
         if (!empty($userId)) {
             try {
-                $userGroups = ConfigUser::find($userId)->ConfigGroup()->pluck('config_groups.id');
 
-                if ($userGroups) {
-                    // $menuIds = ConfigRight::whereIn('group_id', $userGroups)->pluck('menu_id');
-                    // $configMenus = ConfigMenu::whereIn('id', $menuIds)->get()->sortBy('seq');
+                $userGroups = ConfigUser::find($userId)
+                ->ConfigGroup()
+                ->where('app_code', $app_code)
+                ->pluck('config_groups.id');
 
-                    $configMenus = ConfigMenu::all()->sortBy('seq');
+                if ($userGroups->isNotEmpty()) {
+                    $configMenus = ConfigMenu::query()
+                    ->join('config_rights', 'config_menus.id', '=', 'config_rights.menu_id')
+                    ->whereIn('config_rights.group_id', $userGroups) // No need to pluck 'id' again
+                    ->where('config_menus.app_code', $app_code)
+                    ->select('config_menus.*', 'config_rights.menu_seq') // Include menu_seq if needed outside
+                    ->distinct() // Ensure unique menus are selected, if there are duplicates due to joins
+                    ->orderBy('config_rights.menu_seq') // Ensures ordering by menu_seq
+                    ->get();
 
                     if ($configMenus->isEmpty()) {
                         return $mainMenu;
                     }
-
                     $uniqueMenuHeaders = [];
                     // $groupedMenus = [];
 
@@ -104,6 +111,9 @@ if (!function_exists('generateMenu')) {
                     //     $mainMenu[] = $appMenuItem;
                     // }
                     foreach ($configMenus as $configMenu) {
+                        if (!Route::has(str_replace('/', '.', $configMenu->menu_link))) {
+                            continue;
+                        }
                         $menuHeader = $configMenu->menu_header;
                         // Create and add the menu item
                         $menuItem = [

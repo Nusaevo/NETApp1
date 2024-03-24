@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Session;
-use App\Models\Config\ConfigUser;
+use App\Models\Config\ConfigAppl;
 use Illuminate\Support\Facades\Log;
+use App\Models\Config\ConfigUser;
 
 class LoginRequest extends FormRequest
 {
@@ -57,20 +58,18 @@ class LoginRequest extends FormRequest
         }
         $salt = Str::random(40);
         $appKey = config('app.key');
+        RateLimiter::clear($this->throttleKey());
         Session::put('session_salt', $salt . $appKey);
-        $userId = Auth::check() ? Auth::user()->id : '';
-        $configUser = ConfigUser::where('id', $userId)->first();
 
-        if ($configUser) {
-            $configGroup = $configUser->configGroup()->first();
-
-            if ($configGroup) {
-                $appCode = $configGroup->app_code;
-                Session::put('app_code', $appCode);
+        $appIds = getAppIds();
+        if (!empty($appIds)) {
+            $firstAppId = $appIds[0];
+            $firstApp = ConfigAppl::find($firstAppId);
+            if ($firstApp) {
+                $firstAppCode = $firstApp->code;
+                Session::put('app_code', $firstAppCode);
             }
         }
-
-        RateLimiter::clear($this->throttleKey());
     }
 
     /**

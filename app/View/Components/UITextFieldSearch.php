@@ -37,6 +37,6 @@ class UITextFieldSearch extends Component
 
     public function render()
     {
-        return view('components.ui-text-field-search');
+        return view('component.ui-text-field-search');
     }
 }

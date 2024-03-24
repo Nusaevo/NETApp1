@@ -29,6 +29,6 @@ class UIChecklist extends Component
 
     public function render()
     {
-        return view('components.ui-checklist');
+        return view('component.ui-checklist');
     }
 }

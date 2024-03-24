@@ -16,6 +16,6 @@ class UITh extends Component
 
     public function render()
     {
-        return view('components.ui-th');
+        return view('component.ui-th');
     }
 }

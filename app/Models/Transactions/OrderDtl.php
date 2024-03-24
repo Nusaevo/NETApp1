@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models\Transactions;
-use App\Models\Master\Material;
+use App\Models\TrdJewel1\Master\Material;
 use App\Models\Base\BaseModel;
 
 class OrderDtl extends BaseModel

@@ -46,6 +46,6 @@ class UITextField extends Component
 
     public function render()
     {
-        return view('components.ui-text-field');
+        return view('component.ui-text-field');
     }
 }

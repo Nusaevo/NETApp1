@@ -1,10 +1,4 @@
-@php
-    $logoFileName = 'logo.png';
 
-    if (theme()->getOption('layout', 'aside/theme') === 'light') {
-        $logoFileName = 'logo.png';
-    }
-@endphp
 
 {{--begin::Aside--}}
 <div
@@ -20,31 +14,27 @@
 >
 
     {{--begin::Brand--}}
-    <div class="aside-logo flex-column-auto" id="kt_aside_logo">
-        {{--begin::Logo--}}
-        <a href="{{ theme()->getPageUrl('') }}">
-            <img alt="Logo" src="{{ asset('images/'. $logoFileName) }}" class="h-50px logo"/>
-        </a>
-        {{--end::Logo--}}
-
+    <div class="aside-logo flex-column-auto d-flex justify-content-end" id="kt_aside_logo">
         @if (theme()->getOption('layout', 'aside/minimize') === true)
             {{--begin::Aside toggler--}}
             <div id="kt_aside_toggle" class="btn btn-icon w-auto px-0 btn-active-color-primary aside-toggle"
-                 data-kt-toggle="true"
-                 data-kt-toggle-state="active"
-                 data-kt-toggle-target="body"
-                 data-kt-toggle-name="aside-minimize"
+                data-kt-toggle="true"
+                data-kt-toggle-state="active"
+                data-kt-toggle-target="body"
+                data-kt-toggle-name="aside-minimize"
             >
-
-                {!! theme()->getSvgIcon("icons/duotune/arrows/arr080.svg", "svg-icon-1 rotate-180") !!}
+                {!! theme()->getSvgIcon("icons/duotune/arrows/arr079.svg", "svg-icon-1 rotate-180") !!}
             </div>
             {{--end::Aside toggler--}}
         @endif
     </div>
+
+
     {{--end::Brand--}}
 
     {{--begin::Aside menu--}}
     <div class="aside-menu flex-column-fluid">
+        @livewire('component.application-component')
         {{ theme()->getView('layout/aside/_menu') }}
     </div>
     {{--end::Aside menu--}}

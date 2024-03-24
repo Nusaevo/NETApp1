@@ -83,10 +83,10 @@ class Detail extends BaseComponent
     {
         if (!is_null($this->object->id)) {
             $configRights = ConfigRight::where('group_id', $this->object->id)->get();
-
             foreach ($configRights as $configRight) {
                 $this->selectedMenus[$configRight->menu_id] = [
                     'selected' => true,
+                    'menu_seq' => $configRight->menu_seq,
                     'create' => strpos($configRight->trustee, 'C') !== false,
                     'read' => strpos($configRight->trustee, 'R') !== false,
                     'update' => strpos($configRight->trustee, 'U') !== false,
@@ -208,7 +208,7 @@ class Detail extends BaseComponent
         }
         $this->object->ConfigUser()->sync($syncData);
 
-        ConfigRight::saveRights($this->object->id, $this->selectedMenus, $this->object->code);
+        ConfigRight::saveRights($this->object, $this->selectedMenus);
     }
 
     public function changeStatus()

@@ -33,7 +33,7 @@ class BaseComponent extends Component
     public $route;
     public function mount($action = null, $objectId = null)
     {
-        $this->appCode =  Session::get('app_code', '');
+        // $this->appCode =  Session::get('app_code', '');
         // Get all URL segments
 
         $this->action = $action ? $action : null;
@@ -44,8 +44,13 @@ class BaseComponent extends Component
 
         $this->renderRoute = 'livewire.' . implode('.', array_map(function($segment) {
             // Insert hyphens after the first uppercase letter in each word, except for the very first character
-            return preg_replace_callback('/\B([A-Z])/', function($match) {
-                return '-' . strtolower($match[1]);
+            return preg_replace_callback('/(?<=\w)([A-Z])/', function($match) use ($segment) {
+                $prevChar = substr($segment, strpos($segment, $match[0]) - 1, 1);
+                if ($prevChar === '_') {
+                    return $match[0];
+                } else {
+                    return '-' . strtolower($match[1]);
+                }
             }, $segment);
         }, explode('.', $this->baseRoute)));
 
@@ -72,6 +77,7 @@ class BaseComponent extends Component
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');
         }
+
         if (in_array($this->actionValue, ['Edit', 'View'])) {
             $this->onPopulateDropdowns();
             $this->onLoad();

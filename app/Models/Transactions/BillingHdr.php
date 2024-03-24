@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Traits\ModelTrait;
-use App\Models\Master\Partner;
+use App\Models\TrdJewel1\Master\Partner;
 
 class BillingHdr extends Model
 {

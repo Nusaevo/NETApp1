@@ -16,6 +16,6 @@ class UITab extends Component
 
     public function render()
     {
-        return view('components.ui-tab');
+        return view('component.ui-tab');
     }
 }

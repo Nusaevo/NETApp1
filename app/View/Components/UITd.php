@@ -16,6 +16,6 @@ class UITd extends Component
 
     public function render()
     {
-        return view('components.ui-td');
+        return view('component.ui-td');
     }
 }

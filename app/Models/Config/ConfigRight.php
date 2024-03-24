@@ -27,7 +27,9 @@ class ConfigRight extends BaseModel
         'group_code',
         'menu_seq',
         'menu_code',
-        'trustee'
+        'trustee',
+        'app_id',
+        'app_code'
     ];
 
     public function ConfigGroup()
@@ -45,89 +47,75 @@ class ConfigRight extends BaseModel
         return $this->belongsTo(ConfigMenu::class, 'menu_id', 'id');
     }
 
-    public static function getPermissions()
+    public static function getPermissionsByMenu($menu, $appCode = null)
     {
         $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
 
-        $userId = Auth::check() ? Auth::user()->id : null;
-        // $appCode = config('app.name');
-        $firstSegment = Request::segment(1);
+        // Use the provided app_code or fallback to the session.
+        $appCode = $appCode ?: session('app_code');
 
-        if (!empty($firstSegment) && !is_null($userId)) {
-            $configGroup = ConfigUser::find($userId)->ConfigGroup()->pluck('config_groups.id');
+        if (Auth::check()) {
+            $userId = Auth::id();
 
-            if ($configGroup) {
-                $configMenu = ConfigMenu::where('menu_link', $firstSegment)->first();
+            // First, get the user's group IDs
+            $userGroupIds = ConfigUser::find($userId)
+            ->ConfigGroup()
+            ->pluck('config_groups.id');
 
-                if ($configMenu) {
-                    $configRight = ConfigRight::whereIn('group_id', $configGroup)
-                    ->where('menu_id', $configMenu->id)
-                    ->first();
+            if ($userGroupIds->isEmpty()) {
+                return $permissions;
+            }
 
-                    if ($configRight) {
-                        // Parsing the trustee string
-                        $trustee = $configRight->trustee;
-                        $permissions['create'] = strpos($trustee, 'C') !== false;
-                        $permissions['read'] = strpos($trustee, 'R') !== false;
-                        $permissions['update'] = strpos($trustee, 'U') !== false;
-                        $permissions['delete'] = strpos($trustee, 'D') !== false;
-                    }
-                }
+            // Find the menu based on the menu_link and app_code
+            $configMenu = ConfigMenu::where('menu_link', $menu)
+                                    ->whereHas('ConfigAppl', function ($query) use ($appCode) {
+                                        $query->where('app_code', $appCode);
+                                    })
+                                    ->first();
+
+            if (!$configMenu) {
+                return $permissions;
+            }
+
+            // Now, find the ConfigRight based on the user's group and the found menu
+            $configRight = ConfigRight::whereIn('group_id', $userGroupIds)
+                                    ->where('menu_id', $configMenu->id)
+                                    ->first();
+
+            if ($configRight) {
+                // Parsing the trustee string
+                $trustee = $configRight->trustee;
+                $permissions['create'] = strpos($trustee, 'C') !== false;
+                $permissions['read'] = strpos($trustee, 'R') !== false;
+                $permissions['update'] = strpos($trustee, 'U') !== false;
+                $permissions['delete'] = strpos($trustee, 'D') !== false;
             }
         }
 
         return $permissions;
     }
 
-    public static function getPermissionsByMenu($menu)
+
+    public static function saveRights($configGroup, $selectedMenus)
     {
-        $permissions = ['create' => true, 'read' => true, 'update' => true, 'delete' => true];
-
-        $userId = Auth::check() ? Auth::user()->id : null;
-        // $appCode = config('app.name');
-        if (!is_null($userId)) {
-
-            $configGroup = ConfigUser::find($userId)->ConfigGroup()->pluck('config_groups.id');
-
-            if ($configGroup) {
-                $configMenu = ConfigMenu::where('menu_link', $menu)->first();
-
-                if ($configMenu) {
-                    $configRight = ConfigRight::whereIn('group_id', $configGroup)
-                    ->where('menu_id', $configMenu->id)
-                    ->first();
-
-                    if ($configRight) {
-                        // Parsing the trustee string
-                        $trustee = $configRight->trustee;
-                        $permissions['create'] = strpos($trustee, 'C') !== false;
-                        $permissions['read'] = strpos($trustee, 'R') !== false;
-                        $permissions['update'] = strpos($trustee, 'U') !== false;
-                        $permissions['delete'] = strpos($trustee, 'D') !== false;
-                    }
-                }
-            }
-        }
-
-        return $permissions;
-    }
-
-    public static function saveRights($groupId, $selectedMenus, $groupCode = null)
-    {
-        static::where('group_id', $groupId)
+        static::where('group_id', $configGroup->id)
             ->whereNotIn('menu_id', array_keys($selectedMenus))
             ->delete();
-
         foreach ($selectedMenus as $menuId => $permissions) {
             $trustee = static::prepareTrusteeString($permissions); // Assume prepareTrusteeString is moved or adapted for the model
-
             // Update or create ConfigRight for each menuId with necessary data
             static::updateOrCreate(
-                ['group_id' => $groupId, 'menu_id' => $menuId],
                 [
+                    'group_id' => $configGroup->id,
+                    'menu_id' => $menuId,
+                ],
+                [
+                    'menu_seq' => $permissions['menu_seq'],
                     'trustee' => $trustee,
-                    'group_code' => $groupCode ?? ConfigGroup::find($groupId)->code ?? '',
-                    'menu_code' => ConfigMenu::where('id', $menuId)->value('code') ?? '',
+                    'group_code' => $configGroup->code,
+                    'menu_code' => $menuCodes[$menuId] ?? '',
+                    'app_id' => $configGroup->app_id,
+                    'app_code' => $configGroup->app_code,
                 ]
             );
         }

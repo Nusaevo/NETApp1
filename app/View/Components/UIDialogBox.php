@@ -21,6 +21,6 @@ class UIDialogBox extends Component
 
     public function render()
     {
-        return view('components.ui-dialog-box');
+        return view('component.ui-dialog-box');
     }
 }

@@ -155,11 +155,11 @@
 div[wire\:loading].loading-overlay {
     display: flex;
 }
-
 .error-message {
     position: absolute;
-    left: 100px;
-    width: calc(100% - 10px);
+    bottom: -10px;
+    text-align: right;
+    width: auto;
     z-index: 3;
     font-size: 0.75rem;
     color: #dc3545;
@@ -187,29 +187,30 @@ div[wire\:loading].loading-overlay {
         /* Full width on smaller screens */
     }
 }
-
 @media (min-width: 768px) {
 
     .responsive-field {
         position: relative;
         display: flex;
         flex-direction: row;
-        align-items: flex-start;
+        align-items: center; /* Aligns children (label and input) at the center vertically */
         margin-bottom: 2rem;
         min-height: 50px;
     }
-
     .responsive-label {
-        margin-right: 0.5rem;
-        flex: 0 0 100px;
-        text-align: right;
+        display: flex;
+        align-items: center; /* Vertically centers the text within the label */
+        justify-content: flex-end; /* Aligns the label text to the right side of its flex container */
+        flex: 0 0 auto; /* Adjusts the basis to content width, but won't grow or shrink */
+        margin-left: auto; /* Pushes the label to the far right */
+        padding-right: 10px; /* Pushes the label to the far right */
     }
 
     .responsive-input-container {
+        flex: 1; /* Takes up the remaining space */
+        display: flex;
         flex-direction: column;
-        width: 100%;
     }
-
     .text-field-container {
         display: flex;
         align-items: center;
@@ -217,10 +218,10 @@ div[wire\:loading].loading-overlay {
         width: 100%;
     }
 
-
     .responsive-input,
     .responsive-textarea {
-        flex: 1;
+        width: 100%; /* To ensure the input takes the full width of its container */
+        flex: 1; /* Allows input to grow and fill the space */
     }
 
     .btn-sm {
@@ -228,8 +229,8 @@ div[wire\:loading].loading-overlay {
     }
 
     .responsive-field[span="Half"] {
+        width: calc(50% - 1%); /* Adjust width to account for padding */
         float: left;
-        width: 50%;
         box-sizing: border-box;
         padding-right: 1%;
     }
@@ -247,7 +248,7 @@ div[wire\:loading].loading-overlay {
         box-sizing: border-box;
     }
 
-    .responsive-field[span="Full"]+.responsive-field {
+    .responsive-field[span="Full"] + .responsive-field {
         clear: both;
     }
 

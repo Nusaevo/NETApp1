@@ -24,7 +24,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     {
         parent::__construct();
         $this->baseRoute = Str::replace('.', '/', Route::currentRouteName());
-        $this->route .= Route::currentRouteName().'.Detail';
+        $this->route .= Route::currentRouteName();
     }
 
     protected $listeners = [
@@ -64,25 +64,27 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public function viewData($id)
     {
-        if (!empty($this->customRoute)) {
-            return redirect()->route($this->customRoute, ['action' => encryptWithSessionKey('View'), 'objectId' => encryptWithSessionKey($id)]);
-        }
-
-        return redirect()->route($this->route, ['action' => encryptWithSessionKey('View'), 'objectId' => encryptWithSessionKey($id)]);
+        $route = !empty($this->customRoute) ? $this->customRoute . ".Detail" : $this->route . ".Detail";
+        return $this->redirectDetail($id, 'View', $route);
     }
-
 
     public function editData($id)
     {
-        if (!empty($this->customRoute)) {
-            return redirect()->route($this->customRoute, ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($id)]);
-        }
-        return redirect()->route($this->route, ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($id)]);
+        $route = !empty($this->customRoute) ? $this->customRoute . ".Detail" : $this->route . ".Detail";
+        return $this->redirectDetail($id, 'Edit', $route);
     }
 
     public function SelectObject($id)
     {
         $this->object = $this->model::findOrFail($id);
+    }
+
+    private function redirectDetail($id, $action, $route)
+    {
+        return redirect()->route($route, [
+            'action' => encryptWithSessionKey($action),
+            'objectId' => encryptWithSessionKey($id),
+        ]);
     }
 
     public function Disable()
@@ -106,37 +108,37 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->emit('refreshData');
     }
 
-    public function bulkActions(): array
-    {
-        return [
-            'export' => 'Export excel',
-        ];
-    }
+    // public function bulkActions(): array
+    // {
+    //     return [
+    //         'export' => 'Export excel',
+    //     ];
+    // }
 
-    public function export()
-    {
-        // Start query
-        $query = $this->model::query();
+    // public function export()
+    // {
+    //     // Start query
+    //     $query = $this->model::query();
 
-        // Check and apply filters if any
-        if ($filters = $this->getFilters()) {
-            foreach ($filters as $filter => $value) {
-                // Apply the filter to the query. This might require custom logic depending on how your filters are set up.
-                // Example:
-                // if ($filter === 'status' && $value) {
-                //     $query->where('status', $value);
-                // }
-            }
-        }
+    //     // Check and apply filters if any
+    //     if ($filters = $this->getFilters()) {
+    //         foreach ($filters as $filter => $value) {
+    //             // Apply the filter to the query. This might require custom logic depending on how your filters are set up.
+    //             // Example:
+    //             // if ($filter === 'status' && $value) {
+    //             //     $query->where('status', $value);
+    //             // }
+    //         }
+    //     }
 
-        // You may need to modify this part to ensure $data contains the results you want to export
-        $data = $query->get();
+    //     // You may need to modify this part to ensure $data contains the results you want to export
+    //     $data = $query->get();
 
-        // Define the filename based on the model's basename and the current timestamp
-        $filename = class_basename($this->model) . '-export-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+    //     // Define the filename based on the model's basename and the current timestamp
+    //     $filename = class_basename($this->model) . '-export-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
 
-        // Return the Excel download response
-        return Excel::download(new GenericExport($data), $filename);
-    }
+    //     // Return the Excel download response
+    //     return Excel::download(new GenericExport($data), $filename);
+    // }
 
 }

@@ -17,6 +17,6 @@ class UIListTable extends Component
 
     public function render()
     {
-        return view('components.ui-list-table');
+        return view('component.ui-list-table');
     }
 }

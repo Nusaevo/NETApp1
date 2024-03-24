@@ -38,6 +38,6 @@ class UIDropdownSelect extends Component
 
     public function render()
     {
-        return view('components.ui-dropdown-select');
+        return view('component.ui-dropdown-select');
     }
 }

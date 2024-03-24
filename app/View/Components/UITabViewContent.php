@@ -13,6 +13,6 @@ class UITabViewContent extends Component
 
     public function render()
     {
-        return view('components.ui-tab-view-content');
+        return view('component.ui-tab-view-content');
     }
 }

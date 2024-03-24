@@ -89,6 +89,8 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        $application = ConfigAppl::find($this->inputs['app_id']);
+        $this->inputs['app_code'] = $application->code;
         $this->object->fill($this->inputs);
         $this->object->save();
     }

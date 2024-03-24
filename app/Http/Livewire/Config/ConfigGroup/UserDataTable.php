@@ -20,6 +20,7 @@ class UserDataTable extends BaseDataTableComponent
 
     public function mount($groupId = null, $selectedUserIds = null): void
     {
+        $this->customRoute = "Config.ConfigUser";
         $this->groupId = $groupId;
         $this->selectedRows = $selectedUserIds;
     }
@@ -51,19 +52,18 @@ class UserDataTable extends BaseDataTableComponent
             Column::make("Email", "email")
                 ->searchable()
                 ->sortable(),
-            // Column::make('Actions', 'id')
-            //     ->format(function ($value, $row, Column $column) {
-            //         return view('layout.customs.data-table-action', [
-            //             'enable_this_row' => true,
-            //             'allow_details' => true,
-            //             'allow_edit' => false,
-            //             'allow_disable' => false,
-            //             'allow_delete' => false,
-            //             'wire_click_show' => "\$emit('viewData', $row->id)",
-            //             'wire_click_edit' => "\$emit('editData', $row->id)",
-            //             'wire_click_disable' => "\$emit('selectData', $row->id)",
-            //         ]);
-            //     }),
+            Column::make('Actions', 'id')
+                ->format(function ($value, $row, Column $column) {
+                    return view('layout.customs.data-table-action', [
+                       'row' => $row,
+                        'enable_this_row' => true,
+                        'allow_details' => false,
+                        'allow_edit' => true,
+                        'allow_disable' => false,
+                        'allow_delete' => false,
+                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                    ]);
+                }),
         ];
     }
 }
