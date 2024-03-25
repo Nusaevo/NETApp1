@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\Request;
 
 class ConfigRight extends BaseModel
 {
-    use HasFactory, SoftDeletes;
-    use BaseTrait;
     protected $table = 'config_rights';
     protected $connection = 'config';
 
@@ -95,33 +93,60 @@ class ConfigRight extends BaseModel
         return $permissions;
     }
 
-
     public static function saveRights($configGroup, $selectedMenus)
     {
-        static::where('group_id', $configGroup->id)
-            ->whereNotIn('menu_id', array_keys($selectedMenus))
-            ->delete();
-        foreach ($selectedMenus as $menuId => $permissions) {
-            $trustee = static::prepareTrusteeString($permissions); // Assume prepareTrusteeString is moved or adapted for the model
-            // Update or create ConfigRight for each menuId with necessary data
-            static::updateOrCreate(
-                [
-                    'group_id' => $configGroup->id,
-                    'menu_id' => $menuId,
-                ],
-                [
-                    'menu_seq' => $permissions['menu_seq'],
-                    'trustee' => $trustee,
-                    'group_code' => $configGroup->code,
-                    'menu_code' => $menuCodes[$menuId] ?? '',
-                    'app_id' => $configGroup->app_id,
-                    'app_code' => $configGroup->app_code,
-                ]
-            );
+        try {
+            // Retrieve all existing rights for the group to decide which to update, delete, or create
+            $existingRights = static::where('group_id', $configGroup->id)->get()->keyBy('menu_id');
+
+            // Determine which menu IDs need to be deleted
+            $menuIdsToDelete = array_diff($existingRights->keys()->toArray(), array_keys($selectedMenus));
+
+            // Delete rights that are not in the selectedMenus anymore
+            if (!empty($menuIdsToDelete)) {
+                static::where('group_id', $configGroup->id)
+                      ->whereIn('menu_id', $menuIdsToDelete)
+                      ->forceDelete();
+            }
+
+            foreach ($selectedMenus as $menuId => $permissions) {
+                $trustee = static::prepareTrusteeString($permissions);
+
+                // Ensure the ConfigMenu exists
+                $configMenu = ConfigMenu::find($menuId);
+                if (!$configMenu) {
+                    throw new \Exception("ConfigMenu with ID {$menuId} not found.");
+                }
+
+                if (isset($existingRights[$menuId])) {
+                    // Update existing right
+                    $existingRight = $existingRights[$menuId];
+                    $existingRight->update([
+                        'menu_seq' => $permissions['menu_seq'],
+                        'trustee' => $trustee,
+                        'group_code' => $configGroup->code,
+                        'menu_code' => $configMenu->code,
+                        'app_id' => $configGroup->app_id,
+                        'app_code' => $configGroup->app_code,
+                    ]);
+                } else {
+                    static::create([
+                        'group_id' => $configGroup->id,
+                        'menu_id' => $menuId,
+                        'menu_seq' => $permissions['menu_seq'],
+                        'trustee' => $trustee,
+                        'group_code' => $configGroup->code,
+                        'menu_code' => $configMenu->code,
+                        'app_id' => $configGroup->app_id,
+                        'app_code' => $configGroup->app_code,
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            throw $e;
         }
     }
 
-    // Adapt or move prepareTrusteeString to handle permissions
     protected static function prepareTrusteeString($permissions)
     {
         $trustee = '';

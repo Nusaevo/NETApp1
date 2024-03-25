@@ -148,11 +148,12 @@ class BaseComponent extends Component
         $this->validateForm();
         DB::beginTransaction();
         try {
-            if ($this->actionValue == 'Edit') {
-                $this->object->updateObject($this->VersioNumber);
-            }
             if ($this->object) {
                 $this->onValidateAndSave();
+            }
+            if ($this->actionValue == 'Edit') {
+                $this->object->updateObject($this->VersioNumber);
+                $this->object->save();
             }
             DB::commit();
             $this->notify('success',Lang::get('generic.success.save'));

@@ -16,10 +16,10 @@ if (!function_exists('generateMenu')) {
                 'path' => $app_code ? $app_code.'/Home' : '',
                 'icon' => theme()->getSvgIcon("demo1/media/icons/duotune/art/art002.svg", "svg-icon-2"),
             ],
-            [
-                'classes' => ['content' => 'pt-8 pb-2'],
-                'content' => '<span class="menu-section text-muted text-uppercase fs-8 ls-1">Modules</span>',
-            ],
+            // [
+            //     'classes' => ['content' => 'pt-8 pb-2'],
+            //     'content' => '<span class="menu-section text-muted text-uppercase fs-8 ls-1">Modules</span>',
+            // ],
         ];
 
         if (!empty($userId)) {

@@ -207,7 +207,6 @@ class Detail extends BaseComponent
             ];
         }
         $this->object->ConfigUser()->sync($syncData);
-
         ConfigRight::saveRights($this->object, $this->selectedMenus);
     }
 
