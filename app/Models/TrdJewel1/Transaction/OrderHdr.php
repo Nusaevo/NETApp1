@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Models\Transactions;
+namespace App\Models\TrdJewel1\Transaction;
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Material;
+use App\Models\TrdJewel1\Master\Partner;
 class OrderHdr extends BaseModel
 {
     protected static function boot()
@@ -29,7 +30,7 @@ class OrderHdr extends BaseModel
 
     public function Partner()
     {
-        return $this->belongsTo(Material::class, 'partner_id', 'id');
+        return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 
     public function OrderDtl()

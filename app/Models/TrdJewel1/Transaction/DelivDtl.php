@@ -1,23 +1,15 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\TrdJewel1\Transaction;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\ModelTrait;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
-class DelivDtl extends Model
+use App\Models\Base\BaseModel;
+use App\Models\TrdJewel1\Master\Material;
+
+class DelivDtl extends BaseModel
 {
-    use HasFactory;
-    use SoftDeletes;
-    use ModelTrait;
-    use BaseTrait;
-
     protected static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
     protected $fillable = [
@@ -34,10 +26,7 @@ class DelivDtl extends Model
         'matl_descr',
         'wh_code',
         'qty',
-        'qty_reff',
-        'status_code',
-        'created_by',
-        'updated_by',
+        'qty_reff'
     ];
 
     public function getAllColumns()
@@ -58,13 +47,13 @@ class DelivDtl extends Model
         return $query->where('trhdr_id', $id);
     }
 
-    public function item_warehouses()
+    public function Material()
     {
-        return $this->hasMany('App\Models\ItemWarehouse');
+        return $this->belongsTo(Material::class, 'matl_id');
     }
 
-    public function delivHdrs()
+    public function DelivHdr()
     {
-        return $this->belongsTo('App\Models\OrderHdr', 'trhdr_id', 'id');
+        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id');
     }
 }

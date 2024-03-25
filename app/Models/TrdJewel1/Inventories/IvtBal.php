@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Inventories;
+namespace App\Models\TrdJewel1\Inventories;
 use App\Models\Base\BaseModel;
 
 class IvtBal extends BaseModel

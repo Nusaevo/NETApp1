@@ -1,23 +1,14 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\TrdJewel1\Transaction;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\ModelTrait;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
-class DelivHdr extends Model
+use App\Models\TrdJewel1\Master\Partner;
+use App\Models\Base\BaseModel;
+class DelivHdr extends BaseModel
 {
-    use HasFactory;
-    use SoftDeletes;
-    use ModelTrait;
-    use BaseTrait;
-
     protected static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
     protected $fillable = [
@@ -44,13 +35,13 @@ class DelivHdr extends Model
         return null;
     }
 
-    public function partners()
+    public function Partner()
     {
-        return $this->belongsTo('App\Models\Partner', 'partner_id', 'id');
+        return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 
-    public function delivDtls()
+    public function PaymentDtl()
     {
-        return $this->hasMany('App\Models\DelivDtl', 'trhdr_id', 'id');
+        return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id');
     }
 }

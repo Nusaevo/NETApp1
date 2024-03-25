@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Transactions;
+namespace App\Models\TrdJewel1\Transaction;
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\Base\BaseModel;
 

@@ -4,8 +4,8 @@ namespace App\Models\TrdJewel1\Master;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\Config\ConfigConst;
-use App\Models\Inventories\IvtBal;
-use App\Models\Inventories\IvtBalUnit;
+use App\Models\TrdJewel1\Inventories\IvtBal;
+use App\Models\TrdJewel1\Inventories\IvtBalUnit;
 
 class MatlUom extends BaseModel
 {
