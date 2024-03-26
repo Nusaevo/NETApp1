@@ -92,7 +92,6 @@ class BaseComponent extends Component
             }
         }
 
-
         $fullPath = implode('/', $segments);
         $this->permissions = ConfigRight::getPermissionsByMenu($fullPath);
         if (!$this->hasValidPermissions()) {

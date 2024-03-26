@@ -1,3 +1,4 @@
+
 <div>
     <div>
         <x-ui-button click-event="" type="Back" button-name="Back" />
@@ -23,10 +24,10 @@
 
                     <x-ui-list-table id="Table" title="Barang">
                         <x-slot name="button">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+                            {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
                                     Tambah
-                            </button>
-                            {{-- <x-ui-button click-event="Add" button-name="Add" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" /> --}}
+                            </button> --}}
+                            <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/create-icon.png" />
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
@@ -64,11 +65,7 @@
             </div>
             </x-ui-card>
         </x-ui-tab-view-content>
-        <x-ui-footer>
-            <div>
-                <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
-            </div>
-        </x-uifooter>
+        @include('layout.customs.transaction-form-footer')
 </x-ui-page-card>
 
 </div>

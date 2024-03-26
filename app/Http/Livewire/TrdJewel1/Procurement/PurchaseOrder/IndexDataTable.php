@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
 use Lang;
 use Exception;
+
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = OrderHdr::class;
@@ -19,7 +20,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
-        $this->setSort('created_at', 'desc');
+        $this->setSort('tr_date', 'desc');
         $this->setFilter('status_code',  Status::ACTIVE);
     }
     public function columns(): array
@@ -34,52 +35,37 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Supplier", "Partner.name")
                 ->searchable()
                 ->sortable(),
-           Column::make("Status", "status_code")
-                    ->searchable()
-                    ->sortable()
-                    ->format(function ($value, $row, Column $column) {
-                        return Status::getStatusString($value);
-                    }),
+            Column::make("Status", "status_code")
+                ->searchable()
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return Status::getStatusString($value);
+                }),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
-                            'enable_this_row' => true,
-                            'allow_details' => false,
-                            'allow_edit' => true,
-                            'allow_disable' => false,
-                            'allow_delete' => false,
-                            'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'enable_this_row' => true,
+                        'allow_details' => false,
+                        'allow_edit' => true,
+                        'allow_disable' => false,
+                        'allow_delete' => false,
+                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
                     ]);
                 }),
-            // LinkColumn::make('')
-            //     ->title(function ($row) {
-            //         return $row->status_code === "ACT" ? 'Nota Terima Supplier' : '';
-            //     })
-            //     ->location(function ($row) {
-            //         if ($row->status_code === "ACT") {
-            //             return route("PurchasesDeliveries.detail", ["action" => encryptWithSessionKey('Create'), "objectId" => encryptWithSessionKey($row->id)]);
-            //         }
-            //         return null;
-            //     })
-            //     ->attributes(function ($row) {
-            //         if ($row->status_code === "ACT") {
-            //             return [
-            //                 'class' => 'btn btn-primary btn-sm',
-            //                 'style' => 'text-decoration: none;',
-            //             ];
-            //         }
-            //         return [];
-            //     }),
-            // LinkColumn::make('')
-            //     ->title(fn ($row) => 'Print Nota')
-            //     ->location(fn ($row) => route('purchases_orders.printpdf', ['objectId' => encryptWithSessionKey($row->id)]))
-            //     ->attributes(function ($row) {
-            //         return [
-            //             'class' => 'btn btn-primary btn-sm',
-            //             'style' => 'text-decoration: none;',
-            //         ];
-            //     })
+            Column::make('', 'id')
+                ->format(function ($value, $row, Column $column) {
+                    // Tombol pertama (Nota Terima Supplier atau Print, tergantung pada status)
+                    if ($row->status_code === Status::ACTIVE) {
+                        $firstButton = '<a href="' . route("TrdJewel1.Procurement.PurchaseOrder.Detail", ["action" => encryptWithSessionKey('Create'), "objectId" => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="text-decoration: none;">Nota Terima Supplier</a>';
+                    } else {
+                        $firstButton = '';
+                    }
+                    $secondButton = '<a href="' . route('TrdJewel1.Procurement.PurchaseOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
+
+                    return "<div class='text-center'>".$firstButton . $secondButton."</div>";
+                })->html(),
+
         ];
     }
 

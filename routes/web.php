@@ -63,7 +63,6 @@ Route::middleware('auth')->group(function () {
             }
         }
     }
-
     foreach ($livewireComponents as $componentClass) {
         if (Str::contains($componentClass, ['DataTable', 'Component'])) {
             continue;
@@ -84,6 +83,9 @@ Route::middleware('auth')->group(function () {
         }
         else if (Str::endsWith($componentName, 'Detail')) {
             Route::get("/{$componentPath}/Detail/{action}/{objectId?}", $componentClass)->name("{$routeName}.Detail");
+        }
+        else if (Str::endsWith($componentName, 'PrintPdf')) {
+            Route::get("/{$componentPath}/PrintPdf/{action}/{objectId?}", $componentClass)->name("{$routeName}.PrintPdf");
         }
         else {
             Route::get("/{$componentPath}", $componentClass)->name("{$routeName}.{$componentName}");

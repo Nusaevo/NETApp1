@@ -37,7 +37,7 @@
             <x-ui-padding>
             <x-ui-list-table id="Table" title="Side Materials">
                 <x-slot name="button">
-                    <x-ui-button click-event="addBoms" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" />
+                    <x-ui-button click-event="addBoms" cssClass="btn btn-primary" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" />
                 </x-slot>
                 <x-slot name="body">
                     @foreach($matl_boms as $key => $matl_bom)
