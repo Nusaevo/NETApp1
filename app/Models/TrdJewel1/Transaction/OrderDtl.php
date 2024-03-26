@@ -10,6 +10,10 @@ class OrderDtl extends BaseModel
     protected static function boot()
     {
         parent::boot();
+        static::saving(function ($orderDtl) {
+            $newAmt = $orderDtl->qty * $orderDtl->price;
+            $orderDtl->amt = $newAmt;
+        });
     }
 
     protected $fillable = [
@@ -18,9 +22,11 @@ class OrderDtl extends BaseModel
         'tr_seq',
         'matl_id',
         'matl_code',
+        'matl_uom',
+        'matl_descr',
         'qty',
         'qty_reff',
-        'discount',
+        'amt',
         'price'
     ];
 

@@ -26,6 +26,7 @@ class Detail extends BaseComponent
     public $total_amount = 0;
     public $trType = "PO";
 
+    public $matl_action = 'Create';
     public $matl_objectId = null;
 
     public $materialDialogVisible = false;
@@ -33,21 +34,22 @@ class Detail extends BaseComponent
     protected function onLoad()
     {
         $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-        $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->get();
+        $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
         $this->inputs = populateArrayFromModel($this->object);
         foreach ($this->object_detail as $key => $detail) {
             $formattedDetail = populateArrayFromModel($detail);
             $this->input_details[$key] =  $formattedDetail;
+            $this->input_details[$key]['id'] = $detail->id;
             $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
             $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
             $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
+            $this->input_details[$key]['selling_price'] =int_qty( $detail->Material->jwl_selling_price) ?? 0;
             $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
             $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
             $this->input_details[$key]['image_path'] = $detail->Material->Attachment[0]->getUrl();
         }
         $this->countTotalAmount();
     }
-
 
     public function render()
     {
@@ -79,6 +81,74 @@ class Detail extends BaseComponent
         $this->refreshSupplier();
     }
 
+    protected function rules()
+    {
+        $rules = [
+            'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
+            'inputs.tr_date' => 'required',
+            'input_details.*.price' => 'required|integer|min:0|max:9999999999',
+            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
+        ];
+        return $rules;
+    }
+
+    protected $validationAttributes = [
+        'inputs'                => 'Input',
+        'inputs.tr_date'      => 'Tanggal Transaksi',
+        'inputs.partner_id'      => 'Supplier',
+        'input_details.*'              => 'Inputan Barang',
+        'input_details.*.matl_id' => 'Item',
+        'input_details.*.qty' => 'Item Qty',
+        'input_details.*.price' => 'Item Price',
+    ];
+
+    public function onValidateAndSave()
+    {
+        if (empty($this->input_details)) {
+            throw new Exception("Harap pilih item");
+        }
+        if (!empty($this->input_details)) {
+            $unitIds = array_column($this->input_details, 'item_unit_id');
+            if (count($unitIds) !== count(array_flip($unitIds))) {
+                throw new Exception("Ditemukan duplikasi Item.");
+            }
+        }
+
+        $application = Partner::find($this->inputs['partner_id']);
+        $this->inputs['partner_code'] = $application->code;
+        $this->object->fill($this->inputs);
+        $this->object->save();
+
+        foreach ($this->input_details as $index => $inputDetail) {
+            if (!isset($this->object_detail[$index])) {
+                $this->object_detail[$index] = new OrderDtl();
+            }
+            $inputDetail['tr_seq'] = $index + 1;
+            $inputDetail['trhdr_id'] = $this->object->id;
+            $inputDetail['qty_reff'] = $inputDetail['qty'];
+            $this->object_detail[$index]->fill($inputDetail);
+            $this->object_detail[$index]->save();
+        }
+
+        if (!$this->object->isNew()) {
+            foreach ($this->deletedItems as $deletedItemId) {
+                OrderDtl::find($deletedItemId)->delete();
+            }
+        }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->reset('input_details');
+        $this->object = new OrderHdr();
+        $this->object_detail = [];
+        $this->refreshSupplier();
+        $this->total_amount = 0;
+        $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['tr_type']  = $this->trType;
+    }
+
     public function addDetails($material_id = null)
     {
         $detail = [
@@ -89,6 +159,7 @@ class Detail extends BaseComponent
             $detail['matl_id'] = $material->id;
             $detail['matl_code'] = $material->code;
             $detail['matl_descr'] = $material->descr ?? "";
+            $detail['matl_uom'] = $material->MatlUom[0]->id;
             $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
             $detail['barcode'] = $material->MatlUom[0]->barcode;
             $detail['price'] = int_qty($material->jwl_buying_price) ?? 0;
@@ -158,73 +229,5 @@ class Detail extends BaseComponent
             }
         }
         $this->inputs['amt'] = $this->total_amount;
-    }
-
-    protected function rules()
-    {
-        $rules = [
-            'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
-            'inputs.tr_date' => 'required',
-            'input_details.*.price' => 'required|integer|min:0|max:9999999999',
-            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
-        ];
-        return $rules;
-    }
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input',
-        'inputs.tr_date'      => 'Tanggal Transaksi',
-        'inputs.partner_id'      => 'Supplier',
-        'input_details.*'              => 'Inputan Barang',
-        'input_details.*.matl_id' => 'Item',
-        'input_details.*.qty' => 'Item Qty',
-        'input_details.*.price' => 'Item Price',
-    ];
-
-    public function onValidateAndSave()
-    {
-        if (empty($this->input_details)) {
-            throw new Exception("Harap pilih item");
-        }
-        if (!empty($this->input_details)) {
-            $unitIds = array_column($this->input_details, 'item_unit_id');
-            if (count($unitIds) !== count(array_flip($unitIds))) {
-                throw new Exception("Ditemukan duplikasi Item.");
-            }
-        }
-
-        $application = Partner::find($this->inputs['partner_id']);
-        $this->inputs['partner_code'] = $application->code;
-        $this->object->fill($this->inputs);
-        $this->object->save();
-
-        foreach ($this->input_details as $index => $inputDetail) {
-            if (!isset($this->object_detail[$index])) {
-                $this->object_detail[$index] = new OrderDtl();
-            }
-            $inputDetail['tr_seq'] = $index + 1;
-            $inputDetail['trhdr_id'] = $this->object->id;
-            $inputDetail['qty_reff'] = $inputDetail['qty'];
-            $this->object_detail[$index]->fill($inputDetail);
-            $this->object_detail[$index]->save();
-        }
-
-        if (!$this->object->isNew()) {
-            foreach ($this->deletedItems as $deletedItemId) {
-                OrderDtl::find($deletedItemId)->delete();
-            }
-        }
-    }
-
-    public function onReset()
-    {
-        $this->reset('inputs');
-        $this->reset('input_details');
-        $this->object = new OrderHdr();
-        $this->object_detail = [];
-        $this->refreshSupplier();
-        $this->total_amount = 0;
-        $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
     }
 }

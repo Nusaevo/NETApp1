@@ -83,6 +83,16 @@ class BaseComponent extends Component
             $segments = array_slice($segments, 0, -$segmentsToIgnore);
         }
 
+        // Check if the last segment contains "Detail" string and remove it
+        // this only form inside form like material form component
+        if (!empty($segments)) {
+            $lastSegmentIndex = count($segments) - 1;
+            if (strpos($segments[$lastSegmentIndex], 'Detail') !== false) {
+                array_pop($segments);
+            }
+        }
+
+
         $fullPath = implode('/', $segments);
         $this->permissions = ConfigRight::getPermissionsByMenu($fullPath);
         if (!$this->hasValidPermissions()) {
@@ -162,7 +172,7 @@ class BaseComponent extends Component
             if ($this->object) {
                 $this->onValidateAndSave();
             }
-            if ($this->actionValue == 'Edit') {
+            if ($this->actionValue == 'Edit' && isset($this->object->id)) {
                 $this->object->updateObject($this->VersioNumber);
                 $this->object->save();
             }

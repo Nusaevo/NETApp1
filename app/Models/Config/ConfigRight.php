@@ -86,7 +86,6 @@ class ConfigRight extends BaseModel
                 $permissions['delete'] = strpos($trustee, 'D') !== false;
             }
         }
-
         return $permissions;
     }
 

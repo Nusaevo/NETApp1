@@ -55,6 +55,7 @@ class MaterialComponent extends BaseComponent
                 $this->refreshBaseMaterials($this->bom_row);
                 $formattedDetail = populateArrayFromModel($detail);
                 $this->matl_boms[$key] =  $formattedDetail;
+                $this->matl_boms[$key]['id'] = $detail->id;
                 $this->bom_row++;
             }
             $attachments = $this->object->Attachment;

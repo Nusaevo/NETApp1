@@ -17,16 +17,16 @@
                         <x-slot name="title">
                         </x-slot>
                         <x-slot name="body">
-                            @livewire('trd-jewel1.master.material.material-component', ['actionValue' => $actionValue, 'objectIdValue' => $matl_objectId])
+                            @livewire('trd-jewel1.master.material.material-component', ['actionValue' => $matl_action, 'objectIdValue' => $matl_objectId])
                         </x-slot>
                     </x-ui-dialog-box>
 
                     <x-ui-list-table id="Table" title="Barang">
                         <x-slot name="button">
-                            {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
                                     Tambah
-                            </button> --}}
-                            <x-ui-button click-event="Add" button-name="Add" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+                            </button>
+                            {{-- <x-ui-button click-event="Add" button-name="Add" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" /> --}}
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)

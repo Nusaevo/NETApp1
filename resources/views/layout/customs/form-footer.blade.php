@@ -2,7 +2,7 @@
     @if ($actionValue !== 'Create' && (!$object instanceof App\Models\Config\ConfigUser || auth()->user()->id !== $object->id))
     @if(isset($permissions['delete']) && $permissions['delete'])
     <div style="padding-right: 10px;">
-        @if ($status === 'ACTIVE')
+        @if ($status === 'ACTIVE' || !$object->deleted_at)
         <x-ui-button button-name="Disable" click-event="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="images/disable-icon.svg" />
         @else
         <x-ui-button button-name="Enable" click-event="" loading="true" :action="$actionValue" cssClass="btn-success btn-dialog-box" iconPath="images/enable-icon.png" />

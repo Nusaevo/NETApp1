@@ -40,6 +40,6 @@ class Status
             self::ON_HOLD => 'ON_HOLD',
         ];
 
-        return $statuses[$abbreviation] ?? 'Unknown Status';
+        return $statuses[$abbreviation] ?? '';
     }
 }
