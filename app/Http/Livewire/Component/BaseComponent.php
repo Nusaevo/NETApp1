@@ -33,7 +33,7 @@ class BaseComponent extends Component
     public $route;
     public function mount($action = null, $objectId = null)
     {
-        // $this->appCode =  Session::get('app_code', '');
+        $this->appCode =  Session::get('app_code', '');
         // Get all URL segments
 
         $this->action = $action ? $action : null;
@@ -62,18 +62,19 @@ class BaseComponent extends Component
         $this->renderRoute = strtolower($this->renderRoute);
 
         $segments = Request::segments();
-        $segmentsToIgnore = 2;
+        $segmentsToIgnore = 0;
         if (in_array($this->actionValue, ['Edit', 'View'])) {
-            $segmentsToIgnore += 1;
+            $segmentsToIgnore = 3;
+        } elseif ($this->actionValue == 'Create') {
+            $segmentsToIgnore = 2;
         }
 
-        if (count($segments) > $segmentsToIgnore) {
+        if ($segmentsToIgnore > 0 && count($segments) > $segmentsToIgnore) {
             $segments = array_slice($segments, 0, -$segmentsToIgnore);
         }
 
         $fullPath = implode('/', $segments);
         $this->permissions = ConfigRight::getPermissionsByMenu($fullPath);
-
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');
         }

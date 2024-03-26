@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Transaction\PurchasesOrder;
+namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseOrder;
 
 use App\Http\Livewire\Component\BaseComponent;
-use App\Models\Transactions\OrderHdr;
-use App\Models\Transactions\OrderDtl;
+use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\TrdJewel1\Master\Partner;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\TrdJewel1\Master\Material;
@@ -55,7 +55,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view('livewire.transaction.purchases-orders.edit');
+        return view($this->renderRoute);
     }
 
     protected $listeners = [

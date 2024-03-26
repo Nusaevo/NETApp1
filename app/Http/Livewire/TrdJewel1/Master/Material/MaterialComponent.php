@@ -29,7 +29,6 @@ class MaterialComponent extends BaseComponent
 
     public $unit_row = 0;
     public $photo;
-    public $appCode = "TRD_JEWEL1";
 
     public $materialCategories;
     public $materialUOMs;

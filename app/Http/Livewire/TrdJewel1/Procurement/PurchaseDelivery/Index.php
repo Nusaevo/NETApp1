@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Transaction\PurchasesBillings;
+namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseDelivery;
 
 use Livewire\Component;
-use App\Models\OrderHdr;
+use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Traits\LivewireTrait;
 use Lang;
 use Exception;
@@ -19,7 +19,7 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.transaction.purchases-deliveries.index');
+        return view($this->renderRoute);
     }
 
     protected $listeners = [

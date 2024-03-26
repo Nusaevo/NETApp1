@@ -90,6 +90,11 @@ Route::middleware('auth')->group(function () {
         }
 
     }
+
+    Route::get('/', function () {
+        $app_code = Session::get('app_code');
+        return redirect($app_code ? '/' . $app_code . '/Home' : '/');
+    });
     // Additional non-standard routes go here
 });
 // Route::resource('users', UsersController::class);

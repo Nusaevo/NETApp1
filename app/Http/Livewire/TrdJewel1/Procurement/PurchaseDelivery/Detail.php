@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Transaction\PurchasesReturs;
+namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseDelivery;
 
 use Livewire\Component;
-use App\Models\DelivHdr;
-use App\Models\DelivDtl;
-use App\Models\OrderHdr;
-use App\Models\OrderDtl;
+use App\Models\TrdJewel1\Transaction\DelivHdr;
+use App\Models\TrdJewel1\Transaction\DelivDtl;
+use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\ItemUnit;
-use App\Models\Partner;
+use App\Models\TrdJewel1\Master\Partner;
 use App\Models\Config\ConfigConst;
 use App\Models\ItemWarehouse;
-use App\Models\IvtBal;
+use App\Models\TrdJewel1\Inventories\IvtBal;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\Unit;
@@ -75,11 +75,13 @@ class Detail extends Component
                 $this->input_details[$index]['matl_id'] = $detail->matl_id;
                 $this->input_details[$index]['matl_code'] = $detail->matl_code ;
                 $this->input_details[$index]['matl_descr'] = $detail->matl_descr ;
-                $this->input_details[$index]['warehouse_id'] =  $this->warehouses[0];
+                $this->input_details[$index]['warehouse_id'] =  $this->warehouses[0]['value'];
                 $this->input_details[$index]['reffdtl_id'] = $detail->id;
                 $this->input_details[$index]['reffhdrtr_type'] = $detail->tr_type;
                 $this->input_details[$index]['reffhdrtr_id'] =  $this->object->id;
                 $this->input_details[$index]['reffdtltr_seq'] = $detail->tr_seq;
+                $this->input_details[$index]['barcode'] = $detail->materials->uoms[0]->barcode;
+                $this->input_details[$index]['image_path'] = $detail->materials->attachments[0]->path;
             }
             $this->dispatchBrowserEvent('reApplySelect2');
         }

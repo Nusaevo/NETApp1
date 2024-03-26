@@ -4,6 +4,7 @@ namespace App\Http\Livewire\TrdJewel1\Master\Partner;
 
 use App\Http\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\Partner;
+use App\Models\Config\ConfigConst;
 use Illuminate\Validation\Rule;
 
 class Detail extends BaseComponent
@@ -66,16 +67,16 @@ class Detail extends BaseComponent
 
     public function refreshPartnerTypes()
     {
-        $this->partnerTypes = [
-            [
-                'label' => 'Supplier',
-                'value' => 'SUPP',
-            ],
-            [
-                'label' => 'Customer',
-                'value' => 'CUST',
-            ],
-        ];
+        $data = ConfigConst::where('app_code', $this->appCode)
+            ->where('const_group', 'PARTNERS_TYPE')
+            ->orderBy('seq')
+            ->get();
+        $this->partnerTypes = $data->map(function ($data) {
+            return [
+                'label' => $data->str2,
+                'value' => $data->str1,
+            ];
+        })->toArray();
         $this->inputs['grp'] = null;
     }
 

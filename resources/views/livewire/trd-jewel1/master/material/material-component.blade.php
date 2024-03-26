@@ -35,8 +35,8 @@
             <div id="detail" style="padding-bottom: 200px;">
                 <x-ui-text-field label="Material Code" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" />
                 <x-ui-text-field label="Description" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="Deskripsi dibuat otomatis dari side materials" span="Half" />
-                <x-ui-dropdown-select label="Category" click-event="" model="materials.jwl_category" :options="$materialCategories" :selectedValue="$materials['jwl_category']" required="true" :action="$actionValue" span="Half" />
-                <x-ui-dropdown-select label="UOM" click-event="" model="matl_uoms.name" :options="$materialUOMs" :selectedValue="$matl_uoms['name']" required="true" :action="$actionValue" span="Half" />
+                <x-ui-dropdown-select label="Category" click-event="" model="materials.jwl_category" :options="$materialCategories" required="true" :action="$actionValue" span="Half" />
+                <x-ui-dropdown-select label="UOM" click-event="" model="matl_uoms.name" :options="$materialUOMs"  required="true" :action="$actionValue" span="Half" />
                 <x-ui-text-field label="Selling Price" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Selling Price" span="Half" />
                 <x-ui-text-field label="Buying Price" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Half" />
             </div>
@@ -50,7 +50,7 @@
                         <tr wire:key="list{{ $key }}">
                             <x-ui-list-body>
                                 <x-slot name="rows">
-                                    <x-ui-dropdown-select label="Material" click-event="" model="matl_boms.{{ $key }}.base_matl_id" onChanged="generateSpecs(1)" :options="$baseMaterials" :selectedValue="$matl_boms[$key]['base_matl_id']" required="true" :action="$actionValue" span="Half" />
+                                    <x-ui-dropdown-select label="Material" click-event="" model="matl_boms.{{ $key }}.base_matl_id" onChanged="generateSpecs(1)" :options="$baseMaterials" required="true" :action="$actionValue" span="Half" />
                                     <x-ui-text-field label="Quantity" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="true" placeHolder="Enter Quantity" span="Half" />
                                     <x-ui-text-field label="Carat" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="true" placeHolder="Enter Sides Carat" span="Half" />
                                     <x-ui-text-field label="Price" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Sides Price" span="Half" />

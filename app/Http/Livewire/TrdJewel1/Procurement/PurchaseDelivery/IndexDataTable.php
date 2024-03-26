@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Transaction\PurchasesReturs;
+namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseDelivery;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\DelivHdr;
+use App\Models\TrdJewel1\Transaction\DelivHdr;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class IndexDataTable extends DataTableComponent
@@ -14,6 +14,14 @@ class IndexDataTable extends DataTableComponent
     public function mount(): void
     {
         $this->setSort('created_at', 'desc');
+    }
+
+    public function builder(): Builder
+    {
+        return DelivHdr::query()
+            ->withTrashed()
+            ->where('tr_type', 'PD')
+            ->select();
     }
 
      public function configure(): void

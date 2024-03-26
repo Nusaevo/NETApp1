@@ -19,11 +19,6 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSort('created_at', 'desc');
     }
 
-    public function builder(): Builder
-    {
-        return Partner::query()->where('grp', 'SUPP')->withTrashed();
-    }
-
     public function columns(): array
     {
         return [
@@ -33,6 +28,12 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Group", "grp")
                 ->searchable()
                 ->sortable(),
+                Column::make("Group", "grp")
+                ->searchable()
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return getConstValueByStr1('PARTNERS_TYPE', $value);
+                }),
             Column::make("Name", "name")
                 ->searchable()
                 ->sortable(),

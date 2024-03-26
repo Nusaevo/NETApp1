@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Transaction\PurchasesOrder;
+namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseOrder;
 
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\Transactions\OrderHdr;
+use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
@@ -18,7 +18,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->route = 'PurchasesOrders.Detail';
+        $this->customRoute = "";
         $this->setSort('created_at', 'desc');
         $this->setFilter('status_code',  Status::ACTIVE);
     }
@@ -45,15 +45,13 @@ class IndexDataTable extends BaseDataTableComponent
                 Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
-                        'enable_this_row' => true,
-                        'allow_details' => true,
-                        'allow_edit' => in_array($row->status_code, [Status::ACTIVE]),
-                        'allow_disable' => in_array($row->status_code, [Status::ACTIVE]),
-                        'allow_delete' => false,
-                        'wire_click_show' => "\$emit('viewData', $row->id)",
-                        'wire_click_edit' => "\$emit('editData', $row->id)",
-                        'wire_click_disable' => "\$emit('selectData', $row->id)",
-                        'access' => "PurchasesOrders"
+                        'row' => $row,
+                            'enable_this_row' => true,
+                            'allow_details' => false,
+                            'allow_edit' => true,
+                            'allow_disable' => false,
+                            'allow_delete' => false,
+                            'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
                     ]);
                 }),
             // LinkColumn::make('')

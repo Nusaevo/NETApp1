@@ -2,7 +2,7 @@
 
 use App\Models\Config\ConfigMenu;
 use App\Models\Config\ConfigUser;
-use App\Models\Config\ConfigGroup;
+use App\Models\Config\ConfigConst;
 use App\Models\Config\ConfigRight;
 if (!function_exists('populateArrayFromModel')) {
     /**
@@ -74,7 +74,6 @@ if (!function_exists('mapDropdownData')) {
 
 }
 
-
 if (!function_exists('getAppIds')) {
     function getAppIds()
     {
@@ -96,4 +95,24 @@ if (!function_exists('getAppIds')) {
         return [];
     }
 }
+if (!function_exists('getConstValueByStr1')) {
+    function getConstValueByStr1($const_group, $str1)
+    {
+        $configConst = ConfigConst::where('const_group', $const_group)
+                                  ->where('str1', $str1)
+                                  ->first();
 
+        return $configConst->str2 ?? '';
+    }
+}
+
+if (!function_exists('getConstValueByID')) {
+    function getConstValueByID($const_group, $id)
+    {
+        $configConst = ConfigConst::where('const_group', $const_group)
+                                  ->where('id', $id)
+                                  ->first();
+
+        return $configConst->str2 ?? '';
+    }
+}

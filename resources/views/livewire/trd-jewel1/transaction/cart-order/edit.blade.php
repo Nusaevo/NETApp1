@@ -23,9 +23,9 @@
                     <x-ui-expandable-card id="UserCard" title="Puchase Order Info" :isOpen="true">
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" />
 
-                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" />
+                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" />
 
-                        <x-ui-dropdown-select label="Payment" name="Payment" click-event="refreshSupplier" model="inputs.payment_term_id" :options="$payments" :selectedValue="$inputs['payment_term_id']" required="true" :action="$actionValue" />
+                        <x-ui-dropdown-select label="Payment" name="Payment" click-event="refreshSupplier" model="inputs.payment_term_id" :options="$payments"  required="true" :action="$actionValue" />
 
                         <x-ui-table id="POTable">
                             <x-slot name="title">

@@ -24,7 +24,6 @@
                         click-event="refreshSupplier"
                         model="inputs.partner_id"
                         :options="$suppliers"
-                        :selectedValue="$inputs['partner_id']"
                         enabled="false"
                         required="true"
                         :action="$actionValue"/>
@@ -73,7 +72,6 @@
                                                 label=""
                                                 :model="'input_details.' . $key . '.warehouse_id'"
                                                 :options="$warehouses"
-                                                :selectedValue="$detail['warehouse_id']"
                                                 required="true"
                                                 :action="$actionValue"/>
                                             </td>

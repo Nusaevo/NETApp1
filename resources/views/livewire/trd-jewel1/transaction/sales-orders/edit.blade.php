@@ -23,7 +23,7 @@
                     <x-ui-expandable-card id="UserCard" title="Puchase Order Info" :isOpen="true">
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" />
 
-                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" />
+                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers"  required="true" :action="$actionValue" />
 
                         <div class="card-body p-2 mt-10">
                             <h2 class="mb-2 text-center">Barang</h2>

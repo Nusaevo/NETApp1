@@ -11,7 +11,7 @@
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="UserCard" title="Puchase Order Info" :isOpen="true">
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="refreshSupplier" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
 
                         <div class="card-body p-2 mt-10">
                             <h2 class="mb-2 text-center">Barang</h2>
@@ -29,7 +29,7 @@
                                 </x-slot>
 
                                 <x-slot name="body">
-                                    @livewire('masters.materials.material-form', ['action' => $action, 'objectId' => $objectId])
+                                    @livewire('trd-jewel1.masterl.material.material-component', ['action' => $action, 'objectId' => $objectId])
                                 </x-slot>
                             </x-ui-dialog-box>
 
