@@ -11,6 +11,10 @@ use App\Models\Base\BaseModel;
 class Partner extends BaseModel
 {
     protected $table = 'partners';
+    const CUSTOMER = 'C';
+    const SUPPLIER = 'V';
+    const SALESMAN = 'S';
+    const BANK = 'B';
 
     public static function boot()
     {

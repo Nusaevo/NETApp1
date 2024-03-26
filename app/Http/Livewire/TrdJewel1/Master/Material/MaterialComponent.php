@@ -45,20 +45,23 @@ class MaterialComponent extends BaseComponent
     protected function onLoad()
     {
         $this->object = Material::withTrashed()->find($this->objectIdValue);
-        $this->object_uoms = $this->object->MatlUom[0];
-        $this->object_boms = $this->object->MatlBom;
-        $this->materials = populateArrayFromModel($this->object);
-        $this->matl_uoms = populateArrayFromModel($this->object_uoms);
-        foreach ($this->object_boms as $key => $detail) {
-            $this->refreshBaseMaterials($this->bom_row);
-            $formattedDetail = populateArrayFromModel($detail);
-            $this->matl_boms[$key] =  $formattedDetail;
-            $this->bom_row++;
-        }
-        $attachments = $this->object->Attachment;
-        foreach ($attachments as $attachment) {
-            $url = $attachment->getUrl();
-            $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
+        if($this->object)
+        {
+            $this->object_uoms = $this->object->MatlUom[0];
+            $this->object_boms = $this->object->MatlBom;
+            $this->materials = populateArrayFromModel($this->object);
+            $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+            foreach ($this->object_boms as $key => $detail) {
+                $this->refreshBaseMaterials($this->bom_row);
+                $formattedDetail = populateArrayFromModel($detail);
+                $this->matl_boms[$key] =  $formattedDetail;
+                $this->bom_row++;
+            }
+            $attachments = $this->object->Attachment;
+            foreach ($attachments as $attachment) {
+                $url = $attachment->getUrl();
+                $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
+            }
         }
     }
 

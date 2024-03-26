@@ -22,6 +22,11 @@
             {{ $rows }}
         </tbody>
     </table>
+    @isset($footer)
+    <div class="d-flex justify-content-end mt-4">
+        {{ $footer }}
+    </div>
+    @endisset
 </div>
 @if(isset($enableDataTable) && strcmp($enableDataTable, 'true') === 0)
 <script>

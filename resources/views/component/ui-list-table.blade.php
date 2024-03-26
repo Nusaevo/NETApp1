@@ -16,4 +16,9 @@
             {{ $body }}
         </tbody>
     </table>
+    @isset($footer)
+        <div class="d-flex justify-content-end mt-4">
+            {{ $footer }}
+        </div>
+    @endisset
 </div>

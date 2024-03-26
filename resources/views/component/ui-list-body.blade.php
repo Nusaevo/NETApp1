@@ -3,7 +3,9 @@
         <div class="d-flex justify-content-between align-items-start">
             @isset($image)
                 <div class="col-md-2">
-                    {{ $image }}
+                    <div style="margin-top: 20px; margin-right: 20px; margin-bottom: auto; margin-left: 0;">
+                        {{ $image }}
+                    </div>
                 </div>
                 <div class="col-md-9">
                     {{ $rows }}

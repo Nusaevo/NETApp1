@@ -31,15 +31,26 @@ class BaseComponent extends Component
     public $baseRoute;
     public $renderRoute;
     public $route;
-    public function mount($action = null, $objectId = null)
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null)
     {
         $this->appCode =  Session::get('app_code', '');
         // Get all URL segments
 
         $this->action = $action ? $action : null;
         $this->objectId = $action ? $objectId : null;
-        $this->actionValue = $action ? decryptWithSessionKey($action) : null;
-        $this->objectIdValue = $objectId ? decryptWithSessionKey($objectId) : null;
+
+        if ($actionValue !== null) {
+            $this->actionValue = $actionValue;
+        } else {
+            $this->actionValue = $action ? decryptWithSessionKey($action) : null;
+        }
+
+        if ($objectIdValue !== null) {
+            $this->objectIdValue = $objectIdValue;
+        } else {
+            $this->objectIdValue = $objectId ? decryptWithSessionKey($objectId) : null;
+        }
+
         $this->baseRoute = Route::currentRouteName();
 
         $this->renderRoute = 'livewire.' . implode('.', array_map(function($segment) {
@@ -68,7 +79,6 @@ class BaseComponent extends Component
         } elseif ($this->actionValue == 'Create') {
             $segmentsToIgnore = 2;
         }
-
         if ($segmentsToIgnore > 0 && count($segments) > $segmentsToIgnore) {
             $segments = array_slice($segments, 0, -$segmentsToIgnore);
         }

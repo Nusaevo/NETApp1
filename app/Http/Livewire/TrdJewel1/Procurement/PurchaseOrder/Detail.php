@@ -20,12 +20,13 @@ class Detail extends BaseComponent
 
     public $suppliers;
     public $payments;
-    public $unit_row = 0;
     public $deletedItems = [];
     public $newItems = [];
 
     public $total_amount = 0;
     public $trType = "PO";
+
+    public $matl_objectId = null;
 
     public $materialDialogVisible = false;
 
@@ -34,20 +35,15 @@ class Detail extends BaseComponent
         $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
         $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->get();
         $this->inputs = populateArrayFromModel($this->object);
-        foreach ($this->object_detail as $index => $detail) {
+        foreach ($this->object_detail as $key => $detail) {
             $formattedDetail = populateArrayFromModel($detail);
-            $this->input_details[$index] =  $formattedDetail;
-            $this->input_details[$index]['price'] = ceil(currencyToNumeric($detail->price));
-            $this->input_details[$index]['qty'] = ceil(currencyToNumeric($detail->qty));
-            $this->input_details[$index]['amt'] = ceil(currencyToNumeric($detail->amt));
-            $this->input_details[$index]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
-            $this->input_details[$index]['matl_id'] = $detail->matl_id;
-            $this->input_details[$index]['matl_id'] = $detail->matl_id;
-            $this->input_details[$index]['matl_code'] = $detail->matl_code;
-            $this->input_details[$index]['matl_descr'] = $detail->matl_descr;
-            $this->input_details[$index]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-            $this->input_details[$index]['image_path'] = $detail->Material->Attachment[0]->getUrl();
-            $this->unit_row++;
+            $this->input_details[$key] =  $formattedDetail;
+            $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
+            $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
+            $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
+            $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+            $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
+            $this->input_details[$key]['image_path'] = $detail->Material->Attachment[0]->getUrl();
         }
         $this->countTotalAmount();
     }
@@ -67,7 +63,7 @@ class Detail extends BaseComponent
 
     public function refreshSupplier()
     {
-        $suppliersData = Partner::GetByGrp('SUPP');
+        $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
         $this->suppliers = $suppliersData->map(function ($data) {
             return [
                 'label' => $data->name,
@@ -86,10 +82,8 @@ class Detail extends BaseComponent
     public function addDetails($material_id = null)
     {
         $detail = [
-            'tr_seq' => $this->unit_row + 1,
             'tr_type' => $this->trType,
         ];
-
         $material = Material::find($material_id);
         if ($material) {
             $detail['matl_id'] = $material->id;
@@ -105,13 +99,16 @@ class Detail extends BaseComponent
         array_push($this->input_details, $detail);
         $newDetail = end($this->input_details);
         $this->newItems[] = $newDetail;
-        $this->unit_row++;
         $this->countTotalAmount();
     }
 
     public function Add()
     {
-        $this->emit('materialSaved', 195);
+        $this->emit('materialSaved', 211);
+        $this->emit('materialSaved', 212);
+        $this->emit('materialSaved', 213);
+        $this->emit('materialSaved', 214);
+        $this->emit('materialSaved', 215);
     }
 
     public function materialSaved($material_id)
@@ -130,7 +127,6 @@ class Detail extends BaseComponent
             $this->deletedItems[] = $this->input_details[$index]['id'];
         }
         unset($this->input_details[$index]);
-        $this->unit_row = $this->unit_row - 1;
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
     }
@@ -197,6 +193,8 @@ class Detail extends BaseComponent
             }
         }
 
+        $application = Partner::find($this->inputs['partner_id']);
+        $this->inputs['partner_code'] = $application->code;
         $this->object->fill($this->inputs);
         $this->object->save();
 
@@ -204,6 +202,7 @@ class Detail extends BaseComponent
             if (!isset($this->object_detail[$index])) {
                 $this->object_detail[$index] = new OrderDtl();
             }
+            $inputDetail['tr_seq'] = $index + 1;
             $inputDetail['trhdr_id'] = $this->object->id;
             $inputDetail['qty_reff'] = $inputDetail['qty'];
             $this->object_detail[$index]->fill($inputDetail);
@@ -227,15 +226,5 @@ class Detail extends BaseComponent
         $this->total_amount = 0;
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
-    }
-
-    public function openModal()
-    {
-        $this->materialDialogVisible = true;
-    }
-
-    public function closeModal()
-    {
-        $this->materialDialogVisible = false;
     }
 }

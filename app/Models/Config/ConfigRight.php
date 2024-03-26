@@ -63,14 +63,12 @@ class ConfigRight extends BaseModel
             if ($userGroupIds->isEmpty()) {
                 return $permissions;
             }
-
             // Find the menu based on the menu_link and app_code
             $configMenu = ConfigMenu::where('menu_link', $menu)
                                     ->whereHas('ConfigAppl', function ($query) use ($appCode) {
                                         $query->where('app_code', $appCode);
                                     })
                                     ->first();
-
             if (!$configMenu) {
                 return $permissions;
             }
@@ -79,7 +77,6 @@ class ConfigRight extends BaseModel
             $configRight = ConfigRight::whereIn('group_id', $userGroupIds)
                                     ->where('menu_id', $configMenu->id)
                                     ->first();
-
             if ($configRight) {
                 // Parsing the trustee string
                 $trustee = $configRight->trustee;
