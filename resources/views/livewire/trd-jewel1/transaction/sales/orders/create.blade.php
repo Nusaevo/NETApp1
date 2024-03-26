@@ -118,7 +118,7 @@
                     </div><div class="card-footer">
                     @include('layout.customs.button-submit')
                 </div>
-            </form>
+
         </div>
     </div>
 

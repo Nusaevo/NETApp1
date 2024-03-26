@@ -5,10 +5,9 @@
 
     <x-ui-page-card title="{{ $actionValue }} Partner" status="{{ $status }}">
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
-        <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                    <x-ui-expandable-card id="UserCard" title="General Info" :isOpen="true">
+                    <x-ui-card>
                         <x-ui-text-field label="Partner Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" />
                         <x-ui-dropdown-select label="Partner Type" click-event="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" />
                         <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
@@ -17,10 +16,9 @@
                         <x-ui-text-field label="Country" model="inputs.country" type="text" :action="$actionValue" placeHolder="" />
                         <x-ui-text-field label="Postal Code" model="inputs.postal_code" type="text" :action="$actionValue" placeHolder="" />
                         <x-ui-text-field label="Contact Person" model="inputs.contact_person" type="text" :action="$actionValue" placeHolder="" />
-                    </x-ui-expandable-card>
+                    </x-ui-card>
                 </div>
             </x-ui-tab-view-content>
-        </form>
         @include('layout.customs.form-footer')
     </x-ui-page-card>
 </div>

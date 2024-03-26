@@ -16,7 +16,7 @@
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
 
-                <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
+
 
 
 
@@ -101,7 +101,7 @@
                     </x-ui-expandable-card>
             </div>
         </x-ui-tab-view-content>
-        </form>
+
         <div class="card-footer d-flex justify-content-end">
             @if ($actionValue === 'Edit')
             <div style="padding-right: 10px;">

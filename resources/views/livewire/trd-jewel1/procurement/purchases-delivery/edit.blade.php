@@ -13,7 +13,7 @@
 
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
 
-        <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
+
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="UserCard" title="Terima Gudang Info" :isOpen="true">
@@ -94,7 +94,7 @@
                     </x-ui-expandable-card>
                 </div>
             </x-ui-tab-view-content>
-        </form>
+
         <div class="card-footer d-flex justify-content-end">
             @if ($status !== 'Posted')
                 {{-- @if ($actionValue === 'Create')

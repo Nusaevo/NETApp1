@@ -17,7 +17,7 @@
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
         {{-- @endif --}}
 
-        <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
+
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-expandable-card id="UserCard" title="Puchase Order Info" :isOpen="true">
@@ -115,7 +115,7 @@
                 </div>
                 @endif --}}
             </x-ui-tab-view-content>
-        </form>
+
         <div class="card-footer d-flex justify-content-end">
 
             <x-ui-button click-event="Save" button-name="Save Data" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />

@@ -1,4 +1,4 @@
-<div class="card-footer d-flex justify-content-end">
+<x-ui-footer>
     @if ($actionValue !== 'Create' && (!$object instanceof App\Models\Config\ConfigUser || auth()->user()->id !== $object->id))
     @if(isset($permissions['delete']) && $permissions['delete'])
     <div style="padding-right: 10px;">
@@ -14,7 +14,7 @@
     <div>
         <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
     </div>
-</div>
+</x-ui-footer>
 <script>
     document.addEventListener('livewire:load', function() {
         $(document).on('click', '.btn-dialog-box', function(e) {

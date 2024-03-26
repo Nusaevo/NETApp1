@@ -127,7 +127,7 @@
                                 </div>
                     </div><div class="card-footer">
                 </div>
-            </form>
+
         </div>
     </div>
 

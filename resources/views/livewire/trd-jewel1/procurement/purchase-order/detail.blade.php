@@ -4,7 +4,7 @@
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Puchase Order" status="{{ $status }}">
-        <form wire:submit.prevent="{{ $actionValue }}" class="form w-100">
+
             <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
 
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
@@ -29,7 +29,7 @@
                                 </x-slot>
 
                                 <x-slot name="body">
-                                    @livewire('trd-jewel1.masterl.material.material-component', ['action' => $action, 'objectId' => $objectId])
+                                    @livewire('trd-jewel1.master.material.material-component', ['action' => $action, 'objectId' => $objectId])
                                 </x-slot>
                             </x-ui-dialog-box>
 
@@ -84,7 +84,7 @@
                 <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
             </div>
 </div>
-</form>
+
 </x-ui-page-card>
 
 </div>

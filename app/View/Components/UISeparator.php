@@ -26,6 +26,6 @@ class UISeparator extends Component
 
     public function render()
     {
-        return view('comcomponentponent.ui-separator');
+        return view('component.ui-separator');
     }
 }
