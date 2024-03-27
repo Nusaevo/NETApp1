@@ -1,12 +1,7 @@
 <?php
 
-use App\Http\Controllers\Account\SettingsController;
 use App\Http\Controllers\Auth\SocialiteLoginController;
-use App\Http\Controllers\Documentation\ReferencesController;
-use App\Http\Controllers\Logs\AuditLogsController;
-use App\Http\Controllers\Logs\SystemLogsController;
 use App\Http\Controllers\PagesController;
-use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\CustomerSearchController;
