@@ -2,7 +2,7 @@
 
 namespace App\Models\TrdJewel1\Master;
 use App\Models\Base\BaseModel;
-use App\Models\Config\ConfigConst;
+use App\Models\SysConfig1\ConfigConst;
 
 class MatlBom extends BaseModel
 {

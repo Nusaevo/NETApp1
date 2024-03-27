@@ -68,7 +68,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Config\ConfigUser::class,
+            'model' => App\Models\SysConfig1\ConfigUser::class,
         ],
 
         // 'users' => [

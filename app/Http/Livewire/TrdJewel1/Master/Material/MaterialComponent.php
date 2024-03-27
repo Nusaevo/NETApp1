@@ -6,7 +6,7 @@ use App\Http\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\TrdJewel1\Master\MatlUom;
 use App\Models\TrdJewel1\Master\MatlBom;
-use App\Models\Config\ConfigConst;
+use App\Models\SysConfig1\ConfigConst;
 use App\Models\Inventories\IvtBal;
 use App\Models\Inventories\IvtBalUnit;
 use App\Models\Base\Attachment;
@@ -193,7 +193,7 @@ class MaterialComponent extends BaseComponent
                 'string',
                 'min:1',
                 'max:50',
-                Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+                Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
             ],
         ];
         return $rules;
@@ -258,7 +258,7 @@ class MaterialComponent extends BaseComponent
 
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
-                MatlBom::find($deletedItemId)->delete();
+                MatlBom::find($deletedItemId)->forceDelete();
             }
         }
         $this->emit('materialSaved', $this->object->id);

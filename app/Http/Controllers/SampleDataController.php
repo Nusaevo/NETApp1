@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Config\ConfigUser;
+use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Support\Carbon;
 
 class SampleDataController extends Controller

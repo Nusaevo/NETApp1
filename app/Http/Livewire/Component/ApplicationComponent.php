@@ -4,9 +4,9 @@ namespace App\Http\Livewire\Component;
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use App\Models\Config\ConfigAppl;
-use App\Models\Config\ConfigUser;
-use App\Models\Config\ConfigGroup;
+use App\Models\SysConfig1\ConfigAppl;
+use App\Models\SysConfig1\ConfigUser;
+use App\Models\SysConfig1\ConfigGroup;
 use Illuminate\Support\Facades\Session;
 
 class ApplicationComponent extends Component

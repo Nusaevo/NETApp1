@@ -5,7 +5,7 @@ namespace App\Core\Adapters;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use App\Models\Config\ConfigMenu;
+use App\Models\SysConfig1\ConfigMenu;
 /**
  * Adapter class to make the Metronic core lib compatible with the Laravel functions
  *

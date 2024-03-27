@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Config\ConfigMenu;
-use App\Models\Config\ConfigUser;
-use App\Models\Config\ConfigConst;
-use App\Models\Config\ConfigRight;
+use App\Models\SysConfig1\ConfigMenu;
+use App\Models\SysConfig1\ConfigUser;
+use App\Models\SysConfig1\ConfigConst;
+use App\Models\SysConfig1\ConfigRight;
 if (!function_exists('populateArrayFromModel')) {
     /**
      * Populate an array with all column values from a model.

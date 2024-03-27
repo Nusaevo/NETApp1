@@ -9,9 +9,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Session;
-use App\Models\Config\ConfigAppl;
+use App\Models\SysConfig1\ConfigAppl;
 use Illuminate\Support\Facades\Log;
-use App\Models\Config\ConfigUser;
+use App\Models\SysConfig1\ConfigUser;
 
 class LoginRequest extends FormRequest
 {

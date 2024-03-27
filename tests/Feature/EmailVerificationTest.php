@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Config\ConfigUser;
+use App\Models\SysConfig1\ConfigUser;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,7 +16,7 @@ class EmailVerificationTest extends TestCase
 
     public function test_email_verification_screen_can_be_rendered()
     {
-        $user = User::factory()->create([
+        $user = ConfigUser::factory()->create([
             // 'email_verified_at' => null,
         ]);
 
@@ -29,7 +29,7 @@ class EmailVerificationTest extends TestCase
     {
         Event::fake();
 
-        $user = User::factory()->create([
+        $user = ConfigUser::factory()->create([
             // 'email_verified_at' => null,
         ]);
 

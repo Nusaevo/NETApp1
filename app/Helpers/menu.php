@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Config\ConfigMenu;
-use App\Models\Config\ConfigUser;
-use App\Models\Config\ConfigGroup;
-use App\Models\Config\ConfigRight;
+use App\Models\SysConfig1\ConfigMenu;
+use App\Models\SysConfig1\ConfigUser;
+use App\Models\SysConfig1\ConfigGroup;
+use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Route;
 if (!function_exists('generateMenu')) {

@@ -3,7 +3,7 @@
 namespace App\Core;
 
 use App\Core\Adapters\Theme;
-use App\Models\Config\ConfigMenu;
+use App\Models\SysConfig1\ConfigMenu;
 
 class Menu {
     // Menu config

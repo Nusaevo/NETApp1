@@ -2,7 +2,7 @@
 
 namespace App\Rules;
 
-use App\Models\Config\ConfigUser;
+use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,7 +28,7 @@ class MatchOldPassword implements Rule
      */
     public function passes($attribute, $value)
     {
-        $user = User::where('email', request()->input('current_email'))->first();
+        $user = ConfigUser::where('email', request()->input('current_email'))->first();
 
         return Hash::check($value, $user->password);
     }

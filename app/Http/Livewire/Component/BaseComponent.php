@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Component;
 
 use Livewire\Component;
-use App\Models\Config\ConfigRight;
+use App\Models\SysConfig1\ConfigRight;
 use Exception;
 use Lang;
 use DB;

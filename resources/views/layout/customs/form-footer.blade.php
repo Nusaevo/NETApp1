@@ -1,5 +1,5 @@
 <x-ui-footer>
-    @if ($actionValue !== 'Create' && (!$object instanceof App\Models\Config\ConfigUser || auth()->user()->id !== $object->id))
+    @if ($actionValue !== 'Create' && (!$object instanceof App\Models\SysConfig1\ConfigUser || auth()->user()->id !== $object->id))
     @if(isset($permissions['delete']) && $permissions['delete'])
     <div style="padding-right: 10px;">
         @if ($status === 'ACTIVE' || !$object->deleted_at)

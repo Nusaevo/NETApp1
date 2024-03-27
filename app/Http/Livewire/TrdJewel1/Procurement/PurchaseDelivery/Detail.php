@@ -9,7 +9,7 @@ use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\ItemUnit;
 use App\Models\TrdJewel1\Master\Partner;
-use App\Models\Config\ConfigConst;
+use App\Models\SysConfig1\ConfigConst;
 use App\Models\ItemWarehouse;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use Illuminate\Validation\Rule;
