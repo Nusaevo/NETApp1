@@ -229,7 +229,7 @@ div[wire\:loading].loading-overlay {
     }
 
     .responsive-field[span="Half"] {
-        width: calc(50% - 1%); /* Adjust width to account for padding */
+        width: calc(50%);
         float: left;
         box-sizing: border-box;
         padding-right: 1%;

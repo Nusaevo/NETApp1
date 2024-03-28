@@ -5,8 +5,6 @@
 
     <x-ui-page-card title="{{ $actionValue }} Const" status="{{ $status }}">
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
-
-
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
