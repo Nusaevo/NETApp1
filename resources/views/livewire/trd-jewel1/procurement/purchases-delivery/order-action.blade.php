@@ -3,5 +3,5 @@
  cssClass="btn btn-success"
  type="Route"
  loading="true"
- iconPath="images/create-icon.png"
+ iconPath="add.svg"
  button-name="Create Billing" />

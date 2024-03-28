@@ -6,15 +6,6 @@
         <div id="kt_content_container" class="container-xxl">
             <div class="card">
                 <div class="card-body">
-                    {{-- <x-ui-button
-                    visible="true"
-                    enabled="true"
-                    click-event="{{ route('purchases_deliveries.detail', ['action' => 'Create'])  }}"
-                    cssClass="btn btn-success mb-5"
-                    type="Route"
-                    loading="true"
-                    iconPath="images/create-icon.png"
-                    button-name="Create" /> --}}
 
                     <div class="table-responsive">
                         @livewire('transactions.purchases-deliveries.index-data-table')

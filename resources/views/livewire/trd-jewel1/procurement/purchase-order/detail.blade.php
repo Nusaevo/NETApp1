@@ -27,7 +27,7 @@
                             {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
                                     Tambah
                             </button> --}}
-                            <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/create-icon.png" />
+                            <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)

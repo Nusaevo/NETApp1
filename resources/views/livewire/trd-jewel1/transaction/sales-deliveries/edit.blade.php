@@ -99,16 +99,16 @@
             @if ($status !== 'Posted')
                 {{-- @if ($actionValue === 'Create')
                     <div style="padding-right: 10px;">
-                        <x-ui-button click-event="CreateDraft" button-name="Save as Draft" loading="true" :action="$actionValue" cssClass="btn-secondary" iconPath="images/save-icon.png" />
+                        <x-ui-button click-event="CreateDraft" button-name="Save as Draft" loading="true" :action="$actionValue" cssClass="btn-secondary" iconPath="save.svg" />
                     </div>
                 @else
                     <div style="padding-right: 10px;">
-                        <x-ui-button click-event="EditDraft" button-name="Save as Draft" loading="true" :action="$actionValue" cssClass="btn-secondary" iconPath="images/save-icon.png" />
+                        <x-ui-button click-event="EditDraft" button-name="Save as Draft" loading="true" :action="$actionValue" cssClass="btn-secondary" iconPath="save.svg" />
                     </div>
                 @endif --}}
             @endif
             <div>
-                <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+                <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
             </div>
         </div>
 

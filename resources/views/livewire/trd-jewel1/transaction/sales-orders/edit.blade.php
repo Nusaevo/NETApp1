@@ -28,7 +28,7 @@
                         <div class="card-body p-2 mt-10">
                             <h2 class="mb-2 text-center">Barang</h2>
 
-                           <x-ui-button click-event="addDetails" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" />
+                           <x-ui-button click-event="addDetails" cssClass="btn btn-success" iconPath="add.svg" button-name="Tambah" :action="$actionValue" />
 
                             <div class="table-responsive mt-5">
                                 <table id="tbl" class="table table-striped table-hover gy-7 gs-7">
@@ -106,11 +106,11 @@
             @if ($actionValue === 'Edit')
             <div style="padding-right: 10px;">
                 <x-ui-button click-event="{{ route('purchases_deliveries.detail', ['action' =>  Crypt::encryptString('Create'),
-                'objectId' =>  Crypt::encryptString($object->id)]) }}" cssClass="btn btn-primary" type="Route" loading="true" iconPath="images/create-icon.png" button-name="Order Terima Gudang" />
+                'objectId' =>  Crypt::encryptString($object->id)]) }}" cssClass="btn btn-primary" type="Route" loading="true" iconPath="add.svg" button-name="Order Terima Gudang" />
             </div>
             @endif
             <div>
-                <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+                <x-ui-button click-event="{{ $actionValue }}" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
             </div>
         </div>
     </x-ui-page-card>

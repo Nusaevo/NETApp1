@@ -33,7 +33,7 @@
                             </x-slot>
 
                             <x-slot name="button">
-                                <x-ui-button click-event="addDetails" cssClass="btn btn-success" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" />
+                                <x-ui-button click-event="addDetails" cssClass="btn btn-success" iconPath="add.svg" button-name="Tambah" :action="$actionValue" />
                             </x-slot>
 
                             <x-slot name="headers">
@@ -97,7 +97,7 @@
                         <x-ui-table id="PDTable">
 
                             <x-slot name="button">
-                                <x-ui-button visible="true" enabled="true" click-event="{{ route('purchases_deliveries.detail', ['action' => encryptWithSessionKey('Create'), 'objectId' => encryptWithSessionKey($object->id)]) }}" cssClass="btn btn-success mb-5" type="Route" loading="true" iconPath="images/create-icon.png" button-name="Create" />
+                                <x-ui-button visible="true" enabled="true" click-event="{{ route('purchases_deliveries.detail', ['action' => encryptWithSessionKey('Create'), 'objectId' => encryptWithSessionKey($object->id)]) }}" cssClass="btn btn-success mb-5" type="Route" loading="true" iconPath="add.svg" button-name="Create" />
                             </x-slot>
 
                             <x-slot name="headers">
@@ -118,11 +118,11 @@
 
         <div class="card-footer d-flex justify-content-end">
 
-            <x-ui-button click-event="Save" button-name="Save Data" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+            <x-ui-button click-event="Save" button-name="Save Data" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
 
            @if ($actionValue !== 'Create')
-               <x-ui-button click-event="Submit" button-name="Submit Nota Terima Barang" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
-               <x-ui-button click-event="Print" button-name="Print Nota" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+               <x-ui-button click-event="Submit" button-name="Submit Nota Terima Barang" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+               <x-ui-button click-event="Print" button-name="Print Nota" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="print.svg" />
            @endif
        </div>
 

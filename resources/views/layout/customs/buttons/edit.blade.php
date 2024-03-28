@@ -5,5 +5,5 @@
     cssClass="btn btn-success mb-5"
     type="Route"
     loading="true"
-    iconPath="images/edit-icon.png"
+    iconPath="edit.svg"
     button-name="Edit" />

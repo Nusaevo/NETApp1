@@ -3,18 +3,19 @@
     @if(isset($permissions['delete']) && $permissions['delete'])
     <div style="padding-right: 10px;">
         @if ($status === 'ACTIVE' || !$object->deleted_at)
-        <x-ui-button button-name="Disable" click-event="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="images/disable-icon.svg" />
+        <x-ui-button button-name="Disable" click-event="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />
         @else
-        <x-ui-button button-name="Enable" click-event="" loading="true" :action="$actionValue" cssClass="btn-success btn-dialog-box" iconPath="images/enable-icon.png" />
+        <x-ui-button button-name="Enable" click-event="" loading="true" :action="$actionValue" cssClass="btn-success btn-dialog-box" iconPath="enable.svg" />
         @endif
     </div>
     @endif
 
     @endif
     <div>
-        <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+        <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
     </div>
 </x-ui-footer>
+
 <script>
     document.addEventListener('livewire:load', function() {
         $(document).on('click', '.btn-dialog-box', function(e) {

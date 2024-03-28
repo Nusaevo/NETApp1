@@ -116,3 +116,16 @@ if (!function_exists('getConstValueByID')) {
         return $configConst->str2 ?? '';
     }
 }
+
+if (!function_exists('imagePath')) {
+    /**
+     * Get the path of an image file.
+     *
+     * @param string $imageName
+     * @return string
+     */
+    function imagePath($imageName)
+    {
+        return asset('customs/images/' . $imageName);
+    }
+}

@@ -22,8 +22,8 @@
                         </div>
 
                         <div class="button-container">
-                            <x-ui-button click-event="" id="cameraButton" cssClass="btn btn-secondary" iconPath="images/create-icon.png" button-name="Add from Camera" :action="$actionValue" />
-                            <x-ui-button click-event="addFromGallery" cssClass="btn btn-secondary" iconPath="images/create-icon.png" button-name="Add from Gallery" :action="$actionValue" />
+                            <x-ui-button click-event="" id="cameraButton" cssClass="btn btn-secondary" iconPath="add.svg" button-name="Add from Camera" :action="$actionValue" />
+                            <x-ui-button click-event="addFromGallery" cssClass="btn btn-secondary" iconPath="add.svg" button-name="Add from Gallery" :action="$actionValue" />
                         </div>
                     </div>
                 </div>
@@ -37,7 +37,7 @@
             <x-ui-padding>
             <x-ui-list-table id="Table" title="Side Materials">
                 <x-slot name="button">
-                    <x-ui-button click-event="addBoms" cssClass="btn btn-primary" iconPath="images/create-icon.png" button-name="Tambah" :action="$actionValue" />
+                    <x-ui-button click-event="addBoms" cssClass="btn btn-primary" iconPath="add.svg" button-name="Tambah" :action="$actionValue" />
                 </x-slot>
                 <x-slot name="body">
                     @foreach($matl_boms as $key => $matl_bom)
@@ -65,7 +65,7 @@
             <x-ui-text-field label="Barcode" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
             <x-ui-button click-event="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" />
             <x-ui-button click-event="printLabel" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
-            <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="images/save-icon.png" />
+            <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
         </x-ui-footer>
 </x-ui-page-card>
 <div id="cameraStream" style="display: none;"></div>

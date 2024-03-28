@@ -13,7 +13,7 @@
                     cssClass="btn btn-success mb-5"
                     type="Route"
                     loading="true"
-                    iconPath="images/create-icon.png"
+                    iconPath="add.svg"
                     button-name="Create" />
 
                     <div class="table-responsive">
