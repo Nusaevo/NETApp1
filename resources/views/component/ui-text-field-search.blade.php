@@ -12,7 +12,7 @@
     <!-- Select Element -->
     <div class="text-field-container">
         <div class="responsive-input-container">
-            <select id="{{ isset($name) ? $name : 'defaultSelect' }}"
+            <select id="{{ isset($label) ? $label : 'defaultSelect' }}"
                     class="form-control responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                     wire:model="{{ $model }}" data-toggle="tooltip" title="Select an option"
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>

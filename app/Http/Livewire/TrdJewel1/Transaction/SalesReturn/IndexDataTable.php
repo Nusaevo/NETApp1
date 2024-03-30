@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseOrder;
+namespace App\Http\Livewire\TrdJewel1\Transaction\SalesReturn;
 
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\TrdJewel1\Transaction\ReturnHdr;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
@@ -15,7 +15,8 @@ use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    protected $model = OrderHdr::class;
+    protected $model = ReturnHdr::class;
+    public $returnIds;
 
     public function mount(): void
     {
@@ -26,9 +27,10 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::query()
-            ->where('tr_type', 'PO');
+        return ReturnHdr::query()
+            ->where('tr_type', 'SR');
     }
+
     public function columns(): array
     {
         return [
@@ -85,18 +87,18 @@ class IndexDataTable extends BaseDataTableComponent
                     '' => 'Semua',
                 ])->filter(function ($builder, $value) {
                     if ($value === Status::ACTIVE) {
-                        $builder->where('order_hdrs.status_code', Status::ACTIVE);
+                        $builder->where('return_hdrs.status_code', Status::ACTIVE);
                     } else if ($value === Status::COMPLETED) {
-                        $builder->where('order_hdrs.status_code', Status::COMPLETED);
+                        $builder->where('return_hdrs.status_code', Status::COMPLETED);
                     } else if ($value === '') {
                         $builder->withTrashed();
                     }
                 }),
             DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '>=', $value);
+                $builder->where('return_hdrs.tr_date', '>=', $value);
             }),
             DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '<=', $value);
+                $builder->where('return_hdrs.tr_date', '<=', $value);
             }),
 
         ];

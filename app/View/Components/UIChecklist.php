@@ -6,25 +6,33 @@ use Illuminate\View\Component;
 
 class UIChecklist extends Component
 {
-    public $options = [];
-    public $name;
+    public $label;
+    public $model;
+    public $options;
+    public $required;
     public $enabled;
     public $visible;
-    public $label;
     public $action;
+    public $selectedValue;
+    public $onChanged;
+    public $span;
+    public $modelType;
+    public $clickEvent;
 
-    public function __construct($label, $options, $action, $name, $enabled = true, $visible = true)
+    public function __construct($label = '', $model = '', $options, $selectedValue = null, $required = 'false',
+    $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '')
     {
         $this->label = $label;
+        $this->model = $model;
         $this->options = $options;
-        $this->name = $name;
-        if($action == 'View')
-        {
-            $this->enabled = false;
-        }else{
-            $this->enabled = $enabled;
-        }
+        $this->selectedValue = $selectedValue;
+        $this->required = $required;
+        $this->enabled = $enabled;
         $this->visible = $visible;
+        $this->action = $action;
+        $this->onChanged = $onChanged;
+        $this->span = $span;
+        $this->modelType = $modelType;
     }
 
     public function render()

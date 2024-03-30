@@ -545,3 +545,56 @@ div[wire\:loading].loading-overlay {
 .dataTables_paginate .fg-button.ui-button:focus {
     outline: none !important;
 }
+
+/* CSS untuk tombol */
+.btn-custom {
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+/* CSS untuk warna tombol */
+/* Mengganti warna tombol primary */
+/* Mengganti warna tombol primary */
+.btn-primary {
+    color: #fff !important;
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+    padding: 5px !important;
+}
+
+.btn-primary:hover {
+    color: #fff !important;
+    background-color: #0069d9 !important;
+    border-color: #0062cc !important;
+}
+
+/* Mengganti warna tombol secondary */
+.btn-secondary {
+    color: #fff !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    padding: 5px !important;
+}
+
+.btn-secondary:hover {
+    color: #fff !important;
+    background-color: #5a6268 !important;
+    border-color: #545b62 !important;
+}
+
+.btn-primary {
+    color: #fff !important;
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+    padding: 5px !important;
+}

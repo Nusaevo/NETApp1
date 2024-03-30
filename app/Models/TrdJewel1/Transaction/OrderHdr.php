@@ -38,8 +38,24 @@ class OrderHdr extends BaseModel
         return $this->hasMany(OrderDtl::class, 'trhdr_id', 'id');
     }
 
+    public function ReturnHdr()
+    {
+        return $this->hasMany(ReturnHdr::class, 'tr_id', 'id');
+    }
+
     public static function getByCreatedByAndTrType($createdBy, $trType)
     {
         return self::where('created_by', $createdBy)->where('tr_type', $trType)->get();
+    }
+
+    public function isOrderReturnCreated(): bool
+    {
+        foreach ($this->OrderDtl as $orderDtl) {
+            if ($orderDtl->qty_reff !== $orderDtl->qty) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

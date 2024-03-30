@@ -108,6 +108,16 @@ class BaseComponent extends Component
             }
         } elseif ($this->actionValue === 'Create') {
             $this->resetForm();
+            if ($this->objectIdValue !== null) {
+
+                $this->onPopulateDropdowns();
+                $this->onLoad();
+                if($this->object)
+                {
+                    $this->status = Status::getStatusString($this->object->status_code);
+                    $this->VersioNumber = $this->object->version_number;
+                }
+            }
         }else{
             $this->route .=  $this->baseRoute.'.Detail';
             $this->renderRoute .=  '.index';
@@ -168,7 +178,7 @@ class BaseComponent extends Component
         $this->validateForm();
         DB::beginTransaction();
         try {
-            if ($this->object) {
+            if ($this->inputs) {
                 $this->onValidateAndSave();
             }
             if ($this->actionValue == 'Edit' && isset($this->object->id)) {
@@ -190,11 +200,15 @@ class BaseComponent extends Component
             $this->object->updateObject($this->VersioNumber);
 
             if ($this->object->deleted_at) {
-                $this->object->status_code = Status::ACTIVE;
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::ACTIVE;
+                }
                 $this->object->deleted_at = null;
                 $messageKey = 'generic.success.enable';
             } else {
-                $this->object->status_code = Status::DEACTIVATED;
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::DEACTIVATED;
+                }
                 $this->object->save();
                 $this->object->delete();
                 $messageKey = 'generic.success.disable';

@@ -64,13 +64,13 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public function viewData($id)
     {
-        $route = !empty($this->customRoute) ? $this->customRoute . ".Detail" : $this->route . ".Detail";
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->route . ".Detail";
         return $this->redirectDetail($id, 'View', $route);
     }
 
     public function editData($id)
     {
-        $route = !empty($this->customRoute) ? $this->customRoute . ".Detail" : $this->route . ".Detail";
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->route . ".Detail";
         return $this->redirectDetail($id, 'Edit', $route);
     }
 

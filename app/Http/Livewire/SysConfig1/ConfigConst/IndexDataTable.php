@@ -31,13 +31,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Const Group", "const_group")
-                ->searchable()
-                ->sortable(),
             Column::make("Application","id")
                 ->format(function($value, $row, Column $column) {
                     return optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name;
                 })
+                ->searchable()
+                ->sortable(),
+            Column::make("Const Group", "const_group")
                 ->searchable()
                 ->sortable(),
             Column::make("Seq", "seq")

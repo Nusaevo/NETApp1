@@ -9,10 +9,10 @@ use App\Models\TrdJewel1\Master\Material;
 
 class ReturnDtl extends BaseModel
 {
-    use SoftDeletes;
-
-    protected $table = 'public.return_dtls';
-
+    protected static function boot()
+    {
+        parent::boot();
+    }
     protected $fillable = [
         'trhdr_id',
         'tr_type',
@@ -40,6 +40,11 @@ class ReturnDtl extends BaseModel
     public function ReturnHdr()
     {
         return $this->belongsTo(ReturnHdr::class, 'trhdr_id', 'id');
+    }
+
+    public function scopeGetByOrderHdr($query, $id)
+    {
+        return $query->where('trhdr_id', $id);
     }
 
     public function Material()

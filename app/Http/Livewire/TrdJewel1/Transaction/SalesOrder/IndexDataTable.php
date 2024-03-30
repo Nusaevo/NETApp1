@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseOrder;
+namespace App\Http\Livewire\TrdJewel1\Transaction\SalesOrder;
 
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
@@ -27,8 +27,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderHdr::query()
-            ->where('tr_type', 'PO');
+            ->where('tr_type', 'SO');
     }
+
     public function columns(): array
     {
         return [

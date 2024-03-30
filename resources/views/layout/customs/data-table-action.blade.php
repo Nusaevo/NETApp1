@@ -4,7 +4,7 @@ $access = $access ?? null;
 if ($access !== null) {
     $permissions = App\Models\SysConfig1\ConfigRight::getPermissionsByMenu($access);
 } else {
-    $permissions = ['create' => true, 'read' => true, 'update' => true, 'delete' => true];
+    $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
 }
 @endphp
 

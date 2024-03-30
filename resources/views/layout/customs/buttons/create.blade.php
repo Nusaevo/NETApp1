@@ -1,11 +1,21 @@
-@if(isset($permissions['create']) && $permissions['create'])
-<x-ui-button
-    visible="true"
-    enabled="true"
-    :click-event="route($route, ['action' => encryptWithSessionKey('Create')])"
-    cssClass="btn btn-success mb-5"
-    type="Route"
-    loading="true"
-    iconPath="add.svg"
-    button-name="Create" />
+@if(isset($permissions['create']) && $permissions['create'] && isset($objectId))
+    <x-ui-button
+        visible="true"
+        enabled="true"
+        :click-event="route($route, ['action' => encryptWithSessionKey('Create'), 'objectId' => encryptWithSessionKey($objectId)])"
+        cssClass="btn btn-primary mb-5"
+        type="Route"
+        loading="true"
+        iconPath="add.svg"
+        button-name="Create" />
+@else
+    <x-ui-button
+        visible="true"
+        enabled="true"
+        :click-event="route($route, ['action' => encryptWithSessionKey('Create')])"
+        cssClass="btn btn-primary mb-5"
+        type="Route"
+        loading="false"
+        iconPath="add.svg"
+        button-name="Create" />
 @endif

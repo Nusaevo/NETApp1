@@ -9,10 +9,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ReturnHdr extends BaseModel
 {
-    use SoftDeletes;
-
-    protected $table = 'public.return_hdrs';
-
+    protected static function boot()
+    {
+        parent::boot();
+    }
     protected $fillable = [
         'tr_type',
         'tr_id',

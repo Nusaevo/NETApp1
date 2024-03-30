@@ -11,7 +11,7 @@
                 $isActive = $loop->first ? 'active' : ''; // First tab is active by default
             @endphp
             <li class="nav-item" role="presentation">
-                <button class="nav-link {{ $isActive }}" id="{{ $tabWithoutSpaces }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tabWithoutSpaces }}" type="button" role="tab" aria-controls="{{ $tabWithoutSpaces }}">{{ ucfirst($tab) }}</button>
+                <button class="nav-link {{ $isActive }}" id="{{ $tabWithoutSpaces }}-tab" data-bs-toggle="tab" data-bs-target="#{{ $tabWithoutSpaces }}" type="button" role="tab" aria-controls="{{ $tab }}">{{ ucfirst($tab) }}</button>
             </li>
         @endforeach
     </ul>

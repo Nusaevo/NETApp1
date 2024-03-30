@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseOrder;
+namespace App\Http\Livewire\TrdJewel1\Transaction\SalesOrder;
 
 use App\Http\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
@@ -24,7 +24,7 @@ class Detail extends BaseComponent
     public $newItems = [];
 
     public $total_amount = 0;
-    public $trType = "PO";
+    public $trType = "SO";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;

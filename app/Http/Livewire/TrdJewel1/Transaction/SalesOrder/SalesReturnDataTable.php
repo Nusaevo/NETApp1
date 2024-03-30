@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Livewire\TrdJewel1\Procurement\PurchaseOrder;
+namespace App\Http\Livewire\TrdJewel1\Transaction\SalesOrder;
 
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\TrdJewel1\Transaction\ReturnHdr;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
@@ -13,22 +13,30 @@ use App\Enums\Status;
 use Lang;
 use Exception;
 
-class IndexDataTable extends BaseDataTableComponent
+class SalesReturnDataTable extends BaseDataTableComponent
 {
-    protected $model = OrderHdr::class;
+    protected $model = ReturnHdr::class;
+    public $returnIds;
 
-    public function mount(): void
+    public function mount($returnIds = null): void
     {
-        $this->customRoute = "";
+        $this->customRoute = "TrdJewel1/Procurement/SalesReturn";
         $this->setSort('tr_date', 'desc');
         $this->setFilter('status_code',  Status::ACTIVE);
+        $this->returnIds = $returnIds;
     }
 
     public function builder(): Builder
     {
-        return OrderHdr::query()
-            ->where('tr_type', 'PO');
+        $query = ReturnHdr::query()->orderBy('tr_date');
+
+        if ($this->returnIds !== null) {
+            $query->whereIn('return_hdrs.id', $this->returnIds);
+        }
+
+        return $query;
     }
+
     public function columns(): array
     {
         return [
@@ -50,7 +58,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
-                        'row' => $row,
+                       'row' => $row,
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,
@@ -59,18 +67,6 @@ class IndexDataTable extends BaseDataTableComponent
                         'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
                     ]);
                 }),
-            Column::make('', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    // Tombol pertama (Nota Terima Supplier atau Print, tergantung pada status)
-                    // if ($row->status_code === Status::ACTIVE) {
-                    //     $firstButton = '<a href="' . route("TrdJewel1.Procurement.PurchaseOrder.Detail", ["action" => encryptWithSessionKey('Create'), "objectId" => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="text-decoration: none;">Nota Terima Supplier</a>';
-                    // } else {
-                    //     $firstButton = '';
-                    // }
-                    $secondButton = '<a href="' . route('TrdJewel1.Procurement.PurchaseOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
-
-                    return "<div class='text-center'>". $secondButton."</div>";
-                })->html(),
 
         ];
     }
@@ -85,18 +81,18 @@ class IndexDataTable extends BaseDataTableComponent
                     '' => 'Semua',
                 ])->filter(function ($builder, $value) {
                     if ($value === Status::ACTIVE) {
-                        $builder->where('order_hdrs.status_code', Status::ACTIVE);
+                        $builder->where('return_hdrs.status_code', Status::ACTIVE);
                     } else if ($value === Status::COMPLETED) {
-                        $builder->where('order_hdrs.status_code', Status::COMPLETED);
+                        $builder->where('return_hdrs.status_code', Status::COMPLETED);
                     } else if ($value === '') {
                         $builder->withTrashed();
                     }
                 }),
             DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '>=', $value);
+                $builder->where('return_hdrs.tr_date', '>=', $value);
             }),
             DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '<=', $value);
+                $builder->where('return_hdrs.tr_date', '<=', $value);
             }),
 
         ];

@@ -3,11 +3,11 @@
         <x-ui-button click-event="" type="Back" button-name="Back" />
     </div>
 
-    <x-ui-page-card title="{{ $actionValue }} Puchase Order" status="{{ $status }}">
+    <x-ui-page-card title="{{ $actionValue }} Sales Order" status="{{ $status }}">
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
-            <x-ui-tab-view id="myTab" tabs="General, Purchase Return"> </x-ui-tab-view>
+            <x-ui-tab-view id="myTab" tabs="General, Sales Return"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
