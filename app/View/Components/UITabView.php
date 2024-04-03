@@ -8,7 +8,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UITabView extends Component
+class UiTabView extends Component
 {
     public $id;
     public $tabs;
@@ -21,6 +21,6 @@ class UITabView extends Component
 
     public function render()
     {
-        return view('component.ui-tab-view');
+        return view('components.ui-tab-view');
     }
 }

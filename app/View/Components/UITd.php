@@ -5,7 +5,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UITd extends Component
+class UiTd extends Component
 {
     public $width;
 
@@ -16,6 +16,6 @@ class UITd extends Component
 
     public function render()
     {
-        return view('component.ui-td');
+        return view('components.ui-td');
     }
 }

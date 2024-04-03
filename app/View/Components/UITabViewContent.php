@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UITabViewContent extends Component
+class UiTabViewContent extends Component
 {
     public function __construct()
     {
@@ -13,6 +13,6 @@ class UITabViewContent extends Component
 
     public function render()
     {
-        return view('component.ui-tab-view-content');
+        return view('components.ui-tab-view-content');
     }
 }

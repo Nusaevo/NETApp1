@@ -77,10 +77,10 @@ Route::middleware('auth')->group(function () {
             Route::get("/{$componentPath}", $componentClass)->name("{$routeName}");
         }
         else if (Str::endsWith($componentName, 'Detail')) {
-            Route::get("/{$componentPath}/Detail/{action}/{objectId?}", $componentClass)->name("{$routeName}.Detail");
+            Route::get("/{$componentPath}/Detail/{action}/{objectId?}/{additionalParam?}", $componentClass)->name("{$routeName}.Detail");
         }
         else if (Str::endsWith($componentName, 'PrintPdf')) {
-            Route::get("/{$componentPath}/PrintPdf/{action}/{objectId?}", $componentClass)->name("{$routeName}.PrintPdf");
+            Route::get("/{$componentPath}/PrintPdf/{action}/{objectId?}/{additionalParam?}", $componentClass)->name("{$routeName}.PrintPdf");
         }
         else {
             Route::get("/{$componentPath}", $componentClass)->name("{$routeName}.{$componentName}");
@@ -93,6 +93,11 @@ Route::middleware('auth')->group(function () {
         return redirect($app_code ? '/' . $app_code . '/Home' : '/');
     });
     // Additional non-standard routes go here
+});
+
+Route::fallback(function () {
+    $app_code = session('app_code');
+    return redirect($app_code ? '/' . $app_code . '/Home' : '/');
 });
 // Route::resource('users', UsersController::class);
 

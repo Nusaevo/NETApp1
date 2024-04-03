@@ -3,7 +3,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UISeparator extends Component
+class UiSeparator extends Component
 {
     public $caption;
     public $visible;
@@ -26,6 +26,6 @@ class UISeparator extends Component
 
     public function render()
     {
-        return view('component.ui-separator');
+        return view('components.ui-separator');
     }
 }

@@ -50,7 +50,13 @@
                 $('#' + selectId).select2();
                 $('#' + selectId).on('change', function(e) {
                     var data = $(this).select2("val");
-                    @this.set('{{ $model }}', data);
+                    var id = $(this).attr('id');
+                    @if(isset($model))
+                        @this.set('{{ $model }}', data);
+                    @endif
+                    @if(isset($onChanged))
+                        @this.{{ $onChanged }}(id, data);
+                    @endif
                 });
             }
         };

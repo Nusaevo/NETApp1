@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIDialogBox extends Component
+class UiDialogBox extends Component
 {
     public $id;
     public $visible;
@@ -21,6 +21,6 @@ class UIDialogBox extends Component
 
     public function render()
     {
-        return view('component.ui-dialog-box');
+        return view('components.ui-dialog-box');
     }
 }

@@ -3,7 +3,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UITextFieldSearch extends Component
+class UiTextFieldSearch extends Component
 {
     public $label;
     public $model;
@@ -37,6 +37,6 @@ class UITextFieldSearch extends Component
 
     public function render()
     {
-        return view('component.ui-text-field-search');
+        return view('components.ui-text-field-search');
     }
 }

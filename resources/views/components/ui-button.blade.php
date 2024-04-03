@@ -16,24 +16,13 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('backButton').addEventListener('click', function(event) {
                 event.preventDefault();
-                backToPreviousUrl();
+                window.history.go(-1);
             });
         });
 
-        function backToPreviousUrl() {
-            document.getElementById("backButtonText").style.display = 'none';
-            document.getElementById("backButtonLoading").style.display = '';
-
-            window.history.back();
-
-            setTimeout(() => {
-                document.getElementById("backButtonText").style.display = '';
-                document.getElementById("backButtonLoading").style.display = 'none';
-            }, 1000);
-        }
     </script>
 @else
     @if (isset($action) && $action !== 'View')

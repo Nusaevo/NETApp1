@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIPageCard extends Component
+class UiPageCard extends Component
 {
     public $title;
     public $status;
@@ -17,6 +17,6 @@ class UIPageCard extends Component
 
     public function render()
     {
-        return view('component.ui-page-card');
+        return view('components.ui-page-card');
     }
 }

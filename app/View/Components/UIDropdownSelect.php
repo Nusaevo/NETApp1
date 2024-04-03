@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIDropdownSelect extends Component
+class UiDropdownSelect extends Component
 {
     public $label;
     public $model;
@@ -38,6 +38,6 @@ class UIDropdownSelect extends Component
 
     public function render()
     {
-        return view('component.ui-dropdown-select');
+        return view('components.ui-dropdown-select');
     }
 }

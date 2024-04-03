@@ -14,6 +14,7 @@ class PaymentHdr extends BaseModel
         parent::boot();
     }
     protected $fillable = [
+        'tr_id',
         'tr_type',
         'tr_id',
         'tr_date',

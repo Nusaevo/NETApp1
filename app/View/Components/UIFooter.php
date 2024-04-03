@@ -5,7 +5,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIFooter extends Component
+class UiFooter extends Component
 {
     public $id;
 
@@ -16,6 +16,6 @@ class UIFooter extends Component
 
     public function render()
     {
-        return view('component.ui-footer');
+        return view('components.ui-footer');
     }
 }

@@ -5,7 +5,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIExpandableCard extends Component
+class UiExpandableCard extends Component
 {
     public $id;
     public $title;
@@ -20,6 +20,6 @@ class UIExpandableCard extends Component
 
     public function render()
     {
-        return view('component.ui-expandable-card');
+        return view('components.ui-expandable-card');
     }
 }

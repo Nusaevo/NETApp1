@@ -3,7 +3,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UITab extends Component
+class UiTab extends Component
 {
     public $id;
     public $active;
@@ -16,6 +16,6 @@ class UITab extends Component
 
     public function render()
     {
-        return view('component.ui-tab');
+        return view('components.ui-tab');
     }
 }

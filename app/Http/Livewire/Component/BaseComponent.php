@@ -31,8 +31,11 @@ class BaseComponent extends Component
     public $baseRoute;
     public $renderRoute;
     public $route;
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null)
+
+    public $additionalParam;
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
+        $this->additionalParam = $additionalParam;
         $this->appCode =  Session::get('app_code', '');
         // Get all URL segments
 
@@ -64,7 +67,6 @@ class BaseComponent extends Component
                 }
             }, $segment);
         }, explode('.', $this->baseRoute)));
-
         // Convert the entire route to lowercase except the first character of each segment
         $this->renderRoute = implode('.', array_map(function($segment) {
             return lcfirst($segment);

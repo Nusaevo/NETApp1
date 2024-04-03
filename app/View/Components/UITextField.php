@@ -3,7 +3,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UITextField extends Component
+class UiTextField extends Component
 {
     public $label;
     public $model;
@@ -46,6 +46,6 @@ class UITextField extends Component
 
     public function render()
     {
-        return view('component.ui-text-field');
+        return view('components.ui-text-field');
     }
 }

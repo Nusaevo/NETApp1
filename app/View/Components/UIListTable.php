@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIListTable extends Component
+class UiListTable extends Component
 {
     public $id;
     public $title;
@@ -17,6 +17,6 @@ class UIListTable extends Component
 
     public function render()
     {
-        return view('component.ui-list-table');
+        return view('components.ui-list-table');
     }
 }

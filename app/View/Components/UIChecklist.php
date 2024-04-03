@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIChecklist extends Component
+class UiChecklist extends Component
 {
     public $label;
     public $model;
@@ -37,6 +37,6 @@ class UIChecklist extends Component
 
     public function render()
     {
-        return view('component.ui-checklist');
+        return view('components.ui-checklist');
     }
 }

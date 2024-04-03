@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIButton extends Component
+class UiButton extends Component
 {
     public $clickEvent;
     public $buttonName;
@@ -36,6 +36,6 @@ class UIButton extends Component
 
     public function render()
     {
-        return view('component.ui-button');
+        return view('components.ui-button');
     }
 }

@@ -2,16 +2,30 @@
 
 namespace App\Models\TrdJewel1\Transaction;
 use App\Models\Base\BaseModel;
-use App\Models\TrdJewel1\Master\Material;
+use App\Models\SysConfig1\ConfigSnum;
 use App\Models\TrdJewel1\Master\Partner;
+use Illuminate\Support\Facades\Session;
 class OrderHdr extends BaseModel
 {
     protected static function boot()
     {
         parent::boot();
+
+        static::saving(function ($orderHdr) {
+            if (is_null($orderHdr->tr_id) && in_array($orderHdr->tr_type, ['PO', 'SO'])) {
+                $app_code = Session::get('app_code');
+                $configSnum = ConfigSnum::where('code', 'LIKE', '%AR_INVOICE%')->where('app_code', 'LIKE', $app_code)->firstOrFail();
+                $stepCnt = $configSnum->step_cnt;
+                $orderHdr->tr_id = $configSnum->last_cnt + $stepCnt;
+                $configSnum->update(['last_cnt' => $orderHdr->tr_id]);
+
+                $orderHdr->save();
+            }
+        });
     }
 
     protected $fillable = [
+        'tr_id',
         'tr_type',
         'tr_date',
         'reff_code',

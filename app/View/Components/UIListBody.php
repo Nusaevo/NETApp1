@@ -4,7 +4,7 @@ namespace App\View\Components;
 
 use Illuminate\View\Component;
 
-class UIListBody extends Component
+class UiListBody extends Component
 {
 
     public function __construct()
@@ -13,6 +13,6 @@ class UIListBody extends Component
 
     public function render()
     {
-        return view('component.ui-list-body');
+        return view('components.ui-list-body');
     }
 }
