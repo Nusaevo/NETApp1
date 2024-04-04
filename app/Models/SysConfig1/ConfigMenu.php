@@ -12,7 +12,6 @@ class ConfigMenu extends BaseModel
     public static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
         // static::creating(function ($model) {
         //     $maxId = SequenceUtility::getCurrentSequenceValue($model);
         //     $model->code = 'MENU' ."_". ($maxId + 1);

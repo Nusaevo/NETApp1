@@ -51,10 +51,10 @@
                 $('#' + selectId).on('change', function(e) {
                     var data = $(this).select2("val");
                     var id = $(this).attr('id');
-                    @if(isset($model))
+                    @if(isset($model)  && $model !== '')
                         @this.set('{{ $model }}', data);
                     @endif
-                    @if(isset($onChanged))
+                    @if(isset($onChanged)  && $onChanged !== '')
                         @this.{{ $onChanged }}(id, data);
                     @endif
                 });

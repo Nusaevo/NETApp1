@@ -2,8 +2,6 @@
 
 namespace App\Enums;
 
-namespace App\Enums;
-
 class Status
 {
     const PENDING = 'PND';
@@ -15,8 +13,11 @@ class Status
     const COMPLETED = 'CMPLT';
     const CANCELED = 'CNCL';
     const ARCHIVED = 'ARCH';
-    const DRAFT = 'DRFT';
     const ON_HOLD = 'ON_HLD';
+    const DRAFT = 'D';
+    const OPEN = 'O';
+    const VOID = 'V';
+    const POSTED = 'P';
 
     /**
      * Get the full status string from the abbreviation.
@@ -36,10 +37,13 @@ class Status
             self::COMPLETED => 'COMPLETED',
             self::CANCELED => 'CANCELED',
             self::ARCHIVED => 'ARCHIVED',
-            self::DRAFT => 'DRAFT',
             self::ON_HOLD => 'ON_HOLD',
+            self::DRAFT => 'DRAFT',
+            self::OPEN => 'OPEN',
+            self::VOID => 'VOID',
+            self::POSTED => 'POSTED',
         ];
 
-        return $statuses[$abbreviation] ?? '';
+        return $statuses[$abbreviation] ?? 'Unknown Status';
     }
 }
