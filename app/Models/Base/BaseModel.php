@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Base\Attachment;
 use App\Traits\BaseTrait;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Session;
+use App\Enums\Status;
+use App\Models\SysConfig1\ConfigSnum;
 
 
 class BaseModel extends Model
@@ -51,6 +54,27 @@ class BaseModel extends Model
     public function Attachment()
     {
         return $this->hasMany(Attachment::class, 'attached_objectid')
-                    ->where('attached_objecttype', class_basename($this));
+            ->where('attached_objecttype', class_basename($this));
+    }
+
+    public function generateTrId($code)
+    {
+        if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'tr_id')) {
+            $app_code = Session::get('app_code');
+            $configSnum = ConfigSnum::where('app_code', '=', $app_code)
+                ->where('code', '=', $code)
+                ->first();
+            if ($configSnum != null) {
+                $stepCnt = $configSnum->step_cnt;
+                $proposedTrId = $configSnum->last_cnt + $stepCnt;
+                if ($proposedTrId > $configSnum->wrap_high) {
+                    $proposedTrId = $configSnum->wrap_low;
+                }
+                $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+                $configSnum->update(['last_cnt' => $proposedTrId]);
+                return $proposedTrId;
+            }
+            // }
+        }
     }
 }

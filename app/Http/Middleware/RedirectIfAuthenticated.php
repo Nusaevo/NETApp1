@@ -6,7 +6,6 @@ use App\Providers\RouteServiceProvider;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 
 class RedirectIfAuthenticated
 {
@@ -25,8 +24,7 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                $app_code = Session::get('app_code');
-                return redirect($app_code ? '/' . $app_code . '/Home' : '/');
+                return redirect(theme()->getPageUrl(RouteServiceProvider::HOME));
             }
         }
 

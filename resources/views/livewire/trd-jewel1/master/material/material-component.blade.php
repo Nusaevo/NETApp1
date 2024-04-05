@@ -71,41 +71,66 @@
 <div id="cameraStream" style="display: none;"></div>
 
 <script>
-    function scrollToBottom() {
-        var container = document.getElementById('scroll-container');
-        container.scrollTop = container.scrollHeight;
-    }
+    // function scrollToBottom() {
+    //     var container = document.getElementById('scroll-container');
+    //     container.scrollTop = container.scrollHeight;
+    // }
 
-    document.addEventListener('livewire:load', function() {
-        // Call scrollToBottom function when the page loads
-        scrollToBottom();
+    // document.addEventListener('livewire:load', function() {
+    //     // Call scrollToBottom function when the page loads
+    //     scrollToBottom();
 
-        Livewire.on('itemAdded', function() {
-            // Call scrollToBottom function when a new item is added
-            scrollToBottom();
-        });
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        Webcam.set({
-            width: 320
-            , height: 240
-            , dest_width: 640
-            , dest_height: 480
-            , image_format: 'jpeg'
-            , jpeg_quality: 90
-        , });
+    //     Livewire.on('itemAdded', function() {
+    //         // Call scrollToBottom function when a new item is added
+    //         scrollToBottom();
+    //     });
+    // });
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     Webcam.set({
+    //         width: 320
+    //         , height: 240
+    //         , dest_width: 640
+    //         , dest_height: 480
+    //         , image_format: 'jpeg'
+    //         , jpeg_quality: 90
+    //     , });
 
-        Webcam.attach('#cameraStream');
-        document.getElementById('cameraButton').addEventListener('click', function() {
-            captureImageAndEmit();
-        });
-    });
+    //     Webcam.attach('#cameraStream');
+    //     document.getElementById('cameraButton').addEventListener('click', function() {
+    //         captureImageAndEmit();
+    //     });
+    // });
 
     function captureImageAndEmit() {
+        // Show loader while initializing the webcam
+        var loaderContainer = document.getElementById('loader-container');
+        loaderContainer.style.display = 'block';
+
+        Webcam.set({
+            width: 320,
+            height: 240,
+            dest_width: 640,
+            dest_height: 480,
+            image_format: 'jpeg',
+            jpeg_quality: 90,
+        });
+
+        Webcam.attach('#cameraStream');
+
+        // Hide loader once the webcam is initialized
+        Webcam.on('live', function() {
+            loaderContainer.style.display = 'none';
+        });
+
         Webcam.snap(function(dataUri) {
             Livewire.emit('imagesCaptured', dataUri);
+            Webcam.reset();
         });
     }
+
+    document.getElementById('cameraButton').addEventListener('click', function() {
+        captureImageAndEmit();
+    });
 
 </script>
 

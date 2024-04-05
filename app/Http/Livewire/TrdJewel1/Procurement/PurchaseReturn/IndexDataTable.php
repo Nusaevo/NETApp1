@@ -34,7 +34,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Id", "id")
+            Column::make("Nota", "tr_id")
                 ->sortable()
                 ->searchable(),
             Column::make("Tanggal Transaksi", "tr_date")
@@ -49,6 +49,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
+            Column::make("Tanggal dibuat", "created_at")
+                ->searchable()
+                ->sortable(),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

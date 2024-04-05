@@ -6,11 +6,22 @@ use App\Http\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\TrdJewel1\Master\Partner;
+use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\TrdJewel1\Master\Material;
+use App\Enums\Status;
+use App\Models\TrdJewel1\Transaction\BillingDtl;
+use App\Models\TrdJewel1\Transaction\BillingHdr;
+use App\Models\TrdJewel1\Transaction\DelivDtl;
+use App\Models\TrdJewel1\Transaction\DelivHdr;
 use Lang;
 use Exception;
 use DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Session;
+use App\Models\SysConfig1\ConfigSnum;
+
+use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
 {
@@ -19,6 +30,7 @@ class Detail extends BaseComponent
     public $input_details = [];
 
     public $suppliers;
+    public $warehouses;
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
@@ -29,7 +41,6 @@ class Detail extends BaseComponent
     public $matl_action = 'Create';
     public $matl_objectId = null;
 
-    public $materialDialogVisible = false;
     public $returnIds = [];
 
     protected function onLoad()
@@ -37,10 +48,9 @@ class Detail extends BaseComponent
         $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
         $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
         $this->inputs = populateArrayFromModel($this->object);
-        if ($this->object) {
-            $this->returnIds = $this->object->ReturnHdr->pluck('id')->toArray();
-        }
-
+        // if ($this->object) {
+        //     $this->returnIds = $this->object->ReturnHdr->pluck('id')->toArray();
+        // }
         foreach ($this->object_detail as $key => $detail) {
             $this->input_details[$key] =  populateArrayFromModel($detail);
             $this->input_details[$key]['id'] = $detail->id;
@@ -63,7 +73,8 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'changeItem'  => 'changeItem',
-        'materialSaved' => 'materialSaved'
+        'materialSaved' => 'materialSaved',
+        'delete' => 'delete'
     ];
 
 
@@ -80,15 +91,33 @@ class Detail extends BaseComponent
         $this->inputs['partner_id'] = null;
     }
 
+    public function refreshWarehouses()
+    {
+        $data = ConfigConst::where('app_code', $this->appCode)
+            ->where('const_group', 'WAREHOUSE_LOC')
+            ->orderBy('seq')
+            ->get();
+        $this->warehouses = $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+        $this->inputs['wh_code'] = 18;
+    }
+
+
     protected function onPopulateDropdowns()
     {
         $this->refreshSupplier();
+        $this->refreshWarehouses();
     }
 
     protected function rules()
     {
         $rules = [
             'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
+            'inputs.wh_code' =>  'required|integer|min:0|max:9999999999',
             'inputs.tr_date' => 'required',
             'input_details.*.price' => 'required|integer|min:0|max:9999999999',
             'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
@@ -100,6 +129,7 @@ class Detail extends BaseComponent
         'inputs'                => 'Input',
         'inputs.tr_date'      => 'Tanggal Transaksi',
         'inputs.partner_id'      => 'Supplier',
+        'inputs.wh_code'      => 'Warehouse',
         'input_details.*'              => 'Inputan Barang',
         'input_details.*.matl_id' => 'Item',
         'input_details.*.qty' => 'Item Qty',
@@ -117,26 +147,21 @@ class Detail extends BaseComponent
                 throw new Exception("Ditemukan duplikasi Item.");
             }
         }
-
-        $application = Partner::find($this->inputs['partner_id']);
-        $this->inputs['partner_code'] = $application->code;
-        $this->object->fill($this->inputs);
-        $this->object->save();
-
-        foreach ($this->input_details as $index => $inputDetail) {
-            if (!isset($this->object_detail[$index])) {
-                $this->object_detail[$index] = new OrderDtl();
+        if($this->actionValue == 'Edit')
+        {
+            if(!$this->object->isEnableToEdit())
+            {
+                throw new Exception("Nota ini tidak bisa di edit lagi.");
             }
-            $inputDetail['tr_seq'] = $index + 1;
-            $inputDetail['trhdr_id'] = $this->object->id;
-            $inputDetail['qty_reff'] = $inputDetail['qty'];
-            $this->object_detail[$index]->fill($inputDetail);
-            $this->object_detail[$index]->save();
         }
+        $partner = Partner::find($this->inputs['partner_id']);
+        $this->inputs['partner_code'] = $partner->code;
+        $this->inputs['status_code'] = STATUS::OPEN;
+        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, true);
 
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
-                OrderDtl::find($deletedItemId)->delete();
+                $this->object_detail::find($deletedItemId)->delete();
             }
         }
     }
@@ -205,6 +230,43 @@ class Detail extends BaseComponent
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
     }
+
+
+    public function delete()
+    {
+        try {
+            if(!$this->object->isEnableToEdit())
+            {
+                throw new Exception("Nota ini tidak bisa di edit lagi.");
+            }
+            $this->updateVersionNumber();
+            if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::DEACTIVATED;
+                }
+                $this->object->save();
+                $this->object->delete();
+                $messageKey = 'generic.success.disable';
+            $this->object->save();
+            $this->notify('success', Lang::get($messageKey));
+        } catch (Exception $e) {
+            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+        }
+
+          return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+
+    public function createReturn()
+    {
+        if (!$this->object->isEnableToEdit()) {
+            throw new Exception("Nota ini tidak bisa di edit lagi.");
+        }
+
+        return redirect()->route('TrdJewel1.Procurement.PurchaseReturn.Detail', [
+            'action' => encryptWithSessionKey('Create'),
+            'objectId' => encryptWithSessionKey($this->object->id)
+        ]);
+    }
+
 
     public function changeQty($id, $value)
     {

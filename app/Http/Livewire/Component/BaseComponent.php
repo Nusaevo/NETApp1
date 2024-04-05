@@ -180,14 +180,7 @@ class BaseComponent extends Component
         $this->validateForm();
         DB::beginTransaction();
         try {
-            if ($this->actionValue == 'Edit' && isset($this->object->id)) {
-                if ($this->object->version_number != $this->VersioNumber) {
-                    throw new \Exception("This object has already been updated by another user. Please refresh the page and try again.");
-                }
-                if ($this->object->isDirty()) {
-                    $this->VersioNumber ++;
-                }
-            }
+            $this->updateVersionNumber();
             if ($this->inputs) {
                 $this->onValidateAndSave();
             }
@@ -202,31 +195,42 @@ class BaseComponent extends Component
 
     protected function change()
     {
-        // try {
-        //     $this->object->updateObject($this->VersioNumber);
+        try {
+            $this->updateVersionNumber();
+            if ($this->object->deleted_at) {
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::ACTIVE;
+                }
+                $this->object->deleted_at = null;
+                $messageKey = 'generic.success.enable';
+            } else {
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::DEACTIVATED;
+                }
+                $this->object->save();
+                $this->object->delete();
+                $messageKey = 'generic.success.disable';
+            }
 
-        //     if ($this->object->deleted_at) {
-        //         if (isset($this->object->status_code)) {
-        //             $this->object->status_code =  Status::ACTIVE;
-        //         }
-        //         $this->object->deleted_at = null;
-        //         $messageKey = 'generic.success.enable';
-        //     } else {
-        //         if (isset($this->object->status_code)) {
-        //             $this->object->status_code =  Status::DEACTIVATED;
-        //         }
-        //         $this->object->save();
-        //         $this->object->delete();
-        //         $messageKey = 'generic.success.disable';
-        //     }
-
-        //     $this->object->save();
-        //     $this->notify('success', Lang::get($messageKey));
-        // } catch (Exception $e) {
-        //     $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        // }
+            $this->object->save();
+            $this->notify('success', Lang::get($messageKey));
+        } catch (Exception $e) {
+            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+        }
 
         $this->dispatchBrowserEvent('refresh');
+    }
+
+    protected function updateVersionNumber()
+    {
+        if ($this->actionValue == 'Edit' && isset($this->object->id)) {
+            if ($this->object->version_number != $this->VersioNumber) {
+                throw new \Exception("This object has already been updated by another user. Please refresh the page and try again.");
+            }
+            if ($this->object->isDirty()) {
+                $this->VersioNumber ++;
+            }
+        }
     }
 
 

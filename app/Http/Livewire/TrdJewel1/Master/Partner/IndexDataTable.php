@@ -28,7 +28,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Group", "grp")
                 ->searchable()
                 ->sortable(),
-                Column::make("Group", "grp")
+            Column::make("Group", "grp")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {

@@ -21,7 +21,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->customRoute = "";
         $this->setSort('tr_date', 'desc');
-        $this->setFilter('status_code',  Status::ACTIVE);
+        $this->setFilter('status_code',  Status::OPEN);
     }
 
     public function builder(): Builder
@@ -29,11 +29,10 @@ class IndexDataTable extends BaseDataTableComponent
         return OrderHdr::query()
             ->where('tr_type', 'SO');
     }
-
     public function columns(): array
     {
         return [
-            Column::make("Id", "id")
+            Column::make("Nota", "tr_id")
                 ->sortable()
                 ->searchable(),
             Column::make("Tanggal Transaksi", "tr_date")
@@ -48,6 +47,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
+            Column::make("Tanggal dibuat", "created_at")
+                ->searchable()
+                ->sortable(),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -81,7 +83,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             SelectFilter::make('Status', 'status_code')
                 ->options([
-                    Status::ACTIVE => 'Active',
+                    Status::OPEN => 'Open',
                     Status::COMPLETED => 'Selesai',
                     '' => 'Semua',
                 ])->filter(function ($builder, $value) {

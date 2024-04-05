@@ -12,6 +12,23 @@ class ReturnDtl extends BaseModel
     protected static function boot()
     {
         parent::boot();
+        static::created(function ($returnDtl) {
+            $orderDtl = $returnDtl->OrderDtl;
+            $orderDtlQtyReff = ceil(currencyToNumeric($orderDtl->qty_reff));
+            $returnQty = (float)$returnDtl->qty;
+            $newQtyReff = $orderDtlQtyReff - $returnQty;
+            $orderDtl->qty_reff = number_format($newQtyReff, 2);
+            $orderDtl->save();
+        });
+
+        static::deleting(function ($returnDtl) {
+            $orderDtl = $returnDtl->OrderDtl;
+            $orderDtlQtyReff = ceil(currencyToNumeric($orderDtl->qty_reff));
+            $returnQty = (float)$returnDtl->qty;
+            $newQtyReff = $orderDtlQtyReff + $returnQty;
+            $orderDtl->qty_reff = number_format($newQtyReff, 2);
+            $orderDtl->save();
+        });
     }
     protected $fillable = [
         'trhdr_id',
@@ -40,6 +57,11 @@ class ReturnDtl extends BaseModel
     public function ReturnHdr()
     {
         return $this->belongsTo(ReturnHdr::class, 'trhdr_id', 'id');
+    }
+
+    public function OrderDtl()
+    {
+        return $this->belongsTo(OrderDtl::class, 'dlvdtl_id', 'id');
     }
 
     public function scopeGetByOrderHdr($query, $id)

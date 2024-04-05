@@ -13,14 +13,14 @@ use App\Enums\Status;
 use Lang;
 use Exception;
 
-class SalesReturnDataTable extends BaseDataTableComponent
+class PurchaseReturnDataTable extends BaseDataTableComponent
 {
     protected $model = ReturnHdr::class;
     public $returnIds;
 
     public function mount($returnIds = null): void
     {
-        $this->customRoute = "TrdJewel1/Procurement/SalesReturn";
+        $this->customRoute = "TrdJewel1/Procurement/PurchaseReturn";
         $this->setSort('tr_date', 'desc');
         $this->setFilter('status_code',  Status::ACTIVE);
         $this->returnIds = $returnIds;

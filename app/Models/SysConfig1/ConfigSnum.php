@@ -16,9 +16,7 @@ class ConfigSnum extends BaseModel
         'wrap_high',
         'step_cnt',
         'descr',
-        'status_code',
-        'object_name',
-        'object_type'
+        'status_code'
     ];
 
     public function scopeGetActiveData()

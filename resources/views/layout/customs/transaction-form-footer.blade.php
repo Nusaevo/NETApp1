@@ -3,9 +3,37 @@
 $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
 @endphp
 
-@if ($actionValue === 'Edit')
+@if ($actionValue === 'Edit' || $actionValue === 'View')
+<x-ui-button button-name="Delete" click-event="" loading="true" action="Edit" cssClass="btn-danger btn-dialog-box" iconPath="delete.svg" />
 <x-ui-button :action="$actionValue" click-event="{{ route($printPdfRoute,
 ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($object->id)]) }}"
     cssClass="btn-primary" type="Route" loading="true" button-name="Print" iconPath="print.svg" />
 @endif
 <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+
+<script>
+    document.addEventListener('livewire:load', function() {
+        $(document).on('click', '.btn-dialog-box', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: "Apakah Anda Yakin ingin melanjutkannya?"
+                , text: ""
+                , icon: "question"
+                , buttonsStyling: false
+                , showConfirmButton: true
+                , showCancelButton: true
+                , confirmButtonText: "Yes"
+                , cancelButtonText: "No"
+                , closeOnConfirm: false
+                , customClass: {
+                    confirmButton: "btn btn-primary"
+                    , cancelButton: 'btn btn-secondary'
+                }
+            }).then(confirm => {
+                if (confirm.isConfirmed) {
+                    Livewire.emit('delete');
+                }
+            });
+        });
+    });
+</script>

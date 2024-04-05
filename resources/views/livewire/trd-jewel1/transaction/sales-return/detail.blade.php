@@ -3,7 +3,7 @@
         <x-ui-button click-event="" type="Back" button-name="Back" />
     </div>
 
-    <x-ui-page-card title="{{ $actionValue }} Sales Return" status="{{ $status }}">
+    <x-ui-page-card title="{{ $actionValue }} Purchase Return" status="{{ $status }}">
         <x-ui-tab-view id="myTab" tabs="Gemeral"> </x-ui-tab-view>
 
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
@@ -13,7 +13,7 @@
                         <x-ui-text-field label="Tgl Terima" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half"/>
                         <x-ui-text-field-search label="Supplier" name="Supplier" click-event="" model="inputs.partner_id" :options="$suppliers" enabled="false" required="true" :action="$actionValue" span="Half"/>
                     </x-ui-padding>
-                    <x-ui-list-table id="Table" title="Barang">
+                    <x-ui-list-table id="Table" title="">
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
                             <tr wire:key="list{{ $key }}">

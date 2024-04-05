@@ -13,7 +13,28 @@
                         <x-ui-text-field label="Tgl Terima" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half"/>
                         <x-ui-text-field-search label="Supplier" name="Supplier" click-event="" model="inputs.partner_id" :options="$suppliers" enabled="false" required="true" :action="$actionValue" span="Half"/>
                     </x-ui-padding>
-                    <x-ui-list-table id="Table" title="Barang">
+
+                    <x-ui-dialog-box id="NotaDialogBox" :width="'2000px'" :height="'2000px'">
+                        <x-slot name="title">
+                        </x-slot>
+                        <x-slot name="body">
+                            @livewire('trd-jewel1.procurement.purchase-return.purchase-order-data-table')
+                        </x-slot>
+                    </x-ui-dialog-box>
+
+                    <x-ui-dialog-box id="ItemDialogBox" :width="'2000px'" :height="'2000px'">
+                        <x-slot name="title">
+                        </x-slot>
+                        <x-slot name="body">
+                            @livewire('trd-jewel1.procurement.purchase-return.purchase-order-data-table')
+                        </x-slot>
+                    </x-ui-dialog-box>
+
+                    <x-ui-list-table id="Table" title="">
+                        <x-slot name="button">
+                            <x-ui-button click-event="" button-name="Tambah Nota" loading="false" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" dataBsTarget="#NotaDialogBox"/>
+                            <x-ui-button click-event="" button-name="Tambah Barang" loading="false" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" dataBsTarget="#ItemDialogBox"/>
+                        </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
                             <tr wire:key="list{{ $key }}">

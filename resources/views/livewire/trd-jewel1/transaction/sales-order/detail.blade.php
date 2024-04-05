@@ -7,14 +7,16 @@
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
-            <x-ui-tab-view id="myTab" tabs="General, Sales Return"> </x-ui-tab-view>
+            <x-ui-tab-view id="myTab" tabs="General, Purchase Return"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-text-field-search label="Supplier" click-event="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field-search label="Customer" click-event="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-dropdown-select label="Gudang" click-event="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder=""/>
                         {{-- @if ($actionValue === 'Create')
                             <x-ui-checklist label="Buat Nota Terima Supplier otomatis" model="inputs.app_id" :options="['1' => 'Ya']" :action="$actionValue" span="Full" />
                         @endif --}}
@@ -30,10 +32,10 @@
 
                     <x-ui-list-table id="Table" title="Barang">
                         <x-slot name="button">
-                            {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
-                                    Tambah
-                            </button> --}}
-                            <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
+                            <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
+                                <x-ui-text-field label="" model="barcode" type="barcode" required="false" placeHolder="Input Kode Manual" span="Half" style="flex-grow: 1;" onChanged="scanManual" />
+                                <x-ui-button click-event="Add" button-name="Scan RFID" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
+                            </div>
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
@@ -70,7 +72,7 @@
                     </x-ui-list-table>
             </x-ui-card>
             </div>
-            <div class="tab-pane fade show" id="PurchaseReturn" role="tabpanel" aria-labelledby="PurchaseReturn-tab">
+            {{-- <div class="tab-pane fade show" id="PurchaseReturn" role="tabpanel" aria-labelledby="PurchaseReturn-tab">
                 <x-ui-card>
                     @include('layout.customs.buttons.create', ['route' => 'TrdJewel1.Procurement.PurchaseReturn.Detail', 'objectId' => $object->id])
 
@@ -78,9 +80,13 @@
                         @livewire('trd-jewel1.procurement.purchase-order.purchase-return-data-table', ['returnIds' => $returnIds])
                     </div>
                 </x-ui-card>
-            </div>
+            </div> --}}
         </x-ui-tab-view-content>
         <x-ui-footer>
+            @if ($actionValue === 'Edit')
+            <x-ui-button :action="$actionValue" click-event="createReturn"
+                cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
+            @endif
             @include('layout.customs.transaction-form-footer')
         </x-ui-footer>
     </x-ui-page-card>

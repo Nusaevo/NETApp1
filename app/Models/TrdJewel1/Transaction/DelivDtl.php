@@ -26,7 +26,8 @@ class DelivDtl extends BaseModel
         'matl_descr',
         'wh_code',
         'qty',
-        'qty_reff'
+        'qty_reff',
+        'status_code'
     ];
 
     public function getAllColumns()

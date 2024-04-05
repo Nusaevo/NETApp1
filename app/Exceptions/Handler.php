@@ -36,5 +36,23 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+        $this->renderable(function (Throwable $exception, $request) {
+            if ($this->isHttpException($exception)) {
+                $statusCode = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 500;
+                $titles = [
+                    403 => 'Forbidden',
+                    404 => 'Not Found',
+                    500 => 'Internal Server Error'
+                ];
+                $errorTitle = $titles[$statusCode] ?? 'Error';
+                $errorMessage = $exception->getMessage() ?: 'Sorry, something went wrong.';
+
+                return response()->view('errors.error', [
+                    'errorCode' => $statusCode,
+                    'errorTitle' => $errorTitle,
+                    'errorMessage' => $errorMessage,
+                ], $statusCode);
+            }
+        });
     }
 }

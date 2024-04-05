@@ -11,8 +11,17 @@ class OrderDtl extends BaseModel
     {
         parent::boot();
         static::saving(function ($orderDtl) {
-            $newAmt = $orderDtl->qty * $orderDtl->price;
-            $orderDtl->amt = $newAmt;
+            $qty = currencyToNumeric($orderDtl->qty);
+            $price = currencyToNumeric($orderDtl->price);
+            $orderDtl->amt = $qty * $price;
+        });
+        static::deleting(function ($orderDtl) {
+            DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
+                    ->where('tr_seq', $orderDtl->tr_seq)
+                    ->delete();
+            BillingDtl::where('trhdr_id', $orderDtl->trhdr_id)
+                      ->where('tr_seq', $orderDtl->tr_seq)
+                      ->delete();
         });
     }
 
@@ -20,14 +29,13 @@ class OrderDtl extends BaseModel
         'trhdr_id',
         'tr_type',
         'tr_seq',
-        'matl_id',
-        'matl_code',
-        'matl_uom',
-        'matl_descr',
+        'item_unit_id',
+        'item_name',
+        'unit_name',
         'qty',
         'qty_reff',
-        'amt',
-        'price'
+        'price',
+        'amt'
     ];
 
     public function getAllColumnValues($attribute)

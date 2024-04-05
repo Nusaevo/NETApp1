@@ -17,9 +17,9 @@ class UiButton extends Component
     public $type;
     public $id;
     public $onClickJavascript = "";
-
+    public $dataBsTarget;
     public function __construct($clickEvent, $buttonName, $loading = 'true', $enabled = 'true',
-    $visible = 'true', $action = '', $cssClass = '', $iconPath = null, $type = "", $id = "", $onClickJavascript = "")
+    $visible = 'true', $action = '', $cssClass = '', $iconPath = null, $type = "", $id = "", $onClickJavascript = "", $dataBsTarget ="")
     {
         $this->clickEvent = $clickEvent;
         $this->buttonName = $buttonName;
@@ -32,6 +32,7 @@ class UiButton extends Component
         $this->type = $type;
         $this->id = $id;
         $this->onClickJavascript = $onClickJavascript;
+        $this->dataBsTarget = $dataBsTarget;
     }
 
     public function render()
