@@ -181,9 +181,7 @@ class BaseComponent extends Component
         DB::beginTransaction();
         try {
             $this->updateVersionNumber();
-            if ($this->inputs) {
-                $this->onValidateAndSave();
-            }
+            $this->onValidateAndSave();
             DB::commit();
             $this->notify('success',Lang::get('generic.success.save'));
             $this->resetForm();

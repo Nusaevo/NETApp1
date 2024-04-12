@@ -7,7 +7,7 @@
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
-            <x-ui-tab-view id="myTab" tabs="General, Purchase Return"> </x-ui-tab-view>
+            <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
@@ -15,8 +15,8 @@
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
                         <x-ui-text-field-search label="Supplier" click-event="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
-                        <x-ui-dropdown-select label="Gudang" click-event="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
-                        <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder=""/>
+                        {{-- <x-ui-dropdown-select label="Gudang" click-event="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder=""/> --}}
                         {{-- @if ($actionValue === 'Create')
                             <x-ui-checklist label="Buat Nota Terima Supplier otomatis" model="inputs.app_id" :options="['1' => 'Ya']" :action="$actionValue" span="Full" />
                         @endif --}}
@@ -32,10 +32,10 @@
 
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+                            {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
                                     Tambah
-                            </button>
-                            {{-- <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" /> --}}
+                            </button> --}}
+                            <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
@@ -53,8 +53,8 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.barcode" label='Label Code' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='Description' type="text" :action="$actionValue" placeHolder="Description" enabled="false" span="Full" />
                                         <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='Selling Price' type="text" :action="$actionValue" placeHolder="Selling Price" enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.price" label='Buying Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" required="true" placeHolder="" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.price" label='Buying Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
                                     </x-slot>
                                     <x-slot name="button">
@@ -83,10 +83,10 @@
             </div> --}}
         </x-ui-tab-view-content>
         <x-ui-footer>
-            @if ($actionValue === 'Edit')
+            {{-- @if ($actionValue === 'Edit')
             <x-ui-button :action="$actionValue" click-event="createReturn"
                 cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
-            @endif
+            @endif --}}
             @include('layout.customs.transaction-form-footer')
         </x-ui-footer>
     </x-ui-page-card>

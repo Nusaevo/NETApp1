@@ -110,14 +110,14 @@ class Detail extends BaseComponent
     protected function onPopulateDropdowns()
     {
         $this->refreshSupplier();
-        $this->refreshWarehouses();
+        // $this->refreshWarehouses();
     }
 
     protected function rules()
     {
         $rules = [
             'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
-            'inputs.wh_code' =>  'required|integer|min:0|max:9999999999',
+            // 'inputs.wh_code' =>  'required|integer|min:0|max:9999999999',
             'inputs.tr_date' => 'required',
             'input_details.*.price' => 'required|integer|min:0|max:9999999999',
             'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
@@ -155,6 +155,7 @@ class Detail extends BaseComponent
             }
         }
         $partner = Partner::find($this->inputs['partner_id']);
+        $this->inputs['wh_code'] = 18;
         $this->inputs['partner_code'] = $partner->code;
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, true);

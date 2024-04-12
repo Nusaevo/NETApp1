@@ -91,11 +91,11 @@ class OrderHdr extends BaseModel
          {
              $delivTrType = "PD";
              $billingTrType = "APB";
-             $code = "xxxx";
+             $code = "PURCHORDER_LASTID";
          }else{
              $delivTrType = "SD";
              $billingTrType = "APB";
-             $code = "xxxx";
+             $code = "SALESORDER_LASTID";
          }
          if($this->tr_id === null)
          {
@@ -138,7 +138,7 @@ class OrderHdr extends BaseModel
                  'reff_code' => $this->reff_code,
                  'partner_id' => $this->partner_id,
                  'partner_code' => $this->partner_code,
-                 'payment_term_id' => $inputs['payment_term_id'],
+                 'payment_term_id' => 0,
                  'payment_term' => '',
                  'payment_due_days' => 0,
                  'status_code' => $this->status_code,

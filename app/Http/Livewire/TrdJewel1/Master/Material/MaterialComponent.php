@@ -63,6 +63,7 @@ class MaterialComponent extends BaseComponent
                 $url = $attachment->getUrl();
                 $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
             }
+            $this->sellingPriceChanged();
         }
     }
 
@@ -261,6 +262,7 @@ class MaterialComponent extends BaseComponent
                 MatlBom::find($deletedItemId)->forceDelete();
             }
         }
+        dd($this->object->id);
         $this->emit('materialSaved', $this->object->id);
     }
 
@@ -330,5 +332,35 @@ class MaterialComponent extends BaseComponent
 
         // exec($command, $output, $returnValue);
         $this->matl_uoms['barcode'] = "12345";
+    }
+
+
+    public function markupPriceChanged()
+    {
+        if (!isset($this->materials['jwl_buying_price']) || !isset($this->materials['markup'])) {
+            return null;
+        }
+
+        $buyingPrice = $this->materials['jwl_buying_price'];
+
+        $markupAmount = $buyingPrice * ($this->materials['markup'] / 100);
+        $this->materials['jwl_selling_price'] = $buyingPrice + $markupAmount;
+    }
+
+
+    public function sellingPriceChanged()
+    {
+        if (!isset($this->materials['jwl_buying_price'])) {
+            return;
+        }
+
+        $buyingPrice = $this->materials['jwl_buying_price'];
+
+        if ($buyingPrice <= 0) {
+            return;
+        }
+
+        $newMarkupPercentage = (($this->materials['jwl_selling_price'] - $buyingPrice) / $buyingPrice) * 100;
+        $this->materials['markup'] = $newMarkupPercentage;
     }
 }

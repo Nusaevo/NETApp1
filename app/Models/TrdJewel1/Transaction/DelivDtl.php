@@ -23,6 +23,7 @@ class DelivDtl extends BaseModel
         'reffdtltr_seq',
         'matl_id',
         'matl_code',
+        'matl_uom',
         'matl_descr',
         'wh_code',
         'qty',

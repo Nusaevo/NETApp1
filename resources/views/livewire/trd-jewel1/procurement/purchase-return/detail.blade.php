@@ -33,7 +33,6 @@
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
                             <x-ui-button click-event="" button-name="Tambah Nota" loading="false" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" dataBsTarget="#NotaDialogBox"/>
-                            <x-ui-button click-event="" button-name="Tambah Barang" loading="false" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" dataBsTarget="#ItemDialogBox"/>
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
