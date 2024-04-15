@@ -81,7 +81,7 @@ class MaterialComponent extends BaseComponent
 
         $this->materialUOMs = $data->map(function ($data) {
             return [
-                'label' => $data->str1,
+                'label' => $data->str1." - ".$data->str2,
                 'value' => $data->str1,
             ];
         })->toArray();
@@ -99,10 +99,10 @@ class MaterialComponent extends BaseComponent
             ->orderBy('seq')
             ->get();
 
-        $this->materialCategories = $data->map(function ($item) {
+        $this->materialCategories = $data->map(function ($data) {
             return [
-                'label' => $item->str2,
-                'value' => $item->str1
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
             ];
         })->toArray();
 
@@ -120,10 +120,10 @@ class MaterialComponent extends BaseComponent
         ->orderBy('seq')
         ->get();
 
-        $this->baseMaterials = $data->map(function ($item) {
+        $this->baseMaterials = $data->map(function ($data) {
             return [
-                'label' => $item->str2,
-                'value' => $item->id
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->id
             ];
         })->toArray();
         $this->matl_boms[$key]['base_matl_id'] = null;
