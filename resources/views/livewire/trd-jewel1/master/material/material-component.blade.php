@@ -1,4 +1,4 @@
-<x-ui-page-card title="{{ $actionValue }} Master Produk" status="{{ $status }}">
+<x-ui-page-card title="{{ $actionValue }} {{ $this->trans('product') }}" status="{{ $status }}">
         <x-ui-card>
             <x-ui-padding>
                 <div class="material-info-container">
@@ -22,36 +22,36 @@
                         </div>
 
                         <div class="button-container">
-                            <x-ui-button click-event="" id="cameraButton" cssClass="btn btn-secondary" iconPath="add.svg" button-name="Add from Camera" :action="$actionValue" />
-                            <x-ui-button click-event="addFromGallery" cssClass="btn btn-secondary" iconPath="add.svg" button-name="Add from Gallery" :action="$actionValue" />
+                            <x-ui-button click-event="" id="cameraButton" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnCamera') }}" :action="$actionValue" />
+                            <x-ui-button click-event="addFromGallery" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnGallery') }}" :action="$actionValue" />
                         </div>
                     </div>
                 </div>
             </x-ui-padding>
             <x-ui-padding>
-                    <x-ui-dropdown-select label="Category" click-event="" model="materials.jwl_category" :options="$materialCategories" required="true" :action="$actionValue" span="Half" />
-                    <x-ui-text-field label="Product Code" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" enabled="false"/>
-                    <x-ui-text-field label="Buying Price" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Half"  onChanged="markupPriceChanged"/>
-                    <x-ui-text-field label="Description" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="Deskripsi dibuat otomatis dari side materials" span="Half"/>
-                    <x-ui-text-field label="Markup Price(%)" model="materials.markup" type="number" :action="$actionValue" required="true" placeHolder="Markup Price(%)" span="Half" onChanged="markupPriceChanged"/>
-                    <x-ui-text-field label="Selling Price" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Selling Price" span="Half" onChanged="sellingPriceChanged"/>
+                    <x-ui-dropdown-select label="{{ $this->trans('category') }}" click-event="" model="materials.jwl_category" :options="$materialCategories" required="true" :action="$actionValue" span="Half" />
+                    <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" enabled="false"/>
+                    <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Half"  onChanged="markupPriceChanged"/>
+                    <x-ui-text-field label="{{ $this->trans('description') }}" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="Deskripsi dibuat otomatis dari side materials" span="Half"/>
+                    <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$actionValue" required="true" placeHolder="Markup Price(%)" span="Half" onChanged="markupPriceChanged"/>
+                    <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Selling Price" span="Half" onChanged="sellingPriceChanged"/>
 
                     {{-- <x-ui-dropdown-select label="UOM" click-event="" model="matl_uoms.name" :options="$materialUOMs" required="true" :action="$actionValue" span="Half" /> --}}
             </x-ui-padding>
             <x-ui-padding>
             <x-ui-list-table id="Table" title="Side Materials">
                 <x-slot name="button">
-                    <x-ui-button click-event="addBoms" cssClass="btn btn-primary" iconPath="add.svg" button-name="Tambah" :action="$actionValue" />
+                    <x-ui-button click-event="addBoms" cssClass="btn btn-primary" iconPath="add.svg" button-name="{{ $this->trans('btnAdd') }}" :action="$actionValue" />
                 </x-slot>
                 <x-slot name="body">
                     @foreach($matl_boms as $key => $matl_bom)
                     <tr wire:key="list{{ $key }}">
                         <x-ui-list-body>
                             <x-slot name="rows">
-                                <x-ui-dropdown-select label="Material" click-event="" model="matl_boms.{{ $key }}.base_matl_id" onChanged="generateSpecs(1)" :options="$baseMaterials" required="true" :action="$actionValue" span="Half" />
-                                <x-ui-text-field label="Quantity" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="true" placeHolder="Enter Quantity" span="Half" />
-                                <x-ui-text-field label="Carat" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="true" placeHolder="Enter Sides Carat" span="Half" />
-                                <x-ui-text-field label="Price" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Price" span="Half" />
+                                <x-ui-dropdown-select label="{{ $this->trans('material') }}" click-event="" model="matl_boms.{{ $key }}.base_matl_id" onChanged="generateSpecs(1)" :options="$baseMaterials" required="true" :action="$actionValue" span="Half" onChanged="generateMaterialDescriptionsFromBOMs"/>
+                                <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="true" placeHolder="Enter Quantity" span="Half" onChanged="generateMaterialDescriptionsFromBOMs"/>
+                                <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="true" placeHolder="Enter Sides Carat" span="Half" onChanged="generateMaterialDescriptionsFromBOMs"/>
+                                <x-ui-text-field label="{{ $this->trans('price') }}" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="Enter Sides Price" span="Half" />
                             </x-slot>
                             <x-slot name="button">
                                 <a href="#" wire:click.prevent="deleteBoms({{ $key }})">
@@ -66,7 +66,7 @@
             </x-ui-padding>
         </x-ui-card>
         <x-ui-footer>
-            <x-ui-text-field label="Barcode" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
+            <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
             <x-ui-button click-event="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" />
             <x-ui-button click-event="printLabel" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
             <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />

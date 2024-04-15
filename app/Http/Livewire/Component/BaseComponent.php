@@ -29,10 +29,14 @@ class BaseComponent extends Component
     public $objectId;
 
     public $baseRoute;
+    public $baseRenderRoute;
+    public $langBasePath;
     public $renderRoute;
     public $route;
 
     public $additionalParam;
+    public $customValidationAttributes;
+    public $customRules;
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         $this->additionalParam = $additionalParam;
@@ -56,7 +60,7 @@ class BaseComponent extends Component
 
         $this->baseRoute = Route::currentRouteName();
 
-        $this->renderRoute = 'livewire.' . implode('.', array_map(function($segment) {
+        $this->renderRoute =  implode('.', array_map(function($segment) {
             // Insert hyphens after the first uppercase letter in each word, except for the very first character
             return preg_replace_callback('/(?<=\w)([A-Z])/', function($match) use ($segment) {
                 $prevChar = substr($segment, strpos($segment, $match[0]) - 1, 1);
@@ -72,7 +76,8 @@ class BaseComponent extends Component
             return lcfirst($segment);
         }, explode('.', $this->renderRoute)));
         // Convert the entire route to lowercase
-        $this->renderRoute = strtolower($this->renderRoute);
+        $this->baseRenderRoute = strtolower($this->renderRoute);
+        $this->renderRoute = 'livewire.' .$this->baseRenderRoute;
 
         $segments = Request::segments();
         $segmentsToIgnore = 0;
@@ -102,7 +107,7 @@ class BaseComponent extends Component
 
         if (in_array($this->actionValue, ['Edit', 'View'])) {
             $this->onPopulateDropdowns();
-            $this->onLoad();
+            $this->onLoadForEdit();
             if($this->object)
             {
                 $this->status = Status::getStatusString($this->object->status_code);
@@ -113,7 +118,7 @@ class BaseComponent extends Component
             if ($this->objectIdValue !== null) {
 
                 $this->onPopulateDropdowns();
-                $this->onLoad();
+                $this->onLoadForEdit();
                 if($this->object)
                 {
                     $this->status = Status::getStatusString($this->object->status_code);
@@ -123,6 +128,19 @@ class BaseComponent extends Component
         }else{
             $this->route .=  $this->baseRoute.'.Detail';
             $this->renderRoute .=  '.index';
+        }
+        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
+        $this->onPreRender();
+    }
+
+    public function trans($key)
+    {
+        $fullKey = $this->langBasePath . "." . $key;
+        $translation = Lang::get($fullKey);
+        if ($translation === $fullKey) {
+            return $key;
+        } else {
+            return $translation;
         }
     }
 
@@ -150,7 +168,7 @@ class BaseComponent extends Component
     protected function validateForm()
     {
         try {
-            $this->validate();
+            $this->validate($this->customRules,[],$this->customValidationAttributes);
         } catch (Exception $e) {
             $this->notify('error', Lang::get('generic.error.create', ['message' => $e->getMessage()]));
             throw $e;

@@ -44,7 +44,12 @@ class Detail extends BaseComponent
     public $returnIds = [];
     public $barcode = '';
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
         $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();

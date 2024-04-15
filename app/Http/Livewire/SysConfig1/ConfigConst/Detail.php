@@ -18,7 +18,12 @@ class Detail extends BaseComponent
     public $applications;
     public $status = '';
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = ConfigConst::withTrashed()->find($this->objectIdValue);
         $this->inputs = populateArrayFromModel($this->object);

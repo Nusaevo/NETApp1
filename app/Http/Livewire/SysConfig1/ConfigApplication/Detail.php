@@ -11,7 +11,12 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $group_codes;
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = ConfigAppl::withTrashed()->find($this->objectIdValue);
         $this->inputs = populateArrayFromModel($this->object);

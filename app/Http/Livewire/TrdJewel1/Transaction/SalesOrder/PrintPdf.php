@@ -9,7 +9,12 @@ class PrintPdf extends BaseComponent
 {
     public $object;
     public $objectIdValue;
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = OrderHdr::findOrFail($this->objectIdValue);
     }

@@ -7,7 +7,12 @@ use Livewire\Component;
 
 class Detail extends BaseComponent
 {
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
 
     }

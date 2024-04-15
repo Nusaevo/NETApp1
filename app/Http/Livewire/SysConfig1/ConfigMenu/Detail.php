@@ -17,7 +17,12 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $applications;
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = ConfigMenu::withTrashed()->find($this->objectIdValue);
         $this->inputs = populateArrayFromModel($this->object);

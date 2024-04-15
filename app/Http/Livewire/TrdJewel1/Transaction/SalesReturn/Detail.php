@@ -28,7 +28,12 @@ class Detail extends BaseComponent
     public $reff;
     public $reffDetail;
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $warehousesData = ConfigConst::GetWarehouse();
 

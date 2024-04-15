@@ -12,7 +12,12 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $partnerTypes = [];
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = Partner::withTrashed()->find($this->objectIdValue);
         $this->inputs = populateArrayFromModel($this->object);

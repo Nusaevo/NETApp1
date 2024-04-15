@@ -22,7 +22,12 @@ class Detail extends BaseComponent
     public $selectedMenus = [];
     public $selectedUserIds = [];
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
         $this->inputs = populateArrayFromModel($this->object);

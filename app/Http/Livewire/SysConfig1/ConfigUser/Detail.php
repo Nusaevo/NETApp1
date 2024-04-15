@@ -24,7 +24,12 @@ class Detail extends BaseComponent
     public $groups;
     public $status = '';
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
         $this->inputs = populateArrayFromModel($this->object);

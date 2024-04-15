@@ -5,6 +5,10 @@ namespace App\Http\Livewire\SysConfig1\ConfigGroup;
 use App\Http\Livewire\Component\BaseComponent;
 class Index extends BaseComponent
 {
+    protected function onPreRender()
+    {
+
+    }
 
     public function render()
     {

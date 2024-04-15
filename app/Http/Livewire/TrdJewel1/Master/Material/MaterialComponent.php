@@ -18,6 +18,7 @@ use DB;
 use Livewire\WithFileUploads;
 use App\Enums\Status;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class MaterialComponent extends BaseComponent
 {
@@ -43,7 +44,44 @@ class MaterialComponent extends BaseComponent
     public $capturedImages = [];
     public $deleteImages = [];
 
-    protected function onLoad()
+    protected function onPreRender()
+    {
+        $this->customValidationAttributes  = [
+            'materials'                => $this->trans('input'),
+            'materials.*'              => $this->trans('input'),
+            'materials.code'      => $this->trans('code'),
+            'materials.jwl_category'      => $this->trans('category'),
+            'materials.code'      => $this->trans('uom'),
+            'materials.descr'      => $this->trans('description'),
+            'matl_uoms.barcode'      => $this->trans('barcode'),
+            'materials.jwl_buying_price'      =>  $this->trans('buying_price'),
+            'materials.jwl_selling_price'      => $this->trans('selling_price'),
+            'matl_boms.*.base_matl_id' => $this->trans('material'),
+            'matl_boms.*.jwl_sides_cnt' => $this->trans('quantity'),
+            'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
+            'matl_boms.*.jwl_sides_price' => $this->trans('price'),
+        ];
+        $this->customRules  = [
+            'materials.jwl_buying_price' => 'required|numeric|min:0|max:9999999999',
+            'materials.jwl_selling_price' => 'required|numeric|min:0|max:9999999999',
+            'materials.jwl_category' => 'required|string|min:0|max:255',
+            'matl_uoms.name' => 'required|string|min:0|max:255',
+            'matl_uoms.barcode' => 'required|string|min:0|max:255',
+            'matl_boms.*.base_matl_id' => 'required',
+            'matl_boms.*.jwl_sides_cnt' => 'required|numeric|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_carat' => 'required|numeric|min:0|max:9999999999',
+            // 'matl_boms.*.jwl_sides_price' => 'required|numeric|min:0|max:9999999999',
+            // 'materials.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+            // ],
+        ];
+    }
+
+    protected function onLoadForEdit()
     {
         $this->object = Material::withTrashed()->find($this->objectIdValue);
         if($this->object)
@@ -166,19 +204,18 @@ class MaterialComponent extends BaseComponent
                     $filePath = Attachment::saveAttachmentByFileName($image['url'], $this->object->id, class_basename($this->object), $image['filename']);
                     if ($filePath !== false) {
                     } else {
-                        $errorMessages[] = "Failed to save attachment with filename {$image['filename']}";
+                        $errorMessages[] = Lang::get($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
                     }
                 } catch (Exception $e) {
-                    $errorMessages[] = "An error occurred while saving attachment with filename {$image['filename']}: " . $e->getMessage();
+                    $errorMessages[] = Lang::get($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
                 }
             }
         }
 
         Attachment::reSortSequences($this->object->id, class_basename($this->object));
         if (!empty($errorMessages)) {
-            $errorMessage = "Failed to save attachments: " . implode(', ', $errorMessages);
-
-            $this->notify('error', $errorMessage);
+            $errorMessage = implode(', ', $errorMessages);
+            throw new Exception($errorMessage);
         }
     }
 
@@ -191,45 +228,6 @@ class MaterialComponent extends BaseComponent
     protected $listeners = [
         'imagesCaptured'  => 'imagesCaptured',
         'runExe'  => 'runExe'
-    ];
-
-    protected function rules()
-    {
-        $rules = [
-            'materials.jwl_buying_price' => 'required|numeric|min:0|max:9999999999',
-            'materials.jwl_selling_price' => 'required|numeric|min:0|max:9999999999',
-            'materials.jwl_category' => 'required|string|min:0|max:255',
-            'matl_uoms.name' => 'required|string|min:0|max:255',
-            'matl_uoms.barcode' => 'required|string|min:0|max:255',
-            'matl_boms.*.base_matl_id' => 'required',
-            'matl_boms.*.jwl_sides_cnt' => 'required|numeric|min:0|max:9999999999',
-            'matl_boms.*.jwl_sides_carat' => 'required|numeric|min:0|max:9999999999',
-            // 'matl_boms.*.jwl_sides_price' => 'required|numeric|min:0|max:9999999999',
-            // 'materials.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
-            // ],
-        ];
-        return $rules;
-    }
-
-    protected $validationAttributes = [
-        'materials'                => 'Input Material',
-        'materials.*'              => 'Input Material',
-        'materials.code'      => 'Material Code',
-        'materials.jwl_category'      => 'Material Category',
-        'matl_uoms.name'      => 'Material UOM',
-        'materials.descr'      => 'Description Material',
-        'matl_uoms.barcode'      => 'Barcode Material',
-        'materials.jwl_buying_price'      => 'Buying Price Material',
-        'materials.jwl_selling_price'      => 'Selling Price Material',
-        'matl_boms.*.base_matl_id' => 'Material',
-        'matl_boms.*.jwl_sides_cnt' => 'Quantity',
-        'matl_boms.*.jwl_sides_carat' => 'Carat',
-        'matl_boms.*.jwl_sides_price' => 'Price',
     ];
 
     protected function onReset()
@@ -248,8 +246,7 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $this->validateBoms();
-        $this->materials['descr'] = $this->getMaterialDescriptionsFromBOMs();
+        $this->generateMaterialDescriptionsFromBOMs();
         $this->object->fill($this->materials);
         if($this->object->code == null)
         {
@@ -302,31 +299,26 @@ class MaterialComponent extends BaseComponent
         $this->emit('materialSaved', $this->object->id);
     }
 
-    public function getMaterialDescriptionsFromBOMs()
+    public function generateMaterialDescriptionsFromBOMs()
     {
-        $materialDescriptions = "";
+        $materialDescriptions = '';
+
         if ($this->matl_boms && count($this->matl_boms) > 0) {
-            foreach ($this->matl_boms as $bomData) {
+            $bomIds = array_column($this->matl_boms, 'base_matl_id');
+            $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
 
-                $baseMaterials = ConfigConst::find($bomData['base_matl_id']);
-                $jwlSidesCnt = $bomData['jwl_sides_cnt'] ?? 0;
-                $jwlSidesCarat = $bomData['jwl_sides_carat'] ?? 0;
+            foreach ($this->matl_boms as $bom) {
+                $baseMaterial = $bomData[$bom['base_matl_id']] ?? null;
 
-                $description = "$jwlSidesCnt $baseMaterials->str1:$jwlSidesCarat";
-                $materialDescriptions .= $description . "  ";
+                if ($baseMaterial) {
+                    $jwlSidesCnt = $bom['jwl_sides_cnt'] ?? 0;
+                    $jwlSidesCarat = $bom['jwl_sides_carat'] ?? 0;
+                    $materialDescriptions .= "$jwlSidesCnt $baseMaterial->str1:$jwlSidesCarat ";
+                }
             }
-
-            return $materialDescriptions;
         }
-        return $materialDescriptions;
-    }
 
-    public function validateBoms()
-    {
-        try {
-        } catch (Exception $e) {
-            throw new Exception(Lang::get('generic.error.save', ['message' => $e->getMessage()]));
-        }
+        $this->materials['descr'] = $materialDescriptions;
     }
 
     public function addBoms()
