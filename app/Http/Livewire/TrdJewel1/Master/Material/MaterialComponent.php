@@ -44,6 +44,13 @@ class MaterialComponent extends BaseComponent
     public $capturedImages = [];
     public $deleteImages = [];
 
+
+    public $sideMaterialShapes = [];
+    public $sideMaterialColors = [];
+    public $sideMaterialCut = [];
+    public $sideMaterialClarity = [];
+    public $sideMaterialGemStone = [];
+
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -92,9 +99,41 @@ class MaterialComponent extends BaseComponent
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             foreach ($this->object_boms as $key => $detail) {
                 $this->refreshBaseMaterials($this->bom_row);
+                $this->refreshSideMaterialColor($this->bom_row);
+                $this->refreshSideMaterialClarity($this->bom_row);
+                $this->refreshSideMaterialCut($this->bom_row);
+                $this->refreshSideMaterialGemstone($this->bom_row);
+                $this->refreshSideMaterialShapes($this->bom_row);
                 $formattedDetail = populateArrayFromModel($detail);
                 $this->matl_boms[$key] =  $formattedDetail;
                 $this->matl_boms[$key]['id'] = $detail->id;
+                $decodedData = json_decode($detail->jwl_sides_spec, true);
+                switch ($detail->base_matl_id) {
+                    case Material::GOLD:
+                    case Material::ROSE_GOLD:
+                    case Material::WHITE_GOLD:
+                        $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
+                        break;
+                    case Material::DIAMOND:
+                        $this->matl_boms[$key]['shapes'] = $decodedData['shapes'] ?? null;
+                        $this->matl_boms[$key]['clarity'] = $decodedData['clarity'] ?? null;
+                        $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
+                        $this->matl_boms[$key]['cut'] = $decodedData['cut'] ?? null;
+                        $this->matl_boms[$key]['gia_number'] = $decodedData['gia_number'] ?? null;
+                        break;
+                    case Material::STONE:
+                        $this->matl_boms[$key]['gemstone'] = $decodedData['gemstone'] ?? null;
+                        $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
+                        break;
+                    case Material::ANTAM:
+                        $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? null;
+                        $this->matl_boms[$key]['ref_mark'] = $decodedData['ref_mark'] ?? null;
+                        break;
+                }
+
+                switch ($formattedDetail['base_matl_id']) {
+
+                }
                 $this->bom_row++;
             }
             $attachments = $this->object->Attachment;
@@ -165,6 +204,106 @@ class MaterialComponent extends BaseComponent
             ];
         })->toArray();
         $this->matl_boms[$key]['base_matl_id'] = null;
+    }
+
+    public function refreshSideMaterialShapes($key)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GEMSHAPES')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->sideMaterialShapes = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['shapes'] = null;
+    }
+
+    public function refreshSideMaterialClarity($key)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GIACLARITY')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->sideMaterialClarity = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['clarity'] = null;
+    }
+
+    public function refreshSideMaterialCut($key)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GIACUT')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->sideMaterialCut = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['cut'] = null;
+    }
+
+    public function refreshSideMaterialColor($key)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GIACOLORS')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->sideMaterialColors = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['color'] = null;
+    }
+
+    public function refreshSideMaterialGemstone($key)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GEMSTONES')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->sideMaterialGemStone = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['gemstone'] = null;
     }
 
     protected function onPopulateDropdowns()
@@ -283,10 +422,35 @@ class MaterialComponent extends BaseComponent
             }
             $bomData['matl_id'] = $this->object->id;
             $bomData['matl_code'] = $this->object->id;
+
             if ($bomData['jwl_sides_price'] === null || $bomData['jwl_sides_price'] === "") {
                 $bomData['jwl_sides_price'] = 0;
             }
             $bomData['seq'] = $index + 1;
+            $baseMaterialId = $bomData ['base_matl_id'];
+            $dataToSave = [];
+            if (in_array($baseMaterialId, [Material::GOLD, Material::ROSE_GOLD, Material::WHITE_GOLD])) {
+                $dataToSave['purity'] = $bomData['purity'] ?? null;
+            } elseif (in_array($baseMaterialId, [Material::DIAMOND])) {
+                $dataToSave = [
+                    'shapes' => $bomData['shapes'] ?? null,
+                    'clarity' => $bomData['clarity'] ?? null,
+                    'color' => $bomData['color'] ?? null,
+                    'cut' => $bomData['cut'] ?? null,
+                    'gia_number' => $bomData['gia_number'] ?? null,
+                ];
+            } elseif (in_array($baseMaterialId, [Material::STONE])) {
+                $dataToSave = [
+                    'gemstone' => $bomData['gemstone'] ?? null,
+                    'color' => $bomData['color'] ?? null,
+                ];
+            } elseif (in_array($baseMaterialId, [Material::ANTAM])) {
+                $dataToSave = [
+                    'production_year' => $bomData['production_year'] ?? null,
+                    'ref_mark' => $bomData['ref_mark'] ?? null,
+                ];
+            }
+            $bomData['jwl_sides_spec']= json_encode($dataToSave);
             $this->object_boms[$index]->fill($bomData);
             $this->object_boms[$index]->save();
         }
@@ -329,14 +493,15 @@ class MaterialComponent extends BaseComponent
         array_push($this->matl_boms, $bomsDetail);
         // array_push($this->object_boms, $bomsDetail);
         $this->refreshBaseMaterials($this->bom_row);
+        $this->refreshSideMaterialColor($this->bom_row);
+        $this->refreshSideMaterialClarity($this->bom_row);
+        $this->refreshSideMaterialCut($this->bom_row);
+        $this->refreshSideMaterialGemstone($this->bom_row);
+        $this->refreshSideMaterialShapes($this->bom_row);
         $newDetail = end($this->matl_boms);
         $this->newItems[] = $newDetail;
         $this->emit('itemAdded');
         $this->bom_row++;
-    }
-
-    public function generateSpecs($value)
-    {
     }
 
     public function deleteBoms($index)

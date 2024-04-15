@@ -18,6 +18,16 @@ return [
     'btnCamera' => 'Add From Camera',
     'btnGallery' => 'Add From Gallery',
     'btnAdd' => 'Add',
+    'placeHolder_description' => 'Description is automatically generated from side materials',
+    'purity' => 'Kemurnian',
+    'shapes' => 'Shapes',
+    'clarity' => 'Clarity',
+    'color' => 'Color',
+    'cut' => 'Cut',
+    'gia_number' => 'GIA Number',
+    'gemstone' => 'Gemstone',
+    'production_year' => 'Production Year',
+    'ref_mark' => 'Reference Mark',
     'message' => [
         'attachment_failed' => 'Failed to save attachment with filename :filename'
     ],

@@ -5,12 +5,15 @@ use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\Base\BaseModel\Attachment;
 use DB;
-
-
-
 class Material extends BaseModel
 {
     protected $table = 'materials';
+    const GOLD = '23';
+    const ROSE_GOLD = '24';
+    const WHITE_GOLD = '25';
+    const ANTAM = '37';
+    const STONE = '38';
+    const DIAMOND = '39';
 
     protected static function boot()
     {

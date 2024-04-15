@@ -1,4 +1,4 @@
-<x-ui-page-card title="Data Materials" status="{{ $status }}">
+<x-ui-page-card title="Product" status="{{ $status }}">
     @include('layout.customs.buttons.create', ['route' => $route])
 
     <div class="table-responsive">

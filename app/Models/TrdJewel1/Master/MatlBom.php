@@ -24,7 +24,8 @@ class MatlBom extends BaseModel
         'jwl_sides_matl',
         'jwl_sides_parcel',
         'jwl_sides_price',
-        'jwl_sides_amt'
+        'jwl_sides_amt',
+        'jwl_sides_spec'
     ];
 
     public function getAllColumnValues($attribute)

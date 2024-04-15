@@ -1,4 +1,4 @@
-<x-ui-page-card title="Data Partners" status="{{ $status }}">
+<x-ui-page-card title="Partner" status="{{ $status }}">
     @include('layout.customs.buttons.create', ['route' => $route])
 
     <div class="table-responsive">
