@@ -8,17 +8,11 @@ use App\Models\TrdJewel1\Master\MatlUom;
 use App\Models\TrdJewel1\Master\MatlBom;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
-use App\Models\Inventories\IvtBal;
-use App\Models\Inventories\IvtBalUnit;
 use App\Models\Base\Attachment;
-use Illuminate\Support\Facades\Session;
 use Lang;
 use Exception;
 use DB;
 use Livewire\WithFileUploads;
-use App\Enums\Status;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
 
 class MaterialComponent extends BaseComponent
 {
@@ -513,22 +507,6 @@ class MaterialComponent extends BaseComponent
         $this->matl_boms = array_values($this->matl_boms);
     }
 
-    public function runExe()
-    {
-        // $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
-        // $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
-
-        // // Define the arguments
-        // $maxScannedTagLimit = 1;
-        // $timeoutSeconds = 1;
-
-        // // Append arguments to the command
-        // $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
-
-        // exec($command, $output, $returnValue);
-        $this->matl_uoms['barcode'] = "12345";
-    }
-
 
     public function markupPriceChanged()
     {
@@ -559,4 +537,37 @@ class MaterialComponent extends BaseComponent
         $this->materials['markup'] = $newMarkupPercentage;
     }
 
+
+
+    public function runExe()
+    {
+        // $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        // $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
+
+        // // Define the arguments
+        // $maxScannedTagLimit = 1;
+        // $timeoutSeconds = 1;
+
+        // // Append arguments to the command
+        // $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+
+        // exec($command, $output, $returnValue);
+        $this->matl_uoms['barcode'] = "12345";
+    }
+
+    public function printBarcode()
+    {
+        if (isset( $this->matl_uoms['barcode'])) {
+            if(isset($this->materials['descr']))
+            {
+                $additionalParam = urlencode($this->matl_uoms['barcode'] . ';' . $this->materials['descr']);
+                return redirect()->route('TrdJewel1.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey(""),'additionalParam'=> $additionalParam ]);
+            }else{
+                $this->notify('error',Lang::get($this->langBasePath.'.message.side_material_input'));
+            }
+
+        }else{
+            $this->notify('error',Lang::get($this->langBasePath.'.message.barcode_validation'));
+        }
+    }
 }

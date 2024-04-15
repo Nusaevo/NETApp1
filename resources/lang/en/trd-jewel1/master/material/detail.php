@@ -29,6 +29,8 @@ return [
     'production_year' => 'Production Year',
     'ref_mark' => 'Reference Mark',
     'message' => [
-        'attachment_failed' => 'Failed to save attachment with filename :filename'
+        'attachment_failed' => 'Failed to save attachment with filename :filename',
+        'barcode_validation' => 'Failed to print label, please scan the label first.',
+        'side_material_input' => 'Please insert at least one side material'
     ],
 ];

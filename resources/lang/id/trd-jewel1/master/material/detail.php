@@ -30,5 +30,7 @@ return [
     'ref_mark' => 'Tanda Referensi',
     'message' => [
         'attachment_failed' => 'Gagal menyimpan file :filename',
+        'barcode_validation' => 'Gagal cetak label, tolong scan label terlebih dahulu.',
+        'side_material_input' => 'Masukkan setidaknya satu side material.'
     ],
 ];

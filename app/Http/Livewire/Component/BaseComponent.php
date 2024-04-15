@@ -81,14 +81,20 @@ class BaseComponent extends Component
 
         $segments = Request::segments();
         $segmentsToIgnore = 0;
-        if (in_array($this->actionValue, ['Edit', 'View'])) {
+         if (in_array($this->actionValue, ['Edit', 'View'])) {
             $segmentsToIgnore = 3;
         } elseif ($this->actionValue == 'Create') {
             $segmentsToIgnore = 2;
         }
+
+        if (isset($this->additionalParam)) {
+            $additionalSegments = count(explode('/', $this->additionalParam));
+            $segmentsToIgnore += $additionalSegments;
+        }
         if ($segmentsToIgnore > 0 && count($segments) > $segmentsToIgnore) {
             $segments = array_slice($segments, 0, -$segmentsToIgnore);
         }
+
 
         // Check if the last segment contains "Detail" string and remove it
         // this only form inside form like material form component

@@ -84,4 +84,9 @@ class MatlUom extends BaseModel
         IvtBalUnit::insert($inventoryBalUnitsData);
     }
 
+    public function Material()
+    {
+        return $this->belongsTo(Material::class, 'matl_id');
+    }
+
 }

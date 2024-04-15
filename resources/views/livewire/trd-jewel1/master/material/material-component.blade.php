@@ -94,7 +94,7 @@
     <x-ui-footer>
         <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
         <x-ui-button click-event="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" />
-        <x-ui-button click-event="printLabel" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
+        <x-ui-button click-event="printBarcode" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
         <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>
 </x-ui-page-card>
