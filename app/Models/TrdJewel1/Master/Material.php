@@ -14,12 +14,7 @@ class Material extends BaseModel
 
     protected static function boot()
     {
-        parent::boot(); // Call the parent class's boot method
-
-        // static::creating(function ($model) {
-        //     $maxId = SequenceUtility::getCurrentSequenceValue($model);
-        //     $model->code = 'MATL' . "_" . ($maxId + 1);
-        // });
+        parent::boot();
         // static::created(function ($model) {
         //     $model->insertIvtBalData();
         // });

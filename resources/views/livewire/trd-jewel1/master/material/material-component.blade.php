@@ -30,7 +30,7 @@
             </x-ui-padding>
             <x-ui-padding>
                     <x-ui-dropdown-select label="Category" click-event="" model="materials.jwl_category" :options="$materialCategories" required="true" :action="$actionValue" span="Half" />
-                    <x-ui-text-field label="Product Code" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" />
+                    <x-ui-text-field label="Product Code" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" enabled="false"/>
                     <x-ui-text-field label="Buying Price" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="Enter Buying Price" span="Half" />
                     <x-ui-dropdown-select label="UOM" click-event="" model="matl_uoms.name" :options="$materialUOMs" required="true" :action="$actionValue" span="Half" />
                     <x-ui-text-field label="Markup Price(%)" model="materials.markup" type="number" :action="$actionValue" required="true" placeHolder="Markup Price(%)" span="Half" onChanged="markupPriceChanged"/>

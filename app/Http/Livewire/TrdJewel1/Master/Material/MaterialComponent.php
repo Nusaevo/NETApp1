@@ -7,6 +7,7 @@ use App\Models\TrdJewel1\Master\Material;
 use App\Models\TrdJewel1\Master\MatlUom;
 use App\Models\TrdJewel1\Master\MatlBom;
 use App\Models\SysConfig1\ConfigConst;
+use App\Models\SysConfig1\ConfigSnum;
 use App\Models\Inventories\IvtBal;
 use App\Models\Inventories\IvtBalUnit;
 use App\Models\Base\Attachment;
@@ -69,10 +70,15 @@ class MaterialComponent extends BaseComponent
 
     public function refreshUOMs()
     {
-        $data = ConfigConst::where('app_code', $this->appCode)
-            ->where('const_group', 'MATL_UOM')
-            ->orderBy('seq')
-            ->get();
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_UOM')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
         $this->materialUOMs = $data->map(function ($data) {
             return [
                 'label' => $data->str1,
@@ -84,30 +90,40 @@ class MaterialComponent extends BaseComponent
 
     public function refreshCategories()
     {
-        $data = ConfigConst::where('app_code', $this->appCode)
-            ->where('const_group', 'MATL_JWL_CATEGORY')
+        $data = DB::connection('sys-config1')
+            ->table('config_consts')
+            ->select('id','str1','str2')
+            ->where('const_group', 'MMATL_CATEGL1')
+            ->where('app_code', $this->appCode)
+            ->where('deleted_at', NULL)
             ->orderBy('seq')
             ->get();
-        $this->materialCategories = $data->map(function ($data) {
+
+        $this->materialCategories = $data->map(function ($item) {
             return [
-                'label' => $data->str1,
-                'value' => $data->id,
+                'label' => $item->str2,
+                'value' => $item->str1
             ];
         })->toArray();
+
         $this->materials['jwl_category'] = null;
     }
 
     public function refreshBaseMaterials($key)
     {
-        $data = ConfigConst::where('app_code', $this->appCode)
-            ->where('const_group', 'MATL_JWL_BASE_MATL')
-            ->orderBy('seq')
-            ->get();
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_COMPONENTS')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
 
-        $this->baseMaterials = $data->map(function ($data) {
+        $this->baseMaterials = $data->map(function ($item) {
             return [
-                'label' => $data->str1,
-                'value' => $data->id,
+                'label' => $item->str2,
+                'value' => $item->str1
             ];
         })->toArray();
         $this->matl_boms[$key]['base_matl_id'] = null;
@@ -180,22 +196,22 @@ class MaterialComponent extends BaseComponent
     protected function rules()
     {
         $rules = [
-            'materials.jwl_buying_price' => 'required|integer|min:0|max:9999999999',
-            'materials.jwl_selling_price' => 'required|integer|min:0|max:9999999999',
-            'materials.jwl_category' => 'required|integer|min:0|max:9999999999',
-            'matl_uoms.name' => 'required|string|min:0|max:9999999999',
-            'matl_uoms.barcode' => 'required|integer|min:0|max:9999999999',
+            'materials.jwl_buying_price' => 'required|numeric|min:0|max:9999999999',
+            'materials.jwl_selling_price' => 'required|numeric|min:0|max:9999999999',
+            'materials.jwl_category' => 'required|string|min:0|max:255',
+            'matl_uoms.name' => 'required|string|min:0|max:255',
+            'matl_uoms.barcode' => 'required|string|min:0|max:255',
             'matl_boms.*.base_matl_id' => 'required',
-            'matl_boms.*.jwl_sides_cnt' => 'required|integer|min:0|max:9999999999',
-            'matl_boms.*.jwl_sides_carat' => 'required|integer|min:0|max:9999999999',
-            'matl_boms.*.jwl_sides_price' => 'required|integer|min:0|max:9999999999',
-            'materials.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
-            ],
+            'matl_boms.*.jwl_sides_cnt' => 'required|numeric|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_carat' => 'required|numeric|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_price' => 'required|numeric|min:0|max:9999999999',
+            // 'materials.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
+            // ],
         ];
         return $rules;
     }
@@ -234,15 +250,33 @@ class MaterialComponent extends BaseComponent
     {
         $this->validateBoms();
         $this->materials['descr'] = $this->getMaterialDescriptionsFromBOMs();
-
         $this->object->fill($this->materials);
+        if($this->object->code == null)
+        {
+            $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
+            ->where('code', '=', 'MMATL_'.$this->materials['jwl_category']."_LASTID")
+            ->first();
+            if ($configSnum != null) {
+                $stepCnt = $configSnum->step_cnt;
+                $proposedTrId = $configSnum->last_cnt + $stepCnt;
+                if ($proposedTrId > $configSnum->wrap_high) {
+                    $proposedTrId = $configSnum->wrap_low;
+                }
+                $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+                $configSnum->last_cnt = $proposedTrId;
+                $this->object->code = $this->materials['jwl_category'].$proposedTrId;
+                $configSnum->save();
+            }
+        }
         $this->object->save();
 
         // Save Attachment
         $this->saveAttachment();
+        $this->matl_uoms['code'] = $this->object->code;
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
         $this->object_uoms->fill($this->matl_uoms);
+
         $this->object_uoms->save();
 
         // Handle BOMs
@@ -262,7 +296,6 @@ class MaterialComponent extends BaseComponent
                 MatlBom::find($deletedItemId)->forceDelete();
             }
         }
-        dd($this->object->id);
         $this->emit('materialSaved', $this->object->id);
     }
 

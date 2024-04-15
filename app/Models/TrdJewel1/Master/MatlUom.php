@@ -14,13 +14,13 @@ class MatlUom extends BaseModel
     protected static function boot()
     {
         parent::boot();
-        static::creating(function ($model) {
-            $maxId = SequenceUtility::getCurrentSequenceValue($model);
-            $model->code = 'UOM' ."_". ($maxId + 1);
-        });
-        static::created(function ($model) {
-            $model->createIvtBals();
-        });
+        // static::creating(function ($model) {
+        //     $maxId = SequenceUtility::getCurrentSequenceValue($model);
+        //     $model->code = 'UOM' ."_". ($maxId + 1);
+        // });
+        // static::created(function ($model) {
+        //     $model->createIvtBals();
+        // });
     }
 
     protected $fillable = [
