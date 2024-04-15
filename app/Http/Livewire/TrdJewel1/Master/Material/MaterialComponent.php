@@ -82,10 +82,10 @@ class MaterialComponent extends BaseComponent
         $this->materialUOMs = $data->map(function ($data) {
             return [
                 'label' => $data->str1,
-                'value' => $data->id,
+                'value' => $data->str1,
             ];
         })->toArray();
-        $this->matl_uoms['name'] = null;
+        $this->matl_uoms['name'] = 'PCS';
     }
 
     public function refreshCategories()
@@ -123,7 +123,7 @@ class MaterialComponent extends BaseComponent
         $this->baseMaterials = $data->map(function ($item) {
             return [
                 'label' => $item->str2,
-                'value' => $item->str1
+                'value' => $item->id
             ];
         })->toArray();
         $this->matl_boms[$key]['base_matl_id'] = null;
@@ -204,7 +204,7 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.base_matl_id' => 'required',
             'matl_boms.*.jwl_sides_cnt' => 'required|numeric|min:0|max:9999999999',
             'matl_boms.*.jwl_sides_carat' => 'required|numeric|min:0|max:9999999999',
-            'matl_boms.*.jwl_sides_price' => 'required|numeric|min:0|max:9999999999',
+            // 'matl_boms.*.jwl_sides_price' => 'required|numeric|min:0|max:9999999999',
             // 'materials.code' => [
             //     'required',
             //     'string',
@@ -286,6 +286,9 @@ class MaterialComponent extends BaseComponent
             }
             $bomData['matl_id'] = $this->object->id;
             $bomData['matl_code'] = $this->object->id;
+            if ($bomData['jwl_sides_price'] === null || $bomData['jwl_sides_price'] === "") {
+                $bomData['jwl_sides_price'] = 0;
+            }
             $bomData['seq'] = $index + 1;
             $this->object_boms[$index]->fill($bomData);
             $this->object_boms[$index]->save();
@@ -329,6 +332,8 @@ class MaterialComponent extends BaseComponent
     public function addBoms()
     {
         $bomsDetail = new MatlBom();
+        $bomsDetail['jwl_sides_price'] = 0;
+        $bomsDetail['jwl_sides_cnt'] = 1;
         array_push($this->matl_boms, $bomsDetail);
         // array_push($this->object_boms, $bomsDetail);
         $this->refreshBaseMaterials($this->bom_row);
@@ -396,4 +401,5 @@ class MaterialComponent extends BaseComponent
         $newMarkupPercentage = (($this->materials['jwl_selling_price'] - $buyingPrice) / $buyingPrice) * 100;
         $this->materials['markup'] = $newMarkupPercentage;
     }
+
 }
