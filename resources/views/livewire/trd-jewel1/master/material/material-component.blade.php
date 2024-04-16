@@ -63,14 +63,14 @@
                                 @if(in_array($matl_boms[$key]['base_matl_id'], [Material::DIAMOND]))
                                     <x-ui-dropdown-select label="{{ $this->trans('shapes') }}" click-event="" model="matl_boms.{{ $key }}.shapes" :options="$sideMaterialShapes" required="false" :action="$actionValue" span="Half" />
                                     <x-ui-dropdown-select label="{{ $this->trans('clarity') }}" click-event="" model="matl_boms.{{ $key }}.clarity" :options="$sideMaterialClarity" required="false" :action="$actionValue" span="Half" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialColors" required="false" :action="$actionValue" span="Half" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGiaColors" required="false" :action="$actionValue" span="Half" />
                                     <x-ui-dropdown-select label="{{ $this->trans('cut') }}" click-event="" model="matl_boms.{{ $key }}.cut" :options="$sideMaterialCut" required="false" :action="$actionValue" span="Half" />
                                     <x-ui-text-field label="{{ $this->trans('gia_number') }}" model="matl_boms.{{ $key }}.gia_number" type="number" :action="$actionValue" required="false" placeHolder="" span="Full" />
                                 @endif
 
                                 @if(in_array($matl_boms[$key]['base_matl_id'], [Material::STONE]))
                                     <x-ui-dropdown-select label="{{ $this->trans('gemstone') }}" click-event="" model="matl_boms.{{ $key }}.gemstone" :options="$sideMaterialGemStone" required="false" :action="$actionValue" span="Half" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialColors" required="false" :action="$actionValue" span="Half" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGemColors" required="false" :action="$actionValue" span="Half" />
                                 @endif
 
                                 @if(in_array($matl_boms[$key]['base_matl_id'], [Material::ANTAM]))

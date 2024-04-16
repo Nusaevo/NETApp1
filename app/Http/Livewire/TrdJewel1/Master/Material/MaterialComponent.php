@@ -40,13 +40,15 @@ class MaterialComponent extends BaseComponent
 
 
     public $sideMaterialShapes = [];
-    public $sideMaterialColors = [];
+    public $sideMaterialGiaColors = [];
+    public $sideMaterialGemColors = [];
     public $sideMaterialCut = [];
     public $sideMaterialClarity = [];
     public $sideMaterialGemStone = [];
 
     protected function onPreRender()
     {
+        $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
             'materials.*'              => $this->trans('input'),
@@ -93,7 +95,8 @@ class MaterialComponent extends BaseComponent
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             foreach ($this->object_boms as $key => $detail) {
                 $this->refreshBaseMaterials($this->bom_row);
-                $this->refreshSideMaterialColor($this->bom_row);
+                $this->refreshSideMaterialGiaColor($this->bom_row);
+                $this->refreshSideMaterialGemColor($this->bom_row);
                 $this->refreshSideMaterialClarity($this->bom_row);
                 $this->refreshSideMaterialCut($this->bom_row);
                 $this->refreshSideMaterialGemstone($this->bom_row);
@@ -224,7 +227,7 @@ class MaterialComponent extends BaseComponent
     {
         $data = DB::connection('sys-config1')
         ->table('config_consts')
-        ->select('id','str1','str2')
+        ->select('id','str1','str2','note1')
         ->where('const_group', 'MMATL_JEWEL_GIACLARITY')
         ->where('app_code', $this->appCode)
         ->where('deleted_at', NULL)
@@ -260,7 +263,27 @@ class MaterialComponent extends BaseComponent
         $this->matl_boms[$key]['cut'] = null;
     }
 
-    public function refreshSideMaterialColor($key)
+    public function refreshSideMaterialGemColor($key)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GEMCOLORS')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->sideMaterialGemColors = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['color'] = null;
+    }
+
+    public function refreshSideMaterialGiaColor($key)
     {
         $data = DB::connection('sys-config1')
         ->table('config_consts')
@@ -271,7 +294,7 @@ class MaterialComponent extends BaseComponent
         ->orderBy('seq')
         ->get();
 
-        $this->sideMaterialColors = $data->map(function ($data) {
+        $this->sideMaterialGiaColors = $data->map(function ($data) {
             return [
                 'label' => $data->str1." - ".$data->str2,
                 'value' => $data->str1
@@ -487,7 +510,8 @@ class MaterialComponent extends BaseComponent
         array_push($this->matl_boms, $bomsDetail);
         // array_push($this->object_boms, $bomsDetail);
         $this->refreshBaseMaterials($this->bom_row);
-        $this->refreshSideMaterialColor($this->bom_row);
+        $this->refreshSideMaterialGiaColor($this->bom_row);
+        $this->refreshSideMaterialGemColor($this->bom_row);
         $this->refreshSideMaterialClarity($this->bom_row);
         $this->refreshSideMaterialCut($this->bom_row);
         $this->refreshSideMaterialGemstone($this->bom_row);
