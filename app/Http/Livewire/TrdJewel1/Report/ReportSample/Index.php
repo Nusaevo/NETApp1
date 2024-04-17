@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire\Tigaputra\Report\ReportSample;
+namespace App\Http\Livewire\TrdJewel1\Report\ReportSample;
 
 
 use App\Models\Tigaputra\Master\CategoryItem;

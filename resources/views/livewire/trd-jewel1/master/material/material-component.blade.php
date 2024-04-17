@@ -75,7 +75,7 @@
 
                                 @if(in_array($matl_boms[$key]['base_matl_id'], [Material::ANTAM]))
                                     <x-ui-text-field label="{{ $this->trans('production_year') }}" model="matl_boms.{{ $key }}.production_year" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
-                                    <x-ui-text-field label="{{ $this->trans('ref_mark') }}" model="matl_boms.{{ $key }}.ref_mark" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
+                                    <x-ui-text-field label="{{ $this->trans('ref_mark') }}" model="matl_boms.{{ $key }}.ref_mark" type="text" :action="$actionValue" required="false" placeHolder="" span="Half" />
                                 @endif
 
                             </x-slot>
