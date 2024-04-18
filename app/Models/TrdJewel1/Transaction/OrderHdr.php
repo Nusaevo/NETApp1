@@ -175,6 +175,7 @@ class OrderHdr extends BaseModel
                      'matl_id' =>  $object_detail[$index]->matl_id,
                      'matl_code' =>  $object_detail[$index]->matl_code,
                      'matl_descr' =>  $object_detail[$index]->matl_descr,
+                     'matl_uom' =>  $object_detail[$index]->matl_uom,
                      'wh_code' =>   $inputs['wh_code'],
                      'qty' =>  $object_detail[$index]->qty,
                      'qty_reff' =>  $object_detail[$index]->qty_reff,

@@ -4,12 +4,45 @@ namespace App\Models\TrdJewel1\Transaction;
 
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Material;
+use App\Models\TrdJewel1\Inventories\IvtBal;
+use App\Models\TrdJewel1\Inventories\IvtBalUnit;
 
 class DelivDtl extends BaseModel
 {
     protected static function boot()
     {
         parent::boot();
+        static::creating(function ($delivDtl) {
+            $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
+                                 ->where('wh_id', $delivDtl->wh_id)
+                                 ->first();
+            if ($existingBal) {
+                $existingBal->increment('qty_oh', $delivDtl->qty);
+            } else {
+                $inventoryBalData = [
+                    'matl_id' => $delivDtl->matl_id,
+                    'matl_code' => $delivDtl->matl_code,
+                    'matl_uom' => $delivDtl->matl_uom,
+                    'matl_descr' => $delivDtl->matl_descr,
+                    'wh_id' => $delivDtl->wh_code,
+                    'wh_code' => $delivDtl->wh_code,
+                    'qty_oh' => $delivDtl->qty,
+                ];
+                IvtBal::create($inventoryBalData);
+            }
+        });
+
+        static::deleting(function ($delivDtl) {
+            $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
+                                 ->where('wh_id', $delivDtl->wh_id)
+                                 ->first();
+            if ($existingBal) {
+                $existingBal->decrement('qty_oh', $delivDtl->qty);
+                if ($existingBal->qty_oh <= 0) {
+                    $existingBal->delete();
+                }
+            }
+        });
     }
 
     protected $fillable = [

@@ -19,7 +19,8 @@ class IvtBal extends BaseModel
         'wh_code',
         'batch_code',
         'qty_oh',
-        'wh_bin',
+        'wh_id',
+        'wh_code',
     ];
 
     public function scopeGetActiveData()
