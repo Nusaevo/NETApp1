@@ -18,17 +18,29 @@ class DelivDtl extends BaseModel
                                  ->first();
             if ($existingBal) {
                 $existingBal->increment('qty_oh', $delivDtl->qty);
+                IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                          ->where('wh_id', $delivDtl->wh_id)
+                          ->update(['qty_oh' => \DB::raw('qty_oh + ' . $delivDtl->qty)]);
             } else {
                 $inventoryBalData = [
                     'matl_id' => $delivDtl->matl_id,
                     'matl_code' => $delivDtl->matl_code,
                     'matl_uom' => $delivDtl->matl_uom,
                     'matl_descr' => $delivDtl->matl_descr,
-                    'wh_id' => $delivDtl->wh_code,
+                    'wh_id' => $delivDtl->wh_id,
                     'wh_code' => $delivDtl->wh_code,
                     'qty_oh' => $delivDtl->qty,
                 ];
-                IvtBal::create($inventoryBalData);
+                $newIvtBal = IvtBal::create($inventoryBalData);
+                $inventoryBalUnitsData = [
+                    'ivt_id' => $newIvtBal->id,
+                    'matl_id' => $delivDtl->matl_id,
+                    'wh_id' => $delivDtl->wh_id,
+                    'matl_uom_id' => $delivDtl->id,
+                    'uom' => $delivDtl->name,
+                    'qty_oh' => $delivDtl->qty,
+                ];
+                IvtBalUnit::create($inventoryBalUnitsData);
             }
         });
 
@@ -41,6 +53,11 @@ class DelivDtl extends BaseModel
                 if ($existingBal->qty_oh <= 0) {
                     $existingBal->delete();
                 }
+
+                // Delete corresponding records from IvtBalUnit
+                IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                          ->where('wh_id', $delivDtl->wh_id)
+                          ->delete();
             }
         });
     }
