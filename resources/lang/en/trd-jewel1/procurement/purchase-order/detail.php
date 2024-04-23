@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'purchase_order' => 'Purchase Order',
     'date' => 'Transaction Date',
     'partner' => 'Supplier',
     'warehouse' => 'Warehouse',

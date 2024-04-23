@@ -20,4 +20,21 @@ class GoldPriceLog extends BaseModel
         'goldprice_curr',
         'goldprice_basecurr',
     ];
+
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            if ($attribute == "curr_rate") {
+                return currencyToNumeric($this->attributes[$attribute]);
+            }
+            if ($attribute == "goldprice_curr") {
+                return currencyToNumeric($this->attributes[$attribute]);
+            }
+            if ($attribute == "goldprice_basecurr") {
+                return currencyToNumeric($this->attributes[$attribute]);
+            }
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
 }

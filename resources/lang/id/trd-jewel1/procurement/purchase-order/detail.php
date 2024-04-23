@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'purchase_order' => 'Transaksi Pembelian',
     'date' => 'Tanggal Transaksi',
     'partner' => 'Supplier',
     'warehouse' => 'Gudang',

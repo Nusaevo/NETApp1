@@ -22,21 +22,30 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Date", "log_date")
+            Column::make($this->trans("date"), "log_date")
                 ->searchable()
                 ->sortable(),
-            Column::make("Currency Rate", "curr_rate")
+                Column::make($this->trans("currency_rate"), "curr_rate")
                 ->searchable()
-                ->sortable(),
-            Column::make("Gold Price", "goldprice_curr")
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return rupiah(currencyToNumeric($value));
+                }),
+            Column::make($this->trans("gold_price_currency"), "goldprice_curr")
                 ->searchable()
-                ->sortable(),
-            Column::make("Gold Price base Curr", "goldprice_basecurr")
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return dollar(currencyToNumeric($value));
+                }),
+           Column::make($this->trans("gold_price_base"), "goldprice_basecurr")
                 ->searchable()
-                ->sortable(),
-            Column::make('Created Date', 'created_at')
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return rupiah(currencyToNumeric($value));
+                }),
+            Column::make($this->trans('created_date'), 'created_at')
                     ->sortable(),
-                    Column::make('Actions', 'id')
+            Column::make($this->trans('action'), 'id')
                     ->format(function ($value, $row, Column $column) {
                         return view('layout.customs.data-table-action', [
                             'row' => $row,

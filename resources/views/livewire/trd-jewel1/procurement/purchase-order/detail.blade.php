@@ -3,7 +3,7 @@
         <x-ui-button click-event="" type="Back" button-name="Back"/>
     </div>
 
-    <x-ui-page-card title="{{ $this->trans($actionValue) }} Purchase Order" status="{{ $this->trans($status) }}">
+    <x-ui-page-card title="{{ $this->trans($actionValue) . ' ' . $this->trans('purchase_order') }}" status="{{ $this->trans($status) }}">
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else

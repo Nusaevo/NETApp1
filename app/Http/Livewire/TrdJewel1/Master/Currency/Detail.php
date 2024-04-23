@@ -6,15 +6,27 @@ use App\Http\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Validation\Rule;
+use DB;
 
 class Detail extends BaseComponent
 {
     public $inputs = [];
-    public $partnerTypes = [];
+    public $currencies = [];
 
     protected function onPreRender()
     {
-
+        $this->customValidationAttributes  = [
+            'inputs.curr_id' => $this->trans('currency'),
+            'inputs.curr_rate' => $this->trans('currency_rate'),
+            'inputs.goldprice_curr' => $this->trans('gold_price_currency'),
+            'inputs.goldprice_basecurr' => $this->trans('gold_price_base'),
+        ];
+        $this->customRules  = [
+            'inputs.curr_id' => 'required|integer',
+            'inputs.curr_rate' => 'required|numeric|min:0',
+            'inputs.goldprice_curr' => 'required|numeric|min:0',
+            'inputs.goldprice_basecurr' => 'required|numeric|min:0',
+        ];
     }
 
     protected function onLoadForEdit()
@@ -32,66 +44,54 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
     ];
 
-    protected function rules()
-    {
-        $rules = [
-            'inputs.name' => 'required|string|min:1|max:50',
-            'inputs.address' => 'string|min:1|max:50',
-            'inputs.city' => 'string|min:1|max:20',
-            'inputs.country' => 'string|min:1|max:20',
-            'inputs.postal_code' => 'string|min:1|max:10',
-            'inputs.contact_person' => 'string|min:1|max:255',
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('partners', 'code')->ignore($this->object ? $this->object->id : null),
-            ],
-        ];
-        return $rules;
-    }
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input Menu',
-        'inputs.*'              => 'Input Menu',
-        'inputs.code'           => 'Customer Code',
-        'inputs.name'      => 'Name',
-        'inputs.address'      => 'Address',
-        'inputs.city'      => 'City',
-        'inputs.country'      => 'Country',
-        'inputs.postal_code'      => 'Postal Code',
-        'inputs.contact_person'      => 'Contact',
-    ];
-
     public function onReset()
     {
         $this->reset('inputs');
+        $this->inputs['log_date']  = date('Y-m-d');
         $this->object = new GoldPriceLog();
     }
 
-    public function refreshPartnerTypes()
+    public function refreshCurrencies()
     {
-        $data = ConfigConst::where('app_code', $this->appCode)
-            ->where('const_group', 'PARTNERS_TYPE')
+        $data = DB::connection('sys-config1')
+            ->table('config_consts')
+            ->select('id', 'str1', 'str2', 'num1')
+            ->where('const_group', 'MCURRENCY_CODE')
+            ->where('app_code', $this->appCode)
+            ->where('deleted_at', NULL)
             ->orderBy('seq')
             ->get();
-        $this->partnerTypes = $data->map(function ($data) {
+
+        $currencies = $data->map(function ($item) {
             return [
-                'label' => $data->str2,
-                'value' => $data->str1,
+                'label' => $item->str1 . " - " . $item->str2,
+                'value' => $item->id,
+                'num1' => currencyToNumeric($item->num1)
             ];
-        })->toArray();
-        $this->inputs['grp'] = null;
+        });
+
+        $defaultCurrency = $currencies->sortByDesc('num1')->first();
+        $this->currencies = $currencies->toArray();
+        $this->inputs['curr_id'] = $defaultCurrency['value'];
     }
 
     protected function onPopulateDropdowns()
     {
-        $this->refreshPartnerTypes();
+        $this->refreshCurrencies();
     }
 
     public function onValidateAndSave()
     {
+        if (isset($this->inputs['log_date'])) {
+            $existingLog = GoldPriceLog::whereDate('log_date', $this->inputs['log_date'])
+                                        ->where('id', '!=', $this->object->id ?? null)
+                                        ->exists();
+            if ($existingLog) {
+                $this->addError('inputs.log_date', $this->trans('message.log_date_already_exists'));
+                return;
+            }
+        }
+
         $this->object->fill($this->inputs);
         $this->object->save();
     }
