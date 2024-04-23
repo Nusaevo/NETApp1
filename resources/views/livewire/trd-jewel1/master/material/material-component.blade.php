@@ -57,7 +57,7 @@
                                 <x-ui-text-field label="{{ $this->trans('price') }}" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
 
                                 @if(in_array($matl_boms[$key]['base_matl_id'], [Material::GOLD, Material::ROSE_GOLD, Material::WHITE_GOLD]))
-                                    <x-ui-text-field label="{{ $this->trans('purity') }}" model="matl_boms.{{ $key }}.purity" type="text" :action="$actionValue" required="false" placeHolder="" span="Full" />
+                                        <x-ui-dropdown-select label="{{ $this->trans('purity') }}" click-event="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue" span="Full" />
                                 @endif
 
                                 @if(in_array($matl_boms[$key]['base_matl_id'], [Material::DIAMOND]))

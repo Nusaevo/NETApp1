@@ -10,8 +10,7 @@ use App\Enums\Status;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Util\GenericExport; // You'll create this export class next
-
+use App\Models\Util\GenericExport;
 
 abstract class BaseDataTableComponent extends DataTableComponent
 {
@@ -19,12 +18,40 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $baseRoute;
     public $route;
     public $customRoute;
+    public $langBasePath;
+
+    public $baseRenderRoute;
+    public $renderRoute;
 
     public function __construct()
     {
         parent::__construct();
-        $this->baseRoute = Str::replace('.', '/', Route::currentRouteName());
-        $this->route .= Route::currentRouteName();
+        $this->route = Route::currentRouteName();
+        $this->baseRoute = Str::replace('.', '/', $this->route);
+        $this->renderRoute =  implode('.', array_map(function($segment) {
+            // Insert hyphens after the first uppercase letter in each word, except for the very first character
+            return preg_replace_callback('/(?<=\w)([A-Z])/', function($match) use ($segment) {
+                $prevChar = substr($segment, strpos($segment, $match[0]) - 1, 1);
+                if ($prevChar === '_') {
+                    return $match[0];
+                } else {
+                    return '-' . strtolower($match[1]);
+                }
+            }, $segment);
+        }, explode('.', $this->baseRoute)));
+        // Convert the entire route to lowercase except the first character of each segment
+        $this->renderRoute = implode('.', array_map(function($segment) {
+            return lcfirst($segment);
+        }, explode('.', $this->renderRoute)));
+        // Convert the entire route to lowercase
+        $this->baseRenderRoute = strtolower($this->renderRoute);
+        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
+
+        if (!empty($this->customRoute)) {
+            $this->langBasePath = str_replace('.', '/', $this->customRoute) . "/index";
+        } else {
+            $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute)."/index";
+        }
     }
 
     protected $listeners = [
@@ -106,6 +133,17 @@ abstract class BaseDataTableComponent extends DataTableComponent
             ]);
         }
         $this->emit('refreshData');
+    }
+
+    public function trans($key)
+    {
+        $fullKey = $this->langBasePath . "." . $key;
+        $translation = Lang::get($fullKey);
+        if ($translation === $fullKey) {
+            return $key;
+        } else {
+            return $translation;
+        }
     }
 
     // public function bulkActions(): array

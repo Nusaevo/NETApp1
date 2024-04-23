@@ -32,25 +32,25 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Nota", "tr_id")
+            Column::make($this->trans("tr_id"), "tr_id")
                 ->sortable()
                 ->searchable(),
-            Column::make("Tanggal Transaksi", "tr_date")
+            Column::make($this->trans("date"), "tr_date")
                 ->searchable()
                 ->sortable(),
-            Column::make("Supplier", "Partner.name")
+            Column::make($this->trans("supplier"), "Partner.name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Status", "status_code")
+            Column::make($this->trans('status'), "status_code")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
-            Column::make("Tanggal dibuat", "created_at")
+            Column::make($this->trans("created_date"), "created_at")
                 ->searchable()
                 ->sortable(),
-            Column::make('Actions', 'id')
+            Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,

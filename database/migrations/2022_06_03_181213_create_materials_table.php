@@ -34,7 +34,7 @@ return new class extends Migration
             // $table->smallInteger('jwl_sides_cnt')->default(0);
             // $table->string('jwl_sides_matl', 20)->default('');
             // $table->decimal('jwl_selling_price_usd', 15, 2)->default(0);
-            // $table->decimal('jwl_selling_price_idr', 15, 2)->default(0);
+            // $table->decimal('jwl_selling_price', 15, 2)->default(0);
             // $table->string('jwl_sides_calc_method', 5)->default('');
             // $table->decimal('jwl_matl_price', 15, 2)->default(0);
             $table->string('jwl_sellprc_calc_method', 5)->default('');

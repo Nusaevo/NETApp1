@@ -44,6 +44,7 @@ class MaterialComponent extends BaseComponent
     public $sideMaterialGemColors = [];
     public $sideMaterialCut = [];
     public $sideMaterialClarity = [];
+    public $sideMaterialJewelPurity = [];
     public $sideMaterialGemStone = [];
 
     protected function onPreRender()
@@ -68,7 +69,6 @@ class MaterialComponent extends BaseComponent
             'materials.jwl_buying_price' => 'required|numeric|min:0|max:9999999999',
             'materials.jwl_selling_price' => 'required|numeric|min:0|max:9999999999',
             'materials.jwl_category' => 'required|string|min:0|max:255',
-            'matl_uoms.name' => 'required|string|min:0|max:255',
             'matl_uoms.barcode' => 'required|string|min:0|max:255',
             'matl_boms.*.base_matl_id' => 'required',
             'matl_boms.*.jwl_sides_cnt' => 'required|numeric|min:0|max:9999999999',
@@ -101,6 +101,7 @@ class MaterialComponent extends BaseComponent
                 $this->refreshSideMaterialCut($this->bom_row);
                 $this->refreshSideMaterialGemstone($this->bom_row);
                 $this->refreshSideMaterialShapes($this->bom_row);
+                $this->refreshSideMaterialJewelPurity($this->bom_row);
                 $formattedDetail = populateArrayFromModel($detail);
                 $this->matl_boms[$key] =  $formattedDetail;
                 $this->matl_boms[$key]['id'] = $detail->id;
@@ -159,7 +160,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1,
             ];
         })->toArray();
-        $this->matl_uoms['name'] = 'PCS';
+        $this->matl_uoms['matl_uom'] = 'PCS';
     }
 
     public function refreshCategories()
@@ -322,6 +323,25 @@ class MaterialComponent extends BaseComponent
         })->toArray();
         $this->matl_boms[$key]['gemstone'] = null;
     }
+    public function refreshSideMaterialJewelPurity($key)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->sideMaterialJewelPurity = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+        $this->matl_boms[$key]['purity'] = null;
+    }
 
     protected function onPopulateDropdowns()
     {
@@ -425,7 +445,6 @@ class MaterialComponent extends BaseComponent
 
         // Save Attachment
         $this->saveAttachment();
-        $this->matl_uoms['code'] = $this->object->code;
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
         $this->object_uoms->fill($this->matl_uoms);
@@ -444,7 +463,7 @@ class MaterialComponent extends BaseComponent
                 $bomData['jwl_sides_price'] = 0;
             }
             $bomData['seq'] = $index + 1;
-            $baseMaterialId = $bomData ['base_matl_id'];
+            $baseMaterialId = $bomData['base_matl_id'];
             $dataToSave = [];
             if (in_array($baseMaterialId, [Material::GOLD, Material::ROSE_GOLD, Material::WHITE_GOLD])) {
                 $dataToSave['purity'] = $bomData['purity'] ?? null;
@@ -516,6 +535,7 @@ class MaterialComponent extends BaseComponent
         $this->refreshSideMaterialCut($this->bom_row);
         $this->refreshSideMaterialGemstone($this->bom_row);
         $this->refreshSideMaterialShapes($this->bom_row);
+        $this->refreshSideMaterialJewelPurity($this->bom_row);
         $newDetail = end($this->matl_boms);
         $this->newItems[] = $newDetail;
         $this->emit('itemAdded');

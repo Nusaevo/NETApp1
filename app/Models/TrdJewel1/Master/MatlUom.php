@@ -17,8 +17,7 @@ class MatlUom extends BaseModel
     }
 
     protected $fillable = [
-        'code',
-        'name',
+        'matl_uom',
         'matl_id',
         'matl_code',
         'reff_uom',

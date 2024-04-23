@@ -45,7 +45,22 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
-
+        $this->customValidationAttributes  = [
+            'inputs.tr_date'      => $this->trans('tr_date'),
+            'inputs.partner_id'      => $this->trans('supplier'),
+            'inputs.wh_code'      => $this->trans('warehouse'),
+            'input_details.*'              => $this->trans('product'),
+            'input_details.*.matl_id' => $this->trans('product'),
+            'input_details.*.qty' => $this->trans('qty'),
+            'input_details.*.price' => $this->trans('price'),
+        ];
+        $this->customRules  = [
+            'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
+            // 'inputs.wh_code' =>  'required|integer|min:0|max:9999999999',
+            'inputs.tr_date' => 'required',
+            'input_details.*.price' => 'required|integer|min:0|max:9999999999',
+            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
+        ];
     }
 
     protected function onLoadForEdit()
@@ -117,29 +132,6 @@ class Detail extends BaseComponent
         $this->refreshSupplier();
         // $this->refreshWarehouses();
     }
-
-    protected function rules()
-    {
-        $rules = [
-            'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
-            // 'inputs.wh_code' =>  'required|integer|min:0|max:9999999999',
-            'inputs.tr_date' => 'required',
-            'input_details.*.price' => 'required|integer|min:0|max:9999999999',
-            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
-        ];
-        return $rules;
-    }
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input',
-        'inputs.tr_date'      => 'Tanggal Transaksi',
-        'inputs.partner_id'      => 'Supplier',
-        'inputs.wh_code'      => 'Warehouse',
-        'input_details.*'              => 'Inputan Barang',
-        'input_details.*.matl_id' => 'Item',
-        'input_details.*.qty' => 'Item Qty',
-        'input_details.*.price' => 'Item Price',
-    ];
 
     public function onValidateAndSave()
     {

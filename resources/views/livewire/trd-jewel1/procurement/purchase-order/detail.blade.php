@@ -1,9 +1,9 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
+        <x-ui-button click-event="" type="Back" button-name="Back"/>
     </div>
 
-    <x-ui-page-card title="{{ $actionValue }} Puchase Order" status="{{ $status }}">
+    <x-ui-page-card title="{{ $this->trans($actionValue) }} Purchase Order" status="{{ $this->trans($status) }}">
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
@@ -13,9 +13,9 @@
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
                     <x-ui-padding>
-                        <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-text-field-search label="Supplier" click-event="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
-                        {{-- <x-ui-dropdown-select label="Gudang" click-event="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
+                        <x-ui-text-field-search label="{{ $this->trans('partner') }}" click-event="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
+                        {{-- <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" click-event="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder=""/> --}}
                         {{-- @if ($actionValue === 'Create')
                             <x-ui-checklist label="Buat Nota Terima Supplier otomatis" model="inputs.app_id" :options="['1' => 'Ya']" :action="$actionValue" span="Full" />
@@ -33,7 +33,7 @@
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
-                                    Tambah
+                                    {{ $this->trans('btnAdd') }}
                             </button>
                             {{-- <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" /> --}}
                         </x-slot>
@@ -49,13 +49,13 @@
                                     </x-slot>
 
                                     <x-slot name="rows">
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='Product Code' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.barcode" label='Label Code' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='Description' type="text" :action="$actionValue" placeHolder="Description" enabled="false" span="Full" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='Selling Price' type="text" :action="$actionValue" placeHolder="Selling Price" enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.price" label='Buying Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" placeHolder="{{ $this->trans("placeHolder_description") }}" enabled="false" span="Full" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' type="text" :action="$actionValue" placeHolder="{{ $this->trans("selling_price") }}" enabled="false" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price") }}' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="text" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
                                     </x-slot>
                                     <x-slot name="button">
                                         <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
@@ -67,20 +67,11 @@
                             @endforeach
                         </x-slot>
                         <x-slot name="footer">
-                            <h3>Total Price: {{ rupiah($total_amount) }}</h3>
+                            <h3>{{ $this->trans('totalPrice') }}: {{ rupiah($total_amount) }}</h3>
                         </x-slot>
                     </x-ui-list-table>
             </x-ui-card>
             </div>
-            {{-- <div class="tab-pane fade show" id="PurchaseReturn" role="tabpanel" aria-labelledby="PurchaseReturn-tab">
-                <x-ui-card>
-                    @include('layout.customs.buttons.create', ['route' => 'TrdJewel1.Procurement.PurchaseReturn.Detail', 'objectId' => $object->id])
-
-                    <div class="table-responsive">
-                        @livewire('trd-jewel1.procurement.purchase-order.purchase-return-data-table', ['returnIds' => $returnIds])
-                    </div>
-                </x-ui-card>
-            </div> --}}
         </x-ui-tab-view-content>
         <x-ui-footer>
             {{-- @if ($actionValue === 'Edit')
@@ -94,6 +85,7 @@
     // dump($object->id);
 @endphp
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         window.livewire.on('closeMaterialDialog', function() {
