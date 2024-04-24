@@ -80,7 +80,9 @@ class Detail extends BaseComponent
             $this->input_details[$key]['selling_price'] =int_qty( $detail->Material->jwl_selling_price) ?? 0;
             $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
             $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-            $this->input_details[$key]['image_path'] = $detail->Material->Attachment[0]->getUrl();
+            $imagePath = $detail->Material->Attachment->first()?->getUrl() ?? null;
+            $this->input_details[$key]['image_path'] = $imagePath;
+
         }
         $this->countTotalAmount();
     }
