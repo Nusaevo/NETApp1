@@ -55,11 +55,11 @@ class Detail extends BaseComponent
             'input_details.*.price' => $this->trans('price'),
         ];
         $this->customRules  = [
-            'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
-            // 'inputs.wh_code' =>  'required|integer|min:0|max:9999999999',
+            'inputs.partner_id' =>  'required',
+            // 'inputs.wh_code' =>  'required',
             'inputs.tr_date' => 'required',
-            'input_details.*.price' => 'required|integer|min:0|max:9999999999',
-            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
+            'input_details.*.price' => 'required',
+            'input_details.*.qty' => 'required',
         ];
     }
 

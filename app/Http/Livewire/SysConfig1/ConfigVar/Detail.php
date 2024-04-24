@@ -43,7 +43,7 @@ class Detail extends BaseComponent
         $rules = [
             'inputs.app_id' => 'required',
             'inputs.var_group' => 'required|string|min:1|max:50',
-            'inputs.seq' =>  'required|integer|min:0|max:9999999999',
+            'inputs.seq' =>  'required',
             'inputs.default_value' => 'required|string|min:1|max:50',
             'inputs.descr' => 'string|min:1|max:200'
         ];

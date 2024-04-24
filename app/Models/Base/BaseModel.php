@@ -77,4 +77,18 @@ class BaseModel extends Model
             // }
         }
     }
+
+    public function fillAndSanitize(array $attributes)
+    {
+        $sanitizedAttributes = [];
+
+        foreach ($attributes as $key => $value) {
+            if (is_numeric($value) && strpos($value, ',') !== false) {
+                $sanitizedAttributes[$key] = str_replace(',', '', $value);
+            } else {
+                $sanitizedAttributes[$key] = $value;
+            }
+        }
+        $this->fill($sanitizedAttributes);
+    }
 }

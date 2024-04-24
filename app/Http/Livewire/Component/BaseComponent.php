@@ -213,6 +213,7 @@ class BaseComponent extends Component
             DB::rollBack();
             $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
+        $this->dispatchBrowserEvent('reApplyInputMask');
     }
 
     protected function change()

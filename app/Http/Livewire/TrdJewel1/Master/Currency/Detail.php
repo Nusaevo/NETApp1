@@ -24,9 +24,9 @@ class Detail extends BaseComponent
         ];
         $this->customRules  = [
             'inputs.curr_id' => 'required|integer',
-            'inputs.curr_rate' => 'required|numeric|min:0',
-            'inputs.goldprice_curr' => 'required|numeric|min:0',
-            'inputs.goldprice_basecurr' => 'required|numeric|min:0',
+            'inputs.curr_rate' => 'required',
+            'inputs.goldprice_curr' => 'required',
+            'inputs.goldprice_basecurr' => 'required',
         ];
     }
 
@@ -93,7 +93,7 @@ class Detail extends BaseComponent
             }
         }
 
-        $this->object->fill($this->inputs);
+        $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }
 

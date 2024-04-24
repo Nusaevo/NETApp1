@@ -66,14 +66,14 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
         ];
         $this->customRules  = [
-            'materials.jwl_buying_price' => 'required|numeric|min:0|max:9999999999',
-            'materials.jwl_selling_price' => 'required|numeric|min:0|max:9999999999',
+            'materials.jwl_buying_price' => 'required',
+            'materials.jwl_selling_price' => 'required',
             'materials.jwl_category' => 'required|string|min:0|max:255',
             'matl_uoms.barcode' => 'required|string|min:0|max:255',
             'matl_boms.*.base_matl_id' => 'required',
-            'matl_boms.*.jwl_sides_cnt' => 'required|numeric|min:0|max:9999999999',
-            'matl_boms.*.jwl_sides_carat' => 'required|numeric|min:0|max:9999999999',
-            // 'matl_boms.*.jwl_sides_price' => 'required|numeric|min:0|max:9999999999',
+            'matl_boms.*.jwl_sides_cnt' => 'required',
+            'matl_boms.*.jwl_sides_carat' => 'required',
+            // 'matl_boms.*.jwl_sides_price' => 'required',
             // 'materials.code' => [
             //     'required',
             //     'string',
