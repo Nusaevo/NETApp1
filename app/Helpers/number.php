@@ -25,6 +25,14 @@ if (!function_exists('qty')) {
     }
 }
 
+if (!function_exists('toNumberFormatter')) {
+    function toNumberFormatter($formattedNumber)
+    {
+        $numericValue = str_replace(',', '', $formattedNumber);
+        return $numericValue;
+    }
+}
+
 if (!function_exists('currencyToNumeric')) {
     function currencyToNumeric($formattedCurrency)
     {

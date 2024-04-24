@@ -558,10 +558,10 @@ class MaterialComponent extends BaseComponent
             return null;
         }
 
-        $buyingPrice = $this->materials['jwl_buying_price'];
+        $buyingPrice = toNumberFormatter($this->materials['jwl_buying_price']);
 
-        $markupAmount = $buyingPrice * ($this->materials['markup'] / 100);
-        $this->materials['jwl_selling_price'] = $buyingPrice + $markupAmount;
+        $markupAmount = $buyingPrice * (toNumberFormatter($this->materials['markup']) / 100);
+        $this->materials['jwl_selling_price'] = number_format($buyingPrice + $markupAmount);
     }
 
 
@@ -571,14 +571,14 @@ class MaterialComponent extends BaseComponent
             return;
         }
 
-        $buyingPrice = $this->materials['jwl_buying_price'];
+        $buyingPrice = toNumberFormatter($this->materials['jwl_buying_price']);
 
         if ($buyingPrice <= 0) {
             return;
         }
 
-        $newMarkupPercentage = (($this->materials['jwl_selling_price'] - $buyingPrice) / $buyingPrice) * 100;
-        $this->materials['markup'] = $newMarkupPercentage;
+        $newMarkupPercentage = ((toNumberFormatter($this->materials['jwl_selling_price']) - $buyingPrice) / $buyingPrice) * 100;
+        $this->materials['markup'] = number_format($newMarkupPercentage);
     }
 
 
