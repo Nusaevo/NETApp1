@@ -115,27 +115,7 @@
     //         scrollToBottom();
     //     });
     // });
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     Webcam.set({
-    //         width: 320
-    //         , height: 240
-    //         , dest_width: 640
-    //         , dest_height: 480
-    //         , image_format: 'jpeg'
-    //         , jpeg_quality: 90
-    //     , });
-
-    //     Webcam.attach('#cameraStream');
-    //     document.getElementById('cameraButton').addEventListener('click', function() {
-    //         captureImageAndEmit();
-    //     });
-    // });
-
-    function captureImageAndEmit() {
-        // Show loader while initializing the webcam
-        var loaderContainer = document.getElementById('loader-container');
-        loaderContainer.style.display = 'block';
-
+    document.addEventListener('DOMContentLoaded', function() {
         Webcam.set({
             width: 320
             , height: 240
@@ -146,10 +126,38 @@
         , });
 
         Webcam.attach('#cameraStream');
+        document.getElementById('cameraButton').addEventListener('click', function() {
+            captureImageAndEmit();
+        });
+    });
 
-        // Hide loader once the webcam is initialized
+    function captureImageAndEmit() {
+        var cameraStream = document.getElementById('cameraStream');
+        if (!cameraStream) {
+            console.error('Camera stream DOM element not found');
+            return;
+        }
+
+        var loaderContainer = document.getElementById('loader-container');
+        if (loaderContainer) {
+            loaderContainer.style.display = 'block';
+        }
+
+        Webcam.set({
+            width: 320,
+            height: 240,
+            dest_width: 640,
+            dest_height: 480,
+            image_format: 'jpeg',
+            jpeg_quality: 90
+        });
+
+        Webcam.attach('#cameraStream');
+
         Webcam.on('live', function() {
-            loaderContainer.style.display = 'none';
+            if (loaderContainer) {
+                loaderContainer.style.display = 'none';
+            }
         });
 
         Webcam.snap(function(dataUri) {
@@ -158,9 +166,10 @@
         });
     }
 
-    document.getElementById('cameraButton').addEventListener('click', function() {
-        captureImageAndEmit();
-    });
+
+    // document.getElementById('cameraButton').addEventListener('click', function() {
+    //     captureImageAndEmit();
+    // });
 
 </script>
 

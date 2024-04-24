@@ -19,11 +19,11 @@ class Index extends Component
     public function fetchData() {
         $today = Carbon::today()->toDateString();
 
-        $currencyRatesData = GoldPriceLog::orderBy('log_date', 'desc')
+        $currencyRatesData = GoldPriceLog::orderBy('log_date', 'asc')
                                   ->take(30)
                                   ->get(['log_date', 'curr_rate']);
 
-        $goldPricesData = GoldPriceLog::orderBy('log_date', 'desc')
+        $goldPricesData = GoldPriceLog::orderBy('log_date', 'asc')
                                ->take(30)
                                ->get(['log_date', 'goldprice_basecurr']);
 

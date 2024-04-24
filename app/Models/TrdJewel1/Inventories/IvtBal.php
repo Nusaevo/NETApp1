@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Models\TrdJewel1\Inventories;
-use App\Models\Base\BaseModel;
+use Illuminate\Database\Eloquent\Model;
 
-class IvtBal extends BaseModel
+class IvtBal extends Model
 {
     protected $table = 'ivt_bals';
 

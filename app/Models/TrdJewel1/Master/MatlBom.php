@@ -17,7 +17,7 @@ class MatlBom extends BaseModel
         'matl_id',
         'matl_code',
         'base_matl_id',
-        'base_category_id',
+        // 'base_category_id',
         'seq',
         'jwl_sides_carat',
         'jwl_sides_cnt',

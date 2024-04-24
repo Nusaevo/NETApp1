@@ -189,8 +189,8 @@ class Detail extends BaseComponent
             $detail['matl_uom'] = $material->MatlUom[0]->id;
             $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
             $detail['barcode'] = $material->MatlUom[0]->barcode;
-            $detail['price'] = int_qty($material->jwl_buying_price) ?? 0;
-            $detail['selling_price'] = int_qty($material->jwl_selling_price) ?? 0;
+            $detail['price'] = currencyToNumeric($material->jwl_buying_price) ?? 0;
+            $detail['selling_price'] = currencyToNumeric($material->jwl_selling_price) ?? 0;
             $detail['qty'] = 1;
             $detail['amt'] = $detail['qty'] * $detail['price'];
         }
@@ -202,11 +202,9 @@ class Detail extends BaseComponent
 
     public function Add()
     {
-        $this->emit('materialSaved', 211);
-        $this->emit('materialSaved', 212);
-        $this->emit('materialSaved', 213);
-        $this->emit('materialSaved', 214);
-        $this->emit('materialSaved', 215);
+        $this->emit('materialSaved', 2);
+        $this->emit('materialSaved', 3);
+        $this->emit('materialSaved', 4);
     }
 
     public function materialSaved($material_id)

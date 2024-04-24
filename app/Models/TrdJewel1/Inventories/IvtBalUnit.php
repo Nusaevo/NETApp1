@@ -2,10 +2,10 @@
 
 namespace App\Models\TrdJewel1\Inventories;
 
-use App\Models\Base\BaseModel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class IvtBalUnit extends BaseModel
+class IvtBalUnit extends Model
 {
     protected $table = 'ivt_bal_units';
 
@@ -17,10 +17,10 @@ class IvtBalUnit extends BaseModel
     protected $fillable = [
         'ivt_id',
         'matl_id',
-        'matl_uom_id',
-        'uom',
+        'matl_uom',
         'wh_id',
         'batch_code',
+        'unit_code',
         'qty_oh',
         'status_code',
     ];

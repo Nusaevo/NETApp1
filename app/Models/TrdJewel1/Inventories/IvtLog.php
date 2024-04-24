@@ -2,10 +2,10 @@
 
 namespace App\Models\TrdJewel1\Inventories;
 
-use App\Models\Base\BaseModel;
+use Illuminate\Database\Eloquent\Model;
 use App\Models\TrdJewel1\Master\Material;
 
-class IvtLog extends BaseModel
+class IvtLog extends Model
 {
     protected static function boot()
     {

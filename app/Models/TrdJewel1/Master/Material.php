@@ -80,10 +80,10 @@ class Material extends BaseModel
     {
         if (array_key_exists($attribute, $this->attributes)) {
             if ($attribute == "jwl_selling_price") {
-                return int_qty($this->attributes[$attribute]);
+                return currencyToNumeric($this->attributes[$attribute]);
             }
             if ($attribute == "jwl_buying_price") {
-                return int_qty($this->attributes[$attribute]);
+                return currencyToNumeric($this->attributes[$attribute]);
             }
             return $this->attributes[$attribute];
         }
