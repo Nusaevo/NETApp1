@@ -115,21 +115,21 @@
     //         scrollToBottom();
     //     });
     // });
-    document.addEventListener('DOMContentLoaded', function() {
-        Webcam.set({
-            width: 320
-            , height: 240
-            , dest_width: 640
-            , dest_height: 480
-            , image_format: 'jpeg'
-            , jpeg_quality: 90
-        , });
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     Webcam.set({
+    //         width: 320
+    //         , height: 240
+    //         , dest_width: 640
+    //         , dest_height: 480
+    //         , image_format: 'jpeg'
+    //         , jpeg_quality: 90
+    //     , });
 
-        Webcam.attach('#cameraStream');
-        document.getElementById('cameraButton').addEventListener('click', function() {
-            captureImageAndEmit();
-        });
-    });
+    //     Webcam.attach('#cameraStream');
+    //     document.getElementById('cameraButton').addEventListener('click', function() {
+    //         captureImageAndEmit();
+    //     });
+    // });
 
     function captureImageAndEmit() {
         var cameraStream = document.getElementById('cameraStream');
@@ -167,9 +167,9 @@
     }
 
 
-    // document.getElementById('cameraButton').addEventListener('click', function() {
-    //     captureImageAndEmit();
-    // });
+    document.getElementById('cameraButton').addEventListener('click', function() {
+        captureImageAndEmit();
+    });
 
 </script>
 
