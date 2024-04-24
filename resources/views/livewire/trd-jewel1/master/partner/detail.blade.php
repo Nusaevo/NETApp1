@@ -1,21 +1,28 @@
+@php
+    use App\Models\TrdJewel1\Master\Partner;
+@endphp
 <div>
     <div>
         <x-ui-button click-event="" type="Back" button-name="Back" />
     </div>
 
-    <x-ui-page-card title="{{ $actionValue }} Partner" status="{{ $status }}">
+    <x-ui-page-card title="{{ $this->trans('partner') }}" status="{{ $this->trans($status) }}">
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
-                        <x-ui-text-field label="Partner Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" />
-                        <x-ui-dropdown-select label="Partner Type" click-event="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" />
-                        <x-ui-text-field label="Nama" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
-                        <x-ui-text-field label="Address" model="inputs.address" type="textarea" :action="$actionValue" placeHolder="" />
-                        <x-ui-text-field label="City" model="inputs.city" type="text" :action="$actionValue" placeHolder="" />
-                        <x-ui-text-field label="Country" model="inputs.country" type="text" :action="$actionValue" placeHolder="" />
-                        <x-ui-text-field label="Postal Code" model="inputs.postal_code" type="text" :action="$actionValue" placeHolder="" />
-                        <x-ui-text-field label="Contact Person" model="inputs.contact_person" type="text" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" />
+                        <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" click-event="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" />
+                        <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
+                        <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="{{ $this->trans('city') }}" model="inputs.city" type="text" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country" type="text" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="{{ $this->trans('postal_code') }}" model="inputs.postal_code" type="text" :action="$actionValue" placeHolder="" />
+                        <x-ui-text-field label="{{ $this->trans('contact_person') }}" model="inputs.contact_person" type="text" :action="$actionValue" placeHolder="" />
+                        @if(in_array($inputs['grp'], [Partner::CUSTOMER]))
+                            <x-ui-text-field label="{{ $this->trans('ring_size') }}" model="inputs.ring_size" type="text" :action="$actionValue" placeHolder="" />
+                            <x-ui-text-field label="{{ $this->trans('partner_ring_size') }}" model="inputs.partner_ring_size" type="text" :action="$actionValue" placeHolder="" />
+                        @endif
                     </x-ui-card>
                 </div>
             </x-ui-tab-view-content>

@@ -22,46 +22,44 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Code", "code")
+            Column::make($this->trans('code'), "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Group", "grp")
-                ->searchable()
-                ->sortable(),
-            Column::make("Group", "grp")
+            Column::make($this->trans('group'), "grp")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return getConstValueByStr1('PARTNERS_TYPE', $value);
                 }),
-            Column::make("Name", "name")
+            Column::make($this->trans('name'), "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Address", "address")
+            Column::make($this->trans('address'), "address")
                 ->searchable()
                 ->sortable(),
-            Column::make("Status", "status_code")
+            Column::make($this->trans('status'), "status_code")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
-            Column::make('Created Date', 'created_at')
-                    ->sortable(),
-                    Column::make('Actions', 'id')
-                    ->format(function ($value, $row, Column $column) {
-                        return view('layout.customs.data-table-action', [
-                            'row' => $row,
-                            'enable_this_row' => true,
-                            'allow_details' => false,
-                            'allow_edit' => true,
-                            'allow_disable' => false,
-                            'allow_delete' => false,
-                            'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
-                        ]);
-                    }),
+            Column::make($this->trans('created_date'), 'created_at')
+                ->sortable(),
+            Column::make($this->trans('actions'), 'id')
+                ->format(function ($value, $row, Column $column) {
+                    return view('layout.customs.data-table-action', [
+                        'row' => $row,
+                        'enable_this_row' => true,
+                        'allow_details' => false,
+                        'allow_edit' => true,
+                        'allow_disable' => false,
+                        'allow_delete' => false,
+                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                    ]);
+                }),
         ];
     }
+
 
     public function filters(): array
     {

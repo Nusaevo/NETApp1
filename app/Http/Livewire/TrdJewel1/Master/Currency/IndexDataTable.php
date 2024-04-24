@@ -25,7 +25,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("date"), "log_date")
                 ->searchable()
                 ->sortable(),
-                Column::make($this->trans("currency_rate"), "curr_rate")
+          Column::make($this->trans("currency_rate"), "curr_rate")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {

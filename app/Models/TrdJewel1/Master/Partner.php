@@ -49,6 +49,7 @@ class Partner extends BaseModel
         'info',
         'amt_limit',
         'amt_bal',
+        'partner_chars',
         'status_code'
     ];
 

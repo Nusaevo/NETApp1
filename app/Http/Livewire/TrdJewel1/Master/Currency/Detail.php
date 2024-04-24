@@ -7,6 +7,7 @@ use App\Models\TrdJewel1\Master\GoldPriceLog;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Validation\Rule;
 use DB;
+use Exception;
 
 class Detail extends BaseComponent
 {
@@ -88,7 +89,7 @@ class Detail extends BaseComponent
                                         ->exists();
             if ($existingLog) {
                 $this->addError('inputs.log_date', $this->trans('message.log_date_already_exists'));
-                return;
+                throw new Exception($this->trans('message.log_date_already_exists'));
             }
         }
 
