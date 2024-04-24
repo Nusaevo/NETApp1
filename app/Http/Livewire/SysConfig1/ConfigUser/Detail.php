@@ -99,7 +99,7 @@ class Detail extends BaseComponent
 
         $this->validatePassword();
 
-        $this->object->fill($this->inputs);
+        $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }
 

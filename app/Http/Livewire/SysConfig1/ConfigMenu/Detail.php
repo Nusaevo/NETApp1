@@ -91,7 +91,7 @@ class Detail extends BaseComponent
     {
         $application = ConfigAppl::find($this->inputs['app_id']);
         $this->inputs['app_code'] = $application->code;
-        $this->object->fill($this->inputs);
+        $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }
 

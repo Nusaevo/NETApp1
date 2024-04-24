@@ -162,7 +162,7 @@ class Detail extends BaseComponent
         $partner = Partner::find($this->inputs['partner_id']);
         $this->inputs['partner_code'] = $partner->code;
         $this->inputs['status_code'] = STATUS::OPEN;
-        $this->object->fill($this->inputs);
+        $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
 
         foreach ($this->input_details as $index => $inputDetail) {
@@ -174,7 +174,7 @@ class Detail extends BaseComponent
                 // $inputDetail['ivt_id'] = $item_warehouse->id;
                 $inputDetail['trhdr_id'] =  $this->object->id;
                 $inputDetail['qty_reff'] = $inputDetail['qty'];
-                $this->object_detail[$index]->fill($inputDetail);
+                $this->object_detail[$index]->fillAndSanitize($inputDetail);
                 $this->object_detail[$index]->save();
             }
         }

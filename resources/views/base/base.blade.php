@@ -46,7 +46,7 @@
     <script>
         function updateInputMask() {
             // console.log('Input mask updated');
-            myJQuery('.inputnumbers').each(function() {
+            myJQuery('.inputNumbers').each(function() {
                 var value = parseFloat(myJQuery(this).val().replace(/,/g, ''));
                 if (!isNaN(value)) {
                     var formattedValue = value.toLocaleString('en-US');
@@ -54,7 +54,7 @@
                 }
             });
 
-            myJQuery('.inputnumbers').mask("#,##0", {
+            myJQuery('.inputNumbers').mask("#,##0", {
                 reverse: true
             });
         }

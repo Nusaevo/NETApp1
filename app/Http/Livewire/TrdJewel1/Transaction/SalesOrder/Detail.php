@@ -163,10 +163,10 @@ class Detail extends BaseComponent
         $application = Partner::find($this->inputs['partner_id']);
         $this->inputs['partner_code'] = $application->code;
         $this->inputs['status_code'] = STATUS::OPEN;
-        $this->object->fill($this->inputs);
+        $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
         $delivHdr = DelivHdr::firstOrNew(['tr_id' => $this->object->tr_id,'tr_type' => $this->delivTrType]);
-        $delivHdr->fill([
+        $delivHdr->fillAndSanitize([
             'tr_id' => $this->object->tr_id,
             'tr_type' =>  $this->delivTrType,
             'tr_date' => $this->object->tr_date,
@@ -179,7 +179,7 @@ class Detail extends BaseComponent
         $delivHdr->save();
 
         $billingHdr = BillingHdr::firstOrNew(['tr_id' => $this->object->tr_id,'tr_type' =>  $this->billingTrType]);
-        $billingHdr->fill([
+        $billingHdr->fillAndSanitize([
             'tr_id' => $this->object->tr_id,
             'tr_type' => $this->billingTrType,
             'tr_date' => $this->object->tr_date,
@@ -201,7 +201,7 @@ class Detail extends BaseComponent
             $inputDetail['tr_seq'] = $index + 1;
             $inputDetail['trhdr_id'] = $this->object->id;
             $inputDetail['qty_reff'] = $inputDetail['qty'];
-            $this->object_detail[$index]->fill($inputDetail);
+            $this->object_detail[$index]->fillAndSanitize($inputDetail);
             $this->object_detail[$index]->save();
 
             $delivDtl = DelivDtl::firstOrNew([
@@ -209,7 +209,7 @@ class Detail extends BaseComponent
                 'tr_seq' =>  $this->object_detail[$index]->tr_seq,
                 'tr_type' => $this->delivTrType,
             ]);
-            $delivDtl->fill([
+            $delivDtl->fillAndSanitize([
                 'trhdr_id' =>  $this->object_detail[$index]->trhdr_id,
                 'tr_type' =>  $this->delivTrType,
                 'tr_id' =>  $this->object->tr_id,
@@ -232,7 +232,7 @@ class Detail extends BaseComponent
                 'tr_seq' => $delivDtl->tr_seq,
                 'tr_type' => $this->billingTrType,
             ]);
-            $billingDtl->fill([
+            $billingDtl->fillAndSanitize([
                 'trhdr_id' => $delivDtl->trhdr_id,
                 'tr_type' => $this->billingTrType,
                 'tr_id' => $delivDtl->tr_id,

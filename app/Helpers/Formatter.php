@@ -43,6 +43,14 @@ if (!function_exists('currencyToNumeric')) {
     }
 }
 
+if (!function_exists('dateFormat')) {
+    function dateFormat($date, $format = 'd-m-Y')
+    {
+        $dateTime = new DateTime($date);
+        return $dateTime->format($format);
+    }
+}
+
 
 if (!function_exists('int_qty')) {
     function int_qty($qty = 0)

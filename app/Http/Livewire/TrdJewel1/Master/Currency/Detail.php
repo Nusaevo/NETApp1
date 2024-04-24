@@ -48,7 +48,7 @@ class Detail extends BaseComponent
     public function onReset()
     {
         $this->reset('inputs');
-        $this->inputs['log_date']  = date('Y-m-d');
+        $this->inputs['log_date']  = date('d-m-Y');
         $this->object = new GoldPriceLog();
     }
 
@@ -84,7 +84,7 @@ class Detail extends BaseComponent
     public function onValidateAndSave()
     {
         if (isset($this->inputs['log_date'])) {
-            $existingLog = GoldPriceLog::whereDate('log_date', $this->inputs['log_date'])
+            $existingLog = GoldPriceLog::whereDate('log_date', dateFormat($this->inputs['log_date'],'Y-m-d'))
                                         ->where('id', '!=', $this->object->id ?? null)
                                         ->exists();
             if ($existingLog) {

@@ -48,7 +48,7 @@
     "autoload": {
         "files": [
             "app/helpers.php",
-            "app/Helpers/number.php",
+            "app/Helpers/Formatter.php",
             "app/Helpers/menu.php",
             "app/Helpers/global.php",
             "app/Helpers/SequenceUtility.php",

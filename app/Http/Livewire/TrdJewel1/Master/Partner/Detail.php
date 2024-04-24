@@ -116,7 +116,7 @@ class Detail extends BaseComponent
             $dataToSave['partner_ring_size'] = $this->inputs['partner_ring_size'] ?? null;
         }
         $this->inputs['partner_chars']= json_encode($dataToSave);
-        $this->object->fill($this->inputs);
+        $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }
 

@@ -85,11 +85,6 @@ class DelivDtl extends BaseModel
         'status_code'
     ];
 
-    public function getAllColumns()
-    {
-        return $this->fillable;
-    }
-
     public function getAllColumnValues($attribute)
     {
         if (array_key_exists($attribute, $this->attributes)) {

@@ -83,12 +83,31 @@ class BaseModel extends Model
         $sanitizedAttributes = [];
 
         foreach ($attributes as $key => $value) {
-            if (is_numeric($value) && strpos($value, ',') !== false) {
+            if ($this->isDateAttribute($value)) {
+                $sanitizedAttributes[$key] = $this->sanitizeDate($value);
+            } elseif (is_numeric($value) && strpos($value, ',') !== false) {
                 $sanitizedAttributes[$key] = str_replace(',', '', $value);
             } else {
                 $sanitizedAttributes[$key] = $value;
             }
         }
+
         $this->fill($sanitizedAttributes);
     }
+
+    protected function isDateAttribute($attribute)
+    {
+        $dateRegex = '/\d{2}-\d{2}-\d{4}/';
+        return preg_match($dateRegex, $attribute);
+    }
+
+    protected function sanitizeDate($date)
+    {
+        $parts = explode('-', $date);
+        if (count($parts) === 3) {
+            return $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+        }
+        return $date;
+    }
+
 }

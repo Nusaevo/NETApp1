@@ -41,23 +41,25 @@
         </script>
 
         @elseif(isset($type) && $type === 'date')
-        <input wire:model.defer="{{ $model }}" id="{{ $model }}" type="text" class="responsive-input form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif accept=".pdf, .doc, .docx" wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />
+        <input wire:model.defer="{{ $model }}" id="{{ $model }}" type="text" class="inputDates responsive-input form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required
+        @endif wire:change="{{ isset($onChanged) ? $onChanged : '' }}" readonly="readonly" />
+
         <script>
             myJQuery(document).ready(function() {
-                myJQuery("#{{ $model }}").datepicker({
-                    dateFormat: 'yyyy-mm-dd'
-                    , changeMonth: true
-                    , changeYear: true
-                    , showButtonPanel: true
+                myJQuery("[id='{{ $model }}']").datepicker({
+                    dateFormat: 'dd-mm-yy', // Set the date format to 'dd mm yy'
+                    changeMonth: true,
+                    changeYear: true,
+                    showButtonPanel: true
                 }).on("change", function() {
-                    this.dispatchEvent(new Event('input')); // Ensures Livewire recognizes change
+                    @this.set('{{ $model }}', myJQuery(this).val());
                 });
             });
-
         </script>
 
+
         @elseif(isset($type) && $type === 'number')
-        <input wire:model.defer="{{ $model }}" id="{{ $model }}" type="text" class="inputnumbers responsive-input form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif wire:change="{{ isset($onChanged) ? $onChanged : '' }}">
+        <input wire:model.defer="{{ $model }}" id="{{ $model }}" type="text" class="inputNumbers responsive-input form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif wire:change="{{ isset($onChanged) ? $onChanged : '' }}">
 
         @else
         <input wire:model.defer="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="responsive-input form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="{{ isset($type) && $type === 'password' ? 'new-password' : 'off' }}" wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />

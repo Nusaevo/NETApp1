@@ -74,6 +74,17 @@ class OrderHdr extends BaseModel
         return true;
     }
 
+    public function getAllColumnValues($attribute)
+    {
+        if (array_key_exists($attribute, $this->attributes)) {
+            if ($attribute == "tr_date") {
+                return dateFormat($this->attributes[$attribute], 'd-m-Y');
+            }
+            return $this->attributes[$attribute];
+        }
+        return null;
+    }
+
     /**
      * Saves all details related to the purchase order, including delivery and billing information.
      *
@@ -114,12 +125,12 @@ class OrderHdr extends BaseModel
                  $configSnum->save();
              }
          }
-         $this->fill($inputs);
+         $this->fillAndSanitize($inputs);
          $this->save();
          if($createBillingDelivery == true)
          {
              $delivHdr = DelivHdr::firstOrNew(['tr_id' => $this->tr_id,'tr_type' => $delivTrType]);
-             $delivHdr->fill([
+             $delivHdr->fillAndSanitize([
                  'tr_id' => $this->tr_id,
                  'tr_type' =>  $delivTrType,
                  'tr_date' => $this->tr_date,
@@ -130,7 +141,7 @@ class OrderHdr extends BaseModel
              ]);
              $delivHdr->save();
              $billingHdr = BillingHdr::firstOrNew(['tr_id' => $this->tr_id,'tr_type' =>  $billingTrType]);
-             $billingHdr->fill([
+             $billingHdr->fillAndSanitize([
                  'tr_id' => $this->tr_id,
                  'tr_type' => $billingTrType,
                  'tr_date' => $this->tr_date,
@@ -151,7 +162,7 @@ class OrderHdr extends BaseModel
              $inputDetail['tr_seq'] = $index + 1;
              $inputDetail['trhdr_id'] = $this->id;
              $inputDetail['qty_reff'] = $inputDetail['qty'];
-             $object_detail[$index]->fill($inputDetail);
+             $object_detail[$index]->fillAndSanitize($inputDetail);
              $object_detail[$index]->save();
              if($createBillingDelivery == true)
              {
@@ -161,7 +172,7 @@ class OrderHdr extends BaseModel
                      'tr_seq' =>  $object_detail[$index]->tr_seq,
                      'tr_type' => $delivTrType,
                  ]);
-                 $delivDtl->fill([
+                 $delivDtl->fillAndSanitize([
                      'trhdr_id' =>  $object_detail[$index]->trhdr_id,
                      'tr_type' =>  $delivTrType,
                      'tr_id' =>  $this->tr_id,
@@ -185,7 +196,7 @@ class OrderHdr extends BaseModel
                      'tr_seq' => $delivDtl->tr_seq,
                      'tr_type' => $billingTrType,
                  ]);
-                 $billingDtl->fill([
+                 $billingDtl->fillAndSanitize([
                      'trhdr_id' => $delivDtl->trhdr_id,
                      'tr_type' => $billingTrType,
                      'tr_id' => $delivDtl->tr_id,
