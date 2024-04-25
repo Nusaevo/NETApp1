@@ -37,9 +37,15 @@ if (!function_exists('toNumberFormatter')) {
 if (!function_exists('numberFormat')) {
     function numberFormat($number, $decimals = 0, $decPoint = ',', $thousandsSep = '.')
     {
-        return number_format($number, $decimals, $decPoint, $thousandsSep);
+        $formattedNumber = number_format($number, $decimals, $decPoint, $thousandsSep);
+        // Remove trailing zeros after the decimal point
+        $formattedNumber = rtrim($formattedNumber, '0');
+        // If the number ends with the decimal point, remove it as well
+        $formattedNumber = rtrim($formattedNumber, $decPoint);
+        return $formattedNumber;
     }
 }
+
 
 if (!function_exists('currencyToNumeric')) {
     function currencyToNumeric($formattedCurrency)
