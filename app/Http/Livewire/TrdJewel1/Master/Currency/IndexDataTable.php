@@ -25,7 +25,14 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("date"), "log_date")
                 ->searchable()
                 ->sortable(),
-          Column::make($this->trans("currency_rate"), "curr_rate")
+            Column::make($this->trans("currency_rate"), "curr_rate")
+                ->searchable()
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return rupiah(currencyToNumeric($value));
+                }),
+
+            Column::make($this->trans("gold_price_base"), "goldprice_basecurr")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
@@ -37,26 +44,20 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return dollar(currencyToNumeric($value));
                 }),
-           Column::make($this->trans("gold_price_base"), "goldprice_basecurr")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return rupiah(currencyToNumeric($value));
-                }),
             Column::make($this->trans('created_date'), 'created_at')
-                    ->sortable(),
+                ->sortable(),
             Column::make($this->trans('action'), 'id')
-                    ->format(function ($value, $row, Column $column) {
-                        return view('layout.customs.data-table-action', [
-                            'row' => $row,
-                            'enable_this_row' => true,
-                            'allow_details' => false,
-                            'allow_edit' => true,
-                            'allow_disable' => false,
-                            'allow_delete' => false,
-                            'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
-                        ]);
-                    }),
+                ->format(function ($value, $row, Column $column) {
+                    return view('layout.customs.data-table-action', [
+                        'row' => $row,
+                        'enable_this_row' => true,
+                        'allow_details' => false,
+                        'allow_edit' => true,
+                        'allow_disable' => false,
+                        'allow_delete' => false,
+                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                    ]);
+                }),
         ];
     }
 

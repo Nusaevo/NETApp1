@@ -554,34 +554,42 @@ class MaterialComponent extends BaseComponent
 
     public function markupPriceChanged()
     {
-        if (!isset($this->materials['jwl_buying_price']) || !isset($this->materials['markup'])) {
+        // Check if 'jwl_buying_price' and 'markup' are set and not empty
+        if (empty($this->materials['jwl_buying_price']) || empty($this->materials['markup'])) {
             return null;
         }
 
+        // Formatting the buying price and calculating the markup amount
         $buyingPrice = toNumberFormatter($this->materials['jwl_buying_price']);
-
         $markupAmount = $buyingPrice * (toNumberFormatter($this->materials['markup']) / 100);
+
+        // Setting the new selling price
         $this->materials['jwl_selling_price'] = number_format($buyingPrice + $markupAmount);
     }
 
-
     public function sellingPriceChanged()
     {
-        if (!isset($this->materials['jwl_buying_price'])) {
+        // Check if 'jwl_buying_price' is set and not empty
+        if (empty($this->materials['jwl_buying_price'])) {
             return;
         }
 
         $buyingPrice = toNumberFormatter($this->materials['jwl_buying_price']);
 
+        // Check if buying price is positive
         if ($buyingPrice <= 0) {
             return;
         }
 
+        // Check if 'jwl_selling_price' is set and not empty before calculating new markup
+        if (empty($this->materials['jwl_selling_price'])) {
+            return;
+        }
+
+        // Calculating new markup percentage
         $newMarkupPercentage = ((toNumberFormatter($this->materials['jwl_selling_price']) - $buyingPrice) / $buyingPrice) * 100;
         $this->materials['markup'] = number_format($newMarkupPercentage);
     }
-
-
 
     public function runExe()
     {

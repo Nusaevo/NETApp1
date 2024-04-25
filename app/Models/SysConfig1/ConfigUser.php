@@ -2,7 +2,7 @@
 
 namespace App\Models\SysConfig1;
 
-use App\Core\Traits\SpatieLogsActivity;
+// use App\Core\Traits\SpatieLogsActivity;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
 class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
-    use SpatieLogsActivity;
+    // use SpatieLogsActivity;
     // use HasRoles;
     use BaseTrait;
     use SoftDeletes;
@@ -62,6 +62,38 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
             return $this->attributes[$attribute];
         }
         return null;
+    }
+
+    public function fillAndSanitize(array $attributes)
+    {
+        $sanitizedAttributes = [];
+
+        foreach ($attributes as $key => $value) {
+            if ($this->isDateAttribute($value)) {
+                $sanitizedAttributes[$key] = $this->sanitizeDate($value);
+            } elseif (is_numeric($value) && strpos($value, ',') !== false) {
+                $sanitizedAttributes[$key] = str_replace(',', '', $value);
+            } else {
+                $sanitizedAttributes[$key] = $value;
+            }
+        }
+
+        $this->fill($sanitizedAttributes);
+    }
+
+    protected function isDateAttribute($attribute)
+    {
+        $dateRegex = '/\d{2}-\d{2}-\d{4}/';
+        return preg_match($dateRegex, $attribute);
+    }
+
+    protected function sanitizeDate($date)
+    {
+        $parts = explode('-', $date);
+        if (count($parts) === 3) {
+            return $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+        }
+        return $date;
     }
 
     /**

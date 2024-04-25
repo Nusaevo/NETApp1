@@ -97,6 +97,36 @@ class Detail extends BaseComponent
         $this->object->save();
     }
 
+
+    public function currencyChanged()
+    {
+        if (empty($this->inputs['curr_rate']) || empty($this->inputs['goldprice_basecurr'])) {
+            return null;
+        }
+
+        $baseCurrency = toNumberFormatter($this->inputs['goldprice_basecurr']);
+        $currentRate = toNumberFormatter($this->inputs['curr_rate']);
+
+        $this->inputs['goldprice_curr'] = number_format($baseCurrency / $currentRate);
+    }
+
+
+    public function sellingPriceChanged()
+    {
+        if (!isset($this->inputs['jwl_buying_price'])) {
+            return;
+        }
+
+        $buyingPrice = toNumberFormatter($this->inputs['jwl_buying_price']);
+
+        if ($buyingPrice <= 0) {
+            return;
+        }
+
+        $newMarkupPercentage = ((toNumberFormatter($this->inputs['jwl_selling_price']) - $buyingPrice) / $buyingPrice) * 100;
+        $this->inputs['markup'] = number_format($newMarkupPercentage);
+    }
+
     public function changeStatus()
     {
         $this->change();

@@ -38,41 +38,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.13.4/jquery.mask.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/inputmask.min.js"></script>
     <script>
         var myJQuery = jQuery;
 
     </script>
     <script>
-        function updateInputMask() {
-            // console.log('Input mask updated');
-            myJQuery('.inputNumbers').each(function() {
-                var value = parseFloat(myJQuery(this).val().replace(/,/g, ''));
-                if (!isNaN(value)) {
-                    var formattedValue = value.toLocaleString('en-US');
-                    myJQuery(this).val(formattedValue);
-                }
-            });
-
-            myJQuery('.inputNumbers').mask("#,##0", {
-                reverse: true
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // console.log('DOMContentLoaded event fired');
-            updateInputMask();
-        });
-
         $(document).ready(function() {
-            // console.log('jQuery ready event fired');
-            window.addEventListener('reApplyInputMask', function(event) {
-                console.log('Reapplying Input Mask');
-                updateInputMask();
-            });
+            Inputmask({
+                alias: "numeric"
+                , groupSeparator: ","
+                , autoGroup: true
+                , digitsOptional: true
+                , placeholder: '0'
+                , rightAlign: false, // Aligns text to the left
+                clearIncomplete: true // Clears the input if not complete on blur
+            }).mask('.inputNumbers');
         });
 
     </script>
+
 
 
     {{-- begin::Fonts --}}
