@@ -10,7 +10,7 @@
             @isset($options)
                 @foreach ($options as $key => $optionLabel)
                 <div class="form-option" style="display: flex; align-items: center; margin-left: 10px;">
-                    <input id="{{ $id }}" type="checkbox" wire:model="{{ isset($name) ? $name.'.' : '' }}{{ $key }}"
+                    <input id="{{ $id }}" type="checkbox" wire:model="{{ isset($model) ? $model.'.' : '' }}{{ $key }}"
                            id="option{{ $key }}"
                            style="width: 20px; height: 20px; margin-right: 5px;"
                            @if (isset($enabled) && !$enabled) disabled @endif />
