@@ -53,7 +53,8 @@
                 digitsOptional: true,
                 placeholder: '0',
                 rightAlign: false,
-                clearIncomplete: true
+                clearIncomplete: true,
+                allowMinus: false
             }).mask('.inputNumbers');
         });
     </script>
