@@ -7,4 +7,5 @@ return [
     'created_date' => 'Created Date',
     'status' => 'Status',
     'action' => 'Actions',
+    'selling_price' => 'Harga Jual',
 ];

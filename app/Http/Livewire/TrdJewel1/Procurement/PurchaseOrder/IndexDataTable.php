@@ -26,30 +26,39 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::query()
-            ->where('tr_type', 'PO');
+        return OrderHdr::with('OrderDtl')->where('tr_type', 'PO');
     }
     public function columns(): array
     {
         return [
-            Column::make($this->trans("tr_id"), "tr_id")
-                ->sortable()
-                ->searchable(),
             Column::make($this->trans("date"), "tr_date")
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("tr_id"), "tr_id")
+                ->sortable()
+                ->searchable(),
             Column::make($this->trans("supplier"), "Partner.name")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans('status'), "status_code")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
-                }),
-            Column::make($this->trans("created_date"), "created_at")
-                ->searchable()
+                Column::make("Total Quantity", "total_qty")
+                ->label(function($row) {
+                    return $row->total_qty;
+                })
                 ->sortable(),
+            Column::make("Total Amount", "total_amt")
+                ->label(function($row) {
+                    return $row->total_amt;
+                })
+                ->sortable(),
+            // Column::make($this->trans('status'), "status_code")
+            //     ->searchable()
+            //     ->sortable()
+            //     ->format(function ($value, $row, Column $column) {
+            //         return Status::getStatusString($value);
+            //     }),
+            // Column::make($this->trans("created_date"), "created_at")
+            //     ->searchable()
+            //     ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

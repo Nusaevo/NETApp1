@@ -40,6 +40,16 @@ class OrderHdr extends BaseModel
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 
+    public function getTotalQtyAttribute()
+    {
+        return $this->OrderDtl()->sum('qty');
+    }
+
+    public function getTotalAmtAttribute()
+    {
+        return $this->OrderDtl()->sum('amt');
+    }
+
     public function OrderDtl()
     {
         return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id');

@@ -25,6 +25,12 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("description"), "descr")
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("selling_price"), "jwl_selling_price")
+                ->searchable()
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return rupiah(currencyToNumeric($value));
+                }),
             Column::make($this->trans("status"), "status_code")
                 ->searchable()
                 ->sortable()

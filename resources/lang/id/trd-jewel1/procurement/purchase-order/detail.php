@@ -7,7 +7,7 @@ return [
     'warehouse' => 'Gudang',
     'product' => 'Produk',
     'qty' => 'Kuantitas',
-    'price' => 'Harga',
+    'price' => 'Harga Beli',
     'code' => 'Kode Produk',
     'barcode' => 'Kode Batang',
     'description' => 'Deskripsi',

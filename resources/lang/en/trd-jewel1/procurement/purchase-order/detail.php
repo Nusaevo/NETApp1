@@ -7,7 +7,7 @@ return [
     'warehouse' => 'Warehouse',
     'product' => 'Product',
     'qty' => 'Quantity',
-    'price' => 'Price',
+    'price' => 'Buying Price',
     'code' => 'Product Code',
     'barcode' => 'Barcode',
     'description' => 'Description',

@@ -32,10 +32,10 @@
 
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+                            {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
                                     {{ $this->trans('btnAdd') }}
-                            </button>
-                            {{-- <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" /> --}}
+                            </button> --}}
+                            <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
@@ -51,11 +51,11 @@
                                     <x-slot name="rows">
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
                                         <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" placeHolder="{{ $this->trans("placeHolder_description") }}" enabled="false" span="Full" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' type="text" :action="$actionValue" placeHolder="{{ $this->trans("selling_price") }}" enabled="false" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Full" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' type="number" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
                                         <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price") }}' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
                                         <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true" placeHolder="" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="text" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
                                     </x-slot>
                                     <x-slot name="button">
                                         <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
