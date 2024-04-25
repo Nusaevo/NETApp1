@@ -85,7 +85,7 @@ class BaseModel extends Model
         foreach ($attributes as $key => $value) {
             if (isDateAttribute($value)) {
                 $sanitizedAttributes[$key] = sanitizeDate($value);
-            } elseif ((isFormattedNumeric($value) !== false) & ($key == 'goldprice_basecurr')){
+            } elseif ((isFormattedNumeric($value) !== false) ){
                 $sanitizedAttributes[$key] = str_replace('.', '', $value);
                 $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
             } else {

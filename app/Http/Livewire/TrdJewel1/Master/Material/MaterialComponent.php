@@ -423,7 +423,7 @@ class MaterialComponent extends BaseComponent
     public function onValidateAndSave()
     {
         $this->generateMaterialDescriptionsFromBOMs();
-        // $this->object->fillAndSanitize($this->materials);
+        $this->object->fillAndSanitize($this->materials);
         if($this->object->code == null)
         {
             $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
@@ -447,7 +447,7 @@ class MaterialComponent extends BaseComponent
         $this->saveAttachment();
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
-        // $this->object_uoms->fillAndSanitize($this->matl_uoms);
+        $this->object_uoms->fillAndSanitize($this->matl_uoms);
 
         $this->object_uoms->save();
 
