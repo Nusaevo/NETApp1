@@ -38,10 +38,19 @@ if (!function_exists('numberFormat')) {
     function numberFormat($number, $decimals = 0, $decPoint = ',', $thousandsSep = '.')
     {
         $formattedNumber = number_format($number, $decimals, $decPoint, $thousandsSep);
-        // Remove trailing zeros after the decimal point
-        $formattedNumber = rtrim($formattedNumber, '0');
-        // If the number ends with the decimal point, remove it as well
-        $formattedNumber = rtrim($formattedNumber, $decPoint);
+
+        // Find the position of the decimal point
+        $decimalPosition = strpos($formattedNumber, $decPoint);
+
+        if ($decimalPosition !== false) {
+            // Trim trailing zeros after the decimal point
+            $formattedNumber = rtrim($formattedNumber, '0');
+            // If the number ends with the decimal point, remove it as well
+            if (substr($formattedNumber, -1) === $decPoint) {
+                $formattedNumber = substr($formattedNumber, 0, -1);
+            }
+        }
+
         return $formattedNumber;
     }
 }
