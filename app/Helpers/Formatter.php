@@ -3,8 +3,8 @@
 if (!function_exists('rupiah')) {
     function rupiah($price = 0, $use_name = true)
     {
-        $price = number_format($price, 0, ',', '.');
-        if ($use_name)  return 'Rp ' . $price . ',-';
+        $price = numberFormat($price, 0, ',', '.');
+        if ($use_name)  return 'IDR ' . $price;
         else return $price;
     }
 }
@@ -12,8 +12,8 @@ if (!function_exists('rupiah')) {
 if (!function_exists('dollar')) {
     function dollar($price = 0, $use_name = true)
     {
-        $price = number_format($price, 2, ',', '.');
-        if ($use_name)  return 'USD ' . $price . ',-';
+        $price = numberFormat($price, 2, ',', '.');
+        if ($use_name)  return 'USD ' . $price;
         else return $price;
     }
 }
@@ -28,8 +28,16 @@ if (!function_exists('qty')) {
 if (!function_exists('toNumberFormatter')) {
     function toNumberFormatter($formattedNumber)
     {
-        $numericValue = str_replace(',', '', $formattedNumber);
+        $numericValue = str_replace('.', '', $formattedNumber);
+        $numericValue = str_replace(',', '.', $numericValue);
         return $numericValue;
+    }
+}
+
+if (!function_exists('numberFormat')) {
+    function numberFormat($number, $decimals = 0, $decPoint = ',', $thousandsSep = '.')
+    {
+        return number_format($number, $decimals, $decPoint, $thousandsSep);
     }
 }
 
@@ -58,6 +66,34 @@ if (!function_exists('int_qty')) {
         return intval($qty);
     }
 }
+
+if (!function_exists('isFormattedNumeric')) {
+    function isFormattedNumeric($value) {
+        // Strip out commas and dots which could be used as thousand separators
+        $testValue = str_replace([',', '.'], '', $value);
+        // Check if the remaining string is numeric
+        return is_numeric($testValue);
+    }
+}
+
+if (!function_exists('isDateAttribute')) {
+    function isDateAttribute($attribute) {
+        $dateRegex = '/\d{2}-\d{2}-\d{4}/'; // Checks for date format dd-mm-yyyy
+        return preg_match($dateRegex, $attribute);
+    }
+}
+
+if (!function_exists('sanitizeDate')) {
+    function sanitizeDate($date) {
+        $parts = explode('-', $date);
+        if (count($parts) === 3) {
+            // Reformat from dd-mm-yyyy to yyyy-mm-dd
+            return $parts[2] . '-' . $parts[1] . '-' . $parts[0];
+        }
+        return $date;  // Return the original if format does not match
+    }
+}
+
 
 
 // FUNGSI TERBILANG OLEH : MALASNGODING.COM

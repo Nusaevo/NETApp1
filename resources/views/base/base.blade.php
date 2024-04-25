@@ -46,16 +46,18 @@
     <script>
         $(document).ready(function() {
             Inputmask({
-                alias: "numeric"
-                , groupSeparator: ","
-                , autoGroup: true
-                , digitsOptional: true
-                , placeholder: '0'
-                , rightAlign: false,
+                alias: "numeric",
+                groupSeparator: ".", // Sets . as the thousands separator
+                radixPoint: ",", // Sets , as the decimal point
+                autoGroup: true,
+                digitsOptional: true,
+                placeholder: '0',
+                rightAlign: false,
                 clearIncomplete: true
             }).mask('.inputNumbers');
         });
     </script>
+
 
 
 

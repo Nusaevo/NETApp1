@@ -32,7 +32,7 @@ class GoldPriceLog extends BaseModel
             }
             if ($attribute == "goldprice_curr") {
                 $numericValue = currencyToNumeric($this->attributes[$attribute]);
-                return number_format($numericValue, 2, '.', ',');
+                return numberFormat($numericValue, 2);
             }
 
             if ($attribute == "goldprice_basecurr") {

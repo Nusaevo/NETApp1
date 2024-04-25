@@ -107,7 +107,7 @@ class Detail extends BaseComponent
         $baseCurrency = toNumberFormatter($this->inputs['goldprice_basecurr']);
         $currentRate = toNumberFormatter($this->inputs['curr_rate']);
 
-        $this->inputs['goldprice_curr'] = number_format($baseCurrency / $currentRate, 2, '.', ',');
+        $this->inputs['goldprice_curr'] = numberFormat($baseCurrency / $currentRate, 2);
     }
 
     public function changeStatus()

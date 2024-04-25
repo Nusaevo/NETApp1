@@ -32,7 +32,7 @@ class MatlBom extends BaseModel
     {
         if (array_key_exists($attribute, $this->attributes)) {
             if ($attribute == "jwl_sides_carat") {
-                return number_format($this->attributes[$attribute], 3, '.', '');
+                return numberFormat($this->attributes[$attribute], 3);
             }
             if ($attribute == "jwl_sides_cnt") {
                 return $this->attributes[$attribute];
