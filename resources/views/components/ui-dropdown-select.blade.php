@@ -10,7 +10,7 @@
 
     <div class="text-field-container">
         <div class="responsive-input-container">
-            <select name="{{ isset($model) ? $model : '' }}" @if(isset($modelType) && $modelType==='lazy' ) wire:model.lazy="{{ isset($model) ? $model : '' }}" @else wire:model="{{ isset($model) ? $model : '' }}" @endif @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif class="form-control @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif" @if (isset($action) && $action==='View' || (isset($enabled) && $enabled==='false' )) disabled @endif @if (isset($required) && $required==='true' ) required @endif>
+            <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}" @if(isset($modelType) && $modelType==='lazy' ) wire:model.lazy="{{ isset($model) ? $model : '' }}" @else wire:model="{{ isset($model) ? $model : '' }}" @endif @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif class="form-control @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif" @if (isset($action) && $action==='View' || (isset($enabled) && $enabled==='false' )) disabled @endif @if (isset($required) && $required==='true' ) required @endif>
                 <option value=""></option>
                 @if (!is_null($options))
                     @forelse ($options as $option)

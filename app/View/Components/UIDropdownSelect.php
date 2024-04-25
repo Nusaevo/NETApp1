@@ -18,6 +18,7 @@ class UiDropdownSelect extends Component
     public $span;
     public $modelType;
     public $clickEvent;
+    public $id;
 
     public function __construct($label = '', $model = '', $options, $selectedValue = null, $required = 'false',
     $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '', $clickEvent = null)
@@ -34,6 +35,7 @@ class UiDropdownSelect extends Component
         $this->span = $span;
         $this->modelType = $modelType;
         $this->clickEvent = $clickEvent;
+        $this->id = str_replace(['.', '[', ']'], '_', $model);
     }
 
     public function render()

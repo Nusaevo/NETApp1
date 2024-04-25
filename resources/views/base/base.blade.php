@@ -43,24 +43,6 @@
         var myJQuery = jQuery;
 
     </script>
-    <script>
-        $(document).ready(function() {
-            Inputmask({
-                alias: "numeric",
-                groupSeparator: ".", // Sets . as the thousands separator
-                radixPoint: ",", // Sets , as the decimal point
-                autoGroup: true,
-                digitsOptional: true,
-                placeholder: '0',
-                rightAlign: false,
-                clearIncomplete: true,
-                allowMinus: false
-            }).mask('.inputNumbers');
-        });
-    </script>
-
-
-
 
     {{-- begin::Fonts --}}
     {{ theme()->includeFonts() }}

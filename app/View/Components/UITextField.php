@@ -1,4 +1,5 @@
 <?php
+
 namespace App\View\Components;
 
 use Illuminate\View\Component;
@@ -15,7 +16,8 @@ class UiTextField extends Component
     public $span;
     public $onChanged;
     public $action;
-    public $rows; // New parameter for rows
+    public $rows;
+    public $id;
 
     public function __construct(
         $label = '',
@@ -42,6 +44,7 @@ class UiTextField extends Component
         $this->span = $span;
         $this->onChanged = $onChanged;
         $this->rows = $rows;
+        $this->id = str_replace(['.', '[', ']'], '_', $model);
     }
 
     public function render()

@@ -18,6 +18,7 @@ class UiChecklist extends Component
     public $span;
     public $modelType;
     public $clickEvent;
+    public $id;
 
     public function __construct($label = '', $model = '', $options, $selectedValue = null, $required = 'false',
     $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '')
@@ -33,6 +34,7 @@ class UiChecklist extends Component
         $this->onChanged = $onChanged;
         $this->span = $span;
         $this->modelType = $modelType;
+        $this->id = str_replace(['.', '[', ']'], '_', $model);
     }
 
     public function render()
