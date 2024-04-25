@@ -51,11 +51,10 @@
                 , autoGroup: true
                 , digitsOptional: true
                 , placeholder: '0'
-                , rightAlign: false, // Aligns text to the left
-                clearIncomplete: true // Clears the input if not complete on blur
+                , rightAlign: false,
+                clearIncomplete: true
             }).mask('.inputNumbers');
         });
-
     </script>
 
 

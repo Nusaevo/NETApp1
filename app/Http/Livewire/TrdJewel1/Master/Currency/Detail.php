@@ -107,24 +107,7 @@ class Detail extends BaseComponent
         $baseCurrency = toNumberFormatter($this->inputs['goldprice_basecurr']);
         $currentRate = toNumberFormatter($this->inputs['curr_rate']);
 
-        $this->inputs['goldprice_curr'] = number_format($baseCurrency / $currentRate);
-    }
-
-
-    public function sellingPriceChanged()
-    {
-        if (!isset($this->inputs['jwl_buying_price'])) {
-            return;
-        }
-
-        $buyingPrice = toNumberFormatter($this->inputs['jwl_buying_price']);
-
-        if ($buyingPrice <= 0) {
-            return;
-        }
-
-        $newMarkupPercentage = ((toNumberFormatter($this->inputs['jwl_selling_price']) - $buyingPrice) / $buyingPrice) * 100;
-        $this->inputs['markup'] = number_format($newMarkupPercentage);
+        $this->inputs['goldprice_curr'] = number_format($baseCurrency / $currentRate, 2, '.', ',');
     }
 
     public function changeStatus()

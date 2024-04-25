@@ -473,7 +473,7 @@ class MaterialComponent extends BaseComponent
                     'clarity' => $bomData['clarity'] ?? null,
                     'color' => $bomData['color'] ?? null,
                     'cut' => $bomData['cut'] ?? null,
-                    'gia_number' => $bomData['gia_number'] ?? null,
+                    'gia_number' => $bomData['gia_number'] ?? 0,
                 ];
             } elseif (in_array($baseMaterialId, [Material::STONE])) {
                 $dataToSave = [
@@ -482,7 +482,7 @@ class MaterialComponent extends BaseComponent
                 ];
             } elseif (in_array($baseMaterialId, [Material::ANTAM])) {
                 $dataToSave = [
-                    'production_year' => $bomData['production_year'] ?? null,
+                    'production_year' => $bomData['production_year'] ?? 0,
                     'ref_mark' => $bomData['ref_mark'] ?? null,
                 ];
             }
