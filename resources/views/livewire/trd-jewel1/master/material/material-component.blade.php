@@ -32,12 +32,15 @@
             </div>
         </x-ui-padding>
         <x-ui-padding>
-            <x-ui-dropdown-select label="{{ $this->trans('category') }}" click-event="" model="materials.jwl_category" :options="$materialCategories" required="true" :action="$actionValue" span="Half" />
+            <x-ui-dropdown-select label="{{ $this->trans('category1') }}" click-event="" model="materials.jwl_category1" :options="$materialCategories1" required="true" :action="$actionValue" span="Half" onChanged="generateMaterialDescriptions"/>
+            <x-ui-dropdown-select label="{{ $this->trans('category2') }}" click-event="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$actionValue" span="Half" onChanged="generateMaterialDescriptions"/>
             <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" enabled="false" />
             <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="markupPriceChanged" />
-            <x-ui-text-field label="{{ $this->trans('description') }}" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="{{ $this->trans('placeHolder_description') }}" span="Half" />
             <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="markupPriceChanged" />
             <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="sellingPriceChanged" />
+            <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" onChanged="generateMaterialDescriptions"/>
+            <x-ui-text-field label="{{ $this->trans('description') }}" model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="{{ $this->trans('placeHolder_description') }}" span="Half" />
+            <x-ui-text-field label="{{ $this->trans('bom_description') }}" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="{{ $this->trans('placeHolder_bom_description') }}" span="Full" />
 
             {{-- <x-ui-dropdown-select label="UOM" click-event="" model="matl_uoms.name" :options="$materialUOMs" required="true" :action="$actionValue" span="Half" /> --}}
         </x-ui-padding>
@@ -51,16 +54,16 @@
                     <tr wire:key="list{{ $key }}">
                         <x-ui-list-body>
                             <x-slot name="rows">
-                                <x-ui-dropdown-select label="{{ $this->trans('material') }}" click-event="" model="matl_boms.{{ $key }}.base_matl_id" :options="$baseMaterials" required="true" :action="$actionValue" span="Half" onChanged="generateMaterialDescriptionsFromBOMs" />
+                                <x-ui-dropdown-select label="{{ $this->trans('material') }}" click-event="" model="matl_boms.{{ $key }}.base_matl_id" :options="$baseMaterials" required="true" :action="$actionValue" span="Half" :onChanged="'baseMaterialChange('. $key .', $event.target.value)'" />
                                 <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="generateMaterialDescriptionsFromBOMs" />
                                 <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="generateMaterialDescriptionsFromBOMs" />
                                 <x-ui-text-field label="{{ $this->trans('price') }}" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
 
-                                @if(in_array($matl_boms[$key]['base_matl_id'], [Material::GOLD, Material::ROSE_GOLD, Material::WHITE_GOLD]))
+                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::JEWELRY]))
                                         <x-ui-dropdown-select label="{{ $this->trans('purity') }}" click-event="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue" span="Full" />
                                 @endif
 
-                                @if(in_array($matl_boms[$key]['base_matl_id'], [Material::DIAMOND]))
+                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::DIAMOND]))
                                     <x-ui-dropdown-select label="{{ $this->trans('shapes') }}" click-event="" model="matl_boms.{{ $key }}.shapes" :options="$sideMaterialShapes" required="false" :action="$actionValue" span="Half" />
                                     <x-ui-dropdown-select label="{{ $this->trans('clarity') }}" click-event="" model="matl_boms.{{ $key }}.clarity" :options="$sideMaterialClarity" required="false" :action="$actionValue" span="Half" />
                                     <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGiaColors" required="false" :action="$actionValue" span="Half" />
@@ -68,12 +71,12 @@
                                     <x-ui-text-field label="{{ $this->trans('gia_number') }}" model="matl_boms.{{ $key }}.gia_number" type="number" :action="$actionValue" required="false" placeHolder="" span="Full" />
                                 @endif
 
-                                @if(in_array($matl_boms[$key]['base_matl_id'], [Material::STONE]))
+                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::GEMSTONE]))
                                     <x-ui-dropdown-select label="{{ $this->trans('gemstone') }}" click-event="" model="matl_boms.{{ $key }}.gemstone" :options="$sideMaterialGemStone" required="false" :action="$actionValue" span="Half" />
                                     <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGemColors" required="false" :action="$actionValue" span="Half" />
                                 @endif
 
-                                @if(in_array($matl_boms[$key]['base_matl_id'], [Material::ANTAM]))
+                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::GOLD]))
                                     <x-ui-text-field label="{{ $this->trans('production_year') }}" model="matl_boms.{{ $key }}.production_year" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
                                     <x-ui-text-field label="{{ $this->trans('ref_mark') }}" model="matl_boms.{{ $key }}.ref_mark" type="text" :action="$actionValue" required="false" placeHolder="" span="Half" />
                                 @endif

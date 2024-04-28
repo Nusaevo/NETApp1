@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('class_code', 5)->default('');
             $table->string('jwl_carat', 20)->default('');
             $table->string('jwl_base_matl', 20)->default('');
-            $table->string('jwl_category', 20)->default('');
+            $table->string('jwl_category1', 20)->default('');
             $table->decimal('jwl_wgt_gold', 15, 5)->default(0);
             // $table->integer('jwl_supplier_id')->default(0);
             // $table->string('jwl_supplier_code', 20)->default('');

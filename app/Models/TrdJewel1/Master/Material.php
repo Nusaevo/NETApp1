@@ -8,12 +8,10 @@ use DB;
 class Material extends BaseModel
 {
     protected $table = 'materials';
-    const GOLD = '23';
-    const ROSE_GOLD = '24';
-    const WHITE_GOLD = '25';
-    const ANTAM = '37';
-    const STONE = '38';
-    const DIAMOND = '39';
+    const JEWELRY = 'JEWELRY';
+    const GOLD = 'GOLD';
+    const GEMSTONE = 'GEMSTONE';
+    const DIAMOND = 'DIAMOND';
 
     protected static function boot()
     {
@@ -40,7 +38,11 @@ class Material extends BaseModel
         'class_code',
         'jwl_carat',
         'jwl_base_matl',
-        'jwl_category',
+        'jwl_category1',
+        'jwl_category2',
+        'jwl_category3',
+        'jwl_category4',
+        'jwl_category5',
         'jwl_wgt_gold',
         'jwl_supplier_id',
         'jwl_supplier_code',
@@ -84,6 +86,9 @@ class Material extends BaseModel
             }
             if ($attribute == "jwl_buying_price") {
                 return currencyToNumeric($this->attributes[$attribute]);
+            }
+            if ($attribute == "jwl_wgt_gold") {
+                return numberFormat($this->attributes[$attribute]);
             }
             return $this->attributes[$attribute];
         }
