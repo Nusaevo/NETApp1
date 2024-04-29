@@ -59,27 +59,28 @@
                                 <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="generateMaterialDescriptionsFromBOMs" />
                                 <x-ui-text-field label="{{ $this->trans('price') }}" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
 
-                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::JEWELRY]))
-                                        <x-ui-dropdown-select label="{{ $this->trans('purity') }}" click-event="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue" span="Full" />
-                                @endif
-
-                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::DIAMOND]))
-                                    <x-ui-dropdown-select label="{{ $this->trans('shapes') }}" click-event="" model="matl_boms.{{ $key }}.shapes" :options="$sideMaterialShapes" required="false" :action="$actionValue" span="Half" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('clarity') }}" click-event="" model="matl_boms.{{ $key }}.clarity" :options="$sideMaterialClarity" required="false" :action="$actionValue" span="Half" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGiaColors" required="false" :action="$actionValue" span="Half" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('cut') }}" click-event="" model="matl_boms.{{ $key }}.cut" :options="$sideMaterialCut" required="false" :action="$actionValue" span="Half" />
-                                    <x-ui-text-field label="{{ $this->trans('gia_number') }}" model="matl_boms.{{ $key }}.gia_number" type="number" :action="$actionValue" required="false" placeHolder="" span="Full" />
-                                @endif
-
-                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::GEMSTONE]))
-                                    <x-ui-dropdown-select label="{{ $this->trans('gemstone') }}" click-event="" model="matl_boms.{{ $key }}.gemstone" :options="$sideMaterialGemStone" required="false" :action="$actionValue" span="Half" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGemColors" required="false" :action="$actionValue" span="Half" />
-                                @endif
-
-                                @if(in_array($matl_boms[$key]['base_matl_id_note'], [Material::GOLD]))
-                                    <x-ui-text-field label="{{ $this->trans('production_year') }}" model="matl_boms.{{ $key }}.production_year" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
-                                    <x-ui-text-field label="{{ $this->trans('ref_mark') }}" model="matl_boms.{{ $key }}.ref_mark" type="text" :action="$actionValue" required="false" placeHolder="" span="Half" />
-                                @endif
+                                    @isset($matl_bom['base_matl_id_note'])
+                                    @switch($matl_bom['base_matl_id_note'])
+                                        @case(Material::JEWELRY)
+                                            <x-ui-dropdown-select label="{{ $this->trans('purity') }}" click-event="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue" span="Full" />
+                                            @break
+                                        @case(Material::DIAMOND)
+                                            <x-ui-dropdown-select label="{{ $this->trans('shapes') }}" click-event="" model="matl_boms.{{ $key }}.shapes" :options="$sideMaterialShapes" required="false" :action="$actionValue" span="Half" />
+                                            <x-ui-dropdown-select label="{{ $this->trans('clarity') }}" click-event="" model="matl_boms.{{ $key }}.clarity" :options="$sideMaterialClarity" required="false" :action="$actionValue" span="Half" />
+                                            <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGiaColors" required="false" :action="$actionValue" span="Half" />
+                                            <x-ui-dropdown-select label="{{ $this->trans('cut') }}" click-event="" model="matl_boms.{{ $key }}.cut" :options="$sideMaterialCut" required="false" :action="$actionValue" span="Half" />
+                                            <x-ui-text-field label="{{ $this->trans('gia_number') }}" model="matl_boms.{{ $key }}.gia_number" type="number" :action="$actionValue" required="false" placeHolder="" span="Full" />
+                                            @break
+                                        @case(Material::GEMSTONE)
+                                            <x-ui-dropdown-select label="{{ $this->trans('gemstone') }}" click-event="" model="matl_boms.{{ $key }}.gemstone" :options="$sideMaterialGemStone" required="false" :action="$actionValue" span="Half" />
+                                            <x-ui-dropdown-select label="{{ $this->trans('color') }}" click-event="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGemColors" required="false" :action="$actionValue" span="Half" />
+                                            @break
+                                        @case(Material::GOLD)
+                                            <x-ui-text-field label="{{ $this->trans('production_year') }}" model="matl_boms.{{ $key }}.production_year" type="number" :action="$actionValue" required="false" placeHolder="" span="Half" />
+                                            <x-ui-text-field label="{{ $this->trans('ref_mark') }}" model="matl_boms.{{ $key }}.ref_mark" type="text" :action="$actionValue" required="false" placeHolder="" span="Half" />
+                                            @break
+                                    @endswitch
+                                @endisset
 
                             </x-slot>
                             <x-slot name="button">

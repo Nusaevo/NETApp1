@@ -484,44 +484,45 @@ class MaterialComponent extends BaseComponent
         $this->object_uoms->save();
 
         // Handle BOMs
-        // foreach ($this->matl_boms as $index => $bomData) {
-        //     if (!isset($this->object_boms[$index])) {
-        //         $this->object_boms[$index] = new MatlBom();
-        //     }
-        //     $bomData['matl_id'] = $this->object->id;
-        //     $bomData['matl_code'] = $this->object->id;
+        foreach ($this->matl_boms as $index => $bomData) {
+            if (!isset($this->object_boms[$index])) {
+                $this->object_boms[$index] = new MatlBom();
+            }
+            $bomData['matl_id'] = $this->object->id;
+            $bomData['matl_code'] = $this->object->id;
 
-        //     if ($bomData['jwl_sides_price'] === null || $bomData['jwl_sides_price'] === "") {
-        //         $bomData['jwl_sides_price'] = 0;
-        //     }
-        //     $bomData['seq'] = $index + 1;
-        //     $baseMaterialId = $bomData['base_matl_id_value'];
-        //     $dataToSave = [];
-        //     if (in_array($baseMaterialId, [Material::GOLD, Material::ROSE_GOLD, Material::WHITE_GOLD])) {
-        //         $dataToSave['purity'] = $bomData['purity'] ?? null;
-        //     } elseif (in_array($baseMaterialId, [Material::DIAMOND])) {
-        //         $dataToSave = [
-        //             'shapes' => $bomData['shapes'] ?? null,
-        //             'clarity' => $bomData['clarity'] ?? null,
-        //             'color' => $bomData['color'] ?? null,
-        //             'cut' => $bomData['cut'] ?? null,
-        //             'gia_number' => $bomData['gia_number'] ?? 0,
-        //         ];
-        //     } elseif (in_array($baseMaterialId, [Material::STONE])) {
-        //         $dataToSave = [
-        //             'gemstone' => $bomData['gemstone'] ?? null,
-        //             'color' => $bomData['color'] ?? null,
-        //         ];
-        //     } elseif (in_array($baseMaterialId, [Material::ANTAM])) {
-        //         $dataToSave = [
-        //             'production_year' => $bomData['production_year'] ?? 0,
-        //             'ref_mark' => $bomData['ref_mark'] ?? null,
-        //         ];
-        //     }
-        //     $bomData['jwl_sides_spec']= json_encode($dataToSave);
-        //     $this->object_boms[$index]->fillAndSanitize($bomData);
-        //     $this->object_boms[$index]->save();
-        // }
+            if ($bomData['jwl_sides_price'] === null || $bomData['jwl_sides_price'] === "") {
+                $bomData['jwl_sides_price'] = 0;
+            }
+            $bomData['seq'] = $index + 1;
+            $bomData['base_matl_id'] = $bomData['base_matl_id_value'];
+            $baseMaterialId = $bomData['base_matl_id_note'];
+            $dataToSave = [];
+            if (in_array($baseMaterialId, [Material::JEWELRY])) {
+                $dataToSave['purity'] = $bomData['purity'] ?? null;
+            } elseif (in_array($baseMaterialId, [Material::DIAMOND])) {
+                $dataToSave = [
+                    'shapes' => $bomData['shapes'] ?? null,
+                    'clarity' => $bomData['clarity'] ?? null,
+                    'color' => $bomData['color'] ?? null,
+                    'cut' => $bomData['cut'] ?? null,
+                    'gia_number' => $bomData['gia_number'] ?? 0,
+                ];
+            } elseif (in_array($baseMaterialId, [Material::GEMSTONE])) {
+                $dataToSave = [
+                    'gemstone' => $bomData['gemstone'] ?? null,
+                    'color' => $bomData['color'] ?? null,
+                ];
+            } elseif (in_array($baseMaterialId, [Material::GOLD])) {
+                $dataToSave = [
+                    'production_year' => $bomData['production_year'] ?? 0,
+                    'ref_mark' => $bomData['ref_mark'] ?? null,
+                ];
+            }
+            $bomData['jwl_sides_spec']= json_encode($dataToSave);
+            $this->object_boms[$index]->fillAndSanitize($bomData);
+            $this->object_boms[$index]->save();
+        }
 
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
