@@ -121,8 +121,7 @@ class MaterialComponent extends BaseComponent
                 $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
 
                 $decodedData = json_decode($detail->jwl_sides_spec, true);
-
-                switch ($detail->base_matl_id_note) {
+                switch ( $this->matl_boms[$key]['base_matl_id_note']) {
                     case Material::JEWELRY:
                         $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
                         break;
