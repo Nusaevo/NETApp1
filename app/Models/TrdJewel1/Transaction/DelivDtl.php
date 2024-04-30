@@ -14,15 +14,26 @@ class DelivDtl extends BaseModel
         parent::boot();
 
         // Handle when creating a new delivery detail
+        // Handle when creating a new delivery detail
         static::creating(function ($delivDtl) {
             $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                                 ->where('wh_id', $delivDtl->wh_code)
-                                 ->first();
+                ->where('wh_id', $delivDtl->wh_code)
+                ->first();
             if ($existingBal) {
-                $existingBal->increment('qty_oh', $delivDtl->qty);
-                IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                          ->where('wh_id', $delivDtl->wh_code)
-                          ->increment('qty_oh', $delivDtl->qty);
+                $existingBalQty = currencyToNumeric($existingBal->qty_oh);
+                $newQty = $existingBalQty + (float)$delivDtl->qty;
+                $existingBal->qty_oh = $newQty;
+                $existingBal->save();
+
+                // Update corresponding record in IvtBalUnit
+                $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                ->where('wh_id', $delivDtl->wh_code)
+                ->first();
+                if ($existingBalUnit) {
+                $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+                $existingBalUnit->qty_oh = $existingBalUnitQty + (float)$delivDtl->qty;
+                $existingBalUnit->save();
+                }
             } else {
                 $inventoryBalData = [
                     'matl_id' => $delivDtl->matl_id,
@@ -48,18 +59,22 @@ class DelivDtl extends BaseModel
 
         static::deleting(function ($delivDtl) {
             $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                                 ->where('wh_id', $delivDtl->wh_code)
-                                 ->first();
+                ->where('wh_id', $delivDtl->wh_code)
+                ->first();
             if ($existingBal) {
-                $existingBal->decrement('qty_oh', $delivDtl->qty);
-                if ($existingBal->qty_oh <= 0) {
-                    IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                              ->where('wh_id', $delivDtl->wh_code)
-                              ->delete();
-                } else {
-                    IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                              ->where('wh_id', $delivDtl->wh_code)
-                              ->decrement('qty_oh', $delivDtl->qty);
+                $existingBalQty = currencyToNumeric($existingBal->qty_oh);
+                $newQty = $existingBalQty - (float)$delivDtl->qty;
+                $existingBal->qty_oh = $newQty;
+                $existingBal->save();
+
+                // Update corresponding record in IvtBalUnit
+                $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                ->where('wh_id', $delivDtl->wh_code)
+                ->first();
+                if ($existingBalUnit) {
+                $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+                $existingBalUnit->qty_oh = $existingBalUnitQty - (float)$delivDtl->qty;
+                $existingBalUnit->save();
                 }
             }
         });

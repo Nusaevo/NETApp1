@@ -574,12 +574,14 @@ class MaterialComponent extends BaseComponent
             $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
 
             foreach ($this->matl_boms as $bom) {
-                $baseMaterial = $bomData[$bom['base_matl_id_value']] ?? null;
+                if (isset($bom['base_matl_id_value'])) {
+                    $baseMaterial = $bomData[$bom['base_matl_id_value']] ?? null;
 
-                if ($baseMaterial) {
-                    $jwlSidesCnt = $bom['jwl_sides_cnt'] ?? 0;
-                    $jwlSidesCarat = $bom['jwl_sides_carat'] ?? 0;
-                    $materialDescriptions .= "$jwlSidesCnt $baseMaterial->str1:$jwlSidesCarat ";
+                    if ($baseMaterial) {
+                        $jwlSidesCnt = $bom['jwl_sides_cnt'] ?? 0;
+                        $jwlSidesCarat = $bom['jwl_sides_carat'] ?? 0;
+                        $materialDescriptions .= "$jwlSidesCnt $baseMaterial->str1:$jwlSidesCarat ";
+                    }
                 }
             }
         }
