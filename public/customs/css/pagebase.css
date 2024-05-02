@@ -199,12 +199,14 @@ div[wire\:loading].loading-overlay {
     }
     .responsive-label {
         display: flex;
-        align-items: center; /* Vertically centers the text within the label */
-        justify-content: flex-end; /* Aligns the label text to the right side of its flex container */
-        flex: 0 0 auto; /* Adjusts the basis to content width, but won't grow or shrink */
-        margin-left: auto; /* Pushes the label to the far right */
-        padding-right: 10px; /* Pushes the label to the far right */
+        align-items: center;
+        justify-content: flex-end;
+        flex: 0 0 auto;
+        margin-left: auto;
+        padding-right: 10px;
+        width: 150px; /* Adjust the width as needed */
     }
+
 
     .responsive-input-container {
         flex: 1; /* Takes up the remaining space */
