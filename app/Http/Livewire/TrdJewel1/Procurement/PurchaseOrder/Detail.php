@@ -159,7 +159,10 @@ class Detail extends BaseComponent
 
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
-                $this->object_detail::find($deletedItemId)->delete();
+                $orderDtl = OrderDtl::find($deletedItemId);
+                if ($orderDtl) {
+                    $orderDtl->delete();
+                }
             }
         }
     }
@@ -200,28 +203,33 @@ class Detail extends BaseComponent
         $this->countTotalAmount();
     }
 
-    public function test()
-    {
-        $this->SaveWithoutNotification();
-    }
-
     public function Add()
     {
-        $this->emit('materialSaved', 2);
-        $this->emit('materialSaved', 3);
-        $this->emit('materialSaved', 4);
+        // $this->emit('materialSaved', 2);
+        // $this->emit('materialSaved', 3);
+        // $this->emit('materialSaved', 4);
     }
 
     public function materialSaved($material_id)
     {
         try {
+            if (isset($this->input_details)) {
+                $matl_ids = array_column($this->input_details, 'matl_id');
+                if (in_array($material_id, $matl_ids)) {
+                    $this->notify('error',Lang::get($this->langBasePath.'.message.product_duplicated'));
+                    return;
+                }
+            }
             $this->addDetails($material_id);
             $this->emit('closeMaterialDialog');
             $this->SaveWithoutNotification();
+            $this->notify('success', Lang::get($this->langBasePath.'.message.product_added'));
+
         } catch (Exception $e) {
             $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
+
 
     public function deleteDetails($index)
     {
@@ -231,6 +239,7 @@ class Detail extends BaseComponent
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
+        $this->SaveWithoutNotification();
     }
 
 

@@ -15,4 +15,8 @@ return [
     'amount' => 'Amount',
     'btnAdd' => 'Add',
     'totalPrice' => 'Total Price',
+    'message' => [
+        'product_added' => 'Product successfully added',
+        'product_duplicated' => 'Product has been added previously to this invoice. Please select a different product.',
+    ],
 ];

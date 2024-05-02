@@ -1,6 +1,6 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back"/>
+        <x-ui-button clickEvent="" type="Back" button-name="Back"/>
     </div>
     <x-ui-page-card title="{{ $this->trans($actionValue) . ' ' . $this->trans('purchase_order') }}{{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
 
@@ -14,8 +14,8 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-text-field-search label="{{ $this->trans('partner') }}" click-event="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
-                        {{-- <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" click-event="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field-search label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
+                        {{-- <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" clickEvent="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder=""/> --}}
                         {{-- @if ($actionValue === 'Create')
                             <x-ui-checklist label="Buat Nota Terima Supplier otomatis" model="inputs.app_id" :options="['1' => 'Ya']" :action="$actionValue" span="Full" />
@@ -26,17 +26,21 @@
                         <x-slot name="title">
                         </x-slot>
                         <x-slot name="body">
-                            @livewire('trd-jewel1.master.material.material-component', ['actionValue' => $matl_action, 'objectIdValue' => $matl_objectId])
+                            @livewire('trd-jewel1.master.material.material-component', [
+                                'actionValue' => $matl_action,
+                                'objectIdValue' => $matl_objectId,
+                                'searchMode' => true
+                            ])
                         </x-slot>
                     </x-ui-dialog-box>
 
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
 
-                            <button type="button"  wire:click="test" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+                            <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
                                     {{ $this->trans('btnAdd') }}
                             </button>
-                            {{-- <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" /> --}}
+                            {{-- <x-ui-button clickEvent="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" /> --}}
                         </x-slot>
                         <x-slot name="body">
                             @foreach($input_details as $key => $detail)
@@ -76,7 +80,7 @@
         </x-ui-tab-view-content>
         <x-ui-footer>
             {{-- @if ($actionValue === 'Edit')
-            <x-ui-button :action="$actionValue" click-event="createReturn"
+            <x-ui-button :action="$actionValue" clickEvent="createReturn"
                 cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
             @endif --}}
             @include('layout.customs.transaction-form-footer')

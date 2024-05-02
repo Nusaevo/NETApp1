@@ -3,16 +3,16 @@
     @if(isset($permissions['delete']) && $permissions['delete'])
     <div style="padding-right: 10px;">
         @if ($status === 'ACTIVE' || !$object->deleted_at)
-        <x-ui-button button-name="Disable" click-event="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />
+        <x-ui-button button-name="Disable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />
         @else
-        <x-ui-button button-name="Enable" click-event="" loading="true" :action="$actionValue" cssClass="btn-primary btn-dialog-box" iconPath="enable.svg" />
+        <x-ui-button button-name="Enable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-primary btn-dialog-box" iconPath="enable.svg" />
         @endif
     </div>
     @endif
 
     @endif
     <div>
-        <x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
     </div>
 </x-ui-footer>
 

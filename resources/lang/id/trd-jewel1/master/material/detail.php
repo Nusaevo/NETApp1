@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'search_product' => 'Cari Produk',
     'product' => 'Produk',
     'category1' => 'Kategori 1',
     'category2' => 'Kategori 2',
@@ -33,6 +34,7 @@ return [
     'production_year' => 'Tahun Produksi',
     'ref_mark' => 'Nomor Seri',
     'message' => [
+        'product_notfound' => 'Produk tidak ditemukan',
         'attachment_failed' => 'Gagal menyimpan file :filename',
         'barcode_validation' => 'Gagal cetak label, tolong scan label terlebih dahulu.',
         'side_material_input' => 'Masukkan setidaknya satu side material.'

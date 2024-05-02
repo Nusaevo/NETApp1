@@ -1,6 +1,6 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Sales Order" status="{{ $status }}">
@@ -14,8 +14,8 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-text-field-search label="Customer" click-event="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="Half" />
-                        <x-ui-dropdown-select label="Gudang" click-event="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field-search label="Customer" clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-dropdown-select label="Gudang" clickEvent="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder=""/>
                         {{-- @if ($actionValue === 'Create')
                             <x-ui-checklist label="Buat Nota Terima Supplier otomatis" model="inputs.app_id" :options="['1' => 'Ya']" :action="$actionValue" span="Full" />
@@ -34,7 +34,7 @@
                         <x-slot name="button">
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
                                 <x-ui-text-field label="" model="barcode" type="barcode" required="false" placeHolder="Input Kode Manual" span="Half" style="flex-grow: 1;" onChanged="scanManual" />
-                                <x-ui-button click-event="Add" button-name="Scan RFID" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
+                                <x-ui-button clickEvent="Add" button-name="Scan RFID" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
                             </div>
                         </x-slot>
                         <x-slot name="body">
@@ -84,7 +84,7 @@
         </x-ui-tab-view-content>
         <x-ui-footer>
             @if ($actionValue === 'Edit')
-            <x-ui-button :action="$actionValue" click-event="createReturn"
+            <x-ui-button :action="$actionValue" clickEvent="createReturn"
                 cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
             @endif
             @include('layout.customs.transaction-form-footer')

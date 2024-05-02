@@ -22,7 +22,7 @@ class BaseComponent extends Component
     public $actionValue = 'Create';
     public $inputs = [];
     public $status = '';
-    public $VersioNumber;
+    public $VersionNumber;
     public $permissions;
     public $appCode;
     public $action;
@@ -37,6 +37,7 @@ class BaseComponent extends Component
     public $additionalParam;
     public $customValidationAttributes;
     public $customRules;
+
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         $this->additionalParam = $additionalParam;
@@ -107,6 +108,7 @@ class BaseComponent extends Component
 
         $fullPath = implode('/', $segments);
         $this->permissions = ConfigRight::getPermissionsByMenu($fullPath);
+
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');
         }
@@ -117,7 +119,7 @@ class BaseComponent extends Component
             if($this->object)
             {
                 $this->status = Status::getStatusString($this->object->status_code);
-                $this->VersioNumber = $this->object->version_number;
+                $this->VersionNumber = $this->object->version_number;
             }
         } elseif ($this->actionValue === 'Create') {
             $this->resetForm();
@@ -128,7 +130,7 @@ class BaseComponent extends Component
                 if($this->object)
                 {
                     $this->status = Status::getStatusString($this->object->status_code);
-                    $this->VersioNumber = $this->object->version_number;
+                    $this->VersionNumber = $this->object->version_number;
                 }
             }
         }else{
@@ -159,7 +161,6 @@ class BaseComponent extends Component
         if ($this->actionValue === 'View' && !$this->permissions['read']) {
             return false;
         }
-
         if ($this->actionValue === 'Create' && !$this->permissions['create']) {
             return false;
         }
@@ -167,7 +168,6 @@ class BaseComponent extends Component
         if (is_null($this->actionValue) && !$this->permissions['read']) {
             return false;
         }
-
         return true;
     }
 
@@ -195,7 +195,7 @@ class BaseComponent extends Component
             $this->onReset();
             $this->onPopulateDropdowns();
         }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number ?? null;
+            $this->VersionNumber = $this->object->version_number ?? null;
         }
     }
 
@@ -261,11 +261,11 @@ class BaseComponent extends Component
     protected function updateVersionNumber()
     {
         if ($this->actionValue == 'Edit' && isset($this->object->id)) {
-            if ($this->object->version_number != $this->VersioNumber) {
+            if ($this->object->version_number != $this->VersionNumber) {
                 throw new \Exception("This object has already been updated by another user. Please refresh the page and try again.");
             }
             if ($this->object->isDirty()) {
-                $this->VersioNumber ++;
+                $this->VersionNumber ++;
             }
         }
     }

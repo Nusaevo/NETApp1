@@ -2,7 +2,7 @@
     <x-ui-button
         visible="true"
         enabled="true"
-        :click-event="route($route, ['action' => encryptWithSessionKey('Create'), 'objectId' => encryptWithSessionKey($objectId)])"
+        :clickEvent="route($route, ['action' => encryptWithSessionKey('Create'), 'objectId' => encryptWithSessionKey($objectId)])"
         cssClass="btn btn-primary mb-5"
         type="Route"
         loading="true"
@@ -12,7 +12,7 @@
     <x-ui-button
         visible="true"
         enabled="true"
-        :click-event="route($route, ['action' => encryptWithSessionKey('Create')])"
+        :clickEvent="route($route, ['action' => encryptWithSessionKey('Create')])"
         cssClass="btn btn-primary mb-5"
         type="Route"
         loading="false"

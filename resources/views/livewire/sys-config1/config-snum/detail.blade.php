@@ -1,6 +1,6 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Config Snum" status="{{ $status }}">
@@ -10,7 +10,7 @@
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
                         <x-ui-text-field label="Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" visible="true" span="Full" />
-                        <x-ui-dropdown-select label="Application" click-event="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue" />
+                        <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue" />
                         <x-ui-text-field label="Last Count" model="inputs.last_cnt" type="number" :action="$actionValue" placeHolder="" visible="true" span="Full" />
                         <x-ui-text-field label="Wrap Low" model="inputs.wrap_low" type="number" :action="$actionValue" placeHolder="" visible="true" span="Full" />
                         <x-ui-text-field label="Wrap High" model="inputs.wrap_high" type="number" :action="$actionValue" placeHolder="" visible="true" span="Full" />

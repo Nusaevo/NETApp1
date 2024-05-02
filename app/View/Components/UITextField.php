@@ -18,6 +18,7 @@ class UiTextField extends Component
     public $action;
     public $rows;
     public $id;
+    public $clickEvent;
 
     public function __construct(
         $label = '',
@@ -31,7 +32,8 @@ class UiTextField extends Component
         $placeHolder = 'true',
         $span = 'Full',
         $onChanged = '',
-        $rows = 5
+        $rows = 5,
+        $clickEvent = ''
     ) {
         $this->label = $label;
         $this->model = $model;
@@ -45,6 +47,7 @@ class UiTextField extends Component
         $this->onChanged = $onChanged;
         $this->rows = $rows;
         $this->id = str_replace(['.', '[', ']'], '_', $model);
+        $this->clickEvent = $clickEvent;
     }
 
     public function render()

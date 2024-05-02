@@ -230,6 +230,10 @@ div[wire\:loading].loading-overlay {
         margin-left: 5px;
     }
 
+    .responsive-field[span="HalfWidth"] {
+        width: 50%;
+    }
+
     .responsive-field[span="Half"] {
         width: calc(50%);
         float: left;

@@ -19,7 +19,7 @@ class Detail extends Component
 {
     public $object;
     public $object_detail;
-    public $VersioNumber;
+    public $VersionNumber;
     public $actionValue = 'Create';
     public $objectIdValue;
     public $inputs = [];
@@ -47,7 +47,7 @@ class Detail extends Component
                                 ->first();
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->get();
             $this->status = Status::getStatusString( $this->object->status_code);
-            $this->VersioNumber = $this->object->version_number;
+            $this->VersionNumber = $this->object->version_number;
             $this->inputs = populateArrayFromModel($this->object);
             foreach ($this->object_detail as $index => $detail) {
                 $this->input_details[$index] = populateArrayFromModel($detail);
@@ -251,7 +251,7 @@ class Detail extends Component
             $this->inputs['tr_date']  = date('Y-m-d');
             $this->inputs['tr_type']  = $this->trType;
         }elseif ($this->actionValue == 'Edit') {
-            $this->VersioNumber = $this->object->version_number;
+            $this->VersionNumber = $this->object->version_number;
         }
     }
 
@@ -289,7 +289,7 @@ class Detail extends Component
                 $this->object = OrderHdr::create($this->inputs);
             } elseif ($this->actionValue == 'Edit') {
                 if ($this->object) {
-                    $this->object->updateObject($this->VersioNumber);
+                    $this->object->updateObject($this->VersionNumber);
                     $this->object->update($this->inputs);
                 }
             }
@@ -333,7 +333,7 @@ class Detail extends Component
     public function changeStatus()
     {
         try {
-            $this->object->updateObject($this->VersioNumber);
+            $this->object->updateObject($this->VersionNumber);
 
             if ($this->object->deleted_at) {
                 $this->object->deleted_at = null;

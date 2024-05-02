@@ -22,6 +22,7 @@ class MaterialComponent extends BaseComponent
     public $materials = [];
     public $matl_uoms = [];
     public $matl_boms = [];
+    public $product_code ="";
 
     public $unit_row = 0;
     public $photo;
@@ -49,6 +50,13 @@ class MaterialComponent extends BaseComponent
     public $sideMaterialJewelPurity = [];
 
     public $sideMaterialGemStone = [];
+    public $searchMode = false;
+
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
+    {
+        $this->searchMode = $searchMode;
+        parent::mount($action, $objectId, $actionValue, $objectIdValue);
+    }
 
     protected function onPreRender()
     {
@@ -75,7 +83,7 @@ class MaterialComponent extends BaseComponent
             'materials.jwl_buying_price' => 'required',
             'materials.jwl_selling_price' => 'required',
             'materials.jwl_category1' => 'required|string|min:0|max:255',
-            'materials.jwl_category2' => 'required|string|min:0|max:255',
+            // 'materials.jwl_category2' => 'required|string|min:0|max:255',
             'materials.jwl_wgt_gold' => 'required',
             'materials.name' => 'required|string|min:0|max:255',
             'materials.descr' => 'required|string|min:0|max:255',
@@ -96,7 +104,12 @@ class MaterialComponent extends BaseComponent
 
     protected function onLoadForEdit()
     {
-        $this->object = Material::withTrashed()->find($this->objectIdValue);
+        $this->loadMaterial($this->objectIdValue);
+    }
+
+    protected function loadMaterial($objectId)
+    {
+        $this->object = Material::withTrashed()->find($objectId);
         if($this->object)
         {
             $this->object_uoms = $this->object->MatlUom[0];
@@ -132,14 +145,14 @@ class MaterialComponent extends BaseComponent
                         $this->matl_boms[$key]['clarity'] = $decodedData['clarity'] ?? null;
                         $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
                         $this->matl_boms[$key]['cut'] = $decodedData['cut'] ?? null;
-                        $this->matl_boms[$key]['gia_number'] = $decodedData['gia_number'] ?? null;
+                        $this->matl_boms[$key]['gia_number'] = $decodedData['gia_number'] ?? 0;
                         break;
                     case Material::GEMSTONE:
                         $this->matl_boms[$key]['gemstone'] = $decodedData['gemstone'] ?? null;
                         $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
                         break;
                     case Material::GOLD:
-                        $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? null;
+                        $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? 0;
                         $this->matl_boms[$key]['ref_mark'] = $decodedData['ref_mark'] ?? null;
                         break;
                 }
@@ -151,6 +164,18 @@ class MaterialComponent extends BaseComponent
                 $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
             }
             $this->sellingPriceChanged();
+        }
+    }
+
+    public function searchProduct()
+    {
+        if (isset($this->product_code)) {
+            $material = Material::where('code', $this->product_code)->first();
+            if ($material) {
+                $this->loadMaterial($material->id);
+            }else{
+                $this->notify('error',Lang::get($this->langBasePath.'.message.product_notfound'));
+            }
         }
     }
 
@@ -234,7 +259,7 @@ class MaterialComponent extends BaseComponent
             ];
         })->toArray();
 
-        $this->materials['jwl_category1'] = null;
+        $this->materials['jwl_carat'] = null;
     }
 
     public function refreshBaseMaterials($key)
@@ -254,7 +279,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->id."-".$data->note1,
             ];
         })->toArray();
-        $this->materials['jwl_carat'] = null;
+        $this->matl_boms[$key]['base_matl_id'] = null;
     }
 
     public function refreshSideMaterialShapes($key)
@@ -463,6 +488,7 @@ class MaterialComponent extends BaseComponent
 
     protected function onReset()
     {
+        $this->product_code = "";
         $this->reset('materials');
         $this->reset('matl_uoms');
         $this->reset('matl_boms');

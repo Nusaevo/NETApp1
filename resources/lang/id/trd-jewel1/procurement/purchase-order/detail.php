@@ -15,4 +15,8 @@ return [
     'amount' => 'Jumlah',
     'btnAdd' => 'Tambah',
     'totalPrice' => 'Total Harga',
+    'message' => [
+        'product_added' => 'Produk berhasil ditambahkan',
+        'product_duplicated' => 'Product telah ditambahkan sebelumnya pada nota ini. Mohon pilih produk yang berbeda.',
+    ],
 ];

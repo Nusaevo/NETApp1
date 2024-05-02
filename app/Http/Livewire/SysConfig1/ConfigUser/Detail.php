@@ -17,7 +17,7 @@ use DB;
 class Detail extends BaseComponent
 {
     public $object;
-    public $VersioNumber;
+    public $VersionNumber;
     public $actionValue = 'Create';
     public $objectIdValue;
     public $inputs = ['name' => ''];

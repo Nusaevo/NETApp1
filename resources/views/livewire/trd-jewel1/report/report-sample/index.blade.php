@@ -10,7 +10,7 @@
                         <x-ui-text-field label="Cari Nama Barang" model="inputs.name" type="text" action="Edit" placeHolder="" span='Full'/>
 
                         {{-- <x-ui-dropdown-select label="Item Category"
-                        click-event="refreshItemCategory"
+                        clickEvent="refreshItemCategory"
                         model="inputs.category_item_id"
                         :options="$categories"
                         :selectedValue="$inputs['category_item_id']"
@@ -26,7 +26,7 @@
 
                     <div class="card-footer d-flex justify-content-end">
                         <div>
-                            <x-ui-button click-event="search" button-name="Search" loading="true" action="Edit" cssClass="btn-primary" />
+                            <x-ui-button clickEvent="search" button-name="Search" loading="true" action="Edit" cssClass="btn-primary" />
                         </div>
                     </div>
             </form>

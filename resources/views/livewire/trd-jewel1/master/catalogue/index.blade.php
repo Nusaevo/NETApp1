@@ -15,7 +15,7 @@
 
                 <div class="card-footer d-flex justify-content-end">
                     <div>
-                        <x-ui-button click-event="search" button-name="Search" loading="true" action="Edit" cssClass="btn-primary" />
+                        <x-ui-button clickEvent="search" button-name="Search" loading="true" action="Edit" cssClass="btn-primary" />
                     </div>
                 </div>
             </form>
@@ -37,7 +37,7 @@
                     </div>
                     <div class="text-right">
                         <x-ui-button
-                        :click-event="'addToCart(' . $material->id . ', \'' . $material->code . '\')'"
+                        :clickEvent="'addToCart(' . $material->id . ', \'' . $material->code . '\')'"
                         button-name="Add To Cart"
                         loading="true"
                         action="Edit"

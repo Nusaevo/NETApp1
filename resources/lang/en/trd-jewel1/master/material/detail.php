@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'search_product' => 'Search Product',
     'product' => 'Product',
     'category1' => 'Category 1',
     'category2' => 'Category 2',
@@ -33,6 +34,7 @@ return [
     'production_year' => 'Production Year',
     'ref_mark' => 'Reference Mark',
     'message' => [
+        'product_notfound' => 'Product not found',
         'attachment_failed' => 'Failed to save attachment with filename :filename',
         'barcode_validation' => 'Failed to print label, please scan the label first.',
         'side_material_input' => 'Please insert at least one side material'

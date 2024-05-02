@@ -26,6 +26,7 @@ class OrderDtl extends BaseModel
     }
 
     protected $fillable = [
+        'tr_id',
         'trhdr_id',
         'tr_type',
         'tr_seq',

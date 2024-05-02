@@ -4,12 +4,12 @@ $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
 @endphp
 
 @if ($actionValue === 'Edit' || $actionValue === 'View')
-<x-ui-button button-name="Delete" click-event="" loading="true" action="Edit" cssClass="btn-danger btn-dialog-box" iconPath="delete.svg" />
-<x-ui-button :action="$actionValue" click-event="{{ route($printPdfRoute,
+<x-ui-button button-name="Delete" clickEvent="" loading="true" action="Edit" cssClass="btn-danger btn-dialog-box" iconPath="delete.svg" />
+<x-ui-button :action="$actionValue" clickEvent="{{ route($printPdfRoute,
 ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($object->id)]) }}"
     cssClass="btn-primary" type="Route" loading="true" button-name="Print" iconPath="print.svg" />
 @endif
-<x-ui-button click-event="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+<x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
 
 <script>
     document.addEventListener('livewire:load', function() {

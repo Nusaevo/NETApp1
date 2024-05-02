@@ -1,6 +1,6 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Group" status="{{ $status }}">
@@ -12,7 +12,7 @@
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
                         <x-ui-text-field label="Group Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" visible="true" span="Full" />
-                        <x-ui-dropdown-select label="Application" click-event="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue" span="Full" onChanged="applicationChanged" />
+                        <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue" span="Full" onChanged="applicationChanged" />
                         <x-ui-text-field label="Group Descr" model="inputs.descr" type="text" :action="$actionValue" required="true" placeHolder="Enter Group Name" visible="true" span="Full" />
 
                         @livewire('sys-config1.config-group.right-data-table', ['groupId' => $objectIdValue,'appId' => $inputs['app_id'], 'selectedMenus' => $selectedMenus])

@@ -9,7 +9,7 @@
 </head>
 <body>
 <div>
-    <x-ui-button click-event="" type="Back" button-name="Back"/>
+    <x-ui-button clickEvent="" type="Back" button-name="Back"/>
 </div>
 <div class="card">
     <div class="card-body">

@@ -1,6 +1,6 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Application" status="{{ $status }}">

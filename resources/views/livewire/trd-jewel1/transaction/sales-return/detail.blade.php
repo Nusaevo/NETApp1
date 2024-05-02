@@ -1,6 +1,6 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Purchase Return" status="{{ $status }}">
@@ -11,7 +11,7 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Terima" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half"/>
-                        <x-ui-text-field-search label="Supplier" name="Supplier" click-event="" model="inputs.partner_id" :options="$suppliers" enabled="false" required="true" :action="$actionValue" span="Half"/>
+                        <x-ui-text-field-search label="Supplier" name="Supplier" clickEvent="" model="inputs.partner_id" :options="$suppliers" enabled="false" required="true" :action="$actionValue" span="Half"/>
                     </x-ui-padding>
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="body">

@@ -31,7 +31,7 @@
 
         <!-- Refresh Button -->
         @if (isset($clickEvent) && $clickEvent !== '')
-            <button id="refreshButton" type="button" wire:click="{{ $clickEvent }}" class="btn btn-secondary btn-sm"
+            <button type="button" wire:click="{{ $clickEvent }}" class="btn btn-secondary btn-sm"
                     data-toggle="tooltip" title="Refresh your search to get the latest data"
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
                 <i class="bi bi-arrow-repeat"></i>

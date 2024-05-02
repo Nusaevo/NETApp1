@@ -1,6 +1,6 @@
 <div>
     <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
     <x-ui-page-card title="{{ $actionValue }} Var" status="{{ $status  }}">
@@ -11,7 +11,7 @@
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
                         <x-ui-text-field label="Var Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" visible="true" span="Full" />
-                        <x-ui-dropdown-select label="Application" click-event="refreshApplication" model="inputs.app_id" :options="$applications"  required="true" :action="$actionValue" />
+                        <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications"  required="true" :action="$actionValue" />
                         <x-ui-text-field label="Var Group" model="inputs.var_group" type="text" :action="$actionValue" required="true" placeHolder="" visible="true" span="Full" />
                         <x-ui-text-field label="Default Value" model="inputs.default_value" type="text" :action="$actionValue" required="true" placeHolder="" visible="true" span="Full" />
                         <x-ui-text-field label="Seq" model="inputs.seq" type="number" :action="$actionValue" required="false" placeHolder="" visible="true" span="Full" />
