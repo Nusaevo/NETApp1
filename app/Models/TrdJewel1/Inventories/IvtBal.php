@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class IvtBal extends Model
 {
     protected $table = 'ivt_bals';
+    public $timestamps = false;
 
     public static function boot()
     {

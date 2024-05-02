@@ -40,12 +40,14 @@ class MaterialComponent extends BaseComponent
     public $deleteImages = [];
 
 
+    public $materialJewelPurity = [];
     public $sideMaterialShapes = [];
     public $sideMaterialGiaColors = [];
     public $sideMaterialGemColors = [];
     public $sideMaterialCut = [];
     public $sideMaterialClarity = [];
     public $sideMaterialJewelPurity = [];
+
     public $sideMaterialGemStone = [];
 
     protected function onPreRender()
@@ -214,6 +216,27 @@ class MaterialComponent extends BaseComponent
         $this->materials['jwl_category2'] = null;
     }
 
+    public function refreshJewellPurity()
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
+        ->where('app_code', $this->appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+
+        $this->materialJewelPurity = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1
+            ];
+        })->toArray();
+
+        $this->materials['jwl_category1'] = null;
+    }
+
     public function refreshBaseMaterials($key)
     {
         $data = DB::connection('sys-config1')
@@ -231,7 +254,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->id."-".$data->note1,
             ];
         })->toArray();
-        $this->matl_boms[$key]['base_matl_id'] = null;
+        $this->materials['jwl_carat'] = null;
     }
 
     public function refreshSideMaterialShapes($key)
@@ -378,6 +401,7 @@ class MaterialComponent extends BaseComponent
         $this->refreshUOMs();
         $this->refreshCategories1();
         $this->refreshCategories2();
+        $this->refreshJewellPurity();
     }
 
     public function imagesCaptured($imageDataUrl)

@@ -32,7 +32,8 @@
 
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
+
+                            <button type="button"  wire:click="test" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#MaterialDialogBox">
                                     {{ $this->trans('btnAdd') }}
                             </button>
                             {{-- <x-ui-button click-event="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" /> --}}

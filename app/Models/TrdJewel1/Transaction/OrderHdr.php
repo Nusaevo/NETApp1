@@ -102,12 +102,11 @@ class OrderHdr extends BaseModel
      * @param array $inputDetails Details for each line item in the purchase order.
      */
 
-     public function saveOrder($appCode,$trType, $inputs, $input_details, $createBillingDelivery = false)
+     public function saveOrder($appCode,$trType, $inputs, $input_details, $object_detail  = [], $createBillingDelivery = false)
      {
          $delivTrType = "";
          $billingTrType = "";
          $code = "";
-         $object_detail = [];
          if($trType=="PO")
          {
              $delivTrType = "PD";

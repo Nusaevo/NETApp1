@@ -215,6 +215,21 @@ class BaseComponent extends Component
         }
     }
 
+    public function SaveWithoutNotification()
+    {
+        $this->validateForm();
+        DB::beginTransaction();
+        try {
+            $this->updateVersionNumber();
+            $this->onValidateAndSave();
+            DB::commit();
+            $this->resetForm();
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
+        }
+    }
+
     protected function change()
     {
         try {

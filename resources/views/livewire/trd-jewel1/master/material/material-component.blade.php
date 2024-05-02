@@ -39,7 +39,7 @@ use App\Models\TrdJewel1\Master\Material;
             <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="markupPriceChanged" />
             <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" placeHolder="" span="Half" onChanged="sellingPriceChanged" />
             <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$actionValue" required="true" enabled="true" placeHolder="" span="Half" onChanged="generateMaterialDescriptions" />
-            <x-ui-dropdown-select label="{{ $this->trans('purity') }}" click-event="" model="materials.jwl_carat" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue" span="Half" />
+            <x-ui-dropdown-select label="{{ $this->trans('purity') }}" click-event="" model="materials.jwl_carat" :options="$materialJewelPurity" required="false" :action="$actionValue" span="Half" />
             <x-ui-text-field label="{{ $this->trans('description') }}" model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="{{ $this->trans('placeHolder_description') }}" span="Full" />
             <x-ui-text-field label="{{ $this->trans('bom_description') }}" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="{{ $this->trans('placeHolder_bom_description') }}" span="Full" />
 

@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 class IvtBalUnit extends Model
 {
     protected $table = 'ivt_bal_units';
+    public $timestamps = false;
 
     public static function boot()
     {

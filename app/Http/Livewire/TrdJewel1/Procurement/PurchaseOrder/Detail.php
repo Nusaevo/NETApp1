@@ -138,9 +138,6 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if (empty($this->input_details)) {
-            throw new Exception("Harap pilih item");
-        }
         if (!empty($this->input_details)) {
             $unitIds = array_column($this->input_details, 'item_unit_id');
             if (count($unitIds) !== count(array_flip($unitIds))) {
@@ -158,7 +155,7 @@ class Detail extends BaseComponent
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_code'] = $partner->code;
         $this->inputs['status_code'] = STATUS::OPEN;
-        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, true);
+        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
 
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
@@ -203,6 +200,11 @@ class Detail extends BaseComponent
         $this->countTotalAmount();
     }
 
+    public function test()
+    {
+        $this->SaveWithoutNotification();
+    }
+
     public function Add()
     {
         $this->emit('materialSaved', 2);
@@ -215,6 +217,7 @@ class Detail extends BaseComponent
         try {
             $this->addDetails($material_id);
             $this->emit('closeMaterialDialog');
+            $this->SaveWithoutNotification();
         } catch (Exception $e) {
             $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
