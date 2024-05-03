@@ -24,14 +24,12 @@ class MaterialComponent extends BaseComponent
     public $matl_boms = [];
     public $product_code ="";
 
-    public $unit_row = 0;
     public $photo;
 
     public $materialCategories1;
     public $materialCategories2;
     public $materialUOMs;
     public $baseMaterials;
-    public $selectedBomKey;
 
     public $deletedItems = [];
     public $newItems = [];
@@ -48,11 +46,8 @@ class MaterialComponent extends BaseComponent
     public $sideMaterialCut = [];
     public $sideMaterialClarity = [];
     public $sideMaterialJewelPurity = [];
-
     public $sideMaterialGemStone = [];
     public $searchMode = false;
-
-
     public $enableCategory1 = "true";
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
