@@ -22,7 +22,10 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("code"), "code")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("description"), "descr")
+            Column::make($this->trans("description_material"), "name")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("description_bom"), "descr")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("selling_price"), "jwl_selling_price")
