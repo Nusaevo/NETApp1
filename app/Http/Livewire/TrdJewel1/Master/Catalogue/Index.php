@@ -41,6 +41,11 @@ class Index extends BaseComponent
         return view('livewire.trd-jewel1.master.catalogue.index', ['materials' => $materials]);
     }
 
+    protected function onPreRender()
+    {
+
+    }
+
     public function View($id)
     {
         return redirect()->route('materials.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);

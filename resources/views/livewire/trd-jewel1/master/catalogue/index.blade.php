@@ -49,7 +49,7 @@
             @endforeach
             </div>
             <div class="pagination-container">
-                @include('component.ui-pagination', ['paginator' => $materials])
+                @include('components.ui-pagination', ['paginator' => $materials])
             </div>
 
         </div>
