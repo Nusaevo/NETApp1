@@ -65,12 +65,14 @@ $btnIconClass = "svg-icon-1";
 <!--end::Theme mode-->
 
 @if (auth()->check())
-<div class="d-flex align-items-center {{ $itemClass }}" id="kt_header_user_menu_toggle">
+
+@if(session('app_code') === 'TrdJewel1')
+<div class="d-flex align-items-center {{ $itemClass }}" id="kt_header_user_menu_toggle" style="padding-top: 1rem; padding-right: 1rem; padding-left: 1rem;">
     <!--begin::Menu wrapper-->
     <div class="cursor-pointer position-relative symbol {{ $userAvatarClass }}" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="{{ (theme()->isRtl() ? "bottom-start" : "bottom-end") }}" style="width: 40px; height: 40px; line-height: 40px;">
         <!-- Cart icon with adjusted font size and position -->
         <a href="{{ route('TrdJewel1.Transaction.CartOrder.Detail', ['action' => Crypt::encryptString('Edit')]) }}" class="menu-link px-5">
-            <i class="fas fa-shopping-cart" style="font-size: 24px; padding-top: 5px;"></i>
+            <i class="fas fa-shopping-cart" style="font-size: 24px;"></i>
         </a>
 
         <!-- Number badge -->
@@ -80,6 +82,7 @@ $btnIconClass = "svg-icon-1";
     </div>
     <!--end::Menu wrapper-->
 </div>
+@endif
 
 
 <!--begin::User menu-->
