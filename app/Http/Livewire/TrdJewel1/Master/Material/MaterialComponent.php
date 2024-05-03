@@ -52,6 +52,9 @@ class MaterialComponent extends BaseComponent
     public $sideMaterialGemStone = [];
     public $searchMode = false;
 
+
+    public $enableCategory1 = "true";
+
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
     {
         $this->searchMode = $searchMode;
@@ -60,6 +63,10 @@ class MaterialComponent extends BaseComponent
 
     protected function onPreRender()
     {
+        if($this->actionValue == 'Edit')
+        {
+            $this->enableCategory1 = "false";
+        }
         $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
