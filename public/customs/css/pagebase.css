@@ -1,4 +1,8 @@
 /*Loader css*/
+.wrapper{
+    padding-top: 50px !important;
+}
+
 .custom-loader-container {
     display: none;
     /* initially hidden */
