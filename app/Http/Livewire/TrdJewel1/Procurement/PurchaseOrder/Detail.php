@@ -77,6 +77,7 @@ class Detail extends BaseComponent
             $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
             $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
             $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
+            $this->input_details[$key]['name'] = $detail->Material->name ?? "";
             $this->input_details[$key]['selling_price'] = currencyToNumeric($detail->Material->jwl_selling_price) ?? 0;
             $this->input_details[$key]['price'] = currencyToNumeric($detail->Material->jwl_buying_price) ?? 0;
             $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
@@ -189,6 +190,7 @@ class Detail extends BaseComponent
             $detail['matl_id'] = $material->id;
             $detail['matl_code'] = $material->code;
             $detail['matl_descr'] = $material->descr ?? "";
+            $detail['name'] = $material->name ?? "";
             $detail['matl_uom'] = $material->MatlUom[0]->id;
             $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
             $detail['barcode'] = $material->MatlUom[0]->barcode;
