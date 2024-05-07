@@ -6,7 +6,8 @@
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="false">
             <form wire:submit.prevent="search">
                 <div class="card-body">
-                    <x-ui-text-field label="Cari Nama Barang" model="inputs.description" type="text" action="Edit" placeHolder="" span='Full'/>
+                    <x-ui-text-field label="Cari Nama Barang" model="inputs.name" type="text" action="Edit" placeHolder="" span='Full'/>
+                    <x-ui-text-field label="Cari Nama Bahan" model="inputs.description" type="text" action="Edit" placeHolder="" span='Full'/>
                     <x-ui-text-field label="Harga Jual" model="inputs.selling_price1" type="number" action="Edit" placeHolder="" span='Half'/>
                     <x-ui-text-field label="" model="inputs.selling_price2" type="number" action="Edit" placeHolder="" span='Half'/>
                     <x-ui-text-field label="Code Barang" model="inputs.code" type="text" action="Edit" placeHolder="" span='Full'/>
@@ -31,9 +32,11 @@
                         @endif
                     </div>
                     <div class="material-info">
-                        <div><strong>Description:</strong> {{ $material->descr }}</div>
+                        <div><strong>Deskripsi:</strong> {{ $material->name }}</div>
+                        <div><strong>Deskripsi Bahan:</strong> {{ $material->descr }}</div>
                         <div><strong>Code:</strong> {{ $material->code }}</div>
-                        <div><strong>Price:</strong> {{ $material->selling_price }}</div>
+                        <div><strong>Harga (USD):</strong> {{ dollar(currencyToNumeric($material->jwl_selling_price)) }}</div>
+                        <div><strong>Harga (IDR):</strong> {{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate) }}</div>
                     </div>
                     <div class="text-right">
                         <x-ui-button

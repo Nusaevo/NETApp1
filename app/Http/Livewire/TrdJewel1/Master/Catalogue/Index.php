@@ -9,13 +9,16 @@ use App\Models\Transactions\OrderHdr;
 use App\Models\Transactions\OrderDtl;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
+use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Carbon;
 
 class Index extends BaseComponent
 {
     use WithPagination;
+    public $currencyRate;
 
     public $inputs = [
+        'name' => '',
         'description' => '',
         'selling_price1' => '',
         'selling_price2' => '',
@@ -24,13 +27,24 @@ class Index extends BaseComponent
 
     public function render()
     {
-        $query = Material::query();
+        $currentDate = Carbon::today();
 
+        $currencyRatesData = GoldPriceLog::whereDate('log_date', $currentDate)
+        ->orderBy('log_date', 'asc')
+        ->get(['log_date', 'curr_rate']);
+
+        if(isset($currencyRatesData->curr_rate))
+        $this->currencyRate = currencyToNumeric($currencyRatesData->curr_rate) ?? 0;
+
+        $query = Material::query();
+        if (!empty($this->inputs['name'])) {
+            $query->where('name', 'like', '%' . $this->inputs['name'] . '%');
+        }
         if (!empty($this->inputs['description'])) {
             $query->where('descr', 'like', '%' . $this->inputs['description'] . '%');
         }
         if (!empty($this->inputs['selling_price1']) && !empty($this->inputs['selling_price2'])) {
-            $query->whereBetween('selling_price', [$this->inputs['selling_price1'], $this->inputs['selling_price2']]);
+            $query->whereBetween('jwl_selling_price', [$this->inputs['selling_price1'], $this->inputs['selling_price2']]);
         }
         if (!empty($this->inputs['code'])) {
             $query->where('code', 'like', '%' . $this->inputs['code'] . '%');
@@ -63,58 +77,58 @@ class Index extends BaseComponent
 
     public function addToCart($material_id,$material_code)
     {
-        $usercode = Auth::check() ? Auth::user()->code : '';
+        // $usercode = Auth::check() ? Auth::user()->code : '';
 
-        // Get the OrderHdr by user code and tr_type = cart
-        $orderHdr = OrderHdr::where('created_by', $usercode)
-                            ->where('tr_type', 'CART')
-                            ->first();
+        // // Get the OrderHdr by user code and tr_type = cart
+        // $orderHdr = OrderHdr::where('created_by', $usercode)
+        //                     ->where('tr_type', 'CART')
+        //                     ->first();
 
-        // If OrderHdr doesn't exist, create a new one
-        if (!$orderHdr) {
-            $orderHdr = OrderHdr::create([
-                'tr_type' => 'CART',
-                'tr_date' => Carbon::now(),
-                'partner_id' => 0
-            ]);
-        }
+        // // If OrderHdr doesn't exist, create a new one
+        // if (!$orderHdr) {
+        //     $orderHdr = OrderHdr::create([
+        //         'tr_type' => 'CART',
+        //         'tr_date' => Carbon::now(),
+        //         'partner_id' => 0
+        //     ]);
+        // }
 
-        // Get the maximum tr_seq from the current order detail for this order header
-        $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq');
+        // // Get the maximum tr_seq from the current order detail for this order header
+        // $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq');
 
-        // If there are no existing order details, set the maxTrSeq to 1
-        if (!$maxTrSeq) {
-            $maxTrSeq = 1;
-        } else {
-            // Increment the maxTrSeq by 1
-            $maxTrSeq++;
-        }
+        // // If there are no existing order details, set the maxTrSeq to 1
+        // if (!$maxTrSeq) {
+        //     $maxTrSeq = 1;
+        // } else {
+        //     // Increment the maxTrSeq by 1
+        //     $maxTrSeq++;
+        // }
 
-        // Check if the material is already added to the OrderDtl
-        $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material_id)->first();
+        // // Check if the material is already added to the OrderDtl
+        // $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material_id)->first();
 
-        // If OrderDtl doesn't exist for the material, create a new one
-        if (!$existingOrderDtl) {
-            $orderHdr->OrderDtl()->create([
-                'trhdr_id' => $orderHdr->id,
-                'qty_reff' => 1,
-                'matl_id' => $material_id,
-                'matl_code' => $material_code,
-                'qty' => 1,
-                'qty_reff' => 1,
-                'tr_type' => 'SO',
-                'tr_seq' => $maxTrSeq
-            ]);
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => 'Berhasil menambahkan item ke cart'
-            ]);
-        } else {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => 'Item sudah dimasukkan ke cart'
-            ]);
-        }
+        // // If OrderDtl doesn't exist for the material, create a new one
+        // if (!$existingOrderDtl) {
+        //     $orderHdr->OrderDtl()->create([
+        //         'trhdr_id' => $orderHdr->id,
+        //         'qty_reff' => 1,
+        //         'matl_id' => $material_id,
+        //         'matl_code' => $material_code,
+        //         'qty' => 1,
+        //         'qty_reff' => 1,
+        //         'tr_type' => 'SO',
+        //         'tr_seq' => $maxTrSeq
+        //     ]);
+        //     $this->dispatchBrowserEvent('notify-swal', [
+        //         'type' => 'success',
+        //         'message' => 'Berhasil menambahkan item ke cart'
+        //     ]);
+        // } else {
+        //     $this->dispatchBrowserEvent('notify-swal', [
+        //         'type' => 'error',
+        //         'message' => 'Item sudah dimasukkan ke cart'
+        //     ]);
+        // }
     }
 
 }
