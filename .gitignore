@@ -13,4 +13,3 @@ _ide_helper_models.php
 .phpstorm.meta.php
 composer.lock
 .env
-.env.local
