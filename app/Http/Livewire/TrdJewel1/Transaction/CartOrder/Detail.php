@@ -300,7 +300,7 @@ class Detail extends Component
             $this->resetForm();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.success.save', ['object' => "Nota Beli"])
+                'message' => Lang::get('generic.string.save', ['object' => "Nota Beli"])
             ]);
         } catch (Exception $e) {
             DB::rollBack();
@@ -328,34 +328,5 @@ class Detail extends Component
                 OrderDtl::create($inputDetail);
             }
         }
-    }
-
-    public function changeStatus()
-    {
-        try {
-            $this->object->updateObject($this->VersionNumber);
-
-            if ($this->object->deleted_at) {
-                $this->object->deleted_at = null;
-                $messageKey = 'generic.success.enable';
-            } else {
-                $this->object->delete();
-                $messageKey = 'generic.success.disable';
-            }
-
-            $this->object->save();
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get($messageKey, ['object' => ""])
-            ]);
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'delete'), ['object' => $this->object->menu_caption, 'message' => $e->getMessage()])
-            ]);
-        }
-
-        $this->dispatchBrowserEvent('refresh');
     }
 }

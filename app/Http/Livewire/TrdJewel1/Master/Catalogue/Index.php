@@ -5,13 +5,13 @@ namespace App\Http\Livewire\TrdJewel1\Master\Catalogue;
 use App\Http\Livewire\Component\BaseComponent;
 use Livewire\WithPagination;
 use App\Models\TrdJewel1\Master\Material;
-use App\Models\Transactions\OrderHdr;
-use App\Models\Transactions\OrderDtl;
+use App\Models\Transactions\CartHdr;
+use App\Models\Transactions\CartDtl;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Carbon;
-
+use Lang;
 class Index extends BaseComponent
 {
     use WithPagination;
@@ -27,15 +27,7 @@ class Index extends BaseComponent
 
     public function render()
     {
-        $currentDate = Carbon::today();
-
-        $currencyRatesData = GoldPriceLog::whereDate('log_date', $currentDate)
-        ->orderBy('log_date', 'asc')
-        ->get(['log_date', 'curr_rate']);
-
-        if(isset($currencyRatesData->curr_rate))
-        $this->currencyRate = currencyToNumeric($currencyRatesData->curr_rate) ?? 0;
-
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
         $query = Material::query();
         if (!empty($this->inputs['name'])) {
             $query->where('name', 'like', '%' . $this->inputs['name'] . '%');
@@ -77,6 +69,10 @@ class Index extends BaseComponent
 
     public function addToCart($material_id,$material_code)
     {
+        if ($this->currencyRate == 0) {
+            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            return;
+        }
         // $usercode = Auth::check() ? Auth::user()->code : '';
 
         // // Get the OrderHdr by user code and tr_type = cart

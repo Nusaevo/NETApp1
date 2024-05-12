@@ -343,7 +343,7 @@ class Detail extends BaseComponent
                 }
                 $this->object->save();
                 $this->object->delete();
-                $messageKey = 'generic.success.disable';
+                $messageKey = 'generic.string.disable';
             $this->object->save();
             $this->notify('success', Lang::get($messageKey));
         } catch (Exception $e) {

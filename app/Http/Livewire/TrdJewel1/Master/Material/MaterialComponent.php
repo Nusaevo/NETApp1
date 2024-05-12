@@ -183,15 +183,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshUOMs()
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_UOM')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
-
+        $data = ConfigConst::GetUOMData($this->appCode);
         $this->materialUOMs = $data->map(function ($data) {
             return [
                 'label' => $data->str1." - ".$data->str2,
@@ -203,14 +195,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshCategories1()
     {
-        $data = DB::connection('sys-config1')
-            ->table('config_consts')
-            ->select('id','str1','str2')
-            ->where('const_group', 'MMATL_CATEGL1')
-            ->where('app_code', $this->appCode)
-            ->where('deleted_at', NULL)
-            ->orderBy('seq')
-            ->get();
+        $data = ConfigConst::GetMatlCategory1Data($this->appCode);
 
         $this->materialCategories1 = $data->map(function ($data) {
             return [
@@ -224,15 +209,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshCategories2()
     {
-        $data = DB::connection('sys-config1')
-            ->table('config_consts')
-            ->select('id','str1','str2')
-            ->where('const_group', 'MMATL_CATEGL2')
-            ->where('app_code', $this->appCode)
-            ->where('deleted_at', NULL)
-            ->orderBy('seq')
-            ->get();
-
+        $data = ConfigConst::GetMatlCategory2Data($this->appCode);
         $this->materialCategories2 = $data->map(function ($data) {
             return [
                 'label' => $data->str1." - ".$data->str2,
@@ -245,14 +222,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshJewellPurity()
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlJewelPurityData($this->appCode);
 
         $this->materialJewelPurity = $data->map(function ($data) {
             return [
@@ -266,14 +236,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshBaseMaterials($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2','note1')
-        ->where('const_group', 'MMATL_JEWEL_COMPONENTS')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlBaseMaterialData($this->appCode);
 
         $this->baseMaterials = $data->map(function ($data) {
             return [
@@ -286,14 +249,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshSideMaterialShapes($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_JEWEL_GEMSHAPES')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlSideMaterialShapeData($this->appCode);
 
         $this->sideMaterialShapes = $data->map(function ($data) {
             return [
@@ -306,14 +262,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshSideMaterialClarity($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2','note1')
-        ->where('const_group', 'MMATL_JEWEL_GIACLARITY')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlSideMaterialClarityData($this->appCode);
 
         $this->sideMaterialClarity = $data->map(function ($data) {
             return [
@@ -326,14 +275,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshSideMaterialCut($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_JEWEL_GIACUT')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlSideMaterialCutData($this->appCode);
 
         $this->sideMaterialCut = $data->map(function ($data) {
             return [
@@ -346,14 +288,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshSideMaterialGemColor($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_JEWEL_GEMCOLORS')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlSideMaterialGemColorData($this->appCode);
 
         $this->sideMaterialGemColors = $data->map(function ($data) {
             return [
@@ -366,15 +301,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshSideMaterialGiaColor($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_JEWEL_GIACOLORS')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
-
+        $data = ConfigConst::GetMatlSideMaterialGiaColorData($this->appCode);
         $this->sideMaterialGiaColors = $data->map(function ($data) {
             return [
                 'label' => $data->str1." - ".$data->str2,
@@ -386,14 +313,7 @@ class MaterialComponent extends BaseComponent
 
     public function refreshSideMaterialGemstone($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_JEWEL_GEMSTONES')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlSideMaterialGemstoneData($this->appCode);
 
         $this->sideMaterialGemStone = $data->map(function ($data) {
             return [
@@ -403,16 +323,10 @@ class MaterialComponent extends BaseComponent
         })->toArray();
         $this->matl_boms[$key]['gemstone'] = null;
     }
+
     public function refreshSideMaterialJewelPurity($key)
     {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
+        $data = ConfigConst::GetMatlSideMaterialPurityData($this->appCode);
 
         $this->sideMaterialJewelPurity = $data->map(function ($data) {
             return [

@@ -54,25 +54,15 @@ class Detail extends BaseComponent
 
     public function refreshCurrencies()
     {
-        $data = DB::connection('sys-config1')
-            ->table('config_consts')
-            ->select('id', 'str1', 'str2', 'num1')
-            ->where('const_group', 'MCURRENCY_CODE')
-            ->where('app_code', $this->appCode)
-            ->where('deleted_at', NULL)
-            ->orderBy('seq')
-            ->get();
-
+        $data = ConfigConst::GetCurrencyData($this->appCode);
         $currencies = $data->map(function ($item) {
             return [
                 'label' => $item->str1 . " - " . $item->str2,
                 'value' => $item->id,
-                'num1' => currencyToNumeric($item->num1)
             ];
         });
-
-        $defaultCurrency = $currencies->sortByDesc('num1')->first();
-        $this->currencies = $currencies->toArray();
+        $defaultCurrency = $currencies->first();
+        $this->currencies = $currencies;
         $this->inputs['curr_id'] = $defaultCurrency['value'];
     }
 

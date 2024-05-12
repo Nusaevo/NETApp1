@@ -207,7 +207,7 @@ class BaseComponent extends Component
             $this->updateVersionNumber();
             $this->onValidateAndSave();
             DB::commit();
-            $this->notify('success',Lang::get('generic.success.save'));
+            $this->notify('success',Lang::get('generic.string.save'));
             $this->resetForm();
         } catch (Exception $e) {
             DB::rollBack();
@@ -239,14 +239,14 @@ class BaseComponent extends Component
                     $this->object->status_code =  Status::ACTIVE;
                 }
                 $this->object->deleted_at = null;
-                $messageKey = 'generic.success.enable';
+                $messageKey = 'generic.string.enable';
             } else {
                 if (isset($this->object->status_code)) {
                     $this->object->status_code =  Status::DEACTIVATED;
                 }
                 $this->object->save();
                 $this->object->delete();
-                $messageKey = 'generic.success.disable';
+                $messageKey = 'generic.string.disable';
             }
 
             $this->object->save();

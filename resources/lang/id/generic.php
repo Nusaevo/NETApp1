@@ -1,6 +1,6 @@
 <?php
 return [
-    'success' => [
+    'string' => [
         'title' => 'Berhasil',
         'save' => 'Berhasil menyimpan data.',
         'create' => 'Berhasil membuat data.',
@@ -8,6 +8,7 @@ return [
         'delete' => 'Berhasil menghapus data.',
         'disable' => 'Berhasil menonaktifkan data.',
         'enable' => 'Berhasil mengaktifkan data.',
+        'currency_needed' => 'Kurs mata uang harian belum diinputkan. Harap input kurs mata uang harian di Master Currency.',
     ],
     'error' => [
         'title' => 'Gagal',

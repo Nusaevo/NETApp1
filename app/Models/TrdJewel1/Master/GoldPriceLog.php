@@ -3,7 +3,7 @@
 namespace App\Models\TrdJewel1\Master;
 
 use App\Models\Base\BaseModel;
-
+use Illuminate\Support\Carbon;
 class GoldPriceLog extends BaseModel
 {
     protected $table = 'goldprice_logs';
@@ -20,6 +20,16 @@ class GoldPriceLog extends BaseModel
         'goldprice_curr',
         'goldprice_basecurr',
     ];
+
+    public static function GetTodayCurrencyRate()
+    {
+        $currentDate = Carbon::today();
+        $currencyRatesData = self::whereDate('log_date', $currentDate)
+            ->orderBy('log_date', 'asc')
+            ->first(['log_date', 'curr_rate']);
+
+        return $currencyRatesData ? currencyToNumeric($currencyRatesData->curr_rate) : 0;
+    }
 
     public function getAllColumnValues($attribute)
     {

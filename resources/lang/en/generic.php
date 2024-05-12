@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'success' => [
+    'string' => [
         'title' => 'Success',
         'save' => 'Successfully saved data.',
         'create' => 'Successfully created data.',
@@ -9,6 +9,7 @@ return [
         'delete' => 'Successfully deleted data.',
         'disable' => 'Successfully disabled data.',
         'enable' => 'Successfully enabled data.',
+        'currency_needed' => 'Daily currency rate is not available. Please input daily currency rate in the Master Currency.',
     ],
     'error' => [
         'title' => 'Failed',
