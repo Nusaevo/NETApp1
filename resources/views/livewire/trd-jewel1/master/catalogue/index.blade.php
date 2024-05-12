@@ -32,11 +32,14 @@
                         @endif
                     </div>
                     <div class="material-info">
-                        <div><strong>Deskripsi:</strong> {{ $material->name }}</div>
-                        <div><strong>Deskripsi Bahan:</strong> {{ $material->descr }}</div>
-                        <div><strong>Code:</strong> {{ $material->code }}</div>
-                        <div><strong>Harga (USD):</strong> {{ dollar(currencyToNumeric($material->jwl_selling_price)) }}</div>
-                        <div><strong>Harga (IDR):</strong> {{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate) }}</div>
+                        <div class="flex-between">
+                            <div><strong></strong> {{ $material->name ?? "Test" }}</div>
+                            <div><strong></strong> {{ $material->code }}</div>
+                        </div>
+                        <div class="text-left"><strong></strong> {{ $material->descr }}</div>
+                        <div class="text-center">
+                            <strong></strong> {{ dollar(currencyToNumeric($material->jwl_selling_price)) }} - {{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate) }}
+                        </div>
                     </div>
                     <div class="text-right">
                         <x-ui-button

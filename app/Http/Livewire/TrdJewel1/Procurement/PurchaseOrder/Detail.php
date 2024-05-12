@@ -7,21 +7,11 @@ use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\SysConfig1\ConfigConst;
-use Illuminate\Support\Facades\Crypt;
 use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
-use App\Models\TrdJewel1\Transaction\BillingDtl;
-use App\Models\TrdJewel1\Transaction\BillingHdr;
-use App\Models\TrdJewel1\Transaction\DelivDtl;
-use App\Models\TrdJewel1\Transaction\DelivHdr;
 use Lang;
 use Exception;
-use DB;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Session;
-use App\Models\SysConfig1\ConfigSnum;
 
-use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
 {
