@@ -227,4 +227,16 @@ class ConfigConst extends BaseModel
         return $data;
     }
 
+    public static function GetPaymentTerm($appCode)
+    {
+        $data = DB::connection('sys-config1')
+        ->table('config_consts')
+        ->select('id','str1','str2')
+        ->where('const_group', 'MPAYMENT_TERMS')
+        ->where('app_code', $appCode)
+        ->where('deleted_at', NULL)
+        ->orderBy('seq')
+        ->get();
+        return $data;
+    }
 }
