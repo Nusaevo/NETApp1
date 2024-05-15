@@ -37,6 +37,6 @@ return [
         'product_notfound' => 'Product not found',
         'attachment_failed' => 'Failed to save attachment with filename :filename',
         'barcode_validation' => 'Failed to print label, please scan the label first.',
-        'side_material_input' => 'Please insert at least one side material'
+        'save_material_input' => 'Please save material before printing'
     ],
 ];

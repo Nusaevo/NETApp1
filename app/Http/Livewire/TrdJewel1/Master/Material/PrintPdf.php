@@ -7,15 +7,12 @@ use App\Models\TrdJewel1\Master\Material;
 
 class PrintPdf extends BaseComponent
 {
-    public $barcode;
-    public $barcodeName;
-    public $barcodeCode;
+    public $object;
 
     protected function onPreRender()
     {
         $additionalParams = explode(';', urldecode($this->additionalParam));
-        $this->barcode = $additionalParams[0] ?? '';
-        $this->barcodeName = $additionalParams[1] ?? '';
+        $this->object = Material::withTrashed()->find($additionalParams);
     }
 
     protected function onLoadForEdit()

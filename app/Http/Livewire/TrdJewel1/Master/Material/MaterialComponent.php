@@ -646,10 +646,10 @@ class MaterialComponent extends BaseComponent
         if (isset( $this->matl_uoms['barcode'])) {
             if(isset($this->materials['descr']))
             {
-                $additionalParam = urlencode($this->matl_uoms['barcode'] . ';' . $this->materials['descr']);
+                $additionalParam = urlencode($this->object->id);
                 return redirect()->route('TrdJewel1.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey(""),'additionalParam'=> $additionalParam ]);
             }else{
-                $this->notify('error',Lang::get($this->langBasePath.'.message.side_material_input'));
+                $this->notify('error',Lang::get($this->langBasePath.'.message.save_material_input'));
             }
 
         }else{

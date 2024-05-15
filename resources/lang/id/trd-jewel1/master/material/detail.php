@@ -37,6 +37,6 @@ return [
         'product_notfound' => 'Produk tidak ditemukan',
         'attachment_failed' => 'Gagal menyimpan file :filename',
         'barcode_validation' => 'Gagal cetak label, tolong scan label terlebih dahulu.',
-        'side_material_input' => 'Masukkan setidaknya satu side material.'
+        'save_material_input' => 'Tolong simpan material sebelum cetak label.'
     ],
 ];

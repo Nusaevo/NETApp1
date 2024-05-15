@@ -1,0 +1,43 @@
+.barcode-container {
+    display: inline-block;
+    max-width: 27mm;
+    max-height: 13mm;
+    text-align: center;
+    vertical-align: middle;
+    padding-top: 20px;
+    padding-left: 30px;
+}
+.barcode-container2 {
+    display: inline-block;
+    max-width: 27mm;
+    max-height: 13mm;
+    text-align: center;
+    vertical-align: middle;
+    padding-top: 20px;
+    padding-left: 50px;
+}
+
+.barcode-name {
+    font-size: 7px;
+    margin: 0;
+    width: 100%;
+    font-family: Arial, sans-serif;
+}
+.barcode-name2 {
+    font-size: 7px;
+    margin: 0;
+    width: 100%;
+    font-family: Arial, sans-serif;
+}
+
+.barcode {
+    display: block;
+    margin: 0;
+    max-height: 100%;
+}
+
+.barcode2 {
+    display: block;
+    margin: 0;
+    max-height: 100%;
+}
