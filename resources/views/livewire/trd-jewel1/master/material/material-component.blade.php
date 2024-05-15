@@ -25,7 +25,9 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
 
                     <div class="button-container">
-                        <x-ui-button clickEvent="" id="cameraButton" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnCamera') }}" :action="$actionValue" />
+                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cameraModal">
+                            <span style="font-size: 16px;">   {{ $this->trans('btnCamera') }}</span>
+                        </button>
                         <x-ui-button clickEvent="addFromGallery" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnGallery') }}" :action="$actionValue" />
                     </div>
                 </div>
@@ -111,78 +113,179 @@ use App\Models\TrdJewel1\Master\Material;
         @endif
     </x-ui-footer>
 </x-ui-page-card>
-<div id="cameraStream" style="display: none;"></div>
+<x-ui-dialog-box id="cameraModal" :width="'2000px'" :height="'2000px'">
+    <x-slot name="title">
+        <h5 id="cameraModalLabel">Select Cameras</h5>
+    </x-slot>
+    <x-slot name="body">
+        <div class="form-group">
+            <label for="cameraSelect1">Camera 1</label>
+            <select id="cameraSelect1" class="form-control"></select>
+        </div>
+        <div class="form-group">
+            <label for="cameraSelect2">Camera 2</label>
+            <select id="cameraSelect2" class="form-control"></select>
+        </div>
+        <div class="camera-container">
+            <div class="camera-box">
+                <video id="cameraStream1" style="width: 100%; height: auto; margin-top: 10px;" autoplay></video>
+            </div>
+            <div class="camera-box">
+                <video id="cameraStream2" style="width: 100%; height: auto; margin-top: 10px;" autoplay></video>
+            </div>
+        </div>
+    </x-slot>
+    <x-slot name="footer">
+        <button type="button" id="captureButton" class="btn btn-primary">Capture</button>
+    </x-slot>
+</x-ui-dialog-box>
 
 <script>
-    // function scrollToBottom() {
-    //     var container = document.getElementById('scroll-container');
-    //     container.scrollTop = container.scrollHeight;
-    // }
+    document.addEventListener('DOMContentLoaded', function() {
+        const cameraButton = document.querySelector('[data-bs-target="#cameraModal"]');
+        const captureButton = document.getElementById('captureButton');
+        const cameraSelect1 = document.getElementById('cameraSelect1');
+        const cameraSelect2 = document.getElementById('cameraSelect2');
+        const cameraStream1 = document.getElementById('cameraStream1');
+        const cameraStream2 = document.getElementById('cameraStream2');
+        let currentStream1 = null;
+        let currentStream2 = null;
 
-    // document.addEventListener('livewire:load', function() {
-    //     // Call scrollToBottom function when the page loads
-    //     scrollToBottom();
+        // Function to start the camera stream
+        function startCameraStream(deviceId, cameraStream, currentStream) {
+            const constraints = {
+                video: {
+                    deviceId: { exact: deviceId },
+                    width: 320,
+                    height: 240
+                }
+            };
 
-    //     Livewire.on('itemAdded', function() {
-    //         // Call scrollToBottom function when a new item is added
-    //         scrollToBottom();
-    //     });
-    // });
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     Webcam.set({
-    //         width: 320
-    //         , height: 240
-    //         , dest_width: 640
-    //         , dest_height: 480
-    //         , image_format: 'jpeg'
-    //         , jpeg_quality: 90
-    //     , });
+            // Stop any existing stream
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
 
-    //     Webcam.attach('#cameraStream');
-    //     document.getElementById('cameraButton').addEventListener('click', function() {
-    //         captureImageAndEmit();
-    //     });
-    // });
-
-    function captureImageAndEmit() {
-        var cameraStream = document.getElementById('cameraStream');
-        if (!cameraStream) {
-            console.error('Camera stream DOM element not found');
-            return;
+            // Start a new stream
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    cameraStream.srcObject = stream;
+                    if (cameraStream === cameraStream1) {
+                        currentStream1 = stream;
+                    } else {
+                        currentStream2 = stream;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error accessing media devices.', error);
+                });
         }
 
-        var loaderContainer = document.getElementById('loader-container');
-        if (loaderContainer) {
-            loaderContainer.style.display = 'block';
-        }
+        // Show camera dialog
+        cameraButton.addEventListener('click', function() {
+            $('#cameraModal').modal('show');
+            // Get list of video input devices
+            navigator.mediaDevices.enumerateDevices().then(devices => {
+                cameraSelect1.innerHTML = '';
+                cameraSelect2.innerHTML = '';
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                if (videoDevices.length === 0) {
+                    const option = document.createElement('option');
+                    option.text = 'No camera devices found';
+                    cameraSelect1.appendChild(option);
+                    cameraSelect2.appendChild(option);
+                } else {
+                    let droidCamCount = 0;
+                    videoDevices.forEach((device, index) => {
+                        const option = document.createElement('option');
+                        option.value = device.deviceId;
+                        option.text = device.label || `Camera ${index + 1}`;
+                        cameraSelect1.appendChild(option.cloneNode(true));
+                        cameraSelect2.appendChild(option);
 
-        Webcam.set({
-            width: 320
-            , height: 240
-            , dest_width: 640
-            , dest_height: 480
-            , image_format: 'jpeg'
-            , jpeg_quality: 90
+                        // Prioritize DroidCam devices
+                        if (device.label.includes('DroidCam')) {
+                            if (droidCamCount === 0) {
+                                cameraSelect1.value = device.deviceId;
+                                startCameraStream(device.deviceId, cameraStream1, currentStream1);
+                            } else if (droidCamCount === 1) {
+                                cameraSelect2.value = device.deviceId;
+                                startCameraStream(device.deviceId, cameraStream2, currentStream2);
+                            }
+                            droidCamCount++;
+                        }
+                    });
+
+                    // If no DroidCam is found, start the first available cameras
+                    if (droidCamCount === 0) {
+                        if (videoDevices.length > 0) {
+                            startCameraStream(videoDevices[0].deviceId, cameraStream1, currentStream1);
+                        }
+                        if (videoDevices.length > 1) {
+                            startCameraStream(videoDevices[1].deviceId, cameraStream2, currentStream2);
+                        }
+                    }
+                }
+            }).catch(error => {
+                console.error('Error accessing media devices.', error);
+                const option = document.createElement('option');
+                option.text = 'Error accessing media devices';
+                cameraSelect1.appendChild(option);
+                cameraSelect2.appendChild(option);
+            });
         });
 
-        Webcam.attach('#cameraStream');
-
-        Webcam.on('live', function() {
-            if (loaderContainer) {
-                loaderContainer.style.display = 'none';
+        // Start the camera stream when a new camera is selected
+        cameraSelect1.addEventListener('change', function() {
+            if (cameraSelect1.value !== '') {
+                startCameraStream(cameraSelect1.value, cameraStream1, currentStream1);
             }
         });
 
-        Webcam.snap(function(dataUri) {
-            Livewire.emit('imagesCaptured', dataUri);
-            Webcam.reset();
+        cameraSelect2.addEventListener('change', function() {
+            if (cameraSelect2.value !== '') {
+                startCameraStream(cameraSelect2.value, cameraStream2, currentStream2);
+            }
         });
-    }
 
+        // Capture image from the current streams
+        captureButton.addEventListener('click', function() {
+            if (cameraSelect1.value === '' || !currentStream1 || cameraSelect2.value === '' || !currentStream2) {
+                alert('Please select both cameras first.');
+                return;
+            }
 
-    document.getElementById('cameraButton').addEventListener('click', function() {
-        captureImageAndEmit();
+            // Capture image from the first stream
+            const canvas1 = document.createElement('canvas');
+            canvas1.width = 640;
+            canvas1.height = 480;
+            const context1 = canvas1.getContext('2d');
+            context1.drawImage(cameraStream1, 0, 0, canvas1.width, canvas1.height);
+            const dataUri1 = canvas1.toDataURL('image/jpeg', 0.9);
+
+            // Capture image from the second stream
+            const canvas2 = document.createElement('canvas');
+            canvas2.width = 640;
+            canvas2.height = 480;
+            const context2 = canvas2.getContext('2d');
+            context2.drawImage(cameraStream2, 0, 0, canvas2.width, canvas2.height);
+            const dataUri2 = canvas2.toDataURL('image/jpeg', 0.9);
+
+            // Emit both images to Livewire
+            Livewire.emit('imagesCaptured', dataUri1);
+            Livewire.emit('imagesCaptured', dataUri2);
+        });
+
+        // Stop the camera streams when the modal is closed
+        $('#cameraModal').on('hidden.bs.modal', function() {
+            if (currentStream1) {
+                currentStream1.getTracks().forEach(track => track.stop());
+                currentStream1 = null;
+            }
+            if (currentStream2) {
+                currentStream2.getTracks().forEach(track => track.stop());
+                currentStream2 = null;
+            }
+        });
     });
-
 </script>
-

@@ -45,7 +45,7 @@
 
             <script>
                 myJQuery(document).ready(function() {
-                    myJQuery("[id='{{ $model }}']").datepicker({
+                    myJQuery("[id='{{ $id }}']").datepicker({
                         dateFormat: 'dd-mm-yy', // Set the date format to 'dd mm yy'
                         changeMonth: true
                         , changeYear: true

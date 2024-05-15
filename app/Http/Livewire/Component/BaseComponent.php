@@ -58,7 +58,6 @@ class BaseComponent extends Component
         } else {
             $this->objectIdValue = $objectId ? decryptWithSessionKey($objectId) : null;
         }
-
         $this->baseRoute = Route::currentRouteName();
 
         $this->renderRoute =  implode('.', array_map(function($segment) {
@@ -96,7 +95,6 @@ class BaseComponent extends Component
             $segments = array_slice($segments, 0, -$segmentsToIgnore);
         }
 
-
         // Check if the last segment contains "Detail" string and remove it
         // this only form inside form like material form component
         if (!empty($segments)) {
@@ -105,7 +103,6 @@ class BaseComponent extends Component
                 array_pop($segments);
             }
         }
-
         $fullPath = implode('/', $segments);
         $this->permissions = ConfigRight::getPermissionsByMenu($fullPath);
 

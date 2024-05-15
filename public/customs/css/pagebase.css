@@ -482,6 +482,18 @@ div[wire\:loading].loading-overlay {
     margin-top: auto;
 }
 
+.camera-container {
+    display: flex;
+    justify-content: space-between;
+}
+.camera-box {
+    flex: 1;
+    margin-right: 10px;
+}
+.camera-box:last-child {
+    margin-right: 0;
+}
+
 .flex-between {
     display: flex;
     justify-content: space-between;

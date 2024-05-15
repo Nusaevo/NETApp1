@@ -30,6 +30,16 @@ class CartHdr extends BaseModel
         return $this->CartDtl()->sum('qty');
     }
 
+    public static function getCartDetailCount($usercode)
+    {
+        return self::where('created_by', $usercode)
+                    ->where('tr_type', 'C')
+                    ->whereHas('cartDtl')
+                    ->withCount('cartDtl')
+                    ->first()
+                    ->cart_dtl_count ?? 0;
+    }
+
     public function getTotalAmtAttribute()
     {
         return $this->CartDtl()->sum('amt');

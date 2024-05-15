@@ -2,142 +2,178 @@
 
 namespace App\Http\Livewire\TrdJewel1\Transaction\CartOrder;
 
-use Livewire\Component;
-use App\Models\Transactions\OrderHdr;
-use App\Models\Transactions\OrderDtl;
+use App\Http\Livewire\Component\BaseComponent;
+use App\Models\TrdJewel1\Transaction\CartHdr;
+use App\Models\TrdJewel1\Transaction\CartDtl;
 use App\Models\TrdJewel1\Master\Partner;
-use App\Models\Payment;
-use Illuminate\Validation\Rule;
+use App\Models\SysConfig1\ConfigConst;
+use App\Models\TrdJewel1\Master\Material;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\Status;
-use Lang;
+use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Exception;
-use DB;
+use Lang;
 
-class Detail extends Component
+
+class Detail extends BaseComponent
 {
-    public $object;
     public $object_detail;
-    public $VersionNumber;
-    public $actionValue = 'Create';
-    public $objectIdValue;
     public $inputs = [];
     public $input_details = [];
-    public $status = '';
 
     public $suppliers;
+    public $warehouses;
     public $payments;
-
-    public $unit_row = 0;
     public $deletedItems = [];
     public $newItems = [];
 
     public $total_amount = 0;
-    public $trType = "CART";
-    public function mount($action)
-    {
-        $this->actionValue = decryptWithSessionKey($action);
-        $this->populateDropdowns();
-        if (($this->actionValue === 'Edit' || $this->actionValue === 'View')) {
-            $usercode = Auth::check() ? Auth::user()->code : '';
+    public $matl_action = 'Create';
+    public $matl_objectId = null;
+    public $showModal = false;
+    public $currency = [];
 
-            $this->object = OrderHdr::where('created_by', $usercode)
-                                ->where('tr_type', 'CART')
-                                ->first();
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->get();
-            $this->status = Status::getStatusString( $this->object->status_code);
-            $this->VersionNumber = $this->object->version_number;
+    public $returnIds = [];
+
+    protected function onPreRender()
+    {
+        $this->customValidationAttributes  = [
+            'input_details.*'              => $this->trans('product'),
+            'input_details.*.matl_id' => $this->trans('product'),
+            'input_details.*.qty' => $this->trans('qty'),
+            'input_details.*.price' => $this->trans('price'),
+        ];
+        $this->customRules  = [
+            'input_details.*.price' => 'required',
+            'input_details.*.qty' => 'required',
+        ];
+        $usercode = Auth::check() ? Auth::user()->code : '';
+
+        if ($this->actionValue === 'Create') {
+            $this->object = CartHdr::withTrashed()->where('created_by', $usercode)->first();
+        }
+
+        if ($this->object) {
+            $this->object_detail = CartDtl::GetByCartHdr($this->object->id)->orderBy('tr_seq')->get();
             $this->inputs = populateArrayFromModel($this->object);
-            foreach ($this->object_detail as $index => $detail) {
-                $this->input_details[$index] = populateArrayFromModel($detail);
-                $this->input_details[$index]['id'] = $detail->id;
-                $this->input_details[$index]['detail_item_name'] = $detail->item_name . '-' . $detail->unit_name;
+
+            foreach ($this->object_detail as $key => $detail) {
+                $this->input_details[$key] =  populateArrayFromModel($detail);
+                $this->input_details[$key]['id'] = $detail->id;
+                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
+                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
+                $this->input_details[$key]['name'] = $detail->Material->name ?? "";
+                $this->input_details[$key]['matl_descr'] = $detail->Material->descr ?? "";
+                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
+                $imagePath = $detail->Material->Attachment->first()?->getUrl() ?? null;
+                $this->input_details[$key]['image_path'] = $imagePath;
             }
+
             $this->countTotalAmount();
-            $this->dispatchBrowserEvent('reApplySelect2');
-        } else {
-            $this->inputs['tr_date']  = date('Y-m-d');
-            $this->inputs['tr_type']  = $this->trType;
         }
     }
 
+    protected function onLoadForEdit()
+    {
+    }
+
+
     public function render()
     {
-        return view('livewire.transaction.purchases-orders.edit');
+        return view($this->renderRoute);
     }
 
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
-        'changeItem'  => 'changeItem'
+        'materialSaved' => 'materialSaved',
+        'delete' => 'delete'
     ];
 
-    protected function rules()
+    protected function onPopulateDropdowns()
     {
-        $rules = [
-            'inputs.tr_date' => 'required',
-            'inputs.partner_id' => 'required',
-            'inputs.payment_term_id' => 'required',
-            'input_details.*.item_unit_id' => 'required',
-            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
-        ];
-        return $rules;
     }
 
-    protected $validationAttributes = [
-        'inputs'                => 'Input',
-        'inputs.*'              => 'Input',
-        'inputs.tr_date'      => 'Tanggal Transaksi',
-        'inputs.partner_id'      => 'Supplier',
-        'inputs.payment_term_id'      => 'Payment',
-        'input_details.*'              => 'Inputan Barang',
-        'input_details.*.item_unit_id' => 'Item',
-        'input_details.*.qty' => 'Item Qty',
-        'input_details.*.price' => 'Item Price',
-    ];
-
-    public function refreshSupplier()
+    public function onValidateAndSave()
     {
-        $suppliersData = Partner::GetByGrp('SUPP');
-        $this->suppliers = $suppliersData->map(function ($data) {
-            return [
-                'label' => $data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['partner_id'] = null;
+        // if ($this->inputs['curr_rate'] == 0) {
+        //     $this->notify('warning',Lang::get('generic.string.currency_needed'));
+        //     return;
+        // }
+        // if (!empty($this->input_details)) {
+        //     $unitIds = array_column($this->input_details, 'item_unit_id');
+        //     if (count($unitIds) !== count(array_flip($unitIds))) {
+        //         throw new Exception("Ditemukan duplikasi Item.");
+        //     }
+        // }
+        // if($this->actionValue == 'Edit')
+        // {
+        //     if(!$this->object->isEnableToEdit())
+        //     {
+        //         throw new Exception("Nota ini tidak bisa di edit lagi.");
+        //     }
+        // }
+        // $partner = Partner::find($this->inputs['partner_id']);
+        // $this->inputs['wh_code'] = 18;
+        // $this->inputs['partner_code'] = $partner->code;
+        // $this->inputs['status_code'] = STATUS::OPEN;
+        // $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
+
+        // if (!$this->object->isNew()) {
+        //     foreach ($this->deletedItems as $deletedItemId) {
+        //         $orderDtl = OrderDtl::find($deletedItemId);
+        //         if ($orderDtl) {
+        //             $orderDtl->delete();
+        //         }
+        //     }
+        // }
+    }
+    public function Checkout()
+    {
+
     }
 
-    public function refreshPayment()
+    public function onReset()
     {
-        $paymentsData = Payment::All();
-        $this->payments = $paymentsData->map(function ($data) {
-            return [
-                'label' => $data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['payment_term_id'] = null;
     }
 
-    protected function populateDropdowns()
+    public function addDetails($material_id = null)
     {
-        $this->refreshSupplier();
-        $this->refreshPayment();
-    }
-
-    public function addDetails()
-    {
+        $this->showModal = true;
+        $this->dispatchBrowserEvent('toggle-modal');
         $detail = [
-            'tr_seq' => $this->unit_row + 1,
-            'tr_type' => $this->trType
+            'tr_type' => $this->trType,
         ];
+        $material = Material::find($material_id);
+        if ($material) {
+            $detail['matl_id'] = $material->id;
+            $detail['matl_code'] = $material->code;
+            $detail['matl_descr'] = $material->descr ?? "";
+            $detail['name'] = $material->name ?? "";
+            $detail['matl_uom'] = $material->MatlUom[0]->id;
+            $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
+            $detail['barcode'] = $material->MatlUom[0]->barcode;
+            $detail['price'] = currencyToNumeric($material->jwl_buying_price) ?? 0;
+            $detail['selling_price'] = currencyToNumeric($material->jwl_selling_price) ?? 0;
+            $detail['qty'] = 1;
+            $detail['amt'] = $detail['qty'] * $detail['price'];
+        }
         array_push($this->input_details, $detail);
-
         $newDetail = end($this->input_details);
         $this->newItems[] = $newDetail;
-        $this->unit_row++;
-        $this->dispatchBrowserEvent('reApplySelect2');
+        $this->countTotalAmount();
+    }
+
+    public function Add()
+    {
+    }
+
+    public function materialSaved($material_id)
+    {
+
     }
 
 
@@ -148,185 +184,27 @@ class Detail extends Component
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
-    }
-
-    public function changeItem($id, $value, $index)
-    {
-        $duplicated = false;
-        $param = explode("-", $id);
-        foreach ($this->input_details as $item_id => $input_details) {
-            if ($item_id != $param[1]) {
-                if (isset($input_details['item_unit_id'])) {
-                    if ($input_details['item_unit_id'] == $value) {
-                        $duplicated = true;
-                    }
-                }
-            }
-        }
-        // if ($duplicated == false) {
-        //     $itemUnit = ItemUnit::findorFail($value);
-        //     $this->input_details[$param[1]]['item_unit_id'] = $itemUnit->id;
-        //     $this->input_details[$param[1]]['detail_item_name'] = $itemUnit->item->name . '-' . $itemUnit->from_unit->name;
-        //     $this->input_details[$param[1]]['item_name'] = $itemUnit->item->name;
-        //     $this->input_details[$param[1]]['unit_name'] = $itemUnit->from_unit->name;
-        //     $this->input_details[$param[1]]['qty'] = 1;
-        //     $indexOfInputs = count($this->input_details) - 1;
-
-        //     if ($index ==  $indexOfInputs) {
-        //         $this->addDetails();
-        //     }
-        // } else {
-        //     $this->dispatchBrowserEvent('notify-swal', ['type' => 'error', 'title' => 'Gagal', 'message' =>  "Produk dan satuan telah dibuat sebelumnya, mohon dicek kembali!"]);
-        //     $this->dispatchBrowserEvent('reApplySelect2');
-        // }
-    }
-
-    public function changeQty($id, $value)
-    {
-        if (isset($this->input_details[$id]['price'])) {
-            $total = $this->input_details[$id]['price'] * $value;
-            $this->input_details[$id]['amt'] = $total;
-            $this->input_details[$id]['sub_total'] = rupiah($total);
-            $this->countTotalAmount();
-            $this->dispatchBrowserEvent('reApplySelect2');
-        }
+        $this->countTotalAmount();
+        $this->SaveWithoutNotification();
     }
 
     public function changePrice($id, $value)
     {
         if (isset($this->input_details[$id]['qty'])) {
-            $total = $this->input_details[$id]['qty'] * $value;
-            $this->input_details[$id]['amt'] = $total;
-            $this->input_details[$id]['sub_total'] = rupiah($total);
+            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
+            $this->input_details[$id]['amt'] = numberFormat($total) ;
             $this->countTotalAmount();
-            $this->dispatchBrowserEvent('reApplySelect2');
         }
     }
 
     public function countTotalAmount()
     {
         $this->total_amount = 0;
-        foreach ($this->input_details as $item_id => $input_details) {
-            if (isset($input_details['item_unit_id'])) {
-                if (isset($input_details['qty']) && isset($input_details['price']))
-                    $this->total_amount += $input_details['price'] * $input_details['qty'];
+        foreach ($this->input_details as $item_id => $input_detail) {
+            if (isset($input_detail['qty']) && isset($input_detail['selling_price'])) {
+                $this->total_amount += toNumberFormatter($input_detail['selling_price']) * toNumberFormatter($input_detail['qty']);
             }
         }
-        $this->inputs['amt']  =  $this->total_amount;
-    }
-
-    public function validateForm()
-    {
-        try {
-            $this->validate();
-        } catch (Exception $e) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.create', ['object' => "PO", 'message' => $e->getMessage()])
-            ]);
-            throw $e;
-        }
-    }
-
-    public function validateLogic()
-    {
-        if (empty($this->input_details)) {
-            throw new Exception("Harap pilih item");
-        }
-        if (!empty($this->input_details)) {
-            $unitIds = array_column($this->input_details, 'item_unit_id');
-            if (count($unitIds) !== count(array_flip($unitIds))) {
-                throw new Exception("Ditemukan duplikasi Item.");
-            }
-        }
-    }
-
-    public function resetForm()
-    {
-        if ($this->actionValue == 'Create') {
-            $this->reset('inputs');
-            $this->reset('input_details');
-            $this->populateDropdowns();
-            $this->total_amount = 0;
-            $this->inputs['tr_date']  = date('Y-m-d');
-            $this->inputs['tr_type']  = $this->trType;
-        }elseif ($this->actionValue == 'Edit') {
-            $this->VersionNumber = $this->object->version_number;
-        }
-    }
-
-    public function Submit()
-    {
-        if ($this->object->status_code === "ACT") {
-            return redirect()->route('purchases_deliveries.detail', ['action' => encryptWithSessionKey('Create'), 'objectId' => encryptWithSessionKey($this->object->id)]);
-        }else{
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => 'Nota tidak bisa dibuat karena status selesai!']);
-        }
-    }
-
-    public function Print()
-    {
-        if ($this->object->status_code === "ACT") {
-            return redirect()->route('purchases_orders.printpdf', ['objectId' => encryptWithSessionKey($this->object->id)]);
-        }else{
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => 'Nota tidak bisa dibuat karena status selesai!']);
-        }
-    }
-
-    public function Save()
-    {
-        $this->validateForm();
-        DB::beginTransaction();
-
-        try {
-            $this->validateLogic();
-
-            if ($this->actionValue == 'Create') {
-                $this->object = OrderHdr::create($this->inputs);
-            } elseif ($this->actionValue == 'Edit') {
-                if ($this->object) {
-                    $this->object->updateObject($this->VersionNumber);
-                    $this->object->update($this->inputs);
-                }
-            }
-
-            $this->saveDetails();
-
-            DB::commit();
-            $this->resetForm();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => Lang::get('generic.string.save', ['object' => "Nota Beli"])
-            ]);
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => Lang::get('generic.error.save', ['object' => "Nota Beli", 'message' => $e->getMessage()])
-            ]);
-        }
-    }
-
-    private function saveDetails()
-    {
-        foreach ($this->deletedItems as $deletedId) {
-            OrderDtl::where('id', $deletedId)->delete();
-        }
-        $this->deletedItems = [];
-
-        foreach ($this->input_details as $inputDetail) {
-            if (isset($inputDetail['id']) && $this->actionValue === 'Edit') {
-                $detail = OrderDtl::find($inputDetail['id']);
-                $detail->update($inputDetail);
-            } else {
-                $inputDetail['trhdr_id'] = $this->object->id;
-                $inputDetail['qty_reff'] = $inputDetail['qty'];
-                OrderDtl::create($inputDetail);
-            }
-        }
+        $this->inputs['amt'] = numberFormat($this->total_amount);
     }
 }

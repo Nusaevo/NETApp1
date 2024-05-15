@@ -5,16 +5,19 @@ namespace App\Http\Livewire\TrdJewel1\Master\Catalogue;
 use App\Http\Livewire\Component\BaseComponent;
 use Livewire\WithPagination;
 use App\Models\TrdJewel1\Master\Material;
-use App\Models\Transactions\CartHdr;
-use App\Models\Transactions\CartDtl;
+use App\Models\TrdJewel1\Transaction\CartHdr;
+use App\Models\TrdJewel1\Transaction\CartDtl;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Carbon;
 use Lang;
+
 class Index extends BaseComponent
 {
     use WithPagination;
+
     public $currencyRate;
 
     public $inputs = [
@@ -49,7 +52,6 @@ class Index extends BaseComponent
 
     protected function onPreRender()
     {
-
     }
 
     public function View($id)
@@ -67,64 +69,94 @@ class Index extends BaseComponent
         $this->resetPage();
     }
 
-    public function addToCart($material_id,$material_code)
+    public function addToCart($material_id, $material_code)
     {
         if ($this->currencyRate == 0) {
-            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            $this->notify('warning', Lang::get('generic.string.currency_needed'));
             return;
         }
-        // $usercode = Auth::check() ? Auth::user()->code : '';
+        $usercode = Auth::check() ? Auth::user()->code : '';
 
-        // // Get the OrderHdr by user code and tr_type = cart
-        // $orderHdr = OrderHdr::where('created_by', $usercode)
-        //                     ->where('tr_type', 'CART')
-        //                     ->first();
+        DB::beginTransaction();
 
-        // // If OrderHdr doesn't exist, create a new one
-        // if (!$orderHdr) {
-        //     $orderHdr = OrderHdr::create([
-        //         'tr_type' => 'CART',
-        //         'tr_date' => Carbon::now(),
-        //         'partner_id' => 0
-        //     ]);
-        // }
+        try {
+            // Find the material by ID
+            $material = Material::find($material_id);
+            if (!$material) {
+                DB::rollback();
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'error',
+                    'message' => 'Material not found'
+                ]);
+                return;
+            }
 
-        // // Get the maximum tr_seq from the current order detail for this order header
-        // $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq');
+            // Calculate the price
+            $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
 
-        // // If there are no existing order details, set the maxTrSeq to 1
-        // if (!$maxTrSeq) {
-        //     $maxTrSeq = 1;
-        // } else {
-        //     // Increment the maxTrSeq by 1
-        //     $maxTrSeq++;
-        // }
+            // Get the cartHdr by user code and tr_type = cart
+            $cartHdr = CartHdr::where('created_by', $usercode)
+                ->where('tr_type', 'C')
+                ->first();
 
-        // // Check if the material is already added to the OrderDtl
-        // $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material_id)->first();
+            // If cartHdr doesn't exist, create a new one
+            if (!$cartHdr) {
+                $cartHdr = CartHdr::create([
+                    'tr_type' => 'C',
+                    'tr_date' => Carbon::now(),
+                    'created_by' => $usercode,
+                ]);
+            }
 
-        // // If OrderDtl doesn't exist for the material, create a new one
-        // if (!$existingOrderDtl) {
-        //     $orderHdr->OrderDtl()->create([
-        //         'trhdr_id' => $orderHdr->id,
-        //         'qty_reff' => 1,
-        //         'matl_id' => $material_id,
-        //         'matl_code' => $material_code,
-        //         'qty' => 1,
-        //         'qty_reff' => 1,
-        //         'tr_type' => 'SO',
-        //         'tr_seq' => $maxTrSeq
-        //     ]);
-        //     $this->dispatchBrowserEvent('notify-swal', [
-        //         'type' => 'success',
-        //         'message' => 'Berhasil menambahkan item ke cart'
-        //     ]);
-        // } else {
-        //     $this->dispatchBrowserEvent('notify-swal', [
-        //         'type' => 'error',
-        //         'message' => 'Item sudah dimasukkan ke cart'
-        //     ]);
-        // }
+            // Get the maximum tr_seq from the current order detail for this order header
+            $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq');
+
+            // If there are no existing order details, set the maxTrSeq to 1
+            if (!$maxTrSeq) {
+                $maxTrSeq = 1;
+            } else {
+                // Increment the maxTrSeq by 1
+                $maxTrSeq++;
+            }
+
+            // Check if the material is already added to the OrderDtl
+            $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material_id)->first();
+
+            // If OrderDtl doesn't exist for the material, create a new one
+            if (!$existingOrderDtl) {
+                $cartHdr->CartDtl()->create([
+                    'trhdr_id' => $cartHdr->id,
+                    'qty_reff' => 1,
+                    'matl_id' => $material_id,
+                    'matl_code' => $material_code,
+                    'qty' => 1,
+                    'qty_reff' => 1,
+                    'tr_type' => 'C',
+                    'tr_seq' => $maxTrSeq,
+                    'price' => $price,
+                ]);
+
+                DB::commit();
+
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'success',
+                    'message' => 'Berhasil menambahkan item ke cart'
+                ]);
+            } else {
+                DB::rollback();
+
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'error',
+                    'message' => 'Item sudah dimasukkan ke cart'
+                ]);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
+            ]);
+        }
     }
-
 }

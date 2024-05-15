@@ -33,11 +33,12 @@ if (!function_exists('generateMenu')) {
                 if ($userGroups->isNotEmpty()) {
                     $configMenus = ConfigMenu::query()
                     ->join('config_rights', 'config_menus.id', '=', 'config_rights.menu_id')
-                    ->whereIn('config_rights.group_id', $userGroups) // No need to pluck 'id' again
+                    ->whereIn('config_rights.group_id', $userGroups)
                     ->where('config_menus.app_code', $app_code)
-                    ->select('config_menus.*', 'config_rights.menu_seq') // Include menu_seq if needed outside
-                    ->distinct() // Ensure unique menus are selected, if there are duplicates due to joins
-                    ->orderBy('config_rights.menu_seq') // Ensures ordering by menu_seq
+                    ->where('config_rights.trustee', 'like', '%R%')
+                    ->select('config_menus.*', 'config_rights.menu_seq')
+                    ->distinct()
+                    ->orderBy('config_rights.menu_seq')
                     ->get();
 
                     if ($configMenus->isEmpty()) {

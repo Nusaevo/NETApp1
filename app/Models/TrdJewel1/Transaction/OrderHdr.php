@@ -87,6 +87,9 @@ class OrderHdr extends BaseModel
     public function getAllColumnValues($attribute)
     {
         if (array_key_exists($attribute, $this->attributes)) {
+            if ($attribute == "curr_rate") {
+                return currencyToNumeric($this->attributes[$attribute]);
+            }
             if ($attribute == "tr_date") {
                 return dateFormat($this->attributes[$attribute], 'd-m-Y');
             }

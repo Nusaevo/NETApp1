@@ -73,7 +73,7 @@
                             @endforeach
                         </x-slot>
                         <x-slot name="footer">
-                            <h3>{{ $this->trans('totalPrice') }}: {{ rupiah($total_amount) }}</h3>
+                            <h3>{{ $this->trans('totalPrice') }}: {{ dollar($total_amount) }}</h3>
                         </x-slot>
                     </x-ui-list-table>
             </x-ui-card>

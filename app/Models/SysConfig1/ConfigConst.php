@@ -8,6 +8,8 @@ class ConfigConst extends BaseModel
     protected $table = 'config_consts';
     protected $connection = 'sys-config1';
 
+    const CURRENCY_DOLLAR_ID = '125';
+    const CURRENCY_RUPIAH_ID = '124';
     public static function boot()
     {
         parent::boot();

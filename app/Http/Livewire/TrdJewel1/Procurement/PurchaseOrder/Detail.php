@@ -9,8 +9,9 @@ use App\Models\TrdJewel1\Master\Partner;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
-use Lang;
+use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Exception;
+use Lang;
 
 
 class Detail extends BaseComponent
@@ -30,6 +31,8 @@ class Detail extends BaseComponent
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
+    public $showModal = false;
+    public $currency = [];
 
     public $returnIds = [];
 
@@ -129,6 +132,10 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            return;
+        }
         if (!empty($this->input_details)) {
             $unitIds = array_column($this->input_details, 'item_unit_id');
             if (count($unitIds) !== count(array_flip($unitIds))) {
@@ -168,10 +175,15 @@ class Detail extends BaseComponent
         $this->total_amount = 0;
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['curr_code'] = "USD";
+        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
     }
 
     public function addDetails($material_id = null)
     {
+        $this->showModal = true;
+        $this->dispatchBrowserEvent('toggle-modal');
         $detail = [
             'tr_type' => $this->trType,
         ];

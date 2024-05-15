@@ -2,6 +2,7 @@
 
 namespace App\Models\TrdJewel1\Transaction;
 
+use App\Models\TrdJewel1\Master\Material;
 use App\Models\Base\BaseModel;
 
 class CartDtl extends BaseModel
@@ -28,6 +29,9 @@ class CartDtl extends BaseModel
     {
         return $query->where('trhdr_id', $id);
     }
-
+    public function Material()
+    {
+        return $this->belongsTo(Material::class, 'matl_id');
+    }
 }
 
