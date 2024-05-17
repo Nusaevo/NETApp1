@@ -29,6 +29,9 @@
                             <tr wire:key="list{{ $key }}">
                                 <x-ui-list-body>
                                     <x-slot name="image">
+                                        <div class="form-option" style="display: flex; align-items: center; margin-left: 10px;">
+                                            <input type="checkbox" wire:model="input_details.{{$key}}.checked" id="option{{ $key }}" style="width: 20px; height: 20px; margin-right: 5px;"/>
+                                        </div>
                                         @php
                                         $imagePath = isset($detail['image_path']) && !empty($detail['image_path']) ? $detail['image_path'] : 'https://via.placeholder.com/300';
                                         @endphp

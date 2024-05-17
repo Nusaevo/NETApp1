@@ -12,12 +12,15 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\Status;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
+use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Exception;
 use Lang;
 
 
 class Detail extends BaseComponent
 {
+    public $trType = "SO";
+
     public $object_detail;
     public $inputs = [];
     public $input_details = [];
@@ -60,6 +63,7 @@ class Detail extends BaseComponent
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
+                $this->input_details[$key]['checked'] = 1;
                 $this->input_details[$key]['id'] = $detail->id;
                 $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
@@ -95,6 +99,11 @@ class Detail extends BaseComponent
 
     protected function onPopulateDropdowns()
     {
+    }
+
+    public function onCheck()
+    {
+
     }
 
     public function onValidateAndSave()
@@ -133,7 +142,26 @@ class Detail extends BaseComponent
     }
     public function Checkout()
     {
+        $selectedItems = array_filter($this->input_details, function ($item) {
+            return $item['checked'] == 1;
+        });
+        // dd($selectedItems);
 
+        // dd($this->inputs, $this->input_details);
+        // dd('test');
+        $order_header = new OrderHdr();
+        $so_inputs = populateArrayFromModel($order_header);
+        $this->inputs['wh_code'] = 18;
+        $this->inputs['status_code'] = STATUS::OPEN;
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['tr_type'] = "SO";
+        $order_header->saveOrder($this->appCode, $this->trType, $so_inputs, $selectedItems, $this->object_detail, true);
+
+        dd($order_header);
+        return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
+            'action' => encryptWithSessionKey('Edit'),
+            'objectId' => encryptWithSessionKey($order_header)
+        ]);
     }
 
     public function onReset()
