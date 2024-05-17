@@ -118,7 +118,7 @@ class ConfigRight extends BaseModel
                     // Update existing right
                     $existingRight = $existingRights[$menuId];
                     $existingRight->update([
-                        'menu_seq' => $permissions['menu_seq'],
+                        'menu_seq' => !empty($permissions['menu_seq']) ? $permissions['menu_seq'] : 0,
                         'trustee' => $trustee,
                         'group_code' => $configGroup->code,
                         'menu_code' => $configMenu->code,
@@ -129,7 +129,7 @@ class ConfigRight extends BaseModel
                     static::create([
                         'group_id' => $configGroup->id,
                         'menu_id' => $menuId,
-                        'menu_seq' => $permissions['menu_seq'],
+                        'menu_seq' => !empty($permissions['menu_seq']) ? $permissions['menu_seq'] : 0,
                         'trustee' => $trustee,
                         'group_code' => $configGroup->code,
                         'menu_code' => $configMenu->code,
