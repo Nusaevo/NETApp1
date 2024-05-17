@@ -150,17 +150,15 @@ class Detail extends BaseComponent
         // dd($this->inputs, $this->input_details);
         // dd('test');
         $order_header = new OrderHdr();
-        $so_inputs = populateArrayFromModel($order_header);
         $this->inputs['wh_code'] = 18;
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = "SO";
-        $order_header->saveOrder($this->appCode, $this->trType, $so_inputs, $selectedItems, $this->object_detail, true);
+        $order_header->saveOrder($this->appCode, $this->trType, $this->inputs, $selectedItems, [], false);
 
-        dd($order_header);
         return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
             'action' => encryptWithSessionKey('Edit'),
-            'objectId' => encryptWithSessionKey($order_header)
+            'objectId' => encryptWithSessionKey($order_header->id)
         ]);
     }
 

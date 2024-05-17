@@ -120,7 +120,8 @@ class OrderHdr extends BaseModel
              $billingTrType = "APB";
              $code = "SALESORDER_LASTID";
          }
-         if($this->tr_id === null)
+         $this->fillAndSanitize($inputs);
+         if($this->tr_id === null || $this->tr_id == 0)
          {
              $configSnum = ConfigSnum::where('app_code', '=', $appCode)
                  ->where('code', '=', $code)
@@ -137,7 +138,6 @@ class OrderHdr extends BaseModel
                  $configSnum->save();
              }
          }
-         $this->fillAndSanitize($inputs);
          $this->save();
          if($createBillingDelivery == true)
          {
