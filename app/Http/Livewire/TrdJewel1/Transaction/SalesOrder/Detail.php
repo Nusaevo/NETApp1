@@ -27,7 +27,6 @@ class Detail extends BaseComponent
     public $input_details = [];
 
     public $partners;
-    public $warehouses;
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
@@ -54,6 +53,9 @@ class Detail extends BaseComponent
         $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
         $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
         $this->inputs = populateArrayFromModel($this->object);
+
+        // dd($this->object,  $this->inputs);
+
         // if ($this->object) {
         //     $this->returnIds = $this->object->ReturnHdr->pluck('id')->toArray();
         // }
@@ -63,7 +65,7 @@ class Detail extends BaseComponent
             $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
             $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
             $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-            $this->input_details[$key]['selling_price'] =int_qty( $detail->Material->jwl_selling_price) ?? 0;
+            $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
             $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
             $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
             $this->input_details[$key]['image_path'] = $detail->Material->Attachment[0]->getUrl();
@@ -103,41 +105,23 @@ class Detail extends BaseComponent
         $this->payments = $data->map(function ($data) {
             return [
                 'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1,
+                'value' => $data->id,
             ];
         })->toArray();
         $this->inputs['payment_terms_id'] = null;
 
     }
 
-    public function refreshWarehouses()
-    {
-        $data = ConfigConst::where('app_code', $this->appCode)
-            ->where('const_group', 'WAREHOUSE_LOC')
-            ->orderBy('seq')
-            ->get();
-        $this->warehouses = $data->map(function ($data) {
-            return [
-                'label' => $data->str1,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['wh_code'] = 18;
-    }
-
-
     protected function onPopulateDropdowns()
     {
         $this->refreshPayment();
         $this->refreshPartner();
-        $this->refreshWarehouses();
     }
 
     protected function rules()
     {
         $rules = [
             'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
-            'inputs.wh_code' =>  'required|integer|min:0|max:9999999999',
             'inputs.tr_date' => 'required',
             'input_details.*.price' => 'required|integer|min:0|max:9999999999',
             'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
@@ -146,14 +130,13 @@ class Detail extends BaseComponent
     }
 
     protected $validationAttributes = [
-        'inputs'                => 'Input',
-        'inputs.tr_date'      => 'Tanggal Transaksi',
-        'inputs.partner_id'      => 'Supplier',
-        'inputs.wh_code'      => 'Warehouse',
-        'input_details.*'              => 'Inputan Barang',
+        'inputs'                  => 'Input',
+        'inputs.tr_date'          => 'Tanggal Transaksi',
+        'inputs.partner_id'       => 'Supplier',
+        'input_details.*'         => 'Inputan Barang',
         'input_details.*.matl_id' => 'Item',
-        'input_details.*.qty' => 'Item Qty',
-        'input_details.*.price' => 'Item Price',
+        'input_details.*.qty'     => 'Item Qty',
+        'input_details.*.price'   => 'Item Price',
     ];
 
     public function onValidateAndSave()
@@ -235,7 +218,7 @@ class Detail extends BaseComponent
                 'matl_id' =>  $this->object_detail[$index]->matl_id,
                 'matl_code' =>  $this->object_detail[$index]->matl_code,
                 'matl_descr' =>  $this->object_detail[$index]->matl_descr,
-                'wh_code' =>   $this->inputs['wh_code'],
+                'wh_code' =>   18,
                 'qty' =>  $this->object_detail[$index]->qty,
                 'qty_reff' =>  $this->object_detail[$index]->qty_reff,
                 'status_code' =>  $this->object_detail[$index]->status_code,
@@ -341,8 +324,16 @@ class Detail extends BaseComponent
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
+        $this->deleteDetailObject();
     }
 
+    public function deleteDetailObject()
+    {
+        foreach($this->deletedItems as $deletedItem)
+        {
+            $this->object_detail->where('id', $deletedItem)->firstOrFail()->delete();
+        }
+    }
 
     public function delete()
     {
@@ -406,9 +397,11 @@ class Detail extends BaseComponent
     public function changePrice($id, $value)
     {
         if (isset($this->input_details[$id]['qty'])) {
-            $total = $this->input_details[$id]['qty'] * $value;
-            $this->input_details[$id]['amt'] = $total;
+            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
+            $this->input_details[$id]['amt'] = numberFormat($total) ;
+            $this->input_details[$id]['price'] = $total;
             $this->countTotalAmount();
+            $this->SaveWithoutNotification();
         }
     }
 

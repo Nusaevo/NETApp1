@@ -124,24 +124,25 @@ class Detail extends BaseComponent
             return $item['checked'] == 1;
         });
 
+        foreach($selectedItems as &$selectedItem)
+        {
+            $selectedItem['price'] = $selectedItem['selling_price'];
+            $selectedItem['amt'] = $selectedItem['selling_price'];
+            $this->deletedItems[] = $selectedItem['id'];
+        }
+
         $order_header = new OrderHdr();
-        $so_inputs = populateArrayFromModel($order_header);
         $this->inputs['wh_code'] = 18;
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = "SO";
         $order_header->saveOrder($this->appCode, $this->trType, $this->inputs, $selectedItems, [], false);
 
-
-        foreach($selectedItems as $selectedItem)
-        {
-            $this->deletedItems[] = $selectedItem['id'];
-        }
         $this->deleteDetailObject();
 
         return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
             'action' => encryptWithSessionKey('Edit'),
-            'objectId' => encryptWithSessionKey($order_header)
+            'objectId' => encryptWithSessionKey($order_header->id)
         ]);
     }
 
