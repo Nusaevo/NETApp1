@@ -106,59 +106,42 @@ class Detail extends BaseComponent
 
     }
 
+    public function deleteDetailObject()
+    {
+        foreach($this->deletedItems as $deletedItem)
+        {
+            $this->object_detail->where('id', $deletedItem)->firstOrFail()->delete();
+        }
+    }
+
     public function onValidateAndSave()
     {
-        // if ($this->inputs['curr_rate'] == 0) {
-        //     $this->notify('warning',Lang::get('generic.string.currency_needed'));
-        //     return;
-        // }
-        // if (!empty($this->input_details)) {
-        //     $unitIds = array_column($this->input_details, 'item_unit_id');
-        //     if (count($unitIds) !== count(array_flip($unitIds))) {
-        //         throw new Exception("Ditemukan duplikasi Item.");
-        //     }
-        // }
-        // if($this->actionValue == 'Edit')
-        // {
-        //     if(!$this->object->isEnableToEdit())
-        //     {
-        //         throw new Exception("Nota ini tidak bisa di edit lagi.");
-        //     }
-        // }
-        // $partner = Partner::find($this->inputs['partner_id']);
-        // $this->inputs['wh_code'] = 18;
-        // $this->inputs['partner_code'] = $partner->code;
-        // $this->inputs['status_code'] = STATUS::OPEN;
-        // $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
-
-        // if (!$this->object->isNew()) {
-        //     foreach ($this->deletedItems as $deletedItemId) {
-        //         $orderDtl = OrderDtl::find($deletedItemId);
-        //         if ($orderDtl) {
-        //             $orderDtl->delete();
-        //         }
-        //     }
-        // }
+        $this->deleteDetailObject();
     }
     public function Checkout()
     {
         $selectedItems = array_filter($this->input_details, function ($item) {
             return $item['checked'] == 1;
         });
-        // dd($selectedItems);
 
-        // dd($this->inputs, $this->input_details);
-        // dd('test');
         $order_header = new OrderHdr();
+        $so_inputs = populateArrayFromModel($order_header);
         $this->inputs['wh_code'] = 18;
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = "SO";
         $order_header->saveOrder($this->appCode, $this->trType, $this->inputs, $selectedItems, [], false);
 
+
+        foreach($selectedItems as $selectedItem)
+        {
+            $this->deletedItems[] = $selectedItem['id'];
+        }
+        $this->deleteDetailObject();
+
         return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
             'action' => encryptWithSessionKey('Edit'),
-            'objectId' => encryptWithSessionKey($order_header->id)
+            'objectId' => encryptWithSessionKey($order_header)
         ]);
     }
 
@@ -220,6 +203,7 @@ class Detail extends BaseComponent
             $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
             $this->input_details[$id]['amt'] = numberFormat($total) ;
             $this->countTotalAmount();
+            $this->SaveWithoutNotification();
         }
     }
 

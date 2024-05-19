@@ -15,6 +15,7 @@
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
                         <x-ui-text-field-search label="Customer" clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field-search label="Payment" clickEvent="" model="inputs.payment_terms_id" :options="$payments" required="true" :action="$actionValue" span="Half" />
                         <x-ui-dropdown-select label="Gudang" clickEvent="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder=""/>
                         {{-- @if ($actionValue === 'Create')

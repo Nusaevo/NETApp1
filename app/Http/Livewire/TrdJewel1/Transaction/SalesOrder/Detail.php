@@ -97,6 +97,19 @@ class Detail extends BaseComponent
         $this->inputs['partner_id'] = null;
     }
 
+    public function refreshPayment()
+    {
+        $data = ConfigConst::GetPaymentTerm($this->appCode);
+        $this->payments = $data->map(function ($data) {
+            return [
+                'label' => $data->str1." - ".$data->str2,
+                'value' => $data->str1,
+            ];
+        })->toArray();
+        $this->inputs['payment_terms_id'] = null;
+
+    }
+
     public function refreshWarehouses()
     {
         $data = ConfigConst::where('app_code', $this->appCode)
@@ -115,6 +128,7 @@ class Detail extends BaseComponent
 
     protected function onPopulateDropdowns()
     {
+        $this->refreshPayment();
         $this->refreshPartner();
         $this->refreshWarehouses();
     }
