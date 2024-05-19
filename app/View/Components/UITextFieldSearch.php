@@ -34,7 +34,6 @@ class UiTextFieldSearch extends Component
         $this->span = $span;
         $this->modelType = $modelType;
         $this->clickEvent = $clickEvent;
-        $this->id = str_replace(['.', '[', ']'], '_', $model);
     }
 
     public function render()

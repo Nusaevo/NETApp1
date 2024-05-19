@@ -1,5 +1,7 @@
-<div class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}"@endif
->
+@php
+$id = str_replace(['.', '[', ']'], '_', $model);
+@endphp
+<div class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}"@endif>
     <!-- Label -->
     @isset($label)
         @if (!empty($label))

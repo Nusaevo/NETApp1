@@ -1,3 +1,6 @@
+@php
+$id = str_replace(['.', '[', ']'], '_', $model);
+@endphp
 <div wire:ignore.self class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}" @endif>
     <!-- Label -->
     @isset($label)

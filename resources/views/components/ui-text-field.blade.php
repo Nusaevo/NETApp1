@@ -1,3 +1,6 @@
+@php
+$id = str_replace(['.', '[', ']'], '_', $model);
+@endphp
 <div class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible==='false' ) style="display: none;" @endif>
     @if (!empty($label))
     <div class="responsive-label">

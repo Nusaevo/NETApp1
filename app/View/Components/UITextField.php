@@ -46,7 +46,6 @@ class UiTextField extends Component
         $this->span = $span;
         $this->onChanged = $onChanged;
         $this->rows = $rows;
-        $this->id = str_replace(['.', '[', ']'], '_', $model);
         $this->clickEvent = $clickEvent;
     }
 
