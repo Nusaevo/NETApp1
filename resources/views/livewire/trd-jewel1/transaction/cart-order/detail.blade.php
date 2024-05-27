@@ -4,6 +4,10 @@
     </div>
     <x-ui-page-card title="{{ $this->trans($actionValue) . ' ' . $this->trans('cart_order') }}" status="{{ $this->trans($status) }}">
 
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#kt_modal_catalogue">
+            Launch demo modal
+        </button>
+
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
@@ -70,8 +74,72 @@
                 cssClass="btn-primary" loading="true" button-name="Checkout" iconPath="add.svg" />
         </x-ui-footer>
     </x-ui-page-card>
-@php
-    // dump($object->id);
-@endphp
+
+    <div class="modal bg-body fade" tabindex="-1" id="kt_modal_catalogue" wire:ignore.self>
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content shadow-none">
+                <div class="modal-header">
+                    <h5 class="modal-title">Katalog Produk</h5>
+
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="ki-duotone ki-cross fs-2x"><span class="path1"></span><span class="path2"></span></i>
+                    </div>
+                </div>
+
+                <div class="modal-body">
+                    <x-ui-expandable-card id="FilterSearchCard" title="Filter" :isOpen="false">
+                        <form wire:submit.prevent="search">
+                            <div class="card-body">
+                                <x-ui-text-field label="Cari Nama Barang" model="inputsearches.name" type="text" action="Edit" placeHolder="" span='Full'/>
+                                <x-ui-text-field label="Cari Nama Bahan" model="inputsearches.description" type="text" action="Edit" placeHolder="" span='Full'/>
+                                <x-ui-text-field label="Harga Jual" model="inputsearches.selling_price1" type="number" action="Edit" placeHolder="" span='Half'/>
+                                <x-ui-text-field label="" model="inputsearches.selling_price2" type="number" action="Edit" placeHolder="" span='Half'/>
+                                <x-ui-text-field label="Code Barang" model="inputsearches.code" type="text" action="Edit" placeHolder="" span='Full'/>
+                            </div>
+
+                            <div class="card-footer d-flex justify-content-end">
+                                <div>
+                                    <x-ui-button clickEvent="search" button-name="Search" loading="true" action="search" cssClass="btn-primary" />
+                                </div>
+                            </div>
+                        </form>
+                    </x-ui-expandable-card>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped gy-7 gs-7">
+                            <thead>
+                                <tr class="fw-semibold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                    <th class="min-w-200px">Name</th>
+                                    <th class="min-w-400px">Code</th>
+                                    <th class="min-w-100px">Desc</th>
+                                    <th class="min-w-200px">Sell Price</th>
+                                    <th class="min-w-200px">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($materials as $material)
+                                    <tr>
+                                        <td>{{ $material->name ?? 'N/A' }}</td>
+                                        <td>{{ $material->code }}</td>
+                                        <td>{{ $material->descr }}</td>
+                                        <td>{{ dollar(currencyToNumeric($material->jwl_selling_price)) }} - {{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate) }}</td>
+                                        <td>
+                                            <x-ui-button clickEvent="addToCart({{ $material->id }}, '{{ $material->code }}')" button-name="AddToCard" loading="true" action="Edit" cssClass="btn-primary" />
+                                        </td>
+                                    </tr>
+                                @endforeach
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    {{-- <button type="button" class="btn btn-primary">Save changes</button> --}}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
