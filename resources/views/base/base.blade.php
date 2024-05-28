@@ -163,5 +163,33 @@
     //     hideLoader();
     // };
 
+    document.addEventListener('shown.bs.modal', function (event) {
+            var zIndex = 1050 + (10 * document.querySelectorAll('.modal.show').length);
+            var modalBackdrop = document.createElement('div');
+            modalBackdrop.className = 'modal-backdrop';
+            modalBackdrop.style.zIndex = zIndex - 1;
+            modalBackdrop.style.opacity = 0.5;
+            document.body.appendChild(modalBackdrop);
+
+            // Atur zIndex modal saat ini
+            event.target.style.zIndex = zIndex;
+        });
+
+        document.addEventListener('hidden.bs.modal', function (event) {
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length) {
+                document.body.removeChild(backdrops[backdrops.length - 1]);
+            }
+
+            // Periksa jika tidak ada modal yang sedang terbuka, hapus semua backdrop yang mungkin tertinggal
+            if (document.querySelectorAll('.modal.show').length === 0) {
+                document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+                    backdrop.remove();
+                });
+                document.body.classList.remove('modal-open');
+                document.body.style.paddingRight = '';
+            }
+        });
+
 </script>
 

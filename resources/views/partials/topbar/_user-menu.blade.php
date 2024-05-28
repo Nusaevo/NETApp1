@@ -195,7 +195,7 @@
 
     <!--begin::Menu item-->
     <div class="menu-item px-5 my-1">
-        <a href="{{ route('SysConfig1.ConfigUser.Detail', ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey(auth()->user()->id)]) }}" class="menu-link px-5">
+        <a href="{{ route('SysConfig1.AccountSetting.Detail', ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey(auth()->user()->id)]) }}" class="menu-link px-5">
             {{ __('Account Settings') }}
         </a>
     </div>

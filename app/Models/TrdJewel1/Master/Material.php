@@ -95,6 +95,16 @@ class Material extends BaseModel
         return null;
     }
 
+    public function hasQuantity()
+    {
+        $exists = DB::table('ivt_bals')
+            ->where('matl_id', $this->id)
+            ->where('qty_oh', '>', 0)
+            ->exists();
+
+        return $exists;
+    }
+
     public function MatlUom()
     {
         return $this->hasMany(MatlUom::class, 'matl_id');

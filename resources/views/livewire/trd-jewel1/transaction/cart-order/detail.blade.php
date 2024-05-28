@@ -4,9 +4,6 @@
     </div>
     <x-ui-page-card title="{{ $this->trans($actionValue) . ' ' . $this->trans('cart_order') }}" status="{{ $this->trans($status) }}">
 
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#kt_modal_catalogue">
-            Launch demo modal
-        </button>
 
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
@@ -22,7 +19,7 @@
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
                                 <x-ui-button clickEvent="Add" button-name="Scan RFID" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
 
-                                <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="">
+                                <button type="button" wire:click="" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="catalogue">
                                     <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
                                 </button>
                             </div>
@@ -75,7 +72,7 @@
         </x-ui-footer>
     </x-ui-page-card>
 
-    <div class="modal bg-body fade" tabindex="-1" id="kt_modal_catalogue" wire:ignore.self>
+    <div class="modal bg-body fade" tabindex="-1" id="catalogue" wire:ignore.self>
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content shadow-none">
                 <div class="modal-header">

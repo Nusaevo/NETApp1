@@ -37,9 +37,11 @@ class BaseComponent extends Component
     public $additionalParam;
     public $customValidationAttributes;
     public $customRules;
+    public $bypassPermissions = false;
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
+        $this->onPreRender();
         $this->additionalParam = $additionalParam;
         $this->appCode =  Session::get('app_code', '');
         // Get all URL segments
@@ -135,7 +137,6 @@ class BaseComponent extends Component
             $this->renderRoute .=  '.index';
         }
         $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
-        $this->onPreRender();
     }
 
     public function trans($key)
@@ -151,6 +152,10 @@ class BaseComponent extends Component
 
     protected function hasValidPermissions()
     {
+        if ($this->bypassPermissions) {
+            return true;
+        }
+
         if ($this->actionValue === 'Edit' && !$this->permissions['update']) {
             $this->actionValue = 'View';
         }

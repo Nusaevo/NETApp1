@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -8,9 +7,7 @@ use App\Providers\RouteServiceProvider;
 use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Session;
 
 class AuthenticatedSessionController extends Controller
@@ -42,7 +39,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming api authentication request.
+     * Handle an incoming API authentication request.
      *
      * @param  \App\Http\Requests\Auth\LoginRequest  $request
      *
@@ -52,16 +49,17 @@ class AuthenticatedSessionController extends Controller
     {
         if (!Auth::attempt($request->only('code', 'password'))) {
             throw ValidationException::withMessages([
-                'code' => ['The provided credentials are incorrect']
+                'code' => ['The provided credentials are incorrect.']
             ]);
         }
 
-        $user = ConfigUser::where('code', $request->email)->first();
-        return response($user);
+        $user = ConfigUser::where('code', $request->code)->firstOrFail();
+
+        return response()->json($user);
     }
 
     /**
-     * Verifies user token.
+     * Verify user token.
      *
      * @param  \Illuminate\Http\Request  $request
      *
@@ -75,12 +73,13 @@ class AuthenticatedSessionController extends Controller
 
         $user = ConfigUser::where('api_token', $request->api_token)->first();
 
-        if(!$user){
+        if (!$user) {
             throw ValidationException::withMessages([
-                'token' => ['Invalid token']
+                'token' => ['Invalid token.']
             ]);
         }
-        return response($user);
+
+        return response()->json($user);
     }
 
     /**
@@ -94,8 +93,8 @@ class AuthenticatedSessionController extends Controller
     {
         Session::forget('session_salt');
         Auth::guard('web')->logout();
-        $request->session()->invalidate();
 
+        $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect('/');

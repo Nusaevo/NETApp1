@@ -17,7 +17,6 @@ class CartHdr extends BaseModel
 
     protected $fillable = [
         'tr_type',
-        'tr_id',
         'tr_date',
         'curr_id',
         'curr_code',

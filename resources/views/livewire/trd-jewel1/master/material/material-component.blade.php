@@ -25,7 +25,7 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
 
                     <div class="button-container">
-                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cameraModal">
+                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cameraModal" data-bs-dismiss="modal">
                             <span style="font-size: 16px;">   {{ $this->trans('btnCamera') }}</span>
                         </button>
                         <x-ui-button clickEvent="addFromGallery" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnGallery') }}" :action="$actionValue" />
@@ -114,9 +114,6 @@ use App\Models\TrdJewel1\Master\Material;
     </x-ui-footer>
 </x-ui-page-card>
 <x-ui-dialog-box id="cameraModal" :width="'2000px'" :height="'2000px'">
-    <x-slot name="title">
-        <h5 id="cameraModalLabel">Select Cameras</h5>
-    </x-slot>
     <x-slot name="body">
         <div class="form-group">
             <label for="cameraSelect1">Camera 1</label>

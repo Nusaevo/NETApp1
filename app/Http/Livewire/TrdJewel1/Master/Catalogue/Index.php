@@ -31,7 +31,10 @@ class Index extends BaseComponent
     public function render()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-        $query = Material::query();
+        $query = Material::query()
+        ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
+        ->where('ivt_bals.qty_oh', '>', 0)
+        ->select('materials.*');
         if (!empty($this->inputs['name'])) {
             $query->where('name', 'like', '%' . $this->inputs['name'] . '%');
         }
@@ -91,6 +94,15 @@ class Index extends BaseComponent
                 return;
             }
 
+            // Check if the material has quantity
+            if (!$material->hasQuantity()) {
+                DB::rollback();
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'error',
+                    'message' => 'Material out of stock'
+                ]);
+                return;
+            }
             // Calculate the price
             $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
 
