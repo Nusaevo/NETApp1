@@ -7,34 +7,67 @@
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
-            <x-ui-tab-view id="myTab" tabs="General, Purchase Return"> </x-ui-tab-view>
+            <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-text-field-search label="Customer" clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="Half" />
-                        <x-ui-text-field-search label="Payment" clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" span="HalfWidth" />
-
-                        {{-- @if ($actionValue === 'Create')
-                            <x-ui-checklist label="Buat Nota Terima Supplier otomatis" model="inputs.app_id" :options="['1' => 'Ya']" :action="$actionValue" span="Full" />
-                        @endif --}}
+                        <x-ui-dropdown-select label="Payment" clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" span="Half" onChanged="SaveWithoutNotification"/>
+                        <x-ui-text-field-search label="Customer" clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="HalfWidth" onChanged="SaveWithoutNotification"/>
                     </x-ui-padding>
-
-                    <x-ui-dialog-box id="MaterialDialogBox" :visible="$materialDialogVisible" :width="'2000px'" :height="'2000px'">
-                        <x-slot name="title">
-                        </x-slot>
-                        <x-slot name="body">
-                            @livewire('trd-jewel1.master.material.material-component', ['actionValue' => $matl_action, 'objectIdValue' => $matl_objectId])
-                        </x-slot>
-                    </x-ui-dialog-box>
 
                     <x-ui-list-table id="Table" title="Barang">
                         <x-slot name="button">
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
-                                <x-ui-text-field label="" model="barcode" type="barcode" required="false" placeHolder="Input Kode Manual" span="Half" style="flex-grow: 1;" onChanged="scanManual" />
                                 <x-ui-button clickEvent="Add" button-name="Scan RFID" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
+
+                                <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
+                                    <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
+                                </button>
+
+                                <x-ui-dialog-box id="catalogue" :width="'2000px'" :height="'2000px'">
+                                    <x-slot name="body">
+                                        <!-- Search Feature -->
+                                        <div class="mb-3 d-flex">
+                                            <input type="text" class="form-control" placeholder="Search by kode produk, deskripsi material dan deskripsi bahan" wire:model.debounce.300ms="searchTerm">
+                                            <x-ui-button :action="$actionValue" clickEvent="searchMaterials" cssClass="btn-primary" loading="true" button-name="Search" iconPath="" />
+                                        </div>
+
+                                        <!-- Table -->
+                                        <x-ui-table id="CatalogueTable">
+                                            <x-slot name="headers">
+                                                <th class="min-w-50px">Select</th>
+                                                <th class="min-w-100px">Image</th>
+                                                <th class="min-w-100px">Detail</th>
+                                                <th class="min-w-100px">Selling Price</th>
+                                            </x-slot>
+
+                                            <x-slot name="rows">
+                                                @foreach($materials as $material)
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" wire:model="selectedMaterials" value="{{ $material->id }}">
+                                                    </td>
+                                                    <td>
+                                                        @php
+                                                        $imagePath = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : 'https://via.placeholder.com/100';
+                                                        @endphp
+                                                        <img src="{{ $imagePath }}" alt="Material Image" style="width: 100px; height: 100px; object-fit: cover;">
+                                                    </td>
+                                                    <td> Kode Produk : {{ $material->code }} <br> Deskripsi Material : {{ $material->name }} <br> Deskripsi Bahan : {{ $material->descr }}</td>
+                                                    <td>{{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate)}}</td>
+                                                </tr>
+                                                @endforeach
+                                            </x-slot>
+                                        </x-ui-table>
+                                    </x-slot>
+                                    <x-slot name="footer">
+                                        <x-ui-button :action="$actionValue" clickEvent="addSelectedToCart" cssClass="btn-primary" loading="true" button-name="Add" iconPath="add.svg" />
+                                    </x-slot>
+                                </x-ui-dialog-box>
+
                             </div>
                         </x-slot>
                         <x-slot name="body">
@@ -83,10 +116,10 @@
             </div> --}}
         </x-ui-tab-view-content>
         <x-ui-footer>
-            @if ($actionValue === 'Edit')
+            {{-- @if ($actionValue === 'Edit')
             <x-ui-button :action="$actionValue" clickEvent="createReturn"
                 cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
-            @endif
+            @endif --}}
             @include('layout.customs.transaction-form-footer')
         </x-ui-footer>
     </x-ui-page-card>

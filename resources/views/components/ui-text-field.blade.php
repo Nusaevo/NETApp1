@@ -80,7 +80,8 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                     }).mask('#' + modelId);
                 });
             </script>
-
+            @elseif(isset($type) && $type === 'image')
+            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="responsive-input form-control @error($model) is-invalid @enderror" accept="image/*" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />
             @else
             <input wire:model.defer="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="responsive-input form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="{{ isset($type) && $type === 'password' ? 'new-password' : 'off' }}" wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />
 

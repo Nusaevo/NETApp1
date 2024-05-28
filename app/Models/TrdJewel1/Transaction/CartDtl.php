@@ -29,9 +29,9 @@ class CartDtl extends BaseModel
     {
         return $query->where('trhdr_id', $id);
     }
+
     public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id');
     }
 }
-

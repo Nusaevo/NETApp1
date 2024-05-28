@@ -24,7 +24,7 @@
 
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal1">
+                            {{-- <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal1">
                                 Open Modal 1
                               </button>
                             <!-- Button to open the first modal -->
@@ -55,7 +55,7 @@
                                 <x-slot name="footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                 </x-slot>
-                            </x-ui-dialog-box>
+                            </x-ui-dialog-box> --}}
 
                             <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-target="#materialDialogBox" data-bs-toggle="modal">
                                 {{ $this->trans('btnAdd') }}

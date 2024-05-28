@@ -25,9 +25,12 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
 
                     <div class="button-container">
-                        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cameraModal" data-bs-dismiss="modal">
+                        {{-- <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#cameraModal" data-bs-dismiss="modal">
                             <span style="font-size: 16px;">   {{ $this->trans('btnCamera') }}</span>
-                        </button>
+                        </button> --}}
+                        <x-ui-button clickEvent="" id="btnCamera" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnCamera') }}" :action="$actionValue" />
+                            <!-- Hidden File Input -->
+                         <input type="file" id="imageInput" accept="image/*" style="display: none;" multiple onchange="handleFileUpload(event)">
                         <x-ui-button clickEvent="addFromGallery" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnGallery') }}" :action="$actionValue" />
                     </div>
                 </div>
@@ -113,7 +116,29 @@ use App\Models\TrdJewel1\Master\Material;
         @endif
     </x-ui-footer>
 </x-ui-page-card>
-<x-ui-dialog-box id="cameraModal" :width="'2000px'" :height="'2000px'">
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('btnCamera').addEventListener('click', triggerFileInput);
+    });
+
+    function triggerFileInput() {
+        document.getElementById('imageInput').click();
+    }
+
+    function handleFileUpload(event) {
+        const files = event.target.files;
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                Livewire.emit('imagesCaptured', e.target.result);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+</script>
+{{-- <x-ui-dialog-box id="cameraModal" :width="'2000px'" :height="'2000px'">
     <x-slot name="body">
         <div class="form-group">
             <label for="cameraSelect1">Camera 1</label>
@@ -135,8 +160,8 @@ use App\Models\TrdJewel1\Master\Material;
     <x-slot name="footer">
         <button type="button" id="captureButton" class="btn btn-primary">Capture</button>
     </x-slot>
-</x-ui-dialog-box>
-
+</x-ui-dialog-box> --}}
+{{--
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const cameraButton = document.querySelector('[data-bs-target="#cameraModal"]');
@@ -285,4 +310,4 @@ use App\Models\TrdJewel1\Master\Material;
             }
         });
     });
-</script>
+</script> --}}

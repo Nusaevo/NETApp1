@@ -5,17 +5,13 @@ namespace App\Http\Livewire\TrdJewel1\Transaction\CartOrder;
 use App\Http\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Transaction\CartHdr;
 use App\Models\TrdJewel1\Transaction\CartDtl;
-use App\Models\TrdJewel1\Master\Partner;
-use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdJewel1\Master\Material;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\Status;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Carbon\Carbon;
 use DB;
-use Exception;
 use Lang;
 
 
@@ -40,10 +36,11 @@ class Detail extends BaseComponent
     public $total_amount = 0;
     public $matl_action = 'Create';
     public $matl_objectId = null;
-    public $showModal = false;
     public $currency = [];
 
     public $returnIds = [];
+    public $searchTerm = '';
+    public $selectedMaterials = [];
 
     protected function onPreRender()
     {
@@ -63,6 +60,11 @@ class Detail extends BaseComponent
             $this->object = CartHdr::withTrashed()->where('created_by', $usercode)->first();
         }
 
+        $this->retrieveMaterials();
+    }
+
+    protected function retrieveMaterials()
+    {
         if ($this->object) {
             $this->object_detail = CartDtl::GetByCartHdr($this->object->id)->orderBy('tr_seq')->get();
             $this->inputs = populateArrayFromModel($this->object);
@@ -107,23 +109,11 @@ class Detail extends BaseComponent
     {
     }
 
-    public function onCheck()
-    {
-
-    }
-
-    public function deleteDetailObject()
-    {
-        foreach($this->deletedItems as $deletedItem)
-        {
-            $this->object_detail->where('id', $deletedItem)->firstOrFail()->delete();
-        }
-    }
-
     public function onValidateAndSave()
     {
-        $this->deleteDetailObject();
+
     }
+
     public function Checkout()
     {
         $selectedItems = array_filter($this->input_details, function ($item) {
@@ -143,9 +133,6 @@ class Detail extends BaseComponent
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = "SO";
         $order_header->saveOrder($this->appCode, $this->trType, $this->inputs, $selectedItems, [], false);
-
-        $this->deleteDetailObject();
-
         return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($order_header->id)
@@ -158,7 +145,6 @@ class Detail extends BaseComponent
 
     public function addDetails($material_id = null)
     {
-        $this->showModal = true;
         $this->dispatchBrowserEvent('toggle-modal');
         $detail = [
             'tr_type' => $this->trType,
@@ -192,17 +178,21 @@ class Detail extends BaseComponent
 
     }
 
-
     public function deleteDetails($index)
     {
         if (isset($this->input_details[$index]['id'])) {
-            $this->deletedItems[] = $this->input_details[$index]['id'];
+            $deletedItemId = $this->input_details[$index]['id'];
+            $orderDtl = CartDtl::withTrashed()->find($deletedItemId);
+            if ($orderDtl) {
+                $orderDtl->forceDelete();
+            }
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
         $this->SaveWithoutNotification();
     }
+
 
     public function changePrice($id, $value)
     {
@@ -225,7 +215,7 @@ class Detail extends BaseComponent
         $this->inputs['amt'] = numberFormat($this->total_amount);
     }
 
-    public function search()
+    public function searchMaterials()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
@@ -234,112 +224,90 @@ class Detail extends BaseComponent
             return;
         }
 
-        $query = Material::query();
-        if (!empty($this->inputsearches['name'])) {
-            $query->where('name', 'like', '%' . $this->inputsearches['name'] . '%');
-        }
-        if (!empty($this->inputsearches['description'])) {
-            $query->where('descr', 'like', '%' . $this->inputsearches['description'] . '%');
-        }
-        if (!empty($this->inputsearches['selling_price1']) && !empty($this->inputsearches['selling_price2'])) {
-            $query->whereBetween('jwl_selling_price', [$this->inputsearches['selling_price1'], $this->inputsearches['selling_price2']]);
-        }
-        if (!empty($this->inputsearches['code'])) {
-            $query->where('code', 'like', '%' . $this->inputsearches['code'] . '%');
+        $query = Material::query()
+            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
+            ->where('ivt_bals.qty_oh', '>', 0)
+            ->select('materials.*');
+
+        if (!empty($this->searchTerm)) {
+            $query->where(function($query) {
+                $query->where('materials.code', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('materials.name', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('materials.descr', 'like', '%' . $this->searchTerm . '%');
+            });
         }
 
-        $this->materials = $query->get();
+        $this->materials =  $query->get();
     }
 
-    public function addToCart($material_id, $material_code)
+    public function addSelectedToCart()
     {
         if ($this->currencyRate == 0) {
             $this->notify('warning', Lang::get('generic.string.currency_needed'));
             return;
         }
+
         $usercode = Auth::check() ? Auth::user()->code : '';
 
         DB::beginTransaction();
 
         try {
-            // Find the material by ID
-            $material = Material::find($material_id);
-            if (!$material) {
-                DB::rollback();
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'error',
-                    'message' => 'Material not found'
-                ]);
-                return;
-            }
+            $cartHdr = CartHdr::firstOrCreate([
+                'created_by' => $usercode,
+                'tr_type' => 'C',
+            ], [
+                'tr_date' => Carbon::now(),
+            ]);
 
-            // Calculate the price
-            $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+            foreach ($this->selectedMaterials as $material_id) {
+                $material = Material::find($material_id);
+                if (!$material) {
+                    continue;
+                }
 
-            // Get the cartHdr by user code and tr_type = cart
-            $cartHdr = CartHdr::where('created_by', $usercode)
-                ->where('tr_type', 'C')
-                ->first();
+                $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material_id)->first();
 
-            // If cartHdr doesn't exist, create a new one
-            if (!$cartHdr) {
-                $cartHdr = CartHdr::create([
-                    'tr_type' => 'C',
-                    'tr_date' => Carbon::now(),
-                    'created_by' => $usercode,
-                ]);
-            }
+                if ($existingOrderDtl) {
+                    DB::rollback();
+                    $this->dispatchBrowserEvent('notify-swal', [
+                        'type' => 'error',
+                        'message' => "Item {$material->code} sudah ada di cart"
+                    ]);
+                    return;
+                }
 
-            // Get the maximum tr_seq from the current order detail for this order header
-            $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq');
-
-            // If there are no existing order details, set the maxTrSeq to 1
-            if (!$maxTrSeq) {
-                $maxTrSeq = 1;
-            } else {
-                // Increment the maxTrSeq by 1
+                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+                $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
                 $maxTrSeq++;
-            }
-
-            // Check if the material is already added to the OrderDtl
-            $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material_id)->first();
-
-            // If OrderDtl doesn't exist for the material, create a new one
-            if (!$existingOrderDtl) {
 
                 $cartHdr->CartDtl()->create([
                     'trhdr_id' => $cartHdr->id,
                     'qty_reff' => 1,
                     'matl_id' => $material_id,
-                    'matl_code' => $material_code,
+                    'matl_code' => $material->code,
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_type' => 'C',
                     'tr_seq' => $maxTrSeq,
                     'price' => $price,
                 ]);
-
-                DB::commit();
-
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'success',
-                    'message' => 'Berhasil menambahkan item ke cart'
-                ]);
-            } else {
-                DB::rollback();
-
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'error',
-                    'message' => 'Item sudah dimasukkan ke cart'
-                ]);
             }
+
+            DB::commit();
+
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => 'Berhasil menambahkan item ke cart'
+            ]);
+            $this->selectedMaterials = [];
+            $this->retrieveMaterials();
         } catch (\Exception $e) {
             DB::rollback();
-
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
             ]);
         }
     }
+
 }

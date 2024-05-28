@@ -19,9 +19,51 @@
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
                                 <x-ui-button clickEvent="Add" button-name="Scan RFID" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
 
-                                <button type="button" wire:click="" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="catalogue">
+                                <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
                                     <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
                                 </button>
+
+                                <x-ui-dialog-box id="catalogue" :width="'2000px'" :height="'2000px'">
+                                    <x-slot name="body">
+                                        <!-- Search Feature -->
+                                        <div class="mb-3 d-flex">
+                                            <input type="text" class="form-control" placeholder="Search by kode produk, deskripsi material dan deskripsi bahan" wire:model.debounce.300ms="searchTerm">
+                                            <x-ui-button :action="$actionValue" clickEvent="searchMaterials" cssClass="btn-primary" loading="true" button-name="Search" iconPath="" />
+                                        </div>
+
+                                        <!-- Table -->
+                                        <x-ui-table id="CatalogueTable">
+                                            <x-slot name="headers">
+                                                <th class="min-w-50px">Select</th>
+                                                <th class="min-w-100px">Image</th>
+                                                <th class="min-w-100px">Detail</th>
+                                                <th class="min-w-100px">Selling Price</th>
+                                            </x-slot>
+
+                                            <x-slot name="rows">
+                                                @foreach($materials as $material)
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" wire:model="selectedMaterials" value="{{ $material->id }}">
+                                                    </td>
+                                                    <td>
+                                                        @php
+                                                        $imagePath = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : 'https://via.placeholder.com/100';
+                                                        @endphp
+                                                        <img src="{{ $imagePath }}" alt="Material Image" style="width: 100px; height: 100px; object-fit: cover;">
+                                                    </td>
+                                                    <td> Kode Produk : {{ $material->code }} <br> Deskripsi Material : {{ $material->name }} <br> Deskripsi Bahan : {{ $material->descr }}</td>
+                                                    <td>{{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate)}}</td>
+                                                </tr>
+                                                @endforeach
+                                            </x-slot>
+                                        </x-ui-table>
+                                    </x-slot>
+                                    <x-slot name="footer">
+                                        <x-ui-button :action="$actionValue" clickEvent="addSelectedToCart" cssClass="btn-primary" loading="true" button-name="Add" iconPath="add.svg" />
+                                    </x-slot>
+                                </x-ui-dialog-box>
+
                             </div>
                             {{-- <x-ui-button clickEvent="Add" button-name="Tambah" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" /> --}}
                         </x-slot>
@@ -30,13 +72,17 @@
                             <tr wire:key="list{{ $key }}">
                                 <x-ui-list-body>
                                     <x-slot name="image">
-                                        <div class="form-option" style="display: flex; align-items: center; margin-left: 10px;">
-                                            <input type="checkbox" wire:model="input_details.{{$key}}.checked" id="option{{ $key }}" style="width: 20px; height: 20px; margin-right: 5px;"/>
+                                        <div class="d-flex align-items-start" style="padding: 10px;">
+                                            <div class="checkbox-list" style="margin-right: 10px;">
+                                                <input type="checkbox" wire:model="input_details.{{$key}}.checked" id="option{{ $key }}"/>
+                                            </div>
+                                            <div class="position-relative" style="width: 200px; height: 200px;">
+                                                @php
+                                                $imagePath = isset($detail['image_path']) && !empty($detail['image_path']) ? $detail['image_path'] : 'https://via.placeholder.com/300';
+                                                @endphp
+                                                <img src="{{ $imagePath }}" alt="Material Photo" style="width: 200px; height: 200px;">
+                                            </div>
                                         </div>
-                                        @php
-                                        $imagePath = isset($detail['image_path']) && !empty($detail['image_path']) ? $detail['image_path'] : 'https://via.placeholder.com/300';
-                                        @endphp
-                                        <img src="{{ $imagePath }}" alt="Material Photo" style="width: 200px; height: 200px;">
                                     </x-slot>
 
                                     <x-slot name="rows">
@@ -65,78 +111,10 @@
             </div>
         </x-ui-tab-view-content>
         <x-ui-footer>
-            <x-ui-button :action="$actionValue" clickEvent="Save"
-                cssClass="btn-primary" loading="true" button-name="Save" iconPath="save.svg" />
+            {{-- <x-ui-button :action="$actionValue" clickEvent="Save"
+                cssClass="btn-primary" loading="true" button-name="Save" iconPath="save.svg" /> --}}
             <x-ui-button :action="$actionValue" clickEvent="Checkout"
                 cssClass="btn-primary" loading="true" button-name="Checkout" iconPath="add.svg" />
         </x-ui-footer>
     </x-ui-page-card>
-
-    <div class="modal bg-body fade" tabindex="-1" id="catalogue" wire:ignore.self>
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content shadow-none">
-                <div class="modal-header">
-                    <h5 class="modal-title">Katalog Produk</h5>
-
-                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
-                        <i class="ki-duotone ki-cross fs-2x"><span class="path1"></span><span class="path2"></span></i>
-                    </div>
-                </div>
-
-                <div class="modal-body">
-                    <x-ui-expandable-card id="FilterSearchCard" title="Filter" :isOpen="false">
-                        <form wire:submit.prevent="search">
-                            <div class="card-body">
-                                <x-ui-text-field label="Cari Nama Barang" model="inputsearches.name" type="text" action="Edit" placeHolder="" span='Full'/>
-                                <x-ui-text-field label="Cari Nama Bahan" model="inputsearches.description" type="text" action="Edit" placeHolder="" span='Full'/>
-                                <x-ui-text-field label="Harga Jual" model="inputsearches.selling_price1" type="number" action="Edit" placeHolder="" span='Half'/>
-                                <x-ui-text-field label="" model="inputsearches.selling_price2" type="number" action="Edit" placeHolder="" span='Half'/>
-                                <x-ui-text-field label="Code Barang" model="inputsearches.code" type="text" action="Edit" placeHolder="" span='Full'/>
-                            </div>
-
-                            <div class="card-footer d-flex justify-content-end">
-                                <div>
-                                    <x-ui-button clickEvent="search" button-name="Search" loading="true" action="search" cssClass="btn-primary" />
-                                </div>
-                            </div>
-                        </form>
-                    </x-ui-expandable-card>
-
-                    <div class="table-responsive">
-                        <table class="table table-striped gy-7 gs-7">
-                            <thead>
-                                <tr class="fw-semibold fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                    <th class="min-w-200px">Name</th>
-                                    <th class="min-w-400px">Code</th>
-                                    <th class="min-w-100px">Desc</th>
-                                    <th class="min-w-200px">Sell Price</th>
-                                    <th class="min-w-200px">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($materials as $material)
-                                    <tr>
-                                        <td>{{ $material->name ?? 'N/A' }}</td>
-                                        <td>{{ $material->code }}</td>
-                                        <td>{{ $material->descr }}</td>
-                                        <td>{{ dollar(currencyToNumeric($material->jwl_selling_price)) }} - {{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate) }}</td>
-                                        <td>
-                                            <x-ui-button clickEvent="addToCart({{ $material->id }}, '{{ $material->code }}')" button-name="AddToCard" loading="true" action="Edit" cssClass="btn-primary" />
-                                        </td>
-                                    </tr>
-                                @endforeach
-
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                    {{-- <button type="button" class="btn btn-primary">Save changes</button> --}}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 

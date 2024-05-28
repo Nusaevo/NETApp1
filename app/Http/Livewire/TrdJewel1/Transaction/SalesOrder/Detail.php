@@ -16,7 +16,11 @@ use App\Models\TrdJewel1\Transaction\DelivDtl;
 use App\Models\TrdJewel1\Transaction\DelivHdr;
 use Lang;
 use Exception;
+use Carbon\Carbon;
 use DB;
+use App\Models\TrdJewel1\Master\GoldPriceLog;
+use Illuminate\Support\Facades\Auth;
+
 
 use function PHPUnit\Framework\throwException;
 
@@ -41,8 +45,11 @@ class Detail extends BaseComponent
 
     public $materialDialogVisible = false;
     public $returnIds = [];
-    public $barcode = '';
-
+    public $searchTerm = '';
+    public $selectedMaterials = [];
+    public $currencyRate = 0;
+    public $currency = [];
+    public $materials = [];
     protected function onPreRender()
     {
 
@@ -68,7 +75,7 @@ class Detail extends BaseComponent
             $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
             $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
             $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-            $this->input_details[$key]['image_path'] = $detail->Material->Attachment[0]->getUrl();
+            $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
         }
         $this->countTotalAmount();
     }
@@ -108,7 +115,7 @@ class Detail extends BaseComponent
                 'value' => $data->id,
             ];
         })->toArray();
-        $this->inputs['payment_terms_id'] = null;
+        $this->inputs['payment_terms_id'] = 129;
 
     }
 
@@ -299,11 +306,6 @@ class Detail extends BaseComponent
 
     public function Add()
     {
-        $this->emit('materialSaved', 211);
-        $this->emit('materialSaved', 212);
-        $this->emit('materialSaved', 213);
-        $this->emit('materialSaved', 214);
-        $this->emit('materialSaved', 215);
     }
 
     public function materialSaved($material_id)
@@ -319,55 +321,16 @@ class Detail extends BaseComponent
     public function deleteDetails($index)
     {
         if (isset($this->input_details[$index]['id'])) {
-            $this->deletedItems[] = $this->input_details[$index]['id'];
+            $deletedItemId = $this->input_details[$index]['id'];
+            $orderDtl = OrderDtl::withTrashed()->find($deletedItemId);
+            if ($orderDtl) {
+                $orderDtl->forceDelete();
+            }
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
-        $this->deleteDetailObject();
-    }
-
-    public function deleteDetailObject()
-    {
-        foreach($this->deletedItems as $deletedItem)
-        {
-            $this->object_detail->where('id', $deletedItem)->firstOrFail()->delete();
-        }
-    }
-
-    public function delete()
-    {
-        try {
-            if(!$this->object->isEnableToEdit())
-            {
-                throw new Exception("Nota ini tidak bisa di edit lagi.");
-            }
-            $this->updateVersionNumber();
-            if (isset($this->object->status_code)) {
-                    $this->object->status_code =  Status::DEACTIVATED;
-                }
-                $this->object->save();
-                $this->object->delete();
-                $messageKey = 'generic.string.disable';
-            $this->object->save();
-            $this->notify('success', Lang::get($messageKey));
-        } catch (Exception $e) {
-            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        }
-
-          return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-    }
-
-    public function createReturn()
-    {
-        if (!$this->object->isEnableToEdit()) {
-            throw new Exception("Nota ini tidak bisa di edit lagi.");
-        }
-
-        return redirect()->route('TrdJewel1.Transaction.SalesReturn.Detail', [
-            'action' => encryptWithSessionKey('Create'),
-            'objectId' => encryptWithSessionKey($this->object->id)
-        ]);
+        $this->SaveWithoutNotification();
     }
 
     public function scanBarcode()
@@ -414,5 +377,100 @@ class Detail extends BaseComponent
             }
         }
         $this->inputs['amt'] = $this->total_amount;
+    }
+
+    public function searchMaterials()
+    {
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($this->currencyRate == 0) {
+            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            return;
+        }
+
+        $query = Material::query()
+            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
+            ->where('ivt_bals.qty_oh', '>', 0)
+            ->select('materials.*');
+
+        if (!empty($this->searchTerm)) {
+            $query->where(function($query) {
+                $query->where('materials.code', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('materials.name', 'like', '%' . $this->searchTerm . '%')
+                      ->orWhere('materials.descr', 'like', '%' . $this->searchTerm . '%');
+            });
+        }
+
+        $this->materials =  $query->get();
+    }
+
+    public function addSelectedToCart()
+    {
+        if ($this->currencyRate == 0) {
+            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            return;
+        }
+
+        $usercode = Auth::check() ? Auth::user()->code : '';
+
+        DB::beginTransaction();
+
+        try {
+            $cartHdr = OrderHdr::firstOrCreate([
+                'created_by' => $usercode,
+                'tr_type' => 'C',
+            ], [
+                'tr_date' => Carbon::now(),
+            ]);
+
+            foreach ($this->selectedMaterials as $material_id) {
+                $material = Material::find($material_id);
+                if (!$material) {
+                    continue;
+                }
+
+                $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material_id)->first();
+
+                if ($existingOrderDtl) {
+                    DB::rollback();
+                    $this->dispatchBrowserEvent('notify-swal', [
+                        'type' => 'error',
+                        'message' => "Item {$material->code} sudah ada di cart"
+                    ]);
+                    return;
+                }
+
+                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+                $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
+                $maxTrSeq++;
+
+                $cartHdr->CartDtl()->create([
+                    'trhdr_id' => $cartHdr->id,
+                    'qty_reff' => 1,
+                    'matl_id' => $material_id,
+                    'matl_code' => $material->code,
+                    'qty' => 1,
+                    'qty_reff' => 1,
+                    'tr_type' => 'C',
+                    'tr_seq' => $maxTrSeq,
+                    'price' => $price,
+                ]);
+            }
+
+            DB::commit();
+
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => 'Berhasil menambahkan item ke cart'
+            ]);
+            $this->selectedMaterials = [];
+            $this->retrieveMaterials();
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
+            ]);
+        }
     }
 }
