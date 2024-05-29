@@ -3,7 +3,8 @@
 return [
     'cart_order' => 'Cart Order',
     'date' => 'Transaction Date',
-    'partner' => 'Supplier',
+    'partner' => 'Customer',
+    'payment' => 'Payment',
     'warehouse' => 'Warehouse',
     'product' => 'Product',
     'qty' => 'Quantity',

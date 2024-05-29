@@ -14,8 +14,8 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-dropdown-select label="Payment" clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" span="Half" onChanged="SaveWithoutNotification"/>
-                        <x-ui-text-field-search label="Customer" clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="HalfWidth" onChanged="SaveWithoutNotification"/>
+                        <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" span="Half" onChanged="SaveWithoutNotification"/>
+                        <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="HalfWidth" onChanged="SaveWithoutNotification"/>
                     </x-ui-padding>
 
                     <x-ui-list-table id="Table" title="Barang">

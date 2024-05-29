@@ -3,7 +3,8 @@
 return [
     'cart_order' => 'Cart Order',
     'date' => 'Tanggal Transaksi',
-    'partner' => 'Supplier',
+    'partner' => 'Customer',
+    'payment' => 'Pembayaran',
     'warehouse' => 'Gudang',
     'product' => 'Produk',
     'qty' => 'Kuantitas',

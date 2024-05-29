@@ -58,7 +58,6 @@ class LoginRequest extends FormRequest
         }
         $salt = Str::random(40);
         $appKey = config('app.key');
-        RateLimiter::clear($this->throttleKey());
         Session::put('session_salt', $salt . $appKey);
 
         $appIds = getAppIds();
@@ -70,6 +69,7 @@ class LoginRequest extends FormRequest
                 Session::put('app_code', $firstAppCode);
             }
         }
+        RateLimiter::clear($this->throttleKey());
     }
 
     /**

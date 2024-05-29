@@ -37,8 +37,6 @@ class Detail extends BaseComponent
 
     public $total_amount = 0;
     public $trType = "SO";
-    public $delivTrType = "SD";
-    public $billingTrType = "ARB";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -52,7 +50,22 @@ class Detail extends BaseComponent
     public $materials = [];
     protected function onPreRender()
     {
-
+        $this->customValidationAttributes  = [
+            'inputs.tr_date'      => $this->trans('tr_date'),
+            'inputs.payment_term_id'      => $this->trans('payment'),
+            'inputs.partner_id'      => $this->trans('partner'),
+            'input_details.*'              => $this->trans('product'),
+            'input_details.*.matl_id' => $this->trans('product'),
+            'input_details.*.qty' => $this->trans('qty'),
+            'input_details.*.price' => $this->trans('price'),
+        ];
+        $this->customRules  = [
+            'inputs.payment_term_id' =>  'required',
+            'inputs.partner_id' =>  'required',
+            // 'inputs.wh_code' =>  'required',
+            'inputs.tr_date' => 'required',
+            'input_details.*.price' => 'required',
+        ];
     }
 
     protected function onLoadForEdit()
@@ -125,27 +138,6 @@ class Detail extends BaseComponent
         $this->refreshPartner();
     }
 
-    protected function rules()
-    {
-        $rules = [
-            'inputs.partner_id' =>  'required|integer|min:0|max:9999999999',
-            'inputs.tr_date' => 'required',
-            'input_details.*.price' => 'required|integer|min:0|max:9999999999',
-            'input_details.*.qty' => 'required|integer|min:0|max:9999999999',
-        ];
-        return $rules;
-    }
-
-    protected $validationAttributes = [
-        'inputs'                  => 'Input',
-        'inputs.tr_date'          => 'Tanggal Transaksi',
-        'inputs.partner_id'       => 'Supplier',
-        'input_details.*'         => 'Inputan Barang',
-        'input_details.*.matl_id' => 'Item',
-        'input_details.*.qty'     => 'Item Qty',
-        'input_details.*.price'   => 'Item Price',
-    ];
-
     public function onValidateAndSave()
     {
         if (empty($this->input_details)) {
@@ -157,111 +149,12 @@ class Detail extends BaseComponent
                 throw new Exception("Ditemukan duplikasi Item.");
             }
         }
-        if($this->actionValue == 'Edit')
-        {
-            if(!$this->object->isEnableToEdit())
-            {
-                throw new Exception("Nota ini tidak bisa di edit lagi.");
-            }
-        }
         $application = Partner::find($this->inputs['partner_id']);
+        $this->inputs['wh_code'] = 18;
         $this->inputs['partner_code'] = $application->code;
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->fillAndSanitize($this->inputs);
-        $this->object->save();
-        $delivHdr = DelivHdr::firstOrNew(['tr_id' => $this->object->tr_id,'tr_type' => $this->delivTrType]);
-        $delivHdr->fillAndSanitize([
-            'tr_id' => $this->object->tr_id,
-            'tr_type' =>  $this->delivTrType,
-            'tr_date' => $this->object->tr_date,
-            'reff_code' => $this->object->reff_code,
-            'partner_id' => $this->object->partner_id,
-            'partner_code' => $this->object->partner_code,
-            'deliv_by' => $this->inputs['deliv_by'] ?? '',
-            'status_code' => $this->object->status_code,
-        ]);
-        $delivHdr->save();
-
-        $billingHdr = BillingHdr::firstOrNew(['tr_id' => $this->object->tr_id,'tr_type' =>  $this->billingTrType]);
-        $billingHdr->fillAndSanitize([
-            'tr_id' => $this->object->tr_id,
-            'tr_type' => $this->billingTrType,
-            'tr_date' => $this->object->tr_date,
-            'reff_code' => $this->object->reff_code,
-            'partner_id' => $this->object->partner_id,
-            'partner_code' => $this->object->partner_code,
-            'payment_term_id' => 1,
-            'payment_term' => '',
-            'payment_due_days' => 0,
-            'status_code' => $this->object->status_code,
-        ]);
-        $billingHdr->save();
-
-        foreach ($this->input_details as $index => $inputDetail) {
-            if (!isset($this->object_detail[$index])) {
-                $this->object_detail[$index] = new OrderDtl();
-            }
-            $inputDetail['tr_id'] = $this->object->tr_id;
-            $inputDetail['tr_seq'] = $index + 1;
-            $inputDetail['trhdr_id'] = $this->object->id;
-            $inputDetail['qty_reff'] = $inputDetail['qty'];
-            $this->object_detail[$index]->fillAndSanitize($inputDetail);
-            $this->object_detail[$index]->save();
-
-            $delivDtl = DelivDtl::firstOrNew([
-                'trhdr_id' =>  $this->object_detail[$index]->trhdr_id,
-                'tr_seq' =>  $this->object_detail[$index]->tr_seq,
-                'tr_type' => $this->delivTrType,
-            ]);
-            $delivDtl->fillAndSanitize([
-                'trhdr_id' =>  $this->object_detail[$index]->trhdr_id,
-                'tr_type' =>  $this->delivTrType,
-                'tr_id' =>  $this->object->tr_id,
-                'tr_seq' =>  $this->object_detail[$index]->tr_seq,
-                'reffdtl_id' =>  $this->object_detail[$index]->id,
-                'reffhdrtr_type' =>  $this->object_detail[$index]->tr_type,
-                'reffhdrtr_id' =>  $this->object->tr_id,
-                'reffdtltr_seq' =>  $this->object_detail[$index]->tr_seq,
-                'matl_id' =>  $this->object_detail[$index]->matl_id,
-                'matl_code' =>  $this->object_detail[$index]->matl_code,
-                'matl_descr' =>  $this->object_detail[$index]->matl_descr,
-                'wh_code' =>   18,
-                'qty' =>  $this->object_detail[$index]->qty,
-                'qty_reff' =>  $this->object_detail[$index]->qty_reff,
-                'status_code' =>  $this->object_detail[$index]->status_code,
-            ]);
-            $delivDtl->save();
-            $billingDtl = BillingDtl::firstOrNew([
-                'trhdr_id' => $delivDtl->trhdr_id,
-                'tr_seq' => $delivDtl->tr_seq,
-                'tr_type' => $this->billingTrType,
-            ]);
-            $billingDtl->fillAndSanitize([
-                'trhdr_id' => $delivDtl->trhdr_id,
-                'tr_type' => $this->billingTrType,
-                'tr_id' => $delivDtl->tr_id,
-                'tr_seq' => $delivDtl->tr_seq,
-                'dlvdtl_id' => $delivDtl->id,
-                'dlvhdrtr_type' => $delivDtl->tr_type,
-                'dlvhdrtr_id' => $delivDtl->tr_id,
-                'dlvdtltr_seq' => $delivDtl->tr_seq,
-                'matl_id' => $delivDtl->matl_id,
-                'matl_code' => $delivDtl->matl_code,
-                'matl_uom' => $this->object_detail[$index]->matl_uom,
-                'descr' => '',
-                'qty' => $delivDtl->qty,
-                'qty_uom' => '',
-                'qty_base' => $delivDtl->qty,
-                'price' =>  $this->object_detail[$index]->price,
-                'price_uom' => '',
-                'price_base' =>  $this->object_detail[$index]->trhdr_id,
-                'amt' =>  $this->object_detail[$index]->amt,
-                'amt_reff' =>  $this->object_detail[$index]->amt,
-                'status_code' =>  $this->object_detail[$index]->status_code,
-            ]);
-            $billingDtl->save();
-        }
-
+        // $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
                 $this->object_detail::find($deletedItemId)->delete();
@@ -275,9 +168,13 @@ class Detail extends BaseComponent
         $this->reset('input_details');
         $this->object = new OrderHdr();
         $this->object_detail = [];
+        $this->refreshPartner();
         $this->total_amount = 0;
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['curr_code'] = "USD";
+        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
     }
 
     public function addDetails($material_id = null)
