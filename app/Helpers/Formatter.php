@@ -140,7 +140,20 @@ if (!function_exists('sanitizeDate')) {
     }
 }
 
+if (!function_exists('getSubdomain')) {
+    function getSubdomain($url)
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        $hostParts = explode('.', $host);
 
+        // Consider 'example.com' or 'www.example.com' to have no subdomain
+        if (count($hostParts) > 2) {
+            return $hostParts[0];
+        }
+
+        return null;
+    }
+}
 
 // FUNGSI TERBILANG OLEH : MALASNGODING.COM
 // WEBSITE : WWW.MALASNGODING.COM

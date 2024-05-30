@@ -14,20 +14,28 @@
 >
 
     {{--begin::Brand--}}
-    <div class="aside-logo flex-column-auto d-flex justify-content-end" id="kt_aside_logo">
+    <div class="aside-logo flex-column-auto d-flex justify-content-start" id="kt_aside_logo">
+        <a href="{{ $theme->getPageUrl('') }}" >
+            @php
+                $appcode = Session::get('app_code', '');
+                $imagePath = 'customs/logos/' . $appcode . '.png';
+            @endphp
+            <img alt="Logo" src="{{ asset($imagePath) }}" class="h-45px"/>
+        </a>
         @if (theme()->getOption('layout', 'aside/minimize') === true)
             {{--begin::Aside toggler--}}
-            <div id="kt_aside_toggle" class="btn btn-icon w-auto px-0 btn-active-color-primary aside-toggle"
+            {{-- <div id="kt_aside_toggle" class="btn btn-icon w-auto px-0 btn-active-color-primary aside-toggle"
                 data-kt-toggle="true"
                 data-kt-toggle-state="active"
                 data-kt-toggle-target="body"
                 data-kt-toggle-name="aside-minimize"
             >
                 {!! theme()->getSvgIcon("icons/duotune/arrows/arr079.svg", "svg-icon-1 rotate-180") !!}
-            </div>
+            </div> --}}
             {{--end::Aside toggler--}}
         @endif
     </div>
+
 
 
     {{--end::Brand--}}

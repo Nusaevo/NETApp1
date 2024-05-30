@@ -20,7 +20,7 @@ class ApplicationComponent extends Component
         $applicationsData = ConfigAppl::whereIn('id', $appIds)->orderBy('id')->get();
         $this->applications = $applicationsData->map(function ($data) {
             return [
-                'label' => $data->code . ' - ' . $data->name,
+                'label' => $data->name,
                 'value' => $data->code,
             ];
         })->toArray();

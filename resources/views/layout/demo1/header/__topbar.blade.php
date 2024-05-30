@@ -103,13 +103,13 @@ $btnIconClass = "svg-icon-1";
 @endif
 
 <!--begin::Header menu toggle-->
-@if(theme()->getOption('layout', 'header/left') === 'menu')
+{{-- @if(theme()->getOption('layout', 'header/left') === 'menu')
 <div class="d-flex align-items-center d-lg-none ms-2 me-n3" data-bs-toggle="tooltip" title="Show header menu">
     <div class="btn btn-icon btn-active-light-primary w-30px h-30px w-md-40px h-md-40px" id="kt_header_menu_mobile_toggle">
         {!! theme()->getSvgIcon("icons/duotune/text/txt001.svg", "svg-icon-1") !!}
     </div>
 </div>
-@endif
+@endif --}}
 <!--end::Header menu toggle-->
 </div>
 <!--end::Toolbar wrapper-->

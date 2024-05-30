@@ -37,12 +37,24 @@ class Attachment extends Model
         return null;
     }
 
-    public static function saveAttachmentByFileName($imageDataUrl, $objectId, $objectType, $filename)
+    public static function saveAttachmentByFileName($imageDataUrl, $objectId = null, $objectType, $filename)
     {
-        $attachmentsPath = public_path('storage/attachments/' . $objectId);
+        // Create attachment data
+        $attachmentData = [
+            'name' => $filename,
+            'content_type' => 'image/jpeg',
+            'extension' => 'jpg',
+            'attached_objectid' => $objectId,
+            'attached_objecttype' => $objectType,
+        ];
+
+        // Create attachment directory if it doesn't exist
+        $attachmentsPath = public_path('storage/attachments/'.$objectType. "/" . $objectId );
         if (!File::isDirectory($attachmentsPath)) {
             File::makeDirectory($attachmentsPath, 0777, true, true);
         }
+
+        // Decode image data
         $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
         $imageData = base64_decode($imageData);
 
@@ -51,31 +63,26 @@ class Attachment extends Model
                                     ->where('attached_objecttype', $objectType)
                                     ->where('name', $filename)
                                     ->first();
-        $filePath = 'storage/attachments/' . $objectId . '/' . $filename;
+        $filePath = 'storage/attachments/'.$objectType."/" . $objectId . '/' . $filename;
         $fullPath = $attachmentsPath . '/' . $filename;
+
         if ($existingAttachment) {
             // Update existing attachment
             $existingAttachment->path = $filePath;
-            $existingAttachment->name = $filename;
-            $existingAttachment->content_type = 'image/jpeg';
-            $existingAttachment->extension = 'jpg';
             $existingAttachment->save();
             return $existingAttachment->path;
         } else {
-            // Generate file path
-
-
+            // Save new file and attachment record
             if (file_put_contents($fullPath, $imageData)) {
-                $attachmentData = [
-                    'name' => $filename,
-                    'path' => $filePath,
-                    'content_type' => 'image/jpeg',
-                    'extension' => 'jpg',
-                    'attached_objectid' => $objectId,
-                    'attached_objecttype' => $objectType,
-                ];
-                self::create($attachmentData);
-                return $filePath;
+                $attachmentData['path'] = $filePath;
+                $newAttachment = self::create($attachmentData);
+
+                // Update attached_objectid if it was null
+                if (is_null($objectId)) {
+                    $newAttachment->attached_objectid = $newAttachment->id;
+                    $newAttachment->save();
+                }
+                return $newAttachment->path;
             }
         }
 
@@ -116,7 +123,6 @@ class Attachment extends Model
             $seq++;
         }
     }
-
 
     public function getUrl()
     {
