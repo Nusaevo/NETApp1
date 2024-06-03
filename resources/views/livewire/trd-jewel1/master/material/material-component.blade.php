@@ -43,7 +43,7 @@ use App\Models\TrdJewel1\Master\Material;
                             </button>
                             <button class="btn btn-secondary w-100 text-left" onclick="anotherFunction()">
                                 <i class="bi bi-box-arrow-in-right"></i>
-                                {{ $this->trans('btnAnotherAction') }}
+                                {{ $this->trans('btnStorage') }}
                             </button>
                         </div>
                     </div>
