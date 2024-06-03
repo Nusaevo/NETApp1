@@ -26,29 +26,29 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::query()
-            ->where('tr_type', 'SO');
+        return OrderHdr::with('OrderDtl')->where('tr_type', 'SO');
     }
     public function columns(): array
     {
         return [
-            Column::make("Nota", "tr_id")
+            Column::make($this->trans("date"), "tr_date")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("tr_id"), "tr_id")
                 ->sortable()
                 ->searchable(),
-            Column::make("Tanggal Transaksi", "tr_date")
+            Column::make($this->trans("customer"), "Partner.name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Supplier", "Partner.name")
-                ->searchable()
+            Column::make("Total Quantity", "total_qty")
+                ->label(function($row) {
+                    return  currencyToNumeric($row->total_qty);
+                })
                 ->sortable(),
-            Column::make("Status", "status_code")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
-                }),
-            Column::make("Tanggal dibuat", "created_at")
-                ->searchable()
+            Column::make("Total Amount", "total_amt")
+                ->label(function($row) {
+                    return globalCurrency(currencyToNumeric($row->total_amt));
+                })
                 ->sortable(),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
@@ -62,7 +62,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
                     ]);
                 }),
-            Column::make('', 'id')
+                Column::make('', 'id')
                 ->format(function ($value, $row, Column $column) {
                     // Tombol pertama (Nota Terima Supplier atau Print, tergantung pada status)
                     // if ($row->status_code === Status::ACTIVE) {
@@ -70,7 +70,7 @@ class IndexDataTable extends BaseDataTableComponent
                     // } else {
                     //     $firstButton = '';
                     // }
-                    $secondButton = '<a href="' . route('TrdJewel1.Procurement.PurchaseOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
+                    $secondButton = '<a href="' . route('TrdJewel1.Transaction.SalesOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
 
                     return "<div class='text-center'>". $secondButton."</div>";
                 })->html(),

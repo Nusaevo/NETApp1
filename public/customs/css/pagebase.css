@@ -778,3 +778,38 @@ div[wire\:loading].loading-overlay {
 .gallery-btn-delete-selected {
     display: none;
 }
+
+.button-container {
+    position: relative;
+    display: inline-block;
+}
+
+.popup {
+    position: absolute;
+    top: 50px; /* Adjust based on the height of the button */
+    right: 0;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    width: 200px; /* Adjust width as needed */
+    padding: 10px;
+}
+
+.popup button {
+    display: block;
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
+}
+
+.popup button:hover {
+    background-color: #f0f0f0;
+}
+
+.popup button i {
+    margin-right: 10px;
+}

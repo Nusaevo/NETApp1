@@ -18,10 +18,10 @@ class OrderDtl extends BaseModel
         static::deleting(function ($orderDtl) {
             DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
                     ->where('tr_seq', $orderDtl->tr_seq)
-                    ->delete();
+                    ->forceDelete();
             BillingDtl::where('trhdr_id', $orderDtl->trhdr_id)
                       ->where('tr_seq', $orderDtl->tr_seq)
-                      ->delete();
+                      ->forceDelete();
         });
     }
 

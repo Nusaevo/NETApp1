@@ -56,27 +56,42 @@ class ConfigRight extends BaseModel
             $userId = Auth::id();
 
             // First, get the user's group IDs
-            $userGroupIds = ConfigUser::find($userId)
-            ->ConfigGroup()
-            ->pluck('config_groups.id');
+            // $userGroupIds = ConfigUser::find($userId)
+            // ->ConfigGroup()
+            // ->pluck('config_groups.id');
 
-            if ($userGroupIds->isEmpty()) {
+            // if ($userGroupIds->isEmpty()) {
+            //     return $permissions;
+            // }
+            // // Find the menu based on the menu_link and app_code
+            // $configMenu = ConfigMenu::where('menu_link', $menu)
+            //                         ->whereHas('ConfigAppl', function ($query) use ($appCode) {
+            //                             $query->where('app_code', $appCode);
+            //                         })
+            //                         ->first();
+            // if (!$configMenu) {
+            //     return $permissions;
+            // }
+
+            // // Now, find the ConfigRight based on the user's group and the found menu
+            // $configRight = ConfigRight::whereIn('group_id', $userGroupIds)
+            //                         ->where('menu_id', $configMenu->id)
+            //                         ->first();
+
+
+            $configRight = ConfigRight::join('config_menus', 'config_rights.menu_id', '=', 'config_menus.id')
+            ->join('config_appls', 'config_menus.app_id', '=', 'config_appls.id')
+            ->join('config_grpusers', 'config_rights.group_id', '=', 'config_grpusers.group_id')
+            ->join('config_users', 'config_grpusers.user_id', '=', 'config_users.id')
+            ->where('config_users.id', $userId)
+            ->where('config_menus.menu_link', $menu)
+            ->where('config_appls.code', $appCode)
+            ->select('config_rights.*')
+            ->first();
+            if (!$configRight) {
                 return $permissions;
             }
-            // Find the menu based on the menu_link and app_code
-            $configMenu = ConfigMenu::where('menu_link', $menu)
-                                    ->whereHas('ConfigAppl', function ($query) use ($appCode) {
-                                        $query->where('app_code', $appCode);
-                                    })
-                                    ->first();
-            if (!$configMenu) {
-                return $permissions;
-            }
 
-            // Now, find the ConfigRight based on the user's group and the found menu
-            $configRight = ConfigRight::whereIn('group_id', $userGroupIds)
-                                    ->where('menu_id', $configMenu->id)
-                                    ->first();
             if ($configRight) {
                 // Parsing the trustee string
                 $trustee = $configRight->trustee;

@@ -4,7 +4,6 @@ namespace App\Models\Base;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\File;
 
 class Attachment extends Model
@@ -39,6 +38,11 @@ class Attachment extends Model
 
     public static function saveAttachmentByFileName($imageDataUrl, $objectId = null, $objectType, $filename)
     {
+        // Get the upload path from .env
+        $uploadPath = config('upload_path');
+        // Normalize the upload path to use the correct directory separator
+        $normalizedUploadPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $uploadPath);
+
         // Create attachment data
         $attachmentData = [
             'name' => $filename,
@@ -49,7 +53,7 @@ class Attachment extends Model
         ];
 
         // Create attachment directory if it doesn't exist
-        $attachmentsPath = public_path('storage/attachments/'.$objectType. "/" . $objectId );
+        $attachmentsPath = $normalizedUploadPath . DIRECTORY_SEPARATOR . $objectType . DIRECTORY_SEPARATOR . $objectId;
         if (!File::isDirectory($attachmentsPath)) {
             File::makeDirectory($attachmentsPath, 0777, true, true);
         }
@@ -63,8 +67,8 @@ class Attachment extends Model
                                     ->where('attached_objecttype', $objectType)
                                     ->where('name', $filename)
                                     ->first();
-        $filePath = 'storage/attachments/'.$objectType."/" . $objectId . '/' . $filename;
-        $fullPath = $attachmentsPath . '/' . $filename;
+        $filePath = $objectType . DIRECTORY_SEPARATOR . $objectId . DIRECTORY_SEPARATOR . $filename;
+        $fullPath = $attachmentsPath . DIRECTORY_SEPARATOR . $filename;
 
         if ($existingAttachment) {
             // Update existing attachment
@@ -97,9 +101,12 @@ class Attachment extends Model
             ->first();
 
         if ($attachment) {
-            $path = $attachment->path;
-            if (File::exists(public_path($path))) {
-                File::delete(public_path($path));
+            $uploadPath = config('upload_path');
+            $normalizedUploadPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $uploadPath);
+            $path = $normalizedUploadPath . DIRECTORY_SEPARATOR . $attachment->path;
+
+            if (File::exists($path)) {
+                File::delete($path);
             }
             $attachment->delete();
 
@@ -107,6 +114,14 @@ class Attachment extends Model
         }
 
         return false;
+    }
+
+    public function getUrl()
+    {
+        $uploadPath = config('upload_path');
+        $relativePath = str_replace(public_path() . DIRECTORY_SEPARATOR, '', storage_path($uploadPath));
+        $urlPath = str_replace(['\\'], '/', $relativePath . '/' . $this->path);
+        return asset($urlPath);
     }
 
     protected static function reSortSequences($objectId, $objectType)
@@ -122,10 +137,5 @@ class Attachment extends Model
             $attachment->save();
             $seq++;
         }
-    }
-
-    public function getUrl()
-    {
-        return asset($this->path);
     }
 }

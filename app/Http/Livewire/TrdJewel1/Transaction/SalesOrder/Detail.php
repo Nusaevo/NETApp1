@@ -60,8 +60,8 @@ class Detail extends BaseComponent
             'input_details.*.price' => $this->trans('price'),
         ];
         $this->customRules  = [
-            'inputs.payment_term_id' =>  'required',
-            'inputs.partner_id' =>  'required',
+            // 'inputs.payment_term_id' =>  'required',
+            // 'inputs.partner_id' =>  'required',
             // 'inputs.wh_code' =>  'required',
             'inputs.tr_date' => 'required',
             'input_details.*.price' => 'required',
@@ -79,18 +79,25 @@ class Detail extends BaseComponent
         // if ($this->object) {
         //     $this->returnIds = $this->object->ReturnHdr->pluck('id')->toArray();
         // }
-        foreach ($this->object_detail as $key => $detail) {
-            $this->input_details[$key] =  populateArrayFromModel($detail);
-            $this->input_details[$key]['id'] = $detail->id;
-            $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
-            $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
-            $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-            $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
-            $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
-            $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-            $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
+
+        $this->retrieveMaterials();
+    }
+    protected function retrieveMaterials()
+    {
+        if ($this->object) {
+            foreach ($this->object_detail as $key => $detail) {
+                $this->input_details[$key] =  populateArrayFromModel($detail);
+                $this->input_details[$key]['id'] = $detail->id;
+                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
+                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
+                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
+                $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
+            }
+            $this->countTotalAmount();
         }
-        $this->countTotalAmount();
     }
 
     public function render()
@@ -149,12 +156,14 @@ class Detail extends BaseComponent
                 throw new Exception("Ditemukan duplikasi Item.");
             }
         }
-        $application = Partner::find($this->inputs['partner_id']);
         $this->inputs['wh_code'] = 18;
-        $this->inputs['partner_code'] = $application->code;
+        if(!empty($this->inputs['partner_code'])) {
+            $partner = Partner::find($this->inputs['partner_id']);
+            $this->inputs['partner_code'] = $partner->code;
+        }
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->fillAndSanitize($this->inputs);
-        // $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
+        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
                 $this->object_detail::find($deletedItemId)->delete();
@@ -284,18 +293,33 @@ class Detail extends BaseComponent
             $this->notify('warning', Lang::get('generic.string.currency_needed'));
             return;
         }
+        if (empty($this->inputs['payment_term_id'])) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Payment term is required.'
+            ]);
+            return;
+        }
 
+        if (empty($this->inputs['partner_id'])) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Partner is required.'
+            ]);
+            return;
+        }
         $query = Material::query()
             ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
             ->where('ivt_bals.qty_oh', '>', 0)
             ->select('materials.*');
 
-        if (!empty($this->searchTerm)) {
-            $query->where(function($query) {
-                $query->where('materials.code', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('materials.name', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('materials.descr', 'like', '%' . $this->searchTerm . '%');
-            });
+         if (!empty($this->searchTerm)) {
+                $searchTermUpper = strtoupper($this->searchTerm);
+                $query->where(function($query) use ($searchTermUpper) {
+                    $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                          ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
+                          ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
+                });
         }
 
         $this->materials =  $query->get();
@@ -303,22 +327,47 @@ class Detail extends BaseComponent
 
     public function addSelectedToCart()
     {
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
         if ($this->currencyRate == 0) {
             $this->notify('warning', Lang::get('generic.string.currency_needed'));
             return;
         }
 
-        $usercode = Auth::check() ? Auth::user()->code : '';
+        if (empty($this->selectedMaterials)) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
+            ]);
+            return;
+        }
+
+        if (empty($this->inputs['payment_term_id'])) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Payment term is required.'
+            ]);
+            return;
+        }
+
+        if (empty($this->inputs['partner_id'])) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Partner is required.'
+            ]);
+            return;
+        }
 
         DB::beginTransaction();
 
         try {
-            $cartHdr = OrderHdr::firstOrCreate([
-                'created_by' => $usercode,
-                'tr_type' => 'C',
+            $orderHdr = OrderHdr::firstOrCreate([
+                'id' => $this->objectIdValue,
             ], [
                 'tr_date' => Carbon::now(),
             ]);
+
+            $newDetails = [];
 
             foreach ($this->selectedMaterials as $material_id) {
                 $material = Material::find($material_id);
@@ -326,33 +375,38 @@ class Detail extends BaseComponent
                     continue;
                 }
 
-                $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material_id)->first();
+                $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material_id)->first();
 
                 if ($existingOrderDtl) {
                     DB::rollback();
                     $this->dispatchBrowserEvent('notify-swal', [
                         'type' => 'error',
-                        'message' => "Item {$material->code} sudah ada di cart"
+                        'message' => "Item {$material->code} sudah ada di Order"
                     ]);
                     return;
                 }
 
                 $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
-                $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
+                $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
                 $maxTrSeq++;
 
-                $cartHdr->CartDtl()->create([
-                    'trhdr_id' => $cartHdr->id,
+                $newDetails[] = [
+                    'trhdr_id' => $orderHdr->id,
                     'qty_reff' => 1,
                     'matl_id' => $material_id,
+                    'matl_descr' => $material->descr,
                     'matl_code' => $material->code,
+                    'matl_uom' => $material->MatlUom[0]->id,
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_type' => 'C',
+                    'tr_id' => $this->object->id,
                     'tr_seq' => $maxTrSeq,
                     'price' => $price,
-                ]);
+                ];
             }
+            $this->input_details = array_merge($this->input_details, $newDetails);
+            $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
 
             DB::commit();
 
@@ -363,11 +417,13 @@ class Detail extends BaseComponent
             $this->selectedMaterials = [];
             $this->retrieveMaterials();
         } catch (\Exception $e) {
+            DD($e);
             DB::rollback();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
+                'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
             ]);
         }
     }
+
 }

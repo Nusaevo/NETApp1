@@ -91,7 +91,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
-        Session::forget('session_salt');
+        Session::flush();
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

@@ -11,9 +11,9 @@ class OrderHdr extends BaseModel
     {
         parent::boot();
         static::deleting(function ($orderHdr) {
-            $orderHdr->DelivHdr()->delete();
-            $orderHdr->BillingHdr()->delete();
-            $orderHdr->OrderDtl()->delete();
+            $orderHdr->DelivHdr()->forceDelete();
+            $orderHdr->BillingHdr()->forceDelete();
+            $orderHdr->OrderDtl()->forceDelete();
         });
     }
 

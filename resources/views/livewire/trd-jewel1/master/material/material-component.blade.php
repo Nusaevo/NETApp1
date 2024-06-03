@@ -26,10 +26,75 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
 
                     <div class="button-container">
-                        <x-ui-button clickEvent="" id="btnCamera" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnCamera') }}" :action="$actionValue" />
+                        <button id="btnAdd" class="btn btn-secondary" onclick="toggleAddPopup()">
+                            <i class="bi bi-plus-circle"></i>
+                            {{ $this->trans('btnAdd') }}
+                        </button>
+
+                        <!-- Popup for Add Options -->
+                        <div id="addPopup" class="popup shadow-lg p-3 mb-5 bg-white rounded" style="display: none;">
+                            <button class="btn btn-secondary w-100 text-left mb-2" onclick="triggerFileInput('camera')">
+                                <i class="bi bi-camera-fill"></i>
+                                {{ $this->trans('btnCamera') }}
+                            </button>
+                            <button class="btn btn-secondary w-100 text-left mb-2" onclick="triggerFileInput('gallery')">
+                                <i class="bi bi-image-fill"></i>
+                                {{ $this->trans('btnGallery') }}
+                            </button>
+                            <button class="btn btn-secondary w-100 text-left" onclick="anotherFunction()">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                {{ $this->trans('btnAnotherAction') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;" multiple onchange="handleFileUpload(event)">
+
+                    <script>
+                        function toggleAddPopup() {
+                            const popup = document.getElementById('addPopup');
+                            popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+                        }
+
+                        document.addEventListener('DOMContentLoaded', function() {
+                            document.addEventListener('click', function(event) {
+                                const isClickInside = document.getElementById('btnAdd').contains(event.target) || document.getElementById('addPopup').contains(event.target);
+                                if (!isClickInside) {
+                                    document.getElementById('addPopup').style.display = 'none';
+                                }
+                            });
+                        });
+
+                        function triggerFileInput(type) {
+                            const input = document.getElementById('imageInput');
+                            input.removeAttribute('capture');
+                            if (type === 'camera') {
+                                input.setAttribute('capture', 'environment');
+                            }
+                            input.click();
+                        }
+
+                        function handleFileUpload(event) {
+                            const files = event.target.files;
+                            Array.from(files).forEach(file => {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    Livewire.emit('imagesCaptured', e.target.result);
+                                };
+                                reader.readAsDataURL(file);
+                            });
+                        }
+
+                        function anotherFunction() {
+                            // Add your other functionality here
+                        }
+                    </script>
+
+                        {{-- <x-ui-button clickEvent="" id="btnCamera" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnCamera') }}" :action="$actionValue" />
                         <!-- Hidden File Input -->
                         <input type="file" id="imageInput" accept="image/*" style="display: none;" multiple onchange="handleFileUpload(event)">
-                        <x-ui-button clickEvent="" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnGallery') }}" :action="$actionValue" />
+                        <x-ui-button clickEvent="" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnGallery') }}" :action="$actionValue" /> --}}
                     </div>
                 </div>
             </div>

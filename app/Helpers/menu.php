@@ -25,22 +25,39 @@ if (!function_exists('generateMenu')) {
         if (!empty($userId)) {
             try {
 
-                $userGroups = ConfigUser::find($userId)
-                ->ConfigGroup()
-                ->where('app_code', $app_code)
-                ->pluck('config_groups.id');
+                // $userGroups = ConfigUser::find($userId)
+                // ->ConfigGroup()
+                // ->where('app_code', $app_code)
+                // ->pluck('config_groups.id');
 
-                if ($userGroups->isNotEmpty()) {
-                    $configMenus = ConfigMenu::query()
+                // // if ($userGroups->isNotEmpty()) {
+                //     $configMenus = ConfigMenu::query()
+                //     ->join('config_rights', 'config_menus.id', '=', 'config_rights.menu_id')
+                //     ->whereIn('config_rights.group_id', $userGroups)
+                //     ->where('config_menus.app_code', $app_code)
+                //     ->where('config_rights.trustee', 'like', '%R%')
+                //     ->select('config_menus.*', 'config_rights.menu_seq')
+                //     ->distinct()
+                //     ->orderBy('config_rights.menu_seq')
+                //     ->get();
+                $configMenus = ConfigMenu::query()
                     ->join('config_rights', 'config_menus.id', '=', 'config_rights.menu_id')
-                    ->whereIn('config_rights.group_id', $userGroups)
+                    ->joinSub(
+                        ConfigUser::find($userId)
+                            ->ConfigGroup()
+                            ->where('app_code', $app_code)
+                            ->select('config_groups.id'),
+                        'user_groups',
+                        'config_rights.group_id',
+                        '=',
+                        'user_groups.id'
+                    )
                     ->where('config_menus.app_code', $app_code)
                     ->where('config_rights.trustee', 'like', '%R%')
                     ->select('config_menus.*', 'config_rights.menu_seq')
                     ->distinct()
                     ->orderBy('config_rights.menu_seq')
                     ->get();
-
                     if ($configMenus->isEmpty()) {
                         return $mainMenu;
                     }
@@ -149,7 +166,7 @@ if (!function_exists('generateMenu')) {
                         }
                     }
 
-                }
+                // }
             } catch (QueryException $e) {
                 // Handle the case where the config_menus table doesn't exist
                 // You can log this error or handle it as needed

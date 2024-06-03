@@ -14,30 +14,24 @@ use Carbon\Carbon;
 use DB;
 use Lang;
 
-
 class Detail extends BaseComponent
 {
     public $trType = "SO";
-
     public $object_detail;
     public $inputs = [];
     public $input_details = [];
-
     public $inputsearches = [];
     public $materials = [];
     public $currencyRate = 0;
-
     public $suppliers;
     public $warehouses;
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
-
     public $total_amount = 0;
     public $matl_action = 'Create';
     public $matl_objectId = null;
     public $currency = [];
-
     public $returnIds = [];
     public $searchTerm = '';
     public $selectedMaterials = [];
@@ -45,7 +39,7 @@ class Detail extends BaseComponent
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
-            'input_details.*'              => $this->trans('product'),
+            'input_details.*' => $this->trans('product'),
             'input_details.*.matl_id' => $this->trans('product'),
             'input_details.*.qty' => $this->trans('qty'),
             'input_details.*.price' => $this->trans('price'),
@@ -93,14 +87,13 @@ class Detail extends BaseComponent
     {
     }
 
-
     public function render()
     {
         return view($this->renderRoute);
     }
 
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
+        'changeStatus' => 'changeStatus',
         'materialSaved' => 'materialSaved',
         'delete' => 'delete'
     ];
@@ -111,7 +104,6 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-
     }
 
     public function Checkout()
@@ -120,10 +112,19 @@ class Detail extends BaseComponent
             return $item['checked'] == 1;
         });
 
+        if (empty($selectedItems)) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Harap pilih item dahulu sebelum checkout'
+            ]);
+            return;
+        }
+
         foreach($selectedItems as &$selectedItem)
         {
             $selectedItem['price'] = $selectedItem['selling_price'];
             $selectedItem['amt'] = $selectedItem['selling_price'];
+            $selectedItem['tr_type'] = "SO";
             $this->deletedItems[] = $selectedItem['id'];
         }
 
@@ -133,6 +134,7 @@ class Detail extends BaseComponent
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = "SO";
         $order_header->saveOrder($this->appCode, $this->trType, $this->inputs, $selectedItems, [], false);
+
         return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($order_header->id)
@@ -175,7 +177,6 @@ class Detail extends BaseComponent
 
     public function materialSaved($material_id)
     {
-
     }
 
     public function deleteDetails($index)
@@ -193,12 +194,11 @@ class Detail extends BaseComponent
         $this->SaveWithoutNotification();
     }
 
-
     public function changePrice($id, $value)
     {
         if (isset($this->input_details[$id]['qty'])) {
             $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
-            $this->input_details[$id]['amt'] = numberFormat($total) ;
+            $this->input_details[$id]['amt'] = numberFormat($total);
             $this->countTotalAmount();
             $this->SaveWithoutNotification();
         }
@@ -230,20 +230,30 @@ class Detail extends BaseComponent
             ->select('materials.*');
 
         if (!empty($this->searchTerm)) {
-            $query->where(function($query) {
-                $query->where('materials.code', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('materials.name', 'like', '%' . $this->searchTerm . '%')
-                      ->orWhere('materials.descr', 'like', '%' . $this->searchTerm . '%');
+            $searchTermUpper = strtoupper($this->searchTerm);
+            $query->where(function($query) use ($searchTermUpper) {
+                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
             });
         }
 
-        $this->materials =  $query->get();
+        $this->materials = $query->get();
     }
 
     public function addSelectedToCart()
     {
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
         if ($this->currencyRate == 0) {
             $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            return;
+        }
+
+        if (empty($this->selectedMaterials)) {
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
+            ]);
             return;
         }
 
@@ -309,5 +319,4 @@ class Detail extends BaseComponent
             ]);
         }
     }
-
 }

@@ -14,7 +14,6 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
-
     /*
     |--------------------------------------------------------------------------
     | Application Environment
@@ -228,4 +227,5 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
     ],
+    'upload_path' => env('UPLOAD_PATH'),
 ];
