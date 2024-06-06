@@ -22,7 +22,6 @@
                 window.history.go(-1);
             });
         });
-
     </script>
 @else
     @if (isset($action) && $action !== 'View')
@@ -32,8 +31,9 @@
                         class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action"
                         @if (isset($enabled) && $enabled==='false' ) disabled @endif
                         @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
-                        wire:click="{{ isset($clickEvent) ? $clickEvent : '' }}"
-                        @if (isset($dataBsTarget) && $dataBsTarget !== '') data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal"  @endif>
+                        @if (isset($clickEvent) && $clickEvent) wire:click="{{ $clickEvent }}" @endif
+                        @if (isset($dataBsTarget) && $dataBsTarget !== '') data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal"  @endif
+                        @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif>
                     <span wire:loading.remove>
                         @if (isset($iconPath) && $iconPath)
                             <img src="{{ imagePath($iconPath) }}" alt="Icon" style="width: 20px; height: 20px;">
@@ -45,11 +45,13 @@
                     </span>
                 </button>
             @else
-                <button type="button" @if (isset($id)) id="{{ $id }}" @endif wire:click="{{ isset($clickEvent) ? $clickEvent : '' }}"
+                <button type="button" @if (isset($id)) id="{{ $id }}" @endif
                         class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action"
                         @if (isset($enabled) && $enabled==='false' ) disabled @endif
                         @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
-                        @if (isset($dataBsTarget) && $dataBsTarget !== '') data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal"  @endif>
+                        @if (isset($clickEvent) && $clickEvent) wire:click="{{ $clickEvent }}" @endif
+                        @if (isset($dataBsTarget) && $dataBsTarget !== '') data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal"  @endif
+                        @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif>
                     <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
                 </button>
             @endif

@@ -14,6 +14,8 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'storage_path' => env('STORAGE_PATH', 'var/storage/uploads'),
+    'storage_url' => env('STORAGE_URL', 'https://nusaevo.com/storage'),
     /*
     |--------------------------------------------------------------------------
     | Application Environment
@@ -226,6 +228,5 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
 
-    ],
-    'upload_path' => env('UPLOAD_PATH'),
+    ]
 ];

@@ -20,7 +20,7 @@ class Attachment extends Model
         'descr',
         'attached_objectid',
         'attached_objecttype',
-        'seq', // Add seq column
+        'seq',
     ];
 
     public function getAllColumns()
@@ -39,10 +39,7 @@ class Attachment extends Model
     public static function saveAttachmentByFileName($imageDataUrl, $objectId = null, $objectType, $filename)
     {
         // Get the upload path from .env
-        $uploadPath = config('upload_path');
-        // Normalize the upload path to use the correct directory separator
-        $normalizedUploadPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $uploadPath);
-
+        $uploadPath = config('app.storage_path');
         // Create attachment data
         $attachmentData = [
             'name' => $filename,
@@ -53,7 +50,7 @@ class Attachment extends Model
         ];
 
         // Create attachment directory if it doesn't exist
-        $attachmentsPath = $normalizedUploadPath . DIRECTORY_SEPARATOR . $objectType . DIRECTORY_SEPARATOR . $objectId;
+        $attachmentsPath = $uploadPath . "/" . $objectType . "/" . $objectId;
         if (!File::isDirectory($attachmentsPath)) {
             File::makeDirectory($attachmentsPath, 0777, true, true);
         }
@@ -67,8 +64,12 @@ class Attachment extends Model
                                     ->where('attached_objecttype', $objectType)
                                     ->where('name', $filename)
                                     ->first();
-        $filePath = $objectType . DIRECTORY_SEPARATOR . $objectId . DIRECTORY_SEPARATOR . $filename;
-        $fullPath = $attachmentsPath . DIRECTORY_SEPARATOR . $filename;
+        if($objectType == 'NetStorage') {
+            $filePath = $objectType . "/" . $filename;
+        }else{
+             $filePath = $objectType . "/" . $objectId . "/" . $filename;
+        }
+        $fullPath = $attachmentsPath . "/" . $filename;
 
         if ($existingAttachment) {
             // Update existing attachment
@@ -101,9 +102,8 @@ class Attachment extends Model
             ->first();
 
         if ($attachment) {
-            $uploadPath = config('upload_path');
-            $normalizedUploadPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $uploadPath);
-            $path = $normalizedUploadPath . DIRECTORY_SEPARATOR . $attachment->path;
+            $uploadPath = config('app.storage_path');
+            $path = $uploadPath . "/" . $attachment->path;
 
             if (File::exists($path)) {
                 File::delete($path);
@@ -116,12 +116,32 @@ class Attachment extends Model
         return false;
     }
 
+    public static function deleteAttachmentById($imageId)
+    {
+        $attachment = self::find($imageId);
+
+        if ($attachment) {
+            $uploadPath = config('app.storage_path');
+            $path = $uploadPath . "/" . $attachment->path;
+
+            if (File::exists($path)) {
+                File::delete($path);
+            }
+            $attachment->delete();
+
+            return true;
+        }
+
+        return false;
+    }
+
+
     public function getUrl()
     {
-        $uploadPath = config('upload_path');
-        $relativePath = str_replace(public_path() . DIRECTORY_SEPARATOR, '', storage_path($uploadPath));
-        $urlPath = str_replace(['\\'], '/', $relativePath . '/' . $this->path);
-        return asset($urlPath);
+        $uploadPath = config('app.storage_url');
+        $fullPath = $uploadPath . "/" . $this->path;
+        $urlPath = str_replace("/", '/', $fullPath);
+        return $urlPath;
     }
 
     protected static function reSortSequences($objectId, $objectType)

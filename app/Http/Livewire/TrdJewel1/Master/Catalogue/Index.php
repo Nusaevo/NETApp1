@@ -154,6 +154,7 @@ class Index extends BaseComponent
                     'type' => 'success',
                     'message' => 'Berhasil menambahkan item ke cart'
                 ]);
+                $this->emit('updateCartCount');
             } else {
                 DB::rollback();
 

@@ -64,7 +64,7 @@ class Detail extends BaseComponent
             // 'inputs.partner_id' =>  'required',
             // 'inputs.wh_code' =>  'required',
             'inputs.tr_date' => 'required',
-            'input_details.*.price' => 'required',
+            //'input_details.*.price' => 'required',
         ];
     }
 
@@ -87,6 +87,7 @@ class Detail extends BaseComponent
         if ($this->object) {
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
+                $this->input_details[$key]['name'] = $detail->Material->name;
                 $this->input_details[$key]['id'] = $detail->id;
                 $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
@@ -207,6 +208,8 @@ class Detail extends BaseComponent
         array_push($this->input_details, $detail);
         $newDetail = end($this->input_details);
         $this->newItems[] = $newDetail;
+
+        $this->emit('updateCartCount');
         $this->countTotalAmount();
     }
 

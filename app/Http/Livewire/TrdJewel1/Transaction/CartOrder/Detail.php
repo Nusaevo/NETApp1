@@ -120,14 +120,18 @@ class Detail extends BaseComponent
             return;
         }
 
-        foreach($selectedItems as &$selectedItem)
+        foreach($selectedItems as $selectedItem)
         {
             $selectedItem['price'] = $selectedItem['selling_price'];
             $selectedItem['amt'] = $selectedItem['selling_price'];
             $selectedItem['tr_type'] = "SO";
             $this->deletedItems[] = $selectedItem['id'];
         }
-
+        if (!$this->object->isNew()) {
+            foreach ($this->deletedItems as $deletedItemId) {
+                CartDtl::find($deletedItemId)->delete();
+            }
+        }
         $order_header = new OrderHdr();
         $this->inputs['wh_code'] = 18;
         $this->inputs['status_code'] = STATUS::OPEN;
@@ -311,6 +315,7 @@ class Detail extends BaseComponent
             ]);
             $this->selectedMaterials = [];
             $this->retrieveMaterials();
+            $this->emit('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatchBrowserEvent('notify-swal', [

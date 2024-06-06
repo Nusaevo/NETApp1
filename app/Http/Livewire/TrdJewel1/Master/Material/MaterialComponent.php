@@ -345,7 +345,15 @@ class MaterialComponent extends BaseComponent
         $this->refreshJewellPurity();
     }
 
-    public function imagesCaptured($imageDataUrl)
+    public function submitImages($imageByteArrays)
+    {
+        foreach ($imageByteArrays as $byteArray) {
+            $dataUrl = 'data:image/jpeg;base64,' . base64_encode(implode('', array_map('chr', $byteArray)));
+            $filename = uniqid() . '.jpg';
+            $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename];
+        }
+    }
+    public function captureImages($imageDataUrl)
     {
         $filename = uniqid() . '.jpg';
         $this->capturedImages[] = ['url' => $imageDataUrl, 'filename' => $filename];
@@ -398,8 +406,9 @@ class MaterialComponent extends BaseComponent
 
 
     protected $listeners = [
-        'imagesCaptured'  => 'imagesCaptured',
-        'runExe'  => 'runExe'
+        'captureImages'  => 'captureImages',
+        'runExe'  => 'runExe',
+        'submitImages'  => 'submitImages'
     ];
 
     protected function onReset()
