@@ -104,7 +104,17 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        $this->object->fillAndSanitize($this->inputs);
+        $this->object->save();
+        foreach ($this->input_details as $index => $data) {
+            if (!isset($this->object_detail[$index])) {
+                $this->object_detail[$index] = new CartDtl();
+            }
+            $this->object_detail[$index]->fillAndSanitize($data);
+            $this->object_detail[$index]->save();
+        }
     }
+
 
     public function Checkout()
     {
@@ -129,7 +139,7 @@ class Detail extends BaseComponent
         }
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
-                CartDtl::find($deletedItemId)->delete();
+                CartDtl::find($deletedItemId)->forceDelete();
             }
         }
         $order_header = new OrderHdr();
@@ -203,6 +213,7 @@ class Detail extends BaseComponent
         if (isset($this->input_details[$id]['qty'])) {
             $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
             $this->input_details[$id]['amt'] = numberFormat($total);
+            $this->input_details[$id]['price'] = $total;
             $this->countTotalAmount();
             $this->SaveWithoutNotification();
         }
