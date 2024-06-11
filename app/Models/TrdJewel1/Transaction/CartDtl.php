@@ -10,6 +10,11 @@ class CartDtl extends BaseModel
     protected static function boot()
     {
         parent::boot();
+        static::saving(function ($cartDtl) {
+            $qty = currencyToNumeric($cartDtl->qty);
+            $price = currencyToNumeric($cartDtl->price);
+            $cartDtl->amt = $qty * $price;
+        });
     }
 
     protected $fillable = [

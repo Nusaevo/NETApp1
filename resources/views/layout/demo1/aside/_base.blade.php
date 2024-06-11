@@ -14,7 +14,7 @@
 >
 
     {{--begin::Brand--}}
-    <div class="aside-logo flex-column-auto d-flex justify-content-start" id="kt_aside_logo">
+    <div class="aside-logo flex-column-auto d-flex justify-content-center " id="kt_aside_logo">
         <a href="{{ $theme->getPageUrl('') }}" >
             @php
                 $appcode = Session::get('app_code', '');

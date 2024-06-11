@@ -148,9 +148,9 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if (empty($this->input_details)) {
-            throw new Exception("Harap pilih item");
-        }
+        // if (empty($this->input_details)) {
+        //     throw new Exception("Harap pilih item");
+        // }
         if (!empty($this->input_details)) {
             $unitIds = array_column($this->input_details, 'item_unit_id');
             if (count($unitIds) !== count(array_flip($unitIds))) {
@@ -167,7 +167,7 @@ class Detail extends BaseComponent
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
-                $this->object_detail::find($deletedItemId)->delete();
+                OrderDtl::find($deletedItemId)->forceDelete();
             }
         }
     }

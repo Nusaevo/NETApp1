@@ -159,7 +159,7 @@ class Detail extends BaseComponent
             foreach ($this->deletedItems as $deletedItemId) {
                 $orderDtl = OrderDtl::find($deletedItemId);
                 if ($orderDtl) {
-                    $orderDtl->delete();
+                    $orderDtl->forceDelete();
                 }
             }
         }
@@ -254,7 +254,7 @@ class Detail extends BaseComponent
             {
                 throw new Exception("Nota ini tidak bisa di edit lagi.");
             }
-            $this->updateVersionNumber();
+            //$this->updateVersionNumber();
             if (isset($this->object->status_code)) {
                     $this->object->status_code =  Status::DEACTIVATED;
                 }

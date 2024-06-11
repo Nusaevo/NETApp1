@@ -12,6 +12,7 @@
                 </li>
             @endif
 
+            {{-- Pagination Elements --}}
             @foreach ($paginator->getUrlRange(1, $paginator->lastPage()) as $page => $url)
                 @if ($page == $paginator->currentPage())
                     <li class="page-item active" aria-current="page">
@@ -22,6 +23,7 @@
                 @endif
             @endforeach
 
+            {{-- Next Page Link --}}
             @if ($paginator->hasMorePages())
                 <li class="page-item">
                     <a class="page-link" href="{{ $paginator->nextPageUrl() }}" rel="next">&raquo;</a>
@@ -33,11 +35,13 @@
             @endif
         </ul>
     </nav>
+
+    {{-- Pagination Info --}}
+    <div class="text-center pagination-info mt-3">
+        @php
+            $start = ($paginator->currentPage() - 1) * $paginator->perPage() + 1;
+            $end = min($paginator->currentPage() * $paginator->perPage(), $paginator->total());
+        @endphp
+        <p>Showing paginator {{ $start }}-{{ $end }} of {{ $paginator->total() }}</p>
+    </div>
 @endif
-<div class="text-center pagination-info mt-3">
-    @php
-        $start = ($paginator->currentPage() - 1) * $paginator->perPage() + 1;
-        $end = min($paginator->currentPage() * $paginator->perPage(), $paginator->total());
-    @endphp
-    <p>Showing items {{ $start }}-{{ $end }} of {{ $paginator->total() }}</p>
-</div>

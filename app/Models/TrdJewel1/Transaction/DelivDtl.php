@@ -14,25 +14,29 @@ class DelivDtl extends BaseModel
         parent::boot();
 
         // Handle when creating a new delivery detail
-        // Handle when creating a new delivery detail
         static::creating(function ($delivDtl) {
             $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
                 ->where('wh_id', $delivDtl->wh_code)
                 ->first();
+            $qtyChange = (float)$delivDtl->qty;
+            if ($delivDtl->tr_type === 'SD') {
+                $qtyChange = -$qtyChange;
+            }
+
             if ($existingBal) {
                 $existingBalQty = currencyToNumeric($existingBal->qty_oh);
-                $newQty = $existingBalQty + (float)$delivDtl->qty;
+                $newQty = $existingBalQty + $qtyChange;
                 $existingBal->qty_oh = $newQty;
                 $existingBal->save();
 
                 // Update corresponding record in IvtBalUnit
                 $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                ->where('wh_id', $delivDtl->wh_code)
-                ->first();
+                    ->where('wh_id', $delivDtl->wh_code)
+                    ->first();
                 if ($existingBalUnit) {
-                $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
-                $existingBalUnit->qty_oh = $existingBalUnitQty + (float)$delivDtl->qty;
-                $existingBalUnit->save();
+                    $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+                    $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
+                    $existingBalUnit->save();
                 }
             } else {
                 $inventoryBalData = [
@@ -42,7 +46,7 @@ class DelivDtl extends BaseModel
                     'matl_descr' => $delivDtl->matl_descr,
                     'wh_id' => $delivDtl->wh_code,
                     'wh_code' => $delivDtl->wh_code,
-                    'qty_oh' => $delivDtl->qty,
+                    'qty_oh' => $qtyChange,
                 ];
                 $newIvtBal = IvtBal::create($inventoryBalData);
                 $inventoryBalUnitsData = [
@@ -51,36 +55,38 @@ class DelivDtl extends BaseModel
                     'wh_id' => $delivDtl->wh_code,
                     'matl_uom' => $delivDtl->matl_uom,
                     'unit_code' => $delivDtl->matl_uom,
-                    'qty_oh' => $delivDtl->qty,
+                    'qty_oh' => $qtyChange,
                 ];
                 IvtBalUnit::create($inventoryBalUnitsData);
             }
         });
 
-        static::deleting(function ($delivDtl) {
-            $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                ->where('wh_id', $delivDtl->wh_code)
-                ->first();
-            if ($existingBal) {
-                $existingBalQty = currencyToNumeric($existingBal->qty_oh);
-                $newQty = $existingBalQty - (float)$delivDtl->qty;
-                $existingBal->qty_oh = $newQty;
-                $existingBal->save();
+        // static::deleting(function ($delivDtl) {
+        //     $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
+        //         ->where('wh_id', $delivDtl->wh_code)
+        //         ->first();
+        //     $qtyChange = (float)$delivDtl->qty;
+        //     if ($delivDtl->tr_type === 'SD') {
+        //         $qtyChange = -$qtyChange;
+        //     }
+        //     if ($existingBal) {
+        //         $existingBalQty = currencyToNumeric($existingBal->qty_oh);
+        //         $newQty = $existingBalQty - $qtyChange;
+        //         $existingBal->qty_oh = $newQty;
+        //         $existingBal->save();
 
-                // Update corresponding record in IvtBalUnit
-                $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                ->where('wh_id', $delivDtl->wh_code)
-                ->first();
-                if ($existingBalUnit) {
-                $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
-                $existingBalUnit->qty_oh = $existingBalUnitQty - (float)$delivDtl->qty;
-                $existingBalUnit->save();
-                }
-            }
-        });
+        //         // Update corresponding record in IvtBalUnit
+        //         $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+        //             ->where('wh_id', $delivDtl->wh_code)
+        //             ->first();
+        //         if ($existingBalUnit) {
+        //             $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+        //             $existingBalUnit->qty_oh = $existingBalUnitQty - $qtyChange;
+        //             $existingBalUnit->save();
+        //         }
+        //     }
+        // });
     }
-
-
     protected $fillable = [
         'trhdr_id',
         'tr_type',
