@@ -643,15 +643,25 @@ class MaterialComponent extends BaseComponent
 
     public function runExe()
     {
-        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
-        $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
+        // $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        // $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
+
+        // // Define the arguments
+        // $maxScannedTagLimit = 1;
+        // $timeoutSeconds = 1;
+
+        // // Append arguments to the command
+        // $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+
+        $exePath = '/home/ubuntu/RFIDScanner/RFIDScanner.exe'; // Path ke file exe di sistem Linux
+        $exePath = escapeshellarg($exePath); // Gunakan escapeshellarg untuk keamanan
 
         // Define the arguments
         $maxScannedTagLimit = 1;
         $timeoutSeconds = 1;
 
         // Append arguments to the command
-        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+        $command = 'wine ' . $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
 
         exec($command, $output, $returnValue);
 
