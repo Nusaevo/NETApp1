@@ -1,27 +1,25 @@
 @page {
-    size: auto;
-    margin-top: 5mm;
-}
-
-@page :first {
-    margin-bottom: 0mm; /* margin bottom untuk halaman pertama */
+    size: A5;
 }
 
 body {
     margin: 0;
+    font-family: 'Calibri';
+    font-size: 14px;
+    color: #555;
 }
 
 .invoice-box {
-    max-width: 1200px;
-    margin: auto;
-    padding: 30px;
+    width: 100%;
+    max-width: 148mm;
+    height: 210mm;
     border: 1px solid #eee;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-    font-size: 14px;
     line-height: 24px;
-    font-family: 'Calibri';
     font-weight: 700;
     color: #555;
+    box-sizing: border-box;
+    page-break-after: always;
 }
 
 .invoice-box table {
@@ -33,7 +31,7 @@ body {
 
 .invoice-box table td {
     vertical-align: top;
-    padding: 10px; /* Menambahkan padding antar item */
+    padding: 5px;
 }
 
 .invoice-box table tr td:nth-child(2) {
@@ -41,7 +39,7 @@ body {
 }
 
 .invoice-box table tr.top table td {
-    padding-bottom: 20px;
+    /* padding-bottom: 20px; */
 }
 
 .invoice-box table tr.top table td.title {
@@ -51,7 +49,7 @@ body {
 }
 
 .invoice-box table tr.information table td {
-    padding-bottom: 40px;
+    /* padding-bottom: 20px; */
 }
 
 .invoice-box table tr.heading td {
@@ -77,6 +75,10 @@ body {
     font-weight: bold;
 }
 
+.invoice-box .price {
+    float: right;
+}
+
 @media only screen and (max-width: 600px) {
     .invoice-box table tr.top table td {
         width: 100%;
@@ -92,7 +94,6 @@ body {
 }
 
 @media print {
-    /* Menyembunyikan elemen yang tidak diperlukan saat mencetak */
     body * {
         visibility: hidden;
     }
@@ -104,7 +105,6 @@ body {
         left: 0;
         top: 0;
         width: 100%;
-        padding: 20px;
         box-sizing: border-box;
     }
     .card {
@@ -117,7 +117,6 @@ body {
     .btn, .d-flex {
         display: none;
     }
-    /* Menyelaraskan tabel untuk ukuran kertas yang lebih lebar */
     .invoice-box table {
         width: 100%;
     }
@@ -137,7 +136,7 @@ body {
         color: #333;
     }
     .invoice-box table tr.information table td {
-        padding-bottom: 40px;
+        padding-bottom: 20px;
     }
     .invoice-box table tr.heading td {
         background: #eee;
