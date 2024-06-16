@@ -123,9 +123,16 @@ if (!function_exists('isFormattedNumeric')) {
 }
 
 if (!function_exists('isDateAttribute')) {
-    function isDateAttribute($attribute) {
-        $dateRegex = '/\d{2}-\d{2}-\d{4}/'; // Checks for date format dd-mm-yyyy
-        return preg_match($dateRegex, $attribute);
+    if (!function_exists('isDateAttribute')) {
+        function isDateAttribute($attribute) {
+            if (is_array($attribute)) {
+                // Handle the case where the input is an array
+                return false; // Or you can loop through the array to check each element
+            }
+
+            $dateRegex = '/\d{2}-\d{2}-\d{4}/'; // Checks for date format dd-mm-yyyy
+            return preg_match($dateRegex, $attribute);
+        }
     }
 }
 

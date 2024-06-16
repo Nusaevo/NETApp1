@@ -159,6 +159,94 @@ class Detail extends BaseComponent
     {
     }
 
+    public function ScanRFID()
+    {
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($this->currencyRate == 0) {
+            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            return;
+        }
+
+        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        $exePath = escapeshellarg($exePath);
+        $maxScannedTagLimit = 99;
+        $timeoutSeconds = 3;
+
+        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+
+        exec($command, $output, $returnValue);
+
+        if (isset($output) && !empty($output)) {
+            $usercode = Auth::check() ? Auth::user()->code : '';
+
+            DB::beginTransaction();
+
+            try {
+                $cartHdr = CartHdr::firstOrCreate([
+                    'created_by' => $usercode,
+                    'tr_type' => 'C',
+                ], [
+                    'tr_date' => Carbon::now(),
+                ]);
+
+                foreach ($output as $barcode) {
+                    // Find the corresponding material
+                    $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
+                        $query->where('barcode', $barcode);
+                    })->first();
+
+                    if (!isset($material)) {
+                        continue; // Skip if no material found for the barcode
+                    }
+
+                    $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material->id)->first();
+                    if ($existingOrderDtl) {
+                        DB::rollback();
+                        $this->dispatchBrowserEvent('notify-swal', [
+                            'type' => 'error',
+                            'message' => "Item {$material->code} sudah ada di cart"
+                        ]);
+                        return;
+                    }
+
+                    $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+                    $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
+                    $maxTrSeq++;
+
+                    $cartHdr->CartDtl()->create([
+                        'trhdr_id' => $cartHdr->id,
+                        'qty_reff' => 1,
+                        'matl_id' => $material->id,
+                        'matl_code' => $material->code,
+                        'qty' => 1,
+                        'qty_reff' => 1,
+                        'tr_type' => 'C',
+                        'tr_seq' => $maxTrSeq,
+                        'price' => $price,
+                    ]);
+                }
+
+                DB::commit();
+
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'success',
+                    'message' => 'Berhasil menambahkan item ke cart'
+                ]);
+                $this->retrieveMaterials();
+                $this->emit('updateCartCount');
+            } catch (\Exception $e) {
+                DB::rollback();
+                $this->dispatchBrowserEvent('notify-swal', [
+                    'type' => 'error',
+                    'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
+                ]);
+            }
+        } else {
+            $this->notify('error', 'No RFID scanned.');
+        }
+    }
+
     public function addDetails($material_id = null)
     {
         $this->dispatchBrowserEvent('toggle-modal');

@@ -9,6 +9,7 @@ use App\Models\TrdJewel1\Master\Partner;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\TrdJewel1\Master\Material;
+use App\Models\TrdJewel1\Master\MatlUom;
 use App\Enums\Status;
 use App\Models\TrdJewel1\Transaction\BillingDtl;
 use App\Models\TrdJewel1\Transaction\BillingHdr;
@@ -242,20 +243,81 @@ class Detail extends BaseComponent
         $this->SaveWithoutNotification();
     }
 
-    public function scanBarcode()
+
+    public function ScanRFID()
     {
-    //    $itemBarcode = ItemUnit::where('barcode', $this->barcode)->first();
-    //         if (isset($itemBarcode)) {
-    //             $this->addDetails();
-    //             $this->changeItem($itemBarcode->id, is_null($this->input_details) ? 0 : count($this->input_details) - 1, "true");
-    //         } else {
-    //             $this->dispatchBrowserEvent('notify-swal', ['type' => 'error', 'title' => 'Gagal', 'message' =>  "Kode barang tidak ditemukan, mohon reset dan scan kembali!"]);
-    //         }
+        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        $exePath = escapeshellarg($exePath);
+        $maxScannedTagLimit = 99;
+        $timeoutSeconds = 3;
 
-    //     $this->dispatchBrowserEvent('barcode-processed');
-    //     $this->barcode = '';
+        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+
+        exec($command, $output, $returnValue);
+
+        if (isset($output)) {
+            DB::beginTransaction();
+
+            try {
+                $orderHdr = OrderHdr::firstOrCreate([
+                    'id' => $this->objectIdValue,
+                ], [
+                    'tr_date' => Carbon::now(),
+                ]);
+
+                $newDetails = [];
+                foreach ($output as $barcode) {
+                    // Find the corresponding material
+                    $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
+                        $query->where('barcode', $barcode);
+                    })->first();
+
+                    if (!isset($material)) {
+                        // DB::rollback();
+                        // $this->notify('error', "Material untuk RFID $barcode tidak ditemukan.");
+                        continue;
+                    }
+                    $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
+                    if ($existingOrderDtl) {
+                        DB::rollback();
+                        $this->notify('error', "Item {$material->code} sudah ada di Order.");
+                        return;
+                    }
+
+                    $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+                    $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
+                    $maxTrSeq++;
+
+                    $newDetails[] = [
+                        'trhdr_id' => $orderHdr->id,
+                        'qty_reff' => 1,
+                        'matl_id' => $material->id,
+                        'matl_descr' => $material->descr,
+                        'matl_code' => $material->code,
+                        'matl_uom' => $material->MatlUom[0]->id,
+                        'qty' => 1,
+                        'qty_reff' => 1,
+                        'tr_type' => 'C',
+                        'tr_id' => $this->object->id,
+                        'tr_seq' => $maxTrSeq,
+                        'price' => $price,
+                    ];
+                }
+                $this->input_details = array_merge($this->input_details, $newDetails);
+
+                $this->SaveWithoutNotification();
+                DB::commit();
+
+                $this->notify('success', 'Berhasil menambahkan item ke cart');
+                $this->retrieveMaterials();
+            } catch (\Exception $e) {
+                DB::rollback();
+                $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke Order');
+            }
+        } else {
+            $this->notify('error', 'No RFID scanned.');
+        }
     }
-
 
     public function changeQty($id, $value)
     {
@@ -413,8 +475,8 @@ class Detail extends BaseComponent
                 ];
             }
             $this->input_details = array_merge($this->input_details, $newDetails);
-            $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
 
+            $this->SaveWithoutNotification();
             DB::commit();
 
             $this->dispatchBrowserEvent('notify-swal', [

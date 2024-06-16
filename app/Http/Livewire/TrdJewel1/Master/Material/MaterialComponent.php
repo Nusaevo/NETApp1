@@ -89,7 +89,7 @@ class MaterialComponent extends BaseComponent
             'materials.jwl_wgt_gold' => 'required',
             'materials.name' => 'required|string|min:0|max:255',
             'materials.descr' => 'required|string|min:0|max:255',
-            'matl_uoms.barcode' => 'required|string|min:0|max:255',
+            'matl_uoms.barcode' => 'required',
             'matl_boms.*.base_matl_id' => 'required',
             'matl_boms.*.jwl_sides_cnt' => 'required',
             'matl_boms.*.jwl_sides_carat' => 'required',
@@ -643,18 +643,39 @@ class MaterialComponent extends BaseComponent
 
     public function runExe()
     {
-        // $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
-        // $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
+        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
 
-        // // Define the arguments
-        // $maxScannedTagLimit = 1;
-        // $timeoutSeconds = 1;
+        // Define the arguments
+        $maxScannedTagLimit = 1;
+        $timeoutSeconds = 1;
 
-        // // Append arguments to the command
-        // $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+        // Append arguments to the command
+        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
 
-        // exec($command, $output, $returnValue);
-        $this->matl_uoms['barcode'] = "12345";
+        exec($command, $output, $returnValue);
+
+        if (isset($output[0])) {
+            $barcode = $output[0];
+            if (!$this->isUniqueBarcode($barcode)) {
+                $this->notify('error', 'RFID telah digunakan sebelumnya');
+            }else{
+                $this->matl_uoms['barcode'] = $barcode;
+            }
+        } else {
+            $this->notify('error', 'No RFID scanned.');
+        }
+    }
+
+    protected function isUniqueBarcode($barcode)
+    {
+        $query = MatlUom::where('barcode', $barcode);
+
+        if (isset($this->object_id)) {
+            $query->where('matl_id', '!=', $this->object_id);
+        }
+
+        return !$query->exists();
     }
 
     public function printBarcode()
