@@ -158,7 +158,7 @@ class Detail extends BaseComponent
             }
         }
         $this->inputs['wh_code'] = 18;
-        if(!empty($this->inputs['partner_code'])) {
+        if(isset($this->inputs['partner_code'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
@@ -296,25 +296,22 @@ class Detail extends BaseComponent
             $this->notify('warning', Lang::get('generic.string.currency_needed'));
             return;
         }
-        if (empty($this->inputs['payment_term_id'])) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => 'Payment term is required.'
-            ]);
-            return;
-        }
+        // if (empty($this->inputs['payment_term_id'])) {
+        //     $this->dispatchBrowserEvent('notify-swal', [
+        //         'type' => 'error',
+        //         'message' => 'Payment term is required.'
+        //     ]);
+        //     return;
+        // }
 
-        if (empty($this->inputs['partner_id'])) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => 'Partner is required.'
-            ]);
-            return;
-        }
-        $query = Material::query()
-            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
-            ->where('ivt_bals.qty_oh', '>', 0)
-            ->select('materials.*');
+        // if (empty($this->inputs['partner_id'])) {
+        //     $this->dispatchBrowserEvent('notify-swal', [
+        //         'type' => 'error',
+        //         'message' => 'Partner is required.'
+        //     ]);
+        //     return;
+        // }
+        $query = Material::getAvailableMaterials();
 
          if (!empty($this->searchTerm)) {
                 $searchTermUpper = strtoupper($this->searchTerm);
@@ -326,6 +323,13 @@ class Detail extends BaseComponent
         }
 
         $this->materials =  $query->get();
+    }
+
+    public function SaveCheck()
+    {
+        if (!empty($this->input_details) && !$this->object->isNew()) {
+            $this->SaveWithoutNotification();
+        }
     }
 
     public function addSelectedToCart()

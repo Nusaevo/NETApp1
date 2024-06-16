@@ -23,3 +23,31 @@
     text-align: left;
     margin-top: 5px;
 }
+
+@media print {
+    /* Menyembunyikan elemen yang tidak diperlukan saat mencetak */
+    body * {
+        visibility: hidden;
+    }
+    #print, #print * {
+        visibility: visible;
+    }
+    #print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    .card {
+        border: none;
+        box-shadow: none;
+    }
+    .container {
+        padding: 0;
+    }
+    .btn, .d-flex {
+        display: none;
+    }
+}

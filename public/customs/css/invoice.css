@@ -8,43 +8,11 @@
 }
 
 body {
-    margin:0;
-}
-
-#tbl{
-    white-space: normal;
-    line-height: high;
-    font-weight: bold;
-    font-style: normal;
-    color: -internal-quirk-inherit;
-    text-align: start;
-    font-variant: normal;
-}
-
-#signature {
-    margin-top: 25px;
-}
-
-.heading {
-    border: 1px solid black;
-}
-.right{
-  text-align: right;
-}
-.center{
-    text-align: center;
-}
-.item{
-
-    font-size: 14px;
-    font-family: 'Calibri';
-}
-.top_border{
-   border-top:  1px solid;
+    margin: 0;
 }
 
 .invoice-box {
-    max-width: 800px;
+    max-width: 1200px;
     margin: auto;
     padding: 30px;
     border: 1px solid #eee;
@@ -65,18 +33,15 @@ body {
 
 .invoice-box table td {
     vertical-align: top;
+    padding: 10px; /* Menambahkan padding antar item */
 }
 
-/* .invoice-box table tr td:nth-child(2) {
-    text-align: right;
-} */
-
-.info {
+.invoice-box table tr td:nth-child(2) {
     text-align: right;
 }
 
 .invoice-box table tr.top table td {
-    padding-bottom: 5px;
+    padding-bottom: 20px;
 }
 
 .invoice-box table tr.top table td.title {
@@ -86,7 +51,7 @@ body {
 }
 
 .invoice-box table tr.information table td {
-    /* padding-bottom: 5px; */
+    padding-bottom: 40px;
 }
 
 .invoice-box table tr.heading td {
@@ -95,10 +60,8 @@ body {
     font-weight: bold;
 }
 
-
-
 .invoice-box table tr.details td {
-    /* padding-bottom: 5px; */
+    padding-bottom: 20px;
 }
 
 .invoice-box table tr.item td {
@@ -125,5 +88,73 @@ body {
         width: 100%;
         display: block;
         text-align: center;
+    }
+}
+
+@media print {
+    /* Menyembunyikan elemen yang tidak diperlukan saat mencetak */
+    body * {
+        visibility: hidden;
+    }
+    #print, #print * {
+        visibility: visible;
+    }
+    #print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    .card {
+        border: none;
+        box-shadow: none;
+    }
+    .container {
+        padding: 0;
+    }
+    .btn, .d-flex {
+        display: none;
+    }
+    /* Menyelaraskan tabel untuk ukuran kertas yang lebih lebar */
+    .invoice-box table {
+        width: 100%;
+    }
+    .invoice-box table td {
+        padding: 5px;
+        vertical-align: top;
+    }
+    .invoice-box table tr td:nth-child(2) {
+        text-align: right;
+    }
+    .invoice-box table tr.top table td {
+        padding-bottom: 20px;
+    }
+    .invoice-box table tr.top table td.title {
+        font-size: 45px;
+        line-height: 45px;
+        color: #333;
+    }
+    .invoice-box table tr.information table td {
+        padding-bottom: 40px;
+    }
+    .invoice-box table tr.heading td {
+        background: #eee;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+    }
+    .invoice-box table tr.details td {
+        padding-bottom: 20px;
+    }
+    .invoice-box table tr.item td {
+        border-bottom: 1px solid #eee;
+    }
+    .invoice-box table tr.item.last td {
+        border-bottom: none;
+    }
+    .invoice-box table tr.total td:nth-child(2) {
+        border-top: 2px solid #eee;
+        font-weight: bold;
     }
 }

@@ -77,13 +77,41 @@ class OrderHdr extends BaseModel
             return false;
         }
 
-        foreach ($this->OrderDtl as $orderDtl) {
-            if ($orderDtl->qty_reff !== $orderDtl->qty) {
-                return false;
+        if ($this->tr_type == 'PO') {
+            foreach ($this->OrderDtl as $orderDtl) {
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
+                    ->where('tr_type', 'SO')
+                    ->first();
+
+                if ($relatedOrderDtl) {
+                    return false;
+                }
             }
         }
+        // else {
+        //     foreach ($this->OrderDtl as $orderDtl) {
+        //         if ($orderDtl->qty_reff !== $orderDtl->qty) {
+        //             return false;
+        //         }
+        //     }
+        // }
+
         return true;
     }
+
+    public function isItemEnableToDelete(int $matl_id): bool
+    {
+        $relatedOrderDtl = OrderDtl::where('matl_id', $matl_id)
+            ->where('tr_type', 'SO')
+            ->first();
+
+        if ($relatedOrderDtl) {
+            return false;
+        }
+
+        return true;
+    }
+
 
     public function getAllColumnValues($attribute)
     {

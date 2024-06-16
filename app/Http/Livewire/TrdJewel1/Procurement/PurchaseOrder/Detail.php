@@ -149,9 +149,12 @@ class Detail extends BaseComponent
                 throw new Exception("Nota ini tidak bisa di edit lagi.");
             }
         }
-        $partner = Partner::find($this->inputs['partner_id']);
+        if(isset($this->inputs['partner_id']))
+        {
+            $partner = Partner::find($this->inputs['partner_id']);
+            $this->inputs['partner_code'] = $partner->code;
+        }
         $this->inputs['wh_code'] = 18;
-        $this->inputs['partner_code'] = $partner->code;
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
 
@@ -226,7 +229,9 @@ class Detail extends BaseComponent
             }
             $this->addDetails($material_id);
             $this->emit('closeMaterialDialog');
-            $this->SaveWithoutNotification();
+            if (!empty($this->input_details)) {
+                $this->SaveWithoutNotification();
+            }
             $this->notify('success', Lang::get($this->langBasePath.'.message.product_added'));
 
         } catch (Exception $e) {
@@ -237,6 +242,11 @@ class Detail extends BaseComponent
 
     public function deleteDetails($index)
     {
+        if (!$this->object->isItemEnableToDelete($this->input_details[$index]['matl_id'])) {
+            $this->notify('warning', 'Item ini tidak bisa dihapus, karena item sudah terjual.');
+            return;
+        }
+
         if (isset($this->input_details[$index]['id'])) {
             $this->deletedItems[] = $this->input_details[$index]['id'];
         }
@@ -246,13 +256,21 @@ class Detail extends BaseComponent
         $this->SaveWithoutNotification();
     }
 
+    public function SaveCheck()
+    {
+        if (!empty($this->input_details) && !$this->object->isNew()) {
+            $this->SaveWithoutNotification();
+        }
+    }
+
 
     public function delete()
     {
         try {
             if(!$this->object->isEnableToEdit())
             {
-                throw new Exception("Nota ini tidak bisa di edit lagi.");
+                $this->notify('warning', 'Nota ini tidak bisa dihapus, karena ada item yang sudah terjual.');
+                return;
             }
             //$this->updateVersionNumber();
             if (isset($this->object->status_code)) {

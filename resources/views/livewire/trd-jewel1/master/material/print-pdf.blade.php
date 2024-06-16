@@ -15,36 +15,25 @@
         <div class="container mb-5 mt-3">
             <div class="row d-flex align-items-baseline">
                 <div class="col-xl-3 float-end">
-                    <button class="btn btn-light text-capitalize border-0" onclick="printBarcode()"><i class="fas fa-print text-primary"></i> Print</button>
+                    <button class="btn btn-light text-capitalize border-0" onclick="printInvoice()"><i class="fas fa-print text-primary"></i> Print</button>
                 </div>
             </div>
             <hr>
             <div id="print">
                 <!-- Label -->
                 <div class="label-container">
-                    <div class="label-code">{{ $object[0]->code }}</div>
-                    <div class="label-price">{{ dollar(currencyToNumeric($object[0]->jwl_selling_price)) }}</div>
-                    <div class="label-name">{{ $object[0]->name }}</div>
-                    <div class="label-descr">{{ $object[0]->descr }}</div>
+                    <div class="label-code">{{ $object->code }}</div>
+                    <div class="label-price">{{ dollar(currencyToNumeric($object->jwl_selling_price)) }}</div>
+                    <div class="label-name">{{ $object->name }}</div>
+                    <div class="label-descr">{{ $object->descr }}</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 <script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", function() {
-        printLabel();
-    });
-
-    function printLabel() {
-        var page = document.getElementById("print");
-        var newWin = window.open('', 'Print-Window');
-        newWin.document.open();
-        newWin.document.write('<html><link rel="stylesheet" type="text/css" href="/customs/css/label.css"><body onload="window.print()">' + page.innerHTML + '</body></html>');
-        newWin.document.close();
-        setTimeout(function() {
-            newWin.close();
-        }, 10);
+    function printInvoice() {
+        window.print();
     }
 </script>
 </body>

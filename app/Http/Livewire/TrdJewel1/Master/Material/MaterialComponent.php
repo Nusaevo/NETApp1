@@ -408,8 +408,15 @@ class MaterialComponent extends BaseComponent
     protected $listeners = [
         'captureImages'  => 'captureImages',
         'runExe'  => 'runExe',
-        'submitImages'  => 'submitImages'
+        'submitImages'  => 'submitImages',
+        'changeStatus'  => 'changeStatus',
     ];
+
+
+    public function changeStatus()
+    {
+        $this->change();
+    }
 
     protected function onReset()
     {

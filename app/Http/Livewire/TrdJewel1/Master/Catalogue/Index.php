@@ -31,10 +31,7 @@ class Index extends BaseComponent
     public function render()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-        $query = Material::query()
-        ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
-        ->where('ivt_bals.qty_oh', '>', 0)
-        ->select('materials.*');
+        $query = Material::getAvailableMaterials();
         if (!empty($this->inputs['name'])) {
             $query->where('name', 'like', '%' . $this->inputs['name'] . '%');
         }

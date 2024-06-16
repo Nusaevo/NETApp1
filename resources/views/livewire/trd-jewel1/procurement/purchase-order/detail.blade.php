@@ -13,8 +13,8 @@
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
                     <x-ui-padding>
-                        <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-text-field-search label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" />
+                        <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" onChanged="SaveCheck"/>
+                        <x-ui-text-field-search label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" span="Half" onChanged="SaveCheck"/>
                         {{-- <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" clickEvent="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" span="Half" />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" span="Half" placeHolder="" /> --}}
                         {{-- @if ($actionValue === 'Create')
@@ -57,7 +57,7 @@
                                 </x-slot>
                             </x-ui-dialog-box> --}}
 
-                            <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-target="#materialDialogBox" data-bs-toggle="modal">
+                            <button type="button" wire:click="SaveCheck" class="btn btn-primary" data-bs-target="#materialDialogBox" data-bs-toggle="modal">
                                 {{ $this->trans('btnAdd') }}
                             </button>
 

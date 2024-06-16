@@ -109,6 +109,13 @@ use App\Models\TrdJewel1\Master\Material;
     <x-ui-footer>
         <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
         <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" />
+        @if (!$object->deleted_at && !$searchMode && $actionValue == 'Edit')
+            @if ($status === 'ACTIVE')
+            <x-ui-button button-name="Disable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />
+            @else
+            <x-ui-button button-name="Enable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-primary btn-dialog-box" iconPath="enable.svg" />
+            @endif
+        @endif
         <x-ui-button clickEvent="printBarcode" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
         @if($searchMode)
             <x-ui-button clickEvent="SaveWithoutNotification" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
@@ -117,4 +124,33 @@ use App\Models\TrdJewel1\Master\Material;
         @endif
     </x-ui-footer>
 </x-ui-page-card>
+
+
+<script>
+    document.addEventListener('livewire:load', function() {
+        $(document).on('click', '.btn-dialog-box', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: "Apakah Anda Yakin ingin melanjutkannya?"
+                , text: ""
+                , icon: "question"
+                , buttonsStyling: false
+                , showConfirmButton: true
+                , showCancelButton: true
+                , confirmButtonText: "Yes"
+                , cancelButtonText: "No"
+                , closeOnConfirm: false
+                , customClass: {
+                    confirmButton: "btn btn-primary"
+                    , cancelButton: 'btn btn-secondary'
+                }
+            }).then(confirm => {
+                if (confirm.isConfirmed) {
+                    Livewire.emit('changeStatus');
+                }
+            });
+        });
+    });
+
+</script>
 

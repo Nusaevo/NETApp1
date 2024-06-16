@@ -6,6 +6,8 @@ use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
+use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Material::class;
@@ -14,6 +16,13 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->customRoute = "";
         $this->setSort('created_at', 'desc');
+    }
+
+    public function builder(): Builder
+    {
+        return Material::query()
+            ->withTrashed()
+            ->select();
     }
 
     public function columns(): array
@@ -61,14 +70,14 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            // SelectFilter::make('Status', 'Status')
-            //     ->options([
-            //         '0' => 'Active',
-            //         '1' => 'Non Active'
-            //     ])->filter(function (Builder $builder, string $value) {
-            //         if ($value === '0') $builder->withoutTrashed();
-            //         else if ($value === '1') $builder->onlyTrashed();
-            //     }),
+            SelectFilter::make('Status', 'Status')
+                ->options([
+                    '0' => 'Active',
+                    '1' => 'Non Active'
+                ])->filter(function (Builder $builder, string $value) {
+                    if ($value === '0') $builder->withoutTrashed();
+                    else if ($value === '1') $builder->onlyTrashed();
+                }),
         ];
     }
 }

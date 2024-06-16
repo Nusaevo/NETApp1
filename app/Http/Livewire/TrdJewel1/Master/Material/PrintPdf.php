@@ -12,7 +12,7 @@ class PrintPdf extends BaseComponent
     protected function onPreRender()
     {
         $additionalParams = explode(';', urldecode($this->additionalParam));
-        $this->object = Material::withTrashed()->find($additionalParams);
+        $this->object = Material::withTrashed()->whereIn('id', $additionalParams)->first();
     }
 
     protected function onLoadForEdit()
