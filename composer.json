@@ -17,6 +17,7 @@
         "livewire/livewire": "^2.10",
         "psr/simple-cache": "2.0",
         "rappasoft/laravel-livewire-tables": "2.4",
+        "ratchet/pawl": "^0.4.1",
         "spatie/laravel-activitylog": "^4.0",
         "spatie/laravel-permission": "^5.5.0"
     },

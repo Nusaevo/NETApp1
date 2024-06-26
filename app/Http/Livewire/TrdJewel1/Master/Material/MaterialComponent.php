@@ -13,6 +13,8 @@ use Lang;
 use Exception;
 use DB;
 use Livewire\WithFileUploads;
+use Ratchet\Client\Connector;
+use React\EventLoop\Factory;
 
 class MaterialComponent extends BaseComponent
 {
@@ -410,6 +412,7 @@ class MaterialComponent extends BaseComponent
         'runExe'  => 'runExe',
         'submitImages'  => 'submitImages',
         'changeStatus'  => 'changeStatus',
+        'tagScanned' => 'tagScanned'
     ];
 
 
@@ -641,39 +644,22 @@ class MaterialComponent extends BaseComponent
         $this->materials['markup'] = numberFormat($newMarkupPercentage);
     }
 
-    public function runExe()
+    public function tagScanned($msg)
     {
-        // $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
-        // $exePath = escapeshellarg($exePath); // Use escapeshellarg for safety
-
-        // // Define the arguments
-        // $maxScannedTagLimit = 1;
-        // $timeoutSeconds = 1;
-
-        // // Append arguments to the command
-        // $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
-
-        $exePath = '/home/ubuntu/RFIDScanner/RFIDScanner.exe'; // Path ke file exe di sistem Linux
-        $exePath = escapeshellarg($exePath); // Gunakan escapeshellarg untuk keamanan
-
-        // Define the arguments
-        $maxScannedTagLimit = 1;
-        $timeoutSeconds = 1;
-
-        // Append arguments to the command
-        $command = 'wine ' . $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
-
-        exec($command, $output, $returnValue);
-
-        if (isset($output[0])) {
-            $barcode = $output[0];
-            if (!$this->isUniqueBarcode($barcode)) {
-                $this->notify('error', 'RFID telah digunakan sebelumnya');
-            }else{
-                $this->matl_uoms['barcode'] = $barcode;
+        if (isset($msg)) {
+            $tagCount = count($msg);
+            if($tagCount > 1)
+            {               // Show error message with the number of tags
+                $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
+            } else {
+                // Process a single tag
+                if (!$this->isUniqueBarcode($msg)) {
+                    $this->notify('error', 'RFID telah digunakan sebelumnya');
+                } else {
+                    $this->matl_uoms['barcode'] = $msg;
+                    $this->notify('success', 'RFID berhasil discan');
+                }
             }
-        } else {
-            $this->notify('error', 'No RFID scanned.');
         }
     }
 

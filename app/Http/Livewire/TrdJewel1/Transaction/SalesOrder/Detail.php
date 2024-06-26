@@ -246,15 +246,13 @@ class Detail extends BaseComponent
 
     public function ScanRFID()
     {
-        $exePath = '/home/ubuntu/RFIDScanner/RFIDScanner.exe'; // Path ke file exe di sistem Linux
-        $exePath = escapeshellarg($exePath); // Gunakan escapeshellarg untuk keamanan
+        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
+        $exePath = escapeshellarg($exePath);
+        $maxScannedTagLimit = 99;
+        $timeoutSeconds = 3;
 
-        // Define the arguments
-        $maxScannedTagLimit = 1;
-        $timeoutSeconds = 1;
+        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
 
-        // Append arguments to the command
-        $command = 'wine ' . $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
         exec($command, $output, $returnValue);
 
         if (isset($output)) {
