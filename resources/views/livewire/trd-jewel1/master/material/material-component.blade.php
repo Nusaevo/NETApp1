@@ -109,7 +109,8 @@ use App\Models\TrdJewel1\Master\Material;
     <x-ui-footer>
         <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode" type="text" :action="$actionValue" required="true" placeHolder="Enter Barcode" span="Half" enabled="false" />
         {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
-        @livewire('component.rfid-scanner')
+        @livewire('component.rfid-scanner', ['duration' => 2000])
+
         @if (!$searchMode && $actionValue == 'Edit')
             @if ($status === 'ACTIVE')
             <x-ui-button button-name="Disable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />

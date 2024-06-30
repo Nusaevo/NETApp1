@@ -18,7 +18,8 @@
                         <x-slot name="button">
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
 
-                                @livewire('component.rfid-scanner')
+                                @livewire('component.rfid-scanner', ['duration' => 5000])
+
                                 <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
                                     <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
                                 </button>

@@ -1,19 +1,24 @@
-<x-ui-button id="startScanButton" jsClick="startWebSocketScan()" clickEvent="" button-name="Scan" loading="false" action="Edit" cssClass="btn-primary" iconPath="" />
-<x-ui-button id="scanningButton" jsClick="" clickEvent="" button-name="Scanning..." loading="true" action="Edit" cssClass="btn-primary" iconPath="" visible="false" />
+<div id="rfidScannerComponent" data-duration="{{ $duration }}">
+    <button id="scanButton" class="btn btn-primary" onclick="startWebSocketScan()">Scan</button>
+</div>
 
 <script>
     let socket;
     const wsUrl = 'ws://localhost:8081/RFID';
 
     function startWebSocketScan() {
+        const scanButton = document.getElementById('scanButton');
+        const rfidScannerComponent = document.getElementById('rfidScannerComponent');
+        const duration = rfidScannerComponent.getAttribute('data-duration');
+
         socket = new WebSocket(wsUrl);
 
-        document.getElementById('startScanButton').setAttribute('loading', 'true');
-        toggleButtons();
+        scanButton.disabled = true;
+        scanButton.innerText = "Scanning...";
 
         socket.onopen = function() {
             console.log('WebSocket connection established');
-            socket.send('start_scan');
+            socket.send('start_scan:' + duration);
         };
 
         socket.onmessage = function(event) {
@@ -31,36 +36,26 @@
 
         socket.onclose = function() {
             console.log('WebSocket connection closed');
-            document.getElementById('startScanButton').setAttribute('loading', 'false');
-            toggleButtons();
+            scanButton.disabled = false;
+            scanButton.innerText = "Scan";
         };
 
         socket.onerror = function(error) {
             console.log('WebSocket error:', error.message);
             Livewire.emit('errorOccurred', 'WebSocket error: ' + error.message);
+            scanButton.disabled = false;
+            scanButton.innerText = "Scan";
             socket.close();
         };
 
+        // Timeout to close the connection if no response within the specified duration plus buffer time
         setTimeout(function() {
             if (socket.readyState === WebSocket.OPEN) {
                 console.log('No tag scanned');
                 Livewire.emit('errorOccurred', 'No tag scanned');
                 socket.close();
             }
-        }, 5000); // 5 seconds timeout
-    }
-
-    function toggleButtons() {
-        const startButton = document.getElementById('startScanButton');
-        const scanningButton = document.getElementById('scanningButton');
-
-        if (startButton.style.display === 'none') {
-            startButton.style.display = 'block';
-            scanningButton.style.display = 'none';
-        } else {
-            startButton.style.display = 'none';
-            scanningButton.style.display = 'block';
-        }
+        }, parseInt(duration) + 1000); // Adjust the timeout to slightly longer than duration
     }
 
     Livewire.on('tagScanned', tags => {
@@ -73,7 +68,8 @@
             type: 'error',
             message: errorMessage
         });
-        document.getElementById('startScanButton').setAttribute('loading', 'false');
-        toggleButtons();
+        const scanButton = document.getElementById('scanButton');
+        scanButton.disabled = false;
+        scanButton.innerText = "Scan";
     });
 </script>

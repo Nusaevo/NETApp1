@@ -92,7 +92,7 @@ class MaterialComponent extends BaseComponent
             'materials.jwl_wgt_gold' => 'required',
             'materials.name' => 'required|string|min:0|max:255',
             'materials.descr' => 'required|string|min:0|max:255',
-            'matl_uoms.barcode' => 'required',
+            // 'matl_uoms.barcode' => 'required',
             'matl_boms.*.base_matl_id' => 'required',
             'matl_boms.*.jwl_sides_cnt' => 'required',
             'matl_boms.*.jwl_sides_carat' => 'required',

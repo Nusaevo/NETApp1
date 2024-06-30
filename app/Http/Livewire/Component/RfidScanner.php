@@ -7,6 +7,7 @@ class RfidScanner extends Component
 {
     public $scannedTags = [];
     public $errorMessage = '';
+    public $duration = 4000;
 
     public function render()
     {
