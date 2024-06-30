@@ -228,6 +228,30 @@ class Detail extends BaseComponent
             $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
+    public function delete()
+    {
+        try {
+            if(!$this->object->isSalesEnableToEdit())
+            {
+                $this->notify('warning', 'Nota ini tidak bisa dihapus.');
+                return;
+            }
+            //$this->updateVersionNumber();
+            if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::DEACTIVATED;
+                }
+                $this->object->save();
+                $this->object->delete();
+                $messageKey = 'generic.string.disable';
+            $this->object->save();
+            $this->notify('success', Lang::get($messageKey));
+        } catch (Exception $e) {
+            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+        }
+
+          return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+
 
     public function deleteDetails($index)
     {

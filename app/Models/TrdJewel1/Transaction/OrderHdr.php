@@ -72,6 +72,15 @@ class OrderHdr extends BaseModel
         return self::where('created_by', $createdBy)->where('tr_type', $trType)->get();
     }
 
+    public function isSalesEnableToEdit(): bool
+    {
+        if ($this->status_code == Status::COMPLETED) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function isEnableToEdit(): bool
     {
         if ($this->status_code == Status::COMPLETED) {
