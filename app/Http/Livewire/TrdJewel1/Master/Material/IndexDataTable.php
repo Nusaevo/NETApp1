@@ -15,7 +15,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
-        $this->setSort('created_at', 'desc');
+        $this->setSort('stock', 'desc');
     }
 
     public function builder(): Builder
@@ -82,6 +82,22 @@ class IndexDataTable extends BaseDataTableComponent
                 ])->filter(function (Builder $builder, string $value) {
                     if ($value === '0') $builder->withoutTrashed();
                     else if ($value === '1') $builder->onlyTrashed();
+                }),
+            SelectFilter::make('Stock', 'stock_filter')
+                ->options([
+                    'all' => 'All',
+                    'above_0' => 'Above 0',
+                    'below_0' => 'Below 0',
+                ])->filter(function (Builder $builder, string $value) {
+                    if ($value === 'above_0') {
+                        $builder->whereHas('ivtBal', function ($query) {
+                            $query->where('qty_oh', '>', 0);
+                        });
+                    } elseif ($value === 'below_0') {
+                        $builder->whereHas('ivtBal', function ($query) {
+                            $query->where('qty_oh', '<=', 0);
+                        });
+                    }
                 }),
         ];
     }

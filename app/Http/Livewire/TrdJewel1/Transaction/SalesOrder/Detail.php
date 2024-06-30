@@ -167,11 +167,6 @@ class Detail extends BaseComponent
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->fillAndSanitize($this->inputs);
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
-        if (!$this->object->isNew()) {
-            foreach ($this->deletedItems as $deletedItemId) {
-                OrderDtl::find($deletedItemId)->forceDelete();
-            }
-        }
     }
 
     public function onReset()
@@ -266,7 +261,6 @@ class Detail extends BaseComponent
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
-        $this->SaveWithoutNotification();
     }
 
     public function tagScanned($tags)

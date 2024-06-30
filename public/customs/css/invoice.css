@@ -1,25 +1,36 @@
 @page {
-    size: A5;
+    size: A5 portrait;
+    margin: 0; /* No margin */
 }
 
 body {
     margin: 0;
+    padding: 0;
     font-family: 'Calibri';
     font-size: 14px;
     color: #555;
 }
 
+.invoice-box-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    page-break-inside: avoid;
+}
+
 .invoice-box {
     width: 100%;
-    max-width: 148mm;
-    height: 210mm;
+    height: 50%; /* Each box takes half the height of the viewport */
     border: 1px solid #eee;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
     line-height: 24px;
     font-weight: 700;
     color: #555;
     box-sizing: border-box;
-    page-break-after: always;
+    page-break-inside: avoid;
+    margin: 0;
+    padding: 5mm; /* Padding inside the box */
 }
 
 .invoice-box table {
@@ -38,28 +49,16 @@ body {
     text-align: right;
 }
 
-.invoice-box table tr.top table td {
-    /* padding-bottom: 20px; */
-}
-
 .invoice-box table tr.top table td.title {
     font-size: 45px;
     line-height: 45px;
     color: #333;
 }
 
-.invoice-box table tr.information table td {
-    /* padding-bottom: 20px; */
-}
-
 .invoice-box table tr.heading td {
     background: #eee;
     border-bottom: 1px solid #ddd;
     font-weight: bold;
-}
-
-.invoice-box table tr.details td {
-    padding-bottom: 20px;
 }
 
 .invoice-box table tr.item td {
@@ -79,20 +78,6 @@ body {
     float: right;
 }
 
-@media only screen and (max-width: 600px) {
-    .invoice-box table tr.top table td {
-        width: 100%;
-        display: block;
-        text-align: center;
-    }
-
-    .invoice-box table tr.information table td {
-        width: 100%;
-        display: block;
-        text-align: center;
-    }
-}
-
 @media print {
     body * {
         visibility: hidden;
@@ -105,6 +90,7 @@ body {
         left: 0;
         top: 0;
         width: 100%;
+        height: 100%;
         box-sizing: border-box;
     }
     .card {
@@ -113,9 +99,22 @@ body {
     }
     .container {
         padding: 0;
+        margin: 0;
     }
     .btn, .d-flex {
         display: none;
+    }
+    .invoice-box {
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        padding: 5mm; /* Ensure padding inside the box */
+        height: 50%; /* Each box takes half the height of the viewport */
+    }
+    .invoice-box-container {
+        padding: 0;
+        margin: 0;
+        height: 100%; /* Ensure container takes full height */
     }
     .invoice-box table {
         width: 100%;
@@ -128,7 +127,7 @@ body {
         text-align: right;
     }
     .invoice-box table tr.top table td {
-        padding-bottom: 20px;
+        padding-bottom: 10px;
     }
     .invoice-box table tr.top table td.title {
         font-size: 45px;
@@ -136,7 +135,7 @@ body {
         color: #333;
     }
     .invoice-box table tr.information table td {
-        padding-bottom: 20px;
+        padding-bottom: 10px;
     }
     .invoice-box table tr.heading td {
         background: #eee;
@@ -144,7 +143,7 @@ body {
         font-weight: bold;
     }
     .invoice-box table tr.details td {
-        padding-bottom: 20px;
+        padding-bottom: 10px;
     }
     .invoice-box table tr.item td {
         border-bottom: 1px solid #eee;

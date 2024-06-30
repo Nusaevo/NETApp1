@@ -157,15 +157,6 @@ class Detail extends BaseComponent
         $this->inputs['wh_code'] = 18;
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
-
-        if (!$this->object->isNew()) {
-            foreach ($this->deletedItems as $deletedItemId) {
-                $orderDtl = OrderDtl::find($deletedItemId);
-                if ($orderDtl) {
-                    $orderDtl->forceDelete();
-                }
-            }
-        }
     }
 
     public function onReset()
@@ -202,7 +193,9 @@ class Detail extends BaseComponent
             $detail['price'] = currencyToNumeric($material->jwl_buying_price) ?? 0;
             $detail['selling_price'] = currencyToNumeric($material->jwl_selling_price) ?? 0;
             $detail['qty'] = 1;
-            $detail['amt'] = $detail['qty'] * $detail['price'];
+            $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
+            $maxTrSeq++;
+            $detail['tr_eq'] = $maxTrSeq;
         }
         array_push($this->input_details, $detail);
         $newDetail = end($this->input_details);
@@ -229,9 +222,7 @@ class Detail extends BaseComponent
             }
             $this->addDetails($material_id);
             $this->emit('closeMaterialDialog');
-            if (!empty($this->input_details)) {
-                $this->SaveWithoutNotification();
-            }
+            $this->SaveWithoutNotification();
             $this->notify('success', Lang::get($this->langBasePath.'.message.product_added'));
 
         } catch (Exception $e) {
@@ -246,9 +237,12 @@ class Detail extends BaseComponent
             $this->notify('warning', 'Item ini tidak bisa dihapus, karena item sudah terjual.');
             return;
         }
-
         if (isset($this->input_details[$index]['id'])) {
-            $this->deletedItems[] = $this->input_details[$index]['id'];
+            $deletedItemId = $this->input_details[$index]['id'];
+            $orderDtl = OrderDtl::withTrashed()->find($deletedItemId);
+            if ($orderDtl) {
+                $orderDtl->forceDelete();
+            }
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
@@ -258,7 +252,7 @@ class Detail extends BaseComponent
 
     public function SaveCheck()
     {
-        if (!empty($this->input_details) && !$this->object->isNew()) {
+        if (isset($this->input_details) && !$this->object->isNew()) {
             $this->SaveWithoutNotification();
         }
     }
