@@ -17,8 +17,8 @@
                     <x-ui-list-table id="Table" title="">
                         <x-slot name="button">
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
-                                <x-ui-button clickEvent="ScanRFID" button-name="Scan RFID" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
 
+                                @livewire('component.rfid-scanner')
                                 <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
                                     <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
                                 </button>

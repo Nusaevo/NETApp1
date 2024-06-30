@@ -1,34 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
-</head>
-<body>
+    <link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}">
 
-<div>
+<div class="container mb-5 mt-3">
     <div>
-        <x-ui-button clickEvent="" type="Back" button-name="Back"/>
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
-</div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="container mb-5 mt-3">
+    <div class="card">
+        <div class="card-body">
             <div class="row d-flex align-items-baseline">
                 <div class="col-xl-9">
                     <p style="color: #7e8d9f; font-size: 20px;">Nota >> <strong>No: {{ $this->object->tr_id }}</strong></p>
                 </div>
                 <div class="col-xl-3 float-end">
-                    <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark" onclick="printInvoice()">
+                    <button type="button" class="btn btn-light text-capitalize border-0" data-bs-toggle="modal" data-bs-target="#printSettingsModal">
+                        <i class="fas fa-print text-primary"></i> Settings
+                    </button>
+                    <button type="button" class="btn btn-light text-capitalize border-0"  onclick="printInvoice()">
                         <i class="fas fa-print text-primary"></i> Print
-                    </a>
+                    </button>
                 </div>
                 <hr>
             </div>
 
-            @foreach ($object->OrderDtl as $key => $OrderDtl)
             <div id="print">
+            @foreach ($object->OrderDtl as $key => $OrderDtl)
                 <div class="invoice-box">
                     <table>
                         <tr class="top">
@@ -94,16 +90,41 @@
                     </table>
 
                 </div>
-            </div>
             @endforeach
+        </div>
+        </div>
+    </div>
+
+    <!-- Print Settings Modal -->
+    <div class="modal fade" id="printSettingsModal" tabindex="-1" aria-labelledby="printSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="printSettingsModalLabel">Pengaturan Cetak</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form wire:submit.prevent="savePrintSettings">
+                        @foreach ($printSettings as $setting => $value)
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" wire:model="printSettings.{{ $setting }}" id="{{ $setting }}">
+                            <label class="form-check-label" for="{{ $setting }}">
+                                {{ ucfirst(str_replace('_', ' ', $setting)) }}
+                            </label>
+                        </div>
+                        @endforeach
+                        <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+@livewireScripts
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 <script type="text/javascript">
     function printInvoice() {
         window.print();
     }
 </script>
-
-</body>
-</html>

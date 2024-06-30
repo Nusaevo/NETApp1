@@ -74,8 +74,9 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['matl_descr'] = $detail->Material->descr ?? "";
                 $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
-                $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-                $imagePath = $detail->Material->Attachment->first()?->getUrl() ?? null;
+                $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode ?? "";
+                $imagePath = $detail->Material?->Attachment?->first()?->getUrl() ?? null;
+
                 $this->input_details[$key]['image_path'] = $imagePath;
             }
 
@@ -95,6 +96,7 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus' => 'changeStatus',
         'materialSaved' => 'materialSaved',
+        'tagScanned' => 'tagScanned',
         'delete' => 'delete'
     ];
 
@@ -159,7 +161,8 @@ class Detail extends BaseComponent
     {
     }
 
-    public function ScanRFID()
+
+    public function tagScanned($tags)
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
@@ -168,84 +171,81 @@ class Detail extends BaseComponent
             return;
         }
 
-        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
-        $exePath = escapeshellarg($exePath);
-        $maxScannedTagLimit = 99;
-        $timeoutSeconds = 3;
+        $tagCount = count($tags);
+        if($tagCount == 0)
+        {
+            $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
+        }
+        $usercode = Auth::check() ? Auth::user()->code : '';
 
-        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+        DB::beginTransaction();
 
-        exec($command, $output, $returnValue);
+        try {
+            $cartHdr = CartHdr::firstOrCreate([
+                'created_by' => $usercode,
+                'tr_type' => 'C',
+            ], [
+                'tr_date' => Carbon::now(),
+            ]);
 
-        if (isset($output) && !empty($output)) {
-            $usercode = Auth::check() ? Auth::user()->code : '';
+            $addedItemsCount = 0; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
 
-            DB::beginTransaction();
+            foreach ($tags as $barcode) {
+                // Find the corresponding material
+                $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
+                    $query->where('barcode', $barcode);
+                })->first();
 
-            try {
-                $cartHdr = CartHdr::firstOrCreate([
-                    'created_by' => $usercode,
-                    'tr_type' => 'C',
-                ], [
-                    'tr_date' => Carbon::now(),
-                ]);
-
-                foreach ($output as $barcode) {
-                    // Find the corresponding material
-                    $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
-                        $query->where('barcode', $barcode);
-                    })->first();
-
-                    if (!isset($material)) {
-                        continue; // Skip if no material found for the barcode
-                    }
-
-                    $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material->id)->first();
-                    if ($existingOrderDtl) {
-                        DB::rollback();
-                        $this->dispatchBrowserEvent('notify-swal', [
-                            'type' => 'error',
-                            'message' => "Item {$material->code} sudah ada di cart"
-                        ]);
-                        return;
-                    }
-
-                    $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
-                    $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
-                    $maxTrSeq++;
-
-                    $cartHdr->CartDtl()->create([
-                        'trhdr_id' => $cartHdr->id,
-                        'qty_reff' => 1,
-                        'matl_id' => $material->id,
-                        'matl_code' => $material->code,
-                        'qty' => 1,
-                        'qty_reff' => 1,
-                        'tr_type' => 'C',
-                        'tr_seq' => $maxTrSeq,
-                        'price' => $price,
-                    ]);
+                if (!isset($material)) {
+                    continue; // Skip if no material found for the barcode
                 }
 
-                DB::commit();
+                $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material->id)->first();
+                if ($existingOrderDtl) {
+                    DB::rollback();
+                    $this->dispatchBrowserEvent('notify-swal', [
+                        'type' => 'error',
+                        'message' => "Item {$material->code} sudah ada di cart"
+                    ]);
+                    return;
+                }
 
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'success',
-                    'message' => 'Berhasil menambahkan item ke cart'
+                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+                $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
+                $maxTrSeq++;
+
+                $cartHdr->CartDtl()->create([
+                    'trhdr_id' => $cartHdr->id,
+                    'qty_reff' => 1,
+                    'matl_id' => $material->id,
+                    'matl_code' => $material->code,
+                    'qty' => 1,
+                    'tr_type' => 'C',
+                    'tr_seq' => $maxTrSeq,
+                    'price' => $price,
                 ]);
-                $this->retrieveMaterials();
-                $this->emit('updateCartCount');
-            } catch (\Exception $e) {
-                DB::rollback();
-                $this->dispatchBrowserEvent('notify-swal', [
-                    'type' => 'error',
-                    'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
-                ]);
+
+                $addedItemsCount++; // Increment the counter for each added item
             }
-        } else {
-            $this->notify('error', 'No RFID scanned.');
+
+            DB::commit();
+
+            // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => "Berhasil menambahkan {$addedItemsCount} item ke cart"
+            ]);
+            $this->retrieveMaterials();
+            $this->emit('updateCartCount');
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
+            ]);
         }
     }
+
 
     public function addDetails($material_id = null)
     {

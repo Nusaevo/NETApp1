@@ -15,6 +15,7 @@ use DB;
 use Livewire\WithFileUploads;
 use Ratchet\Client\Connector;
 use React\EventLoop\Factory;
+use App\Enums\Status;
 
 class MaterialComponent extends BaseComponent
 {
@@ -418,7 +419,40 @@ class MaterialComponent extends BaseComponent
 
     public function changeStatus()
     {
-        $this->change();
+        $this->changeMaterial();
+    }
+
+    protected function changeMaterial()
+    {
+        try {
+            $this->updateVersionNumber();
+            if ($this->object->deleted_at) {
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::ACTIVE;
+                }
+                $this->object->deleted_at = null;
+                $messageKey = 'generic.string.enable';
+            } else {
+                if($this->object->getAvailableMaterials())
+                {
+                    $this->notify('error', "Barang masih ada di inventory, tidak bisa di nonaktifkan!");
+                    return;
+                }
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code =  Status::DEACTIVATED;
+                }
+                $this->object->save();
+                $this->object->delete();
+                $messageKey = 'generic.string.disable';
+            }
+
+            $this->object->save();
+            $this->notify('success', Lang::get($messageKey));
+        } catch (Exception $e) {
+            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+        }
+
+        $this->dispatchBrowserEvent('refresh');
     }
 
     protected function onReset()
@@ -656,7 +690,7 @@ class MaterialComponent extends BaseComponent
                 if (!$this->isUniqueBarcode($msg)) {
                     $this->notify('error', 'RFID telah digunakan sebelumnya');
                 } else {
-                    $this->matl_uoms['barcode'] = $msg;
+                    $this->matl_uoms['barcode'] = $msg[0];
                     $this->notify('success', 'RFID berhasil discan');
                 }
             }

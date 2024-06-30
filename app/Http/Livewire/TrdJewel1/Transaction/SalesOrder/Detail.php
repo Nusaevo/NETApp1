@@ -111,7 +111,8 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'changeItem'  => 'changeItem',
         'materialSaved' => 'materialSaved',
-        'delete' => 'delete'
+        'delete' => 'delete',
+        'tagScanned' => 'tagScanned',
     ];
 
 
@@ -243,81 +244,94 @@ class Detail extends BaseComponent
         $this->SaveWithoutNotification();
     }
 
-
-    public function ScanRFID()
+    public function tagScanned($tags)
     {
-        $exePath = 'C:\RFIDScanner\RFIDScanner.exe';
-        $exePath = escapeshellarg($exePath);
-        $maxScannedTagLimit = 99;
-        $timeoutSeconds = 3;
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
-        $command = $exePath . ' ' . escapeshellarg($maxScannedTagLimit) . ' ' . escapeshellarg($timeoutSeconds);
+        if ($this->currencyRate == 0) {
+            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            return;
+        }
 
-        exec($command, $output, $returnValue);
+        $tagCount = count($tags);
+        if ($tagCount == 0) {
+            $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
+            return;
+        }
 
-        if (isset($output)) {
-            DB::beginTransaction();
+        $usercode = Auth::check() ? Auth::user()->code : '';
 
-            try {
-                $orderHdr = OrderHdr::firstOrCreate([
-                    'id' => $this->objectIdValue,
-                ], [
-                    'tr_date' => Carbon::now(),
-                ]);
+        DB::beginTransaction();
 
-                $newDetails = [];
-                foreach ($output as $barcode) {
-                    // Find the corresponding material
-                    $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
-                        $query->where('barcode', $barcode);
-                    })->first();
+        try {
+            $orderHdr = OrderHdr::firstOrCreate([
+                'created_by' => $usercode,
+                'tr_type' => 'C',
+            ], [
+                'tr_date' => Carbon::now(),
+            ]);
 
-                    if (!isset($material)) {
-                        // DB::rollback();
-                        // $this->notify('error', "Material untuk RFID $barcode tidak ditemukan.");
-                        continue;
-                    }
-                    $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
-                    if ($existingOrderDtl) {
-                        DB::rollback();
-                        $this->notify('error', "Item {$material->code} sudah ada di Order.");
-                        return;
-                    }
+            $addedItemsCount = 0; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
 
-                    $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
-                    $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
-                    $maxTrSeq++;
+            foreach ($tags as $barcode) {
+                // Find the corresponding material
+                $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
+                    $query->where('barcode', $barcode);
+                })->first();
 
-                    $newDetails[] = [
-                        'trhdr_id' => $orderHdr->id,
-                        'qty_reff' => 1,
-                        'matl_id' => $material->id,
-                        'matl_descr' => $material->descr,
-                        'matl_code' => $material->code,
-                        'matl_uom' => $material->MatlUom[0]->id,
-                        'qty' => 1,
-                        'qty_reff' => 1,
-                        'tr_type' => 'C',
-                        'tr_id' => $this->object->id,
-                        'tr_seq' => $maxTrSeq,
-                        'price' => $price,
-                    ];
+                if (!isset($material)) {
+                    continue; // Skip if no material found for the barcode
                 }
+
+                $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
+                if ($existingOrderDtl) {
+                    DB::rollback();
+                    $this->dispatchBrowserEvent('notify-swal', [
+                        'type' => 'error',
+                        'message' => "Item {$material->code} sudah ada di Order"
+                    ]);
+                    return;
+                }
+
+                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+                $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
+                $maxTrSeq++;
+                $newDetails[] = [
+                    'trhdr_id' => $orderHdr->id,
+                    'qty_reff' => 1,
+                    'matl_id' => $material->id,
+                    'matl_descr' => $material->descr,
+                    'matl_code' => $material->code,
+                    'matl_uom' => $material->MatlUom[0]->id,
+                    'qty' => 1,
+                    'qty_reff' => 1,
+                    'tr_type' => 'C',
+                    'tr_id' => $this->object->id,
+                    'tr_seq' => $maxTrSeq,
+                    'price' => $price,
+                ];
                 $this->input_details = array_merge($this->input_details, $newDetails);
-
                 $this->SaveWithoutNotification();
-                DB::commit();
-
-                $this->notify('success', 'Berhasil menambahkan item ke cart');
-                $this->retrieveMaterials();
-            } catch (\Exception $e) {
-                DB::rollback();
-                $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke Order');
+                $addedItemsCount++;
             }
-        } else {
-            $this->notify('error', 'No RFID scanned.');
+
+            DB::commit();
+
+            // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'success',
+                'message' => "Berhasil menambahkan {$addedItemsCount} item ke Order"
+            ]);
+            $this->retrieveMaterials();
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'error',
+                'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
+            ]);
         }
     }
+
 
     public function changeQty($id, $value)
     {
