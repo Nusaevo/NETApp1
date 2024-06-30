@@ -228,6 +228,7 @@ class Detail extends BaseComponent
             $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
+
     public function delete()
     {
         try {

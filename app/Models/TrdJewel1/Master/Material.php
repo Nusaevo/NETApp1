@@ -4,6 +4,7 @@ namespace App\Models\TrdJewel1\Master;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\Base\BaseModel\Attachment;
+use App\Models\TrdJewel1\Inventories\IvtBal;
 use DB;
 class Material extends BaseModel
 {
@@ -122,5 +123,15 @@ class Material extends BaseModel
             ->where('ivt_bals.qty_oh', '>', 0)
             ->whereNull('materials.deleted_at')
             ->select('materials.*');
+    }
+
+    public function ivtBal()
+    {
+        return $this->hasOne(IvtBal::class, 'matl_id');
+    }
+
+    public function getStockAttribute()
+    {
+        return $this->ivtBal ? $this->ivtBal->qty_oh : 0;
     }
 }
