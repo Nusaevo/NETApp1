@@ -31,8 +31,6 @@ return [
     'weight' => 'Berat (Gram)',
     'code' => 'Kode Produk',
     'buying_price' => 'Harga Beli',
-    'description' => 'Deskripsi Material',
-    'bom_description' => 'Deskripsi Bahan',
     'markup_price' => 'Markup Harga (%)',
     'selling_price' => 'Harga Jual',
     'input' => 'Input Material',

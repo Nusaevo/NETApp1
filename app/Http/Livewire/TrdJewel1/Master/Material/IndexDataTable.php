@@ -8,6 +8,7 @@ use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Material::class;
@@ -15,7 +16,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
-        $this->setSort('stock', 'desc');
+        $this->setSort('created_at', 'desc');
     }
 
     public function builder(): Builder
@@ -37,23 +38,27 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("description_bom"), "descr")
                 ->searchable()
                 ->sortable(),
-            Column::make("Qty OnHand", "stock")
-                ->label(function($row) {
-                    return  currencyToNumeric($row->stock);
+            Column::make("Qty Onhand", "IvtBal.qty_oh")
+                ->format(function ($value, $row, Column $column) {
+                    if(isset($value)){
+                        return currencyToNumeric($value);
+                    }else{
+                    }
                 })
+                ->searchable()
                 ->sortable(),
             Column::make($this->trans("selling_price"), "jwl_selling_price")
-                ->searchable()
-                ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return rupiah(currencyToNumeric($value));
-                }),
-            Column::make($this->trans("status"), "status_code")
+                })
                 ->searchable()
-                ->sortable()
+                ->sortable(),
+            Column::make($this->trans("status"), "status_code")
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
-                }),
+                })
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans('created_date'), 'created_at')
                 ->sortable(),
             Column::make($this->trans('action'), 'id')
@@ -70,7 +75,6 @@ class IndexDataTable extends BaseDataTableComponent
                 }),
         ];
     }
-
 
     public function filters(): array
     {
@@ -89,12 +93,12 @@ class IndexDataTable extends BaseDataTableComponent
                     'above_0' => 'Above 0',
                     'below_0' => 'Below 0',
                 ])->filter(function (Builder $builder, string $value) {
-                    if ($value === 'above_0') {
-                        $builder->whereHas('ivtBal', function ($query) {
+                    if ($value === 'Ada') {
+                        $builder->whereHas('IvtBal', function ($query) {
                             $query->where('qty_oh', '>', 0);
                         });
-                    } elseif ($value === 'below_0') {
-                        $builder->whereHas('ivtBal', function ($query) {
+                    } elseif ($value === 'Kosong') {
+                        $builder->whereHas('IvtBal', function ($query) {
                             $query->where('qty_oh', '<=', 0);
                         });
                     }

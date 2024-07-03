@@ -59,27 +59,28 @@ class Detail extends BaseComponent
     protected function onLoadForEdit()
     {
         $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-        $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
         $this->inputs = populateArrayFromModel($this->object);
-        // if ($this->object) {
-        //     $this->returnIds = $this->object->ReturnHdr->pluck('id')->toArray();
-        // }
-        foreach ($this->object_detail as $key => $detail) {
-            $this->input_details[$key] =  populateArrayFromModel($detail);
-            $this->input_details[$key]['id'] = $detail->id;
-            $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
-            $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
-            $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-            $this->input_details[$key]['name'] = $detail->Material->name ?? "";
-            $this->input_details[$key]['selling_price'] = currencyToNumeric($detail->Material->jwl_selling_price) ?? 0;
-            $this->input_details[$key]['price'] = currencyToNumeric($detail->Material->jwl_buying_price) ?? 0;
-            $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
-            $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-            $imagePath = $detail->Material->Attachment->first()?->getUrl() ?? null;
-            $this->input_details[$key]['image_path'] = $imagePath;
 
+        $this->retrieveMaterials();
+    }
+    protected function retrieveMaterials()
+    {
+        if ($this->object) {
+            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
+            foreach ($this->object_detail as $key => $detail) {
+                $this->input_details[$key] =  populateArrayFromModel($detail);
+                $this->input_details[$key]['name'] = $detail->Material->name;
+                $this->input_details[$key]['id'] = $detail->id;
+                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
+                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
+                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
+                $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
+            }
+            $this->countTotalAmount();
         }
-        $this->countTotalAmount();
     }
 
     public function render()
@@ -91,7 +92,7 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'changeItem'  => 'changeItem',
         'materialSaved' => 'materialSaved',
-        'delete' => 'delete'
+        'delete' => 'delete',
     ];
 
 
@@ -123,6 +124,14 @@ class Detail extends BaseComponent
         $this->inputs['wh_code'] = 18;
     }
 
+    public function OpenDialogBox(){
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            return;
+        }
+        $this->dispatchBrowserEvent('openMaterialDialog');
+    }
+
 
     protected function onPopulateDropdowns()
     {
@@ -133,8 +142,7 @@ class Detail extends BaseComponent
     public function onValidateAndSave()
     {
         if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',Lang::get('generic.string.currency_needed'));
-            return;
+            throw new Exception(Lang::get('generic.string.currency_needed'));
         }
         if (!empty($this->input_details)) {
             $unitIds = array_column($this->input_details, 'item_unit_id');
@@ -156,7 +164,15 @@ class Detail extends BaseComponent
         }
         $this->inputs['wh_code'] = 18;
         $this->inputs['status_code'] = STATUS::OPEN;
-        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
+        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
+        if($this->actionValue == 'Create')
+        {
+            return redirect()->route('TrdJewel1.Procurement.PurchaseOrder.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);
+        }
+        $this->retrieveMaterials();
     }
 
     public function onReset()
@@ -195,7 +211,7 @@ class Detail extends BaseComponent
             $detail['qty'] = 1;
             $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
             $maxTrSeq++;
-            $detail['tr_eq'] = $maxTrSeq;
+            $detail['tr_seq'] = $maxTrSeq;
         }
         array_push($this->input_details, $detail);
         $newDetail = end($this->input_details);
@@ -221,10 +237,9 @@ class Detail extends BaseComponent
                 }
             }
             $this->addDetails($material_id);
-            $this->emit('closeMaterialDialog');
             $this->SaveWithoutNotification();
             $this->notify('success', Lang::get($this->langBasePath.'.message.product_added'));
-
+            $this->dispatchBrowserEvent('closeMaterialDialog');
         } catch (Exception $e) {
             $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }
@@ -246,8 +261,6 @@ class Detail extends BaseComponent
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
-        $this->countTotalAmount();
-        $this->SaveWithoutNotification();
     }
 
     public function SaveCheck()
@@ -281,19 +294,6 @@ class Detail extends BaseComponent
 
           return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
-
-    public function createReturn()
-    {
-        if (!$this->object->isEnableToEdit()) {
-            throw new Exception("Nota ini tidak bisa di edit lagi.");
-        }
-
-        return redirect()->route('TrdJewel1.Procurement.PurchaseReturn.Detail', [
-            'action' => encryptWithSessionKey('Create'),
-            'objectId' => encryptWithSessionKey($this->object->id)
-        ]);
-    }
-
 
     public function changeQty($id, $value)
     {

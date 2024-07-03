@@ -31,8 +31,6 @@ return [
     'weight' => 'Weight (Gram)',
     'code' => 'Product Code',
     'buying_price' => 'Buying Price',
-    'description' => 'Material Description',
-    'bom_description' => 'Side Material Description',
     'markup_price' => 'Markup Price (%)',
     'selling_price' => 'Selling Price',
     'input' => 'Input Material',

@@ -127,11 +127,13 @@ class Material extends BaseModel
 
     public function ivtBal()
     {
-        return $this->hasOne(IvtBal::class, 'matl_id');
+        return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
+            'qty_oh' => '$0.00'
+        ]);
     }
 
     public function getStockAttribute()
     {
-        return $this->ivtBal ? $this->ivtBal->qty_oh : 0;
+        return $this->IvtBal ? $this->IvtBal->qty_oh : 0;
     }
 }

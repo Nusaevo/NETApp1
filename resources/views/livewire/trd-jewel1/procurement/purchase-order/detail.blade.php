@@ -57,7 +57,7 @@
                                 </x-slot>
                             </x-ui-dialog-box> --}}
 
-                            <button type="button" wire:click="SaveCheck" class="btn btn-primary" data-bs-target="#materialDialogBox" data-bs-toggle="modal">
+                            <button type="button" wire:click="OpenDialogBox" class="btn btn-primary" >
                                 {{ $this->trans('btnAdd') }}
                             </button>
 
@@ -117,7 +117,20 @@
             @include('layout.customs.transaction-form-footer')
         </x-ui-footer>
     </x-ui-page-card>
-    @php
-    // dump($object->id);
-    @endphp
+    {{-- @php
+    dump($input_details);
+    @endphp --}}
 </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('openMaterialDialog', function() {
+            $('#materialDialogBox').modal('show');
+        });
+
+        window.addEventListener('closeMaterialDialog', function() {
+            $('#materialDialogBox').modal('hide');
+        });
+    });
+</script>

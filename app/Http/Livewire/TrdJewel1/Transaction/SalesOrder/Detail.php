@@ -86,6 +86,7 @@ class Detail extends BaseComponent
     protected function retrieveMaterials()
     {
         if ($this->object) {
+            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material->name;
@@ -166,62 +167,27 @@ class Detail extends BaseComponent
         }
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->fillAndSanitize($this->inputs);
-        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details, $this->object_detail, true);
+        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
+        $this->retrieveMaterials();
     }
 
     public function onReset()
     {
-        $this->reset('inputs');
-        $this->reset('input_details');
-        $this->object = new OrderHdr();
-        $this->object_detail = [];
-        $this->refreshPartner();
-        $this->total_amount = 0;
-        $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        $this->inputs['curr_code'] = "USD";
-        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
-    }
-
-    public function addDetails($material_id = null)
-    {
-        $detail = [
-            'tr_type' => $this->trType,
-        ];
-        $material = Material::find($material_id);
-        if ($material) {
-            $detail['matl_id'] = $material->id;
-            $detail['matl_code'] = $material->code;
-            $detail['matl_descr'] = $material->descr ?? "";
-            $detail['matl_uom'] = $material->MatlUom[0]->id;
-            $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
-            $detail['barcode'] = $material->MatlUom[0]->barcode;
-            $detail['price'] = int_qty($material->jwl_buying_price) ?? 0;
-            $detail['selling_price'] = int_qty($material->jwl_selling_price) ?? 0;
-            $detail['qty'] = 1;
-            $detail['amt'] = $detail['qty'] * $detail['price'];
-        }
-        array_push($this->input_details, $detail);
-        $newDetail = end($this->input_details);
-        $this->newItems[] = $newDetail;
-
-        $this->emit('updateCartCount');
-        $this->countTotalAmount();
+        // $this->reset('inputs');
+        // $this->reset('input_details');
+        // $this->object = new OrderHdr();
+        // $this->object_detail = [];
+        // $this->refreshPartner();
+        // $this->total_amount = 0;
+        // $this->inputs['tr_date']  = date('Y-m-d');
+        // $this->inputs['tr_type']  = $this->trType;
+        // $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        // $this->inputs['curr_code'] = "USD";
+        // $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
     }
 
     public function Add()
     {
-    }
-
-    public function materialSaved($material_id)
-    {
-        try {
-            $this->addDetails($material_id);
-            $this->emit('closeMaterialDialog');
-        } catch (Exception $e) {
-            $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
-        }
     }
 
     public function delete()
@@ -341,7 +307,6 @@ class Detail extends BaseComponent
                 'type' => 'success',
                 'message' => "Berhasil menambahkan {$addedItemsCount} item ke Order"
             ]);
-            $this->retrieveMaterials();
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatchBrowserEvent('notify-swal', [
@@ -517,7 +482,6 @@ class Detail extends BaseComponent
                 'message' => 'Berhasil menambahkan item ke cart'
             ]);
             $this->selectedMaterials = [];
-            $this->retrieveMaterials();
         } catch (\Exception $e) {
             DD($e);
             DB::rollback();

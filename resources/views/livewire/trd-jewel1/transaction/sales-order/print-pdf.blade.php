@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barcode Label</title>
     <style>
-        /* Include the CSS styles defined above */
         @page {
             size: A5 portrait;
-            margin: 0; /* No margin */
+            margin: 0;
         }
 
         body {
@@ -29,7 +28,7 @@
 
         .invoice-box {
             width: 100%;
-            height: 50vh; /* Each box takes half the height of the viewport */
+            height: 297px; /* Half of A5 height in pixels */
             border: 1px solid #eee;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
             line-height: 24px;
@@ -38,7 +37,7 @@
             box-sizing: border-box;
             page-break-inside: avoid;
             margin: 0;
-            padding: 10px; /* Padding inside the box */
+            padding: 10px;
         }
 
         .invoice-box table {
@@ -116,13 +115,13 @@
                 border: none;
                 box-shadow: none;
                 margin: 0;
-                padding: 10px; /* Ensure padding inside the box */
-                height: 50vh; /* Each box takes half the height of the viewport */
+                padding: 10px;
+                height: 297px; /* Half of A5 height in pixels */
             }
             .invoice-box-container {
                 padding: 0;
                 margin: 0;
-                height: 100%; /* Ensure container takes full height */
+                height: 100%;
             }
             .invoice-box table {
                 width: 100%;

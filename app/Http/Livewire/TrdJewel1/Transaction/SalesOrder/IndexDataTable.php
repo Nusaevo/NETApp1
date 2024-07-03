@@ -20,13 +20,15 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
-        $this->setSort('tr_date', 'desc');
+        $this->setSort('created_at', 'desc');
         $this->setFilter('status_code',  Status::OPEN);
     }
 
     public function builder(): Builder
     {
-        return OrderHdr::with('OrderDtl')->where('tr_type', 'SO');
+        return OrderHdr::with('OrderDtl')
+        ->where('tr_type', 'SO')
+        ->where('order_hdrs.status_code', '!=', Status::DEACTIVATED);;
     }
     public function columns(): array
     {
@@ -49,6 +51,15 @@ class IndexDataTable extends BaseDataTableComponent
                 ->label(function($row) {
                     return rupiah(currencyToNumeric($row->total_amt));
                 })
+                ->sortable(),
+            Column::make($this->trans('status'), "status_code")
+                ->searchable()
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    return Status::getStatusString($value);
+                }),
+            Column::make($this->trans("created_date"), "created_at")
+                ->searchable()
                 ->sortable(),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
