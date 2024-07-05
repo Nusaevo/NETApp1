@@ -160,7 +160,7 @@ class Detail extends BaseComponent
         {
             if(!$this->object->isEnableToEdit())
             {
-                throw new Exception("Nota ini tidak bisa di edit lagi.");
+                throw new Exception("Nota ini tidak bisa di edit lagi, Karena barang sudah diterima");
             }
         }
         if(isset($this->inputs['partner_id']))

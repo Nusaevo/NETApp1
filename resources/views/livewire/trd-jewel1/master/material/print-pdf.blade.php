@@ -7,7 +7,7 @@
     <style>
         @page {
             size: 8cm 3cm;
-            margin: 0.5cm 0 0 0.5cm; /* Atas 0.5cm, kiri 0.5cm, kanan dan bawah 0cm */
+            margin: 0.5cm 0 0 0.5cm; /* Margin atas 0.5cm, kiri 0.5cm, kanan dan bawah 0cm */
         }
 
         html, body {
@@ -19,45 +19,44 @@
         }
 
         .label-container {
-            width: 7cm; /* Kurangi lebar untuk memperhitungkan margin kiri */
-            height: 2.5cm; /* Kurangi tinggi untuk memperhitungkan margin atas */
-            padding: 0 10px 0 0.5cm; /* Tambahkan padding kanan 10px dan padding kiri sedikit */
+            width: 8cm; /* Kurangi lebar untuk memperhitungkan margin kiri */
+            height: 3cm; /* Kurangi tinggi untuk memperhitungkan margin atas */
+            padding: 0 0.5cm; /* Padding kiri dan kanan */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* Sebarkan konten secara vertikal */
-            align-items: flex-end; /* Posisikan di kanan secara horizontal */
-            margin-right: 30px;
+            align-items: flex-start; /* Posisikan di kiri secara horizontal */
+            padding-left: 4cm;
         }
 
-        .label-code, .label-price {
-
+        .label-code, .label-price, .label-name, .label-descr {
             padding: 0;
-            text-align: right; /* Align ke kanan */
-            width: auto; /* Pastikan elemen menggunakan seluruh lebar container */
+            text-align: left; /* Align ke kiri */
+            width: 100%; /* Pastikan elemen menggunakan seluruh lebar container */
+            margin: 0; /* Hilangkan margin default */
         }
 
         .label-code {
             font-size: 16px;
             font-weight: bold;
-            margin-top: -20px; /* Geser ke atas */
+            margin-top: -5mm; /* Geser sedikit ke atas */
         }
 
         .label-price {
             font-size: 12px;
         }
 
-        .label-name{
-            margin-top: 20px;
-        }
-        .label-name, .label-descr {
+        .label-name {
+            margin-top: 5px;
             font-size: 8px;
-            padding: 0;
-            text-align: right; /* Align ke kanan */
-            width: auto; /* Pastikan elemen menggunakan seluruh lebar container */
         }
 
         .label-descr {
+            font-size: 8px;
+            max-width: 100%; /* Set max width to 100% */
+            margin-top: 5px;
+            word-break: break-all; /* Ensure words break to next line */
+            white-space: pre-wrap; /* Preserve whitespace and wrap as necessary */
         }
 
         @media print {
@@ -73,15 +72,13 @@
                 top: 0;
                 width: 8cm;
                 height: 3cm;
-                padding: 0;
-                margin: 0.5cm 0 0 0.5cm;
+                padding: 0.5cm; /* Padding sesuai margin halaman */
                 box-sizing: border-box;
                 border: none;
                 display: flex;
-                justify-content: flex-start;
-                align-items: flex-end;
                 flex-direction: column;
-                padding-right: 10px; /* Tambahkan padding kanan 10px */
+                justify-content: flex-start;
+                align-items: flex-start;
             }
         }
     </style>
@@ -103,15 +100,29 @@
                 <!-- Label -->
                 <div class="label-container">
                     <div class="label-code">{{ $object->code }}</div>
-                    <div class="label-price">{{ currencyToNumeric($object->jwl_selling_price) }}</div>
+                    <div class="label-price">{{ numberFormat(currencyToNumeric($object->jwl_selling_price)) }}</div>
                     <div class="label-name">{{ $object->name }}</div>
-                    <div class="label-descr">{{ $object->descr }}</div>
+                    <div class="label-descr" id="label-descr">0123456789 0123456789 0123456</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 <script type="text/javascript">
+    function formatText(text, maxLength) {
+        let formattedText = '';
+        for (let i = 0; i < text.length; i += maxLength) {
+            formattedText += text.substring(i, i + maxLength) + '\n';
+        }
+        return formattedText;
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const descrElement = document.getElementById('label-descr');
+        const originalText = descrElement.innerText;
+        descrElement.innerText = formatText(originalText, 18);
+    });
+
     function printInvoice() {
         window.print();
     }

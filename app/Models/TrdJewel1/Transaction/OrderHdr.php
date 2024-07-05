@@ -92,7 +92,7 @@ class OrderHdr extends BaseModel
         if ($this->tr_type == 'PO') {
             foreach ($this->OrderDtl as $orderDtl) {
                 $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
-                    ->where('tr_type', 'SO')
+                    ->where('tr_type', 'PO')
                     ->first();
 
                 if ($relatedOrderDtl) {
