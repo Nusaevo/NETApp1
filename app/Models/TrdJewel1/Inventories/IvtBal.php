@@ -11,6 +11,10 @@ class IvtBal extends Model
     public static function boot()
     {
         parent::boot();
+        static::saving(function ($IvtBal) {
+            $qty_oh = currencyToNumeric($IvtBal->qty_oh);
+            $IvtBal->qty_oh = $qty_oh;
+        });
     }
 
     protected $fillable = [

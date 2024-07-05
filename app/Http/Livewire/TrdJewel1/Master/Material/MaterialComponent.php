@@ -502,7 +502,6 @@ class MaterialComponent extends BaseComponent
         $this->object_uoms->fillAndSanitize($this->matl_uoms);
 
         $this->object_uoms->save();
-
         // Handle BOMs
         foreach ($this->matl_boms as $index => $bomData) {
             if (!isset($this->object_boms[$index])) {

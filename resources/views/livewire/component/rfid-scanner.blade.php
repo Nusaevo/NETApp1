@@ -55,7 +55,7 @@
                 Livewire.emit('errorOccurred', 'No tag scanned');
                 socket.close();
             }
-        }, parseInt(duration) + 1000); // Adjust the timeout to slightly longer than duration
+        }, parseInt(duration) + 800); // Adjust the timeout to slightly longer than duration
     }
 
     Livewire.on('tagScanned', tags => {

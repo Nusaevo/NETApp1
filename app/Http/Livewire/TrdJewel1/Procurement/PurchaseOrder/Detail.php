@@ -35,9 +35,15 @@ class Detail extends BaseComponent
     public $currency = [];
 
     public $returnIds = [];
+    public $currencyRate = 0;
 
     protected function onPreRender()
     {
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($this->currencyRate == 0) {
+            abort(431, Lang::get('generic.string.currency_needed'));
+        }
         $this->customValidationAttributes  = [
             'inputs.tr_date'      => $this->trans('tr_date'),
             'inputs.partner_id'      => $this->trans('supplier'),
@@ -261,6 +267,7 @@ class Detail extends BaseComponent
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
+        $this->countTotalAmount();
     }
 
     public function SaveCheck()

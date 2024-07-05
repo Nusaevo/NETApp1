@@ -1,25 +1,36 @@
 @once
 <script>
-    window.addEventListener('notify-swal', function(e) {
-        let data = e.detail;
-        let title = data.title;
-        let message = data.message;
-        let type = data.type;
+    document.addEventListener('livewire:load', function () {
+        window.addEventListener('notify-swal', function(e) {
+            let data = e.detail;
+            let title = data.title;
+            let message = data.message;
+            let type = data.type;
 
-        // Map the type to "Failed" for error and "Success" for success
-        if (type === 'error') {
-            title = 'Failed';
-        } else if (type === 'success') {
-            title = 'Success';
-        }
+            // Map the type to "Failed" for error and "Success" for success
+            if (type === 'error') {
+                title = 'Failed';
+            } else if (type === 'success') {
+                title = 'Success';
+            }
 
-        Swal.fire(title, message, type);
-    });
+            Swal.fire(title, message, type);
+        });
 
-    window.addEventListener('refresh', function(e) {
-        setTimeout(function() {
-            window.location.reload();
-        }, 1000);
+        window.addEventListener('refresh', function(e) {
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        });
+
+        // Ensure notify-swal works on mount
+        // setTimeout(function() {
+        //     Livewire.emit('notify-swal', {
+        //         title: 'Welcome',
+        //         message: 'Welcome to the page!',
+        //         type: 'info'
+        //     });
+        // }, 100); // Adjust the timeout duration as needed
     });
 </script>
 @endonce

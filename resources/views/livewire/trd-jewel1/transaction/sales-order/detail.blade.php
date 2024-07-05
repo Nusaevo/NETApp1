@@ -2,8 +2,8 @@
     <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
+    <x-ui-page-card title="{{ $this->trans($actionValue) . '  Sales Order'}}{{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
 
-    <x-ui-page-card title="{{ $actionValue }} Sales Order {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $status }}">
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
@@ -14,14 +14,14 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" span="Half" onChanged="SaveWithoutNotification"/>
-                        <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="HalfWidth" onChanged="SaveWithoutNotification"/>
+                        <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" span="Half" onChanged="SaveCheck"/>
+                        <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="HalfWidth" onChanged="SaveCheck"/>
                     </x-ui-padding>
 
                     <x-ui-list-table id="Table" title="Barang">
                         <x-slot name="button">
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
-                                @livewire('component.rfid-scanner', ['duration' => 5000])
+                                @livewire('component.rfid-scanner', ['duration' => 1000])
                                 <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
                                     <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
                                 </button>
@@ -128,10 +128,12 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        window.livewire.on('closeMaterialDialog', function() {
-            $('#MaterialDialogBox').modal('hide');
+        window.addEventListener('openMaterialDialog', function() {
+            $('#materialDialogBox').modal('show');
+        });
+
+        window.addEventListener('closeMaterialDialog', function() {
+            $('#materialDialogBox').modal('hide');
         });
     });
-
 </script>
-

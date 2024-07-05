@@ -112,7 +112,7 @@ use App\Models\TrdJewel1\Master\Material;
 
 
         @if (!$searchMode && $actionValue == 'Edit')
-            @livewire('component.rfid-scanner', ['duration' => 2000])
+            @livewire('component.rfid-scanner', ['duration' => 1000])
 
             @if ($status === 'ACTIVE')
             <x-ui-button button-name="Disable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />

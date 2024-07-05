@@ -38,6 +38,11 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($this->currencyRate == 0) {
+            abort(431, Lang::get('generic.string.currency_needed'));
+        }
         $this->customValidationAttributes  = [
             'input_details.*' => $this->trans('product'),
             'input_details.*.matl_id' => $this->trans('product'),
@@ -117,7 +122,6 @@ class Detail extends BaseComponent
         }
     }
 
-
     public function Checkout()
     {
         $selectedItems = array_filter($this->input_details, function ($item) {
@@ -132,18 +136,30 @@ class Detail extends BaseComponent
             return;
         }
 
-        foreach($selectedItems as $selectedItem)
-        {
-            $selectedItem['price'] = $selectedItem['selling_price'];
-            $selectedItem['amt'] = $selectedItem['selling_price'];
-            $selectedItem['tr_type'] = "SO";
-            $this->deletedItems[] = $selectedItem['id'];
+        $outOfStockItems = [];
+        foreach ($selectedItems as &$selectedItem) {
+            $material = Material::checkMaterialStockByMatlId($selectedItem['matl_id']);
+            if (!$material) {
+                $outOfStockItems[] = $selectedItem['matl_code'];
+            } else {
+                $selectedItem['price'] = $selectedItem['selling_price'];
+                $selectedItem['amt'] = $selectedItem['selling_price'];
+                $selectedItem['tr_type'] = "SO";
+                $this->deletedItems[] = $selectedItem['id'];
+            }
         }
+
+        if (!empty($outOfStockItems)) {
+            $this->notify('error','Beberapa material tidak memiliki stok: ' . implode(', ', $outOfStockItems), "Mohon cek kembali!");
+            return;
+        }
+
         if (!$this->object->isNew()) {
             foreach ($this->deletedItems as $deletedItemId) {
                 CartDtl::find($deletedItemId)->forceDelete();
             }
         }
+
         $order_header = new OrderHdr();
         $this->inputs['wh_code'] = 18;
         $this->inputs['status_code'] = STATUS::OPEN;
@@ -157,6 +173,7 @@ class Detail extends BaseComponent
         ]);
     }
 
+
     public function onReset()
     {
     }
@@ -167,15 +184,22 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'warning',
+                'message' => 'Diperlukan kurs mata uang.'
+            ]);
             return;
         }
 
         $tagCount = count($tags);
-        if($tagCount == 0)
-        {
-            $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
-        }
+        // if ($tagCount == 0) {
+        //     $this->dispatchBrowserEvent('notify-swal', [
+        //         'type' => 'error',
+        //         'message' => 'Tidak ada tag yang discan. Silakan coba lagi.'
+        //     ]);
+        //     return;
+        // }
+
         $usercode = Auth::check() ? Auth::user()->code : '';
 
         DB::beginTransaction();
@@ -188,26 +212,23 @@ class Detail extends BaseComponent
                 'tr_date' => Carbon::now(),
             ]);
 
-            $addedItemsCount = 0; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
+            $addedItems = []; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
+            $failedItems = []; // Variabel untuk menyimpan barcode yang gagal ditambahkan
+            $notFoundItems = []; // Variabel untuk menyimpan barcode yang tidak ditemukan atau stok tidak ada
 
             foreach ($tags as $barcode) {
                 // Find the corresponding material
-                $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
-                    $query->where('barcode', $barcode);
-                })->first();
+                $material = Material::getListMaterialByBarcode($barcode);
 
                 if (!isset($material)) {
-                    continue; // Skip if no material found for the barcode
+                    $notFoundItems[] = $barcode;
+                    continue;
                 }
 
                 $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material->id)->first();
                 if ($existingOrderDtl) {
-                    DB::rollback();
-                    $this->dispatchBrowserEvent('notify-swal', [
-                        'type' => 'error',
-                        'message' => "Item {$material->code} sudah ada di cart"
-                    ]);
-                    return;
+                    $failedItems[] = $material->code;
+                    continue;
                 }
 
                 $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
@@ -224,16 +245,26 @@ class Detail extends BaseComponent
                     'tr_seq' => $maxTrSeq,
                     'price' => $price,
                 ]);
-
-                $addedItemsCount++; // Increment the counter for each added item
+                $addedItems[] = $material->code;
             }
 
             DB::commit();
 
-            // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan
+            // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan dan gagal
+            $message = "Total tag yang discan: {$tagCount}.<br>";
+            if (count($addedItems) > 0) {
+                $message .= "Berhasil menambahkan ". count($addedItems)  . " item: <b>" . implode(', ', $addedItems) . "</b>.<br><br>";
+            }
+            if (count($failedItems) > 0) {
+                $message .= "Item sudah ada di keranjang untuk " . count($failedItems) . " item: <b>" . implode(', ', $failedItems) . "</b>.<br><br>";
+            }
+            if (count($notFoundItems) > 0) {
+                $message .= "Material tidak ditemukan atau stok tidak ada untuk " . count($notFoundItems) . " tag: <b>" . implode(', ', $notFoundItems) . "</b>.<br>";
+            }
+
             $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => "Berhasil menambahkan {$addedItemsCount} item ke cart"
+                'type' => 'info',
+                'message' => $message
             ]);
             $this->retrieveMaterials();
             $this->emit('updateCartCount');
@@ -241,7 +272,7 @@ class Detail extends BaseComponent
             DB::rollback();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
+                'message' => 'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage()
             ]);
         }
     }
@@ -273,14 +304,6 @@ class Detail extends BaseComponent
         $this->countTotalAmount();
     }
 
-    public function Add()
-    {
-    }
-
-    public function materialSaved($material_id)
-    {
-    }
-
     public function deleteDetails($index)
     {
         if (isset($this->input_details[$index]['id'])) {
@@ -293,7 +316,6 @@ class Detail extends BaseComponent
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
-        $this->SaveWithoutNotification();
     }
 
     public function changePrice($id, $value)
@@ -327,10 +349,7 @@ class Detail extends BaseComponent
             return;
         }
 
-        $query = Material::query()
-            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
-            ->where('ivt_bals.qty_oh', '>', 0)
-            ->select('materials.*');
+        $query = Material::getAvailableMaterials();
 
         if (!empty($this->searchTerm)) {
             $searchTermUpper = strtoupper($this->searchTerm);

@@ -125,6 +125,18 @@ class Material extends BaseModel
             ->select('materials.*');
     }
 
+    public static function checkMaterialStockByMatlId($matlId)
+    {
+        return self::query()
+            ->join('matl_uoms', 'materials.id', '=', 'matl_uoms.matl_id')
+            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
+            ->where('materials.id', $matlId)
+            ->where('ivt_bals.qty_oh', '>', 0)
+            ->select('materials.*')
+            ->first();
+    }
+
+
     public function ivtBal()
     {
         return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
@@ -135,5 +147,16 @@ class Material extends BaseModel
     public function getStockAttribute()
     {
         return $this->IvtBal ? $this->IvtBal->qty_oh : 0;
+    }
+
+    public static function getListMaterialByBarcode($barcode)
+    {
+        return self::query()
+            ->join('matl_uoms', 'materials.id', '=', 'matl_uoms.matl_id')
+            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
+            ->where('matl_uoms.barcode', $barcode)
+            ->where('ivt_bals.qty_oh', '>', 0)
+            ->select('materials.*')
+            ->first();
     }
 }

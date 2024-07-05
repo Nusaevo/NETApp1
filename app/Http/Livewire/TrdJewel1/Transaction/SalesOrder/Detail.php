@@ -51,6 +51,11 @@ class Detail extends BaseComponent
     public $materials = [];
     protected function onPreRender()
     {
+        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($this->currencyRate == 0) {
+            abort(431, Lang::get('generic.string.currency_needed'));
+        }
         $this->customValidationAttributes  = [
             'inputs.tr_date'      => $this->trans('tr_date'),
             'inputs.payment_term_id'      => $this->trans('payment'),
@@ -151,9 +156,9 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        // if (empty($this->input_details)) {
-        //     throw new Exception("Harap pilih item");
-        // }
+        if ($this->inputs['curr_rate'] == 0) {
+            throw new Exception(Lang::get('generic.string.currency_needed'));
+        }
         if (!empty($this->input_details)) {
             $unitIds = array_column($this->input_details, 'item_unit_id');
             if (count($unitIds) !== count(array_flip($unitIds))) {
@@ -168,22 +173,29 @@ class Detail extends BaseComponent
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->fillAndSanitize($this->inputs);
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
+        if($this->actionValue == 'Create')
+        {
+            return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);
+        }
         $this->retrieveMaterials();
     }
 
     public function onReset()
     {
-        // $this->reset('inputs');
-        // $this->reset('input_details');
-        // $this->object = new OrderHdr();
-        // $this->object_detail = [];
-        // $this->refreshPartner();
-        // $this->total_amount = 0;
-        // $this->inputs['tr_date']  = date('Y-m-d');
-        // $this->inputs['tr_type']  = $this->trType;
-        // $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        // $this->inputs['curr_code'] = "USD";
-        // $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
+        $this->reset('inputs');
+        $this->reset('input_details');
+        $this->object = new OrderHdr();
+        $this->object_detail = [];
+        $this->refreshPartner();
+        $this->total_amount = 0;
+        $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['tr_type']  = $this->trType;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['curr_code'] = "USD";
+        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
     }
 
     public function Add()
@@ -234,55 +246,55 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            $this->dispatchBrowserEvent('notify-swal', [
+                'type' => 'warning',
+                'message' => 'Diperlukan kurs mata uang.'
+            ]);
             return;
         }
 
         $tagCount = count($tags);
-        if ($tagCount == 0) {
-            $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
-            return;
-        }
+        // if ($tagCount == 0) {
+        //     $this->dispatchBrowserEvent('notify-swal', [
+        //         'type' => 'error',
+        //         'message' => 'Tidak ada tag yang discan. Silakan coba lagi.'
+        //     ]);
+        //     return;
+        // }
 
         $usercode = Auth::check() ? Auth::user()->code : '';
 
         DB::beginTransaction();
 
         try {
-            $orderHdr = OrderHdr::firstOrCreate([
-                'created_by' => $usercode,
-                'tr_type' => 'C',
-            ], [
-                'tr_date' => Carbon::now(),
+            $orderHdr = OrderHdr::firstOrNew([
+                'id' => $this->objectIdValue,
             ]);
 
-            $addedItemsCount = 0; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
 
+            $addedItems = []; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
+            $failedItems = []; // Variabel untuk menyimpan barcode yang gagal ditambahkan
+            $notFoundItems = []; // Variabel untuk menyimpan barcode yang tidak ditemukan atau stok tidak ada
+
+            $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
             foreach ($tags as $barcode) {
                 // Find the corresponding material
-                $material = Material::whereHas('MatlUom', function($query) use ($barcode) {
-                    $query->where('barcode', $barcode);
-                })->first();
+                $material = Material::getListMaterialByBarcode($barcode);
 
                 if (!isset($material)) {
-                    continue; // Skip if no material found for the barcode
+                    $notFoundItems[] = $barcode;
+                    continue;
                 }
 
-                $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
-                if ($existingOrderDtl) {
-                    DB::rollback();
-                    $this->dispatchBrowserEvent('notify-swal', [
-                        'type' => 'error',
-                        'message' => "Item {$material->code} sudah ada di Order"
-                    ]);
-                    return;
-                }
+                    $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
+                    if ($existingOrderDtl) {
+                        $failedItems[] = $material->code;
+                        continue;
+                    }
 
                 $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
-                $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
                 $maxTrSeq++;
                 $newDetails[] = [
-                    'trhdr_id' => $orderHdr->id,
                     'qty_reff' => 1,
                     'matl_id' => $material->id,
                     'matl_descr' => $material->descr,
@@ -290,32 +302,41 @@ class Detail extends BaseComponent
                     'matl_uom' => $material->MatlUom[0]->id,
                     'qty' => 1,
                     'qty_reff' => 1,
-                    'tr_type' => 'C',
-                    'tr_id' => $this->object->id,
                     'tr_seq' => $maxTrSeq,
                     'price' => $price,
                 ];
-                $this->input_details = array_merge($this->input_details, $newDetails);
-                $this->SaveWithoutNotification();
-                $addedItemsCount++;
+                $addedItems[] = $material->code;
             }
 
-            DB::commit();
 
-            // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan
+            // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan dan gagal
+            $message = "Total tag yang discan: {$tagCount}.<br>";
+            if (count($addedItems) > 0) {
+                $this->input_details = array_merge($this->input_details, $newDetails);
+                $this->SaveWithoutNotification();
+                DB::commit();
+                $message .= "Berhasil menambahkan ". count($addedItems)  . " item: <b>" . implode(', ', $addedItems) . "</b>.<br><br>";
+            }
+            if (count($failedItems) > 0) {
+                $message .= "Item sudah ada di keranjang untuk " . count($failedItems) . " item: <b>" . implode(', ', $failedItems) . "</b>.<br><br>";
+            }
+            if (count($notFoundItems) > 0) {
+                $message .= "Material tidak ditemukan atau stok tidak ada untuk " . count($notFoundItems) . " tag: <b>" . implode(', ', $notFoundItems) . "</b>.<br>";
+            }
+
             $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'success',
-                'message' => "Berhasil menambahkan {$addedItemsCount} item ke Order"
+                'type' => 'info',
+                'message' => $message
             ]);
+            $this->emit('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
+                'message' => 'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage()
             ]);
         }
     }
-
 
     public function changeQty($id, $value)
     {
@@ -428,14 +449,13 @@ class Detail extends BaseComponent
         DB::beginTransaction();
 
         try {
-            $orderHdr = OrderHdr::firstOrCreate([
+            $orderHdr = OrderHdr::firstOrNew([
                 'id' => $this->objectIdValue,
-            ], [
-                'tr_date' => Carbon::now(),
             ]);
 
             $newDetails = [];
 
+            $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
             foreach ($this->selectedMaterials as $material_id) {
                 $material = Material::find($material_id);
                 if (!$material) {
@@ -454,11 +474,9 @@ class Detail extends BaseComponent
                 }
 
                 $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
-                $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
                 $maxTrSeq++;
 
                 $newDetails[] = [
-                    'trhdr_id' => $orderHdr->id,
                     'qty_reff' => 1,
                     'matl_id' => $material_id,
                     'matl_descr' => $material->descr,
@@ -466,8 +484,6 @@ class Detail extends BaseComponent
                     'matl_uom' => $material->MatlUom[0]->id,
                     'qty' => 1,
                     'qty_reff' => 1,
-                    'tr_type' => 'C',
-                    'tr_id' => $this->object->id,
                     'tr_seq' => $maxTrSeq,
                     'price' => $price,
                 ];

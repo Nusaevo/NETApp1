@@ -159,7 +159,7 @@ class OrderHdr extends BaseModel
                 $code = "PURCHORDER_LASTID";
             } else {
                 $delivTrType = "SD";
-                $billingTrType = "APB";
+                $billingTrType = "ARB";
                 $code = "SALESORDER_LASTID";
             }
             $this->fillAndSanitize($inputs);
