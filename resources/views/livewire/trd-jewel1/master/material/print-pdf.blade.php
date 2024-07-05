@@ -50,13 +50,13 @@
 
         .label-code {
             font-size: 16px;
+            font-weight: bold;
             margin-top: -6mm;
             /* Geser sedikit ke atas */
         }
 
         .label-price {
             font-size: 12px;
-            font-weight: bold;
         }
 
         .label-name {
