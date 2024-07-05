@@ -39,7 +39,7 @@
         .label-code {
             font-size: 16px;
             font-weight: bold;
-            margin-top: -5mm; /* Geser sedikit ke atas */
+            margin-top: -6mm; /* Geser sedikit ke atas */
         }
 
         .label-price {
@@ -102,7 +102,7 @@
                     <div class="label-code">{{ $object->code }}</div>
                     <div class="label-price">{{ numberFormat(currencyToNumeric($object->jwl_selling_price)) }}</div>
                     <div class="label-name">{{ $object->name }}</div>
-                    <div class="label-descr" id="label-descr">0123456789 0123456789 0123456</div>
+                    <div class="label-descr" id="label-descr">{{ $object->descr }}</div>
                 </div>
             </div>
         </div>
