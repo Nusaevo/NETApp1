@@ -50,7 +50,6 @@
 
         .label-code {
             font-size: 16px;
-            font-weight: bold;
             margin-top: -6mm;
             /* Geser sedikit ke atas */
         }
@@ -63,11 +62,9 @@
         .label-name {
             margin-top: 5px;
             font-size: 8px;
-            font-weight: bold;
         }
 
         .label-descr {
-            font-weight: bold;
             font-size: 8px;
             max-width: 100%;
             word-break: break-all;
