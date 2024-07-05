@@ -52,19 +52,23 @@
             font-size: 16px;
             font-weight: bold;
             margin-top: -6mm;
+            font-family: Arial, sans-serif;
             /* Geser sedikit ke atas */
         }
 
         .label-price {
             font-size: 12px;
+            font-family: Arial, sans-serif;
         }
 
         .label-name {
             margin-top: 5px;
             font-size: 8px;
+            font-family: Arial, sans-serif;
         }
 
         .label-descr {
+            font-family: Arial, sans-serif;
             font-size: 8px;
             max-width: 100%;
             word-break: break-all;
