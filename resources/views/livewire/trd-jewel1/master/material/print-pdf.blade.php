@@ -57,14 +57,17 @@
 
         .label-price {
             font-size: 12px;
+            font-weight: bold;
         }
 
         .label-name {
             margin-top: 5px;
             font-size: 8px;
+            font-weight: bold;
         }
 
         .label-descr {
+            font-weight: bold;
             font-size: 8px;
             max-width: 100%;
             word-break: break-all;
