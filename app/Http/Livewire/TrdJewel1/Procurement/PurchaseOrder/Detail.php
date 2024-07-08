@@ -254,7 +254,7 @@ class Detail extends BaseComponent
 
     public function deleteDetails($index)
     {
-        if (!$this->object->isItemEnableToDelete($this->input_details[$index]['matl_id'])) {
+        if ($this->object->isItemEnableToDelete($this->input_details[$index]['matl_id'])) {
             $this->notify('warning', 'Item ini tidak bisa dihapus, karena item sudah terjual.');
             return;
         }

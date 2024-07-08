@@ -61,10 +61,6 @@ class MaterialComponent extends BaseComponent
 
     protected function onPreRender()
     {
-        if($this->actionValue == 'Edit')
-        {
-            $this->enableCategory1 = "false";
-        }
         $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
@@ -178,10 +174,15 @@ class MaterialComponent extends BaseComponent
     {
         if (isset($this->product_code)) {
             $material = Material::where('code', $this->product_code)->first();
-            if ($material) {
-                $this->loadMaterial($material->id);
+            if($material->isItemExistonAnotherPO($material->id))
+            {
+                $this->notify('error',"Penerimaan barang sudah dibuat untuk item ini");
             }else{
-                $this->notify('error',Lang::get($this->langBasePath.'.message.product_notfound'));
+                if ($material) {
+                    $this->loadMaterial($material->id);
+                }else{
+                    $this->notify('error',Lang::get($this->langBasePath.'.message.product_notfound'));
+                }
             }
         }
     }
@@ -415,7 +416,8 @@ class MaterialComponent extends BaseComponent
         'runExe'  => 'runExe',
         'submitImages'  => 'submitImages',
         'changeStatus'  => 'changeStatus',
-        'tagScanned' => 'tagScanned'
+        'tagScanned' => 'tagScanned',
+        'resetMaterial' => 'onReset'
     ];
 
 
@@ -457,7 +459,7 @@ class MaterialComponent extends BaseComponent
         $this->dispatchBrowserEvent('refresh');
     }
 
-    protected function onReset()
+    public function onReset()
     {
         $this->product_code = "";
         $this->reset('materials');

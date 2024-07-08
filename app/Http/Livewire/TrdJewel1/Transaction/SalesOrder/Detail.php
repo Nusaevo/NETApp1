@@ -254,13 +254,6 @@ class Detail extends BaseComponent
         }
 
         $tagCount = count($tags);
-        // if ($tagCount == 0) {
-        //     $this->dispatchBrowserEvent('notify-swal', [
-        //         'type' => 'error',
-        //         'message' => 'Tidak ada tag yang discan. Silakan coba lagi.'
-        //     ]);
-        //     return;
-        // }
 
         $usercode = Auth::check() ? Auth::user()->code : '';
 
@@ -271,10 +264,10 @@ class Detail extends BaseComponent
                 'id' => $this->objectIdValue,
             ]);
 
-
             $addedItems = []; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
             $failedItems = []; // Variabel untuk menyimpan barcode yang gagal ditambahkan
             $notFoundItems = []; // Variabel untuk menyimpan barcode yang tidak ditemukan atau stok tidak ada
+            $emptyStocks = []; // Variabel untuk menyimpan barcode yang stoknya kosong
 
             $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
             foreach ($tags as $barcode) {
@@ -286,11 +279,17 @@ class Detail extends BaseComponent
                     continue;
                 }
 
-                    $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
-                    if ($existingOrderDtl) {
-                        $failedItems[] = $material->code;
-                        continue;
-                    }
+                $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
+                if ($existingOrderDtl) {
+                    $failedItems[] = $material->code;
+                    continue;
+                }
+
+                // Check if stock is empty
+                if ($material->qty_oh <= 0) {
+                    $emptyStocks[] = $material->code;
+                    continue;
+                }
 
                 $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
                 $maxTrSeq++;
@@ -308,7 +307,6 @@ class Detail extends BaseComponent
                 $addedItems[] = $material->code;
             }
 
-
             // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan dan gagal
             $message = "Total tag yang discan: {$tagCount}.<br>";
             if (count($addedItems) > 0) {
@@ -321,22 +319,21 @@ class Detail extends BaseComponent
                 $message .= "Item sudah ada di keranjang untuk " . count($failedItems) . " item: <b>" . implode(', ', $failedItems) . "</b>.<br><br>";
             }
             if (count($notFoundItems) > 0) {
-                $message .= "Material tidak ditemukan atau stok tidak ada untuk " . count($notFoundItems) . " tag: <b>" . implode(', ', $notFoundItems) . "</b>.<br>";
+                $message .= "Material tidak ditemukan untuk " . count($notFoundItems) . " tag: <b>" . implode(', ', $notFoundItems) . "</b>.<br>";
+            }
+            if (count($emptyStocks) > 0) {
+                $message .= "Material dengan stok kosong untuk " . count($emptyStocks) . " tag: <b>" . implode(', ', $emptyStocks) . "</b>.<br>";
             }
 
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'info',
-                'message' => $message
-            ]);
+            $this->notify('info',$message);
             $this->emit('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage()
-            ]);
+
+            $this->notify('error',  'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage());
         }
     }
+
 
     public function changeQty($id, $value)
     {

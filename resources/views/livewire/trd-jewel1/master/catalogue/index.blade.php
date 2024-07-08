@@ -24,11 +24,11 @@
         <div class="main-content">
             @foreach($materials as $key => $material)
                 <div class="list-catalogue-item">
-                    <div class="image-container">
+                    <div class="image-container gallery-image-container">
                         @if($material->Attachment->first())
-                            <img src="{{ $material->Attachment->first()->getUrl() }}" alt="Captured Image" class="photo-box-image" style="width: 100%; height: 100%;">
+                            <img src="{{ $material->Attachment->first()->getUrl() }}" alt="Captured Image" class="photo-box-image gallery-photo-box-image">
                         @else
-                            <img src="https://via.placeholder.com/300" alt="Material Photo" style="width: 100%; height: 100%;">
+                            <img src="https://via.placeholder.com/300" alt="Material Photo"  class="photo-box-image gallery-photo-box-image">
                         @endif
                     </div>
                     <div class="material-info">

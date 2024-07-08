@@ -5,6 +5,7 @@ use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\Base\BaseModel\Attachment;
 use App\Models\TrdJewel1\Inventories\IvtBal;
+use App\Models\TrdJewel1\Transaction\OrderDtl;
 use DB;
 class Material extends BaseModel
 {
@@ -153,10 +154,24 @@ class Material extends BaseModel
     {
         return self::query()
             ->join('matl_uoms', 'materials.id', '=', 'matl_uoms.matl_id')
-            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
+            ->leftJoin('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
             ->where('matl_uoms.barcode', $barcode)
-            ->where('ivt_bals.qty_oh', '>', 0)
-            ->select('materials.*')
+            ->select('materials.*', DB::raw('COALESCE(CAST(ivt_bals.qty_oh AS numeric), 0) as qty_oh'))
             ->first();
+    }
+
+
+
+    public function isItemExistonAnotherPO(int $matl_id): bool
+    {
+        $relatedOrderDtl = OrderDtl::where('matl_id', $matl_id)
+            ->where('tr_type', 'PO')
+            ->first();
+
+        if ($relatedOrderDtl) {
+            return true;
+        }
+
+        return false;
     }
 }

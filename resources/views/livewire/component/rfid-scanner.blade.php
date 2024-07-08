@@ -1,7 +1,10 @@
-<div id="rfidScannerComponent" data-duration="{{ $duration }}">
-    <button id="scanButton" class="btn btn-primary" onclick="startWebSocketScan()">Scan</button>
-</div>
-
+<span style="padding: 2px;">
+    <div id="rfidScannerComponent" data-duration="{{ $duration }}">
+        <button id="scanButton" class="btn btn-primary btn-action" onclick="startWebSocketScan()">
+            <img src="{{ imagePath('rfid.svg') }}" alt="Scan Icon" style="width: 20px; height: 20px; margin-right: 5px;"> Scan
+        </button>
+    </div>
+</span>
 <script>
     let socket;
     const wsUrl = 'ws://localhost:8081/RFID';

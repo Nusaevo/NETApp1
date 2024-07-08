@@ -118,12 +118,11 @@ class OrderHdr extends BaseModel
             ->first();
 
         if ($relatedOrderDtl) {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
-
 
     public function getAllColumnValues($attribute)
     {

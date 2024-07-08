@@ -214,7 +214,8 @@ class Detail extends BaseComponent
 
             $addedItems = []; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
             $failedItems = []; // Variabel untuk menyimpan barcode yang gagal ditambahkan
-            $notFoundItems = []; // Variabel untuk menyimpan barcode yang tidak ditemukan atau stok tidak ada
+            $notFoundItems = []; // Variabel untuk menyimpan barcode yang tidak ditemukan
+            $emptyStocks = []; // Variabel untuk menyimpan barcode yang stoknya kosong
 
             foreach ($tags as $barcode) {
                 // Find the corresponding material
@@ -230,6 +231,12 @@ class Detail extends BaseComponent
                     $failedItems[] = $material->code;
                     continue;
                 }
+
+                if ($material->qty_oh <= 0) {
+                    $emptyStocks[] =  $material->code;
+                    continue;
+                }
+
 
                 $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
                 $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
@@ -259,21 +266,17 @@ class Detail extends BaseComponent
                 $message .= "Item sudah ada di keranjang untuk " . count($failedItems) . " item: <b>" . implode(', ', $failedItems) . "</b>.<br><br>";
             }
             if (count($notFoundItems) > 0) {
-                $message .= "Material tidak ditemukan atau stok tidak ada untuk " . count($notFoundItems) . " tag: <b>" . implode(', ', $notFoundItems) . "</b>.<br>";
+                $message .= "Material tidak ditemukan untuk " . count($notFoundItems) . " tag: <b>" . implode(', ', $notFoundItems) . "</b>.<br>";
             }
-
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'info',
-                'message' => $message
-            ]);
+            if (count($emptyStocks) > 0) {
+                $message .= "Material dengan stok kosong untuk " . count($emptyStocks) . " tag: <b>" . implode(', ', $emptyStocks) . "</b>.<br>";
+            }
+            $this->notify('info',$message);
             $this->retrieveMaterials();
             $this->emit('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage()
-            ]);
+            $this->notify('error',  'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage());
         }
     }
 
