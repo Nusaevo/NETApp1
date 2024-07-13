@@ -36,8 +36,8 @@ class DelivHdr extends BaseModel
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 
-    public function PaymentDtl()
+    public function DelivDtl()
     {
-        return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id');
+        return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
 }

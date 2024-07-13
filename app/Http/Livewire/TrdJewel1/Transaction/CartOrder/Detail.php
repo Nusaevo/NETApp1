@@ -165,7 +165,7 @@ class Detail extends BaseComponent
         $this->inputs['status_code'] = STATUS::OPEN;
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = "SO";
-        $order_header->saveOrder($this->appCode, $this->trType, $this->inputs, $selectedItems, [], true);
+        $order_header->saveOrder($this->appCode,  $this->inputs['tr_type'], $this->inputs, $selectedItems, [], true);
 
         return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
             'action' => encryptWithSessionKey('Edit'),

@@ -60,6 +60,6 @@ class BillingDtl extends BaseModel
 
     public function BillingHdr()
     {
-        return $this->belongsTo(BillingHdr::class, 'trhdr_id', 'id');
+        return $this->belongsTo(BillingHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
 }

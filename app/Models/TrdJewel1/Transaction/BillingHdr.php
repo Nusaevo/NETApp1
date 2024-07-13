@@ -37,6 +37,6 @@ class BillingHdr extends BaseModel
 
     public function BillingDtl()
     {
-        return $this->hasMany(BillingDtl::class, 'trhdr_id', 'id');
+        return $this->hasMany(BillingDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
 }

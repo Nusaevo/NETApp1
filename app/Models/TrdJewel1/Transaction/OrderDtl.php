@@ -103,6 +103,6 @@ class OrderDtl extends BaseModel
 
     public function OrderHdr()
     {
-        return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id');
+        return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
 }

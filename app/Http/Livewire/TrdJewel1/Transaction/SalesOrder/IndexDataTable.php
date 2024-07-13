@@ -40,6 +40,9 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make($this->trans("date"), "tr_date")
                 ->sortable(),
+            Column::make("tr_type", "tr_type")
+                ->hideIf(true)
+                ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->sortable(),
             Column::make($this->trans("customer"), "Partner.name")

@@ -20,6 +20,21 @@ class OrderHdr extends BaseModel
         });
     }
 
+    public function getTrTypeValues($trType)
+    {
+        if ($trType == "PO") {
+            return [
+                'delivTrType' => "PD",
+                'billingTrType' => "APB"
+            ];
+        } else {
+            return [
+                'delivTrType' => "SD",
+                'billingTrType' => "ARB"
+            ];
+        }
+    }
+
     protected $fillable = [
         'tr_id',
         'tr_type',
@@ -44,6 +59,23 @@ class OrderHdr extends BaseModel
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 
+    public function OrderDtl()
+    {
+        return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')->where('tr_type', $this->tr_type);
+    }
+
+    public function DelivHdr()
+    {
+        $values = $this->getTrTypeValues($this->tr_type);
+        return $this->hasMany(DelivHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['delivTrType']);
+    }
+
+    public function BillingHdr()
+    {
+        $values = $this->getTrTypeValues($this->tr_type);
+        return $this->hasMany(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['billingTrType']);
+    }
+
     public function getTotalQtyAttribute()
     {
         return $this->OrderDtl()->sum('qty');
@@ -60,20 +92,6 @@ class OrderHdr extends BaseModel
         return implode(', ', $matlCodes);
     }
 
-    public function OrderDtl()
-    {
-        return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id');
-    }
-
-    public function DelivHdr()
-    {
-        return $this->hasMany(DelivHdr::class, 'tr_id', 'tr_id');
-    }
-
-    public function BillingHdr()
-    {
-        return $this->hasMany(BillingHdr::class, 'tr_id', 'tr_id');
-    }
 
     public static function getByCreatedByAndTrType($createdBy, $trType)
     {

@@ -126,6 +126,6 @@ class DelivDtl extends BaseModel
 
     public function DelivHdr()
     {
-        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id');
+        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
 }
