@@ -18,29 +18,29 @@ class Index extends Component
 
     public function fetchData() {
         $today = Carbon::today()->toDateString();
+        $currencyRatesData = GoldPriceLog::orderBy('log_date', 'desc')
+            ->take(30)
+            ->get(['log_date', 'curr_rate'])
+            ->sortBy('log_date'); 
 
-        $currencyRatesData = GoldPriceLog::orderBy('log_date', 'asc')
-                                  ->take(30)
-                                  ->get(['log_date', 'curr_rate']);
-
-        $goldPricesData = GoldPriceLog::orderBy('log_date', 'asc')
-                               ->take(30)
-                               ->get(['log_date', 'goldprice_basecurr']);
-
+        $goldPricesData = GoldPriceLog::orderBy('log_date', 'desc')
+            ->take(30)
+            ->get(['log_date', 'goldprice_basecurr'])
+            ->sortBy('log_date'); 
         // Convert currency values to numeric and store in array
         $this->currencyRates = $currencyRatesData->map(function ($item) {
             return [
-                'log_date' => $item->log_date,
+                'log_date' => Carbon::parse($item->log_date)->format('Y-m-d'),
                 'curr_rate' => currencyToNumeric($item->curr_rate)
             ];
-        })->toArray();
+        })->values()->toArray();
 
         $this->goldPrices = $goldPricesData->map(function ($item) {
             return [
-                'log_date' => $item->log_date,
+                'log_date' => Carbon::parse($item->log_date)->format('Y-m-d'),
                 'goldprice_basecurr' => currencyToNumeric($item->goldprice_basecurr)
             ];
-        })->toArray();
+        })->values()->toArray();
 
         // Fetch today's rate if available
         $this->todayCurrencyRate = rupiah(currencyToNumeric($currencyRatesData->firstWhere('log_date', $today)?->curr_rate));
