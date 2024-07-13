@@ -7,6 +7,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
 
 class IndexDataTable extends BaseDataTableComponent
@@ -16,14 +17,14 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
-        $this->setSort('created_at', 'desc');
+        $this->setSearchVisibilityStatus(false);
+        $this->setFilter('Status', 0);
+        $this->setFilter('stock_filter', 'above_0');
     }
 
     public function builder(): Builder
     {
-        return Material::query()
-            ->withTrashed()
-            ->select();
+        return Material::query()->with('IvtBal')->orderBy('created_at', 'desc');
     }
 
     public function columns(): array
@@ -40,10 +41,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make("Qty Onhand", "IvtBal.qty_oh")
                 ->format(function ($value, $row, Column $column) {
-                    if(isset($value)){
-                        return currencyToNumeric($value);
-                    }else{
-                    }
+                    return currencyToNumeric(optional($row->IvtBal)->qty_oh ?? 0); // Ensure null values are shown as 0
                 })
                 ->searchable()
                 ->sortable(),
@@ -79,27 +77,41 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('Barang', 'name')
+                ->config([
+                    'placeholder' => 'Cari Kode Barang',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('code', 'like', '%' . $value . '%');
+                }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
                     '1' => 'Non Active'
                 ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
+                    if ($value === '0') {
+                        $builder->withoutTrashed();
+                    } else if ($value === '1') {
+                        $builder->onlyTrashed();
+                    }
                 }),
             SelectFilter::make('Stock', 'stock_filter')
                 ->options([
                     'all' => 'All',
-                    'above_0' => 'Above 0',
-                    'below_0' => 'Below 0',
+                    'above_0' => 'Available',
+                    'below_0' => 'Out of Stock',
                 ])->filter(function (Builder $builder, string $value) {
-                    if ($value === 'Ada') {
+                    if ($value === 'above_0') {
                         $builder->whereHas('IvtBal', function ($query) {
                             $query->where('qty_oh', '>', 0);
                         });
-                    } elseif ($value === 'Kosong') {
-                        $builder->whereHas('IvtBal', function ($query) {
-                            $query->where('qty_oh', '<=', 0);
+                    } elseif ($value === 'below_0') {
+                        $builder->where(function ($query) {
+                            $query->whereDoesntHave('IvtBal')
+                                  ->orWhereHas('IvtBal', function ($query) {
+                                      $query->where('qty_oh', '<=', 0);
+                                  });
                         });
                     }
                 }),

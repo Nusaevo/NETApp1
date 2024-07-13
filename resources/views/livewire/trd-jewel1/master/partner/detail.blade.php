@@ -33,7 +33,7 @@
                 @if ($actionValue === 'Edit')
                 <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
                     <x-ui-card>
-                        <div class="table-responsive">
+                        <div class="table-container">
                         @livewire('trd-jewel1.master.partner.transaction-data-table', ['partnerID' => $objectIdValue])
                         </div>
                     </x-ui-card>

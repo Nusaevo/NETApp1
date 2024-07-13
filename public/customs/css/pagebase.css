@@ -14,7 +14,11 @@
 
 
 /*Loader css*/
-
+.table-container {
+    height: 600px; /* Adjust this value to your desired fixed height */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
 .wrapper{
     padding-top: 50px !important;
 }

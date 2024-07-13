@@ -7,6 +7,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Master\Partner;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
 
 class IndexDataTable extends BaseDataTableComponent
@@ -16,7 +17,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
-        $this->setSort('created_at', 'desc');
+        $this->setSearchVisibilityStatus(false);
+    }
+
+    public function builder(): Builder
+    {
+        return Partner::query()->orderBy('created_at', 'desc');
     }
 
     public function columns(): array
@@ -60,17 +66,43 @@ class IndexDataTable extends BaseDataTableComponent
         ];
     }
 
-
     public function filters(): array
     {
         return [
+            TextFilter::make('Kode Partner', 'code')
+                ->config([
+                    'placeholder' => 'Cari Kode Partner',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('code', 'like', '%' . $value . '%');
+                }),
+            TextFilter::make('Nama', 'name')
+                ->config([
+                    'placeholder' => 'Cari Nama',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('name', 'like', '%' . $value . '%');
+                }),
+            SelectFilter::make('Group', 'grp')
+                ->options([
+                    '' => 'All', // Opsi untuk semua grup
+                    'V' => 'Supplier',
+                    'C' => 'Customer'
+                ])->filter(function (Builder $builder, string $value) {
+                    $builder->where('grp', $value);
+                }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
                     '1' => 'Non Active'
                 ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
+                    if ($value === '0') {
+                        $builder->withoutTrashed();
+                    } else if ($value === '1') {
+                        $builder->onlyTrashed();
+                    }
                 }),
         ];
     }
