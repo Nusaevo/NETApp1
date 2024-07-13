@@ -3,6 +3,7 @@
 return [
     'purchase_order' => 'Transaksi Pembelian',
     'date' => 'Tanggal Transaksi',
+    'side_materials' => 'Bahan',
     'partner' => 'Supplier',
     'warehouse' => 'Gudang',
     'product' => 'Produk',

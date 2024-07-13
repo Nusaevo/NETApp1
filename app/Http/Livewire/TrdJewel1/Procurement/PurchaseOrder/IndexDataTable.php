@@ -102,9 +102,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Customer', 'customer_name')
+            TextFilter::make('Supplier', 'supplier_name')
                 ->config([
-                    'placeholder' => 'Search Customer Name',
+                    'placeholder' => 'Cari Supplier',
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
@@ -113,7 +113,7 @@ class IndexDataTable extends BaseDataTableComponent
                         $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
                     });
                 }),
-                TextFilter::make('Material Code', 'matl_code')
+                TextFilter::make('Kode Barang', 'matl_code')
                 ->config([
                     'placeholder' => 'Search Material Code',
                     'maxlength' => '50',

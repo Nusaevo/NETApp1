@@ -2,6 +2,7 @@
 
 return [
     'search_product' => 'Cari Produk',
+    'side_materials' => 'Bahan',
     'product' => 'Produk',
     'category1' => 'Kategori 1',
     'category2' => 'Kategori 2',

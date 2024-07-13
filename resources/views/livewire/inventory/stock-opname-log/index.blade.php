@@ -7,7 +7,7 @@
         <div id="kt_content_container" class="container-xxl">
             <div class="card">
                 <div class="card-body">
-                    <div class="table-index">
+                    <div class="table-responsive">
                         @livewire('inventory.stock-opname-log.index-data-table')
                     </div>
                 </div>

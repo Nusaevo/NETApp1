@@ -2,6 +2,7 @@
 
 return [
     'search_product' => 'Search Product',
+    'side_materials' => 'Side Materials',
     'product' => 'Product',
     'category1' => 'Category 1',
     'category2' => 'Category 2',

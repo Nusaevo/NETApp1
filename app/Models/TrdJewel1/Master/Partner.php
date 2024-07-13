@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
+use App\Models\TrdJewel1\Transaction\OrderHdr;
 
 class Partner extends BaseModel
 {
@@ -61,6 +62,11 @@ class Partner extends BaseModel
     public function scopeGetByGrp($query, $grp)
     {
         return $query->where('grp', $grp)->get();
+    }
+
+    public function OrderHdr()
+    {
+        return $this->belongsTo(OrderHdr::class, 'partner_id', 'id');
     }
 
 }

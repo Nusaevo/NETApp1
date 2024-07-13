@@ -7,7 +7,12 @@
     </div>
 
     <x-ui-page-card title="{{ $this->trans('partner') }}" status="{{ $this->trans($status) }}">
+        
+        @if ($actionValue === 'Create')
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
+        @elseif($actionValue === 'Edit')
+        <x-ui-tab-view id="myTab" tabs="general,transactions"> </x-ui-tab-view>
+        @endif
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
@@ -25,6 +30,15 @@
                         @endif
                     </x-ui-card>
                 </div>
+                @if ($actionValue === 'Edit')
+                <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
+                    <x-ui-card>
+                        <div class="table-responsive">
+                        @livewire('trd-jewel1.master.partner.transaction-data-table', ['partnerID' => $objectIdValue])
+                        </div>
+                    </x-ui-card>
+                </div>
+                @endif
             </x-ui-tab-view-content>
         @include('layout.customs.form-footer')
     </x-ui-page-card>

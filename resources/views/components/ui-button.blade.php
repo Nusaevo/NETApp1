@@ -23,6 +23,13 @@
             });
         });
     </script>
+@elseif(isset($type) && $type == 'BackManual')
+<div id="backManualButtonContainer">
+    <a href="{{ isset($clickEvent) ? $clickEvent : '#' }}" class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backManualButton">
+        <i class="bi bi-arrow-left-circle fs-2 me-1"></i> <span id="backManualButtonText" style="font-size: 12px;">Back</span>
+        <span class="spinner-border spinner-border-sm" id="backManualButtonLoading" role="status" aria-hidden="true" style="display: none;"></span>
+    </a>
+</div>
 @else
     @if (isset($action) && $action !== 'View')
         <span style="padding: 2px;">

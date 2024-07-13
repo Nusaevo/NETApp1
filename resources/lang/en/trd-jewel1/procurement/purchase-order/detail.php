@@ -2,6 +2,7 @@
 
 return [
     'purchase_order' => 'Purchase Order',
+    'side_materials' => 'Side Materials',
     'date' => 'Transaction Date',
     'partner' => 'Supplier',
     'warehouse' => 'Warehouse',
