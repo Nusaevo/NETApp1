@@ -30,7 +30,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderHdr::with('OrderDtl', 'Partner')
-            ->where('tr_type', 'SO')
+            ->where('order_hdrs.tr_type', 'SO')
             ->where('order_hdrs.status_code', Status::OPEN)
             ->orderBy('order_hdrs.created_at', 'desc');
     }
@@ -47,6 +47,11 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Total Quantity", "total_qty")
                 ->label(function($row) {
                     return currencyToNumeric($row->total_qty);
+                })
+                ->sortable(),
+            Column::make("Barang", "matl_codes")
+                ->label(function($row) {
+                    return $row->matl_codes;
                 })
                 ->sortable(),
             Column::make("Total Amount", "total_amt")

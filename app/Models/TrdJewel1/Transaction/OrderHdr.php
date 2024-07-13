@@ -54,6 +54,12 @@ class OrderHdr extends BaseModel
         return $this->OrderDtl()->sum('amt');
     }
 
+    public function getMatlCodesAttribute()
+    {
+        $matlCodes = $this->OrderDtl()->pluck('matl_code')->toArray();
+        return implode(', ', $matlCodes);
+    }
+
     public function OrderDtl()
     {
         return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id');
