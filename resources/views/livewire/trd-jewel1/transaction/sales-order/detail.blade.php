@@ -110,7 +110,7 @@
                 <x-ui-card>
                     @include('layout.customs.buttons.create', ['route' => 'TrdJewel1.Procurement.PurchaseReturn.Detail', 'objectId' => $object->id])
 
-                    <div class="table-responsive">
+                    <div class="table-index">
                         @livewire('trd-jewel1.procurement.purchase-order.purchase-return-data-table', ['returnIds' => $returnIds])
                     </div>
                 </x-ui-card>

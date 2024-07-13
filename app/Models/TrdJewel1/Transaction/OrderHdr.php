@@ -202,6 +202,7 @@ class OrderHdr extends BaseModel
                     $configSnum->save();
                 }
             }
+            $this->status_code = Status::OPEN; // Set status_code to Status::OPEN
             $this->save();
 
             if ($createBillingDelivery == true) {
@@ -213,7 +214,7 @@ class OrderHdr extends BaseModel
                     'partner_id' => $this->partner_id,
                     'partner_code' => $this->partner_code,
                     'deliv_by' => $inputs['deliv_by'] ?? '',
-                    'status_code' => $this->status_code,
+                    'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                 ]);
                 $delivHdr->save();
 
@@ -227,7 +228,7 @@ class OrderHdr extends BaseModel
                     'payment_term_id' => $this->payment_term_id,
                     'payment_term' => '',
                     'payment_due_days' => 0,
-                    'status_code' => $this->status_code,
+                    'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                 ]);
                 $billingHdr->save();
             }
@@ -244,6 +245,7 @@ class OrderHdr extends BaseModel
                 $inputDetail['qty_reff'] = $inputDetail['qty'];
                 $inputDetail['tr_type'] = $trType;
                 $orderDtl->fillAndSanitize($inputDetail);
+                $orderDtl->status_code = Status::OPEN; // Set status_code to Status::OPEN
                 $orderDtl->save();
 
                 if ($createBillingDelivery == true) {
@@ -268,7 +270,7 @@ class OrderHdr extends BaseModel
                         'wh_code' => $inputs['wh_code'],
                         'qty' => $orderDtl->qty,
                         'qty_reff' => $orderDtl->qty_reff,
-                        'status_code' => $orderDtl->status_code,
+                        'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                     ]);
                     $delivDtl->save();
 
@@ -298,7 +300,7 @@ class OrderHdr extends BaseModel
                         'price_base' => $orderDtl->trhdr_id,
                         'amt' => $orderDtl->amt,
                         'amt_reff' => $orderDtl->amt,
-                        'status_code' => $orderDtl->status_code,
+                        'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                     ]);
                     $billingDtl->save();
                 }

@@ -5,15 +5,10 @@ namespace App\Http\Livewire\TrdJewel1\Transaction\SalesOrder;
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
-use App\Models\TrdJewel1\Master\Partner; // pastikan untuk menyesuaikan namespace ini
-use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter; // menggunakan SearchFilter
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
-use Lang;
-use Exception;
+use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -23,8 +18,6 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->setSearchVisibilityStatus(false);
         $this->customRoute = "";
-        // $this->setSort('created_at', 'desc');
-        // $this->setFilter('status_code',  Status::OPEN);
     }
 
     public function builder(): Builder
@@ -40,10 +33,10 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make($this->trans("date"), "tr_date")
                 ->sortable(),
-            Column::make("tr_type", "tr_type")
-                ->hideIf(true)
-                ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
+                ->sortable(),
+            Column::make($this->trans("tr_type"), "tr_type")
+                ->hideIf(true)
                 ->sortable(),
             Column::make($this->trans("customer"), "Partner.name")
                 ->sortable(),
@@ -94,21 +87,27 @@ class IndexDataTable extends BaseDataTableComponent
             TextFilter::make('Customer', 'customer_name')
                 ->config([
                     'placeholder' => 'Search Customer Name',
-                    'maxlength' => '25',
+                    'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
+                    $value = strtoupper($value);
                     $builder->whereHas('Partner', function ($query) use ($value) {
-                        $query->where('name', 'like', '%'.$value.'%');
+                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
                     });
                 }),
-             TextFilter::make('Material Code', 'matl_code')
+                TextFilter::make('Material Code', 'matl_code')
                 ->config([
                     'placeholder' => 'Search Material Code',
-                    'maxlength' => '25',
+                    'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->whereHas('OrderDtl', function ($query) use ($value) {
-                        $query->where('matl_code', 'like', '%' . $value . '%');
+                    $value = strtoupper($value);
+                    $builder->whereExists(function ($query) use ($value) {
+                        $query->select(DB::raw(1))
+                            ->from('order_dtls')
+                            ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
+                            ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . $value . '%')
+                            ->where('order_dtls.tr_type', 'SO');
                     });
                 }),
             // SelectFilter::make('Status', 'status_code')

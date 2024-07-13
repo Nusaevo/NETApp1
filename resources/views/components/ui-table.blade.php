@@ -11,7 +11,7 @@
 </div>
 
 
-<div class="table-responsive" >
+<div class="table-index" >
     <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" >
         <thead>
             <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">

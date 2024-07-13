@@ -162,7 +162,6 @@ class Detail extends BaseComponent
 
         $order_header = new OrderHdr();
         $this->inputs['wh_code'] = 18;
-        $this->inputs['status_code'] = STATUS::OPEN;
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = "SO";
         $order_header->saveOrder($this->appCode,  $this->inputs['tr_type'], $this->inputs, $selectedItems, [], true);

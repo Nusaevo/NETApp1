@@ -169,7 +169,6 @@ class Detail extends BaseComponent
             $this->inputs['partner_code'] = $partner->code;
         }
         $this->inputs['wh_code'] = 18;
-        $this->inputs['status_code'] = STATUS::OPEN;
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {
