@@ -6,6 +6,9 @@
 
             <button id="btnDeleteSelected" class="btn btn-danger gallery-btn-delete-selected" style="display: none;" onclick="deleteSelectedImages()">
                 <i class="bi bi-trash"></i> Delete Selected
+                <span wire:loading>
+                    <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+                </span>
             </button>
         </div>
     </div>
@@ -36,21 +39,6 @@
         <x-ui-button jsClick="submitSelectedImages()" clickEvent="" button-name="Submit" loading="true" action="Edit" cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>
     @endif
-
-    <!-- Submit Images Progress Modal -->
-    <div id="submitProgressModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Submitting Selected Images</h5>
-                </div>
-                <div class="modal-body">
-                    <progress id="submitUploadProgress" value="0" max="100" style="width: 100%;"></progress>
-                    <div id="submitProgressText" style="text-align: center; margin-top: 10px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
 </x-ui-page-card>
 
 <script>
@@ -89,17 +77,11 @@
         const totalFiles = checkboxes.length;
         let uploadedFiles = 0;
 
-        const progressModal = new bootstrap.Modal(document.getElementById('submitProgressModal'));
-        progressModal.show();
-
         const imageByteArrays = await Promise.all(
             Array.from(checkboxes).map(async checkbox => {
                 const imageUrl = checkbox.dataset.imageUrl;
                 const byteArray = await readImageAsByteArray(imageUrl);
                 uploadedFiles++;
-                const progress = (uploadedFiles / totalFiles) * 100;
-                document.getElementById('submitUploadProgress').value = progress;
-                document.getElementById('submitProgressText').textContent = `Submitting ${uploadedFiles} of ${totalFiles} images`;
                 return byteArray;
             })
         );
@@ -109,9 +91,6 @@
         if (imageByteArrays.length > 0) {
             Livewire.emit('submitImages', imageByteArrays);
             resetSelectedImages();
-            setTimeout(() => {
-                progressModal.hide();
-            }, 2000);
         } else {
             alert('No images selected');
         }
