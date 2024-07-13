@@ -145,51 +145,50 @@
 </body>
 </html>
 <script>
-    // Show the loader immediately when the page starts loading
-    // function showLoader() {
-    //     document.getElementById('loader-container').style.display = 'block';
-    // }
-
-    // // Hide the loader when the page content is ready
-    // function hideLoader() {
-    //     document.getElementById('loader-container').style.display = 'none';
-    // }
-
-    // // Attach an event listener to hide the loader when the DOM is ready
-    // document.addEventListener('DOMContentLoaded', showLoader);
-
-    // // Attach an event listener to hide the loader when the page is fully loaded
-    // window.onload = function () {
-    //     hideLoader();
-    // };
 
     document.addEventListener('shown.bs.modal', function (event) {
-            var zIndex = 1050 + (10 * document.querySelectorAll('.modal.show').length);
-            var modalBackdrop = document.createElement('div');
-            modalBackdrop.className = 'modal-backdrop';
-            modalBackdrop.style.zIndex = zIndex - 1;
-            modalBackdrop.style.opacity = 0.5;
-            document.body.appendChild(modalBackdrop);
+        var zIndex = 1050 + (10 * document.querySelectorAll('.modal.show').length);
+        var modalBackdrop = document.createElement('div');
+        modalBackdrop.className = 'modal-backdrop';
+        modalBackdrop.style.zIndex = zIndex - 1;
+        modalBackdrop.style.opacity = 0.5;
+        document.body.appendChild(modalBackdrop);
 
-            // Atur zIndex modal saat ini
-            event.target.style.zIndex = zIndex;
+        // Atur zIndex modal saat ini
+        event.target.style.zIndex = zIndex;
+    });
+
+    document.addEventListener('hidden.bs.modal', function (event) {
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+        if (backdrops.length) {
+            document.body.removeChild(backdrops[backdrops.length - 1]);
+        }
+
+        // Periksa jika tidak ada modal yang sedang terbuka, hapus semua backdrop yang mungkin tertinggal
+        if (document.querySelectorAll('.modal.show').length === 0) {
+            document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+                backdrop.remove();
+            });
+            document.body.classList.remove('modal-open');
+            document.body.style.paddingRight = '';
+        }
+    });
+
+    myJQuery(document).ready(function() {
+        // Function to set autocomplete off for all text input fields
+        function setAutocompleteOff() {
+            myJQuery('input[type="text"], input[type="search"], input[type="email"], input[type="password"], input[type="tel"], input[type="url"], input[type="number"], input[type="date"]').attr('autocomplete', 'off');
+        }
+
+        // Set autocomplete off for all existing text input fields when the document is ready
+        setAutocompleteOff();
+
+        // Monitor the DOM for changes and set autocomplete off for new input fields
+        const observer = new MutationObserver(function() {
+            setAutocompleteOff();
         });
 
-        document.addEventListener('hidden.bs.modal', function (event) {
-            var backdrops = document.querySelectorAll('.modal-backdrop');
-            if (backdrops.length) {
-                document.body.removeChild(backdrops[backdrops.length - 1]);
-            }
-
-            // Periksa jika tidak ada modal yang sedang terbuka, hapus semua backdrop yang mungkin tertinggal
-            if (document.querySelectorAll('.modal.show').length === 0) {
-                document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
-                    backdrop.remove();
-                });
-                document.body.classList.remove('modal-open');
-                document.body.style.paddingRight = '';
-            }
-        });
-
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
 </script>
 

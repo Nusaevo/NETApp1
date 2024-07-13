@@ -845,3 +845,11 @@ div[wire\:loading].loading-overlay {
 .popup button i {
     margin-right: 10px;
 }
+/* Add this to your CSS file or within a <style> tag in your blade template */
+.filter-width {
+    width: 300px  !important;
+}
+
+.dropdown-menu.w-100.show {
+    width: 400px  !important;
+}
