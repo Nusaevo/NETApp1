@@ -61,6 +61,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
+                        'custom_actions' => [],
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,

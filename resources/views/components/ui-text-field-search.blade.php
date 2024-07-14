@@ -3,19 +3,19 @@ $id = str_replace(['.', '[', ']'], '_', $model);
 @endphp
 <div class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}"@endif>
     <!-- Label -->
-    @isset($label)
+    {{-- @isset($label)
         @if (!empty($label))
             <div class="responsive-label">
                 <label class="@if(isset($required) && $required === 'true') required @endif">{{ $label }} :</label>
             </div>
         @endif
-    @endisset
+    @endisset --}}
 
     <!-- Select Element -->
     <div class="text-field-container">
-        <div class="responsive-input-container">
+        <div class="responsive-input-container form-floating">
             <select id="{{ $id }}"
-                    class="form-control responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
+                    class="form-select responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                     wire:model="{{ $model }}" data-toggle="tooltip" title="Select an option"
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
                     <option value=""></option>
@@ -25,7 +25,9 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                     @endforeach
                 @endif
             </select>
-
+            @if (!empty($label))
+                <label for="{{ $id }}">{{ $label }}</label>
+            @endif
             @error($model)
                 <div class="error-message">{{ $message }}</div>
             @enderror

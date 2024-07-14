@@ -75,6 +75,19 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
+                        'row' => $row,
+                        'custom_actions' => [
+                            [
+                                'label' => 'Print',
+                                'route' => route('TrdJewel1.Procurement.PurchaseOrder.PrintPdf', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($row->id)
+                                ]),
+                                'icon' => 'bi bi-printer'
+                            ],
+                        ],
+
+                        'custom_actions' => [],
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,
@@ -83,18 +96,6 @@ class IndexDataTable extends BaseDataTableComponent
                         'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
                     ]);
                 }),
-            Column::make('', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    // Tombol pertama (Nota Terima Supplier atau Print, tergantung pada status)
-                    // if ($row->status_code === Status::ACTIVE) {
-                    //     $firstButton = '<a href="' . route("TrdJewel1.Procurement.PurchaseOrder.Detail", ["action" => encryptWithSessionKey('Create'), "objectId" => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="text-decoration: none;">Nota Terima Supplier</a>';
-                    // } else {
-                    //     $firstButton = '';
-                    // }
-                    $secondButton = '<a href="' . route('TrdJewel1.Procurement.PurchaseOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
-
-                    return "<div class='text-center'>". $secondButton."</div>";
-                })->html(),
 
         ];
     }

@@ -18,6 +18,8 @@
     height: 600px; /* Adjust this value to your desired fixed height */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    position: relative;
+    overflow: visible;
 }
 .wrapper{
     padding-top: 50px !important;
@@ -181,7 +183,7 @@ div[wire\:loading].loading-overlay {
 }
 .error-message {
     position: absolute;
-    bottom: -10px;
+    bottom: -12px;
     text-align: right;
     width: auto;
     z-index: 3;
@@ -216,27 +218,18 @@ div[wire\:loading].loading-overlay {
     .responsive-field {
         position: relative;
         display: flex;
-        flex-direction: row;
-        align-items: center; /* Aligns children (label and input) at the center vertically */
+        flex-direction: column;
         margin-bottom: 2rem;
-        min-height: 50px;
+        padding-bottom: 5px;
+        min-height: 65px;
     }
-    .responsive-label {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        flex: 0 0 auto;
-        margin-left: auto;
-        padding-right: 10px;
-        width: 150px; /* Adjust the width as needed */
-    }
-
 
     .responsive-input-container {
-        flex: 1; /* Takes up the remaining space */
+        flex: 1;
         display: flex;
         flex-direction: column;
     }
+
     .text-field-container {
         display: flex;
         align-items: center;
@@ -244,10 +237,13 @@ div[wire\:loading].loading-overlay {
         width: 100%;
     }
 
-    .responsive-input,
-    .responsive-textarea {
-        width: 100%; /* To ensure the input takes the full width of its container */
-        flex: 1; /* Allows input to grow and fill the space */
+   .form-control, .form-select {
+        width: 100%; /* Ensures the input takes the full width of its container */
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
     }
 
     .btn-sm {
@@ -256,19 +252,22 @@ div[wire\:loading].loading-overlay {
 
     .responsive-field[span="HalfWidth"] {
         width: 50%;
+        padding-right: 15px; /* Add padding to separate the fields */
+        height: 65px;
     }
 
     .responsive-field[span="Half"] {
-        width: calc(50%);
+        width: 50%;
         float: left;
         box-sizing: border-box;
-        padding-right: 1%;
+        height: 65px;
     }
 
-    .responsive-field[span="Half"]:nth-of-type(2n)::after {
-        content: "";
-        display: table;
-        clear: both;
+    .responsive-field[span="Half"]:nth-of-type(2n) {
+    }
+
+    .responsive-field[span="Half"]:nth-of-type(n) {
+        padding-right: 15px;
     }
 
     .responsive-field[span="Full"] {
@@ -288,6 +287,7 @@ div[wire\:loading].loading-overlay {
         height: 300px !important;
     }
 }
+
 
 /*UISeparator css*/
 .col {
@@ -813,8 +813,6 @@ div[wire\:loading].loading-overlay {
 }
 
 
-
-
 .image-button-container {
     position: relative;
     display: inline-block;
@@ -853,7 +851,11 @@ div[wire\:loading].loading-overlay {
 .filter-width {
     width: 300px  !important;
 }
+.dropdown-menu {
+    position: fixed !important;
+    z-index: 1050 !important;
+}
 
-.dropdown-menu.w-100.show {
-    width: 400px  !important;
+.dropdown-toggle::after {
+    display: none;
 }

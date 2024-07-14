@@ -50,7 +50,7 @@ class IndexDataTable extends BaseDataTableComponent
                     return currencyToNumeric($row->total_qty);
                 })
                 ->sortable(),
-           
+
             Column::make("Total Amount", "total_amt")
                 ->label(function($row) {
                     return rupiah(currencyToNumeric($row->total_amt));
@@ -65,20 +65,25 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
+                        'custom_actions' => [
+                            [
+                                'label' => 'Print',
+                                'route' => route('TrdJewel1.Transaction.SalesOrder.PrintPdf', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($row->id)
+                                ]),
+                                'icon' => 'bi bi-printer'
+                            ],
+                        ],
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute,
+
                     ]);
                 }),
-            Column::make('', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    $secondButton = '<a href="' . route('TrdJewel1.Transaction.SalesOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
-
-                    return "<div class='text-center'>". $secondButton."</div>";
-                })->html(),
         ];
     }
 

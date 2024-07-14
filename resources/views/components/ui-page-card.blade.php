@@ -1,5 +1,5 @@
 <div id="page-card" class="container-xxl mb-5">
-    
+
     <div class="card shadow-sm">
         @if(!empty($title))
             <h3 class="p-5">{{ $title }}</h3>
