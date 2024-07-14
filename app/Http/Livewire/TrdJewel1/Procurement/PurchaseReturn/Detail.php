@@ -192,7 +192,7 @@ class Detail extends BaseComponent
         try {
             $this->updateVersionNumber();
             if (isset($this->object->status_code)) {
-                    $this->object->status_code =  Status::DEACTIVATED;
+                    $this->object->status_code =  Status::NONACTIVE;
                 }
                 $this->object->save();
                 $this->object->delete();

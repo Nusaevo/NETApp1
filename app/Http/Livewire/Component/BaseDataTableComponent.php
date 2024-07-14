@@ -119,7 +119,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public function Disable()
     {
         try {
-            $this->object->status_code = Status::DEACTIVATED;
+            $this->object->status_code = Status::NONACTIVE;
             $this->object->save();
             $this->object->updateObject($this->object->version_number);
             $this->object->delete();

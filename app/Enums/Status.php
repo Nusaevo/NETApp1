@@ -8,7 +8,7 @@ class Status
     const APPROVED = 'APPR';
     const REJECTED = 'RJCT';
     const ACTIVE = 'A';
-    const DEACTIVATED = 'N';
+    const NONACTIVE = 'N';
     const IN_PROGRESS = 'IN_PRG';
     const COMPLETED = 'CMPLT';
     const CANCELED = 'CNCL';
@@ -32,7 +32,7 @@ class Status
             self::APPROVED => 'APPROVED',
             self::REJECTED => 'REJECTED',
             self::ACTIVE => 'ACTIVE',
-            self::DEACTIVATED  => 'NON ACTIVE',
+            self::NONACTIVE  => 'NON ACTIVE',
             self::IN_PROGRESS => 'IN_PROGRESS',
             self::COMPLETED => 'COMPLETED',
             self::CANCELED => 'CANCELED',

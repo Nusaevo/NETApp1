@@ -446,7 +446,7 @@ class MaterialComponent extends BaseComponent
                     return;
                 }
                 if (isset($this->object->status_code)) {
-                    $this->object->status_code =  Status::DEACTIVATED;
+                    $this->object->status_code =  Status::NONACTIVE;
                 }
                 $this->object->save();
                 $this->object->delete();
