@@ -2,15 +2,6 @@
 $id = str_replace(['.', '[', ']'], '_', $model);
 @endphp
 <div class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}"@endif>
-    <!-- Label -->
-    {{-- @isset($label)
-        @if (!empty($label))
-            <div class="responsive-label">
-                <label class="@if(isset($required) && $required === 'true') required @endif">{{ $label }} :</label>
-            </div>
-        @endif
-    @endisset --}}
-
     <!-- Select Element -->
     <div class="text-field-container">
         <div class="responsive-input-container form-floating">
@@ -26,7 +17,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                 @endif
             </select>
             @if (!empty($label))
-                <label for="{{ $id }}">{{ $label }}</label>
+                <label for="{{ $id }}" class="@if(isset($required) && $required === 'true') required @endif">{{ $label }}</label>
             @endif
             @error($model)
                 <div class="error-message">{{ $message }}</div>
@@ -34,13 +25,13 @@ $id = str_replace(['.', '[', ']'], '_', $model);
         </div>
 
         <!-- Refresh Button -->
-        @if (isset($clickEvent) && $clickEvent !== '')
+        {{-- @if (isset($clickEvent) && $clickEvent !== '')
             <button type="button" wire:click="{{ $clickEvent }}" class="btn btn-secondary btn-sm"
                     data-toggle="tooltip" title="Refresh your search to get the latest data"
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
                 <i class="bi bi-arrow-repeat"></i>
             </button>
-        @endif
+        @endif --}}
     </div>
 </div>
 
