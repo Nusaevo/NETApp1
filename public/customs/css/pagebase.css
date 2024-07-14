@@ -859,3 +859,41 @@ div[wire\:loading].loading-overlay {
 .dropdown-toggle::after {
     display: none;
 }
+/* Gaya untuk gambar dalam tampilan biasa */
+.aside-menu img {
+    height: 30px; /* Sesuaikan dengan kebutuhan Anda */
+    width: auto;
+    margin-right: 10px;
+}
+
+/* Gaya untuk elemen Select2 */
+.select2-container .select2-selection--single {
+    height: 50px; /* Sesuaikan dengan kebutuhan Anda */
+    display: flex;
+    align-items: center;
+}
+
+.select2-container .select2-selection--single .select2-selection__rendered {
+    line-height: 28px; /* Menyesuaikan teks secara vertikal */
+    padding-left: 40px; /* Menambahkan padding untuk gambar */
+}
+
+.select2-container .select2-selection--single .select2-selection__arrow {
+    height: 50px; /* Menyamakan tinggi dengan container */
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered img {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px; /* Sesuaikan dengan kebutuhan Anda */
+    height: auto;
+}
+
+.select2-results__option .img-flag {
+    width: 20px; /* Sesuaikan dengan kebutuhan Anda */
+    height: auto;
+    margin-right: 10px;
+    vertical-align: middle;
+}

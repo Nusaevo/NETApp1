@@ -14,7 +14,7 @@
 >
 
     {{--begin::Brand--}}
-    <div class="aside-logo flex-column-auto d-flex justify-content-center " id="kt_aside_logo">
+    {{-- <div class="aside-logo flex-column-auto d-flex justify-content-center " id="kt_aside_logo">
         <a href="{{ $theme->getPageUrl('') }}" >
             @php
                 $appcode = Session::get('app_code', '');
@@ -22,7 +22,7 @@
             @endphp
             <img alt="Logo" src="{{ asset($imagePath) }}" class="h-45px"/>
         </a>
-        @if (theme()->getOption('layout', 'aside/minimize') === true)
+        @if (theme()->getOption('layout', 'aside/minimize') === true) --}}
             {{--begin::Aside toggler--}}
             {{-- <div id="kt_aside_toggle" class="btn btn-icon w-auto px-0 btn-active-color-primary aside-toggle"
                 data-kt-toggle="true"
@@ -33,8 +33,8 @@
                 {!! theme()->getSvgIcon("icons/duotune/arrows/arr079.svg", "svg-icon-1 rotate-180") !!}
             </div> --}}
             {{--end::Aside toggler--}}
-        @endif
-    </div>
+        {{-- @endif
+    </div> --}}
 
 
 

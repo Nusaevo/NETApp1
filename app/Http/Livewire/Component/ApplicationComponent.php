@@ -13,7 +13,9 @@ class ApplicationComponent extends Component
 {
     public $applications;
     public $selectedApplication;
-
+    protected $listeners = [
+        'applicationChanged'  => 'applicationChanged',
+    ];
     public function mount()
     {
         $appIds = getAppIds();

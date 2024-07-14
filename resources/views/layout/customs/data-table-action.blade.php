@@ -14,22 +14,26 @@
         <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton{{ $row->id }}">
             @if($allow_details && isset($permissions['read']) && $permissions['read'])
             <li>
-                <a class="dropdown-item btn btn-sm" href="#" wire:click="viewData({{ $row->id }})">Detil</a>
+                <a class="dropdown-item btn btn-sm" href="#" wire:click="viewData({{ $row->id }})">
+                    <i class="bi bi-eye"></i>Detil</a>
             </li>
             @endif
             @if($allow_edit && (isset($permissions['read']) && $permissions['read'] || isset($permissions['update']) && $permissions['update']))
             <li>
-                <a class="dropdown-item btn btn-sm" href="#" wire:click="editData({{ $row->id }})">Edit</a>
+                <a class="dropdown-item btn btn-sm" href="#" wire:click="editData({{ $row->id }})">
+                    <i class="bi bi-pencil"></i> Edit</a>
             </li>
             @endif
             @if($allow_delete && isset($permissions['delete']) && $permissions['delete'])
             <li>
-                <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">Delete</a>
+                <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
+                    <i class="bi bi-trash"></i>Delete</a>
             </li>
             @endif
             @if($allow_disable && isset($permissions['delete']) && $permissions['delete'])
             <li>
-                <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">Disable</a>
+                <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
+                    <i class="bi bi-x-circle"></i>Disable</a>
             </li>
             @endif
             @if($custom_actions && isset($custom_actions))
