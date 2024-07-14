@@ -18,9 +18,12 @@ class IndexDataTable extends BaseDataTableComponent
     protected $model = ReturnHdr::class;
     public $returnIds;
 
-    public function mount(): void
+    
+
+public function mount(): void
     {
         $this->customRoute = "";
+$this->getPermission($this->customRoute);
         $this->setSort('tr_date', 'desc');
         $this->setFilter('status_code',  Status::ACTIVE);
     }
@@ -62,7 +65,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
             Column::make('', 'id')

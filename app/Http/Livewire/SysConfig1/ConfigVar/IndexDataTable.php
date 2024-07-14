@@ -8,6 +8,7 @@ use App\Models\SysConfig1\ConfigVar;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Illuminate\Support\Facades\Crypt;
+use App\Models\SysConfig1\ConfigRight;
 use Lang;
 use Exception;
 use App\Enums\Status;
@@ -16,9 +17,12 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigVar::class;
 
+    
+
     public function mount(): void
     {
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
         $this->setFilter('Status', 0);
     }
 
@@ -59,7 +63,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
         ];

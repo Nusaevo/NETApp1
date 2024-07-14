@@ -7,6 +7,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\SysConfig1\ConfigMenu;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
@@ -16,9 +17,11 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigMenu::class;
 
+    
     public function mount(): void
     {
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
         $this->setSort('menu_header', 'asc');
         $this->setSort('seq', 'asc');
         $this->setFilter('Status', 0);
@@ -67,7 +70,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
         ];

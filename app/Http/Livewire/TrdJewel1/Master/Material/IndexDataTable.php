@@ -5,6 +5,7 @@ namespace App\Http\Livewire\TrdJewel1\Master\Material;
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Master\Material;
+use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
@@ -13,10 +14,12 @@ use Illuminate\Database\Eloquent\Builder;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Material::class;
+    
 
     public function mount(): void
     {
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
         $this->setSearchVisibilityStatus(false);
         $this->setFilter('Status', 0);
         $this->setFilter('stock_filter', 'above_0');
@@ -69,7 +72,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
         ];

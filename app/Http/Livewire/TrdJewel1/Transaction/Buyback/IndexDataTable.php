@@ -7,17 +7,18 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = OrderHdr::class;
-
     public function mount(): void
     {
         $this->setSearchVisibilityStatus(false);
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
     }
 
     public function builder(): Builder
@@ -71,7 +72,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
             Column::make('', 'id')

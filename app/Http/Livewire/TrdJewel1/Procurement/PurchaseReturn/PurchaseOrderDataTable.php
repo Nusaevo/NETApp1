@@ -20,6 +20,7 @@ class PurchaseOrderDataTable extends BaseDataTableComponent
     public function mount($groupId = null, $selectedUserIds = null): void
     {
         $this->customRoute = "";
+$this->getPermission($this->customRoute);
         $this->groupId = $groupId;
         $this->selectedRows = $selectedUserIds;
     }
@@ -67,7 +68,7 @@ class PurchaseOrderDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
         ];

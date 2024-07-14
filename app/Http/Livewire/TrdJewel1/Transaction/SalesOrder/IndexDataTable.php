@@ -5,6 +5,7 @@ namespace App\Http\Livewire\TrdJewel1\Transaction\SalesOrder;
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\SysConfig1\ConfigRight;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
@@ -18,6 +19,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->setSearchVisibilityStatus(false);
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
     }
 
     public function builder(): Builder
@@ -80,7 +82,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute,
+                        'permissions' => $this->permissions,
 
                     ]);
                 }),

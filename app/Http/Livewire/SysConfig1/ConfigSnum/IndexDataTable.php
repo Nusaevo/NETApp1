@@ -15,9 +15,11 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigSnum::class;
 
+    
     public function mount(): void
     {
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
         $this->setSort('menu_header', 'asc');
         $this->setSort('seq', 'asc');
         $this->setFilter('Status', 0);
@@ -66,7 +68,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
         ];

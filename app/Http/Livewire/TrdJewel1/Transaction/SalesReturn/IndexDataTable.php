@@ -8,6 +8,7 @@ use App\Models\TrdJewel1\Transaction\ReturnHdr;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
+use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
 use Lang;
@@ -21,6 +22,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
         $this->setSort('tr_date', 'desc');
         $this->setFilter('status_code',  Status::ACTIVE);
     }
@@ -62,7 +64,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
             Column::make('', 'id')

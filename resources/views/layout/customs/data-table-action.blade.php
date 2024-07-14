@@ -1,12 +1,3 @@
-@php
-$access = $access ?? null;
-
-if ($access !== null) {
-    $permissions = App\Models\SysConfig1\ConfigRight::getPermissionsByMenu($access);
-} else {
-    $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
-}
-@endphp
 
 <div class="text-center" style="position: relative;">
     @if($enable_this_row)

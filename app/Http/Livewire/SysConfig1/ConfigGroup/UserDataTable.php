@@ -8,6 +8,7 @@ use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\SysConfig1\ConfigGroup;
 use App\Models\SysConfig1\ConfigUser;
+use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Support\Facades\Crypt;
 use Lang;
 use Exception;
@@ -21,6 +22,7 @@ class UserDataTable extends BaseDataTableComponent
     public function mount($groupId = null, $selectedUserIds = null): void
     {
         $this->customRoute = "SysConfig1.ConfigUser";
+        $this->getPermission($this->customRoute);
         $this->groupId = $groupId;
         $this->selectedRows = $selectedUserIds;
     }
@@ -62,7 +64,7 @@ class UserDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
         ];

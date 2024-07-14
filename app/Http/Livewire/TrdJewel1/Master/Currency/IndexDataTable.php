@@ -5,6 +5,7 @@ namespace App\Http\Livewire\TrdJewel1\Master\Currency;
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
+use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Enums\Status;
@@ -13,9 +14,11 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = GoldPriceLog::class;
 
+    
     public function mount(): void
     {
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
         $this->setSort('log_date', 'desc');
     }
 
@@ -56,7 +59,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
         ];

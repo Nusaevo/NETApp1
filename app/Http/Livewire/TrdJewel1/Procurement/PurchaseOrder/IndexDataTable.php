@@ -10,6 +10,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Lang;
 use Exception;
@@ -23,6 +24,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->setSearchVisibilityStatus(false);
         $this->customRoute = "";
+        $this->getPermission($this->customRoute);
     }
 
     public function builder(): Builder
@@ -91,7 +93,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'allow_edit' => true,
                         'allow_disable' => false,
                         'allow_delete' => false,
-                        'access' => $this->customRoute ? $this->customRoute : $this->baseRoute
+                        'permissions' => $this->permissions
                     ]);
                 }),
 

@@ -10,6 +10,7 @@ use App\Enums\Status;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\SysConfig1\ConfigRight;
 use App\Models\Util\GenericExport;
 
 abstract class BaseDataTableComponent extends DataTableComponent
@@ -22,6 +23,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public $baseRenderRoute;
     public $renderRoute;
+    public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
 
     public function __construct()
     {
@@ -144,6 +146,11 @@ abstract class BaseDataTableComponent extends DataTableComponent
         } else {
             return $translation;
         }
+    }
+
+    public function getPermission($customRoute)
+    {
+        $this->permissions = ConfigRight::getPermissionsByMenu($customRoute ? $customRoute : $this->baseRoute);
     }
 
     // public function bulkActions(): array
