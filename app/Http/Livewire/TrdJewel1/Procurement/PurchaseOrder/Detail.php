@@ -75,15 +75,15 @@ class Detail extends BaseComponent
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
-                $this->input_details[$key]['name'] = $detail->Material->name;
+                $this->input_details[$key]['name'] = $detail->Material?->name;
                 $this->input_details[$key]['id'] = $detail->id;
                 $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
                 $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
-                $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-                $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
+                $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
+                $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
             }
             $this->countTotalAmount();
         }

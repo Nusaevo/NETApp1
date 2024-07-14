@@ -173,19 +173,22 @@ class MaterialComponent extends BaseComponent
     public function searchProduct()
     {
         if (isset($this->product_code)) {
+            $this->product_code = strtoupper($this->product_code);
+
             $material = Material::where('code', $this->product_code)->first();
-            if($material->isItemExistonAnotherPO($material->id))
-            {
-                $this->notify('error',"Penerimaan barang sudah dibuat untuk item ini");
-            }else{
-                if ($material) {
+
+            if ($material) {
+                if ($material->isItemExistonAnotherPO($material->id)) {
+                    $this->notify('error', "Penerimaan barang sudah dibuat untuk item ini");
+                } else {
                     $this->loadMaterial($material->id);
-                }else{
-                    $this->notify('error',Lang::get($this->langBasePath.'.message.product_notfound'));
                 }
+            } else {
+                $this->notify('error', Lang::get($this->langBasePath . '.message.product_notfound'));
             }
         }
     }
+
 
     public function refreshUOMs()
     {
