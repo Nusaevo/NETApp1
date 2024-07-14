@@ -32,7 +32,7 @@ class Status
             self::APPROVED => 'APPROVED',
             self::REJECTED => 'REJECTED',
             self::ACTIVE => 'ACTIVE',
-            self::DEACTIVATED  => 'DEACTIVATED',
+            self::DEACTIVATED  => 'NON ACTIVE',
             self::IN_PROGRESS => 'IN_PROGRESS',
             self::COMPLETED => 'COMPLETED',
             self::CANCELED => 'CANCELED',

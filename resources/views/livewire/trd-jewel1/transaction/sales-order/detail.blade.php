@@ -24,8 +24,8 @@
                                 @livewire('component.rfid-scanner', ['duration' => 1000])
 
                                 {{-- <button id="scanButton" class="btn btn-primary" wire:click="tagScanned">Scan</button> --}}
-                                <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
-                                    <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
+                                <button type="button" wire:click="OpenDialogBox" class="btn btn-primary" >
+                                    {{ $this->trans('btnAdd') }}
                                 </button>
 
                                 <x-ui-dialog-box id="catalogue" :width="'2000px'" :height="'2000px'">
@@ -131,11 +131,12 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('openMaterialDialog', function() {
-            $('#materialDialogBox').modal('show');
+            $('#catalogue').modal('show');
         });
 
         window.addEventListener('closeMaterialDialog', function() {
-            $('#materialDialogBox').modal('hide');
+            $('#catalogue').modal('hide');
         });
     });
 </script>
+

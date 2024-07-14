@@ -202,7 +202,7 @@ class OrderHdr extends BaseModel
                     $configSnum->save();
                 }
             }
-            $this->status_code = Status::OPEN; // Set status_code to Status::OPEN
+            $this->status_code = Status::OPEN;
             $this->save();
 
             if ($createBillingDelivery == true) {

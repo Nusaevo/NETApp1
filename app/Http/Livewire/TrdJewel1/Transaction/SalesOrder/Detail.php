@@ -121,6 +121,14 @@ class Detail extends BaseComponent
         'tagScanned' => 'tagScanned',
     ];
 
+    public function OpenDialogBox(){
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            return;
+        }
+        $this->dispatchBrowserEvent('openMaterialDialog');
+    }
+
 
     public function refreshPartner()
     {
