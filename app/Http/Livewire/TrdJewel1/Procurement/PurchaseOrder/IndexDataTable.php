@@ -86,8 +86,6 @@ class IndexDataTable extends BaseDataTableComponent
                                 'icon' => 'bi bi-printer'
                             ],
                         ],
-
-                        'custom_actions' => [],
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,
