@@ -19,10 +19,8 @@
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
 
                                 @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => $actionValue])
+                                <x-ui-button clickEvent="OpenDialogBox" cssClass="btn btn-primary" iconPath="add.svg" button-name="{{ $this->trans('btnAdd') }}" :action="$actionValue" />
 
-                                <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
-                                    <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
-                                </button>
 
                                 <x-ui-dialog-box id="catalogue" :width="'2000px'" :height="'2000px'">
                                     <x-slot name="body">
@@ -117,3 +115,14 @@
         </x-ui-footer>
     </x-ui-page-card>
 
+ <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            window.addEventListener('openMaterialDialog', function() {
+                $('#catalogue').modal('show');
+            });
+
+            window.addEventListener('closeMaterialDialog', function() {
+                $('#catalogue').modal('hide');
+            });
+        });
+    </script>
