@@ -14,7 +14,7 @@ class ApplicationComponent extends Component
     public $applications;
     public $selectedApplication;
     protected $listeners = [
-        'applicationChanged'  => 'applicationChanged',
+        'configApplicationChanged'  => 'configApplicationChanged',
     ];
     public function mount()
     {
@@ -38,7 +38,7 @@ class ApplicationComponent extends Component
         }
     }
 
-    public function applicationChanged($selectedApplication)
+    public function configApplicationChanged($selectedApplication)
     {
         Session::put('app_code', $selectedApplication);
         return redirect($selectedApplication ? '/' . $selectedApplication . '/Home' : '/');

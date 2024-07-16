@@ -6,6 +6,7 @@ use Livewire\Component;
 class RfidScanner extends Component
 {
     public $scannedTags = [];
+    public $action = '';
     public $errorMessage = '';
     public $duration = 4000;
 

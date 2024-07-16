@@ -2,7 +2,7 @@
     @if (!$isDialogBoxComponent)
     <div class="gallery-header">
         <div class="button-group">
-            <x-image-button hideStorageButton="true" class="btn btn-secondary"></x-image-button>
+            <x-image-button hideStorageButton="true" action="Edit" class="btn btn-secondary"></x-image-button>
 
             <button id="btnDeleteSelected" class="btn btn-danger gallery-btn-delete-selected" style="display: none;" onclick="deleteSelectedImages()">
                 <i class="bi bi-trash"></i> Delete Selected

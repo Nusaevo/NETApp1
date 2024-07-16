@@ -56,6 +56,7 @@ class MaterialComponent extends BaseComponent
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
     {
         $this->searchMode = $searchMode;
+        $this->bypassPermissions = $searchMode;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 

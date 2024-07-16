@@ -33,14 +33,12 @@
                 templateResult: formatState,
                 templateSelection: formatState,
                 width: '100%',
-                dropdownAutoWidth: true,
-                minimumResultsForSearch: Infinity, // Menonaktifkan fitur pencarian
-                dropdownCssClass: 'hide-search-box' // Menambahkan kelas CSS untuk menyembunyikan input pencarian
+                dropdownAutoWidth: true
             });
 
             $('.application-select').on('change', function(e) {
                 var selectedValue = $(this).val();
-                Livewire.emit('configApplicationChanged', selectedValue);
+                Livewire.emit('applicationChanged', selectedValue);
             });
         }
 
@@ -89,14 +87,5 @@
         height: auto;
         margin-right: 10px;
         vertical-align: middle;
-    }
-
-    /* Menyembunyikan input pencarian */
-    .select2-container .select2-search--dropdown {
-        display: none;
-    }
-
-    .hide-search-box .select2-search--dropdown {
-        display: none !important;
     }
 </style>

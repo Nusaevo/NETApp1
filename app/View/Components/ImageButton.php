@@ -7,15 +7,19 @@ use Illuminate\View\Component;
 class ImageButton extends Component
 {
     public $hideStorageButton;
+    public $action;
+
     /**
      * Create a new component instance.
      *
      * @return void
      */
-    public function __construct($hideStorageButton = "false")
+    public function __construct($hideStorageButton = "false", $action = '')
     {
         $this->hideStorageButton = $hideStorageButton;
+        $this->action = $action;
     }
+
     /**
      * Get the view / contents that represent the component.
      *

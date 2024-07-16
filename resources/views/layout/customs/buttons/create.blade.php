@@ -8,7 +8,7 @@
         loading="true"
         iconPath="add.svg"
         button-name="Create" />
-@else
+@elseif(isset($permissions['create']) && $permissions['create'] && !isset($objectId))
     <x-ui-button
         visible="true"
         enabled="true"

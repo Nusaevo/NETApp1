@@ -17,9 +17,7 @@
             @endisset
         </div>
         @isset($button)
-            <div class="close-button">
                 {{ $button }}
-            </div>
         @endisset
     </div>
 </td>

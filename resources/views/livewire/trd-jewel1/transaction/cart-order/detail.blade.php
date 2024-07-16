@@ -18,7 +18,7 @@
                         <x-slot name="button">
                             <div style="display: flex; justify-content: start; align-items: center; gap: 10px;">
 
-                                @livewire('component.rfid-scanner', ['duration' => 1000])
+                                @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => $actionValue])
 
                                 <button type="button" wire:click="SaveWithoutNotification" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#catalogue">
                                     <span style="font-size: 16px;"> {{ $this->trans('btnAdd') }}</span>
@@ -96,9 +96,7 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
                                     </x-slot>
                                     <x-slot name="button">
-                                        <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
-                                            X
-                                        </a>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
                                     </x-slot>
                                 </x-ui-list-body>
                             </tr>

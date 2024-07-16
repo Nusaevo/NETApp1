@@ -21,9 +21,7 @@ use App\Models\TrdJewel1\Master\Material;
                                 <div class="photo-box">
                                     <img src="{{ $image['url'] }}" alt="Captured Image" class="photo-box-image">
                                     <div class="image-close-button">
-                                        <a href="#" wire:click.prevent="deleteImage({{ $key }})">
-                                            X
-                                        </a>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
                                     </div>
                                 </div>
                                 @empty
@@ -34,7 +32,7 @@ use App\Models\TrdJewel1\Master\Material;
                             </div>
 
                             <div class="button-container">
-                                <x-image-button></x-image-button>
+                                <x-image-button :action="$actionValue"></x-image-button>
 
                                 <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                     <x-slot name="body">
@@ -97,9 +95,7 @@ use App\Models\TrdJewel1\Master\Material;
                                         @endisset
                                     </x-slot>
                                     <x-slot name="button">
-                                        <a href="#" wire:click.prevent="deleteBoms({{ $key }})">
-                                            X
-                                        </a>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteBoms(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
                                     </x-slot>
                                 </x-ui-list-body>
                             </tr>
@@ -123,7 +119,7 @@ use App\Models\TrdJewel1\Master\Material;
         {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
 
         @if (!$searchMode && $actionValue == 'Edit')
-        @livewire('component.rfid-scanner', ['duration' => 1000])
+        @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => $actionValue])
 
         @if ($status === 'ACTIVE')
         <x-ui-button button-name="Disable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />

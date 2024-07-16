@@ -1,3 +1,4 @@
+@if($action == "Edit" || $action == "Create" )
 <span style="padding: 2px;">
     <div id="rfidScannerComponent" data-duration="{{ $duration }}">
         <button id="scanButton" class="btn btn-primary btn-action" onclick="startWebSocketScan()">
@@ -5,6 +6,7 @@
         </button>
     </div>
 </span>
+@endif
 <script>
     let socket;
     const wsUrl = 'ws://localhost:8081/RFID';

@@ -57,9 +57,7 @@
                                 </x-slot>
                             </x-ui-dialog-box> --}}
 
-                            <button type="button" wire:click="OpenDialogBox" class="btn btn-primary" >
-                                {{ $this->trans('btnAdd') }}
-                            </button>
+                            <x-ui-button clickEvent="OpenDialogBox" cssClass="btn btn-primary" iconPath="add.svg" button-name="{{ $this->trans('btnAdd') }}" :action="$actionValue" />
 
                             <x-ui-dialog-box id="materialDialogBox" :width="'2000px'" :height="'2000px'" >
                                 <x-slot name="body">
@@ -94,9 +92,7 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
                                     </x-slot>
                                     <x-slot name="button">
-                                        <a href="#" wire:click="deleteDetails({{ $key }})" class="btn btn-link">
-                                            X
-                                        </a>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
                                     </x-slot>
                                 </x-ui-list-body>
                             </tr>

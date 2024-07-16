@@ -6,7 +6,9 @@ $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
 @if ($actionValue === 'Edit' || $actionValue === 'View')
 
 @if ($status === 'OPEN' || !$object->deleted_at)
+@if(isset($permissions['delete']) && $permissions['delete'])
 <x-ui-button button-name="Delete" clickEvent="" loading="true" action="Edit" cssClass="btn-danger btn-dialog-box" iconPath="delete.svg" />
+@endif
 @endif
 <x-ui-button :action="$actionValue" clickEvent="{{ route($printPdfRoute,
 ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($object->id)]) }}"
