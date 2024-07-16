@@ -2,7 +2,9 @@
     @if (!$isDialogBoxComponent)
     <div class="gallery-header">
         <div class="button-group">
-            <x-image-button hideStorageButton="true" action="Edit" class="btn btn-secondary"></x-image-button>
+            @if(isset($permissions['create']) && $permissions['create'])
+             <x-image-button hideStorageButton="true" action="Edit" class="btn btn-secondary"></x-image-button>
+            @endif
 
             <button id="btnDeleteSelected" class="btn btn-danger gallery-btn-delete-selected" style="display: none;" onclick="deleteSelectedImages()">
                 <i class="bi bi-trash"></i> Delete Selected
@@ -21,7 +23,9 @@
                     <input type="checkbox" class="gallery-checkbox" data-image-id="{{ $attachment->id }}" data-image-url="{{ $attachment->getUrl() }}" onchange="toggleDeleteButton()">
                     <img src="{{ $attachment->getUrl() }}" alt="Gallery Image" class="photo-box-image gallery-photo-box-image">
                     @if (!$isDialogBoxComponent)
-                    <button class="gallery-btn-delete-image" onclick="deleteImage('{{ $attachment->id }}')" data-image-id="{{ $attachment->id }}">X</button>
+                        @if(isset($permissions['delete']) && $permissions['delete'])
+                            <button class="gallery-btn-delete-image" onclick="deleteImage('{{ $attachment->id }}')" data-image-id="{{ $attachment->id }}">X</button>
+                        @endif
                     @endif
                 </div>
             </div>

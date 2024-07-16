@@ -897,3 +897,47 @@ div[wire\:loading].loading-overlay {
     margin-right: 10px;
     vertical-align: middle;
 }
+
+.list-group-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    margin: 10px 0;
+    overflow-x: auto; /* Mengaktifkan scroll horizontal */
+}
+
+.list-group-item .d-flex {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    width: 100%; /* Pastikan d-flex mengambil lebar penuh */
+}
+
+.list-group-item .col-md-2 {
+    flex: 0 0 200px;
+    max-width: 200px;
+    margin-right: 30px; /* Memberi jarak antara gambar dan elemen di sebelah kanan */
+}
+
+.list-group-item .col-md-2 img {
+    width: 100%;
+    height: auto;
+}
+
+.list-group-item .col-md-9, .list-group-item .col-md-12 {
+    flex: 1;
+    padding: 10px;
+    min-width: 300px; /* Mengatur lebar minimum untuk kolom lainnya */
+}
+
+/* Tambahkan media query untuk menyesuaikan tampilan pada layar yang lebih kecil */
+@media (max-width: 768px) {
+    .list-group-item .d-flex {
+        flex-wrap: nowrap; /* Pastikan elemen tidak terbungkus */
+    }
+
+    .list-group-item .col-md-9, .list-group-item .col-md-12 {
+        min-width: 250px; /* Lebar minimum untuk tampilan mobile */
+    }
+}

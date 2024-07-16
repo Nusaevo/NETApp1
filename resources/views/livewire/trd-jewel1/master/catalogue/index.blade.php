@@ -42,13 +42,14 @@
                         </div>
                     </div>
                     <div class="text-right">
+                        @if(isset($permissions['create']) && $permissions['create'])
                         <x-ui-button
                         :clickEvent="'addToCart(' . $material->id . ', \'' . $material->code . '\')'"
                         button-name="Add To Cart"
                         loading="true"
                         action="Edit"
-                        cssClass="btn-primary"
-                    />
+                        cssClass="btn-primary" />
+                        @endif
                     </div>
 
                 </div>
