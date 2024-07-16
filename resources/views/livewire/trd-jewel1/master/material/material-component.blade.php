@@ -127,7 +127,7 @@ use App\Models\TrdJewel1\Master\Material;
         <x-ui-button button-name="Enable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-primary btn-dialog-box" iconPath="enable.svg" />
         @endif
         @endif
-        <x-ui-button clickEvent="printBarcode" cssClass="btn btn-secondary" button-name="Print Label" :action="$actionValue" />
+        <x-ui-button clickEvent="printBarcode" cssClass="btn btn-secondary" button-name="Print Label" action="Edit" />
         @if($searchMode)
         <x-ui-button clickEvent="SaveWithoutNotification" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
         @else
