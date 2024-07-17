@@ -20,14 +20,14 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchVisibilityStatus(false);
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
+        $this->setDefaultSort('tr_date', 'desc');
     }
 
     public function builder(): Builder
     {
         return OrderHdr::with('OrderDtl', 'Partner')
             ->where('order_hdrs.tr_type', 'SO')
-            ->where('order_hdrs.status_code', Status::OPEN)
-            ->orderBy('order_hdrs.created_at', 'desc');
+            ->where('order_hdrs.status_code', Status::OPEN);
     }
 
     public function columns(): array

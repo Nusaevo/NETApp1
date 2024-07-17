@@ -14,7 +14,6 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = GoldPriceLog::class;
 
-    
     public function mount(): void
     {
         $this->customRoute = "";

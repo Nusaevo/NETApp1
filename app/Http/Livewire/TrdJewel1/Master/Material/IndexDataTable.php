@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Material::class;
-    
+
 
     public function mount(): void
     {
@@ -23,11 +23,12 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchVisibilityStatus(false);
         $this->setFilter('Status', 0);
         $this->setFilter('stock_filter', 'above_0');
+        $this->setDefaultSort('created_at', 'desc');
     }
 
     public function builder(): Builder
     {
-        return Material::query()->with('IvtBal')->orderBy('created_at', 'desc');
+        return Material::query()->with('IvtBal');
     }
 
     public function columns(): array

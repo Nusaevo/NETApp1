@@ -25,6 +25,8 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchVisibilityStatus(false);
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
+
+        $this->setDefaultSort('tr_date', 'desc');
     }
 
     public function builder(): Builder
@@ -70,9 +72,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
-            Column::make($this->trans("created_date"), "created_at")
-                ->searchable()
-                ->sortable(),
+            // Column::make($this->trans("created_date"), "created_at")
+            //     ->searchable()
+            //     ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

@@ -17,13 +17,14 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->customRoute = "";
-    $this->getPermission($this->customRoute);
+        $this->getPermission($this->customRoute);
         $this->setSearchVisibilityStatus(false);
+        $this->setDefaultSort('created_at', 'desc');
     }
 
     public function builder(): Builder
     {
-        return Partner::query()->orderBy('created_at', 'desc');
+        return Partner::query();
     }
 
     public function columns(): array
@@ -67,6 +68,7 @@ class IndexDataTable extends BaseDataTableComponent
                 }),
         ];
     }
+
 
     public function filters(): array
     {
