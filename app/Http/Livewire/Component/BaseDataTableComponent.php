@@ -26,16 +26,27 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $renderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
     public $menu_link;
+    
 
-    public function __construct()
+    abstract public function columns(): array;
+    
+    protected $listeners = [
+        'refreshData' => 'render',
+        'viewData'  => 'View',
+        'editData'  => 'Edit',
+        'deleteData'  => 'Delete',
+        'disableData'  => 'Disable',
+        'selectData'  => 'SelectObject',
+    ];
+
+    public function configure(): void
     {
-        parent::__construct();
         if (empty($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
 
-        $route = ConfigMenu::getRoute($this->baseRoute);
-        $this->baseRenderRoute = strtolower($route);
+        $this->route = ConfigMenu::getRoute($this->baseRoute);
+        $this->baseRenderRoute = strtolower($this->route);
         $this->renderRoute = 'livewire/' . $this->baseRenderRoute;
 
         // Convert base route to URL segments
@@ -49,19 +60,8 @@ abstract class BaseDataTableComponent extends DataTableComponent
         } else {
             $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute)."/index";
         }
-    }
+        $this->permissions = ConfigRight::getPermissionsByMenu($this->menu_link);
 
-    protected $listeners = [
-        'refreshData' => 'render',
-        'viewData'  => 'View',
-        'editData'  => 'Edit',
-        'deleteData'  => 'Delete',
-        'disableData'  => 'Disable',
-        'selectData'  => 'SelectObject',
-    ];
-
-    public function configure(): void
-    {
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
             'class' => 'data-table',
@@ -82,9 +82,12 @@ abstract class BaseDataTableComponent extends DataTableComponent
             }
             return [];
         });
+        $this->setConfigurableAreas([
+            'toolbar-left-start' =>  ['layout.customs.buttons.create', [
+                'route' => $this->baseRoute.".Detail", 'permissions' => $this->permissions
+            ],]
+        ]);
     }
-
-    abstract public function columns(): array;
 
     public function viewData($id)
     {

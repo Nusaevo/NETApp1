@@ -1,5 +1,5 @@
 <x-ui-page-card title="Transaksi Penjualan" status="{{ $status }}">
-    @include('layout.customs.buttons.create', ['route' => $route])
+   
 
     <div class="table-container">
         @livewire('trd-jewel1.transaction.buyback.index-data-table')
