@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
-    <x-ui-page-card title="{{ $this->trans($actionValue) }} {{ $menuName }}" status="">
+    <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}" status="">
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">

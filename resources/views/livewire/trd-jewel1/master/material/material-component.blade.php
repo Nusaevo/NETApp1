@@ -2,7 +2,7 @@
 use App\Models\TrdJewel1\Master\Material;
 @endphp
 
-<x-ui-page-card title="{{ $actionValue }} {{ $menuName }}" status="{{ $status }}">
+<x-ui-page-card title="{{ $actionValue }} {!! $menuName !!}" status="{{ $status }}">
 
     @if ($actionValue === 'Create')
     <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>

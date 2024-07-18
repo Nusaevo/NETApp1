@@ -83,7 +83,6 @@ class BaseComponent extends Component
         $this->permissions = ConfigRight::getPermissionsByMenu($menu_link);
         $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
         $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
-
         // Check for valid permissions
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');

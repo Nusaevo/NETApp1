@@ -6,7 +6,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
-    <x-ui-page-card title="{{ $menuName }}" status="{{ $this->trans($status) }}">
+    <x-ui-page-card title="{!! $menuName !!}" status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
