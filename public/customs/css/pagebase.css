@@ -1,3 +1,91 @@
+/* DataTable Styles */
+.data-table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid #ddd;
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    color: #333;
+}
+
+.data-table thead {
+    background-color: #f5f5f5;
+}
+
+.data-table th,
+.data-table td {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.data-table th {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.data-table-header th {
+    text-align: center;
+}
+
+.data-table-header div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2; /* Warna latar belakang yang sedikit lebih terang untuk baris genap */
+}
+
+.data-table tbody tr:nth-child(odd) {
+    background-color: #ffffff; /* Warna latar belakang untuk baris ganjil */
+}
+
+.data-table tbody tr:hover {
+    background-color: #cccccc; /* Warna latar belakang yang lebih gelap saat hover */
+}
+
+/* Text Alignment */
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+/* Additional Enhancements */
+.data-table-wrapper {
+    margin: 20px 0;
+    overflow-x: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.data-table th:first-child,
+.data-table td:first-child {
+    border-left: none;
+}
+
+.data-table th:last-child,
+.data-table td:last-child {
+    border-right: none;
+}
+
+
 .subdomain-text {
     padding-top: 20px;
 }
@@ -56,55 +144,6 @@
     border-color: #d3d3d3;
 }
 
-/* DataTable Styles */
-.data-table {
-    border-collapse: collapse;
-    width: 100%;
-    border: 2px solid #ccc;
-}
-
-.data-table thead {
-    background-color: #e0e0e0;
-}
-
-.data-table th,
-.data-table td {
-    padding: 2px 4px !important;
-    border: 1px solid #ccc;
-}
-
-.data-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-    text-align: center;
-}
-
-.data-table-header th {
-    text-align: center;
-}
-
-.data-table-header div {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.data-table tbody {
-    background-color: #ffffff;
-}
-
-/* Text Alignment */
-.text-center {
-    text-align: center;
-}
-
-.text-right {
-    text-align: right;
-}
-
-.text-left {
-    text-align: left;
-}
 
 /* UITextField Layout */
 
@@ -858,7 +897,7 @@ div[wire\:loading].loading-overlay {
 
 .dropdown-toggle::after {
     display: none;
-}
+/* }
 
 .aside-menu img {
     height: 30px; /* Sesuaikan dengan kebutuhan Anda */
@@ -940,4 +979,4 @@ div[wire\:loading].loading-overlay {
     .list-group-item .col-md-9, .list-group-item .col-md-12 {
         min-width: 250px; /* Lebar minimum untuk tampilan mobile */
     }
-}
+} */

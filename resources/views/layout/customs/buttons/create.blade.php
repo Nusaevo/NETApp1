@@ -2,8 +2,8 @@
     'permissions' => [],
     'route' => ''
 ])
-
 @if(isset($permissions['create']) && $permissions['create'])
+<div style="padding: 5px;">
     <x-ui-button
         :visible="true"
         :enabled="true"
@@ -11,6 +11,7 @@
         cssClass="btn btn-primary mb-5"
         type="Route"
         :loading="false"
-        iconPath="add.svg"
-        button-name="Create" />
+        iconPath=""
+        button-name="Create"/>
+</div>
 @endif
