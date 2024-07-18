@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SysConfig1\ConfigRight;
+use App\Models\SysConfig1\ConfigMenu;
 use App\Models\Util\GenericExport;
 
 abstract class BaseDataTableComponent extends DataTableComponent
@@ -24,29 +25,23 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $baseRenderRoute;
     public $renderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
+    public $menu_link;
 
     public function __construct()
     {
         parent::__construct();
-        $this->route = Route::currentRouteName();
-        $this->baseRoute = Str::replace('.', '/', $this->route);
-        $this->renderRoute =  implode('.', array_map(function($segment) {
-            // Insert hyphens after the first uppercase letter in each word, except for the very first character
-            return preg_replace_callback('/(?<=\w)([A-Z])/', function($match) use ($segment) {
-                $prevChar = substr($segment, strpos($segment, $match[0]) - 1, 1);
-                if ($prevChar === '_') {
-                    return $match[0];
-                } else {
-                    return '-' . strtolower($match[1]);
-                }
-            }, $segment);
-        }, explode('.', $this->baseRoute)));
-        // Convert the entire route to lowercase except the first character of each segment
-        $this->renderRoute = implode('.', array_map(function($segment) {
-            return lcfirst($segment);
-        }, explode('.', $this->renderRoute)));
-        // Convert the entire route to lowercase
-        $this->baseRenderRoute = strtolower($this->renderRoute);
+        if (empty($this->baseRoute)) {
+            $this->baseRoute = Route::currentRouteName();
+        }
+
+        $route = ConfigMenu::getRoute($this->baseRoute);
+        $this->baseRenderRoute = strtolower($route);
+        $this->renderRoute = 'livewire/' . $this->baseRenderRoute;
+
+        // Convert base route to URL segments
+
+        $fullUrl = str_replace('.', '/', $this->baseRoute);
+        $this->menu_link = ConfigMenu::getFullPathLink($fullUrl);
         $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
 
         if (!empty($this->customRoute)) {
@@ -93,13 +88,13 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public function viewData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->route . ".Detail";
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->baseRoute . ".Detail";
         return $this->redirectDetail($id, 'View', $route);
     }
 
     public function editData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->route . ".Detail";
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->baseRoute . ".Detail";
         return $this->redirectDetail($id, 'Edit', $route);
     }
 
@@ -150,7 +145,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public function getPermission($customRoute)
     {
-        $this->permissions = ConfigRight::getPermissionsByMenu($customRoute ? $customRoute : $this->baseRoute);
+        $this->permissions = ConfigRight::getPermissionsByMenu($customRoute ? $customRoute : $this->menu_link);
     }
 
     // public function bulkActions(): array

@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Component;
 
 use Livewire\Component;
 use App\Models\SysConfig1\ConfigRight;
+use App\Models\SysConfig1\ConfigMenu;
 use Exception;
 use Lang;
 use DB;
@@ -14,10 +15,12 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
-
 class BaseComponent extends Component
 {
     public $object;
+    public $action;
+    public $objectId;
+    // Decrypted object ID and action
     public $objectIdValue;
     public $actionValue = 'Create';
     public $inputs = [];
@@ -25,12 +28,13 @@ class BaseComponent extends Component
     public $VersionNumber;
     public $permissions;
     public $appCode;
-    public $action;
-    public $objectId;
 
+    // Current route
     public $baseRoute;
-    public $baseRenderRoute;
+    // Route for translation and getting base component
     public $langBasePath;
+    // Route to blade PHP
+    public $baseRenderRoute;
     public $renderRoute;
     public $route;
 
@@ -38,107 +42,78 @@ class BaseComponent extends Component
     public $customValidationAttributes;
     public $customRules;
     public $bypassPermissions = false;
+    public $menuName = "";
 
+    // Mount method to initialize the component
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         $this->onPreRender();
         $this->additionalParam = $additionalParam;
         $this->appCode =  Session::get('app_code', '');
-        // Get all URL segments
 
         $this->action = $action ? $action : null;
         $this->objectId = $action ? $objectId : null;
 
+        // Decrypt action value if provided
         if ($actionValue !== null) {
             $this->actionValue = $actionValue;
         } else {
             $this->actionValue = $action ? decryptWithSessionKey($action) : null;
         }
 
+        // Decrypt object ID value if provided
         if ($objectIdValue !== null) {
             $this->objectIdValue = $objectIdValue;
         } else {
             $this->objectIdValue = $objectId ? decryptWithSessionKey($objectId) : null;
         }
-        $this->baseRoute = Route::currentRouteName();
 
-        $this->renderRoute =  implode('.', array_map(function($segment) {
-            // Insert hyphens after the first uppercase letter in each word, except for the very first character
-            return preg_replace_callback('/(?<=\w)([A-Z])/', function($match) use ($segment) {
-                $prevChar = substr($segment, strpos($segment, $match[0]) - 1, 1);
-                if ($prevChar === '_') {
-                    return $match[0];
-                } else {
-                    return '-' . strtolower($match[1]);
-                }
-            }, $segment);
-        }, explode('.', $this->baseRoute)));
-        // Convert the entire route to lowercase except the first character of each segment
-        $this->renderRoute = implode('.', array_map(function($segment) {
-            return lcfirst($segment);
-        }, explode('.', $this->renderRoute)));
-        // Convert the entire route to lowercase
-        $this->baseRenderRoute = strtolower($this->renderRoute);
-        $this->renderRoute = 'livewire.' .$this->baseRenderRoute;
-
-        $segments = Request::segments();
-        $segmentsToIgnore = 0;
-         if (in_array($this->actionValue, ['Edit', 'View'])) {
-            $segmentsToIgnore = 3;
-        } elseif ($this->actionValue == 'Create') {
-            $segmentsToIgnore = 2;
+        // Set base route if not already set
+        if (empty($this->baseRoute)) {
+            $this->baseRoute = Route::currentRouteName();
         }
 
-        if (isset($this->additionalParam)) {
-            $additionalSegments = count(explode('/', $this->additionalParam));
-            $segmentsToIgnore += $additionalSegments;
-        }
-        if ($segmentsToIgnore > 0 && count($segments) > $segmentsToIgnore) {
-            $segments = array_slice($segments, 0, -$segmentsToIgnore);
-        }
+        $route = ConfigMenu::getRoute($this->baseRoute);
+        $this->baseRenderRoute = strtolower($route);
+        $this->renderRoute = 'livewire.' . $this->baseRenderRoute;
 
-        // Check if the last segment contains "Detail" string and remove it
-        // this only form inside form like material form component
-        if (!empty($segments)) {
-            $lastSegmentIndex = count($segments) - 1;
-            if (strpos($segments[$lastSegmentIndex], 'Detail') !== false) {
-                array_pop($segments);
-            }
-        }
-        $fullPath = implode('/', $segments);
-        $this->permissions = ConfigRight::getPermissionsByMenu($fullPath);
+        // Convert base route to URL segments
+        $fullUrl = str_replace('.', '/', $this->baseRoute);
+        $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);
+        $this->permissions = ConfigRight::getPermissionsByMenu($menu_link);
+        $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
+        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
 
+        // Check for valid permissions
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');
         }
 
+        // Handle specific actions like 'Edit', 'View', and 'Create'
         if (in_array($this->actionValue, ['Edit', 'View'])) {
             $this->onPopulateDropdowns();
             $this->onLoadForEdit();
-            if($this->object)
-            {
+            if($this->object) {
                 $this->status = Status::getStatusString($this->object->status_code);
                 $this->VersionNumber = $this->object->version_number;
             }
         } elseif ($this->actionValue === 'Create') {
             $this->resetForm();
             if ($this->objectIdValue !== null) {
-
                 $this->onPopulateDropdowns();
                 $this->onLoadForEdit();
-                if($this->object)
-                {
+                if($this->object) {
                     $this->status = Status::getStatusString($this->object->status_code);
                     $this->VersionNumber = $this->object->version_number;
                 }
             }
-        }else{
+        } else {
             $this->route .=  $this->baseRoute.'.Detail';
             $this->renderRoute .=  '.index';
         }
-        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
     }
 
+    // Translate method
     public function trans($key)
     {
         $fullKey = $this->langBasePath . "." . $key;
@@ -150,6 +125,7 @@ class BaseComponent extends Component
         }
     }
 
+    // Check if user has valid permissions
     protected function hasValidPermissions()
     {
         if ($this->bypassPermissions) {
@@ -173,6 +149,7 @@ class BaseComponent extends Component
         return true;
     }
 
+    // Validate form
     protected function validateForm()
     {
         try {
@@ -183,6 +160,7 @@ class BaseComponent extends Component
         }
     }
 
+    // Notify method
     protected function notify($type, $message)
     {
         $this->dispatchBrowserEvent('notify-swal', [
@@ -191,16 +169,18 @@ class BaseComponent extends Component
         ]);
     }
 
+    // Reset form
     protected function resetForm()
     {
         if ($this->actionValue == 'Create') {
             $this->onReset();
             $this->onPopulateDropdowns();
-        }elseif ($this->actionValue == 'Edit') {
+        } elseif ($this->actionValue == 'Edit') {
             $this->VersionNumber = $this->object->version_number ?? null;
         }
     }
 
+    // Save method
     public function Save()
     {
         $this->validateForm();
@@ -217,6 +197,7 @@ class BaseComponent extends Component
         }
     }
 
+    // Save without notification
     public function SaveWithoutNotification()
     {
         $this->validateForm();
@@ -232,6 +213,7 @@ class BaseComponent extends Component
         }
     }
 
+    // Change method
     protected function change()
     {
         try {
@@ -260,6 +242,7 @@ class BaseComponent extends Component
         $this->dispatchBrowserEvent('refresh');
     }
 
+    // Update version number method
     protected function updateVersionNumber()
     {
         if ($this->actionValue == 'Edit' && isset($this->object->id)) {
@@ -271,6 +254,4 @@ class BaseComponent extends Component
             }
         }
     }
-
-
 }

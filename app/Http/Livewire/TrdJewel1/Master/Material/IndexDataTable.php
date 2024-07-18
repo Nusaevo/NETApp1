@@ -51,7 +51,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("selling_price"), "jwl_selling_price")
                 ->format(function ($value, $row, Column $column) {
-                    return rupiah(currencyToNumeric($value));
+                    return dollar(currencyToNumeric($value));
                 })
                 ->searchable()
                 ->sortable(),

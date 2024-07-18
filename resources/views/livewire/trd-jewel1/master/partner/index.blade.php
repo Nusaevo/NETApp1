@@ -1,4 +1,4 @@
-<x-ui-page-card title="Partner" status="{{ $status }}">
+<x-ui-page-card title="{{ $menuName }}" status="{{ $status }}">
     @include('layout.customs.buttons.create', ['route' => $route])
 
     <div class="table-container">

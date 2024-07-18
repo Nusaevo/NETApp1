@@ -1,5 +1,5 @@
 
-<x-ui-page-card title="Catalogue">
+<x-ui-page-card title="{{ $menuName }}">
     <div>
         @include('layout.customs.notification')
     </div>

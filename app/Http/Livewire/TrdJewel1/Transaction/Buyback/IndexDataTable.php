@@ -51,7 +51,7 @@ class IndexDataTable extends BaseDataTableComponent
                     return currencyToNumeric($row->total_qty);
                 })
                 ->sortable(),
-           
+
             Column::make("Total Amount", "total_amt")
                 ->label(function($row) {
                     return rupiah(currencyToNumeric($row->total_amt));

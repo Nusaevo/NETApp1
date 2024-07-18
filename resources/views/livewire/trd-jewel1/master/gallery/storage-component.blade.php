@@ -1,4 +1,4 @@
-<x-ui-page-card title="Gallery">
+<x-ui-page-card title="{{ $menuName }}">
     @if (!$isDialogBoxComponent)
     <div class="gallery-header">
         <div class="button-group">

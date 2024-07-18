@@ -62,7 +62,8 @@ class MaterialComponent extends BaseComponent
 
     protected function onPreRender()
     {
-        $this->langBasePath = 'trd-jewel1/master/material/detail';
+        $this->baseRoute = "TrdJewel1.Master.Material.Detail";
+        // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
             'materials.*'              => $this->trans('input'),

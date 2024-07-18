@@ -33,7 +33,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
+            Column::make($this->trans("0"), "tr_date")
                 ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->sortable(),

@@ -12,23 +12,23 @@ class ReturnDtl extends BaseModel
     protected static function boot()
     {
         parent::boot();
-        static::created(function ($returnDtl) {
-            $orderDtl = $returnDtl->OrderDtl;
-            $orderDtlQtyReff = ceil(currencyToNumeric($orderDtl->qty_reff));
-            $returnQty = (float)$returnDtl->qty;
-            $newQtyReff = $orderDtlQtyReff - $returnQty;
-            $orderDtl->qty_reff = number_format($newQtyReff, 2);
-            $orderDtl->save();
-        });
+        // static::created(function ($returnDtl) {
+        //     $orderDtl = $returnDtl->OrderDtl;
+        //     $orderDtlQtyReff = ceil(currencyToNumeric($orderDtl->qty_reff));
+        //     $returnQty = (float)$returnDtl->qty;
+        //     $newQtyReff = $orderDtlQtyReff - $returnQty;
+        //     $orderDtl->qty_reff = number_format($newQtyReff, 2);
+        //     $orderDtl->save();
+        // });
 
-        static::deleting(function ($returnDtl) {
-            $orderDtl = $returnDtl->OrderDtl;
-            $orderDtlQtyReff = ceil(currencyToNumeric($orderDtl->qty_reff));
-            $returnQty = (float)$returnDtl->qty;
-            $newQtyReff = $orderDtlQtyReff + $returnQty;
-            $orderDtl->qty_reff = number_format($newQtyReff, 2);
-            $orderDtl->save();
-        });
+        // static::deleting(function ($returnDtl) {
+        //     $orderDtl = $returnDtl->OrderDtl;
+        //     $orderDtlQtyReff = ceil(currencyToNumeric($orderDtl->qty_reff));
+        //     $returnQty = (float)$returnDtl->qty;
+        //     $newQtyReff = $orderDtlQtyReff + $returnQty;
+        //     $orderDtl->qty_reff = number_format($newQtyReff, 2);
+        //     $orderDtl->save();
+        // });
     }
     protected $fillable = [
         'trhdr_id',
