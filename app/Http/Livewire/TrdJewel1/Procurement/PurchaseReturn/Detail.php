@@ -140,7 +140,7 @@ class Detail extends BaseComponent
             ];
         })->toArray();
 
-        $this->inputs['partner_id'] = null;
+        $this->inputs['partner_id'] = "";
     }
 
     protected function onPopulateDropdowns()

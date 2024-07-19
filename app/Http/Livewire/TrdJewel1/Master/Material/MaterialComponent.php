@@ -87,7 +87,7 @@ class MaterialComponent extends BaseComponent
             'materials.jwl_buying_price' => 'required',
             'materials.jwl_selling_price' => 'required',
             'materials.jwl_category1' => 'required|string|min:0|max:255',
-            'materials.jwl_category2' => 'required|string|min:0|max:255',
+            // 'materials.jwl_category2' => 'required|string|min:0|max:255',
             'materials.jwl_carat' => 'required|string|min:0|max:255',
             'materials.jwl_wgt_gold' => 'required',
             'materials.name' => 'required|string|min:0|max:255',
@@ -215,7 +215,7 @@ class MaterialComponent extends BaseComponent
             ];
         })->toArray();
 
-        $this->materials['jwl_category1'] = null;
+        $this->materials['jwl_category1'] = "";
     }
 
     public function refreshCategories2()
@@ -228,7 +228,7 @@ class MaterialComponent extends BaseComponent
             ];
         })->toArray();
 
-        $this->materials['jwl_category2'] = null;
+        $this->materials['jwl_category2'] = "";
     }
 
     public function refreshJewellPurity()
@@ -242,7 +242,7 @@ class MaterialComponent extends BaseComponent
             ];
         })->toArray();
 
-        $this->materials['jwl_carat'] = null;
+        $this->materials['jwl_carat'] = "";
     }
 
     public function refreshBaseMaterials($key)
@@ -255,7 +255,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->id."-".$data->note1,
             ];
         })->toArray();
-        $this->matl_boms[$key]['base_matl_id'] = null;
+        $this->matl_boms[$key]['base_matl_id'] = "";
     }
 
     public function refreshSideMaterialShapes($key)
@@ -268,7 +268,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['shapes'] = null;
+        $this->matl_boms[$key]['shapes'] = "";
     }
 
     public function refreshSideMaterialClarity($key)
@@ -281,7 +281,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['clarity'] = null;
+        $this->matl_boms[$key]['clarity'] = "";
     }
 
     public function refreshSideMaterialCut($key)
@@ -294,7 +294,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['cut'] = null;
+        $this->matl_boms[$key]['cut'] = "";
     }
 
     public function refreshSideMaterialGemColor($key)
@@ -307,7 +307,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['color'] = null;
+        $this->matl_boms[$key]['color'] = "";
     }
 
     public function refreshSideMaterialGiaColor($key)
@@ -319,7 +319,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['color'] = null;
+        $this->matl_boms[$key]['color'] = "";
     }
 
     public function refreshSideMaterialGemstone($key)
@@ -332,7 +332,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['gemstone'] = null;
+        $this->matl_boms[$key]['gemstone'] = "";
     }
 
     public function refreshSideMaterialJewelPurity($key)
@@ -345,7 +345,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['purity'] = null;
+        $this->matl_boms[$key]['purity'] = "";
     }
 
     protected function onPopulateDropdowns()

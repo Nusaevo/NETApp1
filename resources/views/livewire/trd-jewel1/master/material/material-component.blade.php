@@ -21,7 +21,7 @@ use App\Models\TrdJewel1\Master\Material;
                                 <div class="photo-box">
                                     <img src="{{ $image['url'] }}" alt="Captured Image" class="photo-box-image">
                                     <div class="image-close-button">
-                                        <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
                                     </div>
                                 </div>
                                 @empty
@@ -43,7 +43,7 @@ use App\Models\TrdJewel1\Master\Material;
                         </div>
                     </div>
                 </x-ui-padding>
-                <x-ui-padding >
+                <x-ui-padding>
                     @if($searchMode)
                     <x-ui-text-field label="{{ $this->trans('search_product') }}" model="product_code" type="text" :action="$actionValue" enabled="true" placeHolder="" span="HalfWidth" enabled="true" clickEvent="searchProduct" />
                     @endif
@@ -95,7 +95,7 @@ use App\Models\TrdJewel1\Master\Material;
                                         @endisset
                                     </x-slot>
                                     <x-slot name="button">
-                                        <x-ui-link-text type="close" :clickEvent="'deleteBoms(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteBoms(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
                                     </x-slot>
                                 </x-ui-list-body>
                             </tr>
@@ -108,7 +108,7 @@ use App\Models\TrdJewel1\Master\Material;
         @if (!$searchMode && $actionValue === 'Edit')
         <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
-                    @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
+                @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
             </x-ui-card>
         </div>
         @endif
@@ -118,21 +118,26 @@ use App\Models\TrdJewel1\Master\Material;
         <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode" type="text" :action="$actionValue" required="false" placeHolder="Enter Barcode" span="Half" enabled="false" />
         {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
 
-        @if (!$searchMode && $actionValue == 'Edit')
+        @if (!$searchMode)
         @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => $actionValue])
+        @endif
 
+        @if (!$searchMode && $actionValue == 'Edit')
         @if ($status === 'ACTIVE')
         <x-ui-button button-name="Disable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />
         @else
         <x-ui-button button-name="Enable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-primary btn-dialog-box" iconPath="enable.svg" />
         @endif
-        @endif
+
         <x-ui-button clickEvent="printBarcode" cssClass="btn btn-secondary" button-name="Print Label" action="Edit" />
+        @endif
+
         @if($searchMode)
         <x-ui-button clickEvent="SaveWithoutNotification" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
         @else
         <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
         @endif
+
     </x-ui-footer>
 </x-ui-page-card>
 
@@ -161,4 +166,6 @@ use App\Models\TrdJewel1\Master\Material;
             });
         });
     });
+
 </script>
+
