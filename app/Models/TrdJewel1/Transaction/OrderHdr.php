@@ -4,6 +4,7 @@ namespace App\Models\TrdJewel1\Transaction;
 
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
+use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
 use App\Models\SysConfig1\ConfigSnum;
 use DB;
@@ -62,6 +63,12 @@ class OrderHdr extends BaseModel
     public function OrderDtl()
     {
         return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')->where('tr_type', $this->tr_type);
+    }
+
+    public function Materials()
+    {
+        return $this->hasManyThrough(Material::class, OrderDtl::class, 'tr_id', 'id', 'tr_id', 'matl_id')
+                    ->where('order_dtls.tr_type', $this->tr_type);
     }
 
     public function DelivHdr()

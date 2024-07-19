@@ -21,5 +21,6 @@ return [
         'enable' => "Failed to enable data,\nError message: :message",
         'password_mismatch' => "Password mismatch. Please make sure your new password matches the confirmation password.",
         'password_must_be_filled' => "Password must be filled.",
+        'field_required' => "The :field field is required. Please fill out the :field to proceed.",
     ],
 ];

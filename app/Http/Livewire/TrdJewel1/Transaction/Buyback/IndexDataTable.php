@@ -105,10 +105,10 @@ class IndexDataTable extends BaseDataTableComponent
                     $value = strtoupper($value);
                     $builder->whereExists(function ($query) use ($value) {
                         $query->select(DB::raw(1))
-                            ->from('order_dtls')
-                            ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
+                            ->from('return_dtls')
+                            ->whereRaw('return_dtls.tr_id = order_hdrs.tr_id')
                             ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . $value . '%')
-                            ->where('order_dtls.tr_type', 'SO');
+                            ->where('return_dtls.tr_type', 'SO');
                     });
                 }),
             // SelectFilter::make('Status', 'status_code')

@@ -1,10 +1,10 @@
 <?php
-
 namespace App\Http\Livewire\TrdJewel1\Transaction\Buyback;
 
 use App\Http\Livewire\Component\BaseComponent;
+use App\Models\TrdJewel1\Transaction\ReturnHdr;
+use App\Models\TrdJewel1\Transaction\ReturnDtl;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
-use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Support\Facades\Crypt;
@@ -22,7 +22,6 @@ use DB;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Facades\Auth;
 
-
 use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
@@ -37,7 +36,7 @@ class Detail extends BaseComponent
     public $newItems = [];
 
     public $total_amount = 0;
-    public $trType = "SO";
+    public $trType = "BB";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -48,7 +47,8 @@ class Detail extends BaseComponent
     public $selectedMaterials = [];
     public $currencyRate = 0;
     public $currency = [];
-    public $materials = [];
+    public $order_hdrs = [];
+
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -76,8 +76,8 @@ class Detail extends BaseComponent
 
     protected function onLoadForEdit()
     {
-        $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-        $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
+        $this->object = ReturnHdr::withTrashed()->find($this->objectIdValue);
+        $this->object_detail = ReturnDtl::GetByReturnHdr($this->object->id)->orderBy('tr_seq')->get();
         $this->inputs = populateArrayFromModel($this->object);
 
         // dd($this->object,  $this->inputs);
@@ -88,10 +88,11 @@ class Detail extends BaseComponent
 
         $this->retrieveMaterials();
     }
+
     protected function retrieveMaterials()
     {
         if ($this->object) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
+            $this->object_detail = ReturnDtl::GetByReturnHdr($this->object->id)->orderBy('tr_seq')->get();
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material->name;
@@ -121,6 +122,18 @@ class Detail extends BaseComponent
         'tagScanned' => 'tagScanned',
     ];
 
+    public function OpenDialogBox(){
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            return;
+        }
+        if (empty($this->inputs['partner_id'])) {
+            $this->notify('warning', Lang::get('generic.error.field_required', ['field' => "Customer"]));
+            return;
+        }
+        $this->searchMaterials();
+        $this->dispatchBrowserEvent('openMaterialDialog');
+    }
 
     public function refreshPartner()
     {
@@ -135,22 +148,8 @@ class Detail extends BaseComponent
         $this->inputs['partner_id'] = "";
     }
 
-    public function refreshPayment()
-    {
-        $data = ConfigConst::GetPaymentTerm($this->appCode);
-        $this->payments = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['payment_terms_id'] = 129;
-
-    }
-
     protected function onPopulateDropdowns()
     {
-        $this->refreshPayment();
         $this->refreshPartner();
     }
 
@@ -171,10 +170,17 @@ class Detail extends BaseComponent
             $this->inputs['partner_code'] = $partner->code;
         }
         $this->object->fillAndSanitize($this->inputs);
-        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
+        $this->object->save();
+        foreach ($this->input_details as $index => $data) {
+            if (!isset($this->object_detail[$index])) {
+                $this->object_detail[$index] = new ReturnDtl();
+            }
+            $this->object_detail[$index]->fillAndSanitize($data);
+            $this->object_detail[$index]->save();
+        }
         if($this->actionValue == 'Create')
         {
-            return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
+            return redirect()->route('TrdJewel1.Transaction.Buyback.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -186,7 +192,7 @@ class Detail extends BaseComponent
     {
         $this->reset('inputs');
         $this->reset('input_details');
-        $this->object = new OrderHdr();
+        $this->object = new ReturnHdr();
         $this->object_detail = [];
         $this->refreshPartner();
         $this->total_amount = 0;
@@ -222,7 +228,7 @@ class Detail extends BaseComponent
             $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
-          return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
 
 
@@ -230,117 +236,14 @@ class Detail extends BaseComponent
     {
         if (isset($this->input_details[$index]['id'])) {
             $deletedItemId = $this->input_details[$index]['id'];
-            $orderDtl = OrderDtl::withTrashed()->find($deletedItemId);
-            if ($orderDtl) {
-                $orderDtl->forceDelete();
+            $returnDtl = ReturnDtl::withTrashed()->find($deletedItemId);
+            if ($returnDtl) {
+                $returnDtl->forceDelete();
             }
         }
         unset($this->input_details[$index]);
         $this->input_details = array_values($this->input_details);
         $this->countTotalAmount();
-    }
-
-    public function tagScanned($tags)
-    {
-        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-
-        if ($this->currencyRate == 0) {
-            $this->dispatchBrowserEvent('notify-swal', [
-                'type' => 'warning',
-                'message' => 'Diperlukan kurs mata uang.'
-            ]);
-            return;
-        }
-
-        $tagCount = count($tags);
-
-        $usercode = Auth::check() ? Auth::user()->code : '';
-
-        DB::beginTransaction();
-
-        try {
-            $orderHdr = OrderHdr::firstOrNew([
-                'id' => $this->objectIdValue,
-            ]);
-
-            $addedItems = []; // Variabel untuk menghitung jumlah barang yang berhasil dimasukkan
-            $failedItems = []; // Variabel untuk menyimpan barcode yang gagal ditambahkan
-            $notFoundItems = []; // Variabel untuk menyimpan barcode yang tidak ditemukan atau stok tidak ada
-            $emptyStocks = []; // Variabel untuk menyimpan barcode yang stoknya kosong
-
-            $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
-            foreach ($tags as $barcode) {
-                // Find the corresponding material
-                $material = Material::getListMaterialByBarcode($barcode);
-
-                if (!isset($material)) {
-                    $notFoundItems[] = $barcode;
-                    continue;
-                }
-
-                $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
-                if ($existingOrderDtl) {
-                    $failedItems[] = $material->code;
-                    continue;
-                }
-
-                // Check if stock is empty
-                if ($material->qty_oh <= 0) {
-                    $emptyStocks[] = $material->code;
-                    continue;
-                }
-
-                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
-                $maxTrSeq++;
-                $newDetails[] = [
-                    'qty_reff' => 1,
-                    'matl_id' => $material->id,
-                    'matl_descr' => $material->descr,
-                    'matl_code' => $material->code,
-                    'matl_uom' => $material->MatlUom[0]->id,
-                    'qty' => 1,
-                    'qty_reff' => 1,
-                    'tr_seq' => $maxTrSeq,
-                    'price' => $price,
-                ];
-                $addedItems[] = $material->code;
-            }
-
-            // Menampilkan pesan sukses dengan jumlah barang yang berhasil dimasukkan dan gagal
-            $message = "Total tag yang discan: {$tagCount}.<br>";
-            if (count($addedItems) > 0) {
-                $this->input_details = array_merge($this->input_details, $newDetails);
-                $this->SaveWithoutNotification();
-                DB::commit();
-                $message .= "Berhasil menambahkan ". count($addedItems)  . " item: <b>" . implode(', ', $addedItems) . "</b>.<br><br>";
-            }
-            if (count($failedItems) > 0) {
-                $message .= "Item sudah ada di keranjang untuk " . count($failedItems) . " item: <b>" . implode(', ', $failedItems) . "</b>.<br><br>";
-            }
-            if (count($notFoundItems) > 0) {
-                $message .= "Material tidak ditemukan untuk " . count($notFoundItems) . " tag: <b>" . implode(', ', $notFoundItems) . "</b>.<br>";
-            }
-            if (count($emptyStocks) > 0) {
-                $message .= "Material dengan stok kosong untuk " . count($emptyStocks) . " tag: <b>" . implode(', ', $emptyStocks) . "</b>.<br>";
-            }
-
-            $this->notify('info',$message);
-            $this->emit('updateCartCount');
-        } catch (\Exception $e) {
-            DB::rollback();
-
-            $this->notify('error',  'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage());
-        }
-    }
-
-
-    public function changeQty($id, $value)
-    {
-        if (isset($this->input_details[$id]['price'])) {
-            $total = $this->input_details[$id]['price'] * $value;
-            $this->input_details[$id]['amt'] = $total;
-            $this->countTotalAmount();
-        }
     }
 
     public function changePrice($id, $value)
@@ -368,39 +271,31 @@ class Detail extends BaseComponent
     public function searchMaterials()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-
         if ($this->currencyRate == 0) {
             $this->notify('warning', Lang::get('generic.string.currency_needed'));
             return;
         }
-        // if (empty($this->inputs['payment_term_id'])) {
-        //     $this->dispatchBrowserEvent('notify-swal', [
-        //         'type' => 'error',
-        //         'message' => 'Payment term is required.'
-        //     ]);
-        //     return;
-        // }
 
-        // if (empty($this->inputs['partner_id'])) {
-        //     $this->dispatchBrowserEvent('notify-swal', [
-        //         'type' => 'error',
-        //         'message' => 'Partner is required.'
-        //     ]);
-        //     return;
-        // }
-        $query = Material::getAvailableMaterials();
-
-         if (!empty($this->searchTerm)) {
-                $searchTermUpper = strtoupper($this->searchTerm);
-                $query->where(function($query) use ($searchTermUpper) {
-                    $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                          ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
-                          ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
-                });
+        $query = OrderHdr::with(['OrderDtl.Material' => function($query) {
+            $query->whereNull('deleted_at');
+        }])
+        ->where('partner_id', $this->inputs['partner_id'])
+        ->where('tr_type', 'SO')
+        ->whereNull('deleted_at');
+        if (!empty($this->searchTerm)) {
+            $searchTermUpper = strtoupper($this->searchTerm);
+            $query->where(function($query) use ($searchTermUpper) {
+                $query->whereRaw('UPPER(tr_id) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereHas('OrderDtl.Material', function($q) use ($searchTermUpper) {
+                          $q->whereRaw('UPPER(code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                            ->orWhereRaw('UPPER(name) LIKE ?', ['%' . $searchTermUpper . '%'])
+                            ->orWhereRaw('UPPER(descr) LIKE ?', ['%' . $searchTermUpper . '%']);
+                      });
+            });
         }
-
-        $this->materials =  $query->get();
+        $this->order_hdrs = $query->get();
     }
+
 
     public function SaveCheck()
     {
@@ -445,22 +340,22 @@ class Detail extends BaseComponent
         DB::beginTransaction();
 
         try {
-            $orderHdr = OrderHdr::firstOrNew([
+            $returnHdr = ReturnHdr::firstOrNew([
                 'id' => $this->objectIdValue,
             ]);
 
             $newDetails = [];
 
-            $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
+            $maxTrSeq = $returnHdr->ReturnDtl()->max('tr_seq') ?? 0;
             foreach ($this->selectedMaterials as $material_id) {
                 $material = Material::find($material_id);
                 if (!$material) {
                     continue;
                 }
 
-                $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material_id)->first();
+                $existingReturnDtl = $returnHdr->ReturnDtl()->where('matl_id', $material_id)->first();
 
-                if ($existingOrderDtl) {
+                if ($existingReturnDtl) {
                     DB::rollback();
                     $this->dispatchBrowserEvent('notify-swal', [
                         'type' => 'error',
@@ -495,7 +390,6 @@ class Detail extends BaseComponent
             ]);
             $this->selectedMaterials = [];
         } catch (\Exception $e) {
-            DD($e);
             DB::rollback();
             $this->dispatchBrowserEvent('notify-swal', [
                 'type' => 'error',

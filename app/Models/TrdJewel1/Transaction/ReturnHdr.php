@@ -39,4 +39,20 @@ class ReturnHdr extends BaseModel
     {
         return $this->hasMany(ReturnDtl::class, 'trhdr_id', 'id');
     }
+
+    public function getTotalQtyAttribute()
+    {
+        return $this->ReturnDtl()->sum('qty');
+    }
+
+    public function getTotalAmtAttribute()
+    {
+        return $this->ReturnDtl()->sum('amt');
+    }
+
+    public function getMatlCodesAttribute()
+    {
+        $matlCodes = $this->ReturnDtl()->pluck('matl_code')->toArray();
+        return implode(', ', $matlCodes);
+    }
 }

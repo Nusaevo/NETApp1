@@ -19,5 +19,6 @@ return [
         'enable' => "Gagal mengaktifkan data,\nPesan kesalahan: :message",
         'password_mismatch' => "Kata sandi tidak cocok. Pastikan kata sandi baru Anda sesuai dengan konfirmasi kata sandi.",
         'password_must_be_filled' => "Kata sandi harus diisi.",
+        'field_required' => "Field :field harus diisi. Harap lengkapi :field untuk melanjutkan.",
     ],
 ];

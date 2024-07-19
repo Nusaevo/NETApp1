@@ -23,13 +23,13 @@
             }
             var baseUrl = state.element.getAttribute('data-image');
             var $state = $(
-                '<span><img src="' + baseUrl + '" class="img-flag" /> ' + state.text + '</span>'
+                '<span><img src="' + baseUrl + '" class="img-flag" style="width: 20px; height: auto; margin-right: 10px;" /> ' + state.text + '</span>'
             );
             return $state;
         }
 
         function initializeSelect2() {
-            $('.application-select').select2({
+            $('#applicationSelect').select2({
                 templateResult: formatState,
                 templateSelection: formatState,
                 width: '100%',
@@ -38,7 +38,7 @@
                 dropdownCssClass: 'hide-search-box' // Menambahkan kelas CSS untuk menyembunyikan input pencarian
             });
 
-            $('.application-select').on('change', function(e) {
+            $('#applicationSelect').on('change', function(e) {
                 var selectedValue = $(this).val();
                 Livewire.emit('configApplicationChanged', selectedValue);
             });
@@ -60,22 +60,22 @@
     }
 
     /* Gaya untuk elemen application-select */
-    .select2-container--default.select2-container.application-select .select2-selection--single {
+    #applicationSelect + .select2-container .select2-selection--single {
         height: 50px; /* Sesuaikan dengan kebutuhan Anda */
         display: flex;
         align-items: center;
     }
 
-    .select2-container--default.select2-container.application-select .select2-selection--single .select2-selection__rendered {
+    #applicationSelect + .select2-container .select2-selection--single .select2-selection__rendered {
         line-height: 28px; /* Menyesuaikan teks secara vertikal */
         padding-left: 40px; /* Menambahkan padding untuk gambar */
     }
 
-    .select2-container--default.select2-container.application-select .select2-selection--single .select2-selection__arrow {
+    #applicationSelect + .select2-container .select2-selection--single .select2-selection__arrow {
         height: 50px; /* Menyamakan tinggi dengan container */
     }
 
-    .select2-container--default.select2-container.application-select .select2-selection--single .select2-selection__rendered img {
+    #applicationSelect + .select2-container .select2-selection--single .select2-selection__rendered img {
         position: absolute;
         left: 10px;
         top: 50%;
@@ -84,19 +84,19 @@
         height: auto;
     }
 
-    .select2-results__option .img-flag {
-        width: 20px; /* Sesuaikan dengan kebutuhan Anda */
-        height: auto;
+    #applicationSelect + .select2-container .select2-results__option .img-flag {
+        width: 30px; /* Sesuaikan dengan kebutuhan Anda */
+        height: 30px;
         margin-right: 10px;
         vertical-align: middle;
     }
 
     /* Menyembunyikan input pencarian */
-    .select2-container .select2-search--dropdown {
+    #applicationSelect + .select2-container .select2-search--dropdown {
         display: none;
     }
 
-    .hide-search-box .select2-search--dropdown {
+    #applicationSelect + .select2-container .hide-search-box .select2-search--dropdown {
         display: none !important;
     }
 </style>
