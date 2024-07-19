@@ -45,14 +45,14 @@
                                         <img src="{{ $imagePath }}" alt="Material Photo" style="width: 200px; height: 200px;">
                                     </x-slot>
                                     <x-slot name="rows">
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='Product Code' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.barcode" label='Label Code' type="text" :action="$actionValue" placeHolder="" enabled="false" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='Product Code' type="text" :action="$actionValue"  enabled="false" span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.barcode" label='Label Code' type="text" :action="$actionValue"  enabled="false" span="Half" />
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='Description' type="text" :action="$actionValue" placeHolder="Description" enabled="false" span="Full" />
                                         <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='Selling Price' type="text" :action="$actionValue" placeHolder="Selling Price" enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.price" label='Buying Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.order_qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false" placeHolder="" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty Retur' type="text" :action="$actionValue" enabled="true" required="true" placeHolder="" span="Full" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.price" label='Buying Price' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" enabled="false"  span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.order_qty" label='Qty' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" :action="$actionValue" enabled="false"  span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='Amount' type="text" :action="$actionValue" enabled="false"  span="Half" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='Qty Retur' type="text" :action="$actionValue" enabled="true" required="true"  span="Full" />
                                     </x-slot>
                                 </x-ui-list-body>
                             </tr>

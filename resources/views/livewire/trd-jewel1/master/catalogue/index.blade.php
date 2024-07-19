@@ -6,11 +6,11 @@
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="false">
             <form wire:submit.prevent="search">
                 <div class="card-body">
-                    <x-ui-text-field label="Cari Nama Barang" model="inputs.name" type="text" action="Edit" placeHolder="" span='Full'/>
-                    <x-ui-text-field label="Cari Nama Bahan" model="inputs.description" type="text" action="Edit" placeHolder="" span='Full'/>
-                    <x-ui-text-field label="Harga Jual" model="inputs.selling_price1" type="number" action="Edit" placeHolder="" span='Half'/>
-                    <x-ui-text-field label="" model="inputs.selling_price2" type="number" action="Edit" placeHolder="" span='Half'/>
-                    <x-ui-text-field label="Code Barang" model="inputs.code" type="text" action="Edit" placeHolder="" span='Full'/>
+                    <x-ui-text-field label="Cari Nama Barang" model="inputs.name" type="text" action="Edit"  span='Full'/>
+                    <x-ui-text-field label="Cari Nama Bahan" model="inputs.description" type="text" action="Edit"  span='Full'/>
+                    <x-ui-text-field label="Harga Jual" model="inputs.selling_price1" type="number" action="Edit"  span='Half'/>
+                    <x-ui-text-field label="" model="inputs.selling_price2" type="number" action="Edit"  span='Half'/>
+                    <x-ui-text-field label="Code Barang" model="inputs.code" type="text" action="Edit"  span='Full'/>
 
                 </div>
 

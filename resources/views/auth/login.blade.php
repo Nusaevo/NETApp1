@@ -49,7 +49,7 @@
 
         <!--begin::Input group-->
         {{--<div class="form-group mb-4">
-             <x-ui-text-field model="" label="" model="password" action="Edit" type="password" span="Full" placeHolder="" />
+             <x-ui-text-field model="" label="" model="password" action="Edit" type="password" span="Full"  />
         </div>--}}
         <!-- Password Input Group with Toggle -->
         <div class="form-group mb-4 position-relative">

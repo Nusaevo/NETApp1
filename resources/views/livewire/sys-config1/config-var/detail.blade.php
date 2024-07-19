@@ -10,12 +10,12 @@
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
-                        <x-ui-text-field label="Var Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true" placeHolder="" visible="true" span="Full" />
+                        <x-ui-text-field label="Var Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true"  visible="true" span="Full" />
                         <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications"  required="true" :action="$actionValue" />
-                        <x-ui-text-field label="Var Group" model="inputs.var_group" type="text" :action="$actionValue" required="true" placeHolder="" visible="true" span="Full" />
-                        <x-ui-text-field label="Default Value" model="inputs.default_value" type="text" :action="$actionValue" required="true" placeHolder="" visible="true" span="Full" />
-                        <x-ui-text-field label="Seq" model="inputs.seq" type="number" :action="$actionValue" required="false" placeHolder="" visible="true" span="Full" />
-                        <x-ui-text-field label="Descr" model="inputs.descr" type="textarea" :action="$actionValue" required="false" placeHolder="" visible="true" span="Full" />
+                        <x-ui-text-field label="Var Group" model="inputs.var_group" type="text" :action="$actionValue" required="true"  visible="true" span="Full" />
+                        <x-ui-text-field label="Default Value" model="inputs.default_value" type="text" :action="$actionValue" required="true"  visible="true" span="Full" />
+                        <x-ui-text-field label="Seq" model="inputs.seq" type="number" :action="$actionValue" required="false"  visible="true" span="Full" />
+                        <x-ui-text-field label="Descr" model="inputs.descr" type="textarea" :action="$actionValue" required="false"  visible="true" span="Full" />
                     </x-ui-card>
                 </div>
             </x-ui-tab-view-content>

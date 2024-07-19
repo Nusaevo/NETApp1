@@ -7,7 +7,7 @@
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
             <form wire:submit.prevent="search">
                     <div class="card-body">
-                        <x-ui-text-field label="Cari Nama Barang" model="inputs.name" type="text" action="Edit" placeHolder="" span='Full'/>
+                        <x-ui-text-field label="Cari Nama Barang" model="inputs.name" type="text" action="Edit"  span='Full'/>
 
                         {{-- <x-ui-dropdown-select label="Item Category"
                         clickEvent="refreshItemCategory"
