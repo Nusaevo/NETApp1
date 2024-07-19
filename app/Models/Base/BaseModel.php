@@ -47,7 +47,9 @@ class BaseModel extends Model
     public function setStatus($value)
     {
         if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'status_code')) {
-            $this->attributes['status_code'] = $value;
+            if (!isset($this->attributes['status_code'])) {
+                $this->attributes['status_code'] = $value;
+            }
         }
     }
 

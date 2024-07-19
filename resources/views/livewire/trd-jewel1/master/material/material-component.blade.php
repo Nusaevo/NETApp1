@@ -123,11 +123,8 @@ use App\Models\TrdJewel1\Master\Material;
         @endif
 
         @if (!$searchMode && $actionValue == 'Edit')
-        @if ($status === 'ACTIVE')
-        <x-ui-button button-name="Disable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-danger btn-dialog-box" iconPath="disable.svg" />
-        @else
-        <x-ui-button button-name="Enable" clickEvent="" loading="true" :action="$actionValue" cssClass="btn-primary btn-dialog-box" iconPath="enable.svg" />
-        @endif
+
+        @include('layout.customs.buttons.disable')
 
         <x-ui-button clickEvent="printBarcode" cssClass="btn btn-secondary" button-name="Print Label" action="Edit" />
         @endif
