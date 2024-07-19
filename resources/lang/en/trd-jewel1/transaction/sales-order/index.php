@@ -3,7 +3,7 @@
 return [
     'tr_id' => 'Receipt Number',
     'date' => 'Date',
-    'supplier' => 'Supplier',
+    'customer' => 'Customer',
     'created_date' => 'Created Date',
     'status' => 'Status',
     'action' => 'Actions',

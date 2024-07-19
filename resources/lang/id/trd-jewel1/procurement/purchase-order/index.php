@@ -2,10 +2,13 @@
 
 return [
     'tr_id' => 'No Nota',
-    'date' => 'Tanggal',
+    'date' => 'Tgl Nota',
     'supplier' => 'Supplier',
-    'created_date' => 'Created Date',
+    'created_date' => 'Tgl dibuat',
     'status' => 'Status',
-    'action' => 'Actions',
+    'action' => 'Aksi',
     'selling_price' => 'Harga Jual',
+    'qty' => 'Jumlah',
+    'amt' => 'Total Harga',
+    'matl_code' => 'Kode Barang',
 ];

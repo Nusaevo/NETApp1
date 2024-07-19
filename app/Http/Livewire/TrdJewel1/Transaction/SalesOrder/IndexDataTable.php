@@ -40,20 +40,18 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("customer"), "Partner.name")
-                ->sortable(),
-            Column::make("Barang", "matl_codes")
+            Column::make($this->trans("customer"), "Partner.name"),
+            Column::make($this->trans("matl_code"), "matl_codes")
                 ->label(function($row) {
                     return $row->matl_codes;
                 })
                 ->sortable(),
-            Column::make("Total Quantity", "total_qty")
+            Column::make($this->trans("qty"), "total_qty")
                 ->label(function($row) {
                     return currencyToNumeric($row->total_qty);
                 })
                 ->sortable(),
-
-            Column::make("Total Amount", "total_amt")
+            Column::make($this->trans("amt"), "total_amt")
                 ->label(function($row) {
                     return rupiah(currencyToNumeric($row->total_amt));
                 })

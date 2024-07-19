@@ -4,7 +4,7 @@ namespace App\Http\Livewire\TrdJewel1\Transaction\Buyback;
 
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\TrdJewel1\Transaction\ReturnHdr;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\SysConfig1\ConfigRight;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    protected $model = OrderHdr::class;
+    protected $model = ReturnHdr::class;
     public function mount(): void
     {
         $this->setSearchVisibilityStatus(false);
@@ -23,10 +23,9 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::with('OrderDtl', 'Partner')
-            ->where('order_hdrs.tr_type', 'SO')
-            ->where('order_hdrs.status_code', Status::OPEN)
-            ->orderBy('order_hdrs.created_at', 'desc');
+        return ReturnHdr::with('ReturnDtl', 'Partner')
+            ->where('return_hdrs.tr_type', 'BB')
+            ->where('return_hdrs.status_code', Status::OPEN);
     }
 
     public function columns(): array
@@ -41,18 +40,17 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("customer"), "Partner.name")
                 ->sortable(),
-            Column::make("Barang", "matl_codes")
+            Column::make($this->trans("matl_code"), "matl_codes")
                 ->label(function($row) {
                     return $row->matl_codes;
                 })
                 ->sortable(),
-            Column::make("Total Quantity", "total_qty")
+            Column::make($this->trans("qty"), "total_qty")
                 ->label(function($row) {
                     return currencyToNumeric($row->total_qty);
                 })
                 ->sortable(),
-
-            Column::make("Total Amount", "total_amt")
+            Column::make($this->trans("amt"), "total_amt")
                 ->label(function($row) {
                     return rupiah(currencyToNumeric($row->total_amt));
                 })
@@ -62,7 +60,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
-            Column::make('Actions', 'id')
+            Column::make($this->trans("action"), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
@@ -75,12 +73,12 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-            Column::make('', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    $secondButton = '<a href="' . route('TrdJewel1.Transaction.SalesOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
+            // Column::make('', 'id')
+            //     ->format(function ($value, $row, Column $column) {
+            //         $secondButton = '<a href="' . route('TrdJewel1.Transaction.SalesOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
 
-                    return "<div class='text-center'>". $secondButton."</div>";
-                })->html(),
+            //         return "<div class='text-center'>". $secondButton."</div>";
+            //     })->html(),
         ];
     }
 

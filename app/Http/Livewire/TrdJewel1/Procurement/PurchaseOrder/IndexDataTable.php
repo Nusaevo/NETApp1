@@ -51,23 +51,22 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("supplier"), "Partner.name")
                 ->searchable()
                 ->sortable(),
-             Column::make("Barang", "matl_codes")
-                    ->label(function($row) {
-                        return $row->matl_codes;
-                    })
-                    ->sortable(),
-            Column::make("Total Quantity", "total_qty")
+            Column::make($this->trans("matl_code"), "matl_codes")
                 ->label(function($row) {
-                    return  currencyToNumeric($row->total_qty);
+                    return $row->matl_codes;
                 })
                 ->sortable(),
-            Column::make("Total Amount", "total_amt")
+            Column::make($this->trans("qty"), "total_qty")
                 ->label(function($row) {
-                    return globalCurrency(currencyToNumeric($row->total_amt));
+                    return currencyToNumeric($row->total_qty);
+                })
+                ->sortable(),
+            Column::make($this->trans("amt"), "total_amt")
+                ->label(function($row) {
+                    return rupiah(currencyToNumeric($row->total_amt));
                 })
                 ->sortable(),
             Column::make($this->trans('status'), "status_code")
-                ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
