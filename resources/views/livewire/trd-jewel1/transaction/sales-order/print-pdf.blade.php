@@ -6,8 +6,8 @@
     <title>Barcode Label</title>
     <style>
         @page {
-            size: A5 portrait;
-            margin: 0;
+            size: A5 landscape;
+            margin: 10mm; /* Adjust the margin as needed */
         }
 
         body {
@@ -28,7 +28,7 @@
 
         .invoice-box {
             width: 100%;
-            height: 297px; /* Half of A5 height in pixels */
+            height: calc(100vh - 20mm); /* Full height of A5 minus the margins */
             border: 1px solid #eee;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
             line-height: 24px;
@@ -37,7 +37,8 @@
             box-sizing: border-box;
             page-break-inside: avoid;
             margin: 0;
-            padding: 10px;
+            padding: 10mm; /* Padding in mm */
+            page-break-after: always; /* Ensure each box is on a new page */
         }
 
         .invoice-box table {
@@ -49,7 +50,7 @@
 
         .invoice-box table td {
             vertical-align: top;
-            padding: 5px;
+            padding: 5mm; /* Padding in mm */
         }
 
         .invoice-box table tr td:nth-child(2) {
@@ -85,6 +86,10 @@
             float: right;
         }
 
+        .invoice-box .description {
+            font-size: 12px; /* Smaller font size for descriptions */
+        }
+
         @media print {
             body * {
                 visibility: hidden;
@@ -115,8 +120,9 @@
                 border: none;
                 box-shadow: none;
                 margin: 0;
-                padding: 10px;
-                height: 297px; /* Half of A5 height in pixels */
+                padding: 10mm; /* Padding in mm */
+                height: calc(100vh - 20mm); /* Full height of A5 minus the margins */
+                page-break-after: always;
             }
             .invoice-box-container {
                 padding: 0;
@@ -127,14 +133,14 @@
                 width: 100%;
             }
             .invoice-box table td {
-                padding: 5px;
+                padding: 5mm; /* Padding in mm */
                 vertical-align: top;
             }
             .invoice-box table tr td:nth-child(2) {
                 text-align: right;
             }
             .invoice-box table tr.top table td {
-                padding-bottom: 10px;
+                padding-bottom: 10mm;
             }
             .invoice-box table tr.top table td.title {
                 font-size: 45px;
@@ -142,7 +148,7 @@
                 color: #333;
             }
             .invoice-box table tr.information table td {
-                padding-bottom: 10px;
+                padding-bottom: 10mm;
             }
             .invoice-box table tr.heading td {
                 background: #eee;
@@ -150,7 +156,7 @@
                 font-weight: bold;
             }
             .invoice-box table tr.details td {
-                padding-bottom: 10px;
+                padding-bottom: 10mm;
             }
             .invoice-box table tr.item td {
                 border-bottom: 1px solid #eee;
@@ -189,80 +195,78 @@
                 </div>
 
                 <div id="print">
-                    @foreach ($object->OrderDtl->chunk(2) as $chunk)
+                    @foreach ($object->OrderDtl as $OrderDtl)
                         <div class="invoice-box-container">
-                            @foreach ($chunk as $key => $OrderDtl)
-                                <div class="invoice-box">
-                                    <table>
-                                        <tr class="top">
-                                            <td colspan="2">
-                                                <table>
-                                                    <tr>
-                                                        <td class="title">
-                                                            {{-- <img src="{{ asset('customs/logos/TrdJewel1.png') }}" style="width: 100%; max-width: 300px;"> --}}
-                                                        </td>
-                                                        <td>
-                                                            <p>
-                                                                Nomor Nota : #<b>{{ $this->object->id }}</b><br>
-                                                                Tanggal : <b>{{ $this->object->tr_date }}</b><br>
-                                                                Customer : <b>{{ $this->object->Partner->name }}</b>
-                                                            </p>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
+                            <div class="invoice-box">
+                                <table>
+                                    <tr class="top">
+                                        <td colspan="2">
+                                            <table>
+                                                <tr>
+                                                    <td class="title">
+                                                        {{-- <img src="{{ asset('customs/logos/TrdJewel1.png') }}" style="width: 100%; max-width: 300px;"> --}}
+                                                    </td>
+                                                    <td>
+                                                        <p>
+                                                            Nomor Nota : #<b>{{ $this->object->id }}</b><br>
+                                                            Tanggal : <b>{{ $this->object->tr_date }}</b><br>
+                                                            Customer : <b>{{ $this->object->Partner->name }}</b>
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
 
-                                        <tr class="information">
-                                            <td>
-                                                @php
-                                                $imagePath = $OrderDtl->Material->Attachment->first() ? $OrderDtl->Material->Attachment->first()->getUrl() : 'https://via.placeholder.com/100';
-                                                @endphp
-                                                <img src="{{ $imagePath }}" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
-                                            </td>
-                                            <td>
-                                                <table>
-                                                    <tr>
-                                                        <td style="padding-bottom: 10px; font-size: 16px;">
-                                                           {{ $OrderDtl->matl_code }}<br>
-                                                            <b>{{ $OrderDtl->Material->jwl_category1 }} </b> : {{ $OrderDtl->Material->jwl_category2 }}<br>
-                                                            <b>Deskripsi Bahan : </b>{{ $OrderDtl->name }}<br>
-                                                            <b>Deskripsi Bahan : </b>{{ $OrderDtl->matl_descr }}<br>
-                                                            <div class="price"><b>Price : </b>{{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</div><br>
-                                                            <b>Qty : </b>1
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                    <table>
-                                        <tr class="heading">
-                                            <td colspan="2">Keterangan Tambahan</td>
-                                        </tr>
-                                        <tr class="item">
-                                            <td>
-                                                <ul>
-                                                    <li>BARANG & BERAT SUDAH DIPERIKSA PEMBELI</li>
-                                                    <li>BARANG TIDAK DITERIMA KEMBALI / NO RETURN</li>
-                                                    <li>TUKAR TAMBAH: -15% KONDISI BAIK</li>
-                                                    <li>JUAL: -25% KONDISI BAIK</li>
-                                                </ul>
-                                            </td>
-                                            <td>
-                                                {{ rupiah(currencyToNumeric($OrderDtl->price)) }} <br>
-                                                {{ terbilang(currencyToNumeric($OrderDtl->price)) }}
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </div>
-                            @endforeach
+                                    <tr class="information">
+                                        <td>
+                                            @php
+                                            $imagePath = $OrderDtl->Material->Attachment->first() ? $OrderDtl->Material->Attachment->first()->getUrl() : 'https://via.placeholder.com/100';
+                                            @endphp
+                                            <img src="{{ $imagePath }}" alt="Material Image" style="width: 300px; height: 300px; object-fit: cover;">
+                                        </td>
+                                        <td>
+                                            <table>
+                                                <tr>
+                                                    <td class="description" style="padding-bottom: 10mm; font-size: 16px;">
+                                                       {{ $OrderDtl->matl_code }}<br>
+                                                        <b>{{ $OrderDtl->Material->jwl_category1 }} </b> : {{ $OrderDtl->Material->jwl_category2 }}<br>
+                                                        <b>Deskripsi Bahan : </b>{{ $OrderDtl->name }}<br>
+                                                        <b>Deskripsi Bahan : </b>{{ $OrderDtl->matl_descr }}<br>
+                                                        <div class="price"><b>Price : </b>{{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</div><br>
+                                                        <b>Qty : </b>1
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <table>
+                                    <tr class="heading">
+                                        <td colspan="2">Keterangan Tambahan</td>
+                                    </tr>
+                                    <tr class="item">
+                                        <td class="description">
+                                            <ul>
+                                                <li>BARANG & BERAT SUDAH DIPERIKSA PEMBELI</li>
+                                                <li>BARANG TIDAK DITERIMA KEMBALI / NO RETURN</li>
+                                                <li>TUKAR TAMBAH: -15% KONDISI BAIK</li>
+                                                <li>JUAL: -25% KONDISI BAIK</li>
+                                            </ul>
+                                        </td>
+                                        <td class="description">
+                                            {{ rupiah(currencyToNumeric($OrderDtl->price)) }} <br>
+                                            {{ terbilang(currencyToNumeric($OrderDtl->price)) }}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     @endforeach
                 </div>
             </div>
         </div>
-
+{{--
         <!-- Print Settings Modal -->
         <div class="modal fade" id="printSettingsModal" tabindex="-1" aria-labelledby="printSettingsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -286,7 +290,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
 </body>
 </html>

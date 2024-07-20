@@ -4,6 +4,7 @@ namespace App\Http\Livewire\TrdJewel1\Transaction\SalesOrder;
 
 use App\Http\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Models\SysConfig1\ConfigRight;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;

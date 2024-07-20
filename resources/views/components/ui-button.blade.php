@@ -8,21 +8,14 @@
         </a>
     </span>
 @elseif(isset($type) && $type == 'Back')
-    <div id="backButtonContainer">
-        <a class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backButton">
-            <i class="bi bi-arrow-left-circle fs-2 me-1"></i> <span id="backButtonText" style="font-size: 12px;">Back</span>
-            <span class="spinner-border spinner-border-sm" id="backButtonLoading" role="status" aria-hidden="true" style="display: none;"></span>
-        </a>
-    </div>
+<div id="backButtonContainer">
+    <a class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backButton" wire:click="goBack">
+        <i class="bi bi-arrow-left-circle fs-2 me-1"></i>
+        <span id="backButtonText" style="font-size: 12px;">Back</span>
+        <span class="spinner-border spinner-border-sm" id="backButtonLoading" role="status" aria-hidden="true" style="display: none;"></span>
+    </a>
+</div>
 
-    <script>
-         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('backButton').addEventListener('click', function(event) {
-                event.preventDefault();
-                window.history.go(-1);
-            });
-        });
-    </script>
 @elseif(isset($type) && $type == 'BackManual')
 <div id="backManualButtonContainer">
     <a href="{{ isset($clickEvent) ? $clickEvent : '#' }}" class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backManualButton">

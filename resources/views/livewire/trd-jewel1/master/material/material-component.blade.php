@@ -48,7 +48,7 @@ use App\Models\TrdJewel1\Master\Material;
                     <x-ui-text-field label="{{ $this->trans('search_product') }}" model="product_code" type="text" :action="$actionValue" enabled="true"  span="HalfWidth" enabled="true" clickEvent="searchProduct" />
                     @endif
                     <x-ui-dropdown-select label="{{ $this->trans('category1') }}" clickEvent="" model="materials.jwl_category1" :options="$materialCategories1" :enabled="$enableCategory1" required="true" :action="$actionValue" span="Half" onChanged="generateMaterialDescriptions" />
-                    <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true" enabled="true"  span="Half" />
+                    <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true" enabled="false"  span="Half" />
                     <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$actionValue" span="Half" onChanged="generateMaterialDescriptions" />
                     <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true"  span="Half" onChanged="markupPriceChanged" />
                     <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="materials.jwl_carat" :options="$materialJewelPurity" required="true" :action="$actionValue" span="Half" />

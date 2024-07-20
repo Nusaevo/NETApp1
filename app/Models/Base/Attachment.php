@@ -144,6 +144,13 @@ class Attachment extends Model
         return $urlPath;
     }
 
+    public function getUrlAttribute()
+    {
+        $uploadPath = config('app.storage_url');
+        $fullPath = $uploadPath . "/" . $this->path;
+        return str_replace("/", '/', $fullPath);
+    }
+
     protected static function reSortSequences($objectId, $objectType)
     {
         $attachments = self::where('attached_objectid', $objectId)

@@ -129,7 +129,6 @@ class Detail extends BaseComponent
         $this->dispatchBrowserEvent('openMaterialDialog');
     }
 
-
     public function refreshPartner()
     {
         $partnersdata = Partner::GetByGrp(Partner::CUSTOMER);
@@ -153,7 +152,6 @@ class Detail extends BaseComponent
             ];
         })->toArray();
         $this->inputs['payment_terms_id'] = 129;
-
     }
 
     protected function onPopulateDropdowns()
@@ -164,11 +162,8 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if ($this->inputs['curr_rate'] == 0) {
-            throw new Exception(Lang::get('generic.string.currency_needed'));
-        }
         if (!empty($this->input_details)) {
-            $unitIds = array_column($this->input_details, 'item_unit_id');
+            $unitIds = array_column($this->input_details, 'matl_code');
             if (count($unitIds) !== count(array_flip($unitIds))) {
                 throw new Exception("Ditemukan duplikasi Item.");
             }

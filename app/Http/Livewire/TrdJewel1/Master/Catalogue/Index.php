@@ -45,7 +45,7 @@ class Index extends BaseComponent
             $query->where('code', 'like', '%' . $this->inputs['code'] . '%');
         }
 
-        $materials = $query->paginate(9);
+        $materials = $query->paginate(18);
 
         return view('livewire.trd-jewel1.master.catalogue.index', ['materials' => $materials]);
     }

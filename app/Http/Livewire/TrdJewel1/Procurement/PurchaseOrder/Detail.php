@@ -148,15 +148,6 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if ($this->inputs['curr_rate'] == 0) {
-            throw new Exception(Lang::get('generic.string.currency_needed'));
-        }
-        if (!empty($this->input_details)) {
-            $unitIds = array_column($this->input_details, 'item_unit_id');
-            if (count($unitIds) !== count(array_flip($unitIds))) {
-                throw new Exception("Ditemukan duplikasi Item.");
-            }
-        }
         if($this->actionValue == 'Edit')
         {
             if(!$this->object->isEnableToEdit())

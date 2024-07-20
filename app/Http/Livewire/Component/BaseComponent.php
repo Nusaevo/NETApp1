@@ -47,6 +47,7 @@ class BaseComponent extends Component
     // Mount method to initialize the component
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
+        session(['previous_url' => url()->previous()]);
         $this->onPreRender();
         $this->additionalParam = $additionalParam;
         $this->appCode =  Session::get('app_code', '');
@@ -252,5 +253,14 @@ class BaseComponent extends Component
                 $this->VersionNumber ++;
             }
         }
+    }
+
+    public function goBack()
+    {
+        // Retrieve the previous URL from the session
+        $previousUrl = session('previous_url', url()->previous());
+
+        // Redirect to the previous URL
+        return redirect()->to($previousUrl);
     }
 }
