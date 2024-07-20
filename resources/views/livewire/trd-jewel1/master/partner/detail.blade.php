@@ -18,8 +18,8 @@
                     <x-ui-card>
                         <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true"  span="Half"/>
                         <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" clickEvent="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" span="Half"/>
-                        <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
-                        <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea" :action="$actionValue" />
+                        <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" span="Full" />
+                        <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea" :action="$actionValue" span="Full"/>
                         <x-ui-text-field label="{{ $this->trans('city') }}" model="inputs.city" type="text" :action="$actionValue"  span="Half"/>
                         <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country" type="text" :action="$actionValue"  span="Half"/>
                         <x-ui-text-field label="{{ $this->trans('postal_code') }}" model="inputs.postal_code" type="text" :action="$actionValue"  span="Half"/>
