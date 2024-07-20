@@ -26,10 +26,10 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $renderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
     public $menu_link;
-    
+
 
     abstract public function columns(): array;
-    
+
     protected $listeners = [
         'refreshData' => 'render',
         'viewData'  => 'View',
@@ -87,6 +87,12 @@ abstract class BaseDataTableComponent extends DataTableComponent
                 'route' => $this->baseRoute.".Detail", 'permissions' => $this->permissions
             ],]
         ]);
+
+        $this->setFilterPillsDisabled();
+        $this->setSortingPillsDisabled();
+        $this->setFilterLayout('slide-down');
+        $this->setFilterSlideDownDefaultStatusEnabled();
+        $this->setSingleSortingDisabled();
     }
 
     public function viewData($id)
