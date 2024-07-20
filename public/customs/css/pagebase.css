@@ -300,8 +300,8 @@ div[wire\:loading].loading-overlay {
         height: 65px;
     }
 
-    .responsive-field[span="Half"]:nth-of-type(2n) {
-    }
+    /* .responsive-field[span="Half"]:nth-of-type(2n) {
+    } */
 
     .responsive-field[span="Half"]:nth-of-type(n) {
         padding-right: 15px;
