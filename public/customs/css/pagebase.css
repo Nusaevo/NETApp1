@@ -302,7 +302,7 @@ div[wire\:loading].loading-overlay {
 
     /* Untuk elemen genap tidak ada padding */
     .responsive-field[span="Half"]:nth-of-type(2n) {
-        padding-right: 0;
+        padding-right: 15px;
     }
 
     /* Untuk elemen ganjil tetap ada padding */
