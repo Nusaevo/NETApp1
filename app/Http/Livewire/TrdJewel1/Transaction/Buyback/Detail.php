@@ -47,7 +47,7 @@ class Detail extends BaseComponent
     public $selectedMaterials = [];
     public $currencyRate = 0;
     public $currency = [];
-    public $order_hdrs = [];
+    public $orderHdr = [];
 
     protected function onPreRender()
     {
@@ -276,24 +276,25 @@ class Detail extends BaseComponent
             return;
         }
 
-        $query = OrderHdr::with(['OrderDtl.Material' => function($query) {
-            $query->whereNull('deleted_at');
-        }])
-        ->where('partner_id', $this->inputs['partner_id'])
-        ->where('tr_type', 'SO')
-        ->whereNull('deleted_at');
-        if (!empty($this->searchTerm)) {
-            $searchTermUpper = strtoupper($this->searchTerm);
-            $query->where(function($query) use ($searchTermUpper) {
-                $query->whereRaw('UPPER(tr_id) LIKE ?', ['%' . $searchTermUpper . '%'])
-                      ->orWhereHas('OrderDtl.Material', function($q) use ($searchTermUpper) {
-                          $q->whereRaw('UPPER(code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                            ->orWhereRaw('UPPER(name) LIKE ?', ['%' . $searchTermUpper . '%'])
-                            ->orWhereRaw('UPPER(descr) LIKE ?', ['%' . $searchTermUpper . '%']);
-                      });
-            });
+        $partnerId = $this->inputs['partner_id'];
+        if (empty($partnerId)) {
+            $this->notify('warning', 'Partner ID is required');
+            return;
         }
-        $this->order_hdrs = $query->get();
+        $searchTermUpper = strtoupper($this->searchTerm ?? '');
+        $this->orderHdr = OrderHdr::where('partner_id', $partnerId)
+        ->where('tr_type', 'SO')
+        ->where(function ($query) use ($searchTermUpper) {
+            if ($searchTermUpper) {
+                $query->whereRaw('UPPER(tr_id) LIKE ?', ['%' . $searchTermUpper . '%'])
+                    ->orWhereHas('OrderDtl.Material', function ($q) use ($searchTermUpper) {
+                        $q->whereRaw('UPPER(code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                          ->orWhereRaw('UPPER(name) LIKE ?', ['%' . $searchTermUpper . '%'])
+                          ->orWhereRaw('UPPER(descr) LIKE ?', ['%' . $searchTermUpper . '%']);
+                    });
+            }
+        })
+        ->get();
     }
 
 

@@ -41,19 +41,15 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                 });
             </script>
             @elseif(isset($type) && $type === 'code')
-            <div class="form-floating">
                 <input wire:model.defer="{{ $model }}" type="text" class="form-control responsive-input @error($model) is-invalid @enderror" @if((isset($action) && ($action=='Edit' || $action=='View' )) || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="{{ isset($type) && $type === 'password' ? 'new-password' : 'off' }}" wire:change="{{ isset($onChanged) ? $onChanged : '' }}" autocomplete="off"/>
                 @if (!empty($label))
                 <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
                 @endif
-            </div>
             @elseif(isset($type) && $type === 'date')
-            <div class="form-floating">
                 <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="inputDates form-control responsive-input @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif wire:change="{{ isset($onChanged) ? $onChanged : '' }}" readonly="readonly" />
                 @if (!empty($label))
                 <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
                 @endif
-            </div>
             <script>
                 myJQuery(document).ready(function() {
                     myJQuery("[id='{{ $id }}']").datepicker({
@@ -67,7 +63,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                 });
             </script>
             @elseif(isset($type) && $type === 'number')
-                <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="inputNumbers form-control responsive-input @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif wire:change="{{ isset($onChanged) ? $onChanged : '' }}" autocomplete="off">
+            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control responsive-input @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="{{ isset($type) && $type === 'password' ? 'new-password' : 'off' }}" wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />
                 @if (!empty($label))
                 <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
                 @endif
@@ -80,7 +76,6 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                         radixPoint: ",",
                         autoGroup: true,
                         digitsOptional: true,
-                        placeholder: '0',
                         rightAlign: false,
                         clearIncomplete: true,
                         allowMinus: false
