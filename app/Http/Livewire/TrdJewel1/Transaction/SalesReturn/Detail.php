@@ -132,7 +132,7 @@ class Detail extends BaseComponent
         $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
         $this->suppliers = $suppliersData->map(function ($data) {
             return [
-                'label' => $data->name,
+                'label' =>  $data->code." - ".$data->name,
                 'value' => $data->id,
             ];
         })->toArray();
