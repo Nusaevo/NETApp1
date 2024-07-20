@@ -16,7 +16,7 @@
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
-                        <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true"  span="Half"/>
+                        <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="false"  span="Half"/>
                         <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" clickEvent="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" span="Half"/>
                         <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" span="Full" />
                         <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea" :action="$actionValue" span="Full"/>

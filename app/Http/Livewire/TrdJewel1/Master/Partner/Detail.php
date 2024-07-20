@@ -36,12 +36,12 @@ class Detail extends BaseComponent
             'inputs.country' => 'string|min:1|max:20',
             'inputs.postal_code' => 'string|min:1|max:10',
             'inputs.contact_person' => 'string|min:1|max:255',
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50'
-            ],
+            // 'inputs.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50'
+            // ],
         ];
     }
 
@@ -99,27 +99,44 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if (isset($this->inputs['code'])) {
-            $existingPartner = Partner::where('code', $this->inputs['code'])
-                                      ->where('id', '!=', $this->object->id ?? null)
-                                      ->exists();
+        // if (isset($this->inputs['code'])) {
+        //     $existingPartner = Partner::where('code', $this->inputs['code'])
+        //                               ->where('id', '!=', $this->object->id ?? null)
+        //                               ->exists();
 
-            if ($existingPartner) {
-                $this->addError('inputs.code', $this->trans('message.code_already_exists'));
-                throw new Exception($this->trans('message.code_already_exists'));
-            }
-        }
-
+        //     if ($existingPartner) {
+        //         $this->addError('inputs.code', $this->trans('message.code_already_exists'));
+        //         throw new Exception($this->trans('message.code_already_exists'));
+        //     }
+        // } else {
+        //     $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
+        // }
+        $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
         $dataToSave = [];
         if (in_array($this->inputs['grp'], [Partner::CUSTOMER])) {
             $dataToSave['ring_size'] = $this->inputs['ring_size'] ?? null;
             $dataToSave['partner_ring_size'] = $this->inputs['partner_ring_size'] ?? null;
         }
-        $this->inputs['partner_chars']= json_encode($dataToSave);
+        $this->inputs['partner_chars'] = json_encode($dataToSave);
         $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }
 
+    private function generateNewCode($name)
+    {
+        $initialCode = strtoupper(substr($name, 0, 1));
+        $latestCode = Partner::where('code', 'LIKE', $initialCode . '%')
+                             ->orderBy('code', 'desc')
+                             ->pluck('code')
+                             ->first();
+
+        if ($latestCode) {
+            $numericPart = intval(substr($latestCode, 1)) + 1;
+            return $initialCode . $numericPart;
+        } else {
+            return $initialCode . '1';
+        }
+    }
     public function changeStatus()
     {
         $this->change();
