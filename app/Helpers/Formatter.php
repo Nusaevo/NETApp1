@@ -59,11 +59,16 @@ if (!function_exists('qty')) {
 if (!function_exists('toNumberFormatter')) {
     function toNumberFormatter($formattedNumber)
     {
+        if ($formattedNumber === null || $formattedNumber === '') {
+            return 0;
+        }
+
         $numericValue = str_replace('.', '', $formattedNumber);
         $numericValue = str_replace(',', '.', $numericValue);
-        return $numericValue;
+        return (float) $numericValue;
     }
 }
+
 
 if (!function_exists('numberFormat')) {
     function numberFormat($number, $decimals = 0, $decPoint = ',', $thousandsSep = '.')

@@ -70,19 +70,28 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             <script>
-                $(document).ready(function() {
-                    var modelId = "{{ $id }}";
-                    Inputmask({
-                        alias: "numeric"
-                        , groupSeparator: "."
-                        , radixPoint: ","
-                        , autoGroup: true
-                        , digitsOptional: true
-                        , rightAlign: false
-                        , clearIncomplete: true
-                        , allowMinus: false
-                    }).mask('#' + modelId);
+          $(document).ready(function() {
+                var modelId = "{{ $id }}";
+                var $input = $('#' + modelId);
+
+                Inputmask({
+                    alias: "numeric",
+                    groupSeparator: ".",
+                    radixPoint: ",",
+                    autoGroup: true,
+                    digitsOptional: true,
+                    rightAlign: false,
+                    clearIncomplete: true,
+                    allowMinus: false,
+                    placeholder: "0"
+                }).mask($input[0]);
+
+                $input.on('blur', function() {
+                    if ($(this).val().trim() === '') {
+                        $(this).val('0');
+                    }
                 });
+            });
 
             </script>
             @elseif(isset($type) && $type === 'image')
