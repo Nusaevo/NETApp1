@@ -36,13 +36,13 @@
                                     </td>
                                 </tr>
                             </table>
-                            <table style="margin-top: 10px;">
+                            <table style="margin-top: 0px;">
                                 <tr class="information">
                                     <td style="width: 50%; vertical-align: top;">
                                         @php
                                         $imagePath = $OrderDtl->Material->Attachment->first() ? $OrderDtl->Material->Attachment->first()->getUrl() : 'https://via.placeholder.com/200';
                                         @endphp
-                                        <img src="{{ $imagePath }}" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
+                                        <img src="https://via.placeholder.com/200" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
                                     </td>
                                     <td style="width: 50%;">
                                         <p style="margin: 0; padding: 0;">Kode Barang: <strong>{{ $OrderDtl->matl_code }}</strong></p>
@@ -87,10 +87,11 @@
 </script>
 
 <style>
- @page {
-    size: A5 portrait;
+@page {
+    size: 210mm 140mm; /* Ukuran khusus 210 x 140 mm */
     margin: 0 10mm; /* Margin kanan dan kiri */
 }
+
 
 body {
     margin: 0;
