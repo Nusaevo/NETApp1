@@ -88,7 +88,7 @@
 
 <style>
  @page {
-    size: A5 landscape;
+    size: A5 portrait;
     margin: 0 10mm; /* Margin kanan dan kiri */
 }
 
