@@ -9,10 +9,10 @@
     </span>
 @elseif(isset($type) && $type == 'Back')
 <div id="backButtonContainer">
-    <a class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backButton" wire:click="goBack">
+    <a class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backButton" wire:click="goBack" wire:loading.attr="disabled">
         <i class="bi bi-arrow-left-circle fs-2 me-1"></i>
-        <span id="backButtonText" style="font-size: 12px;">Back</span>
-        <span class="spinner-border spinner-border-sm" id="backButtonLoading" role="status" aria-hidden="true" style="display: none;"></span>
+        <span id="backButtonText" style="font-size: 12px;" wire:loading.remove>Back</span>
+        <span class="spinner-border spinner-border-sm" id="backButtonLoading" role="status" aria-hidden="true" wire:loading></span>
     </a>
 </div>
 

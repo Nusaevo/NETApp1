@@ -1,170 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Label</title>
-    <style>
-        @page {
-            size: A5 portrait;
-            margin: 0;
-        }
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Calibri';
-            font-size: 14px;
-            color: #555;
-        }
-
-        .invoice-box-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            box-sizing: border-box;
-            page-break-inside: avoid;
-        }
-
-        .invoice-box {
-            width: 100%;
-            height: 297px; /* Half of A5 height in pixels */
-            border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-            line-height: 24px;
-            font-weight: 700;
-            color: #555;
-            box-sizing: border-box;
-            page-break-inside: avoid;
-            margin: 0;
-            padding: 10px;
-        }
-
-        .invoice-box table {
-            width: 100%;
-            line-height: inherit;
-            text-align: left;
-            border-collapse: collapse;
-        }
-
-        .invoice-box table td {
-            vertical-align: top;
-            padding: 5px;
-        }
-
-        .invoice-box table tr td:nth-child(2) {
-            text-align: right;
-        }
-
-        .invoice-box table tr.top table td.title {
-            font-size: 45px;
-            line-height: 45px;
-            color: #333;
-        }
-
-        .invoice-box table tr.heading td {
-            background: #eee;
-            border-bottom: 1px solid #ddd;
-            font-weight: bold;
-        }
-
-        .invoice-box table tr.item td {
-            border-bottom: 1px solid #eee;
-        }
-
-        .invoice-box table tr.item.last td {
-            border-bottom: none;
-        }
-
-        .invoice-box table tr.total td:nth-child(2) {
-            border-top: 2px solid #eee;
-            font-weight: bold;
-        }
-
-        .invoice-box .price {
-            float: right;
-        }
-
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #print, #print * {
-                visibility: visible;
-            }
-            #print {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                box-sizing: border-box;
-            }
-            .card {
-                border: none;
-                box-shadow: none;
-            }
-            .container {
-                padding: 0;
-                margin: 0;
-            }
-            .btn, .d-flex {
-                display: none;
-            }
-            .invoice-box {
-                border: none;
-                box-shadow: none;
-                margin: 0;
-                padding: 10px;
-                height: 297px; /* Half of A5 height in pixels */
-            }
-            .invoice-box-container {
-                padding: 0;
-                margin: 0;
-                height: 100%;
-            }
-            .invoice-box table {
-                width: 100%;
-            }
-            .invoice-box table td {
-                padding: 5px;
-                vertical-align: top;
-            }
-            .invoice-box table tr td:nth-child(2) {
-                text-align: right;
-            }
-            .invoice-box table tr.top table td {
-                padding-bottom: 10px;
-            }
-            .invoice-box table tr.top table td.title {
-                font-size: 45px;
-                line-height: 45px;
-                color: #333;
-            }
-            .invoice-box table tr.information table td {
-                padding-bottom: 10px;
-            }
-            .invoice-box table tr.heading td {
-                background: #eee;
-                border-bottom: 1px solid #ddd;
-                font-weight: bold;
-            }
-            .invoice-box table tr.details td {
-                padding-bottom: 10px;
-            }
-            .invoice-box table tr.item td {
-                border-bottom: 1px solid #eee;
-            }
-            .invoice-box table tr.item.last td {
-                border-bottom: none;
-            }
-            .invoice-box table tr.total td:nth-child(2) {
-                border-top: 2px solid #eee;
-                font-weight: bold;
-            }
-        }
-    </style>
-</head>
 <body>
     <div class="container mb-5 mt-3">
         <div>
@@ -288,11 +122,169 @@
             </div>
         </div>
     </div>
-</body>
-</html>
 
 <script type="text/javascript">
     function printInvoice() {
         window.print();
     }
 </script>
+<style>
+    @page {
+        size: A5 portrait;
+        margin: 0;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Calibri';
+        font-size: 14px;
+        color: #555;
+    }
+
+    .invoice-box-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-sizing: border-box;
+        page-break-inside: avoid;
+    }
+
+    .invoice-box {
+        width: 100%;
+        height: 297px; /* Half of A5 height in pixels */
+        border: 1px solid #eee;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        line-height: 24px;
+        font-weight: 700;
+        color: #555;
+        box-sizing: border-box;
+        page-break-inside: avoid;
+        margin: 0;
+        padding: 10px;
+    }
+
+    .invoice-box table {
+        width: 100%;
+        line-height: inherit;
+        text-align: left;
+        border-collapse: collapse;
+    }
+
+    .invoice-box table td {
+        vertical-align: top;
+        padding: 5px;
+    }
+
+    .invoice-box table tr td:nth-child(2) {
+        text-align: right;
+    }
+
+    .invoice-box table tr.top table td.title {
+        font-size: 45px;
+        line-height: 45px;
+        color: #333;
+    }
+
+    .invoice-box table tr.heading td {
+        background: #eee;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+    }
+
+    .invoice-box table tr.item td {
+        border-bottom: 1px solid #eee;
+    }
+
+    .invoice-box table tr.item.last td {
+        border-bottom: none;
+    }
+
+    .invoice-box table tr.total td:nth-child(2) {
+        border-top: 2px solid #eee;
+        font-weight: bold;
+    }
+
+    .invoice-box .price {
+        float: right;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #print, #print * {
+            visibility: visible;
+        }
+        #print {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .card {
+            border: none;
+            box-shadow: none;
+        }
+        .container {
+            padding: 0;
+            margin: 0;
+        }
+        .btn, .d-flex {
+            display: none;
+        }
+        .invoice-box {
+            border: none;
+            box-shadow: none;
+            margin: 0;
+            padding: 10px;
+            height: 297px; /* Half of A5 height in pixels */
+        }
+        .invoice-box-container {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+        }
+        .invoice-box table {
+            width: 100%;
+        }
+        .invoice-box table td {
+            padding: 5px;
+            vertical-align: top;
+        }
+        .invoice-box table tr td:nth-child(2) {
+            text-align: right;
+        }
+        .invoice-box table tr.top table td {
+            padding-bottom: 10px;
+        }
+        .invoice-box table tr.top table td.title {
+            font-size: 45px;
+            line-height: 45px;
+            color: #333;
+        }
+        .invoice-box table tr.information table td {
+            padding-bottom: 10px;
+        }
+        .invoice-box table tr.heading td {
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .invoice-box table tr.details td {
+            padding-bottom: 10px;
+        }
+        .invoice-box table tr.item td {
+            border-bottom: 1px solid #eee;
+        }
+        .invoice-box table tr.item.last td {
+            border-bottom: none;
+        }
+        .invoice-box table tr.total td:nth-child(2) {
+            border-top: 2px solid #eee;
+            font-weight: bold;
+        }
+    }
+</style>
