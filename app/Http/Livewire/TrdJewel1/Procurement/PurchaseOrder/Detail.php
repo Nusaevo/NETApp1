@@ -136,7 +136,7 @@ class Detail extends BaseComponent
             $this->notify('warning',Lang::get('generic.string.currency_needed'));
             return;
         }
-        $this->dispatchBrowserEvent('openMaterialDialog');
+        $this->dispatch('openMaterialDialog');
     }
 
 
@@ -190,7 +190,7 @@ class Detail extends BaseComponent
     public function addDetails($material_id = null)
     {
         $this->showModal = true;
-        $this->dispatchBrowserEvent('toggle-modal');
+        $this->dispatch('toggle-modal');
         $detail = [
             'tr_type' => $this->trType,
         ];
@@ -218,9 +218,9 @@ class Detail extends BaseComponent
 
     public function Add()
     {
-        // $this->emit('materialSaved', 2);
-        // $this->emit('materialSaved', 3);
-        // $this->emit('materialSaved', 4);
+        // $this->dispatch('materialSaved', 2);
+        // $this->dispatch('materialSaved', 3);
+        // $this->dispatch('materialSaved', 4);
     }
 
     public function materialSaved($material_id)
@@ -236,7 +236,7 @@ class Detail extends BaseComponent
             $this->addDetails($material_id);
             $this->SaveWithoutNotification();
             $this->notify('success', Lang::get($this->langBasePath.'.message.product_added'));
-            $this->dispatchBrowserEvent('closeMaterialDialog');
+            $this->dispatch('closeMaterialDialog');
         } catch (Exception $e) {
             $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
         }

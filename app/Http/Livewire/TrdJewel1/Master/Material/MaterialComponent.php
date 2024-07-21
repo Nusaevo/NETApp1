@@ -461,7 +461,7 @@ class MaterialComponent extends BaseComponent
             $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
-        $this->dispatchBrowserEvent('refresh');
+        $this->dispatch('refresh');
     }
 
     public function onReset()
@@ -555,7 +555,7 @@ class MaterialComponent extends BaseComponent
                 MatlBom::find($deletedItemId)->forceDelete();
             }
         }
-        $this->emit('materialSaved', $this->object->id);
+        $this->dispatch('materialSaved', $this->object->id);
     }
 
     public function generateMaterialDescriptions()
@@ -633,7 +633,7 @@ class MaterialComponent extends BaseComponent
         $this->refreshSideMaterialJewelPurity($this->bom_row);
         $newDetail = end($this->matl_boms);
         $this->newItems[] = $newDetail;
-        $this->emit('itemAdded');
+        $this->dispatch('itemAdded');
         $this->bom_row++;
     }
 

@@ -110,7 +110,7 @@ class Detail extends BaseComponent
             $this->notify('warning',Lang::get('generic.string.currency_needed'));
             return;
         }
-        $this->dispatchBrowserEvent('openMaterialDialog');
+        $this->dispatch('openMaterialDialog');
     }
 
     protected function onPopulateDropdowns()
@@ -137,7 +137,7 @@ class Detail extends BaseComponent
         });
 
         if (empty($selectedItems)) {
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Harap pilih item dahulu sebelum checkout'
             ]);
@@ -191,7 +191,7 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'warning',
                 'message' => 'Diperlukan kurs mata uang.'
             ]);
@@ -200,7 +200,7 @@ class Detail extends BaseComponent
 
         $tagCount = count($tags);
         // if ($tagCount == 0) {
-        //     $this->dispatchBrowserEvent('notify-swal', [
+        //     $this->dispatch('notify-swal', [
         //         'type' => 'error',
         //         'message' => 'Tidak ada tag yang discan. Silakan coba lagi.'
         //     ]);
@@ -280,7 +280,7 @@ class Detail extends BaseComponent
             }
             $this->notify('info',$message);
             $this->retrieveMaterials();
-            $this->emit('updateCartCount');
+            $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
             $this->notify('error',  'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage());
@@ -290,7 +290,7 @@ class Detail extends BaseComponent
 
     public function addDetails($material_id = null)
     {
-        $this->dispatchBrowserEvent('toggle-modal');
+        $this->dispatch('toggle-modal');
         $detail = [
             'tr_type' => $this->trType,
         ];
@@ -382,7 +382,7 @@ class Detail extends BaseComponent
         }
 
         if (empty($this->selectedMaterials)) {
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
             ]);
@@ -411,7 +411,7 @@ class Detail extends BaseComponent
 
                 if ($existingOrderDtl) {
                     DB::rollback();
-                    $this->dispatchBrowserEvent('notify-swal', [
+                    $this->dispatch('notify-swal', [
                         'type' => 'error',
                         'message' => "Item {$material->code} sudah ada di cart"
                     ]);
@@ -437,16 +437,16 @@ class Detail extends BaseComponent
 
             DB::commit();
 
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'success',
                 'message' => 'Berhasil menambahkan item ke cart'
             ]);
             $this->selectedMaterials = [];
             $this->retrieveMaterials();
-            $this->emit('updateCartCount');
+            $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
             ]);

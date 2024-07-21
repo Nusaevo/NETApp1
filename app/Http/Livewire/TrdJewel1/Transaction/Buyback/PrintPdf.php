@@ -37,7 +37,7 @@ class PrintPdf extends BaseComponent
     {
         $this->order->print_settings = json_encode($this->printSettings);
         $this->order->save();
-        $this->emit('notify', 'Pengaturan cetak disimpan.');
+        $this->dispatch('notify', 'Pengaturan cetak disimpan.');
     }
 
     public function render()

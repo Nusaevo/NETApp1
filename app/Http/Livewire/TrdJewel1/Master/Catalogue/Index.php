@@ -84,7 +84,7 @@ class Index extends BaseComponent
             $material = Material::find($material_id);
             if (!$material) {
                 DB::rollback();
-                $this->dispatchBrowserEvent('notify-swal', [
+                $this->dispatch('notify-swal', [
                     'type' => 'error',
                     'message' => 'Material not found'
                 ]);
@@ -94,7 +94,7 @@ class Index extends BaseComponent
             // Check if the material has quantity
             if (!$material->hasQuantity()) {
                 DB::rollback();
-                $this->dispatchBrowserEvent('notify-swal', [
+                $this->dispatch('notify-swal', [
                     'type' => 'error',
                     'message' => 'Material out of stock'
                 ]);
@@ -147,15 +147,15 @@ class Index extends BaseComponent
 
                 DB::commit();
 
-                $this->dispatchBrowserEvent('notify-swal', [
+                $this->dispatch('notify-swal', [
                     'type' => 'success',
                     'message' => 'Berhasil menambahkan item ke cart'
                 ]);
-                $this->emit('updateCartCount');
+                $this->dispatch('updateCartCount');
             } else {
                 DB::rollback();
 
-                $this->dispatchBrowserEvent('notify-swal', [
+                $this->dispatch('notify-swal', [
                     'type' => 'error',
                     'message' => 'Item sudah dimasukkan ke cart'
                 ]);
@@ -163,7 +163,7 @@ class Index extends BaseComponent
         } catch (\Exception $e) {
             DB::rollback();
 
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
             ]);

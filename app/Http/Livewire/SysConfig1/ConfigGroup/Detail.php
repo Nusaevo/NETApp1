@@ -51,7 +51,7 @@ class Detail extends BaseComponent
     public function applicationChanged()
     {
         $this->selectedMenus = [];
-        $this->emit('applicationChanged', $this->inputs['app_id'], $this->selectedMenus);
+        $this->dispatch('applicationChanged', $this->inputs['app_id'], $this->selectedMenus);
     }
 
     // public function refreshUser()

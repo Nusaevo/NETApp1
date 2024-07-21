@@ -55,12 +55,12 @@
     }
 
     function selectImage(imageId) {
-        Livewire.emit('selectImage', imageId);
+        Livewire.dispatch('selectImage', imageId);
     }
 
     function deleteImage(imageId) {
         if (confirm('Are you sure you want to delete this image?')) {
-            Livewire.emit('deleteImage', imageId);
+            Livewire.dispatch('deleteImage', imageId);
         }
     }
 
@@ -93,7 +93,7 @@
         console.log('Selected Image Byte Arrays:', imageByteArrays);
 
         if (imageByteArrays.length > 0) {
-            Livewire.emit('submitImages', imageByteArrays);
+            Livewire.dispatch('submitImages', imageByteArrays);
             resetSelectedImages();
         } else {
             alert('No images selected');

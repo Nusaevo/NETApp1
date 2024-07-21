@@ -1,4 +1,4 @@
-<div id="page-card" class="container-xxl mb-5">
+<div><div id="page-card" class="container-xxl mb-5">
 
     <div class="card shadow-sm">
         @if(!empty($title))
@@ -31,4 +31,6 @@
 
 <div>
     @include('layout.customs.notification')
+</div>
+
 </div>

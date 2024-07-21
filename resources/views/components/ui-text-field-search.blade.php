@@ -34,7 +34,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
 </div>
 
 <script>
-    document.addEventListener('livewire:load', function() {
+    document.addEventListener('livewire:initialized', () => {
         var initializeSelect2 = function() {
             var selectId = '{{ isset($id) ? $id : 'defaultSelect' }}';
             var isEnabled = '{{ isset($action) && $action === 'View' || (isset($enabled) && $enabled === 'false') }}';

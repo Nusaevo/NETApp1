@@ -1,55 +1,59 @@
-<div class="aside-menu flex-column-fluid" style="width: 100%;">
-    <select id="applicationSelect" class="custom-select application-select" style="color: grey; width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f8f9fa;" wire:loading.attr="disabled" wire:loading.class="select2-loading">
-        @foreach($applications as $application)
-            @php
-                $imagePath = 'customs/logos/' . $application['value'] . '.png';
-            @endphp
-            <option value="{{ $application['value'] }}" @if($selectedApplication == $application['value']) selected @endif data-image="{{ asset($imagePath) }}">{{ $application['label'] }}</option>
-        @endforeach
-    </select>
-</div>
+<div>
+    <div class="aside-menu flex-column-fluid" style="width: 100%;">
+        <select id="applicationSelect" class="custom-select application-select" style="color: grey; width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f8f9fa;" wire:loading.attr="disabled" wire:loading.class="select2-loading">
+            @foreach($applications as $application)
+                @php
+                    $imagePath = 'customs/logos/' . $application['value'] . '.png';
+                @endphp
+                <option value="{{ $application['value'] }}" @if($selectedApplication == $application['value']) selected @endif data-image="{{ asset($imagePath) }}">{{ $application['label'] }}</option>
+            @endforeach
+        </select>
+    </div>
 
-<!-- Loading Indicator -->
-<span wire:loading.remove></span>
-<span wire:loading>
-    <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
-</span>
+    <!-- Loading Indicator -->
+    <span wire:loading.remove></span>
+    <span wire:loading>
+        <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+    </span>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        function formatState(state) {
-            if (!state.id) {
-                return state.text;
-            }
-            var baseUrl = state.element.getAttribute('data-image');
-            var $state = $(
-                '<span><img src="' + baseUrl + '" class="img-flag" style="width: 20px; height: auto; margin-right: 10px;" /> ' + state.text + '</span>'
-            );
-            return $state;
+
+document.addEventListener('livewire:init', () => {
+    function formatState(state) {
+        if (!state.id) {
+            return state.text;
         }
+        var baseUrl = state.element.getAttribute('data-image');
+        var $state = $(
+            '<span><img src="' + baseUrl + '" class="img-flag" style="width: 20px; height: auto; margin-right: 10px;" /> ' + state.text + '</span>'
+        );
+        return $state;
+    }
 
-        function initializeSelect2() {
-            $('#applicationSelect').select2({
-                templateResult: formatState,
-                templateSelection: formatState,
-                width: '100%',
-                dropdownAutoWidth: true,
-                minimumResultsForSearch: Infinity, // Menonaktifkan fitur pencarian
-                dropdownCssClass: 'hide-search-box' // Menambahkan kelas CSS untuk menyembunyikan input pencarian
-            });
-
-            $('#applicationSelect').on('change', function(e) {
-                var selectedValue = $(this).val();
-                Livewire.emit('configApplicationChanged', selectedValue);
-            });
-        }
-
-        initializeSelect2();
-
-        Livewire.hook('message.processed', (message, component) => {
-            initializeSelect2();
+    function initializeSelect2() {
+        $('#applicationSelect').select2({
+            templateResult: formatState,
+            templateSelection: formatState,
+            width: '100%',
+            dropdownAutoWidth: true,
+            minimumResultsForSearch: Infinity, // Disable search feature
+            dropdownCssClass: 'hide-search-box' // Add CSS class to hide search input
         });
+
+        $('#applicationSelect').on('change', function(e) {
+            var selectedValue = $(this).val();
+            Livewire.dispatch('configApplicationChanged', { selectedApplication: selectedValue } );
+        });
+    }
+
+    initializeSelect2();
+
+    Livewire.hook('message.processed', (message, component) => {
+        $('#applicationSelect').select2('destroy'); // Destroy existing Select2
+        initializeSelect2(); // Reinitialize Select2
     });
+});
+
 </script>
 
 <style>
@@ -100,3 +104,5 @@
         display: none !important;
     }
 </style>
+
+</div>

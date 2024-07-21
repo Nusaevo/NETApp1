@@ -26,7 +26,7 @@ class RfidScanner extends Component
     public function handleError($message)
     {
         $this->errorMessage = $message;
-        $this->dispatchBrowserEvent('notify-swal', [
+        $this->dispatch('notify-swal', [
             'type' => 'error',
             'message' => $message,
         ]);
@@ -39,6 +39,6 @@ class RfidScanner extends Component
 
     public function showNotification($data)
     {
-        $this->dispatchBrowserEvent('notify-swal', $data);
+        $this->dispatch('notify-swal', $data);
     }
 }

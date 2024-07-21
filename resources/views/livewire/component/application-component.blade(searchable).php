@@ -38,7 +38,7 @@
 
             $('.application-select').on('change', function(e) {
                 var selectedValue = $(this).val();
-                Livewire.emit('applicationChanged', selectedValue);
+                Livewire.dispatch('applicationChanged', selectedValue);
             });
         }
 

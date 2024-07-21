@@ -95,7 +95,7 @@
             }
         }).then(confirm => {
             if (confirm.isConfirmed) {
-                Livewire.emit('disableData');
+                Livewire.dispatch('disableData');
             }
         });
     });

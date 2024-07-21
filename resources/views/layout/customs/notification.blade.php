@@ -1,39 +1,35 @@
 @once
 <script>
-    document.addEventListener('livewire:load', function () {
-        window.addEventListener('notify-swal', function(e) {
-            let data = e.detail;
-            let title = data.title;
-            let message = data.message;
-            let type = data.type;
+    window.addEventListener('notify-swal', function(e) {
+        let dataArray = e.detail;
+        console.log('Event Data:', dataArray); // Debugging
 
-            // Map the type to "Failed" for error and "Success" for success
-            if (type === 'error') {
-                title = 'Failed';
-            } else if (type === 'success') {
-                title = 'Success';
-            }
+        // Access the first element of the array
+        let data = dataArray[0];
 
-            Swal.fire(title, message, type);
-        });
+        let title = data.title || 'No title';
+        let message = data.message || 'No message';
+        let type = data.type || 'info';
 
-        window.addEventListener('refresh', function(e) {
-            setTimeout(function() {
-                window.location.reload();
-            }, 1000);
-        });
+        // Map the type to "Failed" for error and "Success" for success
+        if (type === 'error') {
+            title = 'Failed';
+        } else if (type === 'success') {
+            title = 'Success';
+        }
 
-        // Ensure notify-swal works on mount
-        // setTimeout(function() {
-        //     Livewire.emit('notify-swal', {
-        //         title: 'Welcome',
-        //         message: 'Welcome to the page!',
-        //         type: 'info'
-        //     });
-        // }, 100); // Adjust the timeout duration as needed
+        Swal.fire(title, message, type);
+    });
+
+    window.addEventListener('refresh', function(e) {
+        setTimeout(function() {
+            window.location.reload();
+        }, 1000);
     });
 </script>
 @endonce
+
+
 
 @if (session()->has('success'))
 <div class="rounded p-10 pb-0 d-flex flex-column">

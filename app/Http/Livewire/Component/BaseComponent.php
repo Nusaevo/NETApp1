@@ -163,7 +163,7 @@ class BaseComponent extends Component
     // Notify method
     protected function notify($type, $message)
     {
-        $this->dispatchBrowserEvent('notify-swal', [
+        $this->dispatch('notify-swal', [
             'type' => $type,
             'message' => $message,
         ]);
@@ -239,7 +239,7 @@ class BaseComponent extends Component
             $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
-        $this->dispatchBrowserEvent('refresh');
+        $this->dispatch('refresh');
     }
 
     // Update version number method

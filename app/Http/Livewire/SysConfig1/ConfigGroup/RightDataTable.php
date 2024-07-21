@@ -42,7 +42,7 @@ class RightDataTable extends BaseDataTableComponent
 
     public function performUpdateActions()
     {
-        $this->emit('selectedMenus', $this->selectedRows);
+        $this->dispatch('selectedMenus', $this->selectedRows);
     }
 
     public function updatedSelectedRows($value, $key)

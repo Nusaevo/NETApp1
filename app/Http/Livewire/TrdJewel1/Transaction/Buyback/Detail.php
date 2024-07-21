@@ -133,7 +133,7 @@ class Detail extends BaseComponent
             return;
         }
         $this->searchMaterials();
-        $this->dispatchBrowserEvent('openMaterialDialog');
+        $this->dispatch('openMaterialDialog');
     }
 
     public function refreshPartner()
@@ -328,7 +328,7 @@ class Detail extends BaseComponent
         }
 
         if (empty($this->selectedMaterials)) {
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
             ]);
@@ -361,7 +361,7 @@ class Detail extends BaseComponent
 
                 if ($existingReturnDtl) {
                     DB::rollback();
-                    $this->dispatchBrowserEvent('notify-swal', [
+                    $this->dispatch('notify-swal', [
                         'type' => 'error',
                         'message' => "Item {$material->code} sudah ada di Order"
                     ]);
@@ -390,14 +390,14 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
             DB::commit();
 
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'success',
                 'message' => 'Berhasil menambahkan item ke nota'
             ]);
             $this->selectedMaterials = [];
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatchBrowserEvent('notify-swal', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
             ]);

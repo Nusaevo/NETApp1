@@ -132,7 +132,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('openMaterialDialog', function() {
-            Livewire.emit('resetMaterial');
+            Livewire.dispatch('resetMaterial');
             $('#materialDialogBox').modal('show');
         });
 

@@ -1,7 +1,6 @@
 @extends('base.base')
 
 @section('data-table-requirements')
-    <script src="//unpkg.com/alpinejs" defer></script>
     <style>
         [x-cloak] { display: none !important; }
     </style>

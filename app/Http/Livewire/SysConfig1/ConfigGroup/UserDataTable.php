@@ -29,7 +29,7 @@ class UserDataTable extends BaseDataTableComponent
 
     public function performUpdateActions()
     {
-        $this->emit('selectedUserIds', $this->selectedRows);
+        $this->dispatch('selectedUserIds', $this->selectedRows);
     }
 
     public function updatedSelectedRows()

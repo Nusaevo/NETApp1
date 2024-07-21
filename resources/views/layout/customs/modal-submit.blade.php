@@ -1,5 +1,4 @@
 <script>
-    document.addEventListener('livewire:load', function() {
         $(document).on('click', '.btn-submit', function(e) {
             e.preventDefault();
             Swal.fire({
@@ -18,9 +17,8 @@
                 }
             }).then(confirm => {
                 if (confirm.isConfirmed) {
-                    Livewire.emit('destroy_listener');
+                    Livewire.dispatch('destroy_listener');
                 }
             });
         });
-    });
 </script>

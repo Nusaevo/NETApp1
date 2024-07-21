@@ -1,4 +1,4 @@
-@if($action == "Edit" || $action == "Create" )
+@if($action == "Edit" || $action == "Create")
 <span style="padding: 2px;">
     <div id="rfidScannerComponent" data-duration="{{ $duration }}">
         <button id="scanButton" class="btn btn-primary btn-action" onclick="startWebSocketScan()">
@@ -7,16 +7,16 @@
     </div>
 </span>
 @endif
-<script>
-    let socket;
-    const wsUrl = 'ws://localhost:8081/RFID';
 
+@push('scripts')
+<script>
+    // Define the function in the global scope
     function startWebSocketScan() {
         const scanButton = document.getElementById('scanButton');
         const rfidScannerComponent = document.getElementById('rfidScannerComponent');
         const duration = rfidScannerComponent.getAttribute('data-duration');
 
-        socket = new WebSocket(wsUrl);
+        let socket = new WebSocket('ws://localhost:8081/RFID');
 
         scanButton.disabled = true;
         scanButton.innerText = "Scanning...";
@@ -31,10 +31,10 @@
             if (msg.startsWith('Scanned Tags:')) {
                 const tags = msg.substring(14).split(', ');
                 console.log('Tags scanned:', tags);
-                Livewire.emit('tagScanned', tags);
+                Livewire.dispatch('tagScanned', { tags: tags });
             } else {
                 console.log('No tag scanned');
-                Livewire.emit('errorOccurred', 'No tag scanned');
+                Livewire.dispatch('errorOccurred', { message: 'No tag scanned' });
             }
             socket.close();
         };
@@ -47,7 +47,7 @@
 
         socket.onerror = function(error) {
             console.log('WebSocket error:', error.message);
-            Livewire.emit('errorOccurred', 'WebSocket error: ' + error.message);
+            Livewire.dispatch('errorOccurred', { message: 'WebSocket error: ' + error.message });
             scanButton.disabled = false;
             scanButton.innerText = "Scan";
             socket.close();
@@ -57,24 +57,30 @@
         setTimeout(function() {
             if (socket.readyState === WebSocket.OPEN) {
                 console.log('No tag scanned');
-                Livewire.emit('errorOccurred', 'No tag scanned');
+                Livewire.dispatch('errorOccurred', { message: 'No tag scanned' });
                 socket.close();
             }
         }, parseInt(duration) + 800); // Adjust the timeout to slightly longer than duration
     }
 
-    Livewire.on('tagScanned', tags => {
-        console.log('Tags scanned:', tags);
-    });
+    document.addEventListener('livewire:init', function() {
+        console.log('Livewire loaded'); // To verify script is loaded
 
-    Livewire.on('errorOccurred', errorMessage => {
-        console.log('Error:', errorMessage);
-        Livewire.emit('notify-swal', {
-            type: 'error',
-            message: errorMessage
+        Livewire.on('errorOccurred', errorMessage => {
+            console.log('Error:', errorMessage);
+            Livewire.dispatch('notify-swal', {
+                type: 'error',
+                message: errorMessage.message
+            });
+            const scanButton = document.getElementById('scanButton');
+            scanButton.disabled = false;
+            scanButton.innerText = "Scan";
         });
-        const scanButton = document.getElementById('scanButton');
-        scanButton.disabled = false;
-        scanButton.innerText = "Scan";
+
+        Livewire.hook('message.processed', (message, component) => {
+            console.log('Livewire message processed'); // Verify re-initialization
+            // No need to re-initialize the event listener as it's directly assigned in the HTML
+        });
     });
 </script>
+@endpush

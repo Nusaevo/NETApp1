@@ -24,7 +24,7 @@ class RfidScanners extends Component
     {
         $this->isScanning = true;
         $this->errorMessage = '';
-        $this->emit('scanStatusChanged', $this->isScanning);
+        $this->dispatch('scanStatusChanged', $this->isScanning);
 
         $this->loop = Factory::create();
         $connector = new Connector($this->loop);
@@ -36,9 +36,9 @@ class RfidScanners extends Component
                 foreach ($barcodes as $barcode) {
                     if ($barcode !== "No tag scanned" && $barcode !== "Unknown command" && $barcode !== "Failed to open USB connection" && $barcode !== "Scan stopped") {
                         $this->scannedTags[] = $barcode;
-                        $this->emit('tagScanned', $barcode);
+                        $this->dispatch('tagScanned', $barcode);
                     } else {
-                        $this->emit('errorOccurred', $barcode);
+                        $this->dispatch('errorOccurred', $barcode);
                     }
                 }
             });
@@ -52,7 +52,7 @@ class RfidScanners extends Component
                 }
             });
         }, function ($e) {
-            $this->emit('errorOccurred', "Could not connect: {$e->getMessage()}");
+            $this->dispatch('errorOccurred', "Could not connect: {$e->getMessage()}");
             $this->loop->stop();
         });
 
@@ -67,7 +67,7 @@ class RfidScanners extends Component
             $this->conn = null;
         }
         $this->isScanning = false;
-        $this->emit('scanStatusChanged', $this->isScanning);
+        $this->dispatch('scanStatusChanged', $this->isScanning);
         if ($this->loop) {
             $this->loop->cancelTimer($this->timer);
             $this->loop->stop();

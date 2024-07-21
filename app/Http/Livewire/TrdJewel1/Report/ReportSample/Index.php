@@ -39,7 +39,7 @@ class Index extends BaseComponent
     public function resetResult()
     {
         $this->results = [];
-        $this->emit('refreshDataTable');
+        $this->dispatch('refreshDataTable');
     }
 
     public function search()
@@ -54,6 +54,6 @@ class Index extends BaseComponent
 
         $data = DB::select($query);
         $this->results = $data;
-        $this->emit('refreshDataTable');
+        $this->dispatch('refreshDataTable');
     }
 }

@@ -49,7 +49,7 @@ class StorageComponent extends BaseComponent
 
     public function submitImages($imageByteArrays)
     {
-        $this->emit('saveImages', $imageByteArrays);
+        $this->dispatch('saveImages', $imageByteArrays);
         $this->notify('success', 'Images submitted successfully: ');
     }
 
