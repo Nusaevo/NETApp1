@@ -274,15 +274,6 @@ div[wire\:loading].loading-overlay {
         width: 100%;
     }
 
-   .form-control, .form-select {
-        width: 100%; /* Ensures the input takes the full width of its container */
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        line-height: 1.5;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-    }
-
     .btn-sm {
         margin-left: 5px;
     }

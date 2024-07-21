@@ -1,10 +1,9 @@
 @php
 $id = str_replace(['.', '[', ']'], '_', $model);
 @endphp
-<div class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}"@endif>
+<div class="mb-5 col-sm" @if(isset($span)) span="{{ $span }}"@endif>
     <!-- Select Element -->
-    <div class="text-field-container">
-        <div class="responsive-input-container form-floating">
+        <div class="form-floating">
             <select id="{{ $id }}"
                     class="form-select responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                     wire:model="{{ $model }}" data-toggle="tooltip" title="Select an option"
@@ -32,7 +31,6 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                 <i class="bi bi-arrow-repeat"></i>
             </button>
         @endif --}}
-    </div>
 </div>
 
 <script>

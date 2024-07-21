@@ -1,9 +1,9 @@
 @php
 $id = str_replace(['.', '[', ']'], '_', $model);
 @endphp
-<div wire:ignore.self class="mb-3 responsive-field" @if(isset($span)) span="{{ $span }}" @endif>
-    <div class="text-field-container">
-        <div class="responsive-input-container form-floating">
+<div wire:ignore.self class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif>
+    {{-- <div class="text-field-container"> --}}
+        <div class="form-floating">
             <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}" @if(isset($modelType) && $modelType==='lazy' ) wire:model.lazy="{{ isset($model) ? $model : '' }}" @else wire:model="{{ isset($model) ? $model : '' }}" @endif @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif class="form-select @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif" @if (isset($action) && $action==='View' || (isset($enabled) && $enabled==='false' )) disabled @endif @if (isset($required) && $required==='true' ) required @endif>
                 <option value=""></option>
                 @if (!is_null($options))
@@ -32,5 +32,5 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                 </button>
             @endif
         @endif --}}
-    </div>
+    {{-- </div> --}}
 </div>

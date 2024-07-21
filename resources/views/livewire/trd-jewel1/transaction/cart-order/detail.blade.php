@@ -1,14 +1,14 @@
 <div>
     <div>
-        <x-ui-button clickEvent="" type="Back" button-name="Back"/>
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card title="{{ $this->trans($actionValue)}} {!! $menuName !!}" status="{{ $this->trans($status) }}">
 
 
         @if ($actionValue === 'Create')
-            <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
+        <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
-            <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
+        <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
@@ -73,7 +73,7 @@
                                     <x-slot name="image">
                                         <div class="d-flex align-items-start" style="padding: 10px;">
                                             <div class="checkbox-list" style="margin-right: 10px;">
-                                                <input type="checkbox" wire:model="input_details.{{$key}}.checked" id="option{{ $key }}"/>
+                                                <input type="checkbox" wire:model="input_details.{{$key}}.checked" id="option{{ $key }}" />
                                             </div>
                                             <div class="position-relative" style="width: 200px; height: 200px;">
                                                 @php
@@ -85,16 +85,23 @@
                                     </x-slot>
 
                                     <x-slot name="rows">
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'"  type="number" :action="$actionValue"  enabled="true" span="Full" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true"  span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false"  span="Half" />
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue" enabled="false"  />
+                                        </div>
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" enabled="false"  />
+                                        </div>
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'" type="number" :action="$actionValue" enabled="true"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false"  />
+                                        </div>
+
                                     </x-slot>
                                     <x-slot name="button">
-                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
                                     </x-slot>
                                 </x-ui-list-body>
                             </tr>
@@ -104,18 +111,17 @@
                             <h3>{{ $this->trans('totalPrice') }}: {{ rupiah($total_amount) }}</h3>
                         </x-slot>
                     </x-ui-list-table>
-            </x-ui-card>
+                </x-ui-card>
             </div>
         </x-ui-tab-view-content>
         <x-ui-footer>
             {{-- <x-ui-button :action="$actionValue" clickEvent="Save"
                 cssClass="btn-primary" loading="true" button-name="Save" iconPath="save.svg" /> --}}
-            <x-ui-button :action="$actionValue" clickEvent="Checkout"
-                cssClass="btn-primary" loading="true" button-name="Checkout" iconPath="add.svg" />
+            <x-ui-button :action="$actionValue" clickEvent="Checkout" cssClass="btn-primary" loading="true" button-name="Checkout" iconPath="add.svg" />
         </x-ui-footer>
     </x-ui-page-card>
 
- <script>
+    <script>
         document.addEventListener('DOMContentLoaded', function() {
             window.addEventListener('openMaterialDialog', function() {
                 $('#catalogue').modal('show');
@@ -125,4 +131,6 @@
                 $('#catalogue').modal('hide');
             });
         });
+
     </script>
+

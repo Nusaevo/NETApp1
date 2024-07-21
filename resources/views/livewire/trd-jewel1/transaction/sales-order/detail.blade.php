@@ -5,17 +5,19 @@
     <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
-            <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
+        <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @else
-            <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
+        <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
                     <x-ui-padding>
-                        <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" span="Half" />
-                        <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" span="Half" onChanged="SaveCheck"/>
-                        <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" span="HalfWidth" onChanged="SaveCheck"/>
+                        <div class="row">
+                            <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" />
+                            <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" onChanged="SaveCheck" />
+                            <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" onChanged="SaveCheck" />
+                        </div>
                     </x-ui-padding>
 
                     <x-ui-list-table id="Table" title="Barang">
@@ -82,16 +84,24 @@
                                     </x-slot>
 
                                     <x-slot name="rows">
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue"  enabled="false" span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'"  type="number" :action="$actionValue"  enabled="true" span="Full" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true"  span="Half" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false"  span="Half" />
+
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue" enabled="false"  />
+                                        </div>
+
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" enabled="false"  />
+                                        </div>
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'" type="number" :action="$actionValue" enabled="true"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false"  />
+                                        </div>
                                     </x-slot>
                                     <x-slot name="button">
-                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
 
                                     </x-slot>
                                 </x-ui-list-body>
@@ -102,7 +112,7 @@
                             <h3>Total Price: {{ rupiah($total_amount) }}</h3>
                         </x-slot>
                     </x-ui-list-table>
-            </x-ui-card>
+                </x-ui-card>
             </div>
             {{-- <div class="tab-pane fade show" id="PurchaseReturn" role="tabpanel" aria-labelledby="PurchaseReturn-tab">
                 <x-ui-card>
@@ -122,9 +132,9 @@
             @include('layout.customs.transaction-form-footer')
         </x-ui-footer>
     </x-ui-page-card>
-@php
+    @php
     // dump($object->id);
-@endphp
+    @endphp
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -136,5 +146,6 @@
             $('#catalogue').modal('hide');
         });
     });
+
 </script>
 

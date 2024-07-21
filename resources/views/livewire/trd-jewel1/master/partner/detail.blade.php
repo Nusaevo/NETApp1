@@ -1,5 +1,5 @@
 @php
-    use App\Models\TrdJewel1\Master\Partner;
+use App\Models\TrdJewel1\Master\Partner;
 @endphp
 <div>
     <div>
@@ -13,31 +13,37 @@
         @elseif($actionValue === 'Edit')
         <x-ui-tab-view id="myTab" tabs="general,transactions"> </x-ui-tab-view>
         @endif
-            <x-ui-tab-view-content id="myTabContent" class="tab-content">
-                <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                    <x-ui-card>
-                        <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="false"  span="Half"/>
-                        <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" clickEvent="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" span="Half"/>
-                        <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" span="Full" />
-                        <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea" :action="$actionValue" span="Full"/>
-                        <x-ui-text-field label="{{ $this->trans('city') }}" model="inputs.city" type="text" :action="$actionValue"  span="Half"/>
-                        <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country" type="text" :action="$actionValue"  span="Half"/>
-                        <x-ui-text-field label="{{ $this->trans('postal_code') }}" model="inputs.postal_code" type="text" :action="$actionValue"  span="Half"/>
-                        <x-ui-text-field label="{{ $this->trans('contact_person') }}" model="inputs.contact_person" type="text" :action="$actionValue"  span="HalfWidth"/>
+        <x-ui-tab-view-content id="myTabContent" class="tab-content">
+            <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                <x-ui-card>
+                    <div class="row">
+                        <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="false" />
+                        <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" clickEvent="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" />
+                    </div>
+                    <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
+                    <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea" :action="$actionValue" />
+                    <div class="row">
+                        <x-ui-text-field label="{{ $this->trans('city') }}" model="inputs.city" type="text" :action="$actionValue" />
+                        <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country" type="text" :action="$actionValue" />
+                        <x-ui-text-field label="{{ $this->trans('postal_code') }}" model="inputs.postal_code" type="text" :action="$actionValue" />
+                    </div>
+                    <div class="row">
+                        <x-ui-text-field label="{{ $this->trans('contact_person') }}" model="inputs.contact_person" type="text" :action="$actionValue" span="HalfWidth" />
                         @if(in_array($inputs['grp'], [Partner::CUSTOMER]))
-                            <x-ui-text-field label="{{ $this->trans('ring_size') }}" model="inputs.ring_size" type="text" :action="$actionValue"  span="Half"/>
-                            <x-ui-text-field label="{{ $this->trans('partner_ring_size') }}" model="inputs.partner_ring_size" type="text" :action="$actionValue"  span="Half"/>
-                        @endif
-                    </x-ui-card>
-                </div>
-                @if ($actionValue === 'Edit')
-                <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
-                    <x-ui-card>
-                        @livewire('trd-jewel1.master.partner.transaction-data-table', ['partnerID' => $objectIdValue])
-                    </x-ui-card>
-                </div>
-                @endif
-            </x-ui-tab-view-content>
+                        <x-ui-text-field label="{{ $this->trans('ring_size') }}" model="inputs.ring_size" type="text" :action="$actionValue" />
+                        <x-ui-text-field label="{{ $this->trans('partner_ring_size') }}" model="inputs.partner_ring_size" type="text" :action="$actionValue" />
+                        @endif </div>
+                </x-ui-card>
+            </div>
+            @if ($actionValue === 'Edit')
+            <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
+                <x-ui-card>
+                    @livewire('trd-jewel1.master.partner.transaction-data-table', ['partnerID' => $objectIdValue])
+                </x-ui-card>
+            </div>
+            @endif
+        </x-ui-tab-view-content>
         @include('layout.customs.form-footer')
     </x-ui-page-card>
 </div>
+
