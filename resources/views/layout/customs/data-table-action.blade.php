@@ -1,7 +1,6 @@
-
 <div class="text-center" style="position: relative;">
     @if($enable_this_row)
-    <div class="dropdown" style="position: relative;">
+    <div class="dropdown">
         <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton{{ $row->id }}" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="svg-icon svg-icon-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -11,29 +10,33 @@
                 </svg>
             </span>
         </button>
-        <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton{{ $row->id }}">
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ $row->id }}">
             @if($allow_details && isset($permissions['read']) && $permissions['read'])
             <li>
                 <a class="dropdown-item btn btn-sm" href="#" wire:click="viewData({{ $row->id }})">
-                    <i class="bi bi-eye"></i>Detil</a>
+                    <i class="bi bi-eye"></i> Detil
+                </a>
             </li>
             @endif
             @if($allow_edit && (isset($permissions['read']) && $permissions['read'] || isset($permissions['update']) && $permissions['update']))
             <li>
                 <a class="dropdown-item btn btn-sm" href="#" wire:click="editData({{ $row->id }})">
-                    <i class="bi bi-pencil"></i> Edit</a>
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
             </li>
             @endif
             @if($allow_delete && isset($permissions['delete']) && $permissions['delete'])
             <li>
                 <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
-                    <i class="bi bi-trash"></i>Delete</a>
+                    <i class="bi bi-trash"></i> Delete
+                </a>
             </li>
             @endif
             @if($allow_disable && isset($permissions['delete']) && $permissions['delete'])
             <li>
                 <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
-                    <i class="bi bi-x-circle"></i>Disable</a>
+                    <i class="bi bi-x-circle"></i> Disable
+                </a>
             </li>
             @endif
             @if($custom_actions && isset($custom_actions))
@@ -51,15 +54,25 @@
 </div>
 
 <script>
-    document.addEventListener('livewire:load', function() {
+    document.addEventListener('DOMContentLoaded', function() {
         var dropdowns = document.querySelectorAll('.dropdown');
         dropdowns.forEach(function(dropdown) {
             dropdown.addEventListener('show.bs.dropdown', function(event) {
                 var menu = event.target.querySelector('.dropdown-menu');
                 var rect = event.target.getBoundingClientRect();
-                menu.style.top = rect.top + window.scrollY + event.target.offsetHeight + 'px';
-                menu.style.left = rect.left + window.scrollX + 'px';
+                var viewportWidth = window.innerWidth;
+                var menuWidth = menu.offsetWidth;
+
+                // Ensure dropdown aligns correctly and fits within the viewport
                 menu.style.position = 'absolute';
+                menu.style.top = rect.bottom + 'px';
+
+                // Adjust left position for better visibility on mobile
+                var leftPosition = rect.left;
+                if (leftPosition + menuWidth > viewportWidth) {
+                    leftPosition = viewportWidth - menuWidth - 10; // Adjust for right padding
+                }
+                menu.style.left = leftPosition + 'px';
             });
         });
     });
