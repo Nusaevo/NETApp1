@@ -53,14 +53,15 @@ class Detail extends BaseComponent
             'input_details.*.qty' => $this->trans('qty'),
             'input_details.*.price' => $this->trans('price'),
         ];
-        $this->customRules  = [
-            // 'inputs.partner_id' =>  'required',
-            // 'inputs.wh_code' =>  'required',
-            'inputs.tr_date' => 'required',
-            'input_details.*.price' => 'required',
-            'input_details.*.qty' => 'required',
-        ];
     }
+
+    public $rules  = [
+        // 'inputs.partner_id' =>  'required',
+        // 'inputs.wh_code' =>  'required',
+        'inputs.tr_date' => 'required',
+        'input_details.*.price' => 'required',
+        'input_details.*.qty' => 'required',
+    ];
 
     protected function onLoadForEdit()
     {

@@ -28,21 +28,6 @@ class Detail extends BaseComponent
             'inputs.ring_size'      => $this->trans('ring_size'),
             'inputs.partner_ring_size'      => $this->trans('partner_ring_size'),
         ];
-        $this->customRules  = [
-            'inputs.grp' => 'required|string|min:1|max:50',
-            'inputs.name' => 'required|string|min:1|max:50',
-            'inputs.address' => 'string|min:1|max:50',
-            'inputs.city' => 'string|min:1|max:20',
-            'inputs.country' => 'string|min:1|max:20',
-            'inputs.postal_code' => 'string|min:1|max:10',
-            'inputs.contact_person' => 'string|min:1|max:255',
-            // 'inputs.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50'
-            // ],
-        ];
     }
 
     protected function onLoadForEdit()
@@ -57,6 +42,22 @@ class Detail extends BaseComponent
                 break;
         }
     }
+
+    public $rules  = [
+        'inputs.grp' => 'required|string|min:1|max:50',
+        'inputs.name' => 'required|string|min:1|max:50',
+        'inputs.address' => 'string|min:1|max:50',
+        'inputs.city' => 'string|min:1|max:20',
+        'inputs.country' => 'string|min:1|max:20',
+        'inputs.postal_code' => 'string|min:1|max:10',
+        'inputs.contact_person' => 'string|min:1|max:255',
+        // 'inputs.code' => [
+        //     'required',
+        //     'string',
+        //     'min:1',
+        //     'max:50'
+        // ],
+    ];
 
     public function render()
     {

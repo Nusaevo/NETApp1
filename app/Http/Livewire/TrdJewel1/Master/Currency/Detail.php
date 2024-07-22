@@ -22,13 +22,14 @@ class Detail extends BaseComponent
             'inputs.goldprice_curr' => $this->trans('gold_price_currency'),
             'inputs.goldprice_basecurr' => $this->trans('gold_price_base'),
         ];
-        $this->customRules  = [
-            'inputs.curr_id' => 'required|integer',
-            'inputs.curr_rate' => 'required',
-            'inputs.goldprice_curr' => 'required',
-            'inputs.goldprice_basecurr' => 'required',
-        ];
     }
+
+    public $rules = [
+        'inputs.curr_id' => 'required|integer',
+        'inputs.curr_rate' => 'required',
+        'inputs.goldprice_curr' => 'required',
+        'inputs.goldprice_basecurr' => 'required',
+    ];
 
     protected function onLoadForEdit()
     {

@@ -153,7 +153,7 @@ class BaseComponent extends Component
     protected function validateForm()
     {
         try {
-            $this->validate($this->customRules,[],$this->customValidationAttributes);
+            $this->validate($this->rules,[],$this->customValidationAttributes);
         } catch (Exception $e) {
             $this->notify('error', Lang::get('generic.error.create', ['message' => $e->getMessage()]));
             throw $e;

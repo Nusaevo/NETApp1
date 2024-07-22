@@ -84,7 +84,8 @@ use App\Models\TrdJewel1\Master\Material;
                                 <x-ui-list-body>
                                     <x-slot name="rows">
                                         <div class="row">
-                                            <x-ui-dropdown-select label="{{ $this->trans('material') }}" clickEvent="" model="matl_boms.{{ $key }}.base_matl_id" :options="$baseMaterials" required="true" :action="$actionValue" :onChanged="'baseMaterialChange('. $key .', $event.target.value)'" />
+                                            <x-ui-dropdown-select label="{{ $this->trans('material') }}" clickEvent="" model="matl_boms.{{ $key }}.base_matl_id" :options="$baseMaterials" required="true" :action="$actionValue"
+                                                :onChanged="'baseMaterialChange('. $key .', '. (!empty('$event.target.value') ? '$event.target.value' : 'null') .')'"/>
                                             <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />
                                         </div>
                                         <div class="row">

@@ -83,8 +83,10 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
         ];
-        $this->customRules  = [
-            'materials.jwl_buying_price' => 'required',
+    }
+    
+    public $rules = [
+        'materials.jwl_buying_price' => 'required',
             'materials.jwl_selling_price' => 'required',
             'materials.jwl_category1' => 'required|string|min:0|max:255',
             // 'materials.jwl_category2' => 'required|string|min:0|max:255',
@@ -104,8 +106,7 @@ class MaterialComponent extends BaseComponent
             //     'max:50',
             //     Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
             // ],
-        ];
-    }
+    ];
 
     protected function onLoadForEdit()
     {

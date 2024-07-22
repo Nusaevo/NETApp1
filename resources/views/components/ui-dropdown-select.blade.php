@@ -4,8 +4,8 @@ $id = str_replace(['.', '[', ']'], '_', $model);
 <div wire:ignore.self class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif>
     <div class="form-floating">
         <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}"
-                @if(isset($modelType) && $modelType==='lazy' ) wire:model.lazy="{{ isset($model) ? $model : '' }}" 
-                @else wire:model="{{ isset($model) ? $model : '' }}" 
+                @if(isset($modelType) && $modelType==='lazy' ) wire:model.lazy="{{ isset($model) ? $model : '' }}"
+                @else wire:model="{{ isset($model) ? $model : '' }}"
                 @endif
                 @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif
                 class="form-select @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"

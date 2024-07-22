@@ -21,7 +21,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             <script>
-                document.addEventListener('livewire:initialized', () => {
+                document.addEventListener('livewire:load', function() {
                     var barcodeInput = document.getElementById('{{ $model }}');
                     if (barcodeInput) {
                         window.addEventListener('barcode-processed', function() {

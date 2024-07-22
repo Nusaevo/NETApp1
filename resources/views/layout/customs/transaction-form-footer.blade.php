@@ -17,7 +17,7 @@ $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
 {{-- <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" /> --}}
 
 <script>
-    document.addEventListener('livewire:initialized', () => {
+    document.addEventListener('livewire:load', function() {
         $(document).on('click', '.btn-dialog-box', function(e) {
             e.preventDefault();
             Swal.fire({

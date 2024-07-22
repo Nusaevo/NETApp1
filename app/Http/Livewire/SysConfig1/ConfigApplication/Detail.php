@@ -31,23 +31,11 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
     ];
 
-    protected function rules()
-    {
-        $rules = [
-            'inputs.name' => 'required|string|min:1|max:100',
-            'inputs.version' => 'string|min:1|max:15',
-            'inputs.descr' => 'string|min:1|max:500',
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
-            ],
-
-        ];
-        return $rules;
-    }
+    public $rules = [
+        'inputs.name' => 'required|string|min:1|max:100',
+         'inputs.version' => 'string|min:1|max:15',
+        'inputs.descr' => 'string|min:1|max:500',
+    ];
 
     protected $validationAttributes = [
         'inputs'                => 'Input Application',

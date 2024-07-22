@@ -15,6 +15,7 @@ return [
     |
     */
 
+    'legacy_model_binding' => true,
     'class_namespace' => 'App\\Http\\Livewire',
 
     /*
