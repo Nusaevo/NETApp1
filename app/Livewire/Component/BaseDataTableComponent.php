@@ -127,13 +127,13 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->object->save();
             $this->object->updateObject($this->object->version_number);
             $this->object->delete();
-            $this->dispatch('notify-swal', [
+             $this->dispatch('alert', [
                 'type' => 'success',
                 'message' => Lang::get('generic.string.disable', ['object' => "object"])
             ]);
         } catch (Exception $e) {
             // Handle the exception
-            $this->dispatch('notify-swal', [
+             $this->dispatch('alert', [
                 'type' => 'error',
                 'message' => Lang::get('generic.string.disable', ['object' => "object", 'message' => $e->getMessage()])
             ]);

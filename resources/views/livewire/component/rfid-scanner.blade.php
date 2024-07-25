@@ -74,7 +74,7 @@
 
             Livewire.on('errorOccurred', errorMessage => {
                 console.log('Error:', errorMessage);
-                Livewire.dispatch('notify-swal', {
+                Livewire.dispatch('notify-alert', {
                     type: 'error',
                     message: errorMessage.message
                 });

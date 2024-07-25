@@ -329,7 +329,7 @@ class Detail extends BaseComponent
         }
 
         if (empty($this->selectedMaterials)) {
-            $this->dispatch('notify-swal', [
+             $this->dispatch('alert', [
                 'type' => 'error',
                 'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
             ]);
@@ -362,7 +362,7 @@ class Detail extends BaseComponent
 
                 if ($existingReturnDtl) {
                     DB::rollback();
-                    $this->dispatch('notify-swal', [
+                     $this->dispatch('alert', [
                         'type' => 'error',
                         'message' => "Item {$material->code} sudah ada di Order"
                     ]);
@@ -391,14 +391,14 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
             DB::commit();
 
-            $this->dispatch('notify-swal', [
+             $this->dispatch('alert', [
                 'type' => 'success',
                 'message' => 'Berhasil menambahkan item ke nota'
             ]);
             $this->selectedMaterials = [];
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('notify-swal', [
+             $this->dispatch('alert', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
             ]);
