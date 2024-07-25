@@ -1,4 +1,4 @@
 [
-    "node_modules/fullcalendar/main.js",
-    "node_modules/fullcalendar/locales-all.min.js"
+    "node_modules/fullcalendar/index.js",
+    "node_modules/fullcalendar/index.global.min.js"
 ]
