@@ -5,4 +5,4 @@
         @livewire('trd-jewel1.master.partner.index-data-table')
     </div>
 </x-ui-page-card>
-<div>
+</div>
