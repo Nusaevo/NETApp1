@@ -6,7 +6,7 @@ use App\Models\TrdJewel1\Master\Material;
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Inventories\IvtBalUnit;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class OrderDtl extends BaseModel
 {

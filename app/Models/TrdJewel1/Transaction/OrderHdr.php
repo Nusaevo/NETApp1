@@ -7,7 +7,7 @@ use App\Models\TrdJewel1\Master\Partner;
 use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
 use App\Models\SysConfig1\ConfigSnum;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class OrderHdr extends BaseModel
 {

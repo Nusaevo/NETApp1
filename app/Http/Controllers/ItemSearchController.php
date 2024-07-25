@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\TrdJewel1\Master\Material;
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class ItemSearchController extends Controller
 {

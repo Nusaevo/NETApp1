@@ -35,8 +35,8 @@ array_walk($menu, function ($val) {
 
 Route::middleware('auth')->group(function () {
     $livewireComponents = [];
-    $livewireDirectory = app_path('Http/Livewire');
-    $namespaceBase = 'App\Http\Livewire';
+    $livewireDirectory = app_path('Livewire');
+    $namespaceBase = 'App\Livewire';
     $excludeDirectory = $livewireDirectory . DIRECTORY_SEPARATOR . 'Components';
 
     if (File::isDirectory($livewireDirectory)) {

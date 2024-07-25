@@ -6,7 +6,7 @@ use App\Models\Base\BaseModel;
 use App\Models\Base\BaseModel\Attachment;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Transaction\OrderDtl;
-use DB;
+use Illuminate\Support\Facades\DB;
 class Material extends BaseModel
 {
     protected $table = 'materials';

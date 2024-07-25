@@ -2,7 +2,7 @@
 
 namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
-use DB;
+use Illuminate\Support\Facades\DB;
 class ConfigConst extends BaseModel
 {
     protected $table = 'config_consts';
