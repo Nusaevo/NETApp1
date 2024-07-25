@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Models\SysConfig1\ConfigUser;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rules;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
-use Illuminate\Support\Str;
+use Illuminate\Auth\Events\Registered;
+use App\Providers\RouteServiceProvider;
 
 class RegisteredUserController extends Controller
 {
@@ -21,14 +21,15 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        return view('auth.register');
+        addJavascriptFile('assets/js/custom/authentication/sign-up/general.js');
+
+        return view('pages/auth.register');
     }
 
     /**
      * Handle an incoming registration request.
      *
      * @param  \Illuminate\Http\Request  $request
-     *
      * @return \Illuminate\Http\RedirectResponse
      *
      * @throws \Illuminate\Validation\ValidationException
@@ -36,15 +37,17 @@ class RegisteredUserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'  => 'required|string|max:255',
-            'email'      => 'required|string|email|max:255|unique:users',
-            'password'   => ['required', 'confirmed', Rules\Password::defaults()],
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'code', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = ConfigUser::create([
-            'name' => $request->name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
+            'code' => $request->code,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'last_login_at' => \Illuminate\Support\Carbon::now()->toDateTimeString(),
+            'last_login_ip' => $request->getClientIp()
         ]);
 
         event(new Registered($user));
@@ -52,34 +55,5 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return redirect(RouteServiceProvider::HOME);
-    }
-
-
-    /**
-     * Handle an incoming api registration request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     *
-     * @return \Illuminate\Http\Response
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function apiStore(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email'      => 'required|string|email|max:255|unique:users',
-            'password'   => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        $token = Str::random(60);
-        $user = ConfigUser::create([
-            'name' => $request->name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-            'api_token' => hash('sha256', $token),
-        ]);
-
-        return response($user);
     }
 }

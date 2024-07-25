@@ -1,11 +1,12 @@
 <?php
 
-use App\Http\Controllers\Auth\SocialiteLoginController;
-use App\Http\Controllers\PagesController;
+use App\Http\Controllers\Apps\PermissionManagementController;
+use App\Http\Controllers\Apps\RoleManagementController;
+use App\Http\Controllers\Apps\UserManagementController;
+use App\Http\Controllers\Auth\SocialiteController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\CustomerSearchController;
-use App\Http\Controllers\ItemSearchController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,22 +17,6 @@ use App\Http\Controllers\ItemSearchController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-// Route::get('/', function () {
-//     return redirect('index');
-// });
-
-$menu = theme()->getMenu();
-array_walk($menu, function ($val) {
-    if (isset($val['path'])) {
-        $route = Route::get($val['path'], [PagesController::class, 'index']);
-
-        // Exclude documentation from auth middleware
-        if (!Str::contains($val['path'], 'documentation')) {
-            $route->middleware('auth');
-        }
-    }
-});
 
 Route::middleware('auth')->group(function () {
     $livewireComponents = [];
@@ -88,6 +73,15 @@ Route::middleware('auth')->group(function () {
 
     }
 
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::name('user-management.')->group(function () {
+        Route::resource('/user-management/users', UserManagementController::class);
+        Route::resource('/user-management/roles', RoleManagementController::class);
+        Route::resource('/user-management/permissions', PermissionManagementController::class);
+    });
+
+    // Route::get('/', [DashboardController::class, 'index']);
     Route::get('/', function () {
         $app_code = Session::get('app_code');
         return redirect($app_code ? '/' . $app_code . '/Home' : '/');
@@ -95,17 +89,10 @@ Route::middleware('auth')->group(function () {
     // Additional non-standard routes go here
 });
 
-Route::fallback(function () {
-    $app_code = session('app_code');
-    return redirect($app_code ? '/' . $app_code . '/Home' : '/');
+Route::get('/error', function () {
+    abort(500);
 });
-// Route::resource('users', UsersController::class);
 
-// /**
-//  * Socialite login using Google service
-//  * https://laravel.com/docs/8.x/socialite
-//  */
-Route::get('/auth/redirect/{provider}', [SocialiteLoginController::class, 'redirect']);
-Route::get('search-item', [ItemSearchController::class, 'selectSearch']);
-Route::get('search-customer', [CustomerSearchController::class, 'selectSearch']);
+Route::get('/auth/redirect/{provider}', [SocialiteController::class, 'redirect']);
+
 require __DIR__ . '/auth.php';

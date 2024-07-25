@@ -9,7 +9,6 @@ use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Enums\Status;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 
 class IndexDataTable extends BaseDataTableComponent

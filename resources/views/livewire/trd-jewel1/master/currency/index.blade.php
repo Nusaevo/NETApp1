@@ -1,3 +1,4 @@
+<div>
 <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
    
 
@@ -5,4 +6,4 @@
         @livewire('trd-jewel1.master.currency.index-data-table')
     </div>
 </x-ui-page-card>
-
+</div>

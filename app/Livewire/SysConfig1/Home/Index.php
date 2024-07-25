@@ -2,12 +2,18 @@
 
 namespace App\Livewire\SysConfig1\Home;
 
-use Livewire\Component;
+use App\Livewire\Component\BaseComponent;
 
-class Index extends Component
+use Livewire\Attributes\Layout;
+class Index extends BaseComponent
 {
+    protected function onPreRender()
+    {
+        $this->bypassPermissions = true;
+    }
+
     public function render()
     {
-        return view('pages.index');
+        return view('livewire.index');
     }
 }

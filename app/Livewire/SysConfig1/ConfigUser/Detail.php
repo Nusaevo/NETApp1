@@ -9,8 +9,6 @@ use App\Models\SysConfig1\ConfigGroup;
 use Illuminate\Validation\Rule;
 use App\Models\SysConfig1\ConfigAppl;
 use Illuminate\Support\Facades\Crypt;
-
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -43,7 +41,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     protected function rules()
@@ -112,12 +110,12 @@ class Detail extends BaseComponent
     {
         if ($this->object->isNew()) {
             if (empty($this->inputs['newpassword'])) {
-                throw new Exception(Lang::get('generic.error.password_must_be_filled'));
+                throw new Exception(__('generic.error.password_must_be_filled'));
             }
         }
         if (!empty($this->inputs['newpassword'])) {
             if ($this->inputs['newpassword'] !== $this->inputs['confirmnewpassword']) {
-                throw new Exception(Lang::get('generic.error.password_mismatch'));
+                throw new Exception(__('generic.error.password_mismatch'));
             }
         }
     }

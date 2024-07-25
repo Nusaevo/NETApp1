@@ -7,7 +7,6 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use App\Enums\Status;
 

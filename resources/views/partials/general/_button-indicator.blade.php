@@ -1,14 +1,9 @@
-@php
-    $label = $label ?? __('Submit');
-    $message = $message ?? __('Please wait...');
-@endphp
-
-<!--begin::Indicator-->
+<!--begin::Indicator label-->
 <span class="indicator-label">
-    {{ $label }}
+    {{ $label ?? 'Upgrade Plan' }}
 </span>
-<span class="indicator-progress">
-    {{ $message }}
-    <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
-</span>
-<!--end::Indicator-->
+<!--end::Indicator label-->
+<!--begin::Indicator progress-->
+<span class="indicator-progress">Please wait...
+<span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+<!--end::Indicator progress-->

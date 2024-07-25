@@ -1,3 +1,5 @@
+
+<div>
 <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
    
 
@@ -6,3 +8,5 @@
     </div>
 </x-ui-page-card>
 
+
+</div>

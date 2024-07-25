@@ -1,4 +1,5 @@
 <div>
+<div>
     <x-ui-button clickEvent="" type="Back" button-name="Back" />
 </div>
 <div class="card">
@@ -152,3 +153,5 @@
     }
 
 </style>
+
+</div>

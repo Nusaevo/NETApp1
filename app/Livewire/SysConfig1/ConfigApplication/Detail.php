@@ -4,7 +4,6 @@ namespace App\Livewire\SysConfig1\ConfigApplication;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigAppl;
-use Illuminate\Validation\Rule;
 
 class Detail extends BaseComponent
 {
@@ -24,7 +23,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     protected $listeners = [

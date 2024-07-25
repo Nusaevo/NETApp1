@@ -40,7 +40,8 @@ return [
     |
     */
 
-    'layout' => 'layout.demo1.master',
+    'layout' => 'layout.app',
+
     /*
     |--------------------------------------------------------------------------
     | Livewire Assets URL
@@ -54,7 +55,7 @@ return [
     |
     */
 
-    'asset_url' => null,
+    'asset_url' => env('LIVEWIRE_ASSET_URL', null),
 
     /*
     |--------------------------------------------------------------------------

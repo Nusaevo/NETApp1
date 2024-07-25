@@ -12,7 +12,6 @@ use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Models\TrdJewel1\Transaction\OrderDtl;
 use Exception;
 use App\Enums\Status;
-use Illuminate\Support\Facades\Lang;
 
 class Detail extends BaseComponent
 {
@@ -89,7 +88,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     protected $listeners = [
@@ -195,9 +194,9 @@ class Detail extends BaseComponent
                 $this->object->delete();
                 $messageKey = 'generic.string.disable';
             $this->object->save();
-            $this->notify('success', Lang::get($messageKey));
+            $this->notify('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
           return redirect()->route(str_replace('.Detail', '', $this->baseRoute));

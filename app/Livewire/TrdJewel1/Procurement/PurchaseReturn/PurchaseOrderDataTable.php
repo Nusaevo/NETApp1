@@ -8,7 +8,6 @@ use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Enums\Status;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 class PurchaseOrderDataTable extends BaseDataTableComponent
 {

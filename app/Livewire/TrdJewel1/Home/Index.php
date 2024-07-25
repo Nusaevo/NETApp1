@@ -1,20 +1,24 @@
 <?php
 namespace App\Livewire\TrdJewel1\Home;
 
-use Livewire\Component;
+use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Carbon\Carbon;  // Carbon for handling dates
 
-class Index extends Component
+class Index extends BaseComponent
 {
     public $currencyRates = [];
     public $goldPrices = [];
     public $todayCurrencyRate;
     public $todayGoldPrice;
 
-    public function mount() {
+
+    protected function onPreRender()
+    {
+        $this->bypassPermissions = true;
         $this->fetchData();
     }
+
 
     public function fetchData() {
         $today = Carbon::today()->toDateString();
@@ -52,6 +56,7 @@ class Index extends Component
         return view('livewire.trd-jewel1.home.index', [
             'currencyRates' => $this->currencyRates,
             'goldPrices' => $this->goldPrices,
-        ]);
+        ])->layout('layout.app');
+
     }
 }

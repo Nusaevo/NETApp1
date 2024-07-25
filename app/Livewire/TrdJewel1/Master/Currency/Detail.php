@@ -39,7 +39,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     protected $listeners = [

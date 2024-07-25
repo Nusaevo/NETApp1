@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\SysConfig1\ConfigUser;
+use App\Models\User;
 use Faker\Generator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -16,34 +16,18 @@ class UsersSeeder extends Seeder
      */
     public function run(Generator $faker)
     {
-        // Create a demo user
-        ConfigUser::create([
-            'code'    => 'andryhuang',
-            'password'    => Hash::make('secret'),
-            'name'    => $faker->name,
-            'dept'         => 'Demo Department',
-            'phone'        => $faker->phoneNumber,
-            'email'        => 'demo@demo.com',
-            'status_code'  => 'A',
-            'created_by'   => "SYSTEM",
-            'updated_by'   => "SYSTEM",
-            'version_number' => 1,
+        $demoUser = User::create([
+            'name'              => $faker->name,
+            'email'             => 'demo@demo.com',
+            'password'          => Hash::make('demo'),
+            'email_verified_at' => now(),
         ]);
 
-        // Create additional demo users
-        for ($i = 0; $i < 9; $i++) {
-            ConfigUser::create([
-                'code'    => $faker->unique()->userName,
-                'password'    => Hash::make('secret'),
-                'name'    => $faker->name,
-                'dept'         => $faker->word,
-                'phone'        => $faker->phoneNumber,
-                'email'        => $faker->unique()->safeEmail,
-                'status_code'  => 'A',
-                'created_by'   => "SYSTEM",
-                'updated_by'   => "SYSTEM",
-                'version_number' => 1,
-            ]);
-        }
+        $demoUser2 = User::create([
+            'name'              => $faker->name,
+            'email'             => 'admin@demo.com',
+            'password'          => Hash::make('demo'),
+            'email_verified_at' => now(),
+        ]);
     }
 }

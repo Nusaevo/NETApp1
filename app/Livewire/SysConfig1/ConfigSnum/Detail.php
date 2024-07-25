@@ -7,7 +7,6 @@ use App\Models\SysConfig1\ConfigSnum;
 use App\Models\SysConfig1\ConfigAppl;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -30,7 +29,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     protected $listeners = [

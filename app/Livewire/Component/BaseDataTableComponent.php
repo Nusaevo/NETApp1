@@ -4,7 +4,6 @@ namespace App\Livewire\Component;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use App\Enums\Status;
 use Illuminate\Support\Facades\Route;
@@ -127,15 +126,15 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->object->save();
             $this->object->updateObject($this->object->version_number);
             $this->object->delete();
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'success',
-                'message' => Lang::get('generic.string.disable', ['object' => "object"])
+                'message' => __('generic.string.disable', ['object' => "object"])
             ]);
         } catch (Exception $e) {
             // Handle the exception
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
-                'message' => Lang::get('generic.string.disable', ['object' => "object", 'message' => $e->getMessage()])
+                'message' => __('generic.string.disable', ['object' => "object", 'message' => $e->getMessage()])
             ]);
         }
         $this->dispatch('refreshData');
@@ -144,7 +143,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public function trans($key)
     {
         $fullKey = $this->langBasePath . "." . $key;
-        $translation = Lang::get($fullKey);
+        $translation = __($fullKey);
         if ($translation === $fullKey) {
             return $key;
         } else {

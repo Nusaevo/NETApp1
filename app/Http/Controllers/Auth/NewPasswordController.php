@@ -16,19 +16,19 @@ class NewPasswordController extends Controller
      * Display the password reset view.
      *
      * @param  \Illuminate\Http\Request  $request
-     *
      * @return \Illuminate\View\View
      */
-    public function create(Request $request, $token)
+    public function create(Request $request)
     {
-        return view('auth.reset-password', compact('request', 'token'));
+        addJavascriptFile('assets/js/custom/authentication/reset-password/new-password.js');
+
+        return view('pages/auth.reset-password', ['request' => $request]);
     }
 
     /**
      * Handle an incoming new password request.
      *
      * @param  \Illuminate\Http\Request  $request
-     *
      * @return \Illuminate\Http\RedirectResponse
      *
      * @throws \Illuminate\Validation\ValidationException
@@ -36,8 +36,8 @@ class NewPasswordController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'token'    => 'required',
-            'email'    => 'required|email',
+            'token' => ['required'],
+            'code' => ['required', 'code'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -45,10 +45,10 @@ class NewPasswordController extends Controller
         // will update the password on an actual user model and persist it to the
         // database. Otherwise we will parse the error and return the response.
         $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
+            $request->only('code', 'password', 'password_confirmation', 'token'),
             function ($user) use ($request) {
                 $user->forceFill([
-                    'password'       => Hash::make($request->password),
+                    'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
                 ])->save();
 
@@ -60,8 +60,8 @@ class NewPasswordController extends Controller
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
         return $status == Password::PASSWORD_RESET
-            ? redirect()->route('login')->with('status', __($status))
-            : back()->withInput($request->only('email'))
-                ->withErrors(['email' => __($status)]);
+                    ? redirect()->route('login')->with('status', __($status))
+                    : back()->withInput($request->only('email'))
+                            ->withErrors(['email' => __($status)]);
     }
 }

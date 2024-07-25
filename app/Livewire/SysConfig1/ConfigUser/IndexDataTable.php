@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Models\SysConfig1\ConfigUser;
 use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use App\Enums\Status;
 class IndexDataTable extends BaseDataTableComponent

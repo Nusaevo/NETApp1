@@ -15,7 +15,7 @@ class RfidScanner extends Component
         return view('livewire.component.rfid-scanner');
     }
 
-    protected $listeners = ['tagScanned' => 'handleTagScanned', 'errorOccurred' => 'handleError', 'notify-alert' => 'showNotification'];
+    protected $listeners = ['tagScanned' => 'handleTagScanned', 'errorOccurred' => 'handleError', 'notify-swal' => 'showNotification'];
 
     public function handleTagScanned($tags)
     {
@@ -26,7 +26,7 @@ class RfidScanner extends Component
     public function handleError($message)
     {
         $this->errorMessage = $message;
-         $this->dispatch('alert', [
+        $this->dispatch('notify-swal', [
             'type' => 'error',
             'message' => $message,
         ]);
@@ -39,6 +39,6 @@ class RfidScanner extends Component
 
     public function showNotification($data)
     {
-         $this->dispatch('alert', $data);
+        $this->dispatch('notify-swal', $data);
     }
 }

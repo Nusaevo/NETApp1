@@ -1,3 +1,4 @@
+ <div>
  <x-ui-page-card title="{!! $menuName !!}">
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="false">
                 <div class="card-body">
@@ -50,3 +51,4 @@
         </div>
 
 </x-ui-page-card>
+</div>

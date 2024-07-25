@@ -8,7 +8,7 @@
             toastr.error(message);
         });
 
-        Livewire.on('alert', (dataArray) => {
+        Livewire.on('notify-swal', (dataArray) => {
             console.log('alert event triggered'); // Debugging
             console.log('Event data:', dataArray); // Debugging
 

@@ -8,20 +8,30 @@ use Throwable;
 class Handler extends ExceptionHandler
 {
     /**
+     * A list of exception types with their corresponding custom log levels.
+     *
+     * @var array<class-string<\Throwable>, \Psr\Log\LogLevel::*>
+     */
+    protected $levels = [
+        //
+    ];
+
+    /**
      * A list of the exception types that are not reported.
      *
-     * @var array
+     * @var array<int, class-string<\Throwable>>
      */
     protected $dontReport = [
         //
     ];
 
     /**
-     * A list of the inputs that are never flashed for validation exceptions.
+     * A list of the inputs that are never flashed to the session on validation exceptions.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $dontFlash = [
+        'current_password',
         'password',
         'password_confirmation',
     ];
@@ -35,25 +45,6 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
-        });
-        $this->renderable(function (Throwable $exception, $request) {
-            if ($this->isHttpException($exception)) {
-                $statusCode = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : 500;
-                $titles = [
-                    403 => 'Forbidden',
-                    404 => 'Not Found',
-                    500 => 'Internal Server Error',
-                    431 => 'Error'
-                ];
-                $errorTitle = $titles[$statusCode] ?? 'Error';
-                $errorMessage = $exception->getMessage() ?: 'Sorry, something went wrong.';
-
-                return response()->view('errors.error', [
-                    'errorCode' => $statusCode,
-                    'errorTitle' => $errorTitle,
-                    'errorMessage' => $errorMessage,
-                ], $statusCode);
-            }
         });
     }
 }

@@ -1,49 +1,19 @@
-@php
-    $class = $class ?? '';
-    $icon = $icon ?? false;
-    $title = $title ?? false;
-    $body = $body ?? false;
-    $button = $button ?? false;
-    $button_label = $button_label ?? 'Button';
-    $button_url = $button_url ?? '#';
-    $button_modal_id = $button_modal_id ?? false;
-    $color = $color ?? 'primary';
-    $padding = $padding ?? 'p-6';
-    $icon_classes = $icon ? 'ms-15 ms-lg-15' : 'ms-0 ms-lg-0';
-@endphp
-
 <!--begin::Notice-->
-<div class="notice d-flex bg-light-{{ $color }} rounded border-{{ $color }} border border-dashed {{ $class }} {{ $padding }}">
-    @if ($icon)
-        <!--begin::Icon-->
-        {!! theme()->getSvgIcon($icon, "svg-icon-2tx svg-icon-" . $color . " me-4") !!}
-        <!--end::Icon-->
-    @endif
-
-    <!--begin::Wrapper-->
-    <div class="d-flex flex-stack flex-grow-1 {{ util()->putIf($button, 'flex-wrap flex-md-nowrap') }}">
-        @if ($title || $body)
-            <!--begin::Content-->
-            <div class="{{ util()->putIf($button, 'mb-3 mb-md-0') }} fw-bold">
-                @if ($title)
-                    <h4 class="text-gray-800 fw-bolder">{{ $title }}</h4>
-                @endif
-
-                @if ($body)
-                    <div class="fs-6 text-gray-600 @if ($button) {{ 'pe-7' }} @endif">{!! $body !!}</div>
-                @endif
-            </div>
-            <!--end::Content-->
-        @endif
-
-        @if ($button)
-            <!--begin::Action-->
-            <a href="{{ $button_url }}" class="btn btn-{{ $color }} px-6 align-self-center text-nowrap" {{ util()->putIf($button_modal_id, 'data-bs-toggle="modal" data-bs-target="' . $button_modal_id . '"') }}>
-                {{ $button_label }}
-            </a>
-            <!--end::Action-->
-        @endif
-    </div>
-    <!--end::Wrapper-->
+<div class="notice d-flex bg-light-primary rounded border-primary border border-dashed min-w-lg-600px flex-shrink-0 p-6">
+<!--begin::Icon-->
+{!! getIcon('devices-2', 'fs-2tx text-primary me-4') !!} 
+<!--end::Icon-->
+<!--begin::Wrapper-->
+<div class="d-flex flex-stack flex-grow-1 flex-wrap flex-md-nowrap">
+	<!--begin::Content-->
+	<div class="mb-3 mb-md-0 fw-semibold">
+		<h4 class="text-gray-900 fw-bold">Database Backup Process Completed!</h4>
+		<div class="fs-6 text-gray-700 pe-7">Login into Admin Dashboard to make sure the data integrity is OK</div>
+	</div>
+	<!--end::Content-->
+	<!--begin::Action-->
+	<a href="#" class="btn btn-primary px-6 align-self-center text-nowrap">Proceed</a>
+	<!--end::Action-->
 </div>
+<!--end::Wrapper--></div>
 <!--end::Notice-->

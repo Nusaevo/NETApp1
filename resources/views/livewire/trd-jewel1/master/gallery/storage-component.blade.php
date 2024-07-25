@@ -1,3 +1,4 @@
+<div>
 <x-ui-page-card title="{!! $menuName !!}">
     @if (!$isDialogBoxComponent)
     <div class="gallery-header">
@@ -108,3 +109,4 @@
         toggleDeleteButton();
     }
 </script>
+</div>

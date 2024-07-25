@@ -12,7 +12,6 @@ use App\Models\TrdJewel1\Master\GoldPriceLog;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Lang;
 
 class Detail extends BaseComponent
 {
@@ -41,7 +40,7 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            abort(431, Lang::get('generic.string.currency_needed'));
+            abort(431, __('generic.string.currency_needed'));
         }
         $this->customValidationAttributes  = [
             'input_details.*' => $this->trans('product'),
@@ -96,7 +95,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     protected $listeners = [
@@ -108,7 +107,7 @@ class Detail extends BaseComponent
 
     public function OpenDialogBox(){
         if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            $this->notify('warning',__('generic.string.currency_needed'));
             return;
         }
         $this->dispatch('openMaterialDialog');
@@ -138,7 +137,7 @@ class Detail extends BaseComponent
         });
 
         if (empty($selectedItems)) {
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Harap pilih item dahulu sebelum checkout'
             ]);
@@ -192,7 +191,7 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'warning',
                 'message' => 'Diperlukan kurs mata uang.'
             ]);
@@ -201,7 +200,7 @@ class Detail extends BaseComponent
 
         $tagCount = count($tags);
         // if ($tagCount == 0) {
-        //      $this->dispatch('alert', [
+        //     $this->dispatch('notify-swal', [
         //         'type' => 'error',
         //         'message' => 'Tidak ada tag yang discan. Silakan coba lagi.'
         //     ]);
@@ -356,7 +355,7 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            $this->notify('warning', __('generic.string.currency_needed'));
             return;
         }
 
@@ -378,12 +377,12 @@ class Detail extends BaseComponent
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
         if ($this->currencyRate == 0) {
-            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            $this->notify('warning', __('generic.string.currency_needed'));
             return;
         }
 
         if (empty($this->selectedMaterials)) {
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
             ]);
@@ -412,7 +411,7 @@ class Detail extends BaseComponent
 
                 if ($existingOrderDtl) {
                     DB::rollback();
-                     $this->dispatch('alert', [
+                    $this->dispatch('notify-swal', [
                         'type' => 'error',
                         'message' => "Item {$material->code} sudah ada di cart"
                     ]);
@@ -438,7 +437,7 @@ class Detail extends BaseComponent
 
             DB::commit();
 
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'success',
                 'message' => 'Berhasil menambahkan item ke cart'
             ]);
@@ -447,7 +446,7 @@ class Detail extends BaseComponent
             $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
             ]);

@@ -1,3 +1,3 @@
-<div style="padding-bottom: 20px;">
+<div style="padding:5px;">
     {{ $slot }}
 </div>

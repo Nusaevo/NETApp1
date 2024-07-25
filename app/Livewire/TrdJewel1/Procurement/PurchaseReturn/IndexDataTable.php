@@ -10,7 +10,6 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 
 class IndexDataTable extends BaseDataTableComponent

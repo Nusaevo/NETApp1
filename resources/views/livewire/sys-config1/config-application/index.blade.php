@@ -1,8 +1,9 @@
+<div>
+        <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
 
-    <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
-
-        <div class="table-container">
-            @livewire('sys-config1.config-application.index-data-table')
-        </div>
-    </x-ui-page-card>
+            <div class="table-container">
+                @livewire('sys-config1.config-application.index-data-table')
+            </div>
+        </x-ui-page-card>
+</div>
 

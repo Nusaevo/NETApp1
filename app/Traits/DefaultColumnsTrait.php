@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Traits;
-use Illuminate\Support\Facades\DB;
+use DB;
 trait DefaultColumnsTrait
 {
     protected function generateDefaultColumns($table)

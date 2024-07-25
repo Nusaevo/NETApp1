@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Lang;
 
 class Index extends BaseComponent
 {
@@ -72,7 +71,7 @@ class Index extends BaseComponent
     public function addToCart($material_id, $material_code)
     {
         if ($this->currencyRate == 0) {
-            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            $this->notify('warning', __('generic.string.currency_needed'));
             return;
         }
         $usercode = Auth::check() ? Auth::user()->code : '';
@@ -84,7 +83,7 @@ class Index extends BaseComponent
             $material = Material::find($material_id);
             if (!$material) {
                 DB::rollback();
-                 $this->dispatch('alert', [
+                $this->dispatch('notify-swal', [
                     'type' => 'error',
                     'message' => 'Material not found'
                 ]);
@@ -94,7 +93,7 @@ class Index extends BaseComponent
             // Check if the material has quantity
             if (!$material->hasQuantity()) {
                 DB::rollback();
-                 $this->dispatch('alert', [
+                $this->dispatch('notify-swal', [
                     'type' => 'error',
                     'message' => 'Material out of stock'
                 ]);
@@ -147,7 +146,7 @@ class Index extends BaseComponent
 
                 DB::commit();
 
-                 $this->dispatch('alert', [
+                $this->dispatch('notify-swal', [
                     'type' => 'success',
                     'message' => 'Berhasil menambahkan item ke cart'
                 ]);
@@ -155,7 +154,7 @@ class Index extends BaseComponent
             } else {
                 DB::rollback();
 
-                 $this->dispatch('alert', [
+                $this->dispatch('notify-swal', [
                     'type' => 'error',
                     'message' => 'Item sudah dimasukkan ke cart'
                 ]);
@@ -163,7 +162,7 @@ class Index extends BaseComponent
         } catch (\Exception $e) {
             DB::rollback();
 
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
             ]);

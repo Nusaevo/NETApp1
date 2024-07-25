@@ -12,7 +12,6 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use Illuminate\Support\Facades\DB;
 

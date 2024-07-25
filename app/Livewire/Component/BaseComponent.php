@@ -6,7 +6,6 @@ use Livewire\Component;
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\SysConfig1\ConfigMenu;
 use Exception;
-use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Status;
 use Illuminate\Support\Facades\Auth;
@@ -47,6 +46,7 @@ class BaseComponent extends Component
     // Mount method to initialize the component
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
+        app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
         $this->onPreRender();
         $this->additionalParam = $additionalParam;
@@ -117,7 +117,7 @@ class BaseComponent extends Component
     public function trans($key)
     {
         $fullKey = $this->langBasePath . "." . $key;
-        $translation = Lang::get($fullKey);
+        $translation = __($fullKey);
         if ($translation === $fullKey) {
             return $key;
         } else {
@@ -155,7 +155,7 @@ class BaseComponent extends Component
         try {
             $this->validate($this->rules,[],$this->customValidationAttributes);
         } catch (Exception $e) {
-            $this->notify('error', Lang::get('generic.error.create', ['message' => $e->getMessage()]));
+            $this->notify('error', __('generic.error.create', ['message' => $e->getMessage()]));
             throw $e;
         }
     }
@@ -163,7 +163,7 @@ class BaseComponent extends Component
     // Notify method
     protected function notify($type, $message)
     {
-         $this->dispatch('alert', [
+        $this->dispatch('notify-swal', [
             'type' => $type,
             'message' => $message,
         ]);
@@ -189,11 +189,11 @@ class BaseComponent extends Component
             $this->updateVersionNumber();
             $this->onValidateAndSave();
             DB::commit();
-            $this->notify('success',Lang::get('generic.string.save'));
+            $this->notify('success',__('generic.string.save'));
             $this->resetForm();
         } catch (Exception $e) {
             DB::rollBack();
-            $this->notify('error', Lang::get('generic.error.save', ['message' => $e->getMessage()]));
+            $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
 
@@ -234,9 +234,9 @@ class BaseComponent extends Component
             }
 
             $this->object->save();
-            $this->notify('success', Lang::get($messageKey));
+            $this->notify('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         $this->dispatch('refresh');

@@ -33,7 +33,7 @@ class Index extends BaseComponent
         $this->dateEnd = now()->format('Y-m-d');
 
         $this->refreshItemCategory();
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     public function resetResult()

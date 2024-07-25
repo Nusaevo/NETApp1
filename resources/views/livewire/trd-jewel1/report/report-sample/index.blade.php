@@ -1,8 +1,4 @@
 <div>
-    <div>
-        @include('layout.customs.notification')
-    </div>
-
     <x-ui-page-card title="Report Sample" >
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
             <form wire:submit.prevent="search">

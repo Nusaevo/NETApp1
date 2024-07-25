@@ -9,7 +9,6 @@ use App\Models\TrdJewel1\Master\MatlBom;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\Base\Attachment;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
@@ -187,7 +186,7 @@ class MaterialComponent extends BaseComponent
                     $this->loadMaterial($material->id);
                 }
             } else {
-                $this->notify('error', Lang::get($this->langBasePath . '.message.product_notfound'));
+                $this->notify('error', __($this->langBasePath . '.message.product_notfound'));
             }
         }
     }
@@ -396,10 +395,10 @@ class MaterialComponent extends BaseComponent
                     $filePath = Attachment::saveAttachmentByFileName($image['url'], $this->object->id, class_basename($this->object), $image['filename']);
                     if ($filePath !== false) {
                     } else {
-                        $errorMessages[] = Lang::get($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
+                        $errorMessages[] = __($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
                     }
                 } catch (Exception $e) {
-                    $errorMessages[] = Lang::get($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
+                    $errorMessages[] = __($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
                 }
             }
         }
@@ -457,9 +456,9 @@ class MaterialComponent extends BaseComponent
             }
 
             $this->object->save();
-            $this->notify('success', Lang::get($messageKey));
+            $this->notify('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         $this->dispatch('refresh');
@@ -725,11 +724,11 @@ class MaterialComponent extends BaseComponent
                 $additionalParam = urlencode($this->object->id);
                 return redirect()->route('TrdJewel1.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey(""),'additionalParam'=> $additionalParam ]);
             }else{
-                $this->notify('error',Lang::get($this->langBasePath.'.message.save_material_input'));
+                $this->notify('error',__($this->langBasePath.'.message.save_material_input'));
             }
 
         }else{
-            $this->notify('error',Lang::get($this->langBasePath.'.message.barcode_validation'));
+            $this->notify('error',__($this->langBasePath.'.message.barcode_validation'));
         }
     }
 }

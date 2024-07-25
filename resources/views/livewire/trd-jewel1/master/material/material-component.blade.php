@@ -1,3 +1,4 @@
+<div>
 @php
 use App\Models\TrdJewel1\Master\Material;
 @endphp
@@ -173,3 +174,4 @@ use App\Models\TrdJewel1\Master\Material;
 
     </x-ui-footer>
 </x-ui-page-card>
+</div>

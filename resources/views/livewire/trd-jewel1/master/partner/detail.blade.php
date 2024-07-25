@@ -1,3 +1,5 @@
+
+<div>
 @php
 use App\Models\TrdJewel1\Master\Partner;
 @endphp
@@ -46,4 +48,4 @@ use App\Models\TrdJewel1\Master\Partner;
         @include('layout.customs.form-footer')
     </x-ui-page-card>
 </div>
-
+</div>

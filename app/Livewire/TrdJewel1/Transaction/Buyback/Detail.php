@@ -16,7 +16,6 @@ use App\Models\TrdJewel1\Transaction\BillingDtl;
 use App\Models\TrdJewel1\Transaction\BillingHdr;
 use App\Models\TrdJewel1\Transaction\DelivDtl;
 use App\Models\TrdJewel1\Transaction\DelivHdr;
-use Illuminate\Support\Facades\Lang;
 use Exception;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -55,7 +54,7 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            abort(431, Lang::get('generic.string.currency_needed'));
+            abort(431, __('generic.string.currency_needed'));
         }
         $this->customValidationAttributes  = [
             'inputs.tr_date'      => $this->trans('tr_date'),
@@ -113,7 +112,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute)->layout('layout.app');
     }
 
     protected $listeners = [
@@ -126,11 +125,11 @@ class Detail extends BaseComponent
 
     public function OpenDialogBox(){
         if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',Lang::get('generic.string.currency_needed'));
+            $this->notify('warning',__('generic.string.currency_needed'));
             return;
         }
         if (empty($this->inputs['partner_id'])) {
-            $this->notify('warning', Lang::get('generic.error.field_required', ['field' => "Customer"]));
+            $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
             return;
         }
         $this->searchMaterials();
@@ -220,9 +219,9 @@ class Detail extends BaseComponent
                 $this->object->delete();
                 $messageKey = 'generic.string.disable';
             $this->object->save();
-            $this->notify('success', Lang::get($messageKey));
+            $this->notify('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error',Lang::get('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
@@ -269,7 +268,7 @@ class Detail extends BaseComponent
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
         if ($this->currencyRate == 0) {
-            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            $this->notify('warning', __('generic.string.currency_needed'));
             return;
         }
 
@@ -324,12 +323,12 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->notify('warning', Lang::get('generic.string.currency_needed'));
+            $this->notify('warning', __('generic.string.currency_needed'));
             return;
         }
 
         if (empty($this->selectedMaterials)) {
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
             ]);
@@ -362,7 +361,7 @@ class Detail extends BaseComponent
 
                 if ($existingReturnDtl) {
                     DB::rollback();
-                     $this->dispatch('alert', [
+                    $this->dispatch('notify-swal', [
                         'type' => 'error',
                         'message' => "Item {$material->code} sudah ada di Order"
                     ]);
@@ -391,14 +390,14 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
             DB::commit();
 
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'success',
                 'message' => 'Berhasil menambahkan item ke nota'
             ]);
             $this->selectedMaterials = [];
         } catch (\Exception $e) {
             DB::rollback();
-             $this->dispatch('alert', [
+            $this->dispatch('notify-swal', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
             ]);

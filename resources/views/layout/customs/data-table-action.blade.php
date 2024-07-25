@@ -53,7 +53,7 @@
     @endif
 </div>
 
-<script>
+{{-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         var dropdowns = document.querySelectorAll('.dropdown');
         dropdowns.forEach(function(dropdown) {
@@ -99,4 +99,4 @@
             }
         });
     });
-</script>
+</script> --}}

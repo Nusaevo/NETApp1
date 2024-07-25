@@ -1,5 +1,4 @@
 <div>
-    <x-base-layout>
         <div class="row gy-5 g-xl-8">
             <div class="col-xxl-4">
                 @php
@@ -111,8 +110,6 @@
     });
 
 </script>
-
-</x-base-layout>
 
 
 </div>
