@@ -10,10 +10,23 @@ use Illuminate\Support\Facades\Route;
 class SidebarMenu extends Component
 {
     public $menus;
+    public $baseRoute;
 
     public function mount()
     {
+        $this->baseRoute = $this->getBaseRoute();
         $this->menus = $this->generateMenu(auth()->user()->id);
+    }
+
+    private function getBaseRoute()
+    {
+        $currentRoute = Route::currentRouteName();
+        if (strpos($currentRoute, 'Detail/PrintPdf') !== false) {
+            $routeParts = explode('/', $currentRoute);
+            array_pop($routeParts); // Remove last part
+            return implode('/', $routeParts);
+        }
+        return $currentRoute;
     }
 
     private function generateMenu($userId)

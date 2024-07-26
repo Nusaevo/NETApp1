@@ -44,29 +44,25 @@ class Detail extends BaseComponent
         return view($this->renderRoute)->layout('layout.app');
     }
 
-    protected function rules()
-    {
-        $rules = [
+    public $rules = [
             'inputs.name' => 'required|string|min:1|max:100',
-            'inputs.email' => [
-                'required',
-                'string',
-                'min:1',
-                'max:255',
-                'email',
-                Rule::unique('sys-config1.config_users', 'email')->ignore($this->object ? $this->object->id : null),
-            ],
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('sys-config1.config_users', 'code')->ignore($this->object ? $this->object->id : null),
-            ],
+            // 'inputs.email' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:255',
+            //     'email',
+            //     Rule::unique('sys-config1.config_users', 'email')->ignore($this->object ? $this->object->id : null),
+            // ],
+            // 'inputs.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('sys-config1.config_users', 'code')->ignore($this->object ? $this->object->id : null),
+            // ],
             // 'inputs.newpassword' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
         ];
-        return $rules;
-    }
 
     protected $validationAttributes = [
         'inputs'                => 'Input User',

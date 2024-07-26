@@ -37,17 +37,13 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
     ];
 
-    protected function rules()
-    {
-        $rules = [
+    public $rules= [
             'inputs.app_id' => 'required',
             'inputs.var_group' => 'required|string|min:1|max:50',
             'inputs.seq' =>  'required',
             'inputs.default_value' => 'required|string|min:1|max:50',
             'inputs.descr' => 'string|min:1|max:200'
         ];
-        return $rules;
-    }
 
     protected $validationAttributes = [
         'inputs'                => 'Input',

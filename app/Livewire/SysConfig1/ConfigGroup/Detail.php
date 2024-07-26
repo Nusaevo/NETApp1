@@ -123,9 +123,7 @@ class Detail extends BaseComponent
         $this->selectedUserIds = $selectedUserIds;
     }
 
-    protected function rules()
-    {
-        $rules = [
+    public $rules= [
             'inputs.app_id' =>  'required',
             'inputs.descr' => 'required|string|min:1|max:100',
             // 'inputs.code' => [
@@ -136,8 +134,6 @@ class Detail extends BaseComponent
             //     Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
             // ],
         ];
-        return $rules;
-    }
 
     protected $validationAttributes = [
         'inputs'                => 'Input Group',

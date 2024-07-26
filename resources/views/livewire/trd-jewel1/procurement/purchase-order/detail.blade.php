@@ -126,7 +126,6 @@
     {{-- @php
     dump($input_details);
     @endphp --}}
-</div>
 
 
 <script>
@@ -143,3 +142,5 @@
 
 </script>
 
+
+</div>

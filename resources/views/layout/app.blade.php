@@ -53,7 +53,7 @@
     <!--end::Custom Stylesheets-->
 
     @livewireStyles
-    
+
 </head>
 <!--end::Head-->
 
@@ -95,11 +95,11 @@
 </div>
 <!--end::App-->
 
-@include('partials/_drawers')
+{{-- @include('partials/_drawers')
 
 @include('partials/_modals')
 
-@include('partials/_scrolltop')
+@include('partials/_scrolltop') --}}
 
 
 

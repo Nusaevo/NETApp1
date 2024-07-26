@@ -37,9 +37,7 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
     ];
 
-    protected function rules()
-    {
-        $rules = [
+    public $rules= [
             'inputs.app_id' => 'required',
             'inputs.const_group' => 'required|string|min:1|max:50',
             'inputs.seq' =>  'required',
@@ -53,8 +51,6 @@ class Detail extends BaseComponent
             //     Rule::unique('config.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
             // ],
         ];
-        return $rules;
-    }
 
     protected $validationAttributes = [
         'inputs'                => 'Input',

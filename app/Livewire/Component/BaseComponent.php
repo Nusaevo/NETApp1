@@ -73,7 +73,6 @@ class BaseComponent extends Component
         if (empty($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
-
         $route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($route);
         $this->renderRoute = 'livewire.' . $this->baseRenderRoute;

@@ -36,22 +36,18 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
     ];
 
-    protected function rules()
-    {
-        $rules = [
+    public  $rules = [
             'inputs.app_id' => 'required',
             'inputs.menu_caption' => 'required|string|min:1|max:100',
             'inputs.menu_link' => 'required|string|min:1|max:100',
-            'inputs.code' => [
-                'required',
-                'string',
-                'min:1',
-                'max:50',
-                Rule::unique('sys-config1.config_menus', 'code')->ignore($this->object ? $this->object->id : null),
-            ],
+            // 'inputs.code' => [
+            //     'required',
+            //     'string',
+            //     'min:1',
+            //     'max:50',
+            //     Rule::unique('sys-config1.config_menus', 'code')->ignore($this->object ? $this->object->id : null),
+            // ],
         ];
-        return $rules;
-    }
 
     protected $validationAttributes = [
         'inputs'                => 'Input Menu',

@@ -97,9 +97,7 @@ class Detail extends BaseComponent
         'delete'  => 'delete'
     ];
 
-    protected function rules()
-    {
-        $rules = [
+    public $rules= [
             'inputs.tr_date' => 'required',
             'inputs.partner_id' => 'required',
             'input_details.*.matl_id' => 'required',
@@ -112,8 +110,6 @@ class Detail extends BaseComponent
             'input_details.*.order_qty' => 'required|integer|min:0|max:9999999999',
         ];
 
-        return $rules;
-    }
 
     protected $validationAttributes = [
         'inputs'                => 'Input',
