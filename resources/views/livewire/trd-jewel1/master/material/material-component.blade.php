@@ -107,7 +107,7 @@ use App\Models\TrdJewel1\Master\Material;
                                                 <x-ui-text-field label="{{ $this->trans('gia_number') }}" model="matl_boms.{{ $key }}.gia_number" type="number" :action="$actionValue" required="false" />
                                             @elseif($matl_bom['base_matl_id_note'] == Material::GEMSTONE)
                                                 <div class="row">
-                                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" clickEvent="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGemColors" required="false" :action="$actionValue" />
+                                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" clickEvent="" model="matl_boms.{{ $key }}.gemcolor" :options="$sideMaterialGemColors" required="false" :action="$actionValue" />
                                                 </div>
                                             @elseif($matl_bom['base_matl_id_note'] == Material::GOLD)
                                                 <div class="row">
@@ -117,7 +117,7 @@ use App\Models\TrdJewel1\Master\Material;
                                             @endif
                                         @endisset
                                     </x-slot>
-                                    
+
                                     <x-slot name="button">
                                         <x-ui-link-text type="close" :clickEvent="'deleteBoms(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
                                     </x-slot>
