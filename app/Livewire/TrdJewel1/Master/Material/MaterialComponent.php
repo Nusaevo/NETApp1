@@ -364,10 +364,10 @@ class MaterialComponent extends BaseComponent
             $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename];
         }
     }
-    public function captureImages($imageDataUrl)
+    public function captureImages($imageData)
     {
         $filename = uniqid() . '.jpg';
-        $this->capturedImages[] = ['url' => $imageDataUrl, 'filename' => $filename];
+        $this->capturedImages[] = ['url' => $imageData, 'filename' => $filename];
     }
 
     public function deleteImage($index)
@@ -684,7 +684,7 @@ class MaterialComponent extends BaseComponent
         $this->materials['markup'] = numberFormat($newMarkupPercentage);
     }
 
-    public function tagScanned($msg)
+    public function tagScanned($tags)
     {
         if (isset($msg)) {
             $tagCount = count($msg);

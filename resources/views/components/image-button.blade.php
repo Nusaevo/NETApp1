@@ -60,7 +60,7 @@
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    Livewire.dispatch('captureImages', e.target.result);
+                    Livewire.dispatch('captureImages', { imageData: e.target.result });
                 };
                 reader.readAsDataURL(file);
             });
@@ -127,7 +127,7 @@
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    Livewire.dispatch('captureImages', e.target.result);
+                    Livewire.dispatch('captureImages', { imageData: e.target.result });
                 };
                 reader.readAsDataURL(file);
             });
