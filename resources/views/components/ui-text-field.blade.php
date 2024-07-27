@@ -6,7 +6,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
     <div class="d-flex align-items-center">
         <div class="form-floating flex-grow-1">
             @if(isset($type) && $type === 'textarea')
-            <textarea wire:model.defer="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off"></textarea>
+            <textarea wire:model.defer="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off"></textarea>
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -16,7 +16,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'barcode')
-            <input wire:model="{{ $model }}" id="{{ $id }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off" />
+            <input wire:model="{{ $model }}" id="{{ $id }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off" />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -43,7 +43,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
 
             </script>
             @elseif(isset($type) && $type === 'code')
-            <input wire:model.defer="{{ $model }}" type="text" class="form-control  @error($model) is-invalid @enderror" @if((isset($action) && ($action=='Edit' || $action=='View' )) || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off" />
+            <input wire:model.defer="{{ $model }}" type="text" class="form-control  @error($model) is-invalid @enderror" @if((isset($action) && ($action=='Edit' || $action=='View' )) || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off" />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -66,7 +66,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
 
             </script>
             @elseif(isset($type) && $type === 'number')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif />
+            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -108,7 +108,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @else
-            <input wire:model.defer="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif />
+            <input wire:model.defer="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
