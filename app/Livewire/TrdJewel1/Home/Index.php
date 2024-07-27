@@ -56,7 +56,7 @@ class Index extends BaseComponent
         return view('livewire.trd-jewel1.home.index', [
             'currencyRates' => $this->currencyRates,
             'goldPrices' => $this->goldPrices,
-        ])->layout('layout.app');
+        ]);
 
     }
 }

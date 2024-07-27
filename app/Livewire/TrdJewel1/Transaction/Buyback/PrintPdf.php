@@ -42,6 +42,6 @@ class PrintPdf extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute)->layout('layout.app');
+        return view($this->renderRoute);
     }
 }
