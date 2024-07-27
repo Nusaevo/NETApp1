@@ -72,16 +72,16 @@
             console.log('Livewire loaded'); // To verify script is loaded
             initializeScanButton();
 
-            Livewire.on('errorOccurred', errorMessage => {
-                console.log('Error:', errorMessage);
-                Livewire.dispatch('notify-swal', {
-                    type: 'error',
-                    message: errorMessage.message
-                });
-                const scanButton = document.getElementById('scanButton');
-                scanButton.disabled = false;
-                scanButton.querySelector('span').innerText = "Scan";
-            });
+            // Livewire.on('errorOccurred', errorMessage => {
+            //     console.log('Error:', errorMessage);
+            //     Livewire.dispatch('notify-swal', {
+            //         type: 'error',
+            //         message: errorMessage.message
+            //     });
+            //     const scanButton = document.getElementById('scanButton');
+            //     scanButton.disabled = false;
+            //     scanButton.querySelector('span').innerText = "Scan";
+            // });
 
             Livewire.hook('element.updated', (el, component) => {
                 if (el.querySelector('#scanButton')) {

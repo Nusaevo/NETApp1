@@ -12,7 +12,7 @@
 
 <div class="table-responsive mt-5" >
     <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" >
-        <tbody wire:ignore.self >
+        <tbody>
             {{ $body }}
         </tbody>
     </table>

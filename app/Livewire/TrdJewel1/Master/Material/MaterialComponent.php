@@ -83,7 +83,7 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
         ];
     }
-    
+
     public $rules = [
         'materials.jwl_buying_price' => 'required',
             'materials.jwl_selling_price' => 'required',
@@ -268,7 +268,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['shapes'] = "";
+        $this->matl_boms[$key]['shapes'] =  "";
     }
 
     public function refreshSideMaterialClarity($key)
@@ -281,7 +281,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['clarity'] = "";
+        $this->matl_boms[$key]['clarity'] =  "";
     }
 
     public function refreshSideMaterialCut($key)
@@ -319,7 +319,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['color'] = "";
+        $this->matl_boms[$key]['color'] =  "";
     }
 
     public function refreshSideMaterialGemstone($key)
@@ -332,7 +332,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['gemstone'] = "";
+        $this->matl_boms[$key]['gemstone'] =  "";
     }
 
     public function refreshSideMaterialJewelPurity($key)
@@ -345,7 +345,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['purity'] = "";
+        $this->matl_boms[$key]['purity'] =   "";
     }
 
     protected function onPopulateDropdowns()
@@ -615,14 +615,14 @@ class MaterialComponent extends BaseComponent
         $this->materials['descr'] = $materialDescriptions;
     }
 
-
     public function addBoms()
     {
         $bomsDetail = new MatlBom();
         $bomsDetail['jwl_sides_price'] = 0;
         $bomsDetail['jwl_sides_cnt'] = 1;
-        array_push($this->matl_boms, $bomsDetail);
-        // array_push($this->object_boms, $bomsDetail);
+
+        $this->matl_boms[] = $bomsDetail;
+
         $this->refreshBaseMaterials($this->bom_row);
         $this->refreshSideMaterialGiaColor($this->bom_row);
         $this->refreshSideMaterialGemColor($this->bom_row);
@@ -631,12 +631,10 @@ class MaterialComponent extends BaseComponent
         $this->refreshSideMaterialGemstone($this->bom_row);
         $this->refreshSideMaterialShapes($this->bom_row);
         $this->refreshSideMaterialJewelPurity($this->bom_row);
-        $newDetail = end($this->matl_boms);
-        $this->newItems[] = $newDetail;
-        $this->dispatch('itemAdded');
+
+        $this->newItems[] = $bomsDetail;
         $this->bom_row++;
     }
-
     public function deleteBoms($index)
     {
         if (isset($this->matl_boms[$index]['id'])) {

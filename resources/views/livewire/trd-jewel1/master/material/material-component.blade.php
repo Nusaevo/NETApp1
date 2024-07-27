@@ -97,7 +97,7 @@ use App\Models\TrdJewel1\Master\Material;
                                         @switch($matl_bom['base_matl_id_note'])
                                         @case(Material::JEWELRY)
 
-                                        <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue" span="Full" />
+                                        <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue"/>
                                         @break
                                         @case(Material::DIAMOND)
 

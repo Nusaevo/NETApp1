@@ -134,13 +134,16 @@
             toastr.error(message);
         });
 
-        Livewire.on('swal', (message, icon, confirmButtonText) => {
-            if (typeof icon === 'undefined') {
-                icon = 'success';
-            }
-            if (typeof confirmButtonText === 'undefined') {
-                confirmButtonText = 'Ok, got it!';
-            }
+        Livewire.on('notify-swal', (dataArray) => {
+            console.log('alert event triggered'); // Debugging
+            console.log('Event data:', dataArray); // Debugging
+
+            // Assuming the data is an array, get the first item
+            let data = dataArray[0];
+            let message = data.message || '';
+            let icon = data.type || 'success';
+            let confirmButtonText = 'Ok';
+
             Swal.fire({
                 text: message,
                 icon: icon,

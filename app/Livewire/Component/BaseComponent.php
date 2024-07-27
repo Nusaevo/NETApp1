@@ -162,6 +162,7 @@ class BaseComponent extends Component
     // Notify method
     protected function notify($type, $message)
     {
+
         $this->dispatch('notify-swal', [
             'type' => $type,
             'message' => $message,

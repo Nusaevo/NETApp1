@@ -112,7 +112,9 @@ class Detail extends BaseComponent
         // } else {
         //     $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
         // }
-        $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
+        if (!isset($this->inputs['code'])) {
+            $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
+        }
         $dataToSave = [];
         if (in_array($this->inputs['grp'], [Partner::CUSTOMER])) {
             $dataToSave['ring_size'] = $this->inputs['ring_size'] ?? null;

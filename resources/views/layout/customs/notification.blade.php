@@ -1,4 +1,4 @@
-@once
+{{-- @once
 <script>
     document.addEventListener('livewire:init', () => {
         Livewire.on('success', (message) => {
@@ -30,4 +30,4 @@
         });
     });
 </script>
-@endonce
+@endonce --}}
