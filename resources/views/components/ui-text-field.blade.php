@@ -1,8 +1,9 @@
+
+<div class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible==='false' ) style="display: none;" @endif>
 @php
 $id = str_replace(['.', '[', ']'], '_', $model);
 @endphp
 
-<div class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible==='false' ) style="display: none;" @endif>
     <div class="d-flex align-items-center">
         <div class="form-floating flex-grow-1">
             @if(isset($type) && $type === 'textarea')
@@ -22,7 +23,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             @endif
             <script>
                 document.addEventListener('livewire:load', function() {
-                    var barcodeInput = document.getElementById('{{ $model }}');
+                    var barcodeInput = document.getElementById('{{ $id }}');
                     if (barcodeInput) {
                         window.addEventListener('barcode-processed', function() {
                             barcodeInput.value = '';
@@ -34,7 +35,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                                 event.preventDefault();
                                 if (barcodeInput.value !== "") {
                                     console.log(barcodeInput.value);
-                                    Livewire.emit('scanBarcode', barcodeInput.value);
+                                    Livewire.dispatch('scanBarcode', barcodeInput.value);
                                 }
                             }
                         });
@@ -47,20 +48,28 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'date')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class=" form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif readonly="readonly" />
+            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif readonly="readonly" />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             <script>
-                myJQuery(document).ready(function() {
-                    myJQuery("[id='{{ $id }}']").datepicker({
+                function initDatePicker(id) {
+                    myJQuery("[id='" + id + "']").datepicker({
                         dateFormat: 'dd-mm-yy', // Set the date format to 'dd mm yy'
                         changeMonth: true,
                         changeYear: true,
                         showButtonPanel: true
                     }).on("change", function() {
-                        @this.set('{{ $model }}', myJQuery(this).val());
+                        @this.set(id.replace(/_/g, '.'), myJQuery(this).val());
                     });
+                }
+
+                document.addEventListener('livewire:init', function() {
+                    initDatePicker('{{ $id }}');
+                });
+
+                document.addEventListener('livewire:update', function() {
+                    initDatePicker('{{ $id }}');
                 });
             </script>
             @elseif(isset($type) && $type === 'number')
@@ -69,9 +78,8 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             <script>
-                myJQuery(document).ready(function() {
-                    var modelId = "{{ $id }}";
-                    var $input = $('#' + modelId);
+                function initInputMask(id) {
+                    var $input = myJQuery('#' + id);
 
                     Inputmask({
                         alias: "numeric",
@@ -86,10 +94,16 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                     }).mask($input[0]);
 
                     $input.on('blur', function() {
-                        if ($(this).val().trim() === '') {
-                            $(this).val('0');
-                        }
+                        @this.set(id.replace(/_/g, '.'), myJQuery(this).val());
                     });
+                }
+
+                document.addEventListener('livewire:init', function() {
+                    initInputMask('{{ $id }}');
+                });
+
+                document.addEventListener('livewire:update', function() {
+                    initInputMask('{{ $id }}');
                 });
             </script>
             @elseif(isset($type) && $type === 'image')

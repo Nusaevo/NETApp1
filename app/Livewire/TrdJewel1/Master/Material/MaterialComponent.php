@@ -34,7 +34,6 @@ class MaterialComponent extends BaseComponent
     public $baseMaterials;
 
     public $deletedItems = [];
-    public $newItems = [];
     public $bom_row = 0;
 
     public $capturedImages = [];
@@ -97,7 +96,17 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.base_matl_id' => 'required',
             'matl_boms.*.jwl_sides_cnt' => 'required',
             'matl_boms.*.jwl_sides_carat' => 'required',
-            // 'matl_boms.*.jwl_sides_price' => 'required',
+            'matl_boms.*.jwl_sides_price' => 'nullable',
+            'matl_boms.*.purity' => 'nullable',
+            'matl_boms.*.shapes' => 'nullable',
+            'matl_boms.*.clarity' => 'nullable',
+            'matl_boms.*.color' => 'nullable',
+            'matl_boms.*.cut' => 'nullable',
+            'matl_boms.*.gia_number' => 'nullable',
+            'matl_boms.*.gemstone' => 'nullable',
+            'matl_boms.*.gemcolor' => 'nullable',
+            'matl_boms.*.production_year' => 'nullable',
+            'matl_boms.*.ref_mark' => 'nullable',
             // 'materials.code' => [
             //     'required',
             //     'string',
@@ -154,7 +163,7 @@ class MaterialComponent extends BaseComponent
                         break;
                     case Material::GEMSTONE:
                         $this->matl_boms[$key]['gemstone'] = $decodedData['gemstone'] ?? null;
-                        $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
+                        $this->matl_boms[$key]['gemcolor'] = $decodedData['gemcolor'] ?? null;
                         break;
                     case Material::GOLD:
                         $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? 0;
@@ -307,7 +316,7 @@ class MaterialComponent extends BaseComponent
                 'value' => $data->str1
             ];
         })->toArray();
-        $this->matl_boms[$key]['color'] = "";
+        $this->matl_boms[$key]['gemcolor'] = "";
     }
 
     public function refreshSideMaterialGiaColor($key)
@@ -474,7 +483,6 @@ class MaterialComponent extends BaseComponent
         $this->object_uoms = new MatlUom();
         $this->object_boms = [];
         $this->deletedItems = [];
-        $this->newItems = [];
         $this->bom_row = 0;
         $this->capturedImages = [];
     }
@@ -537,7 +545,7 @@ class MaterialComponent extends BaseComponent
             } elseif (in_array($baseMaterialId, [Material::GEMSTONE])) {
                 $dataToSave = [
                     'gemstone' => $bomData['gemstone'] ?? null,
-                    'color' => $bomData['color'] ?? null,
+                    'gemcolor' => $bomData['gemcolor'] ?? null,
                 ];
             } elseif (in_array($baseMaterialId, [Material::GOLD])) {
                 $dataToSave = [
@@ -596,8 +604,14 @@ class MaterialComponent extends BaseComponent
         $materialDescriptions = '';
 
         if ($this->matl_boms && count($this->matl_boms) > 0) {
-            $bomIds = array_column($this->matl_boms, 'base_matl_id_value');
-            $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
+            $bomIds = array_filter(array_column($this->matl_boms, 'base_matl_id_value'), function($value) {
+                return !is_null($value) && $value !== '';
+            });
+            
+            if (!empty($bomIds)) {
+                $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
+            }
+            
 
             foreach ($this->matl_boms as $bom) {
                 if (isset($bom['base_matl_id_value'])) {
@@ -617,10 +631,10 @@ class MaterialComponent extends BaseComponent
 
     public function addBoms()
     {
-        $bomsDetail = new MatlBom();
         $bomsDetail['jwl_sides_price'] = 0;
         $bomsDetail['jwl_sides_cnt'] = 1;
-
+        $bomsDetail['base_matl_id_value'] = "";
+        $bomsDetail['base_matl_id_note'] = "";
         $this->matl_boms[] = $bomsDetail;
 
         $this->refreshBaseMaterials($this->bom_row);
@@ -631,8 +645,6 @@ class MaterialComponent extends BaseComponent
         $this->refreshSideMaterialGemstone($this->bom_row);
         $this->refreshSideMaterialShapes($this->bom_row);
         $this->refreshSideMaterialJewelPurity($this->bom_row);
-
-        $this->newItems[] = $bomsDetail;
         $this->bom_row++;
     }
     public function deleteBoms($index)
