@@ -80,8 +80,10 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['price'] = dollar(currencyToNumeric($detail->price));
+                $this->input_details[$key]['selling_price'] = dollar(currencyToNumeric($detail->Material->jwl_selling_price));
+                $this->input_details[$key]['amt'] = dollar(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['sub_total'] = (currencyToNumeric($detail->amt));
                 $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
             }
@@ -195,6 +197,7 @@ class Detail extends BaseComponent
             'tr_type' => $this->trType,
         ];
         $material = Material::find($material_id);
+        DD($material);
         if ($material) {
             $detail['matl_id'] = $material->id;
             $detail['matl_code'] = $material->code;
@@ -293,30 +296,12 @@ class Detail extends BaseComponent
           return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
 
-    public function changeQty($id, $value)
-    {
-        if (isset($this->input_details[$id]['price'])) {
-            $total = $this->input_details[$id]['price'] * $value;
-            $this->input_details[$id]['amt'] = $total;
-            $this->countTotalAmount();
-        }
-    }
-
-    public function changePrice($id, $value)
-    {
-        if (isset($this->input_details[$id]['qty'])) {
-            $total = $this->input_details[$id]['qty'] * $value;
-            $this->input_details[$id]['amt'] = $total;
-            $this->countTotalAmount();
-        }
-    }
-
     public function countTotalAmount()
     {
         $this->total_amount = 0;
         foreach ($this->input_details as $item_id => $input_detail) {
-            if (isset($input_detail['qty']) && isset($input_detail['price'])) {
-                $this->total_amount += $input_detail['price'] * $input_detail['qty'];
+            if (isset($input_detail['sub_total'])) {
+                $this->total_amount += $input_detail['sub_total'];
             }
         }
         $this->inputs['amt'] = $this->total_amount;
