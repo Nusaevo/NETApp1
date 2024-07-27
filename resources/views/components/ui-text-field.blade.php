@@ -69,7 +69,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             <script>
-                $(document).ready(function() {
+                myJQuery(document).ready(function() {
                     var modelId = "{{ $id }}";
                     var $input = $('#' + modelId);
 

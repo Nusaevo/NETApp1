@@ -686,17 +686,17 @@ class MaterialComponent extends BaseComponent
 
     public function tagScanned($tags)
     {
-        if (isset($msg)) {
-            $tagCount = count($msg);
+        if (isset($tags)) {
+            $tagCount = count($tags);
             if($tagCount > 1)
             {               // Show error message with the number of tags
                 $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
             } else {
                 // Process a single tag
-                if (!$this->isUniqueBarcode($msg)) {
+                if (!$this->isUniqueBarcode($tags)) {
                     $this->notify('error', 'RFID telah digunakan sebelumnya');
                 } else {
-                    $this->matl_uoms['barcode'] = $msg[0];
+                    $this->matl_uoms['barcode'] = $tags[0];
                     $this->notify('success', 'RFID berhasil discan');
                 }
             }
@@ -706,7 +706,6 @@ class MaterialComponent extends BaseComponent
     protected function isUniqueBarcode($barcode)
     {
         $query = MatlUom::where('barcode', $barcode);
-
         if (isset($this->object_id)) {
             $query->where('matl_id', '!=', $this->object_id);
         }

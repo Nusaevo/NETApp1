@@ -10,7 +10,7 @@ use App\Models\TrdJewel1\Master\Material;
     @elseif(!$searchMode && $actionValue === 'Edit')
     <x-ui-tab-view id="myTab" tabs="general,transactions"> </x-ui-tab-view>
     @endif
-    <x-ui-tab-view-content id="myTabContent" class="tab-content">
+    <x-ui-tab-view-content id="tabMaterial" class="tab-content">
         <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
             <x-ui-card>
                 <x-ui-padding>
@@ -141,7 +141,7 @@ use App\Models\TrdJewel1\Master\Material;
             </x-ui-card>
         </div>
         @if (!$searchMode && $actionValue === 'Edit')
-        <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
+        <div class="tab-pane fade show" id="tabTransactionMaterial" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
                 @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
             </x-ui-card>
