@@ -69,8 +69,8 @@ use App\Models\TrdJewel1\Master\Material;
                         <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" onChanged="sellingPriceChanged" />
                     </div>
                     <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('description') }}" model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="{{ $this->trans('placeHolder_description') }}" />
-                        <x-ui-text-field label="{{ $this->trans('bom_description') }}" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" placeHolder="{{ $this->trans('placeHolder_bom_description') }}" />
+                        <x-ui-text-field label="{{ $this->trans('description') }} ( {{ $this->trans('placeHolder_description') }} )" model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" />
+                        <x-ui-text-field label="{{ $this->trans('bom_description') }} ( {{ $this->trans('placeHolder_bom_description') }} )" model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" />
                     </div>
                 </x-ui-padding>
 
@@ -130,7 +130,7 @@ use App\Models\TrdJewel1\Master\Material;
             </x-ui-card>
         </div>
         @if (!$searchMode && $actionValue === 'Edit')
-        <div class="tab-pane fade show" id="tabTransactionMaterial" role="tabpanel" aria-labelledby="transactions-tab">
+        <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
                 @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
             </x-ui-card>

@@ -101,6 +101,7 @@ class Detail extends BaseComponent
         'changeItem'  => 'changeItem',
         'materialSaved' => 'materialSaved',
         'delete' => 'delete',
+        'saveCheck' => 'saveCheck',
     ];
 
 
@@ -264,8 +265,9 @@ class Detail extends BaseComponent
         $this->countTotalAmount();
     }
 
-    public function SaveCheck()
+    public function saveCheck()
     {
+        dd("ss");
         if (isset($this->input_details) && !$this->object->isNew()) {
             $this->SaveWithoutNotification();
         }

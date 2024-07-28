@@ -53,6 +53,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             <script>
+            document.addEventListener('livewire:init', () => {
                 myJQuery(document).ready(function() {
                     myJQuery("[id='{{ $id }}']").datepicker({
                         dateFormat: 'dd-mm-yy', // Set the date format to 'dd mm yy'
@@ -61,8 +62,12 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                         , showButtonPanel: true
                     }).on("change", function() {
                         @this.set('{{ $model }}', myJQuery(this).val());
+                        @if(isset($onChanged)  && $onChanged !== '')
+                        Livewire.dispatch('{{ $onChanged }}');
+                        @endif
                     });
                 });
+            });
 
             </script>
             @elseif(isset($type) && $type === 'number')

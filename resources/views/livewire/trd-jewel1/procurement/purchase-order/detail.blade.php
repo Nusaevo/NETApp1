@@ -14,8 +14,9 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <div class="row">
-                            <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" onChanged="SaveCheck" />
-                            <x-ui-text-field-search label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :options="$suppliers" required="true" :action="$actionValue" onChanged="SaveCheck" />
+                            <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" onChanged="saveCheck" />
+                            <x-ui-text-field-search label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers"
+                                required="true" :action="$actionValue" onChanged="saveCheck" />
                         </div>
                         {{-- <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" clickEvent="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue"  />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue"  /> --}}
