@@ -80,9 +80,9 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['price'] = dollar(currencyToNumeric($detail->price));
-                $this->input_details[$key]['selling_price'] = dollar(currencyToNumeric($detail->Material->jwl_selling_price));
-                $this->input_details[$key]['amt'] = dollar(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['price'] = currencyToNumeric($detail->price);
+                $this->input_details[$key]['selling_price'] = currencyToNumeric($detail->Material->jwl_selling_price);
+                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
                 $this->input_details[$key]['sub_total'] = (currencyToNumeric($detail->amt));
                 $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;

@@ -34,10 +34,13 @@ document.addEventListener('livewire:init', () => {
             selectElement.select2();
             selectElement.on('change', function(e) {
                 var data = $(this).val();
+                var onChanged = '{{ isset($onChanged) ? $onChanged : '' }}';
                 @this.set('{{ $model }}', data);
-                @if(isset($onChanged)  && $onChanged !== '')
-                        Livewire.dispatch('{{ $onChanged }}');
-                @endif
+
+                if (onChanged !== '') {
+                    Livewire.dispatch(onChanged);
+                    console.log('Event dispatched:', onChanged);  // Log the event dispatch action
+                }
             });
         }
     }
