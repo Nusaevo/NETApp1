@@ -15,8 +15,8 @@
                     <x-ui-padding>
                         <div class="row">
                             <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" />
-                            <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" onChanged="SaveCheck" />
-                            <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :options="$partners" required="true" :action="$actionValue" onChanged="SaveCheck" />
+                            <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" onChanged="saveCheck" />
+                            <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" onChanged="saveCheck" />
                         </div>
                     </x-ui-padding>
 

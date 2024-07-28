@@ -118,6 +118,7 @@ class Detail extends BaseComponent
         'materialSaved' => 'materialSaved',
         'delete' => 'delete',
         'tagScanned' => 'tagScanned',
+        'saveCheck' => 'saveCheck',
     ];
 
     public function OpenDialogBox(){
@@ -404,7 +405,7 @@ class Detail extends BaseComponent
         $this->materials =  $query->get();
     }
 
-    public function SaveCheck()
+    public function saveCheck()
     {
         if (!empty($this->input_details) && !$this->object->isNew()) {
             $this->SaveWithoutNotification();

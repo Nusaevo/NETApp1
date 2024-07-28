@@ -267,7 +267,6 @@ class Detail extends BaseComponent
 
     public function saveCheck()
     {
-        dd("ss");
         if (isset($this->input_details) && !$this->object->isNew()) {
             $this->SaveWithoutNotification();
         }
