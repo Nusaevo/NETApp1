@@ -60,7 +60,7 @@ class LoginRequest extends FormRequest
 
         $appIds = getAppIds();
         if (!empty($appIds)) {
-            $firstAppId = $appIds[1];
+            $firstAppId = $appIds[2];
             $firstApp = ConfigAppl::find($firstAppId);
             if ($firstApp) {
                 $firstAppCode = $firstApp->code;

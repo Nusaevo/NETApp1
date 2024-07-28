@@ -198,7 +198,6 @@ class Detail extends BaseComponent
             'tr_type' => $this->trType,
         ];
         $material = Material::find($material_id);
-        DD($material);
         if ($material) {
             $detail['matl_id'] = $material->id;
             $detail['matl_code'] = $material->code;

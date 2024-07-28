@@ -33,11 +33,11 @@ use App\Models\TrdJewel1\Master\Material;
                             </div>
 
                             <div class="button-container">
-                                <x-image-button :action="$actionValue"></x-image-button>
+                                <x-image-button :action="$actionValue" :hideStorageButton="true"></x-image-button>
 
                                 <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                     <x-slot name="body">
-                                        @livewire('trd-jewel1.master.gallery.storage-component', ['isDialogBoxComponent' => true])
+                                        @livewire('trd-jewel1.master.gallery.storage-component', [ 'isDialogBoxComponent' => true])
                                     </x-slot>
                                 </x-ui-dialog-box>
                             </div>
