@@ -95,11 +95,11 @@
                                         </div>
                                         <div class="row">
                                             <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' type="text" :action="$actionValue" enabled="false"  />
-                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price") }}' type="text" :onChanged="'changePrice('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true"  />
+
                                         </div>
                                         <div class="row">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true"  />
-                                            <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price") }}' type="text" :onChanged="'changePrice('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true"  />
                                         </div>
                                     </x-slot>
                                     <x-slot name="button">

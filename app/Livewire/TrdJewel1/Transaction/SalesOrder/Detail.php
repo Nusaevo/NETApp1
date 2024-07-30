@@ -162,6 +162,15 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        if($this->actionValue == 'Edit')
+        {
+            if($this->object->isOrderCompleted())
+            {
+                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                return;
+            }
+        }
+
         if (!empty($this->input_details)) {
             $unitIds = array_column($this->input_details, 'matl_code');
             if (count($unitIds) !== count(array_flip($unitIds))) {
@@ -207,9 +216,15 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            if(!$this->object->isSalesEnableToEdit())
+            if($this->object->isOrderCompleted())
             {
-                $this->notify('warning', 'Nota ini tidak bisa dihapus.');
+                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                return;
+            }
+
+            if(!$this->object->isOrderEnableToDelete())
+            {
+                $this->notify('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
                 return;
             }
             //$this->updateVersionNumber();
@@ -231,6 +246,10 @@ class Detail extends BaseComponent
 
     public function deleteDetails($index)
     {
+        if ($this->object->isItemHasBuyBack($this->input_details[$index]['matl_id'])) {
+            $this->notify('warning', 'Item ini tidak bisa dihapus, karena item sudah dibuyback.');
+            return;
+        }
         if (isset($this->input_details[$index]['id'])) {
             $deletedItemId = $this->input_details[$index]['id'];
             $orderDtl = OrderDtl::withTrashed()->find($deletedItemId);
@@ -497,6 +516,8 @@ class Detail extends BaseComponent
                 'message' => 'Berhasil menambahkan item ke cart'
             ]);
             $this->selectedMaterials = [];
+            $this->searchMaterials();
+            $this->retrieveMaterials();
         } catch (\Exception $e) {
             DD($e);
             DB::rollback();

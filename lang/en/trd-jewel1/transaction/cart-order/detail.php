@@ -12,7 +12,7 @@ return [
     'barcode' => 'Barcode',
     'name' => 'Material Description',
     'description' => 'Side Material Description',
-    'selling_price' => 'Selling Price',
+    'selling_price' => 'Selling Price (IDR)',
     'amount' => 'Amount',
     'btnAdd' => 'Add',
     'totalPrice' => 'Total Price',

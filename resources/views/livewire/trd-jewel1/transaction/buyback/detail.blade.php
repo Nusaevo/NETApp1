@@ -13,18 +13,11 @@
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
                     <x-ui-padding>
-                        <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true"  />
-                        <x-ui-text-field-search
-                        label='{{ $this->trans("partner") }}'
-                        clickEvent=""
-                        model="inputs.partner_id"
-                        :options="$partners"
-                        required="true"
-                        :action="$actionValue"
-                        span="HalfWidth"
-                        onChanged="SaveCheck"
-                        enabled="{{ $actionValue === 'Edit' ? 'false' : '' }}"
-                    />
+                        <div class="row">
+                            <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" />
+                            <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']"
+                                :options="$partners" required="true" :action="$actionValue" enabled="{{ $actionValue === 'Edit' ? 'false' : '' }}" />
+                        </div>
 
                     </x-ui-padding>
 
@@ -49,28 +42,28 @@
                                             </x-slot>
                                             <x-slot name="rows">
                                                 @if(empty($orderDtls) || count($orderDtls) === 0)
-                                                    <tr>
-                                                        <td colspan="5" class="text-center">Tidak ada data ditemukan</td>
-                                                    </tr>
+                                                <tr>
+                                                    <td colspan="5" class="text-center">Tidak ada data ditemukan</td>
+                                                </tr>
                                                 @else
-                                                    @foreach($orderDtls as $index => $orderDtl)
-                                                        <tr wire:key="orderDtl-{{ $index }}">
-                                                            <td>
-                                                                <input type="checkbox" wire:model="selectedMaterials" value="{{ $orderDtl['orderDtlId'] }}">
-                                                            </td>
-                                                            <td>
-                                                                {{ $orderDtl['tr_id'] }}
-                                                            </td>
-                                                            <td>
-                                                                Kode Produk: {{ $orderDtl['materialCode'] }} <br>
-                                                                Deskripsi Material: {{ $orderDtl['materialName'] }} <br>
-                                                                Deskripsi Bahan: {{ $orderDtl['materialDescr'] }}
-                                                            </td>
-                                                            <td>
-                                                                {{ rupiah(currencyToNumeric($orderDtl['price'])) }}
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
+                                                @foreach($orderDtls as $index => $orderDtl)
+                                                <tr wire:key="orderDtl-{{ $index }}">
+                                                    <td>
+                                                        <input type="checkbox" wire:model="selectedMaterials" value="{{ $orderDtl['orderDtlId'] }}">
+                                                    </td>
+                                                    <td>
+                                                        {{ $orderDtl['tr_id'] }}
+                                                    </td>
+                                                    <td>
+                                                        Kode Produk: {{ $orderDtl['materialCode'] }} <br>
+                                                        Deskripsi Material: {{ $orderDtl['materialName'] }} <br>
+                                                        Deskripsi Bahan: {{ $orderDtl['materialDescr'] }}
+                                                    </td>
+                                                    <td>
+                                                        {{ rupiah(currencyToNumeric($orderDtl['price'])) }}
+                                                    </td>
+                                                </tr>
+                                                @endforeach
                                                 @endif
                                             </x-slot>
 
@@ -97,16 +90,21 @@
                                     </x-slot>
 
                                     <x-slot name="rows">
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" enabled="false"  />
-                                        <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue" enabled="false"  />
-                                        <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue" enabled="false"  />
-                                        <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" enabled="false"  />
-                                        <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'" type="number" :action="$actionValue" enabled="true"  />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true"  />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false"  />
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.dlvhdrtr_id" label='{{ $this->trans("reff_number") }}' type="text" :action="$actionValue" enabled="false" />
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" enabled="false" />
+                                        </div>
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue" enabled="false" />
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" enabled="false" />
+                                        </div>
+                                        <div class="row">
+                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'" type="number" :action="$actionValue" enabled="true" />
+                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true" />
+                                        </div>
                                     </x-slot>
                                     <x-slot name="button">
-                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue"/>
+                                        <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
 
                                     </x-slot>
                                 </x-ui-list-body>

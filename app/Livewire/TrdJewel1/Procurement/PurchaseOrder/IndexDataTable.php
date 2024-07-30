@@ -12,13 +12,12 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
-use Exception;
+use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = OrderHdr::class;
-
     public function mount(): void
     {
         $this->setSearchVisibilityStatus(false);
@@ -32,8 +31,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with('OrderDtl')
         ->where('tr_type', 'PO')
-        ->where('order_hdrs.status_code', Status::OPEN)
-        ->orderBy('order_hdrs.created_at', 'desc');
+        ->where('order_hdrs.status_code', Status::OPEN);
     }
     public function columns(): array
     {
@@ -42,6 +40,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")
+                ->hideIf(true)
+                ->sortable(),
+           Column::make('currency', "curr_rate")
                 ->hideIf(true)
                 ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
@@ -60,11 +61,17 @@ class IndexDataTable extends BaseDataTableComponent
                     return currencyToNumeric($row->total_qty);
                 })
                 ->sortable(),
-            Column::make($this->trans("amt"), "total_amt")
-                ->label(function($row) {
-                    return rupiah(currencyToNumeric($row->total_amt));
+             Column::make($this->trans("amt"), "total_amt_in_idr")
+                ->label(function ($row) {
+                    $currencyRateNumeric = currencyToNumeric($row->curr_rate);
+                    if ($currencyRateNumeric == 0) {
+                        return 'N/A';
+                    }
+                    $totalAmt = currencyToNumeric($row->total_amt);
+                    $totalInIdr = $totalAmt * $currencyRateNumeric;
+                    return rupiah($totalInIdr);
                 })
-                ->sortable(),
+             ->sortable(),
             Column::make($this->trans('status'), "status_code")
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {

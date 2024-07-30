@@ -83,7 +83,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['price'] = currencyToNumeric($detail->price);
                 $this->input_details[$key]['selling_price'] = currencyToNumeric($detail->Material->jwl_selling_price);
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['sub_total'] = (currencyToNumeric($detail->amt));
+                $this->input_details[$key]['sub_total'] = currencyToNumeric($detail->amt);
                 $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
             }
@@ -153,10 +153,12 @@ class Detail extends BaseComponent
     {
         if($this->actionValue == 'Edit')
         {
-            if(!$this->object->isEnableToEdit())
+            if($this->object->isOrderCompleted())
             {
-                throw new Exception("Nota ini tidak bisa di edit lagi, Karena barang sudah diterima");
+                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                return;
             }
+
         }
         if(isset($this->inputs['partner_id']))
         {
@@ -231,6 +233,10 @@ class Detail extends BaseComponent
         try {
             if (isset($this->input_details)) {
                 $matl_ids = array_column($this->input_details, 'matl_id');
+                if ($this->object->isItemHasBuyBack($material_id)) {
+                    $this->notify('error', 'Item ini sudah ada di PO lain.');
+                    return;
+                }
                 if (in_array($material_id, $matl_ids)) {
                     $this->notify('error',__($this->langBasePath.'.message.product_duplicated'));
                     return;
@@ -248,7 +254,7 @@ class Detail extends BaseComponent
 
     public function deleteDetails($index)
     {
-        if ($this->object->isItemEnableToDelete($this->input_details[$index]['matl_id'])) {
+        if ($this->object->isItemHasSalesOrder($this->input_details[$index]['matl_id'])) {
             $this->notify('warning', 'Item ini tidak bisa dihapus, karena item sudah terjual.');
             return;
         }
@@ -275,11 +281,18 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            if(!$this->object->isEnableToEdit())
+            if($this->object->isOrderCompleted())
             {
-                $this->notify('warning', 'Nota ini tidak bisa dihapus, karena ada item yang sudah terjual.');
+                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
+
+            if(!$this->object->isOrderEnableToDelete())
+            {
+                $this->notify('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+                return;
+            }
+
             //$this->updateVersionNumber();
             if (isset($this->object->status_code)) {
                     $this->object->status_code =  Status::NONACTIVE;

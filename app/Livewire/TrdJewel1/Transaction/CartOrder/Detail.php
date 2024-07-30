@@ -443,6 +443,7 @@ class Detail extends BaseComponent
             ]);
             $this->selectedMaterials = [];
             $this->retrieveMaterials();
+            $this->searchMaterials();
             $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();

@@ -12,7 +12,7 @@ return [
     'barcode' => 'Kode Batang',
     'name' => 'Deskripsi Material',
     'description' => 'Deskripsi Bahan',
-    'selling_price' => 'Harga Jual',
+    'selling_price' => 'Harga Jual (IDR)',
     'amount' => 'Jumlah',
     'btnAdd' => 'Tambah',
     'totalPrice' => 'Total Harga',

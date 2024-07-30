@@ -40,7 +40,7 @@ class BaseModel extends Model
 
     public function isNew()
     {
-        $isNew = empty($this->id);
+        $isNew = !isset($this->id);
         return  $isNew;
     }
 

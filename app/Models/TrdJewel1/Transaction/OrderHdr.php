@@ -93,6 +93,8 @@ class OrderHdr extends BaseModel
         return $this->OrderDtl()->sum('amt');
     }
 
+
+
     public function getMatlCodesAttribute()
     {
         $matlCodes = $this->OrderDtl()->pluck('matl_code')->toArray();
@@ -105,25 +107,21 @@ class OrderHdr extends BaseModel
         return self::where('created_by', $createdBy)->where('tr_type', $trType)->get();
     }
 
-    public function isSalesEnableToEdit(): bool
+
+    public function isOrderCompleted(): bool
     {
         if ($this->status_code == Status::COMPLETED) {
             return false;
         }
-
         return true;
     }
 
-    public function isEnableToEdit(): bool
+    public function isOrderEnableToDelete(): bool
     {
-        if ($this->status_code == Status::COMPLETED) {
-            return false;
-        }
-
         if ($this->tr_type == 'PO') {
             foreach ($this->OrderDtl as $orderDtl) {
                 $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
-                    ->where('tr_type', 'PO')
+                    ->where('tr_type', 'SO')
                     ->where('tr_id', '!=', $this->tr_id)
                     ->first();
 
@@ -132,22 +130,56 @@ class OrderHdr extends BaseModel
                 }
             }
         }
-        // else {
-        //     foreach ($this->OrderDtl as $orderDtl) {
-        //         if ($orderDtl->qty_reff !== $orderDtl->qty) {
-        //             return false;
-        //         }
-        //     }
-        // }
 
+        if ($this->tr_type == 'SO') {
+            foreach ($this->OrderDtl as $orderDtl) {
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
+                    ->where('tr_type', 'BB')
+                    ->where('tr_id', '!=', $this->tr_id)
+                    ->first();
+
+                if ($relatedOrderDtl) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
-    public function isItemEnableToDelete(int $matl_id): bool
+
+    public function isItemHasPurchaseOrder(int $matl_id): bool
+    {
+        $relatedOrderDtl = OrderDtl::where('matl_id', $matl_id)
+            ->where('tr_type', 'PO')
+            ->where('tr_id', '!=', $this->tr_id)
+            ->first();
+
+        if ($relatedOrderDtl) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isItemHasSalesOrder(int $matl_id): bool
     {
         $relatedOrderDtl = OrderDtl::where('matl_id', $matl_id)
             ->where('tr_type', 'SO')
             ->where('tr_id', '!=', $this->tr_id)
+            ->first();
+
+        if ($relatedOrderDtl) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isItemHasBuyback(int $matl_id): bool
+    {
+        $relatedOrderDtl = ReturnDtl::where('matl_id', $matl_id)
+            ->where('tr_type', 'BB')
+            ->where('tr_id', '!=', $this->dlvhdrtr_id)
             ->first();
 
         if ($relatedOrderDtl) {
@@ -180,7 +212,6 @@ class OrderHdr extends BaseModel
     public function saveOrder($appCode, $trType, $inputs, $input_details, $createBillingDelivery = false)
     {
         DB::beginTransaction();
-
         try {
             $delivTrType = "";
             $billingTrType = "";
@@ -211,7 +242,10 @@ class OrderHdr extends BaseModel
                     $configSnum->save();
                 }
             }
-            $this->status_code = Status::OPEN;
+
+            if ($this->isNew()) {
+                $this->status_code = Status::OPEN;
+            }
             $this->save();
 
             if ($createBillingDelivery == true) {
@@ -223,8 +257,10 @@ class OrderHdr extends BaseModel
                     'partner_id' => $this->partner_id,
                     'partner_code' => $this->partner_code,
                     'deliv_by' => $inputs['deliv_by'] ?? '',
-                    'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                 ]);
+                if ($delivHdr->isNew()) {
+                    $delivHdr->status_code = Status::OPEN;
+                }
                 $delivHdr->save();
 
                 $billingHdr = BillingHdr::firstOrNew(['tr_id' => $this->tr_id, 'tr_type' => $billingTrType]);
@@ -237,8 +273,10 @@ class OrderHdr extends BaseModel
                     'payment_term_id' => $this->payment_term_id,
                     'payment_term' => '',
                     'payment_due_days' => 0,
-                    'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                 ]);
+                if ($billingHdr->isNew()) {
+                    $billingHdr->status_code = Status::OPEN;
+                }
                 $billingHdr->save();
             }
 
@@ -254,7 +292,9 @@ class OrderHdr extends BaseModel
                 $inputDetail['qty_reff'] = $inputDetail['qty'];
                 $inputDetail['tr_type'] = $trType;
                 $orderDtl->fillAndSanitize($inputDetail);
-                $orderDtl->status_code = Status::OPEN; // Set status_code to Status::OPEN
+                if ($orderDtl->isNew()) {
+                    $orderDtl->status_code = Status::OPEN;
+                }
                 $orderDtl->save();
 
                 if ($createBillingDelivery == true) {
@@ -279,8 +319,10 @@ class OrderHdr extends BaseModel
                         'wh_code' => $inputs['wh_code'],
                         'qty' => $orderDtl->qty,
                         'qty_reff' => $orderDtl->qty_reff,
-                        'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                     ]);
+                    if ($delivDtl->isNew()) {
+                        $delivDtl->status_code = Status::OPEN;
+                    }
                     $delivDtl->save();
 
                     $billingDtl = BillingDtl::firstOrNew([
@@ -309,12 +351,13 @@ class OrderHdr extends BaseModel
                         'price_base' => $orderDtl->trhdr_id,
                         'amt' => $orderDtl->amt,
                         'amt_reff' => $orderDtl->amt,
-                        'status_code' => Status::OPEN, // Set status_code to Status::OPEN
                     ]);
+                    if ($billingDtl->isNew()) {
+                        $billingDtl->status_code = Status::OPEN;
+                    }
                     $billingDtl->save();
                 }
             }
-
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();

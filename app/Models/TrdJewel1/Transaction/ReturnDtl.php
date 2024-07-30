@@ -117,7 +117,7 @@ class ReturnDtl extends BaseModel
         return $this->belongsTo(OrderDtl::class, 'dlvdtl_id', 'id')->where('tr_type', 'SO');;
     }
 
-    public function scopeGetByOrderHdr($query, $id)
+    public function scopeGetByReturnHdr($query, $id)
     {
         return $query->where('trhdr_id', $id);
     }

@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Facades\Auth;
 
+use App\Models\SysConfig1\ConfigSnum;
 use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
@@ -102,7 +103,8 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
                 $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+
+                $this->input_details[$key]['sub_total'] = currencyToNumeric($detail->amt);
                 $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
             }
@@ -119,8 +121,7 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'changeItem'  => 'changeItem',
         'materialSaved' => 'materialSaved',
-        'delete' => 'delete',
-        'tagScanned' => 'tagScanned',
+        'delete' => 'delete'
     ];
 
     public function OpenDialogBox(){
@@ -156,22 +157,54 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        if($this->actionValue == 'Edit')
+        {
+            if($this->object->isOrderCompleted())
+            {
+                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                return;
+            }
+        }
+
         $this->inputs['wh_code'] = 18;
         if (isset($this->inputs['partner_code'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
         $this->object->fillAndSanitize($this->inputs);
+        if ($this->object->tr_id === null || $this->object->tr_id == 0) {
+            $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
+                ->where('code', '=',  "BUYBACK_LASTID")
+                ->first();
+            if ($configSnum != null) {
+                $stepCnt = $configSnum->step_cnt;
+                $proposedTrId = $configSnum->last_cnt + $stepCnt;
+                if ($proposedTrId > $configSnum->wrap_high) {
+                    $proposedTrId = $configSnum->wrap_low;
+                }
+                $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+                $configSnum->last_cnt = $proposedTrId;
+                $this->object->tr_id = $proposedTrId;
+                $configSnum->save();
+            }
+        }
+        if ($this->object->isNew()) {
+            $this->object->status_code = Status::OPEN;
+        }
         $this->object->save();
-
         foreach ($this->input_details as $index => $data) {
             if (!isset($this->object_detail[$index])) {
                 $this->object_detail[$index] = new ReturnDtl();
             }
             $this->object_detail[$index]->fillAndSanitize($data);
+            if ($this->object_detail[$index]->isNew()) {
+                $this->object->status_code = Status::OPEN;
+                $this->object_detail[$index]->tr_id =  $this->object->tr_id;
+                $this->object_detail[$index]->tr_type =  $this->object->tr_type;
+                $this->object_detail[$index]->trhdr_id = $this->object->id;
+            }
             $this->object_detail[$index]->save();
         }
-
         if ($this->actionValue == 'Create') {
             return redirect()->route('TrdJewel1.Transaction.Buyback.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
@@ -206,11 +239,11 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            // if(!$this->object->isSalesEnableToEdit())
-            // {
-            //     $this->notify('warning', 'Nota ini tidak bisa dihapus.');
-            //     return;
-            // }
+            if($this->object->isOrderCompleted())
+            {
+                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                return;
+            }
             //$this->updateVersionNumber();
             if (isset($this->object->status_code)) {
                     $this->object->status_code =  Status::NONACTIVE;
@@ -257,8 +290,8 @@ class Detail extends BaseComponent
     {
         $this->total_amount = 0;
         foreach ($this->input_details as $item_id => $input_detail) {
-            if (isset($input_detail['qty']) && isset($input_detail['price'])) {
-                $this->total_amount += $input_detail['price'] * $input_detail['qty'];
+            if (isset($input_detail['sub_total'])) {
+                $this->total_amount += $input_detail['sub_total'];
             }
         }
         $this->inputs['amt'] = $this->total_amount;
@@ -341,6 +374,7 @@ class Detail extends BaseComponent
             $returnHdr = ReturnHdr::firstOrNew([
                 'id' => $this->objectIdValue,
             ]);
+
 
             $newDetails = [];
             $maxTrSeq = $returnHdr->ReturnDtl()->max('tr_seq') ?? 0;
