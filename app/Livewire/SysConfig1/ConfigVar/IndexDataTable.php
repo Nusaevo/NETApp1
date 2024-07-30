@@ -16,13 +16,14 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigVar::class;
 
-    
+
 
     public function mount(): void
     {
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
         $this->setFilter('Status', 0);
+        $this->setSearchVisibilityStatus(false);
     }
 
     public function builder(): Builder

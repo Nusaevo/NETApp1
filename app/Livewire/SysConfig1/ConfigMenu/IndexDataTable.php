@@ -8,15 +8,15 @@ use App\Models\SysConfig1\ConfigMenu;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Models\SysConfig1\ConfigRight;
-use Illuminate\Support\Facades\Crypt;
-use Exception;
 use App\Enums\Status;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigMenu::class;
 
-    
+
     public function mount(): void
     {
         $this->customRoute = "";
@@ -24,6 +24,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSort('menu_header', 'asc');
         $this->setSort('seq', 'asc');
         $this->setFilter('Status', 0);
+        $this->setSearchVisibilityStatus(false);
     }
 
     public function builder(): Builder
@@ -36,8 +37,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Application","id")
-                ->format(function($value, $row, Column $column) {
+            Column::make("Application", "id")
+                ->format(function ($value, $row, Column $column) {
                     return optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name;
                 })
                 ->searchable()
@@ -78,6 +79,52 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('Kode Aplikasi', 'appl_code')
+                ->config([
+                    'placeholder' => 'Cari Kode Aplikasi',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $value = strtoupper($value);
+                    $builder->whereHas('configAppl', function ($query) use ($value) {
+                        $query->where(DB::raw('UPPER(code)'), 'like', '%' . $value . '%');
+                    });
+                }),
+            TextFilter::make('Nama Aplikasi', 'appl_name')
+                ->config([
+                    'placeholder' => 'Cari Nama Aplikasi',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $value = strtoupper($value);
+                    $builder->whereHas('configAppl', function ($query) use ($value) {
+                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
+                    });
+                }),
+            TextFilter::make('Kode', 'code')
+                ->config([
+                    'placeholder' => 'Cari Kode',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+                }),
+            TextFilter::make('Header', 'menu_header')
+                ->config([
+                    'placeholder' => 'Cari Menu Header',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(menu_header)'), 'like', '%' . strtoupper($value) . '%');
+                }),
+            TextFilter::make('Caption', 'menu_caption')
+                ->config([
+                    'placeholder' => 'Cari Menu Caption',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(menu_caption)'), 'like', '%' . strtoupper($value) . '%');
+                }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

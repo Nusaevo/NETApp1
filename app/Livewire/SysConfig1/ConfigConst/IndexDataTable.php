@@ -8,7 +8,9 @@ use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Models\SysConfig1\ConfigRight;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
+use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -20,6 +22,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
+        $this->setSearchVisibilityStatus(false);
     }
 
     public function builder(): Builder
@@ -32,8 +35,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Application","id")
-                ->format(function($value, $row, Column $column) {
+            Column::make("Application", "id")
+                ->format(function ($value, $row, Column $column) {
                     return optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name;
                 })
                 ->searchable()
@@ -50,15 +53,15 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Str2", "str2")
                 ->searchable()
                 ->sortable(),
-           Column::make("Num1", "num1")
-                 ->searchable()
-                 ->sortable(),
+            Column::make("Num1", "num1")
+                ->searchable()
+                ->sortable(),
             Column::make("Num2", "num2")
-                 ->searchable()
-                 ->sortable(),
+                ->searchable()
+                ->sortable(),
             Column::make("Note1", "note1")
-                 ->searchable()
-                 ->sortable(),
+                ->searchable()
+                ->sortable(),
             Column::make('Created Date', 'created_at')
                 ->sortable(),
             Column::make('Actions', 'id')
@@ -80,6 +83,36 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('Kode Aplikasi', 'appl_code')
+                ->config([
+                    'placeholder' => 'Cari Kode Aplikasi',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $value = strtoupper($value);
+                    $builder->whereHas('configAppl', function ($query) use ($value) {
+                        $query->where(DB::raw('UPPER(code)'), 'like', '%' . $value . '%');
+                    });
+                }),
+            TextFilter::make('Nama Aplikasi', 'appl_name')
+                ->config([
+                    'placeholder' => 'Cari Nama Aplikasi',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $value = strtoupper($value);
+                    $builder->whereHas('configAppl', function ($query) use ($value) {
+                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
+                    });
+                }),
+            TextFilter::make('Group', 'const_group')
+                ->config([
+                    'placeholder' => 'Cari Group',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('const_group', 'like', '%' . $value . '%');
+                }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Livewire\SysConfig1\ConfigUser;
 
 use App\Livewire\Component\BaseDataTableComponent;
@@ -10,6 +11,10 @@ use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Support\Facades\Crypt;
 use Exception;
 use App\Enums\Status;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+
+use Illuminate\Support\Facades\DB;
+
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigUser::class;
@@ -20,6 +25,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
+        $this->setSearchVisibilityStatus(false);
     }
 
     public function columns(): array
@@ -61,6 +67,30 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('LoginID', 'loginID')
+                ->config([
+                    'placeholder' => 'Cari User LoginID',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(loginID)'), 'like', '%' . strtoupper($value) . '%');
+                }),
+            TextFilter::make('Email', 'email')
+                ->config([
+                    'placeholder' => 'Cari Email',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(email)'), 'like', '%' . strtoupper($value) . '%');
+                }),
+            TextFilter::make('Nama', 'name')
+                ->config([
+                    'placeholder' => 'Cari Nama',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

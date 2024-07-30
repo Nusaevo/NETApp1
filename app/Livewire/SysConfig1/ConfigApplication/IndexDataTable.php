@@ -8,7 +8,9 @@ use App\Models\SysConfig1\ConfigAppl;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Models\SysConfig1\ConfigRight;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
+use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -20,6 +22,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
+        $this->setSearchVisibilityStatus(false);
     }
 
     public function builder(): Builder
@@ -68,6 +71,22 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('Kode Aplikasi', 'code')
+                ->config([
+                    'placeholder' => 'Cari Kode Aplikasi',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+                }),
+            TextFilter::make('Nama', 'name')
+                ->config([
+                    'placeholder' => 'Cari Nama',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
