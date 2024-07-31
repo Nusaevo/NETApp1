@@ -92,7 +92,7 @@
         console.log('Selected Image Byte Arrays:', imageByteArrays);
 
         if (imageByteArrays.length > 0) {
-            Livewire.dispatch('submitImages', imageByteArrays);
+            Livewire.dispatch('submitImages', { imageByteArrays : imageByteArrays });
             resetSelectedImages();
         } else {
             alert('No images selected');
