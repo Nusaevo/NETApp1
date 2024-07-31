@@ -28,9 +28,11 @@ class StorageComponent extends BaseComponent
         if($this->isDialogBoxComponent == false)
         {
             $attachments = Attachment::where('attached_objecttype', 'NetStorage')
+            ->orderBy('created_at', 'desc')
             ->paginate(15);
         }else{
-            $attachments = Attachment::where('attached_objecttype', 'NetStorage')->get();
+            $attachments = Attachment::where('attached_objecttype', 'NetStorage')
+            ->orderBy('created_at', 'desc')->get();
         }
 
         return view('livewire.trd-jewel1.master.gallery.storage-component', ['attachments' => $attachments]);
