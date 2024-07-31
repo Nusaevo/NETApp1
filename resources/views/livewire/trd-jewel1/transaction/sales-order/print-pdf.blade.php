@@ -42,7 +42,7 @@
                                         @php
                                         $imagePath = $OrderDtl->Material->Attachment->first() ? $OrderDtl->Material->Attachment->first()->getUrl() : 'https://via.placeholder.com/200';
                                         @endphp
-                                        <img src="https://via.placeholder.com/200" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
+                                        <img src="{{ $imagePath }}" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
                                     </td>
                                     <td style="width: 50%;">
                                         <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
