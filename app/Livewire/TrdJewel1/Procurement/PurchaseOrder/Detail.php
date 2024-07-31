@@ -85,7 +85,6 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
                 $this->input_details[$key]['price'] = currencyToNumeric($detail->price);
                 $this->input_details[$key]['selling_price'] = currencyToNumeric($detail->Material->jwl_selling_price);
-                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
                 $this->input_details[$key]['sub_total'] = currencyToNumeric($detail->amt);
                 $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
@@ -315,8 +314,8 @@ class Detail extends BaseComponent
     {
         $this->total_amount = 0;
         foreach ($this->input_details as $item_id => $input_detail) {
-            if (isset($input_detail['sub_total'])) {
-                $this->total_amount += $input_detail['sub_total'];
+            if (isset($input_detail['price'])) {
+                $this->total_amount += $input_detail['price'];
             }
         }
         $this->inputs['amt'] = $this->total_amount;
