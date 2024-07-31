@@ -72,7 +72,10 @@ class Detail extends BaseComponent
     protected function retrieveMaterials()
     {
         if ($this->object) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
+            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->trType)->orderBy('tr_seq')->get();
+            if (is_null($this->object_detail) || $this->object_detail->isEmpty()) {
+                return;
+            }
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material?->name;
@@ -160,8 +163,8 @@ class Detail extends BaseComponent
             }
 
         }
-        if(isset($this->inputs['partner_id']))
-        {
+
+        if (!isNullOrEmptyString($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
@@ -272,9 +275,8 @@ class Detail extends BaseComponent
 
     public function saveCheck()
     {
-        if (isset($this->input_details) && !$this->object->isNew()) {
+        if (!$this->object->isNew())
             $this->SaveWithoutNotification();
-        }
     }
 
 

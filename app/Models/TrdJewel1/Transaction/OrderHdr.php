@@ -111,9 +111,9 @@ class OrderHdr extends BaseModel
     public function isOrderCompleted(): bool
     {
         if ($this->status_code == Status::COMPLETED) {
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     public function isOrderEnableToDelete(): bool

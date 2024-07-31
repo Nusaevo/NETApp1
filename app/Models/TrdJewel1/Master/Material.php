@@ -123,7 +123,8 @@ class Material extends BaseModel
             ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
             ->where('ivt_bals.qty_oh', '>', 0)
             ->whereNull('materials.deleted_at')
-            ->select('materials.*');
+            ->select('materials.*')
+            ->distinct();
     }
 
     public static function checkMaterialStockByMatlId($matlId)

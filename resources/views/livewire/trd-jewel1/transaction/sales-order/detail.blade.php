@@ -86,18 +86,18 @@
                                     <x-slot name="rows">
 
                                         <div class="row">
-                                            <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" enabled="false"  />
-                                            <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_code" label='{{ $this->trans("code") }}' type="text" :action="$actionValue" enabled="false" />
+                                            <x-ui-text-field model="input_details.{{ $key }}.barcode" label='{{ $this->trans("barcode") }}' type="text" :action="$actionValue" enabled="false" />
                                         </div>
 
                                         <div class="row">
-                                            <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue" enabled="false"  />
-                                            <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.name" label='{{ $this->trans("name") }}' type="text" :action="$actionValue" enabled="false" />
+                                            <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" enabled="false" />
                                         </div>
                                         <div class="row">
-                                            <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'" type="number" :action="$actionValue" enabled="true"  />
-                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true"  />
-                                            {{-- <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false"  /> --}}
+                                            <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' :onChanged="'changePrice('. $key .', $event.target.value)'" type="number" :action="$actionValue" enabled="true" />
+                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" enabled="false" :action="$actionValue" required="true" />
+                                            {{-- <x-ui-text-field model="input_details.{{ $key }}.amt" label='{{ $this->trans("amount") }}' type="number" :action="$actionValue" enabled="false" /> --}}
                                         </div>
                                     </x-slot>
                                     <x-slot name="button">
@@ -112,6 +112,32 @@
                             <h3>Total Price: {{ rupiah($total_amount) }}</h3>
                         </x-slot>
                     </x-ui-list-table>
+                    @if($actionValue == 'Edit')
+                    <td class="description" style="font-size: 12px; margin: 0; padding: 0;">
+                        <ul style="margin: 0; padding: 2px;">
+                            <input type="checkbox" id="item_checked" name="item_checked" wire:model="printSettings.item_checked" wire:change="SaveWithoutNotification" />
+                            <label for="item_checked">Barang & Berat sudah di periksa pembeli</label>
+                            <br>
+                            <input type="checkbox" id="no_return" name="no_return" wire:model="printSettings.no_return" wire:change="SaveWithoutNotification" />
+                            <label for="no_return">Barang tidak diterima kembali / no retur</label>
+                            <br>
+                            <input type="checkbox" id="trade_in_minus15" name="trade_in_minus15" wire:model="printSettings.trade_in_minus15" wire:change="SaveWithoutNotification"  />
+                            <label for="trade_in_minus15">Tukar tambah - 15% kondisi baik</label>
+                            <br>
+                            <input type="checkbox" id="sale_minus25" name="sale_minus25" wire:model="printSettings.sale_minus25" wire:change="SaveWithoutNotification" />
+                            <label for="sale_minus25">Jual -25% kondisi baik</label>
+                            <br>
+                            <input type="checkbox" id="trade_in_minus10" name="trade_in_minus10" wire:model="printSettings.trade_in_minus10" wire:change="SaveWithoutNotification"  />
+                            <label for="trade_in_minus10">Tukar tambah -10%</label>
+                            <br>
+                            <input type="checkbox" id="sale_minus20" name="sale_minus20" wire:model="printSettings.sale_minus20" wire:change="SaveWithoutNotification" />
+                            <label for="sale_minus20">Jual -20%</label>
+                            <br>
+                            <input type="checkbox" id="show_price" name="show_price" wire:model="printSettings.show_price" wire:change="SaveWithoutNotification" />
+                            <label for="show_price">Harga jual ditampilkan</label>
+                        </ul>
+                    </td>
+                    @endif
                 </x-ui-card>
             </div>
             {{-- <div class="tab-pane fade show" id="PurchaseReturn" role="tabpanel" aria-labelledby="PurchaseReturn-tab">

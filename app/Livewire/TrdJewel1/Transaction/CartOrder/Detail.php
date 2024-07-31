@@ -67,7 +67,9 @@ class Detail extends BaseComponent
         if ($this->object) {
             $this->object_detail = CartDtl::GetByCartHdr($this->object->id)->orderBy('tr_seq')->get();
             $this->inputs = populateArrayFromModel($this->object);
-
+            if (is_null($this->object_detail) || $this->object_detail->isEmpty()) {
+                return;
+            }
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['checked'] = 1;
@@ -369,7 +371,6 @@ class Detail extends BaseComponent
                       ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
             });
         }
-
         $this->materials = $query->get();
     }
 

@@ -8,7 +8,7 @@ return [
     'warehouse' => 'Gudang',
     'product' => 'Produk',
     'qty' => 'Kuantitas',
-    'price' => 'Harga Beli',
+    'price' => 'Harga Beli Kembali',
     'code' => 'Kode Produk',
     'barcode' => 'Kode Batang',
     'name' => 'Deskripsi Material',
@@ -17,6 +17,7 @@ return [
     'amount' => 'Jumlah',
     'btnAdd' => 'Tambah',
     'totalPrice' => 'Total Harga',
+    'reff_number' => 'No Nota Jual',
     'message' => [
         'product_added' => 'Produk berhasil ditambahkan',
         'product_duplicated' => 'Product telah ditambahkan sebelumnya pada nota ini. Mohon pilih produk yang berbeda.',

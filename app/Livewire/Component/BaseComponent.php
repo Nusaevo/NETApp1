@@ -209,6 +209,7 @@ class BaseComponent extends Component
             $this->resetForm();
         } catch (Exception $e) {
             DB::rollBack();
+            dd($e->getMessage());
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }

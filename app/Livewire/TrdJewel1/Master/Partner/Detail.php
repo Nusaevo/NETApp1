@@ -112,7 +112,7 @@ class Detail extends BaseComponent
         // } else {
         //     $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
         // }
-        if (!isset($this->inputs['code'])) {
+        if (!isNullOrEmptyString($this->inputs['code'])) {
             $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
         }
         $dataToSave = [];

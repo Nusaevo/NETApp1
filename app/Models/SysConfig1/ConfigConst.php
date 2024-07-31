@@ -88,6 +88,21 @@ class ConfigConst extends BaseModel
         return $data;
     }
 
+    public static function GetMatlCategory1String($appCode, $str1)
+    {
+        $data = DB::connection('sys-config1')
+            ->table('config_consts')
+            ->select('str2')
+            ->where('const_group', 'MMATL_CATEGL1')
+            ->where('app_code', $appCode)
+            ->where('str1', $str1)
+            ->where('deleted_at', NULL)
+            ->first();
+
+        // Jika data ditemukan, kembalikan str2, jika tidak, kembalikan null
+        return $data ? $data->str2 : null;
+    }
+
     public static function GetMatlCategory2Data($appCode)
     {
         $data = DB::connection('sys-config1')
@@ -99,6 +114,19 @@ class ConfigConst extends BaseModel
         ->orderBy('seq')
         ->get();
         return $data;
+    }
+
+    public static function GetMatlCategory2String($appCode, $str1)
+    {
+        $data = DB::connection('sys-config1')
+            ->table('config_consts')
+            ->select('str2')
+            ->where('const_group', 'MMATL_CATEGL2')
+            ->where('app_code', $appCode)
+            ->where('str1', $str1)
+            ->where('deleted_at', NULL)
+            ->first();
+        return $data ? $data->str2 : null;
     }
 
     public static function GetMatlJewelPurityData($appCode)
@@ -113,6 +141,20 @@ class ConfigConst extends BaseModel
         ->get();
 
         return $data;
+    }
+
+    public static function GetMatlJewelPurityString($appCode, $str1)
+    {
+        $data = DB::connection('sys-config1')
+            ->table('config_consts')
+            ->select('str2')
+            ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
+            ->where('app_code', $appCode)
+            ->where('str1', $str1)
+            ->where('deleted_at', NULL)
+            ->first();
+
+        return $data ? $data->str2 : null;
     }
 
     public static function GetMatlBaseMaterialData($appCode)

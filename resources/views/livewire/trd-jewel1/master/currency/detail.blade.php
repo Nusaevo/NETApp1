@@ -8,7 +8,7 @@
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
-                    <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.log_date" type="date" :action="$actionValue" required="true" span="Full" />
+                    <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.log_date" type="date" :action="$actionValue" required="true" span="Full" enabled="{{ $actionValue === 'Edit' ? 'false' : '' }}"/>
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('currency_rate') }}" model="inputs.curr_rate" type="number" :action="$actionValue" required="true" placeHolder="USD to IDR" span="Half" onChanged="currencyChanged" />
                         <x-ui-dropdown-select label="{{ $this->trans('currency') }}" clickEvent="" model="inputs.curr_id" :options="$currencies" required="true" :action="$actionValue" enabled="false" span="Half" />

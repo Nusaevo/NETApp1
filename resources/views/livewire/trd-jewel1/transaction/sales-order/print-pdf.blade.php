@@ -1,29 +1,28 @@
-
 <div>
-<div class="container mb-5 mt-3">
-    <div>
-        <x-ui-button clickEvent="" type="Back" button-name="Back" />
-    </div>
+    @php
+    use App\Models\SysConfig1\ConfigConst;
+    @endphp
+    <div class="container mb-5 mt-3">
+        <div>
+            <x-ui-button clickEvent="" type="Back" button-name="Back" />
+        </div>
 
-    <div class="card">
-        <div class="card-body">
-            <div class="row d-flex align-items-baseline">
-                <div class="col-xl-9">
-                    <p style="color: #7e8d9f; font-size: 20px;">Nota >> <strong>No: {{ $this->object->tr_id }}</strong></p>
+        <div class="card">
+            <div class="card-body">
+                <div class="row d-flex align-items-baseline">
+                    <div class="col-xl-9">
+                        <p style="color: #7e8d9f; font-size: 20px;">Nota >> <strong>No: {{ $this->object->tr_id }}</strong></p>
+                    </div>
+                    <div class="col-xl-3 float-end">
+                        <button type="button" class="btn btn-light text-capitalize border-0" onclick="printInvoice()">
+                            <i class="fas fa-print text-primary"></i> Print
+                        </button>
+                    </div>
+                    <hr>
                 </div>
-                <div class="col-xl-3 float-end">
-                    <button type="button" class="btn btn-light text-capitalize border-0" data-bs-toggle="modal" data-bs-target="#printSettingsModal">
-                        <i class="fas fa-print text-primary"></i> Settings
-                    </button>
-                    <button type="button" class="btn btn-light text-capitalize border-0" onclick="printInvoice()">
-                        <i class="fas fa-print text-primary"></i> Print
-                    </button>
-                </div>
-                <hr>
-            </div>
 
-            <div id="print">
-                @foreach ($object->OrderDtl as $OrderDtl)
+                <div id="print">
+                    @foreach ($object->OrderDtl as $OrderDtl)
                     <div class="invoice-box-container">
                         <div class="invoice-box">
                             <table style="width: 100%;">
@@ -34,7 +33,6 @@
                                     <td style="text-align: right; width: 50%;">
                                         <p style="margin: 0; padding: 0;">Nomor Nota: <strong>{{ $this->object->id }}</strong></p>
                                         <p style="margin: 0; padding: 0;">Tanggal: <strong>{{ $this->object->tr_date }}</strong></p>
-                                        <p style="margin: 0; padding: 0;">Customer: <strong>{{ $this->object->Partner->name }}</strong></p>
                                     </td>
                                 </tr>
                             </table>
@@ -47,11 +45,15 @@
                                         <img src="https://via.placeholder.com/200" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
                                     </td>
                                     <td style="width: 50%;">
-                                        <p style="margin: 0; padding: 0;">Kode Barang: <strong>{{ $OrderDtl->matl_code }}</strong></p>
-                                        <p style="margin: 0; padding: 0;"><strong>{{ $OrderDtl->Material->jwl_category1 }}</strong>: {{ $OrderDtl->Material->jwl_category2 }}</p>
-                                        <p style="margin: 0; padding: 0;">Deskripsi Bahan: {{ $OrderDtl->name }}</p>
-                                        <p style="margin: 0; padding: 0;">Deskripsi Bahan: {{ $OrderDtl->matl_descr }}</p>
-                                        <p style="margin: 0; padding: 0;">Qty: 1</p>
+                                        <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
+                                        <p style="margin: 0; padding: 0;">Category : <strong>{{ ConfigConst::GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }} -
+                                                {{ ConfigConst::GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
+
+                                        <p style="margin: 0; padding: 0;">Berat : {{ numberFormat($OrderDtl->Material->jwl_wgt_gold,2) }} Gram</p>
+                                        <p style="margin: 0; padding: 0;">Kemurnian : {{ ConfigConst::GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
+                                        <p style="margin: 0; padding: 0;">Deskripsi : {{ $OrderDtl->Material->name }}</p>
+                                        <p style="margin: 0; padding: 0;">Deskripsi Bahan : {{ $OrderDtl->Material->descr }}</p>
+                                        <p style="margin: 0; padding: 0;">Qty : {{ currencyToNumeric($OrderDtl->qty) }} PCS</p>
                                     </td>
                                 </tr>
                             </table>
@@ -62,126 +64,164 @@
                                 <tr class="item">
                                     <td class="description" style="font-size: 12px; margin: 0; padding: 0;">
                                         <ul style="margin: 0; padding: 2px;">
-                                            <li>BARANG & BERAT SUDAH DIPERIKSA PEMBELI</li>
-                                            <li>BARANG TIDAK DITERIMA KEMBALI / NO RETURN</li>
-                                            <li>TUKAR TAMBAH: -15% KONDISI BAIK</li>
-                                            <li>JUAL: -25% KONDISI BAIK</li>
+                                            @if($printSettings['item_checked'])
+                                            <li>Barang & Berat sudah di periksa pembeli</li>
+                                            @endif
+                                            @if($printSettings['no_return'])
+                                            <li>Barang tidak diterima kembali / no retur</li>
+                                            @endif
+                                            @if($printSettings['trade_in_minus15'])
+                                            <li>Tukar tambah - 15% kondisi baik</li>
+                                            @endif
+                                            @if($printSettings['sale_minus25'])
+                                            <li>Jual -25% kondisi baik</li>
+                                            @endif
+                                            @if($printSettings['trade_in_minus10'])
+                                            <li>Tukar tambah -10%</li>
+                                            @endif
+                                            @if($printSettings['sale_minus20'])
+                                            <li>Jual -20%</li>
+                                            @endif
                                         </ul>
                                     </td>
                                     <td class="item-price" style="text-align: right; width: 50%;">
+                                        @if($printSettings['show_price'])
                                         <p style="margin: 0; padding: 0; font-size: 18px;"><b>Rp. {{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</b></p>
                                         <p style="margin: 0; padding: 0; font-size: 12px;">{{ terbilang(currencyToNumeric($OrderDtl->price)) }}</p>
+                                        @endif
                                     </td>
                                 </tr>
                             </table>
                         </div>
                     </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>
+
+    <script type="text/javascript">
+        function printInvoice() {
+            window.print();
+        }
+
+    </script>
+
+    <style>
+        @page {
+            size: 210mm 140mm;
+            /* Ukuran khusus 210 x 140 mm */
+            margin: 0 10mm;
+            /* Margin kanan dan kiri */
+        }
+
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Calibri';
+            font-size: 14px;
+            color: #555;
+        }
+
+        .container {
+            padding: 0;
+            margin: 0;
+        }
+
+        .card {
+            border: none;
+            box-shadow: none;
+        }
+
+        #print {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        .invoice-box-container {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            /* Ubah untuk menyesuaikan konten */
+            box-sizing: border-box;
+            page-break-inside: avoid;
+        }
+
+        .invoice-box {
+            width: 100%;
+            height: auto;
+            /* Sesuaikan tinggi dengan konten */
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            line-height: 20px;
+            /* Kurangi jarak baris untuk menghemat ruang */
+            font-weight: 400;
+            /* Kurangi ketebalan font untuk menghemat ruang */
+            color: #555;
+            box-sizing: border-box;
+            page-break-inside: avoid;
+            margin: 0;
+            padding: 5mm 10mm;
+            /* Padding atas, bawah, kiri, dan kanan */
+        }
+
+        .invoice-box table {
+            width: 100%;
+            line-height: inherit;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        .invoice-box table td {
+            vertical-align: top;
+            padding: 1mm;
+            /* Kurangi padding untuk menghemat ruang */
+        }
+
+        .information td {
+            border-top: 3px solid #ddd;
+            border-bottom: 3px solid #ddd;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #print,
+            #print * {
+                visibility: visible;
+            }
+
+            #print {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                box-sizing: border-box;
+            }
+
+            .btn,
+            .d-flex {
+                display: none;
+            }
+
+            .invoice-box {
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 5mm 10mm;
+                /* Padding atas, bawah, kiri, dan kanan */
+                height: auto;
+                /* Sesuaikan tinggi dengan konten */
+                page-break-after: always;
+            }
+        }
+
+    </style>
+
 </div>
 
-<script type="text/javascript">
-    function printInvoice() {
-        window.print();
-    }
-</script>
-
-<style>
-@page {
-    size: 210mm 140mm; /* Ukuran khusus 210 x 140 mm */
-    margin: 0 10mm; /* Margin kanan dan kiri */
-}
-
-
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Calibri';
-    font-size: 14px;
-    color: #555;
-}
-
-.container {
-    padding: 0;
-    margin: 0;
-}
-
-.card {
-    border: none;
-    box-shadow: none;
-}
-
-#print {
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-}
-
-.invoice-box-container {
-    display: flex;
-    flex-direction: column;
-    height: auto; /* Ubah untuk menyesuaikan konten */
-    box-sizing: border-box;
-    page-break-inside: avoid;
-}
-
-.invoice-box {
-    width: 100%;
-    height: auto; /* Sesuaikan tinggi dengan konten */
-    border: 1px solid #eee;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-    line-height: 20px; /* Kurangi jarak baris untuk menghemat ruang */
-    font-weight: 400; /* Kurangi ketebalan font untuk menghemat ruang */
-    color: #555;
-    box-sizing: border-box;
-    page-break-inside: avoid;
-    margin: 0;
-    padding: 5mm 10mm; /* Padding atas, bawah, kiri, dan kanan */
-}
-
-.invoice-box table {
-    width: 100%;
-    line-height: inherit;
-    text-align: left;
-    border-collapse: collapse;
-}
-
-.invoice-box table td {
-    vertical-align: top;
-    padding: 1mm; /* Kurangi padding untuk menghemat ruang */
-}
-
-@media print {
-    body * {
-        visibility: hidden;
-    }
-    #print, #print * {
-        visibility: visible;
-    }
-    #print {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        box-sizing: border-box;
-    }
-    .btn, .d-flex {
-        display: none;
-    }
-    .invoice-box {
-        border: none;
-        box-shadow: none;
-        margin: 0;
-        padding: 5mm 10mm; /* Padding atas, bawah, kiri, dan kanan */
-        height: auto; /* Sesuaikan tinggi dengan konten */
-        page-break-after: always;
-    }
-}
-
-
-</style>
-
-</div>

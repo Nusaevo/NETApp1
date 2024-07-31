@@ -79,7 +79,6 @@ class Detail extends BaseComponent
     protected function onLoadForEdit()
     {
         $this->object = ReturnHdr::withTrashed()->find($this->objectIdValue);
-        $this->object_detail = ReturnDtl::GetByReturnHdr($this->object->id)->orderBy('tr_seq')->get();
         $this->inputs = populateArrayFromModel($this->object);
 
         // dd($this->object,  $this->inputs);
@@ -94,7 +93,10 @@ class Detail extends BaseComponent
     protected function retrieveMaterials()
     {
         if ($this->object) {
-            $this->object_detail = ReturnDtl::GetByReturnHdr($this->object->id)->orderBy('tr_seq')->get();
+            $this->object_detail = ReturnDtl::GetByOrderHdr($this->object->id, $this->trType)->orderBy('tr_seq')->get();
+            if (is_null($this->object_detail) || $this->object_detail->isEmpty()) {
+                return;
+            }
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material->name;
@@ -102,7 +104,8 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->OrderDtl->price));
+                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
 
                 $this->input_details[$key]['sub_total'] = currencyToNumeric($detail->amt);
                 $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
@@ -121,7 +124,8 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'changeItem'  => 'changeItem',
         'materialSaved' => 'materialSaved',
-        'delete' => 'delete'
+        'delete' => 'delete',
+        'saveCheck' => 'saveCheck'
     ];
 
     public function OpenDialogBox(){
@@ -167,7 +171,9 @@ class Detail extends BaseComponent
         }
 
         $this->inputs['wh_code'] = 18;
-        if (isset($this->inputs['partner_code'])) {
+
+
+        if (!isNullOrEmptyString($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
@@ -211,7 +217,6 @@ class Detail extends BaseComponent
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
         }
-
         $this->retrieveMaterials();
         $this->searchMaterials();
     }
@@ -325,8 +330,10 @@ class Detail extends BaseComponent
                 'materials.name as materialName',
                 'materials.descr as materialDescr'
             )
+            ->distinct()
             ->where('order_hdrs.partner_id', $partnerId)
             ->where('order_hdrs.tr_type', 'SO')
+            ->where('order_dtls.tr_type', 'SO')
             ->where('order_dtls.qty_reff','>', 0)
             ->whereNull('order_hdrs.deleted_at')
             ->whereNull('order_dtls.deleted_at');
@@ -344,11 +351,10 @@ class Detail extends BaseComponent
         })->toArray();
     }
 
-    public function SaveCheck()
+    public function saveCheck()
     {
-        if (!empty($this->input_details) && !$this->object->isNew()) {
+        if (!$this->object->isNew())
             $this->SaveWithoutNotification();
-        }
     }
 
     public function addSelectedToCart()
@@ -405,6 +411,7 @@ class Detail extends BaseComponent
                 $price = currencyToNumeric($orderDtl->price);
                 $maxTrSeq++;
                 $newDetails[] = [
+                    'tr_seq' => $maxTrSeq,
                     'dlvdtl_id' => $orderDtl->id,
                     'dlvhdrtr_type' => $orderDtl->tr_type,
                     'dlvhdrtr_id' => $orderDtl->tr_id,
@@ -415,6 +422,7 @@ class Detail extends BaseComponent
                     'matl_code' => $material->code,
                     'matl_uom' => $material->MatlUom[0]->id,
                     'qty' => 1,
+                    'selling_price' => $price,
                     'price' => $price,
                 ];
             }
@@ -429,6 +437,7 @@ class Detail extends BaseComponent
                 'message' => 'Berhasil menambahkan item ke nota'
             ]);
             $this->selectedMaterials = [];
+            $this->searchMaterials();
         } catch (\Exception $e) {
             DB::rollback();
             $this->dispatch('notify-swal', [

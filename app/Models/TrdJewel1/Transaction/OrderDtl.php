@@ -91,10 +91,12 @@ class OrderDtl extends BaseModel
         return null;
     }
 
-    public function scopeGetByOrderHdr($query, $id)
+    public function scopeGetByOrderHdr($query, $id, $trType)
     {
-        return $query->where('trhdr_id', $id);
+        return $query->where('trhdr_id', $id)
+                     ->where('tr_type', $trType);
     }
+
 
     public function Material()
     {

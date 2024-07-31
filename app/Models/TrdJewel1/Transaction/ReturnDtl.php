@@ -64,7 +64,7 @@ class ReturnDtl extends BaseModel
             $OrderDtl = $returnDtl->OrderDtl;  // Assuming the relation method name is OrderDtl
             if ($OrderDtl) {
                 $OrderDtlQtyReff = ceil(currencyToNumeric($OrderDtl->qty_reff));
-                $returnQty = (float)$returnDtl->qty;
+                $returnQty = ceil(currencyToNumeric($OrderDtl->qty));
                 $newQtyReff = $OrderDtlQtyReff - $returnQty;
                 $OrderDtl->qty_reff = number_format($newQtyReff, 2);
                 $OrderDtl->save();
@@ -72,14 +72,14 @@ class ReturnDtl extends BaseModel
         });
 
         static::deleting(function ($returnDtl) {
-            $OrderDtl = $returnDtl->OrderDtl;  // Assuming the relation method name is OrderDtl
-            if ($OrderDtl) {
-                $OrderDtlQtyReff = ceil(currencyToNumeric($OrderDtl->qty_reff));
-                $returnQty = (float)$returnDtl->qty;
-                $newQtyReff = $OrderDtlQtyReff + $returnQty;
-                $OrderDtl->qty_reff = number_format($newQtyReff, 2);
-                $OrderDtl->save();
-            }
+                $OrderDtl = $returnDtl->OrderDtl;
+                if ($OrderDtl) {
+                    $OrderDtlQtyReff = ceil(currencyToNumeric($OrderDtl->qty_reff));
+                    $returnQty =  ceil(currencyToNumeric($OrderDtl->qty));
+                    $newQtyReff = $OrderDtlQtyReff + $returnQty;
+                    $OrderDtl->qty_reff = number_format($newQtyReff, 2);
+                    $OrderDtl->save();
+                }
         });
     }
 
@@ -117,9 +117,10 @@ class ReturnDtl extends BaseModel
         return $this->belongsTo(OrderDtl::class, 'dlvdtl_id', 'id')->where('tr_type', 'SO');;
     }
 
-    public function scopeGetByReturnHdr($query, $id)
+    public function scopeGetByOrderHdr($query, $id, $trType)
     {
-        return $query->where('trhdr_id', $id);
+        return $query->where('trhdr_id', $id)
+        ->where('tr_type', $trType);;
     }
 
     public function Material()

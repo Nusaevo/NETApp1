@@ -136,8 +136,8 @@
         });
 
         Livewire.on('notify-swal', (dataArray) => {
-            console.log('alert event triggered'); // Debugging
-            console.log('Event data:', dataArray); // Debugging
+            // console.log('alert event triggered'); // Debugging
+            // console.log('Event data:', dataArray); // Debugging
 
             // Assuming the data is an array, get the first item
             let data = dataArray[0];

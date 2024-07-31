@@ -129,3 +129,48 @@ if (!function_exists('imagePath')) {
         return asset('customs/images/' . $imageName);
     }
 }
+
+if (!function_exists('isNullOrEmptyString')) {
+    /**
+     * Get string
+     *
+     * @return void
+     */
+    function isNullOrEmptyString($str) {
+        return (!isset($str) || trim($str) === '');
+    }
+}
+
+if (!function_exists('isNullOrEmptyNumber')) {
+    /**
+     * Check if a number is null, empty or zero
+     *
+     * @param mixed $num
+     * @return bool
+     */
+    function isNullOrEmptyNumber($num) {
+        return (!isset($num) || $num === null || $num === '' || $num == 0);
+    }
+}
+
+if (!function_exists('isNullOrEmptyDateTime')) {
+    /**
+     * Check if a date/time is null, empty, or invalid
+     *
+     * @param mixed $date
+     * @return bool
+     */
+    function isNullOrEmptyDateTime($date) {
+        if (!isset($date) || $date === null || $date === '') {
+            return true;
+        }
+
+        // Use DateTime to validate the date format
+        try {
+            $dt = new DateTime($date);
+            return false;
+        } catch (Exception $e) {
+            return true;
+        }
+    }
+}

@@ -48,6 +48,8 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     public $currency = [];
     public $materials = [];
+    public $printSettings = [];
+
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -76,21 +78,31 @@ class Detail extends BaseComponent
     protected function onLoadForEdit()
     {
         $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-        $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
+        $this->printSettings = json_decode($this->object->print_settings, true);
+
+        if ($this->printSettings === null) {
+            $this->printSettings = [
+                'item_checked' => false,
+                'no_return' => false,
+                'trade_in_minus15' => false,
+                'sale_minus25' => false,
+                'trade_in_minus10' => false,
+                'sale_minus20' => false,
+                'show_price' => false,
+            ];
+        }
+
         $this->inputs = populateArrayFromModel($this->object);
-
-        // dd($this->object,  $this->inputs);
-
-        // if ($this->object) {
-        //     $this->returnIds = $this->object->ReturnHdr->pluck('id')->toArray();
-        // }
 
         $this->retrieveMaterials();
     }
     protected function retrieveMaterials()
     {
         if ($this->object) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id)->orderBy('tr_seq')->get();
+            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->trType)->orderBy('tr_seq')->get();
+            if (is_null($this->object_detail) || $this->object_detail->isEmpty()) {
+                return;
+            }
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material->name;
@@ -178,11 +190,12 @@ class Detail extends BaseComponent
             }
         }
         $this->inputs['wh_code'] = 18;
-        if(isset($this->inputs['partner_code'])) {
+
+        if (!isNullOrEmptyString($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->object->fillAndSanitize($this->inputs);
+        $this->inputs['print_settings'] = json_encode($this->printSettings);
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {
@@ -426,9 +439,8 @@ class Detail extends BaseComponent
 
     public function saveCheck()
     {
-        if (!empty($this->input_details) && !$this->object->isNew()) {
+        if (!$this->object->isNew())
             $this->SaveWithoutNotification();
-        }
     }
 
     public function addSelectedToCart()

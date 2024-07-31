@@ -74,7 +74,7 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if (isset($this->inputs['log_date'])) {
+        if (isNullOrEmptyDateTime($this->inputs['log_date'])) {
             $existingLog = GoldPriceLog::whereDate('log_date', dateFormat($this->inputs['log_date'],'Y-m-d'))
                                         ->where('id', '!=', $this->object->id ?? null)
                                         ->exists();

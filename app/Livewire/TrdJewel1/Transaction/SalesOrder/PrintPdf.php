@@ -16,6 +16,7 @@ class PrintPdf extends BaseComponent
         'sale_minus25' => false,
         'trade_in_minus10' => false,
         'sale_minus20' => false,
+        'show_price' => false,
     ];
 
     public function onPreRender()
@@ -30,14 +31,6 @@ class PrintPdf extends BaseComponent
     {
         $this->object = OrderHdr::findOrFail($this->objectIdValue);
         $this->printSettings = json_decode($this->object->print_settings, true) ?? $this->printSettings;
-    }
-
-
-    public function savePrintSettings()
-    {
-        $this->order->print_settings = json_encode($this->printSettings);
-        $this->order->save();
-        $this->dispatch('notify', 'Pengaturan cetak disimpan.');
     }
 
     public function render()

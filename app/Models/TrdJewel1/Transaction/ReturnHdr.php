@@ -6,6 +6,7 @@ use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\TrdJewel1\Transaction\ReturnDtl;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Status;
 
 class ReturnHdr extends BaseModel
 {
@@ -29,6 +30,15 @@ class ReturnHdr extends BaseModel
         'curr_rate',
         'status_code'
     ];
+
+
+    public function isOrderCompleted(): bool
+    {
+        if ($this->status_code == Status::COMPLETED) {
+            return true;
+        }
+        return false;
+    }
 
     public function Partner()
     {

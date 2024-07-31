@@ -103,6 +103,9 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                     Livewire.hook('element.init', function() {
                         initInputMasks();
                     });
+                    Livewire.hook('morph.updated', function() {
+                        initInputMasks();
+                    });
                 });
 
             </script>
