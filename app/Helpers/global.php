@@ -81,7 +81,7 @@ if (!function_exists('getAppIds')) {
             $userId = Auth::id();
             $appIds = ConfigUser::where('id', $userId)
                         ->with(['ConfigGroup' => function($query) {
-                            $query->select('app_id');
+                            $query->select('app_id')->orderBy('app_id', 'desc');
                         }])
                         ->firstOrFail()
                         ->ConfigGroup
@@ -95,6 +95,7 @@ if (!function_exists('getAppIds')) {
         return [];
     }
 }
+
 if (!function_exists('getConstValueByStr1')) {
     function getConstValueByStr1($const_group, $str1)
     {

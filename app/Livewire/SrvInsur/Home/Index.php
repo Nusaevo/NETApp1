@@ -1,11 +1,15 @@
 <?php
 
 namespace App\Livewire\SrvInsur\Home;
+use App\Livewire\Component\BaseComponent;
 
-use Livewire\Component;
-
-class Index extends Component
+class Index extends BaseComponent
 {
+    protected function onPreRender()
+    {
+        $this->bypassPermissions = true;
+    }
+
     public function render()
     {
         return view('livewire.index');
