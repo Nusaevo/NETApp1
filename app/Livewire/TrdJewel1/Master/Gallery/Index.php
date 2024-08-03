@@ -10,21 +10,6 @@ class Index extends BaseComponent
 
     }
 
-    protected function onLoadForEdit()
-    {
-
-    }
-
-    protected function onPopulateDropdowns()
-    {
-
-    }
-
-    protected function onReset()
-    {
-
-    }
-
     public function render()
     {
         return view($this->renderRoute);

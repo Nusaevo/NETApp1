@@ -55,12 +55,12 @@ class TransactionDataTable extends BaseDataTableComponent
                     ->sortable(),
             Column::make("Total Quantity", "total_qty")
                 ->label(function($row) {
-                    return currencyToNumeric($row->total_qty);
+                    return $row->total_qty;
                 })
                 ->sortable(),
             Column::make("Total Amount", "total_amt")
                 ->label(function($row) {
-                    return rupiah(currencyToNumeric($row->total_amt));
+                    return rupiah($row->total_amt);
                 })
                 ->sortable(),
             // Column::make("Status", "status_code")

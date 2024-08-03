@@ -3,11 +3,14 @@
 namespace App\Models\SysConfig1;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ConfigMenu extends BaseModel
 {
     protected $table = 'config_menus';
     protected $connection = 'sys-config1';
+    use SoftDeletes;
+    
 
     public static function boot()
     {

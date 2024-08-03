@@ -14,25 +14,34 @@ use Illuminate\Support\Facades\DB;
 
 class Detail extends BaseComponent
 {
-    public $object;
-    public $VersionNumber;
-    public $actionValue = 'Create';
-    public $objectIdValue;
-    public $inputs = ['name' => ''];
     public $groups;
-    public $status = '';
+    public $rules = [
+        'inputs.name' => 'required|string|min:1|max:100'
+    ];
 
     protected function onPreRender()
     {
+        $this->customValidationAttributes  = [
+            'inputs'                => 'Input User',
+            'inputs.*'              => 'Input User',
+            'inputs.name'           => 'Nama User',
+            'inputs.code'      => 'Login ID',
+            'inputs.email'       => 'Email User',
+            'inputs.dept'       => 'Department',
+            'inputs.phone'       => 'No HP',
+            'inputs.newpassword' => 'Password'
+        ];
 
-    }
+        $this->reset('inputs');
+        $this->object = new ConfigUser();
 
-    protected function onLoadForEdit()
-    {
-        $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
-        $this->inputs['newpassword'] = "";
-        $this->inputs['confirmnewpassword'] = "";
+        if($this->isEditOrView())
+        {
+            $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $this->inputs['newpassword'] = "";
+            $this->inputs['confirmnewpassword'] = "";
+        }
     }
 
     protected $listeners = [
@@ -42,47 +51,6 @@ class Detail extends BaseComponent
     public function render()
     {
         return view($this->renderRoute);
-    }
-
-    public $rules = [
-            'inputs.name' => 'required|string|min:1|max:100',
-            // 'inputs.email' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:255',
-            //     'email',
-            //     Rule::unique('sys-config1.config_users', 'email')->ignore($this->object ? $this->object->id : null),
-            // ],
-            // 'inputs.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('sys-config1.config_users', 'code')->ignore($this->object ? $this->object->id : null),
-            // ],
-            // 'inputs.newpassword' => 'string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/'
-        ];
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input User',
-        'inputs.*'              => 'Input User',
-        'inputs.name'           => 'Nama User',
-        'inputs.code'      => 'Login ID',
-        'inputs.email'       => 'Email User',
-        'inputs.dept'       => 'Department',
-        'inputs.phone'       => 'No HP',
-        'inputs.newpassword' => 'Password'
-    ];
-
-    protected function onReset()
-    {
-        $this->reset('inputs');
-        $this->object = new ConfigUser();
-    }
-
-    protected function onPopulateDropdowns()
-    {
     }
 
     public function onValidateAndSave()

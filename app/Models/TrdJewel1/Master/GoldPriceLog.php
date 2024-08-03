@@ -4,13 +4,21 @@ namespace App\Models\TrdJewel1\Master;
 
 use App\Models\Base\BaseModel;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletes;
 class GoldPriceLog extends BaseModel
 {
     protected $table = 'goldprice_logs';
-
+    use SoftDeletes;
+   
     public static function boot()
     {
         parent::boot();
+
+        static::retrieved(function ($model) {
+            if (array_key_exists('goldprice_curr', $model->attributes)) {
+                $model->goldprice_curr = numberFormat($model->attributes['goldprice_curr'], 2);
+            }
+        });
     }
 
     protected $fillable = [
@@ -31,25 +39,15 @@ class GoldPriceLog extends BaseModel
         return $currencyRatesData ? currencyToNumeric($currencyRatesData->curr_rate) : 0;
     }
 
-    public function getAllColumnValues($attribute)
+    public static function calculateGoldPrice($baseCurrency, $currentRate)
     {
-        if (array_key_exists($attribute, $this->attributes)) {
-            if ($attribute == "log_date") {
-                return dateFormat($this->attributes[$attribute], 'd-m-Y');
-            }
-            if ($attribute == "curr_rate") {
-                return currencyToNumeric($this->attributes[$attribute]);
-            }
-            if ($attribute == "goldprice_curr") {
-                $numericValue = currencyToNumeric($this->attributes[$attribute]);
-                return numberFormat($numericValue, 2);
-            }
-
-            if ($attribute == "goldprice_basecurr") {
-                return currencyToNumeric($this->attributes[$attribute]);
-            }
-            return $this->attributes[$attribute];
+        if (empty($baseCurrency) || empty($currentRate)) {
+            return null;
         }
-        return null;
+
+        $baseCurrency = toNumberFormatter($baseCurrency);
+        $currentRate = toNumberFormatter($currentRate);
+
+        return numberFormat($baseCurrency / $currentRate, 2);
     }
 }

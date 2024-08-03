@@ -6,11 +6,12 @@ use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Inventories\IvtBalUnit;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class MatlUom extends BaseModel
 {
     protected $table = 'matl_uoms';
-
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();

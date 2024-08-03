@@ -7,10 +7,11 @@ use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Inventories\IvtBalUnit;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class OrderDtl extends BaseModel
 {
-
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();
@@ -80,16 +81,6 @@ class OrderDtl extends BaseModel
         'amt'
     ];
 
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            if ($attribute == "qty") {
-                return currencyToNumeric($this->attributes[$attribute]);
-            }
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
 
     public function scopeGetByOrderHdr($query, $id, $trType)
     {

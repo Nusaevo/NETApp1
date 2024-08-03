@@ -15,14 +15,26 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     use HasFactory, Notifiable;
     // use SpatieLogsActivity;
     // use HasRoles;
-    use BaseTrait;
     use SoftDeletes;
+    use BaseTrait;
+
     protected $connection = 'sys-config1';
 
 
     public static function boot()
     {
         parent::boot();
+        static::retrieved(function ($model) {
+            $attributes = $model->getAllColumns();
+
+            foreach ($attributes as $attribute) {
+                $value = $model->getAllColumnValues($attribute);
+                if (is_string($value) && preg_match('/^\$[\d,]+\.\d{2}$/', $value)) {
+                    $value = (float) currencyToNumeric($value);
+                }
+                $model->{$attribute} = $value;
+            }
+        });
         self::bootUpdatesCreatedByAndUpdatedAt();
     }
     /**
@@ -98,19 +110,6 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     public function setRememberToken($value)
     {
         $this->remember_token = $value;
-    }
-    /**
-     * Prepare proper error handling for url attribute
-     *
-     * @return string
-     */
-    public function getAvatarUrlAttribute()
-    {
-        if ($this->info) {
-            return asset($this->info->avatar_url);
-        }
-
-        return asset(theme()->getMediaUrlPath().'avatars/blank.png');
     }
 
     public function scopeGetActiveData()

@@ -8,11 +8,13 @@ use App\Models\TrdJewel1\Master\Partner;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use App\Services\SysConfig1\ConfigService;
 use App\Enums\Status;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Partner::class;
+    protected $configService;
 
     public function mount(): void
     {
@@ -20,6 +22,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setSearchVisibilityStatus(false);
         $this->setDefaultSort('created_at', 'desc');
+        $this->configService = new ConfigService();
     }
 
     public function builder(): Builder
@@ -37,7 +40,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    return getConstValueByStr1('PARTNERS_TYPE', $value);
+                    return  $this->configService->getConstValueByStr1('PARTNERS_TYPE', $value);
                 }),
             Column::make($this->trans('name'), "name")
                 ->searchable()

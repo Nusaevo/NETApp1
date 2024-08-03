@@ -2,13 +2,16 @@
 namespace App\Models\SysConfig1;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BaseTrait;
 class ConfigVar extends BaseModel
 {
     protected $table = 'config_vars';
     protected $connection = 'sys-config1';
+    use SoftDeletes;
 
-    protected $fillable = [
+    use SoftDeletes;
+        protected $fillable = [
         'code',
         'app_id',
         'app_code',

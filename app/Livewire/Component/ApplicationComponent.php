@@ -5,9 +5,8 @@ namespace App\Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\SysConfig1\ConfigAppl;
-use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigGroup;
 use Illuminate\Support\Facades\Session;
+use App\Services\SysConfig1\ConfigService;
 
 class ApplicationComponent extends Component
 {
@@ -18,7 +17,8 @@ class ApplicationComponent extends Component
     ];
     public function mount()
     {
-        $appIds = getAppIds();
+        $configService = new ConfigService();
+        $appIds = $configService->getAppIds();
         $applicationsData = ConfigAppl::whereIn('id', $appIds)->orderBy('id')->get();
         $this->applications = $applicationsData->map(function ($data) {
             return [

@@ -4,8 +4,11 @@ namespace App\Models\TrdJewel1\Transaction;
 
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\Base\BaseModel;
+use Illuminate\Database\Eloquent\SoftDeletes;
 class DelivHdr extends BaseModel
 {
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();
@@ -22,14 +25,6 @@ class DelivHdr extends BaseModel
         'deliv_by',
         'status_code'
     ];
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
 
     public function Partner()
     {

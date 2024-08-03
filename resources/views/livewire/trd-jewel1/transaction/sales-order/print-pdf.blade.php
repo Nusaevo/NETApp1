@@ -73,9 +73,9 @@
                                             @if($printSettings['trade_in_minus15'])
                                             <li>Tukar tambah - 15% kondisi baik</li>
                                             @endif
-                                            @if($printSettings['sale_minus25'])
+                                            {{-- @if($printSettings['sales_minus25'])
                                             <li>Jual -25% kondisi baik</li>
-                                            @endif
+                                            @endif --}}
                                             @if($printSettings['trade_in_minus10'])
                                             <li>Tukar tambah -10%</li>
                                             @endif

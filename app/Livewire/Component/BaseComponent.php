@@ -48,7 +48,6 @@ class BaseComponent extends Component
     {
         app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
-        $this->onPreRender();
         $this->additionalParam = $additionalParam;
         $this->appCode =  Session::get('app_code', '');
 
@@ -68,6 +67,7 @@ class BaseComponent extends Component
         } else {
             $this->objectIdValue = $objectId ? decryptWithSessionKey($objectId) : null;
         }
+        $this->onPreRender();
 
         // Set base route if not already set
         if (empty($this->baseRoute)) {
@@ -90,17 +90,12 @@ class BaseComponent extends Component
 
         // Handle specific actions like 'Edit', 'View', and 'Create'
         if (in_array($this->actionValue, ['Edit', 'View'])) {
-            $this->onPopulateDropdowns();
-            $this->onLoadForEdit();
             if($this->object) {
                 $this->status = Status::getStatusString($this->object->status_code);
                 $this->VersionNumber = $this->object->version_number;
             }
         } elseif ($this->actionValue === 'Create') {
-            $this->resetForm();
             if ($this->objectIdValue !== null) {
-                $this->onPopulateDropdowns();
-                $this->onLoadForEdit();
                 if($this->object) {
                     $this->status = Status::getStatusString($this->object->status_code);
                     $this->VersionNumber = $this->object->version_number;
@@ -169,16 +164,11 @@ class BaseComponent extends Component
         ]);
     }
 
-    // Reset form
-    protected function resetForm()
+    public function isEditOrView()
     {
-        if ($this->actionValue == 'Create') {
-            $this->onReset();
-            $this->onPopulateDropdowns();
-        } elseif ($this->actionValue == 'Edit') {
-            $this->VersionNumber = $this->object->version_number ?? null;
-        }
+        return in_array($this->actionValue, ['Edit', 'View']);
     }
+
 
     // Save method
     public function Save()
@@ -189,8 +179,9 @@ class BaseComponent extends Component
             $this->updateVersionNumber();
             $this->onValidateAndSave();
             DB::commit();
+            $this->onPreRender();
+
             $this->notify('success',__('generic.string.save'));
-            $this->resetForm();
         } catch (Exception $e) {
             DB::rollBack();
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
@@ -205,8 +196,9 @@ class BaseComponent extends Component
         try {
             $this->updateVersionNumber();
             $this->onValidateAndSave();
+
             DB::commit();
-            $this->resetForm();
+            $this->onPreRender();
         } catch (Exception $e) {
             DB::rollBack();
             dd($e->getMessage());

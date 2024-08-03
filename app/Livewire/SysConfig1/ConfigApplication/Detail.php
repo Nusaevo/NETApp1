@@ -10,15 +10,31 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $group_codes;
 
+
+    public $rules = [
+        'inputs.code' => 'required|string|min:1|max:100',
+        'inputs.name' => 'required|string|min:1|max:100',
+        'inputs.latest_version' => 'string|min:1|max:15',
+        'inputs.descr' => 'string|min:1|max:500',
+    ];
+
     protected function onPreRender()
     {
-
-    }
-
-    protected function onLoadForEdit()
-    {
-        $this->object = ConfigAppl::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
+        $this->reset('inputs');
+        $this->object = new ConfigAppl();
+        $this->customValidationAttributes  = [
+            'inputs'                => 'Input Application',
+            'inputs.*'              => 'Input Application',
+            'inputs.name'           => 'Application Name',
+            'inputs.code'      => 'Application Code',
+            'inputs.latest_version' => 'Application Version',
+            'inputs.descr' => 'Description',
+        ];
+        if($this->isEditOrView())
+        {
+            $this->object = ConfigAppl::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+        }
     }
 
     public function render()
@@ -29,32 +45,6 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
     ];
-
-    public $rules = [
-        'inputs.name' => 'required|string|min:1|max:100',
-         'inputs.version' => 'string|min:1|max:15',
-        'inputs.descr' => 'string|min:1|max:500',
-    ];
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input Application',
-        'inputs.*'              => 'Input Application',
-        'inputs.name'           => 'Application Name',
-        'inputs.code'      => 'Application Code',
-        'inputs.version' => 'Application Version',
-        'inputs.descr' => 'Description',
-    ];
-
-    protected function onPopulateDropdowns()
-    {
-
-    }
-
-    protected function onReset()
-    {
-        $this->reset('inputs');
-        $this->object = new ConfigAppl();
-    }
 
     public function onValidateAndSave()
     {

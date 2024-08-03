@@ -45,13 +45,13 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make("Qty Onhand", "IvtBal.qty_oh")
                 ->format(function ($value, $row, Column $column) {
-                    return currencyToNumeric(optional($row->IvtBal)->qty_oh ?? 0); // Ensure null values are shown as 0
+                    return optional($row->IvtBal)->qty_oh ?? 0; // Ensure null values are shown as 0
                 })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("selling_price"), "jwl_selling_price")
                 ->format(function ($value, $row, Column $column) {
-                    return dollar(currencyToNumeric($value));
+                    return dollar($value);
                 })
                 ->searchable()
                 ->sortable(),

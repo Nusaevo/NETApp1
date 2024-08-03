@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Services\SysConfig1\ConfigService;
 
 use Illuminate\Support\Facades\Session;
 use App\Models\SysConfig1\ConfigAppl;
@@ -58,7 +59,8 @@ class LoginRequest extends FormRequest
         $appKey = config('app.key');
         Session::put('session_salt', $salt . $appKey);
 
-        $appIds = getAppIds();
+        $configService = new ConfigService();
+        $appIds = $configService->getAppIds();
         if (!empty($appIds)) {
             $firstAppId = $appIds[0];
             $firstApp = ConfigAppl::find($firstAppId);

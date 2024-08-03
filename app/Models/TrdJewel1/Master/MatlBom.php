@@ -3,14 +3,21 @@
 namespace App\Models\TrdJewel1\Master;
 use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigConst;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class MatlBom extends BaseModel
 {
     protected $table = 'matl_boms';
+    use SoftDeletes;
+   
 
     protected static function boot()
     {
         parent::boot();
+        static::retrieved(function ($model) {
+            if (array_key_exists('jwl_sides_carat', $model->attributes)) {
+                $model->jwl_sides_carat = numberFormat($model->attributes['jwl_sides_carat'], 3);
+            }
+        });
     }
 
     protected $fillable = [
@@ -27,23 +34,6 @@ class MatlBom extends BaseModel
         'jwl_sides_amt',
         'jwl_sides_spec'
     ];
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            if ($attribute == "jwl_sides_carat") {
-                return numberFormat($this->attributes[$attribute], 3);
-            }
-            if ($attribute == "jwl_sides_cnt") {
-                return $this->attributes[$attribute];
-            }
-            if ($attribute == "jwl_sides_price") {
-                return int_qty($this->attributes[$attribute]);
-            }
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
 
     /**
      * Retrieve the JSON attribute as an array.

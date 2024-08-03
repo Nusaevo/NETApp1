@@ -3,12 +3,10 @@
 namespace App\Models\TrdJewel1\Master;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Partner extends BaseModel
 {
     protected $table = 'partners';
@@ -16,7 +14,8 @@ class Partner extends BaseModel
     const SUPPLIER = 'V';
     const SALESMAN = 'S';
     const BANK = 'B';
-
+    use SoftDeletes;
+        
     public static function boot()
     {
         parent::boot();
@@ -69,4 +68,19 @@ class Partner extends BaseModel
         return $this->belongsTo(OrderHdr::class, 'partner_id', 'id');
     }
 
+    public static function generateNewCode($name)
+    {
+        $initialCode = strtoupper(substr($name, 0, 1));
+        $latestCode = self::where('code', 'LIKE', $initialCode . '%')
+                             ->orderBy('code', 'desc')
+                             ->pluck('code')
+                             ->first();
+
+        if ($latestCode) {
+            $numericPart = intval(substr($latestCode, 1)) + 1;
+            return $initialCode . $numericPart;
+        } else {
+            return $initialCode . '1';
+        }
+    }
 }

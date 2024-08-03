@@ -5,6 +5,7 @@ namespace App\Livewire\TrdJewel1\Master\Currency;
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use App\Models\SysConfig1\ConfigConst;
+use App\Services\TrdJewel1\Master\MasterService;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -13,7 +14,7 @@ class Detail extends BaseComponent
 {
     public $inputs = [];
     public $currencies = [];
-
+    protected $masterService;
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -22,6 +23,25 @@ class Detail extends BaseComponent
             'inputs.goldprice_curr' => $this->trans('gold_price_currency'),
             'inputs.goldprice_basecurr' => $this->trans('gold_price_base'),
         ];
+
+        $this->reset('inputs');
+        $this->inputs['log_date']  = date('d-m-Y');
+        $this->object = new GoldPriceLog();
+
+        $this->masterService = new MasterService();
+
+        $currencyData = $this->masterService->getCurrencyData($this->appCode);
+        $this->currencies = $currencyData['currencies'];
+        $defaultCurrency = $currencyData['defaultCurrency'];
+        $this->inputs['curr_id'] = $defaultCurrency['value'];
+
+        if($this->isEditOrView())
+        {
+            $this->object = GoldPriceLog::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $this->inputs['log_date'] = dateFormat($this->object->log_date, 'd-m-Y');
+            $this->inputs['curr_id'] = $defaultCurrency['value'];
+        }
     }
 
     public $rules = [
@@ -31,12 +51,6 @@ class Detail extends BaseComponent
         'inputs.goldprice_basecurr' => 'required',
     ];
 
-    protected function onLoadForEdit()
-    {
-        $this->object = GoldPriceLog::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
-    }
-
     public function render()
     {
         return view($this->renderRoute);
@@ -45,32 +59,6 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
     ];
-
-    public function onReset()
-    {
-        $this->reset('inputs');
-        $this->inputs['log_date']  = date('d-m-Y');
-        $this->object = new GoldPriceLog();
-    }
-
-    public function refreshCurrencies()
-    {
-        $data = ConfigConst::GetCurrencyData($this->appCode);
-        $currencies = $data->map(function ($item) {
-            return [
-                'label' => $item->str1 . " - " . $item->str2,
-                'value' => $item->id,
-            ];
-        });
-        $defaultCurrency = $currencies->first();
-        $this->currencies = $currencies;
-        $this->inputs['curr_id'] = $defaultCurrency['value'];
-    }
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshCurrencies();
-    }
 
     public function onValidateAndSave()
     {
@@ -95,10 +83,8 @@ class Detail extends BaseComponent
             return null;
         }
 
-        $baseCurrency = toNumberFormatter($this->inputs['goldprice_basecurr']);
-        $currentRate = toNumberFormatter($this->inputs['curr_rate']);
-
-        $this->inputs['goldprice_curr'] = numberFormat($baseCurrency / $currentRate, 2);
+        $goldPrice = GoldPriceLog::calculateGoldPrice($this->inputs['goldprice_basecurr'], $this->inputs['curr_rate']);
+        $this->inputs['goldprice_curr'] = $goldPrice;
     }
 
     public function changeStatus()

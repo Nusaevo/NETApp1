@@ -13,8 +13,8 @@ class ConfigRight extends BaseModel
 {
     protected $table = 'config_rights';
     protected $connection = 'sys-config1';
-
-    public static function boot()
+    use SoftDeletes;
+        public static function boot()
     {
         parent::boot();
     }

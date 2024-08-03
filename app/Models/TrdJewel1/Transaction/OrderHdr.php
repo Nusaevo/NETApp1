@@ -8,9 +8,11 @@ use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class OrderHdr extends BaseModel
 {
+    use SoftDeletes;
+
     protected static function boot()
     {
         parent::boot();
@@ -18,6 +20,14 @@ class OrderHdr extends BaseModel
             $orderHdr->DelivHdr()->Delete();
             $orderHdr->BillingHdr()->Delete();
             $orderHdr->OrderDtl()->Delete();
+        });
+
+
+        static::retrieved(function ($model) {
+
+            if (array_key_exists('goldprice_curr', $model->attributes)) {
+                $model->goldprice_curr = numberFormat($model->attributes['goldprice_curr'], 2);
+            }
         });
     }
 
@@ -85,15 +95,13 @@ class OrderHdr extends BaseModel
 
     public function getTotalQtyAttribute()
     {
-        return $this->OrderDtl()->sum('qty');
+        return currencyToNumeric($this->OrderDtl()->sum('qty'));
     }
 
     public function getTotalAmtAttribute()
     {
-        return $this->OrderDtl()->sum('amt');
+        return currencyToNumeric($this->OrderDtl()->sum('amt'));
     }
-
-
 
     public function getMatlCodesAttribute()
     {
@@ -188,21 +196,6 @@ class OrderHdr extends BaseModel
 
         return false;
     }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            if ($attribute == "curr_rate") {
-                return currencyToNumeric($this->attributes[$attribute]);
-            }
-            if ($attribute == "tr_date") {
-                return dateFormat($this->attributes[$attribute], 'd-m-Y');
-            }
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
-
     /**
      * Saves all details related to the purchase order, including delivery and billing information.
      *

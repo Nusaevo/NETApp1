@@ -2,13 +2,15 @@
 
 namespace App\Models\TrdJewel1\Transaction;;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\TrdJewel1\Transaction\PaymentDtl;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BaseTrait;
 class PaymentHdr extends BaseModel
 {
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();

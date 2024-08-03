@@ -30,6 +30,10 @@ class Index extends BaseComponent
     public function render()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($this->currencyRate == 0) {
+            abort(431, __('generic.string.currency_needed'));
+        }
         $query = Material::getAvailableMaterials();
         if (!empty($this->inputs['name'])) {
             $query->where('name', 'like', '%' . $this->inputs['name'] . '%');

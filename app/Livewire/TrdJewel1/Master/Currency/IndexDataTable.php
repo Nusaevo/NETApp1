@@ -32,20 +32,20 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    return rupiah(currencyToNumeric($value));
+                    return rupiah($value);
                 }),
 
             Column::make($this->trans("gold_price_base"), "goldprice_basecurr")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    return rupiah(currencyToNumeric($value));
+                    return rupiah($value);
                 }),
             Column::make($this->trans("gold_price_currency"), "goldprice_curr")
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    return dollar(currencyToNumeric($value));
+                    return dollar($value);
                 }),
             Column::make($this->trans('created_date'), 'created_at')
                 ->sortable(),

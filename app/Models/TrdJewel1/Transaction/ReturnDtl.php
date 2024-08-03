@@ -4,13 +4,15 @@ namespace App\Models\TrdJewel1\Transaction;
 
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Inventories\IvtBalUnit;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BaseTrait;
 class ReturnDtl extends BaseModel
 {
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();

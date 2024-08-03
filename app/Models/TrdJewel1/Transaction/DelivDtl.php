@@ -6,9 +6,11 @@ use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Inventories\IvtBalUnit;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BaseTrait;
 class DelivDtl extends BaseModel
 {
+    use SoftDeletes;
     protected static function boot()
     {
         parent::boot();
@@ -105,15 +107,6 @@ class DelivDtl extends BaseModel
         'qty_reff',
         'status_code'
     ];
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
-
     public function scopeGetByOrderHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)

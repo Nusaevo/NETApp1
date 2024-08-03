@@ -7,6 +7,8 @@ use App\Models\Base\BaseModel\Attachment;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Transaction\OrderDtl;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\SysConfig1\ConfigConst;
 class Material extends BaseModel
 {
     protected $table = 'materials';
@@ -14,10 +16,17 @@ class Material extends BaseModel
     const GOLD = 'GOLD';
     const GEMSTONE = 'GEMSTONE';
     const DIAMOND = 'DIAMOND';
+    use SoftDeletes;
 
     protected static function boot()
     {
         parent::boot();
+
+        static::retrieved(function ($model) {
+            if (array_key_exists('jwl_wgt_gold', $model->attributes)) {
+                $model->jwl_wgt_gold = numberFormat($model->attributes['jwl_wgt_gold'], 2);
+            }
+        });
         // static::created(function ($model) {
         //     $model->insertIvtBalData();
         // });
@@ -78,23 +87,6 @@ class Material extends BaseModel
         $currentSequenceValue = DB::select("SELECT last_value FROM $sequenceName")[0]->last_value;
 
         return $currentSequenceValue;
-    }
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            if ($attribute == "jwl_selling_price") {
-                return currencyToNumeric($this->attributes[$attribute]);
-            }
-            if ($attribute == "jwl_buying_price") {
-                return currencyToNumeric($this->attributes[$attribute]);
-            }
-            if ($attribute == "jwl_wgt_gold") {
-                return numberFormat($this->attributes[$attribute]);
-            }
-            return $this->attributes[$attribute];
-        }
-        return null;
     }
 
     public function hasQuantity()
@@ -175,4 +167,101 @@ class Material extends BaseModel
 
         return false;
     }
+
+
+    public static function retrieveBomDetail($detail)
+    {
+        $baseMaterial = ConfigConst::where('id', $detail->base_matl_id)->first();
+        $formattedDetail = populateArrayFromModel($detail);
+
+        $formattedDetail['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
+        $formattedDetail['base_matl_id_value'] = $baseMaterial->id;
+        $formattedDetail['base_matl_id_note'] = $baseMaterial->note1;
+
+        $decodedData = json_decode($detail->jwl_sides_spec, true);
+
+        switch ($formattedDetail['base_matl_id_note']) {
+            case self::JEWELRY:
+                $formattedDetail['purity'] = $decodedData['purity'] ?? null;
+                break;
+            case self::DIAMOND:
+                $formattedDetail['shapes'] = $decodedData['shapes'] ?? null;
+                $formattedDetail['clarity'] = $decodedData['clarity'] ?? null;
+                $formattedDetail['color'] = $decodedData['color'] ?? null;
+                $formattedDetail['cut'] = $decodedData['cut'] ?? null;
+                $formattedDetail['gia_number'] = $decodedData['gia_number'] ?? 0;
+                break;
+            case self::GEMSTONE:
+                $formattedDetail['gemstone'] = $decodedData['gemstone'] ?? null;
+                $formattedDetail['gemcolor'] = $decodedData['gemcolor'] ?? null;
+                break;
+            case self::GOLD:
+                $formattedDetail['production_year'] = $decodedData['production_year'] ?? 0;
+                $formattedDetail['ref_mark'] = $decodedData['ref_mark'] ?? null;
+                break;
+        }
+
+        return $formattedDetail;
+    }
+
+    public static function generateMaterialDescriptionsFromBOMs($matl_boms)
+    {
+        $materialDescriptions = '';
+
+        if ($matl_boms && count($matl_boms) > 0) {
+            $bomIds = array_filter(array_column($matl_boms, 'base_matl_id_value'), function($value) {
+                return !is_null($value) && $value !== '';
+            });
+
+            if (!empty($bomIds)) {
+                $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
+            }
+
+            foreach ($matl_boms as $bom) {
+                if (isset($bom['base_matl_id_value'])) {
+                    $baseMaterial = $bomData[$bom['base_matl_id_value']] ?? null;
+
+                    if ($baseMaterial) {
+                        $jwlSidesCnt = $bom['jwl_sides_cnt'] ?? 0;
+                        $jwlSidesCarat = $bom['jwl_sides_carat'] ?? 0;
+                        $materialDescriptions .= "$jwlSidesCnt $baseMaterial->str1:$jwlSidesCarat ";
+                    }
+                }
+            }
+        }
+
+        return $materialDescriptions;
+    }
+
+    public static function calculateSellingPrice($buyingPrice, $markup)
+    {
+        if (empty($buyingPrice) || empty($markup)) {
+            return null;
+        }
+
+        $buyingPrice = toNumberFormatter($buyingPrice);
+        $markupAmount = $buyingPrice * (toNumberFormatter($markup) / 100);
+        return numberFormat($buyingPrice + $markupAmount);
+    }
+
+    public static function calculateMarkup($buyingPrice, $sellingPrice)
+    {
+        if (empty($buyingPrice)) {
+            return null;
+        }
+
+        $buyingPrice = toNumberFormatter($buyingPrice);
+
+        if ($buyingPrice <= 0) {
+            return null;
+        }
+
+        if (empty($sellingPrice)) {
+            return null;
+        }
+
+        $newMarkupPercentage = ((toNumberFormatter($sellingPrice) - $buyingPrice) / $buyingPrice) * 100;
+        return numberFormat($newMarkupPercentage);
+    }
+
 }

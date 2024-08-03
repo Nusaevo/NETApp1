@@ -3,10 +3,11 @@
 namespace App\Models\TrdJewel1\Transaction;
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\Base\BaseModel;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class BillingDtl extends BaseModel
 {
-
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();
@@ -35,18 +36,6 @@ class BillingDtl extends BaseModel
         'amt_reff',
         'status_code'
     ];
-
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            if ($attribute == "qty") {
-                return currencyToNumeric($this->attributes[$attribute]);
-            }
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
 
     public function scopeGetByOrderHdr($query, $id, $trType)
     {

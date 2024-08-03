@@ -2,11 +2,14 @@
 namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BaseTrait;
 class ConfigSnum extends BaseModel
 {
     protected $table = 'config_snums';
     protected $connection = 'sys-config1';
-
+    use SoftDeletes;
+        
     protected $fillable = [
         'code',
         'app_id',

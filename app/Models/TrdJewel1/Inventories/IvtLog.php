@@ -38,12 +38,4 @@ class IvtLog extends Model
         'process_flag',
         'status_code'
     ];
-
-    public function getAllColumnValues($attribute)
-    {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
-    }
 }

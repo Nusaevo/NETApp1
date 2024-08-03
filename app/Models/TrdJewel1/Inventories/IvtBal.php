@@ -2,8 +2,9 @@
 
 namespace App\Models\TrdJewel1\Inventories;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Base\BaseModel;
 
-class IvtBal extends Model
+class IvtBal extends BaseModel
 {
     protected $table = 'ivt_bals';
     public $timestamps = false;
@@ -27,6 +28,7 @@ class IvtBal extends Model
         'wh_id',
         'wh_code',
     ];
+
 
     public function scopeGetActiveData()
     {

@@ -15,6 +15,7 @@ use Livewire\WithFileUploads;
 use Ratchet\Client\Connector;
 use React\EventLoop\Factory;
 use App\Enums\Status;
+use App\Services\TrdJewel1\Master\MasterService;
 
 class MaterialComponent extends BaseComponent
 {
@@ -51,6 +52,9 @@ class MaterialComponent extends BaseComponent
     public $searchMode = false;
     public $enableCategory1 = "true";
 
+
+    protected $materialService;
+
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
     {
         $this->searchMode = $searchMode;
@@ -58,30 +62,6 @@ class MaterialComponent extends BaseComponent
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
-    protected function onPreRender()
-    {
-        $this->baseRoute = "TrdJewel1.Master.Material.Detail";
-        // $this->langBasePath = 'trd-jewel1/master/material/detail';
-        $this->customValidationAttributes  = [
-            'materials'                => $this->trans('input'),
-            'materials.*'              => $this->trans('input'),
-            'materials.code'      => $this->trans('code'),
-            'materials.jwl_category1'      => $this->trans('category1'),
-            'materials.jwl_category2'      => $this->trans('category2'),
-            'materials.jwl_wgt_gold'      => $this->trans('weight'),
-            'materials.jwl_carat' => $this->trans('carat'),
-            'materials.code'      => $this->trans('uom'),
-            'materials.name'      => $this->trans('description'),
-            'materials.descr'      => $this->trans('bom_description'),
-            'matl_uoms.barcode'      => $this->trans('barcode'),
-            'materials.jwl_buying_price'      =>  $this->trans('buying_price'),
-            'materials.jwl_selling_price'      => $this->trans('selling_price'),
-            'matl_boms.*.base_matl_id' => $this->trans('material'),
-            'matl_boms.*.jwl_sides_cnt' => $this->trans('quantity'),
-            'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
-            'matl_boms.*.jwl_sides_price' => $this->trans('price'),
-        ];
-    }
 
     public $rules = [
         'materials.jwl_buying_price' => 'required',
@@ -114,11 +94,68 @@ class MaterialComponent extends BaseComponent
             //     'max:50',
             //     Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
             // ],
+
     ];
 
-    protected function onLoadForEdit()
+    protected function onPreRender()
     {
-        $this->loadMaterial($this->objectIdValue);
+        $this->baseRoute = "TrdJewel1.Master.Material.Detail";
+        // $this->langBasePath = 'trd-jewel1/master/material/detail';
+        $this->customValidationAttributes  = [
+            'materials'                => $this->trans('input'),
+            'materials.*'              => $this->trans('input'),
+            'materials.code'      => $this->trans('code'),
+            'materials.jwl_category1'      => $this->trans('category1'),
+            'materials.jwl_category2'      => $this->trans('category2'),
+            'materials.jwl_wgt_gold'      => $this->trans('weight'),
+            'materials.jwl_carat' => $this->trans('carat'),
+            'materials.code'      => $this->trans('uom'),
+            'materials.name'      => $this->trans('description'),
+            'materials.descr'      => $this->trans('bom_description'),
+            'matl_uoms.barcode'      => $this->trans('barcode'),
+            'materials.jwl_buying_price'      =>  $this->trans('buying_price'),
+            'materials.jwl_selling_price'      => $this->trans('selling_price'),
+            'matl_boms.*.base_matl_id' => $this->trans('material'),
+            'matl_boms.*.jwl_sides_cnt' => $this->trans('quantity'),
+            'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
+            'matl_boms.*.jwl_sides_price' => $this->trans('price'),
+        ];
+
+        $this->product_code = "";
+        $this->reset('materials');
+        $this->reset('matl_uoms');
+        $this->reset('matl_boms');
+
+        $this->materialService = new MasterService();
+        $this->baseMaterials = $this->materialService->getMatlBaseMaterialData($this->appCode);
+        $this->materialUOMs = $this->materialService->getUOMData($this->appCode);
+        $this->materialCategories1 = $this->materialService->getMatlCategory1Data($this->appCode);
+        $this->materialCategories2 = $this->materialService->getMatlCategory2Data($this->appCode);
+        $this->materialJewelPurity = $this->materialService->getMatlJewelPurityData($this->appCode);
+        $this->sideMaterialShapes = $this->materialService->getMatlSideMaterialShapeData($this->appCode);
+        $this->sideMaterialClarity = $this->materialService->getMatlSideMaterialClarityData($this->appCode);
+        $this->sideMaterialCut = $this->materialService->getMatlSideMaterialCutData($this->appCode);
+        $this->sideMaterialGemColors = $this->materialService->getMatlSideMaterialGemColorData($this->appCode);
+        $this->sideMaterialGiaColors = $this->materialService->getMatlSideMaterialGiaColorData($this->appCode);
+        $this->sideMaterialGemStone = $this->materialService->getMatlSideMaterialGemstoneData($this->appCode);
+        $this->sideMaterialJewelPurity = $this->materialService->getMatlSideMaterialPurityData($this->appCode);
+
+        $this->matl_uoms['matl_uom'] = 'PCS';
+        $this->materials['jwl_category1'] = "";
+        $this->materials['jwl_category2'] = "";
+        $this->materials['jwl_carat'] = "";
+        $this->object = new Material();
+        $this->object_uoms = new MatlUom();
+        $this->object_boms = [];
+        $this->deletedItems = [];
+        $this->bom_row = 0;
+        $this->capturedImages = [];
+
+
+        if($this->isEditOrView())
+        {
+            $this->loadMaterial($this->objectIdValue);
+        }
     }
 
     protected function loadMaterial($objectId)
@@ -131,45 +168,7 @@ class MaterialComponent extends BaseComponent
             $this->materials = populateArrayFromModel($this->object);
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             foreach ($this->object_boms as $key => $detail) {
-                $this->refreshBaseMaterials($this->bom_row);
-                $this->refreshSideMaterialGiaColor($this->bom_row);
-                $this->refreshSideMaterialGemColor($this->bom_row);
-                $this->refreshSideMaterialClarity($this->bom_row);
-                $this->refreshSideMaterialCut($this->bom_row);
-                $this->refreshSideMaterialGemstone($this->bom_row);
-                $this->refreshSideMaterialShapes($this->bom_row);
-                $this->refreshSideMaterialJewelPurity($this->bom_row);
-                $formattedDetail = populateArrayFromModel($detail);
-                $this->matl_boms[$key] =  $formattedDetail;
-                $this->matl_boms[$key]['id'] = $detail->id;
-
-                $baseMaterial = ConfigConst::where('id', $detail->base_matl_id)->first();
-                $this->matl_boms[$key]['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
-
-                $this->matl_boms[$key]['base_matl_id_value'] =  $baseMaterial->id;
-                $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
-
-                $decodedData = json_decode($detail->jwl_sides_spec, true);
-                switch ( $this->matl_boms[$key]['base_matl_id_note']) {
-                    case Material::JEWELRY:
-                        $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
-                        break;
-                    case Material::DIAMOND:
-                        $this->matl_boms[$key]['shapes'] = $decodedData['shapes'] ?? null;
-                        $this->matl_boms[$key]['clarity'] = $decodedData['clarity'] ?? null;
-                        $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
-                        $this->matl_boms[$key]['cut'] = $decodedData['cut'] ?? null;
-                        $this->matl_boms[$key]['gia_number'] = $decodedData['gia_number'] ?? 0;
-                        break;
-                    case Material::GEMSTONE:
-                        $this->matl_boms[$key]['gemstone'] = $decodedData['gemstone'] ?? null;
-                        $this->matl_boms[$key]['gemcolor'] = $decodedData['gemcolor'] ?? null;
-                        break;
-                    case Material::GOLD:
-                        $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? 0;
-                        $this->matl_boms[$key]['ref_mark'] = $decodedData['ref_mark'] ?? null;
-                        break;
-                }
+                $this->matl_boms[$key] = Material::retrieveBomDetail($detail);
                 $this->bom_row++;
             }
             $attachments = $this->object->Attachment;
@@ -201,170 +200,6 @@ class MaterialComponent extends BaseComponent
     }
 
 
-    public function refreshUOMs()
-    {
-        $data = ConfigConst::GetUOMData($this->appCode);
-        $this->materialUOMs = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1,
-            ];
-        })->toArray();
-        $this->matl_uoms['matl_uom'] = 'PCS';
-    }
-
-    public function refreshCategories1()
-    {
-        $data = ConfigConst::GetMatlCategory1Data($this->appCode);
-
-        $this->materialCategories1 = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-
-        $this->materials['jwl_category1'] = "";
-    }
-
-    public function refreshCategories2()
-    {
-        $data = ConfigConst::GetMatlCategory2Data($this->appCode);
-        $this->materialCategories2 = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-
-        $this->materials['jwl_category2'] = "";
-    }
-
-    public function refreshJewellPurity()
-    {
-        $data = ConfigConst::GetMatlJewelPurityData($this->appCode);
-
-        $this->materialJewelPurity = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-
-        $this->materials['jwl_carat'] = "";
-    }
-
-    public function refreshBaseMaterials($key)
-    {
-        $data = ConfigConst::GetMatlBaseMaterialData($this->appCode);
-
-        $this->baseMaterials = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->id."-".$data->note1,
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['base_matl_id'] = "";
-    }
-
-    public function refreshSideMaterialShapes($key)
-    {
-        $data = ConfigConst::GetMatlSideMaterialShapeData($this->appCode);
-
-        $this->sideMaterialShapes = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['shapes'] =  "";
-    }
-
-    public function refreshSideMaterialClarity($key)
-    {
-        $data = ConfigConst::GetMatlSideMaterialClarityData($this->appCode);
-
-        $this->sideMaterialClarity = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['clarity'] =  "";
-    }
-
-    public function refreshSideMaterialCut($key)
-    {
-        $data = ConfigConst::GetMatlSideMaterialCutData($this->appCode);
-
-        $this->sideMaterialCut = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['cut'] = "";
-    }
-
-    public function refreshSideMaterialGemColor($key)
-    {
-        $data = ConfigConst::GetMatlSideMaterialGemColorData($this->appCode);
-
-        $this->sideMaterialGemColors = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['gemcolor'] = "";
-    }
-
-    public function refreshSideMaterialGiaColor($key)
-    {
-        $data = ConfigConst::GetMatlSideMaterialGiaColorData($this->appCode);
-        $this->sideMaterialGiaColors = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['color'] =  "";
-    }
-
-    public function refreshSideMaterialGemstone($key)
-    {
-        $data = ConfigConst::GetMatlSideMaterialGemstoneData($this->appCode);
-
-        $this->sideMaterialGemStone = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['gemstone'] =  "";
-    }
-
-    public function refreshSideMaterialJewelPurity($key)
-    {
-        $data = ConfigConst::GetMatlSideMaterialPurityData($this->appCode);
-
-        $this->sideMaterialJewelPurity = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->str1
-            ];
-        })->toArray();
-        $this->matl_boms[$key]['purity'] =   "";
-    }
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshUOMs();
-        $this->refreshCategories1();
-        $this->refreshCategories2();
-        $this->refreshJewellPurity();
-    }
-
     public function submitImages($imageByteArrays)
     {
         foreach ($imageByteArrays as $byteArray) {
@@ -373,6 +208,7 @@ class MaterialComponent extends BaseComponent
             $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename];
         }
     }
+
     public function captureImages($imageData)
     {
         $filename = uniqid() . '.jpg';
@@ -471,20 +307,6 @@ class MaterialComponent extends BaseComponent
         }
 
         $this->dispatch('refresh');
-    }
-
-    public function onReset()
-    {
-        $this->product_code = "";
-        $this->reset('materials');
-        $this->reset('matl_uoms');
-        $this->reset('matl_boms');
-        $this->object = new Material();
-        $this->object_uoms = new MatlUom();
-        $this->object_boms = [];
-        $this->deletedItems = [];
-        $this->bom_row = 0;
-        $this->capturedImages = [];
     }
 
     public function onValidateAndSave()
@@ -596,37 +418,11 @@ class MaterialComponent extends BaseComponent
         $base_matl_id_parts = explode('-', $value);
         $this->matl_boms[$key]['base_matl_id_value'] = $base_matl_id_parts[0];
         $this->matl_boms[$key]['base_matl_id_note'] =  $base_matl_id_parts[1];
-        $this->generateMaterialDescriptionsFromBOMs();
     }
 
     public function generateMaterialDescriptionsFromBOMs()
     {
-        $materialDescriptions = '';
-
-        if ($this->matl_boms && count($this->matl_boms) > 0) {
-            $bomIds = array_filter(array_column($this->matl_boms, 'base_matl_id_value'), function($value) {
-                return !is_null($value) && $value !== '';
-            });
-            
-            if (!empty($bomIds)) {
-                $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
-            }
-            
-
-            foreach ($this->matl_boms as $bom) {
-                if (isset($bom['base_matl_id_value'])) {
-                    $baseMaterial = $bomData[$bom['base_matl_id_value']] ?? null;
-
-                    if ($baseMaterial) {
-                        $jwlSidesCnt = $bom['jwl_sides_cnt'] ?? 0;
-                        $jwlSidesCarat = $bom['jwl_sides_carat'] ?? 0;
-                        $materialDescriptions .= "$jwlSidesCnt $baseMaterial->str1:$jwlSidesCarat ";
-                    }
-                }
-            }
-        }
-
-        $this->materials['descr'] = $materialDescriptions;
+        $this->materials['descr'] = Material::generateMaterialDescriptionsFromBOMs($this->matl_boms);
     }
 
     public function addBoms()
@@ -637,16 +433,17 @@ class MaterialComponent extends BaseComponent
         $bomsDetail['base_matl_id_note'] = "";
         $this->matl_boms[] = $bomsDetail;
 
-        $this->refreshBaseMaterials($this->bom_row);
-        $this->refreshSideMaterialGiaColor($this->bom_row);
-        $this->refreshSideMaterialGemColor($this->bom_row);
-        $this->refreshSideMaterialClarity($this->bom_row);
-        $this->refreshSideMaterialCut($this->bom_row);
-        $this->refreshSideMaterialGemstone($this->bom_row);
-        $this->refreshSideMaterialShapes($this->bom_row);
-        $this->refreshSideMaterialJewelPurity($this->bom_row);
+        $this->matl_boms[$this->bom_row]['base_matl_id'] = "";
+        $this->matl_boms[$this->bom_row]['shapes'] = "";
+        $this->matl_boms[$this->bom_row]['clarity'] = "";
+        $this->matl_boms[$this->bom_row]['cut'] = "";
+        $this->matl_boms[$this->bom_row]['gemcolor'] = "";
+        $this->matl_boms[$this->bom_row]['color'] = "";
+        $this->matl_boms[$this->bom_row]['gemstone'] = "";
+        $this->matl_boms[$this->bom_row]['purity'] = "";
         $this->bom_row++;
     }
+
     public function deleteBoms($index)
     {
         if (isset($this->matl_boms[$index]['id'])) {
@@ -659,41 +456,20 @@ class MaterialComponent extends BaseComponent
 
     public function markupPriceChanged()
     {
-        // Check if 'jwl_buying_price' and 'markup' are set and not empty
         if (empty($this->materials['jwl_buying_price']) || empty($this->materials['markup'])) {
             return null;
         }
 
-        // Formatting the buying price and calculating the markup amount
-        $buyingPrice = toNumberFormatter($this->materials['jwl_buying_price']);
-        $markupAmount = $buyingPrice * (toNumberFormatter($this->materials['markup']) / 100);
-
-        // Setting the new selling price
-        $this->materials['jwl_selling_price'] = numberFormat($buyingPrice + $markupAmount);
+        $this->materials['jwl_selling_price'] = Material::calculateSellingPrice($this->materials['jwl_buying_price'], $this->materials['markup']);
     }
 
     public function sellingPriceChanged()
     {
-        // Check if 'jwl_buying_price' is set and not empty
         if (empty($this->materials['jwl_buying_price'])) {
             return;
         }
 
-        $buyingPrice = toNumberFormatter($this->materials['jwl_buying_price']);
-
-        // Check if buying price is positive
-        if ($buyingPrice <= 0) {
-            return;
-        }
-
-        // Check if 'jwl_selling_price' is set and not empty before calculating new markup
-        if (empty($this->materials['jwl_selling_price'])) {
-            return;
-        }
-
-        // Calculating new markup percentage
-        $newMarkupPercentage = ((toNumberFormatter($this->materials['jwl_selling_price']) - $buyingPrice) / $buyingPrice) * 100;
-        $this->materials['markup'] = numberFormat($newMarkupPercentage);
+        $this->materials['markup'] = Material::calculateMarkup($this->materials['jwl_buying_price'], $this->materials['jwl_selling_price']);
     }
 
     public function tagScanned($tags)
@@ -701,7 +477,8 @@ class MaterialComponent extends BaseComponent
         if (isset($tags)) {
             $tagCount = count($tags);
             if($tagCount > 1)
-            {               // Show error message with the number of tags
+            {
+                // Show error message with the number of tags
                 $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
             } else {
                 // Process a single tag

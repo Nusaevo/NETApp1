@@ -4,9 +4,11 @@ namespace App\Models\TrdJewel1\Transaction;
 
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class BillingHdr extends BaseModel
 {
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();

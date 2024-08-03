@@ -5,11 +5,13 @@ namespace App\Models\TrdJewel1\Transaction;
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\TrdJewel1\Transaction\ReturnDtl;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Status;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BaseTrait;
 class ReturnHdr extends BaseModel
 {
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();

@@ -3,20 +3,34 @@
 if (!function_exists('rupiah')) {
     function rupiah($price = 0, $use_name = true)
     {
-        $price = numberFormat($price, 0, ',', '.');
-        if ($use_name)  return 'IDR ' . $price;
-        else return $price;
+        if (is_numeric($price)) {
+            $price = numberFormat($price, 0, ',', '.');
+        }
+
+        if ($use_name) {
+            return 'IDR ' . $price;
+        } else {
+            return $price;
+        }
     }
 }
+
 
 if (!function_exists('dollar')) {
     function dollar($price = 0, $use_name = true)
     {
-        $price = numberFormat($price, 2, ',', '.');
-        if ($use_name)  return 'USD ' . $price;
-        else return $price;
+        if (is_numeric($price)) {
+            $price = numberFormat($price, 2, ',', '.');
+        }
+
+        if ($use_name) {
+            return 'USD ' . $price;
+        } else {
+            return $price;
+        }
     }
 }
+
 
 if (!function_exists('getDefaultCurrencyStr1')) {
     function getDefaultCurrencyStr1()

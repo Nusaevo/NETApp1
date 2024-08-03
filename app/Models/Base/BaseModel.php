@@ -15,13 +15,24 @@ use App\Models\SysConfig1\ConfigSnum;
 
 class BaseModel extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
     use BaseTrait;
 
     protected $fillable = [];
     protected static function boot()
     {
         parent::boot();
+        static::retrieved(function ($model) {
+            $attributes = $model->getAllColumns();
+
+            foreach ($attributes as $attribute) {
+                $value = $model->getAllColumnValues($attribute);
+                if (is_string($value) && preg_match('/^\$[\d,]+\.\d{2}$/', $value)) {
+                    $value = (float) currencyToNumeric($value);
+                }
+                $model->{$attribute} = $value;
+            }
+        });
         self::bootUpdatesCreatedByAndUpdatedAt();
     }
 

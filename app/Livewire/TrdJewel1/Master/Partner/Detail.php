@@ -4,14 +4,28 @@ namespace App\Livewire\TrdJewel1\Master\Partner;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\Partner;
+use App\Services\TrdJewel1\Master\MasterService as MasterMasterService;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use App\Services\TrdJewel1\Master\MasterService;
 use Exception;
 
 class Detail extends BaseComponent
 {
     public $inputs = [];
     public $partnerTypes = [];
+    protected $masterService;
+
+    public $rules  = [
+        'inputs.grp' => 'required|string|min:1|max:50',
+        'inputs.name' => 'required|string|min:1|max:50',
+        // 'inputs.code' => [
+        //     'required',
+        //     'string',
+        //     'min:1',
+        //     'max:50'
+        // ],
+    ];
 
     protected function onPreRender()
     {
@@ -28,36 +42,28 @@ class Detail extends BaseComponent
             'inputs.ring_size'      => $this->trans('ring_size'),
             'inputs.partner_ring_size'      => $this->trans('partner_ring_size'),
         ];
-    }
 
-    protected function onLoadForEdit()
-    {
-        $this->object = Partner::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
-        $decodedData = json_decode($this->object->partner_chars, true);
-        switch ($this->object->grp) {
-            case Partner::CUSTOMER:
-                $this->inputs['ring_size'] = $decodedData['ring_size'] ?? null;
-                $this->inputs['partner_ring_size'] = $decodedData['partner_ring_size'] ?? null;
-                break;
+        $this->reset('inputs');
+        $this->object = new Partner();
+        $this->masterService = new MasterService();
+
+        $this->partnerTypes = $this->masterService->getPartnerTypes($this->appCode);
+        $this->inputs['grp'] = null;
+        $this->inputs['code'] = "";
+
+        if($this->isEditOrView())
+        {
+            $this->object = Partner::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $decodedData = json_decode($this->object->partner_chars, true);
+            switch ($this->object->grp) {
+                case Partner::CUSTOMER:
+                    $this->inputs['ring_size'] = $decodedData['ring_size'] ?? null;
+                    $this->inputs['partner_ring_size'] = $decodedData['partner_ring_size'] ?? null;
+                    break;
+            }
         }
     }
-
-    public $rules  = [
-        'inputs.grp' => 'required|string|min:1|max:50',
-        'inputs.name' => 'required|string|min:1|max:50',
-        'inputs.address' => 'string|min:1|max:50',
-        'inputs.city' => 'string|min:1|max:20',
-        'inputs.country' => 'string|min:1|max:20',
-        'inputs.postal_code' => 'string|min:1|max:10',
-        'inputs.contact_person' => 'string|min:1|max:255',
-        // 'inputs.code' => [
-        //     'required',
-        //     'string',
-        //     'min:1',
-        //     'max:50'
-        // ],
-    ];
 
     public function render()
     {
@@ -67,36 +73,6 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
     ];
-
-    public function onReset()
-    {
-        $this->reset('inputs');
-        $this->object = new Partner();
-    }
-
-    public function refreshPartnerTypes()
-    {
-        $data = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('id','str1','str2')
-        ->where('const_group', 'PARTNERS_TYPE')
-        ->where('app_code', $this->appCode)
-        ->where('deleted_at', NULL)
-        ->orderBy('seq')
-        ->get();
-        $this->partnerTypes = $data->map(function ($data) {
-            return [
-                'label' =>  $data->str1.' - '.$data->str2,
-                'value' => $data->str1,
-            ];
-        })->toArray();
-        $this->inputs['grp'] = null;
-    }
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshPartnerTypes();
-    }
 
     public function onValidateAndSave()
     {
@@ -112,8 +88,16 @@ class Detail extends BaseComponent
         // } else {
         //     $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
         // }
-        if (!isNullOrEmptyString($this->inputs['code'])) {
-            $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
+
+        $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));
+        if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
+            $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode produk.';
+            $this->addError('inputs.name', $errorMessage);
+            throw new Exception($errorMessage);
+        }
+
+        if (isNullOrEmptyString($this->inputs['code'])) {
+            $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
         }
         $dataToSave = [];
         if (in_array($this->inputs['grp'], [Partner::CUSTOMER])) {
@@ -125,21 +109,6 @@ class Detail extends BaseComponent
         $this->object->save();
     }
 
-    private function generateNewCode($name)
-    {
-        $initialCode = strtoupper(substr($name, 0, 1));
-        $latestCode = Partner::where('code', 'LIKE', $initialCode . '%')
-                             ->orderBy('code', 'desc')
-                             ->pluck('code')
-                             ->first();
-
-        if ($latestCode) {
-            $numericPart = intval(substr($latestCode, 1)) + 1;
-            return $initialCode . $numericPart;
-        } else {
-            return $initialCode . '1';
-        }
-    }
     public function changeStatus()
     {
         $this->change();

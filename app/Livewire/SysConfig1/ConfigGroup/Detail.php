@@ -6,6 +6,7 @@ use App\Models\SysConfig1\ConfigGroup;
 use App\Models\SysConfig1\ConfigAppl;
 use App\Models\SysConfig1\ConfigUser;
 use App\Models\SysConfig1\ConfigRight;
+use App\Services\SysConfig1\ConfigService;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Exception;
@@ -20,31 +21,43 @@ class Detail extends BaseComponent
     public $users;
     public $selectedMenus = [];
     public $selectedUserIds = [];
+    protected $configService;
+
+
+    public $rules= [
+        'inputs.app_id' =>  'required',
+        'inputs.descr' => 'required|string|min:1|max:100',
+        // 'inputs.code' => [
+        //     'required',
+        //     'string',
+        //     'min:1',
+        //     'max:50',
+        //     Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
+        // ],
+    ];
 
     protected function onPreRender()
     {
-
-    }
-
-    protected function onLoadForEdit()
-    {
-        $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
-        $this->applicationChanged();
-        $this->populateSelectedRights();
-        $this->populateSelectedUsers();
-    }
-
-    public function refreshApplication()
-    {
-        $applicationsData = ConfigAppl::GetActiveData();
-        $this->applications = $applicationsData->map(function ($data) {
-            return [
-                'label' => $data->code . ' - ' . $data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['app_id'] = null;
+        $this->customValidationAttributes  = [
+            'inputs'                => 'Input Group',
+            'inputs.*'              => 'Input Group',
+            'inputs.code'           => 'Group Code',
+            'inputs.app_id'      => 'Application',
+            'inputs.descr'      => 'Group Descr'
+        ];
+        $this->reset('inputs');
+        $this->selectedMenus = [];
+        $this->object = new ConfigGroup();
+        $this->configService = new ConfigService();
+        $this->applications = $this->configService->getActiveApplications();
+        if($this->isEditOrView())
+        {
+            $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $this->applicationChanged();
+            $this->populateSelectedRights();
+            $this->populateSelectedUsers();
+        }
     }
 
     public function applicationChanged()
@@ -66,11 +79,6 @@ class Detail extends BaseComponent
 
     //     $this->inputs['user_id'] = null;
     // }
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshApplication();
-    }
 
     public function render()
     {
@@ -123,33 +131,6 @@ class Detail extends BaseComponent
         $this->selectedUserIds = $selectedUserIds;
     }
 
-    public $rules= [
-            'inputs.app_id' =>  'required',
-            'inputs.descr' => 'required|string|min:1|max:100',
-            // 'inputs.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
-            // ],
-        ];
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input Group',
-        'inputs.*'              => 'Input Group',
-        'inputs.code'           => 'Group Code',
-        'inputs.app_id'      => 'Application',
-        'inputs.descr'      => 'Group Descr'
-    ];
-
-    protected function onReset()
-    {
-        $this->reset('inputs');
-        $this->selectedMenus = [];
-        $this->object = new ConfigGroup();
-    }
-
     public function validateApplicationUsers()
     {
         $appId = $this->inputs['app_id'];
@@ -183,7 +164,6 @@ class Detail extends BaseComponent
                 throw new Exception("Pengguna dengan loginID: $existingUserCodes sudah terdaftar pada group lain di aplikasi ini.");
             }
         }
-
     }
 
     public function onValidateAndSave()

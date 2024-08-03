@@ -5,27 +5,47 @@ namespace App\Livewire\SysConfig1\ConfigVar;
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigVar;
 use App\Models\SysConfig1\ConfigAppl;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Crypt;
-use Exception;
-use Illuminate\Support\Facades\DB;
 
+use App\Services\SysConfig1\ConfigService;
 
 class Detail extends BaseComponent
 {
     public $inputs = [];
     public $applications;
     public $languages;
+    protected $configService;
+
+    public $rules= [
+        'inputs.app_id' => 'required',
+        'inputs.var_group' => 'required|string|min:1|max:50',
+        'inputs.seq' =>  'required',
+        'inputs.default_value' => 'required|string|min:1|max:50',
+        'inputs.descr' => 'string|min:1|max:200'
+    ];
 
     protected function onPreRender()
     {
+        $this->customValidationAttributes  = [
+            'inputs'                => 'Input',
+            'inputs.*'              => 'Input',
+            'inputs.code'           => 'Var Code',
+            'inputs.var_group'           => 'Var Group',
+            'inputs.seq'      => 'Var Seq',
+            'inputs.default_value'      => 'Default Value',
+            'inputs.descr'      => 'Description',
+        ];
 
-    }
+        $this->reset('inputs');
+        $this->object = new ConfigVar();
 
-    protected function onLoadForEdit()
-    {
-        $this->object = ConfigVar::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
+        $this->configService = new ConfigService();
+        $this->applications = $this->configService->getActiveApplications();
+
+        if($this->isEditOrView())
+        {
+            $this->object = ConfigVar::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+        }
     }
 
     public function render()
@@ -36,46 +56,6 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
     ];
-
-    public $rules= [
-            'inputs.app_id' => 'required',
-            'inputs.var_group' => 'required|string|min:1|max:50',
-            'inputs.seq' =>  'required',
-            'inputs.default_value' => 'required|string|min:1|max:50',
-            'inputs.descr' => 'string|min:1|max:200'
-        ];
-
-    protected $validationAttributes = [
-        'inputs'                => 'Input',
-        'inputs.*'              => 'Input',
-        'inputs.code'           => 'Var Code',
-        'inputs.var_group'           => 'Var Group',
-        'inputs.seq'      => 'Var Seq',
-        'inputs.default_value'      => 'Default Value',
-        'inputs.descr'      => 'Description',
-    ];
-
-    public function refreshApplication()
-    {
-        $applicationsData = ConfigAppl::GetActiveData();
-        $this->applications = $applicationsData->map(function ($data) {
-            return [
-                'label' => $data->code . ' - ' . $data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['app_id'] = null;
-    }
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshApplication();
-    }
-
-    protected function onReset()
-    {
-        $this->reset('inputs');
-    }
 
     public function onValidateAndSave()
     {

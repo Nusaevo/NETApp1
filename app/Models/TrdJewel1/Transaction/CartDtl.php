@@ -4,9 +4,11 @@ namespace App\Models\TrdJewel1\Transaction;
 
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\Base\BaseModel;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class CartDtl extends BaseModel
 {
+    use SoftDeletes;
+        
     protected static function boot()
     {
         parent::boot();
