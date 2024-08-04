@@ -170,7 +170,37 @@ class MaterialComponent extends BaseComponent
             $this->materials = populateArrayFromModel($this->object);
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             foreach ($this->object_boms as $key => $detail) {
-                $this->matl_boms[$key] = Material::retrieveBomDetail($detail);
+                $formattedDetail = populateArrayFromModel($detail);
+                $this->matl_boms[$key] =  $formattedDetail;
+                $this->matl_boms[$key]['id'] = $detail->id;
+
+                $baseMaterial = ConfigConst::where('id', $detail->base_matl_id)->first();
+                $this->matl_boms[$key]['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
+
+                $this->matl_boms[$key]['base_matl_id_value'] =  $baseMaterial->id;
+                $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
+
+                $decodedData = json_decode($detail->jwl_sides_spec, true);
+                switch ( $this->matl_boms[$key]['base_matl_id_note']) {
+                    case Material::JEWELRY:
+                        $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
+                        break;
+                    case Material::DIAMOND:
+                        $this->matl_boms[$key]['shapes'] = $decodedData['shapes'] ?? null;
+                        $this->matl_boms[$key]['clarity'] = $decodedData['clarity'] ?? null;
+                        $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
+                        $this->matl_boms[$key]['cut'] = $decodedData['cut'] ?? null;
+                        $this->matl_boms[$key]['gia_number'] = $decodedData['gia_number'] ?? 0;
+                        break;
+                    case Material::GEMSTONE:
+                        $this->matl_boms[$key]['gemstone'] = $decodedData['gemstone'] ?? null;
+                        $this->matl_boms[$key]['gemcolor'] = $decodedData['gemcolor'] ?? null;
+                        break;
+                    case Material::GOLD:
+                        $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? 0;
+                        $this->matl_boms[$key]['ref_mark'] = $decodedData['ref_mark'] ?? null;
+                        break;
+                }
                 $this->bom_row++;
             }
             $attachments = $this->object->Attachment;
@@ -425,7 +455,32 @@ class MaterialComponent extends BaseComponent
 
     public function generateMaterialDescriptionsFromBOMs()
     {
-        $this->materials['descr'] = Material::generateMaterialDescriptionsFromBOMs($this->matl_boms);
+        $materialDescriptions = '';
+
+        if ($this->matl_boms && count($this->matl_boms) > 0) {
+            $bomIds = array_filter(array_column($this->matl_boms, 'base_matl_id_value'), function($value) {
+                return !is_null($value) && $value !== '';
+            });
+
+            if (!empty($bomIds)) {
+                $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
+            }
+
+
+            foreach ($this->matl_boms as $bom) {
+                if (isset($bom['base_matl_id_value'])) {
+                    $baseMaterial = $bomData[$bom['base_matl_id_value']] ?? null;
+
+                    if ($baseMaterial) {
+                        $jwlSidesCnt = $bom['jwl_sides_cnt'] ?? 0;
+                        $jwlSidesCarat = $bom['jwl_sides_carat'] ?? 0;
+                        $materialDescriptions .= "$jwlSidesCnt $baseMaterial->str1:$jwlSidesCarat ";
+                    }
+                }
+            }
+        }
+
+        $this->materials['descr'] = $materialDescriptions;
     }
 
     public function addBoms()
