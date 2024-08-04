@@ -24,17 +24,12 @@ class Detail extends BaseComponent
             'inputs.goldprice_basecurr' => $this->trans('gold_price_base'),
         ];
 
-        $this->reset('inputs');
-        $this->inputs['log_date']  = date('d-m-Y');
-        $this->object = new GoldPriceLog();
-
         $this->masterService = new MasterService();
 
         $currencyData = $this->masterService->getCurrencyData($this->appCode);
         $this->currencies = $currencyData['currencies'];
         $defaultCurrency = $currencyData['defaultCurrency'];
         $this->inputs['curr_id'] = $defaultCurrency['value'];
-
         if($this->isEditOrView())
         {
             $this->object = GoldPriceLog::withTrashed()->find($this->objectIdValue);
@@ -42,6 +37,13 @@ class Detail extends BaseComponent
             $this->inputs['log_date'] = dateFormat($this->object->log_date, 'd-m-Y');
             $this->inputs['curr_id'] = $defaultCurrency['value'];
         }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->inputs['log_date']  = date('d-m-Y');
+        $this->object = new GoldPriceLog();
     }
 
     public $rules = [
@@ -71,6 +73,7 @@ class Detail extends BaseComponent
                 throw new Exception($this->trans('message.log_date_already_exists'));
             }
         }
+        $this->currencyChanged();
 
         $this->object->fillAndSanitize($this->inputs);
         $this->object->save();

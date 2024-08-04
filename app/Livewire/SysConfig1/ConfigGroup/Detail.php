@@ -45,9 +45,6 @@ class Detail extends BaseComponent
             'inputs.app_id'      => 'Application',
             'inputs.descr'      => 'Group Descr'
         ];
-        $this->reset('inputs');
-        $this->selectedMenus = [];
-        $this->object = new ConfigGroup();
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications();
         if($this->isEditOrView())
@@ -58,6 +55,13 @@ class Detail extends BaseComponent
             $this->populateSelectedRights();
             $this->populateSelectedUsers();
         }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->selectedMenus = [];
+        $this->object = new ConfigGroup();
     }
 
     public function applicationChanged()

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 
 use App\Models\SysConfig1\ConfigSnum;
 use function PHPUnit\Framework\throwException;
+use App\Services\TrdJewel1\Master\MasterService;
 
 class Detail extends BaseComponent
 {
@@ -49,6 +50,16 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     public $currency = [];
     public $orderDtls ;
+    protected $materialService;
+
+
+    public $rules  = [
+        // 'inputs.payment_term_id' =>  'required',
+        // 'inputs.partner_id' =>  'required',
+        // 'inputs.wh_code' =>  'required',
+        'inputs.tr_date' => 'required',
+        //'input_details.*.price' => 'required',
+    ];
 
     protected function onPreRender()
     {
@@ -66,28 +77,16 @@ class Detail extends BaseComponent
             'input_details.*.qty' => $this->trans('qty'),
             'input_details.*.price' => $this->trans('price'),
         ];
-    }
+        $this->materialService = new MasterService();
+        $this->partners = $this->materialService->getCustomers($this->appCode);
+        $this->inputs['partner_id'] = "";
 
-    public $rules  = [
-        // 'inputs.payment_term_id' =>  'required',
-        // 'inputs.partner_id' =>  'required',
-        // 'inputs.wh_code' =>  'required',
-        'inputs.tr_date' => 'required',
-        //'input_details.*.price' => 'required',
-    ];
-
-    protected function onLoadForEdit()
-    {
-        $this->object = ReturnHdr::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
-
-        // dd($this->object,  $this->inputs);
-
-        // if ($this->object) {
-        //     $this->returnIds = $this->object->ReturnHdr->pluck('id')->toArray();
-        // }
-
-        $this->retrieveMaterials();
+        if($this->isEditOrView())
+        {
+            $this->object = ReturnHdr::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $this->retrieveMaterials();
+        }
     }
 
     protected function retrieveMaterials()
@@ -115,6 +114,20 @@ class Detail extends BaseComponent
         }
     }
 
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->reset('input_details');
+        $this->object = new ReturnHdr();
+        $this->object_detail = [];
+        $this->total_amount = 0;
+        $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['tr_type']  = $this->trType;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['curr_code'] = "USD";
+        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
+    }
+
     public function render()
     {
         return view($this->renderRoute);
@@ -139,24 +152,6 @@ class Detail extends BaseComponent
         }
         $this->searchMaterials();
         $this->dispatch('openMaterialDialog');
-    }
-
-    public function refreshPartner()
-    {
-        $partnersdata = Partner::GetByGrp(Partner::CUSTOMER);
-        $this->partners = $partnersdata->map(function ($data) {
-            return [
-                'label' =>  $data->code." - ".$data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-
-        $this->inputs['partner_id'] = "";
-    }
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshPartner();
     }
 
     public function onValidateAndSave()
@@ -219,22 +214,6 @@ class Detail extends BaseComponent
         }
         $this->retrieveMaterials();
         $this->searchMaterials();
-    }
-
-
-    public function onReset()
-    {
-        $this->reset('inputs');
-        $this->reset('input_details');
-        $this->object = new ReturnHdr();
-        $this->object_detail = [];
-        $this->refreshPartner();
-        $this->total_amount = 0;
-        $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        $this->inputs['curr_code'] = "USD";
-        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
     }
 
     public function Add()

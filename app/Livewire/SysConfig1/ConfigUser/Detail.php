@@ -32,9 +32,6 @@ class Detail extends BaseComponent
             'inputs.newpassword' => 'Password'
         ];
 
-        $this->reset('inputs');
-        $this->object = new ConfigUser();
-
         if($this->isEditOrView())
         {
             $this->object = ConfigUser::withTrashed()->find($this->objectIdValue);
@@ -42,6 +39,12 @@ class Detail extends BaseComponent
             $this->inputs['newpassword'] = "";
             $this->inputs['confirmnewpassword'] = "";
         }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->object = new ConfigUser();
     }
 
     protected $listeners = [

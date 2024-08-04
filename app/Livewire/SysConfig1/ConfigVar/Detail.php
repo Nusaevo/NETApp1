@@ -35,8 +35,6 @@ class Detail extends BaseComponent
             'inputs.descr'      => 'Description',
         ];
 
-        $this->reset('inputs');
-        $this->object = new ConfigVar();
 
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications();
@@ -46,6 +44,12 @@ class Detail extends BaseComponent
             $this->object = ConfigVar::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
         }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->object = new ConfigVar();
     }
 
     public function render()

@@ -120,12 +120,6 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
         ];
-
-        $this->product_code = "";
-        $this->reset('materials');
-        $this->reset('matl_uoms');
-        $this->reset('matl_boms');
-
         $this->materialService = new MasterService();
         $this->baseMaterials = $this->materialService->getMatlBaseMaterialData($this->appCode);
         $this->materialUOMs = $this->materialService->getUOMData($this->appCode);
@@ -144,18 +138,26 @@ class MaterialComponent extends BaseComponent
         $this->materials['jwl_category1'] = "";
         $this->materials['jwl_category2'] = "";
         $this->materials['jwl_carat'] = "";
-        $this->object = new Material();
-        $this->object_uoms = new MatlUom();
-        $this->object_boms = [];
-        $this->deletedItems = [];
-        $this->bom_row = 0;
-        $this->capturedImages = [];
-
 
         if($this->isEditOrView())
         {
             $this->loadMaterial($this->objectIdValue);
         }
+    }
+
+
+    public function onReset()
+    {
+        $this->product_code = "";
+        $this->reset('materials');
+        $this->reset('matl_uoms');
+        $this->reset('matl_boms');
+        $this->object = new Material();
+        $this->object_uoms = new MatlUom();
+        $this->object_boms = [];
+        $this->deletedItems = [];
+        $this->capturedImages = [];
+        $this->bom_row = 0;
     }
 
     protected function loadMaterial($objectId)
@@ -381,6 +383,7 @@ class MaterialComponent extends BaseComponent
         }
 
         if (!$this->object->isNew()) {
+            dd("Ss");
             foreach ($this->deletedItems as $deletedItemId) {
                 MatlBom::find($deletedItemId)->forceDelete();
             }

@@ -20,8 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Facades\Auth;
-
-
+use App\Services\TrdJewel1\Master\MasterService;
 use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
@@ -49,7 +48,16 @@ class Detail extends BaseComponent
     public $currency = [];
     public $materials = [];
     public $printSettings = [];
+    protected $materialService;
 
+
+    public $rules  = [
+        // 'inputs.payment_term_id' =>  'required',
+        // 'inputs.partner_id' =>  'required',
+        // 'inputs.wh_code' =>  'required',
+        'inputs.tr_date' => 'required',
+        //'input_details.*.price' => 'required',
+    ];
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -66,36 +74,35 @@ class Detail extends BaseComponent
             'input_details.*.qty' => $this->trans('qty'),
             'input_details.*.price' => $this->trans('price'),
         ];
-    }
+        $this->materialService = new MasterService();
+        $this->partners = $this->materialService->getCustomers($this->appCode);
+        $this->payments = $this->materialService->getPaymentTerm($this->appCode);
 
-    public $rules  = [
-        // 'inputs.payment_term_id' =>  'required',
-        // 'inputs.partner_id' =>  'required',
-        // 'inputs.wh_code' =>  'required',
-        'inputs.tr_date' => 'required',
-        //'input_details.*.price' => 'required',
-    ];
-    protected function onLoadForEdit()
-    {
-        $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-        $this->printSettings = json_decode($this->object->print_settings, true);
+        $this->inputs['partner_id'] = "";
+        $this->inputs['payment_terms_id'] = 129;
+        if($this->isEditOrView())
+        {
+            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
+            $this->printSettings = json_decode($this->object->print_settings, true);
 
-        if ($this->printSettings === null) {
-            $this->printSettings = [
-                'item_checked' => false,
-                'no_return' => false,
-                'trade_in_minus15' => false,
-                'sale_minus25' => false,
-                'trade_in_minus10' => false,
-                'sale_minus20' => false,
-                'show_price' => false,
-            ];
+            if ($this->printSettings === null) {
+                $this->printSettings = [
+                    'item_checked' => false,
+                    'no_return' => false,
+                    'trade_in_minus15' => false,
+                    'sale_minus25' => false,
+                    'trade_in_minus10' => false,
+                    'sale_minus20' => false,
+                    'show_price' => false,
+                ];
+            }
+
+            $this->inputs = populateArrayFromModel($this->object);
+
+            $this->retrieveMaterials();
         }
-
-        $this->inputs = populateArrayFromModel($this->object);
-
-        $this->retrieveMaterials();
     }
+
     protected function retrieveMaterials()
     {
         if ($this->object) {
@@ -119,6 +126,20 @@ class Detail extends BaseComponent
         }
     }
 
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->reset('input_details');
+        $this->object = new OrderHdr();
+        $this->object_detail = [];
+        $this->total_amount = 0;
+        $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['tr_type']  = $this->trType;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['curr_code'] = "USD";
+        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
+    }
+
     public function render()
     {
         return view($this->renderRoute);
@@ -139,37 +160,6 @@ class Detail extends BaseComponent
             return;
         }
         $this->dispatch('openMaterialDialog');
-    }
-
-    public function refreshPartner()
-    {
-        $partnersdata = Partner::GetByGrp(Partner::CUSTOMER);
-        $this->partners = $partnersdata->map(function ($data) {
-            return [
-                'label' =>  $data->code." - ".$data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-
-        $this->inputs['partner_id'] = "";
-    }
-
-    public function refreshPayment()
-    {
-        $data = ConfigConst::GetPaymentTerm($this->appCode);
-        $this->payments = $data->map(function ($data) {
-            return [
-                'label' => $data->str1." - ".$data->str2,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['payment_terms_id'] = 129;
-    }
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshPayment();
-        $this->refreshPartner();
     }
 
     public function onValidateAndSave()
@@ -207,20 +197,6 @@ class Detail extends BaseComponent
         $this->retrieveMaterials();
     }
 
-    public function onReset()
-    {
-        $this->reset('inputs');
-        $this->reset('input_details');
-        $this->object = new OrderHdr();
-        $this->object_detail = [];
-        $this->refreshPartner();
-        $this->total_amount = 0;
-        $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        $this->inputs['curr_code'] = "USD";
-        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
-    }
 
     public function Add()
     {

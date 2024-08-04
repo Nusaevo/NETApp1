@@ -3,6 +3,7 @@
 namespace App\Services\TrdJewel1\Master;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\TrdJewel1\Master\Partner;
 
 class MasterService
 {
@@ -39,10 +40,14 @@ class MasterService
     {
         $data = $this->getConfigData('MCURRENCY_CODE', $appCode);
 
-        $currencies = $this->mapData($data);
+        $currencies = $data->map(function ($item) {
+            return [
+                'label' => $item->str1 . " - " . $item->str2,
+                'value' => $item->id,
+            ];
+        })->toArray();
 
         $defaultCurrency = $currencies[0] ?? null;
-
         return [
             'currencies' => $currencies,
             'defaultCurrency' => $defaultCurrency
@@ -185,5 +190,45 @@ class MasterService
     {
         $data = $this->getConfigData('MPAYMENT_TERMS', $appCode);
         return $this->mapData($data);
+    }
+
+    public function getSuppliers()
+    {
+        $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
+        return $suppliersData->map(function ($data) {
+            return [
+                'label' => $data->code . " - " . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
+
+    public function getCustomers()
+    {
+        $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
+        return $suppliersData->map(function ($data) {
+            return [
+                'label' => $data->code . " - " . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
+
+    public function getWarehouses($appCode)
+    {
+        return $this->connection
+            ->table('config_consts')
+            ->select('id', 'str1')
+            ->where('const_group', 'WAREHOUSE_LOC')
+            ->where('app_code', $appCode)
+            ->whereNull('deleted_at')
+            ->orderBy('seq')
+            ->get()
+            ->map(function ($data) {
+                return [
+                    'label' => $data->str1,
+                    'value' => $data->id,
+                ];
+            })->toArray();
     }
 }

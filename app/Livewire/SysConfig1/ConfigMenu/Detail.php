@@ -31,8 +31,6 @@ class Detail extends BaseComponent
             'inputs.menu_caption'      => 'Menu Caption',
             'inputs.menu_link'      => 'Menu link'
         ];
-        $this->reset('inputs');
-        $this->object = new ConfigMenu();
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications();
         $this->inputs['app_id'] = null;
@@ -43,6 +41,13 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
         }
     }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->object = new ConfigMenu();
+    }
+
 
     public function render()
     {

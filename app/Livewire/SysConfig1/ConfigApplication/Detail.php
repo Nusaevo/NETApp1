@@ -20,8 +20,6 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
-        $this->reset('inputs');
-        $this->object = new ConfigAppl();
         $this->customValidationAttributes  = [
             'inputs'                => 'Input Application',
             'inputs.*'              => 'Input Application',
@@ -35,6 +33,12 @@ class Detail extends BaseComponent
             $this->object = ConfigAppl::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
         }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->object = new ConfigAppl();
     }
 
     public function render()

@@ -67,6 +67,7 @@ class BaseComponent extends Component
         } else {
             $this->objectIdValue = $objectId ? decryptWithSessionKey($objectId) : null;
         }
+        $this->onReset();
         $this->onPreRender();
 
         // Set base route if not already set
@@ -179,7 +180,10 @@ class BaseComponent extends Component
             $this->updateVersionNumber();
             $this->onValidateAndSave();
             DB::commit();
-            $this->onPreRender();
+            if(!$this->isEditOrView())
+            {
+                $this->onReset();
+            }
 
             $this->notify('success',__('generic.string.save'));
         } catch (Exception $e) {
@@ -198,7 +202,10 @@ class BaseComponent extends Component
             $this->onValidateAndSave();
 
             DB::commit();
-            $this->onPreRender();
+            if(!$this->isEditOrView())
+            {
+                $this->onReset();
+            }
         } catch (Exception $e) {
             DB::rollBack();
             dd($e->getMessage());
@@ -255,5 +262,9 @@ class BaseComponent extends Component
 
         // Redirect to the previous URL
         return redirect()->to($previousUrl);
+    }
+
+    protected function onReset()
+    {
     }
 }

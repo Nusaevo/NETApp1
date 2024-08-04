@@ -43,8 +43,6 @@ class Detail extends BaseComponent
             'inputs.partner_ring_size'      => $this->trans('partner_ring_size'),
         ];
 
-        $this->reset('inputs');
-        $this->object = new Partner();
         $this->masterService = new MasterService();
 
         $this->partnerTypes = $this->masterService->getPartnerTypes($this->appCode);
@@ -63,6 +61,12 @@ class Detail extends BaseComponent
                     break;
             }
         }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->object = new Partner();
     }
 
     public function render()

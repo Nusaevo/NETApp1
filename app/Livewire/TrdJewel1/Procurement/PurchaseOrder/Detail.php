@@ -10,6 +10,7 @@ use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
+use App\Services\TrdJewel1\Master\MasterService;
 use Exception;
 
 
@@ -36,6 +37,16 @@ class Detail extends BaseComponent
     public $returnIds = [];
     public $currencyRate = 0;
 
+    protected $materialService;
+
+    public $rules  = [
+        // 'inputs.partner_id' =>  'required',
+        // 'inputs.wh_code' =>  'required',
+        'inputs.tr_date' => 'required',
+        'input_details.*.price' => 'required',
+        'input_details.*.qty' => 'required',
+    ];
+
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -52,23 +63,19 @@ class Detail extends BaseComponent
             'input_details.*.qty' => $this->trans('qty'),
             'input_details.*.price' => $this->trans('price'),
         ];
+
+        $this->suppliers = $this->materialService->getSuppliers();
+        $this->warehouses = $this->materialService->getWarehouses($this->appCode);
+        $this->inputs['wh_code'] = 18;
+        $this->inputs['partner_id'] = "";
+        if($this->isEditOrView())
+        {
+            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $this->retrieveMaterials();
+        }
     }
 
-    public $rules  = [
-        // 'inputs.partner_id' =>  'required',
-        // 'inputs.wh_code' =>  'required',
-        'inputs.tr_date' => 'required',
-        'input_details.*.price' => 'required',
-        'input_details.*.qty' => 'required',
-    ];
-
-    protected function onLoadForEdit()
-    {
-        $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-        $this->inputs = populateArrayFromModel($this->object);
-
-        $this->retrieveMaterials();
-    }
     protected function retrieveMaterials()
     {
         if ($this->object) {
@@ -98,6 +105,21 @@ class Detail extends BaseComponent
         return view($this->renderRoute);
     }
 
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->reset('input_details');
+        $this->object = new OrderHdr();
+        $this->object_detail = [];
+        $this->total_amount = 0;
+        $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['tr_type']  = $this->trType;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['curr_code'] = "USD";
+        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
+    }
+
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'changeItem'  => 'changeItem',
@@ -106,49 +128,12 @@ class Detail extends BaseComponent
         'saveCheck' => 'saveCheck',
     ];
 
-
-    public function refreshSupplier()
-    {
-        $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
-        $this->suppliers = $suppliersData->map(function ($data) {
-            return [
-
-                'label' =>  $data->code." - ".$data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-
-        $this->inputs['partner_id'] = "";
-    }
-
-    public function refreshWarehouses()
-    {
-        $data = ConfigConst::where('app_code', $this->appCode)
-            ->where('const_group', 'WAREHOUSE_LOC')
-            ->orderBy('seq')
-            ->get();
-        $this->warehouses = $data->map(function ($data) {
-            return [
-                'label' => $data->str1,
-                'value' => $data->id,
-            ];
-        })->toArray();
-        $this->inputs['wh_code'] = 18;
-    }
-
     public function OpenDialogBox(){
         if ($this->inputs['curr_rate'] == 0) {
             $this->notify('warning',__('generic.string.currency_needed'));
             return;
         }
         $this->dispatch('openMaterialDialog');
-    }
-
-
-    protected function onPopulateDropdowns()
-    {
-        $this->refreshSupplier();
-        // $this->refreshWarehouses();
     }
 
     public function onValidateAndSave()
@@ -177,21 +162,6 @@ class Detail extends BaseComponent
             ]);
         }
         $this->retrieveMaterials();
-    }
-
-    public function onReset()
-    {
-        $this->reset('inputs');
-        $this->reset('input_details');
-        $this->object = new OrderHdr();
-        $this->object_detail = [];
-        $this->refreshSupplier();
-        $this->total_amount = 0;
-        $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        $this->inputs['curr_code'] = "USD";
-        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
     }
 
     public function addDetails($material_id = null)

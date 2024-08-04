@@ -91,9 +91,6 @@ class Detail extends BaseComponent
         }
     }
 
-    protected function onLoadForEdit()
-    {
-    }
 
     public function render()
     {
@@ -113,10 +110,6 @@ class Detail extends BaseComponent
             return;
         }
         $this->dispatch('openMaterialDialog');
-    }
-
-    protected function onPopulateDropdowns()
-    {
     }
 
     public function onValidateAndSave()
@@ -180,11 +173,6 @@ class Detail extends BaseComponent
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($order_header->id)
         ]);
-    }
-
-
-    public function onReset()
-    {
     }
 
 
