@@ -121,18 +121,18 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
         ];
         $this->materialService = new MasterService();
-        // $this->baseMaterials = $this->materialService->getMatlBaseMaterialData($this->appCode);
-        // $this->materialUOMs = $this->materialService->getUOMData($this->appCode);
-        // $this->materialCategories1 = $this->materialService->getMatlCategory1Data($this->appCode);
-        // $this->materialCategories2 = $this->materialService->getMatlCategory2Data($this->appCode);
-        // $this->materialJewelPurity = $this->materialService->getMatlJewelPurityData($this->appCode);
-        // $this->sideMaterialShapes = $this->materialService->getMatlSideMaterialShapeData($this->appCode);
-        // $this->sideMaterialClarity = $this->materialService->getMatlSideMaterialClarityData($this->appCode);
-        // $this->sideMaterialCut = $this->materialService->getMatlSideMaterialCutData($this->appCode);
-        // $this->sideMaterialGemColors = $this->materialService->getMatlSideMaterialGemColorData($this->appCode);
-        // $this->sideMaterialGiaColors = $this->materialService->getMatlSideMaterialGiaColorData($this->appCode);
-        // $this->sideMaterialGemStone = $this->materialService->getMatlSideMaterialGemstoneData($this->appCode);
-        // $this->sideMaterialJewelPurity = $this->materialService->getMatlSideMaterialPurityData($this->appCode);
+        $this->baseMaterials = $this->materialService->getMatlBaseMaterialData($this->appCode);
+        $this->materialUOMs = $this->materialService->getUOMData($this->appCode);
+        $this->materialCategories1 = $this->materialService->getMatlCategory1Data($this->appCode);
+        $this->materialCategories2 = $this->materialService->getMatlCategory2Data($this->appCode);
+        $this->materialJewelPurity = $this->materialService->getMatlJewelPurityData($this->appCode);
+        $this->sideMaterialShapes = $this->materialService->getMatlSideMaterialShapeData($this->appCode);
+        $this->sideMaterialClarity = $this->materialService->getMatlSideMaterialClarityData($this->appCode);
+        $this->sideMaterialCut = $this->materialService->getMatlSideMaterialCutData($this->appCode);
+        $this->sideMaterialGemColors = $this->materialService->getMatlSideMaterialGemColorData($this->appCode);
+        $this->sideMaterialGiaColors = $this->materialService->getMatlSideMaterialGiaColorData($this->appCode);
+        $this->sideMaterialGemStone = $this->materialService->getMatlSideMaterialGemstoneData($this->appCode);
+        $this->sideMaterialJewelPurity = $this->materialService->getMatlSideMaterialPurityData($this->appCode);
 
         $this->matl_uoms['matl_uom'] = 'PCS';
         $this->materials['jwl_category1'] = "";
