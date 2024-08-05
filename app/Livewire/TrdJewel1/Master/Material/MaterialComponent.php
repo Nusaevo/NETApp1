@@ -413,7 +413,6 @@ class MaterialComponent extends BaseComponent
         }
 
         if (!$this->object->isNew()) {
-            dd("Ss");
             foreach ($this->deletedItems as $deletedItemId) {
                 MatlBom::find($deletedItemId)->forceDelete();
             }
