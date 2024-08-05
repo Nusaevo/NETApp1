@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class BaseComponent extends Component
 {
@@ -170,15 +171,19 @@ class BaseComponent extends Component
         return in_array($this->actionValue, ['Edit', 'View']);
     }
 
-
-    // Save method
     public function Save()
     {
         $this->validateForm();
         DB::beginTransaction();
         try {
             $this->updateVersionNumber();
+
+            // Start detailed logging for onValidateAndSave
             $this->onValidateAndSave();
+            // $start = microtime(true);
+            // $end = microtime(true);
+            // Log::info('Execution time for onValidateAndSave: ' . ($end - $start) . ' seconds');
+
             DB::commit();
             if(!$this->isEditOrView())
             {

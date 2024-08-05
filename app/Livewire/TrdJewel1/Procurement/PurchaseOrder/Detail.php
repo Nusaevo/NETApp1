@@ -37,7 +37,7 @@ class Detail extends BaseComponent
     public $returnIds = [];
     public $currencyRate = 0;
 
-    protected $materialService;
+    protected $masterService;
 
     public $rules  = [
         // 'inputs.partner_id' =>  'required',
@@ -64,8 +64,9 @@ class Detail extends BaseComponent
             'input_details.*.price' => $this->trans('price'),
         ];
 
-        $this->suppliers = $this->materialService->getSuppliers();
-        $this->warehouses = $this->materialService->getWarehouses($this->appCode);
+        $this->masterService = new MasterService();
+        $this->suppliers = $this->masterService->getSuppliers();
+        $this->warehouses = $this->masterService->getWarehouses($this->appCode);
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = "";
         if($this->isEditOrView())

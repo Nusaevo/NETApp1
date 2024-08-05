@@ -16,6 +16,7 @@
         <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
     </span>
 
+@push('scripts')
 <script>
 
 document.addEventListener('livewire:init', () => {
@@ -55,7 +56,7 @@ document.addEventListener('livewire:init', () => {
 });
 
 </script>
-
+@endpush
 <style>
     .aside-menu img {
         height: 30px; /* Sesuaikan dengan kebutuhan Anda */

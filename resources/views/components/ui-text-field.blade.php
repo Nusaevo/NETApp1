@@ -2,7 +2,7 @@
 $id = str_replace(['.', '[', ']'], '_', $model);
 @endphp
 
-<div class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible==='false' ) style="display: none;" @endif>
+<div wire:ignore class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible==='false' ) style="display: none;" @endif>
     <div class="d-flex align-items-center">
         <div class="form-floating flex-grow-1">
             @if(isset($type) && $type === 'textarea')
@@ -16,11 +16,33 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'barcode')
-            <input wire:model="{{ $model }}" id="{{ $id }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off" />
+            <input x-data="{
+                initBarcode() {
+                    let barcodeInput = this.$refs.inputField;
+                    if (barcodeInput) {
+                        console.log('Initializing barcode input for:', barcodeInput.id);
+
+                        window.addEventListener('barcode-processed', function() {
+                            barcodeInput.value = '';
+                            barcodeInput.focus();
+                        });
+
+                        barcodeInput.addEventListener('keydown', function(event) {
+                            if (event.key === 'Enter') {
+                                event.preventDefault();
+                                if (barcodeInput.value !== '') {
+                                    console.log(barcodeInput.value);
+                                    Livewire.dispatch('scanBarcode', barcodeInput.value);
+                                }
+                            }
+                        });
+                    }
+                }
+            }" x-init="initBarcode()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif x-ref="inputField">
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
-            <script>
+            {{-- <script>
                 document.addEventListener('livewire:load', function() {
                     var barcodeInput = document.getElementById('{{ $model }}');
                     if (barcodeInput) {
@@ -41,74 +63,89 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                     }
                 });
 
-            </script>
+            </script> --}}
             @elseif(isset($type) && $type === 'code')
             <input wire:model.defer="{{ $model }}" type="text" class="form-control  @error($model) is-invalid @enderror" @if((isset($action) && ($action=='Edit' || $action=='View' )) || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off" />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'date')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class=" form-control  @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif readonly="readonly" />
-            @if (!empty($label))
-            <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
-            @endif
-            <script>
-            document.addEventListener('livewire:init', () => {
-                myJQuery(document).ready(function() {
-                    myJQuery("[id='{{ $id }}']").datepicker({
-                        dateFormat: 'dd-mm-yy', // Set the date format to 'dd mm yy'
-                        changeMonth: true
-                        , changeYear: true
-                        , showButtonPanel: true
-                    }).on("change", function() {
-                        @this.set('{{ $model }}', myJQuery(this).val());
-                        @if(isset($onChanged)  && $onChanged !== '')
-                        Livewire.dispatch('{{ $onChanged }}');
-                        @endif
-                    });
-                });
-            });
+            <input x-data="{
+                initDatepicker() {
+                    let input = this.$refs.inputField;
+                    if (input) {
+                        console.log('Initializing datepicker for:', input.id);
 
-            </script>
-            @elseif(isset($type) && $type === 'number')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif />
-            @if (!empty($label))
-            <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
-            @endif
-            <script>
-                document.addEventListener('livewire:init', function() {
-                    function initInputMasks() {
-                        //console.log('Initializing input masks for all number inputs');
-                        myJQuery('input.number-mask').each(function() {
-                            var $input = myJQuery(this);
-                            //console.log('Initializing input mask for:', $input.attr('id'));
-
-                            Inputmask({
-                                alias: "numeric"
-                                , groupSeparator: "."
-                                , radixPoint: ","
-                                , autoGroup: true
-                                , digitsOptional: true
-                                , rightAlign: false
-                                , clearIncomplete: true
-                                , allowMinus: false
-                                , placeholder: "0"
-                            }).mask($input[0]);
-                            $input.on('blur', function() {
-                                @this.set(id.replace(/_/g, '.'), myJQuery(this).val());
-                            });
+                        myJQuery(input).datepicker({
+                            dateFormat: 'dd-mm-yy',
+                            changeMonth: true,
+                            changeYear: true,
+                            showButtonPanel: true
+                        }).on('change', function() {
+                            $wire.set('{{ $model }}', myJQuery(this).val());
+                            @if(isset($onChanged) && $onChanged !== '')
+                            Livewire.dispatch('{{ $onChanged }}');
+                            @endif
                         });
                     }
-                    initInputMasks();
-                    Livewire.hook('element.init', function() {
-                        initInputMasks();
-                    });
-                    Livewire.hook('morph.updated', function() {
-                        initInputMasks();
+                }
+            }" x-init="initDatepicker()" wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif readonly="readonly" x-ref="inputField">
+
+            @if (!empty($label))
+            <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
+            @endif
+            {{-- @push('scripts')
+            <script>
+                document.addEventListener('livewire:init', () => {
+                    myJQuery(document).ready(function() {
+                        myJQuery("[id='{{ $id }}']").datepicker({
+                            dateFormat: 'dd-mm-yy', // Set the date format to 'dd mm yy'
+                            changeMonth: true
+                            , changeYear: true
+                            , showButtonPanel: true
+                        }).on("change", function() {
+                            @this.set('{{ $model }}', myJQuery(this).val());
+                            @if(isset($onChanged) && $onChanged !== '')
+                            Livewire.dispatch('{{ $onChanged }}');
+                            @endif
+                        });
                     });
                 });
 
             </script>
+            @endpush --}}
+            @elseif(isset($type) && $type === 'number')
+            <input x-data="{
+                    initInputMask() {
+                        let input = this.$refs.inputField;
+                        if (input) {
+                            console.log('Initializing input mask for:', input.id);
+
+                            Inputmask({
+                                alias: 'numeric',
+                                groupSeparator: '.',
+                                radixPoint: ',',
+                                autoGroup: true,
+                                digitsOptional: true,
+                                rightAlign: false,
+                                clearIncomplete: true,
+                                allowMinus: false,
+                                placeholder: '0'
+                            }).mask(input);
+
+                            input.addEventListener('blur', () => {
+                                if (input.value.trim() === '') {
+                                    input.value = '0';
+                                }
+                                console.log('Blur event for:', input.id, 'with value:', input.value);
+                                $wire.set('{{ $model }}', input.value);
+                            });
+                        }
+                    }
+                }" x-init="initInputMask()" wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif x-ref="inputField">
+            @if (!empty($label))
+            <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
+            @endif
 
             @elseif(isset($type) && $type === 'image')
             <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="form-control  @error($model) is-invalid @enderror" accept="image/*" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif />

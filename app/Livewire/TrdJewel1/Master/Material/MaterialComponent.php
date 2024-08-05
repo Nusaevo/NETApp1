@@ -53,7 +53,7 @@ class MaterialComponent extends BaseComponent
     public $enableCategory1 = "true";
 
 
-    protected $materialService;
+    protected $masterService;
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
     {
@@ -120,19 +120,19 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
         ];
-        $this->materialService = new MasterService();
-        $this->baseMaterials = $this->materialService->getMatlBaseMaterialData($this->appCode);
-        $this->materialUOMs = $this->materialService->getUOMData($this->appCode);
-        $this->materialCategories1 = $this->materialService->getMatlCategory1Data($this->appCode);
-        $this->materialCategories2 = $this->materialService->getMatlCategory2Data($this->appCode);
-        $this->materialJewelPurity = $this->materialService->getMatlJewelPurityData($this->appCode);
-        $this->sideMaterialShapes = $this->materialService->getMatlSideMaterialShapeData($this->appCode);
-        $this->sideMaterialClarity = $this->materialService->getMatlSideMaterialClarityData($this->appCode);
-        $this->sideMaterialCut = $this->materialService->getMatlSideMaterialCutData($this->appCode);
-        $this->sideMaterialGemColors = $this->materialService->getMatlSideMaterialGemColorData($this->appCode);
-        $this->sideMaterialGiaColors = $this->materialService->getMatlSideMaterialGiaColorData($this->appCode);
-        $this->sideMaterialGemStone = $this->materialService->getMatlSideMaterialGemstoneData($this->appCode);
-        $this->sideMaterialJewelPurity = $this->materialService->getMatlSideMaterialPurityData($this->appCode);
+        $this->masterService = new MasterService();
+        $this->baseMaterials = $this->masterService->getMatlBaseMaterialData($this->appCode);
+        $this->materialUOMs = $this->masterService->getUOMData($this->appCode);
+        $this->materialCategories1 = $this->masterService->getMatlCategory1Data($this->appCode);
+        $this->materialCategories2 = $this->masterService->getMatlCategory2Data($this->appCode);
+        $this->materialJewelPurity = $this->masterService->getMatlJewelPurityData($this->appCode);
+        $this->sideMaterialShapes = $this->masterService->getMatlSideMaterialShapeData($this->appCode);
+        $this->sideMaterialClarity = $this->masterService->getMatlSideMaterialClarityData($this->appCode);
+        $this->sideMaterialCut = $this->masterService->getMatlSideMaterialCutData($this->appCode);
+        $this->sideMaterialGemColors = $this->masterService->getMatlSideMaterialGemColorData($this->appCode);
+        $this->sideMaterialGiaColors = $this->masterService->getMatlSideMaterialGiaColorData($this->appCode);
+        $this->sideMaterialGemStone = $this->masterService->getMatlSideMaterialGemstoneData($this->appCode);
+        $this->sideMaterialJewelPurity = $this->masterService->getMatlSideMaterialPurityData($this->appCode);
 
         $this->matl_uoms['matl_uom'] = 'PCS';
         $this->materials['jwl_category1'] = "";
@@ -422,27 +422,7 @@ class MaterialComponent extends BaseComponent
 
     public function generateMaterialDescriptions()
     {
-        $jwl_category1 = $this->materials['jwl_category1'] ?? '';
-        $jwl_category2 = $this->materials['jwl_category2'] ?? '';
-        $jwl_wgt_gold = $this->materials['jwl_wgt_gold'] ?? '';
-
-        $materialDescriptions = "";
-
-        if (!empty($jwl_category1)) {
-            $materialDescriptions .= $jwl_category1;
-        }
-        if (!empty($jwl_category2)) {
-            $materialDescriptions .= " " . $jwl_category2;
-        }
-
-        if (!empty($jwl_wgt_gold)) {
-            if (!empty($materialDescriptions)) {
-                $materialDescriptions .= " ";
-            }
-            $materialDescriptions .= $jwl_wgt_gold . " GR";
-        }
-
-        $this->materials['name'] = $materialDescriptions;
+        $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
     }
 
     public function baseMaterialChange($key,$value)
@@ -450,36 +430,12 @@ class MaterialComponent extends BaseComponent
         $base_matl_id_parts = explode('-', $value);
         $this->matl_boms[$key]['base_matl_id_value'] = $base_matl_id_parts[0];
         $this->matl_boms[$key]['base_matl_id_note'] =  $base_matl_id_parts[1];
+        $this->generateMaterialDescriptionsFromBOMs();
     }
 
     public function generateMaterialDescriptionsFromBOMs()
     {
-        $materialDescriptions = '';
-
-        if ($this->matl_boms && count($this->matl_boms) > 0) {
-            $bomIds = array_filter(array_column($this->matl_boms, 'base_matl_id_value'), function($value) {
-                return !is_null($value) && $value !== '';
-            });
-
-            if (!empty($bomIds)) {
-                $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
-            }
-
-
-            foreach ($this->matl_boms as $bom) {
-                if (isset($bom['base_matl_id_value'])) {
-                    $baseMaterial = $bomData[$bom['base_matl_id_value']] ?? null;
-
-                    if ($baseMaterial) {
-                        $jwlSidesCnt = $bom['jwl_sides_cnt'] ?? 0;
-                        $jwlSidesCarat = $bom['jwl_sides_carat'] ?? 0;
-                        $materialDescriptions .= "$jwlSidesCnt $baseMaterial->str1:$jwlSidesCarat ";
-                    }
-                }
-            }
-        }
-
-        $this->materials['descr'] = $materialDescriptions;
+        $this->materials['descr'] = Material::generateMaterialDescriptionsFromBOMs($this->matl_boms);
     }
 
     public function addBoms()

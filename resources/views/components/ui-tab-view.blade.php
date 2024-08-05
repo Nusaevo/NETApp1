@@ -15,6 +15,7 @@
         @endforeach
     </ul>
 </div>
+@push('scripts')
 <script>
     (function() {
         // Initialize a variable to keep track of the active tab
@@ -70,3 +71,4 @@
         });
     })();
 </script>
+@endpush

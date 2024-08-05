@@ -48,7 +48,7 @@ class Detail extends BaseComponent
     public $currency = [];
     public $materials = [];
     public $printSettings = [];
-    protected $materialService;
+    protected $masterService;
 
 
     public $rules  = [
@@ -74,9 +74,9 @@ class Detail extends BaseComponent
             'input_details.*.qty' => $this->trans('qty'),
             'input_details.*.price' => $this->trans('price'),
         ];
-        $this->materialService = new MasterService();
-        $this->partners = $this->materialService->getCustomers($this->appCode);
-        $this->payments = $this->materialService->getPaymentTerm($this->appCode);
+        $this->masterService = new MasterService();
+        $this->partners = $this->masterService->getCustomers($this->appCode);
+        $this->payments = $this->masterService->getPaymentTerm($this->appCode);
 
         $this->inputs['partner_id'] = "";
         $this->inputs['payment_terms_id'] = 129;

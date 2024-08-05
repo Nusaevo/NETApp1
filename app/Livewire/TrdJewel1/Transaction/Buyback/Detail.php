@@ -50,7 +50,7 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     public $currency = [];
     public $orderDtls ;
-    protected $materialService;
+    protected $masterService;
 
 
     public $rules  = [
@@ -77,8 +77,8 @@ class Detail extends BaseComponent
             'input_details.*.qty' => $this->trans('qty'),
             'input_details.*.price' => $this->trans('price'),
         ];
-        $this->materialService = new MasterService();
-        $this->partners = $this->materialService->getCustomers($this->appCode);
+        $this->masterService = new MasterService();
+        $this->partners = $this->masterService->getCustomers($this->appCode);
         $this->inputs['partner_id'] = "";
 
         if($this->isEditOrView())

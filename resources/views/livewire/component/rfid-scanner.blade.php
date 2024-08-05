@@ -7,6 +7,7 @@
         </div>
     @endif
 
+    @push('scripts')
     <script>
         function startWebSocketScan() {
             console.log('Starting WebSocket scan'); // To verify function is called
@@ -91,6 +92,6 @@
             });
         });
     </script>
-
+    @endpush
 </div>
 

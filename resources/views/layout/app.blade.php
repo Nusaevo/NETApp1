@@ -54,7 +54,6 @@
     <!--end::Custom Stylesheets-->
 
     @livewireStyles
-
 </head>
 <!--end::Head-->
 

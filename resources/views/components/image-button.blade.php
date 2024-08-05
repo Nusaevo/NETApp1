@@ -31,6 +31,7 @@
         <input type="file" id="imageInput" accept="image/*" style="display: none;" multiple onchange="handleFileUpload(event)">
     </div>
 
+    @push('scripts')
     <script>
         function toggleAddPopup() {
             const popup = document.getElementById('addPopup');
@@ -66,6 +67,7 @@
             });
         }
     </script>
+    @endpush
     @else
     <div class="image-button-container" style="visibility: hidden">
         <button id="btnAdd" class="btn btn-secondary" onclick="toggleAddPopup()">
@@ -98,6 +100,7 @@
         <input type="file" id="imageInput" accept="image/*" style="display: none;" multiple onchange="handleFileUpload(event)">
     </div>
 
+    @push('scripts')
     <script>
         function toggleAddPopup() {
             const popup = document.getElementById('addPopup');
@@ -133,5 +136,6 @@
             });
         }
     </script>
+    @endpush
     @endif
 </div>

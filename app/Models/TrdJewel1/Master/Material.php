@@ -233,6 +233,30 @@ class Material extends BaseModel
         return $materialDescriptions;
     }
 
+    public static function generateMaterialDescriptions($materials)
+    {
+        $jwl_category1 = $materials['jwl_category1'] ?? '';
+        $jwl_category2 = $materials['jwl_category2'] ?? '';
+        $jwl_wgt_gold = $materials['jwl_wgt_gold'] ?? '';
+
+        $materialDescriptions = "";
+
+        if (!empty($jwl_category1)) {
+            $materialDescriptions .= $jwl_category1;
+        }
+        if (!empty($jwl_category2)) {
+            $materialDescriptions .= " " . $jwl_category2;
+        }
+
+        if (!empty($jwl_wgt_gold)) {
+            if (!empty($materialDescriptions)) {
+                $materialDescriptions .= " ";
+            }
+            $materialDescriptions .= $jwl_wgt_gold . " GR";
+        }
+        return $materialDescriptions;
+    }
+
     public static function calculateSellingPrice($buyingPrice, $markup)
     {
         if (empty($buyingPrice) || empty($markup)) {
