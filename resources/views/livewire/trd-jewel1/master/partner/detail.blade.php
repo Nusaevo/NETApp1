@@ -12,7 +12,7 @@ use App\Models\TrdJewel1\Master\Partner;
 
         @if ($actionValue === 'Create')
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
-        @elseif($actionValue === 'Edit')
+        @elseif($actionValue !== 'Create')
         <x-ui-tab-view id="myTab" tabs="general,transactions"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">

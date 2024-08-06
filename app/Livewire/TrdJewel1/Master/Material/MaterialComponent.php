@@ -52,7 +52,6 @@ class MaterialComponent extends BaseComponent
     public $searchMode = false;
     public $enableCategory1 = "true";
 
-
     protected $masterService;
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
@@ -142,6 +141,9 @@ class MaterialComponent extends BaseComponent
         if($this->isEditOrView())
         {
             $this->loadMaterial($this->objectIdValue);
+            // if($this->object->isItemExistonOrder($this->objectIdValue)){
+            //     $this->actionValue = "View";
+            // }
         }
     }
 

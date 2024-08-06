@@ -153,6 +153,17 @@ class Material extends BaseModel
             ->first();
     }
 
+    public function isItemExistonOrder(int $matl_id): bool
+    {
+        $relatedOrderDtl = OrderDtl::where('matl_id', $matl_id)
+            ->first();
+
+        if ($relatedOrderDtl) {
+            return true;
+        }
+
+        return false;
+    }
 
 
     public function isItemExistonAnotherPO(int $matl_id): bool
