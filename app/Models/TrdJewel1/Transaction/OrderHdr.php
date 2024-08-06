@@ -63,6 +63,7 @@ class OrderHdr extends BaseModel
         'curr_rate',
         'status_code',
         'print_settings',
+        'print_remarks',
     ];
 
     public function Partner()

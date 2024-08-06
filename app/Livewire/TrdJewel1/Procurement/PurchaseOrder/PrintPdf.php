@@ -11,12 +11,13 @@ class PrintPdf extends BaseComponent
     public $objectIdValue;
     protected function onPreRender()
     {
-
+        if ($this->isEditOrView()) {
+        $this->object = OrderHdr::findOrFail($this->objectIdValue);
+        }
     }
 
     protected function onLoadForEdit()
     {
-        $this->object = OrderHdr::findOrFail($this->objectIdValue);
     }
 
     public function render()

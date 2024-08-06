@@ -47,9 +47,10 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     public $currency = [];
     public $materials = [];
-    public $printSettings = [];
     protected $masterService;
 
+    public $printSettings = [];
+    public $printRemarks = [];
 
     public $rules  = [
         // 'inputs.payment_term_id' =>  'required',
@@ -77,31 +78,42 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers($this->appCode);
         $this->payments = $this->masterService->getPaymentTerm($this->appCode);
-
+        $this->printSettings = $this->masterService->getPrintSettings($this->appCode);
+        $this->printRemarks = $this->masterService->getPrintRemarks($this->appCode);
         $this->inputs['partner_id'] = "";
         $this->inputs['payment_terms_id'] = 129;
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->printSettings = json_decode($this->object->print_settings, true);
-
-            if ($this->printSettings === null) {
-                $this->printSettings = [
-                    'item_checked' => false,
-                    'no_return' => false,
-                    'trade_in_minus15' => false,
-                    'sale_minus25' => false,
-                    'trade_in_minus10' => false,
-                    'sale_minus20' => false,
-                    'show_price' => false,
-                ];
+            if ($this->object->print_settings) {
+                $savedSettings = json_decode($this->object->print_settings, true);
+                foreach ($this->printSettings as &$setting) {
+                    foreach ($savedSettings as $savedSetting) {
+                        if ($setting['code'] === $savedSetting['code'] && $setting['value'] === $savedSetting['value']) {
+                            $setting['checked'] = $savedSetting['checked'];
+                            break;
+                        }
+                    }
+                }
             }
 
+            if ($this->object->print_remarks) {
+                $savedSettings = json_decode($this->object->print_remarks, true);
+                foreach ($this->printRemarks as &$setting) {
+                    foreach ($savedSettings as $savedSetting) {
+                        if ($setting['code'] === $savedSetting['code'] && $setting['value'] === $savedSetting['value']) {
+                            $setting['checked'] = $savedSetting['checked'];
+                            break;
+                        }
+                    }
+                }
+            }
             $this->inputs = populateArrayFromModel($this->object);
 
             $this->retrieveMaterials();
         }
     }
+
 
     protected function retrieveMaterials()
     {
@@ -185,7 +197,8 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->inputs['print_settings'] = json_encode($this->printSettings);
+        $this->inputs['print_settings'] = json_encode($this->filterprintRemarks($this->printSettings));
+        $this->inputs['print_remarks'] = json_encode($this->filterprintRemarks($this->printRemarks));
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {
@@ -197,6 +210,16 @@ class Detail extends BaseComponent
         $this->retrieveMaterials();
     }
 
+    protected function filterprintRemarks($printRemarks)
+    {
+        return array_map(function ($setting) {
+            return [
+                'code' => $setting['code'],
+                'value' => $setting['value'],
+                'checked' => $setting['checked'],
+            ];
+        }, $printRemarks);
+    }
 
     public function Add()
     {

@@ -25,7 +25,7 @@ class Detail extends BaseComponent
         'inputs.seq' =>  'required',
         'inputs.str1' => 'required|string|min:1|max:50',
         'inputs.str2' => 'string|min:1|max:50',
-        'inputs.code' => [ 'required'],
+        // 'inputs.code' => [ 'required'],
     ];
 
     protected function onPreRender()

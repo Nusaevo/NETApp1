@@ -14,7 +14,6 @@ use App\Enums\Status;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Partner::class;
-    protected $configService;
 
     public function mount(): void
     {
@@ -22,7 +21,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setSearchVisibilityStatus(false);
         $this->setDefaultSort('created_at', 'desc');
-        $this->configService = new ConfigService();
+
     }
 
     public function builder(): Builder
@@ -40,7 +39,8 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    return  $this->configService->getConstValueByStr1('PARTNERS_TYPE', $value);
+                    $configService = new ConfigService();
+                    return  $configService->getConstValueByStr1('PARTNERS_TYPE', $value) ?? '';
                 }),
             Column::make($this->trans('name'), "name")
                 ->searchable()

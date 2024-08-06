@@ -1,6 +1,8 @@
 <div>
     @php
-    use App\Models\SysConfig1\ConfigConst;
+    use App\Services\TrdJewel1\Master\MasterService;
+
+    $masterService = new MasterService();
     @endphp
     <div class="container mb-5 mt-3">
         <div>
@@ -46,11 +48,11 @@
                                     </td>
                                     <td style="width: 50%;">
                                         <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
-                                        <p style="margin: 0; padding: 0;">Category : <strong>{{ ConfigConst::GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }} -
-                                                {{ ConfigConst::GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
+                                        <p style="margin: 0; padding: 0;">Category : <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }} -
+                                                {{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
 
                                         <p style="margin: 0; padding: 0;">Berat : {{ numberFormat($OrderDtl->Material->jwl_wgt_gold,2) }} Gram</p>
-                                        <p style="margin: 0; padding: 0;">Kemurnian : {{ ConfigConst::GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
+                                        <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
                                         <p style="margin: 0; padding: 0;">Deskripsi : {{ $OrderDtl->Material->name }}</p>
                                         <p style="margin: 0; padding: 0;">Deskripsi Bahan : {{ $OrderDtl->Material->descr }}</p>
                                         <p style="margin: 0; padding: 0;">Qty : {{ currencyToNumeric($OrderDtl->qty) }} PCS</p>
@@ -64,28 +66,15 @@
                                 <tr class="item">
                                     <td class="description" style="font-size: 12px; margin: 0; padding: 0;">
                                         <ul style="margin: 0; padding: 2px;">
-                                            @if($printSettings['item_checked'])
-                                            <li>Barang & Berat sudah di periksa pembeli</li>
+                                            @foreach ($printRemarks as $remark)
+                                            @if ($remark['checked'])
+                                            <li>{{ $remark['label'] }}</li>
                                             @endif
-                                            @if($printSettings['no_return'])
-                                            <li>Barang tidak diterima kembali / no retur</li>
-                                            @endif
-                                            @if($printSettings['trade_in_minus15'])
-                                            <li>Tukar tambah - 15% kondisi baik</li>
-                                            @endif
-                                            {{-- @if($printSettings['sales_minus25'])
-                                            <li>Jual -25% kondisi baik</li>
-                                            @endif --}}
-                                            @if($printSettings['trade_in_minus10'])
-                                            <li>Tukar tambah -10%</li>
-                                            @endif
-                                            @if($printSettings['sale_minus20'])
-                                            <li>Jual -20%</li>
-                                            @endif
+                                            @endforeach
                                         </ul>
                                     </td>
                                     <td class="item-price" style="text-align: right; width: 50%;">
-                                        @if($printSettings['show_price'])
+                                        @if ($isShowPrice)
                                         <p style="margin: 0; padding: 0; font-size: 18px;"><b>Rp. {{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</b></p>
                                         <p style="margin: 0; padding: 0; font-size: 12px;">{{ terbilang(currencyToNumeric($OrderDtl->price)) }}</p>
                                         @endif

@@ -189,7 +189,14 @@ class MasterService
     public function getPaymentTerm($appCode)
     {
         $data = $this->getConfigData('MPAYMENT_TERMS', $appCode);
-        return $this->mapData($data);
+
+        $payments = $data->map(function ($item) {
+            return [
+                'label' => $item->str1 . " - " . $item->str2,
+                'value' => $item->id,
+            ];
+        })->toArray();
+        return $payments;
     }
 
     public function getSuppliers()
@@ -230,5 +237,36 @@ class MasterService
                     'value' => $data->id,
                 ];
             })->toArray();
+    }
+
+    public function getPrintSettings($appCode)
+    {
+        $data = $this->getConfigData('TRX_NJ_PRINT_OPTIONS', $appCode);
+
+        $options = $data->map(function ($item) {
+            return [
+                'code' => $item->str1,
+                'label' => $item->str2,
+                'value' => $item->id,
+                'checked' => false
+            ];
+        })->toArray();
+
+        return $options;
+    }
+    public function getPrintRemarks($appCode)
+    {
+        $data = $this->getConfigData('TRX_NJ_REMARK', $appCode);
+
+        $options = $data->map(function ($item) {
+            return [
+                'code' => $item->str1,
+                'label' => $item->str2,
+                'value' => $item->id,
+                'checked' => false
+            ];
+        })->toArray();
+
+        return $options;
     }
 }

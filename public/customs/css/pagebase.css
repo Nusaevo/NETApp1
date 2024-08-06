@@ -935,3 +935,41 @@ div[wire\:loading].loading-overlay {
         min-width: 250px; /* Lebar minimum untuk tampilan mobile */
     }
 }
+
+
+.print-options {
+    width: 100%;
+}
+
+.print-options table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.print-options th, .print-options td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.print-options th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.print-options ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.print-options li {
+    margin-bottom: 5px;
+}
+
+/* For devices with a width of 768px or more */
+@media (min-width: 768px) {
+    .print-options {
+        width: 50%;
+    }
+}

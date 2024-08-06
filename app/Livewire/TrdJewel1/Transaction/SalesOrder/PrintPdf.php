@@ -6,31 +6,55 @@ namespace App\Livewire\TrdJewel1\Transaction\SalesOrder;
 use Livewire\Component;
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Services\TrdJewel1\Master\MasterService;
 
 class PrintPdf extends BaseComponent
 {
-    public $printSettings = [
-        'item_checked' => false,
-        'no_return' => false,
-        'trade_in_minus15' => false,
-        'sale_minus25' => false,
-        'trade_in_minus10' => false,
-        'sale_minus20' => false,
-        'show_price' => false,
-    ];
-
+    public $printSettings = [];
+    public $printRemarks = [];
+    public $isShowPrice = false;
     public function onPreRender()
     {
-    }
+        $masterService = new MasterService();
+        $this->printSettings = $masterService->getPrintSettings($this->appCode);
+        $this->printRemarks = $masterService->getPrintRemarks($this->appCode);
 
-    public function onPopulateDropdowns()
-    {
-    }
-
-    protected function onLoadForEdit()
-    {
         $this->object = OrderHdr::findOrFail($this->objectIdValue);
         $this->printSettings = json_decode($this->object->print_settings, true) ?? $this->printSettings;
+        if ($this->object->print_settings) {
+            $savedSettings = json_decode($this->object->print_settings, true);
+            foreach ($this->printSettings as &$setting) {
+                foreach ($savedSettings as $savedSetting) {
+                    if ($setting['code'] === $savedSetting['code'] && $setting['value'] === $savedSetting['value']) {
+                        $setting['checked'] = $savedSetting['checked'];
+                        break;
+                    }
+                }
+            }
+            $this->isShowPrice = $this->isSettingChecked($this->printSettings, 'A1');
+        }
+
+        if ($this->object->print_remarks) {
+            $savedRemarks = json_decode($this->object->print_remarks, true);
+            foreach ($this->printRemarks as &$remark) {
+                foreach ($savedRemarks as $savedRemark) {
+                    if ($remark['code'] === $savedRemark['code'] && $remark['value'] === $savedRemark['value']) {
+                        $remark['checked'] = $savedRemark['checked'];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public function isSettingChecked($settings, $code)
+    {
+        foreach ($settings as $setting) {
+            if ($setting['code'] === $code && isset($setting['checked']) && $setting['checked']) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function render()

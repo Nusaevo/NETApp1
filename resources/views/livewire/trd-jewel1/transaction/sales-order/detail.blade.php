@@ -113,31 +113,47 @@
                         </x-slot>
                     </x-ui-list-table>
                     @if($actionValue == 'Edit')
-                    <td class="description" style="font-size: 12px; margin: 0; padding: 0;">
-                        <ul style="margin: 0; padding: 2px;">
-                            <input type="checkbox" id="item_checked" name="item_checked" wire:model="printSettings.item_checked" wire:change="SaveWithoutNotification" />
-                            <label for="item_checked">Barang & Berat sudah di periksa pembeli</label>
-                            <br>
-                            <input type="checkbox" id="no_return" name="no_return" wire:model="printSettings.no_return" wire:change="SaveWithoutNotification" />
-                            <label for="no_return">Barang tidak diterima kembali / no retur</label>
-                            <br>
-                            <input type="checkbox" id="trade_in_minus15" name="trade_in_minus15" wire:model="printSettings.trade_in_minus15" wire:change="SaveWithoutNotification"  />
-                            <label for="trade_in_minus15">Tukar tambah - 15% kondisi baik</label>
-                            <br>
-                            <input type="checkbox" id="sale_minus25" name="sale_minus25" wire:model="printSettings.sale_minus25" wire:change="SaveWithoutNotification" />
-                            <label for="sale_minus25">Jual -25% kondisi baik</label>
-                            <br>
-                            <input type="checkbox" id="trade_in_minus10" name="trade_in_minus10" wire:model="printSettings.trade_in_minus10" wire:change="SaveWithoutNotification"  />
-                            <label for="trade_in_minus10">Tukar tambah -10%</label>
-                            <br>
-                            <input type="checkbox" id="sale_minus20" name="sale_minus20" wire:model="printSettings.sale_minus20" wire:change="SaveWithoutNotification" />
-                            <label for="sale_minus20">Jual -20%</label>
-                            <br>
-                            <input type="checkbox" id="show_price" name="show_price" wire:model="printSettings.show_price" wire:change="SaveWithoutNotification" />
-                            <label for="show_price">Harga jual ditampilkan</label>
-                        </ul>
-                    </td>
+                    <div class="print-options">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Print Remarks</th>
+                                    <th>Print Settings</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <ul>
+                                            @foreach($printRemarks as $index => $setting)
+                                            @if(is_array($setting) && isset($setting['value']) && isset($setting['label']))
+                                            <li>
+                                                <input type="checkbox" id="remark_{{ $setting['value'] }}" name="printRemarks[{{ $index }}][checked]" wire:model="printRemarks.{{ $index }}.checked" wire:change="SaveWithoutNotification" {{ $setting['checked'] ? 'checked' : '' }} />
+                                                <label for="remark_{{ $setting['value'] }}">{{ $setting['label'] }}</label>
+                                            </li>
+                                            @endif
+                                            @endforeach
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <ul>
+                                            @foreach($printSettings as $index => $setting)
+                                            @if(is_array($setting) && isset($setting['value']) && isset($setting['label']))
+                                            <li>
+                                                <input type="checkbox" id="setting_{{ $setting['value'] }}" name="printSettings[{{ $index }}][checked]" wire:model="printSettings.{{ $index }}.checked" wire:change="SaveWithoutNotification" {{ $setting['checked'] ? 'checked' : '' }} />
+                                                <label for="setting_{{ $setting['value'] }}">{{ $setting['label'] }}</label>
+                                            </li>
+                                            @endif
+                                            @endforeach
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     @endif
+
+
                 </x-ui-card>
             </div>
             {{-- <div class="tab-pane fade show" id="PurchaseReturn" role="tabpanel" aria-labelledby="PurchaseReturn-tab">
