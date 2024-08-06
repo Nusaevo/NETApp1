@@ -10,7 +10,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                 @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif
                 class="form-select @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"
                 @if (isset($action) && $action==='View' || (isset($enabled) && $enabled==='false' )) disabled @endif
-                @if (isset($required) && $required==='true' ) required @endif>
+                @if (isset($required) && $required==='true' ) required @endif wire:loading.attr="disabled">
             <option value=""></option>
             @if (!is_null($options))
                 @forelse ($options as $option)

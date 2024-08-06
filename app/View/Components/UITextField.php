@@ -19,6 +19,7 @@ class UiTextField extends Component
     public $rows;
     public $id;
     public $clickEvent;
+    public $buttonName;
 
     public function __construct(
         $label = '',
@@ -33,7 +34,7 @@ class UiTextField extends Component
         $span = 'Full',
         $onChanged = '',
         $rows = 5,
-        $clickEvent = ''
+        $clickEvent = '', $buttonName = ""
     ) {
         $this->label = $label;
         $this->model = $model;
@@ -47,6 +48,7 @@ class UiTextField extends Component
         $this->onChanged = $onChanged;
         $this->rows = $rows;
         $this->clickEvent = $clickEvent;
+        $this->buttonName = $buttonName;
     }
 
     public function render()
