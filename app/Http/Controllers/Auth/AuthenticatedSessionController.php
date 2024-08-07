@@ -37,10 +37,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $request->user()->update([
-            'last_login_at' => Carbon::now()->toDateTimeString(),
-            'last_login_ip' => $request->getClientIp()
-        ]);
+        // $request->user()->update([
+        //     'last_login_at' => Carbon::now()->toDateTimeString(),
+        //     'last_login_ip' => $request->getClientIp()
+        // ]);
 
         return redirect()->intended(RouteServiceProvider::HOME);
     }
@@ -54,16 +54,28 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
-        Log::info('Destroying session for user ID: ' . Auth::id());
+        try {
+            $userId = Auth::id();
+            Log::info('Attempting to destroy session for user ID: ' . $userId);
 
-        Auth::guard('web')->logout();
+            if (!$userId) {
+                throw new \Exception('User is not authenticated.');
+            }
 
-        $request->session()->invalidate();
-        Log::info('Session invalidated.');
+            Auth::guard('web')->logout();
+            Log::info('User logged out.');
 
-        $request->session()->regenerateToken();
-        Log::info('Session token regenerated.');
+            $request->session()->invalidate();
+            Log::info('Session invalidated.');
 
-        return redirect('/');
+            $request->session()->regenerateToken();
+            Log::info('Session token regenerated.');
+
+            // return redirect('/');
+        } catch (\Exception $e) {
+            Log::error('Error during logout: ' . $e->getMessage());
+            return redirect('/')->with('error', 'There was a problem logging you out.');
+        }
     }
+
 }
