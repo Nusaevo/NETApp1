@@ -116,11 +116,9 @@
 
 
     <div id="custom-loading-container" class="custom-loading-container" style="display: none;">
-        <div class="custom-loading-spinner">
-            <!-- You can use any spinner or animation here -->
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+        <div class="custom-loading-spinner lds-ripple">
+            <div></div>
+            <div></div>
         </div>
     </div>
 
