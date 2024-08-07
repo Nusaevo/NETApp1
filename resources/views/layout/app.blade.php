@@ -1,26 +1,22 @@
-
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" {!! printHtmlAttributes('html') !!}>
 <!--begin::Head-->
 <head>
-    <base href=""/>
+    <base href="" />
     <title>{{ config('app.name', 'Laravel') }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta charset="utf-8"/>
-    <meta name="description" content=""/>
-    <meta name="keywords" content=""/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta property="og:locale" content="en_US"/>
-    <meta property="og:type" content="article"/>
-    <meta property="og:title" content=""/>
-    <link rel="canonical" href=""/>
+    <meta charset="utf-8" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="" />
+    <link rel="canonical" href="" />
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/pagebase.css') }}">
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
-
-<!-- Tambahkan ini di bagian <head> atau sebelum penutupan </body> -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
 
@@ -51,19 +47,22 @@
 
     <!--begin::Global Stylesheets Bundle(used by all pages)-->
     @foreach(getGlobalAssets('css') as $path)
-        {!! sprintf('<link rel="stylesheet" href="%s">', asset($path)) !!}
+    {!! sprintf('
+    <link rel="stylesheet" href="%s">', asset($path)) !!}
     @endforeach
     <!--end::Global Stylesheets Bundle-->
 
     <!--begin::Vendor Stylesheets(used by this page)-->
     @foreach(getVendors('css') as $path)
-        {!! sprintf('<link rel="stylesheet" href="%s">', asset($path)) !!}
+    {!! sprintf('
+    <link rel="stylesheet" href="%s">', asset($path)) !!}
     @endforeach
     <!--end::Vendor Stylesheets-->
 
     <!--begin::Custom Stylesheets(optional)-->
     @foreach(getCustomCss() as $path)
-        {!! sprintf('<link rel="stylesheet" href="%s">', asset($path)) !!}
+    {!! sprintf('
+    <link rel="stylesheet" href="%s">', asset($path)) !!}
     @endforeach
     <!--end::Custom Stylesheets-->
 
@@ -74,104 +73,128 @@
 <!--begin::Body-->
 <body {!! printHtmlClasses('body') !!} {!! printHtmlAttributes('body') !!}>
 
-@include('partials/theme-mode/_init')
+    @include('partials/theme-mode/_init')
 
-<div class="d-flex flex-column flex-root app-root" id="kt_app_root">
-    <!--begin::Page-->
-    <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
-        @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_header')
-        <!--begin::Wrapper-->
-        <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
-            @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_sidebar')
-            <!--begin::Main-->
-            <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-                <!--begin::Content wrapper-->
-                <div class="d-flex flex-column flex-column-fluid">
-                    {{-- @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_toolbar') --}}
-                    <!--begin::Content-->
-                    <div id="kt_app_content" class="app-content flex-column-fluid">
-                        <!--begin::Content container-->
-                        <div id="kt_app_content_container" class="app-container container-fluid">
-                            {{ $slot }}
+    <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+        <!--begin::Page-->
+        <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
+            @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_header')
+            <!--begin::Wrapper-->
+            <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
+                @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_sidebar')
+                <!--begin::Main-->
+                <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+                    <!--begin::Content wrapper-->
+                    <div class="d-flex flex-column flex-column-fluid">
+                        {{-- @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_toolbar') --}}
+                        <!--begin::Content-->
+                        <div id="kt_app_content" class="app-content flex-column-fluid">
+                            <!--begin::Content container-->
+                            <div id="kt_app_content_container" class="app-container container-fluid">
+                                {{ $slot }}
+                            </div>
+                            <!--end::Content container-->
                         </div>
-                        <!--end::Content container-->
+                        <!--end::Content-->
                     </div>
-                    <!--end::Content-->
+                    <!--end::Content wrapper-->
+                    @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_footer')
                 </div>
-                <!--end::Content wrapper-->
-                @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_footer')
+                <!--end:::Main-->
             </div>
-            <!--end:::Main-->
+            <!--end::Wrapper-->
         </div>
-        <!--end::Wrapper-->
+        <!--end::Page-->
     </div>
-    <!--end::Page-->
-</div>
-<!--end::App-->
+    <!--end::App-->
 
-{{-- @include('partials/_drawers')
+    {{-- @include('partials/_drawers')
 
 @include('partials/_modals')
 
 @include('partials/_scrolltop') --}}
 
 
+    <div id="custom-loading-container" class="custom-loading-container" style="display: none;">
+        <div class="custom-loading-spinner">
+            <!-- You can use any spinner or animation here -->
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
 
 
-<!--begin::Javascript-->
-<!--begin::Global Javascript Bundle(mandatory for all pages)-->
-@foreach(getGlobalAssets() as $path)
+    <!--begin::Javascript-->
+    <!--begin::Global Javascript Bundle(mandatory for all pages)-->
+    @foreach(getGlobalAssets() as $path)
     {!! sprintf('<script src="%s"></script>', asset($path)) !!}
-@endforeach
-<!--end::Global Javascript Bundle-->
+    @endforeach
+    <!--end::Global Javascript Bundle-->
 
-<!--begin::Vendors Javascript(used by this page)-->
-@foreach(getVendors('js') as $path)
+    <!--begin::Vendors Javascript(used by this page)-->
+    @foreach(getVendors('js') as $path)
     {!! sprintf('<script src="%s"></script>', asset($path)) !!}
-@endforeach
-<!--end::Vendors Javascript-->
+    @endforeach
+    <!--end::Vendors Javascript-->
 
-<!--begin::Custom Javascript(optional)-->
-@foreach(getCustomJs() as $path)
+    <!--begin::Custom Javascript(optional)-->
+    @foreach(getCustomJs() as $path)
     {!! sprintf('<script src="%s"></script>', asset($path)) !!}
-@endforeach
-<!--end::Custom Javascript-->
-@stack('scripts')
-<!--end::Javascript-->
+    @endforeach
+    <!--end::Custom Javascript-->
+    @stack('scripts')
+    <!--end::Javascript-->
 
-<script>
-    document.addEventListener('livewire:init', () => {
-        Livewire.on('success', (message) => {
-            toastr.success(message);
-        });
-        Livewire.on('error', (message) => {
-            toastr.error(message);
-        });
-
-        Livewire.on('notify-swal', (dataArray) => {
-            // console.log('alert event triggered'); // Debugging
-            // console.log('Event data:', dataArray); // Debugging
-
-            // Assuming the data is an array, get the first item
-            let data = dataArray[0];
-            let message = data.message || '';
-            let icon = data.type || 'success';
-            let confirmButtonText = 'Ok';
-
-            Swal.fire({
-                text: message,
-                icon: icon,
-                buttonsStyling: false,
-                confirmButtonText: confirmButtonText,
-                customClass: {
-                    confirmButton: 'btn btn-primary'
-                }
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('success', (message) => {
+                toastr.success(message);
             });
+            Livewire.on('error', (message) => {
+                toastr.error(message);
+            });
+
+            Livewire.on('notify-swal', (dataArray) => {
+                // console.log('alert event triggered'); // Debugging
+                // console.log('Event data:', dataArray); // Debugging
+
+                // Assuming the data is an array, get the first item
+                let data = dataArray[0];
+                let message = data.message || '';
+                let icon = data.type || 'success';
+                let confirmButtonText = 'Ok';
+
+                Swal.fire({
+                    text: message
+                    , icon: icon
+                    , buttonsStyling: false
+                    , confirmButtonText: confirmButtonText
+                    , customClass: {
+                        confirmButton: 'btn btn-primary'
+                    }
+                });
+            });
+        });
+
+    </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOMContentLoaded event fired');
+        var loadingContainer = document.getElementById('custom-loading-container');
+        loadingContainer.style.display = 'flex';
+        console.log('Loading container displayed');
+
+        window.addEventListener('load', function() {
+            console.log('Window load event fired');
+            setTimeout(function() {
+                loadingContainer.style.display = 'none';
+                console.log('Loading container hidden');
+            }, 1000); // Add a delay of 1 second to observe the loader
         });
     });
 </script>
-
-@livewireScripts
+    @livewireScripts
 </body>
 <!--end::Body-->
 
