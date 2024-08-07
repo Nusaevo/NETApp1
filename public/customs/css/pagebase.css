@@ -1032,3 +1032,17 @@ div[wire\:loading].loading-overlay {
     opacity: 0;
   }
 }
+@media (max-width: 576px) {
+    .dropdown {
+        display: none;
+    }
+    .mobile-button {
+        display: block;
+    }
+}
+
+@media (min-width: 577px) {
+    .mobile-button {
+        display: none;
+    }
+}

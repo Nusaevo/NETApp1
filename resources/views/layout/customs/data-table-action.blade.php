@@ -50,53 +50,34 @@
             @endif
         </ul>
     </div>
+    <div class="mobile-button">
+        @if($allow_details && isset($permissions['read']) && $permissions['read'])
+        <button class="btn btn-primary btn-sm" wire:click="viewData({{ $row->id }})">
+            <i class="bi bi-eye"></i> Detil
+        </button>
+        @endif
+        @if($allow_edit && (isset($permissions['read']) && $permissions['read'] || isset($permissions['update']) && $permissions['update']))
+        <button class="btn btn-secondary btn-sm" wire:click="editData({{ $row->id }})">
+            <i class="bi bi-pencil"></i> Edit
+        </button>
+        @endif
+        @if($allow_delete && isset($permissions['delete']) && $permissions['delete'])
+        <button class="btn btn-danger btn-sm btn-dialog-box" wire:click="selectData({{ $row->id }})">
+            <i class="bi bi-trash"></i> Delete
+        </button>
+        @endif
+        @if($allow_disable && isset($permissions['delete']) && $permissions['delete'])
+        <button class="btn btn-warning btn-sm btn-dialog-box" wire:click="selectData({{ $row->id }})">
+            <i class="bi bi-x-circle"></i> Disable
+        </button>
+        @endif
+        @if($custom_actions && isset($custom_actions))
+        @foreach ($custom_actions as $action)
+        <button class="btn btn-info btn-sm" href="{{ $action['route'] }}">
+            <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
+        </button>
+        @endforeach
+        @endif
+    </div>
     @endif
 </div>
-
-{{-- <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var dropdowns = document.querySelectorAll('.dropdown');
-        dropdowns.forEach(function(dropdown) {
-            dropdown.addEventListener('show.bs.dropdown', function(event) {
-                var menu = event.target.querySelector('.dropdown-menu');
-                var rect = event.target.getBoundingClientRect();
-                var viewportWidth = window.innerWidth;
-                var menuWidth = menu.offsetWidth;
-
-                // Ensure dropdown aligns correctly and fits within the viewport
-                menu.style.position = 'absolute';
-                menu.style.top = rect.bottom + 'px';
-
-                // Adjust left position for better visibility on mobile
-                var leftPosition = rect.left;
-                if (leftPosition + menuWidth > viewportWidth) {
-                    leftPosition = viewportWidth - menuWidth - 10; // Adjust for right padding
-                }
-                menu.style.left = leftPosition + 'px';
-            });
-        });
-    });
-
-    $(document).on('click', '.btn-dialog-box', function(e) {
-        e.preventDefault();
-        Swal.fire({
-            title: "Apakah Anda Yakin ingin melanjutkannya?",
-            text: "",
-            icon: "question",
-            buttonsStyling: false,
-            showConfirmButton: true,
-            showCancelButton: true,
-            confirmButtonText: "Yes",
-            cancelButtonText: "No",
-            closeOnConfirm: false,
-            customClass: {
-                confirmButton: "btn btn-primary",
-                cancelButton: 'btn btn-secondary'
-            }
-        }).then(confirm => {
-            if (confirm.isConfirmed) {
-                Livewire.dispatch('disableData');
-            }
-        });
-    });
-</script> --}}
