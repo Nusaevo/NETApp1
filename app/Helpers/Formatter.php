@@ -83,10 +83,14 @@ if (!function_exists('toNumberFormatter')) {
     }
 }
 
-
 if (!function_exists('numberFormat')) {
     function numberFormat($number, $decimals = 0, $decPoint = ',', $thousandsSep = '.')
     {
+        // Check if the number is null
+        if ($number === null) {
+            return '0'; // or you can return an empty string or any default value you prefer
+        }
+
         $formattedNumber = number_format($number, $decimals, $decPoint, $thousandsSep);
 
         // Find the position of the decimal point
@@ -104,7 +108,6 @@ if (!function_exists('numberFormat')) {
         return $formattedNumber;
     }
 }
-
 
 if (!function_exists('currencyToNumeric')) {
     function currencyToNumeric($formattedCurrency)

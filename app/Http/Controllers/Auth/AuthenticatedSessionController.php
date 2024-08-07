@@ -8,6 +8,7 @@ use App\Providers\RouteServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -53,11 +54,15 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
+        Log::info('Destroying session for user ID: ' . Auth::id());
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
+        Log::info('Session invalidated.');
 
         $request->session()->regenerateToken();
+        Log::info('Session token regenerated.');
 
         return redirect('/');
     }
