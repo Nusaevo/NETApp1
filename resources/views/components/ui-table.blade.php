@@ -15,6 +15,8 @@
             let tableId = '{{ isset($id) ? $id : 'defaultTable' }}';
             let tableElement = this.$refs.table;
 
+            console.log('Initializing DataTable for:', tableId); // Added console log
+
             if (tableElement && myJQuery.fn.DataTable) {
                 if (myJQuery.fn.DataTable.isDataTable('#' + tableId)) {
                     myJQuery('#' + tableId).DataTable().destroy();
@@ -43,6 +45,10 @@
                     pagingType: 'full_numbers',
                     stateSave: true,
                 });
+
+                console.log('DataTable initialized:', myJQuery('#' + tableId).DataTable().data().toArray()); // Added console log to display table data
+            } else {
+                console.log('DataTable initialization failed. myJQuery.fn.DataTable is not defined.');
             }
         }
     }"
@@ -64,30 +70,3 @@
     </div>
     @endisset
 </div>
-
-{{-- @if(isset($enableDataTable) && strcmp($enableDataTable, 'true') === 0)
-@push('scripts')
-<script>
-    document.addEventListener('livewire:load', function() {
-        Livewire.hook('element.init', (el, component) => {
-            if (el.id === '{{ isset($id) ? $id : 'defaultTable' }}') {
-                console.log('Livewire element.init hook for:', el.id);
-                Alpine.store('initDataTable');
-            }
-        });
-
-        Livewire.hook('morph.updated', (el, component) => {
-            if (el.id === '{{ isset($id) ? $id : 'defaultTable' }}') {
-                console.log('Livewire morph.updated hook for:', el.id);
-                Alpine.store('initDataTable');
-            }
-        });
-
-        Livewire.on('refreshDataTable', function() {
-            console.log('Livewire refreshDataTable event');
-            Alpine.store('initDataTable');
-        });
-    });
-</script>
-@endpush
-@endif --}}

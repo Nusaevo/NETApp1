@@ -35,6 +35,10 @@ return [
     'gemstone' => 'Batuan Permata',
     'production_year' => 'Tahun Produksi',
     'ref_mark' => 'Nomor Seri',
+    'partner' => 'Customer',
+    'gold_price' => 'Harga Emas/gr',
+    'jwl_cost' => 'Ongkos',
+    'origin' => 'Asal',
     'message' => [
         'product_notfound' => 'Produk tidak ditemukan',
         'attachment_failed' => 'Gagal menyimpan file :filename',

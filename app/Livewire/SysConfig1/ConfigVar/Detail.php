@@ -49,6 +49,7 @@ class Detail extends BaseComponent
     public function onReset()
     {
         $this->reset('inputs');
+        $this->inputs['app_id'] = null;
         $this->object = new ConfigVar();
     }
 

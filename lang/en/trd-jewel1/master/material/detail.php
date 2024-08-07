@@ -35,6 +35,10 @@ return [
     'gemstone' => 'Gemstone',
     'production_year' => 'Production Year',
     'ref_mark' => 'Reference Mark',
+    'partner' => 'Customer',
+    'gold_price' => 'Gold Price/gr',
+    'jwl_cost' => 'Cost',
+    'origin' => 'Origin',
     'message' => [
         'product_notfound' => 'Product not found',
         'attachment_failed' => 'Failed to save attachment with filename :filename',

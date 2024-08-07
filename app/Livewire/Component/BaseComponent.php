@@ -176,8 +176,8 @@ class BaseComponent extends Component
         $this->validateForm();
         DB::beginTransaction();
         try {
-            $this->updateVersionNumber();
 
+            $this->updateVersionNumber();
             // Start detailed logging for onValidateAndSave
             $this->onValidateAndSave();
             // $start = microtime(true);
@@ -193,6 +193,7 @@ class BaseComponent extends Component
             $this->notify('success',__('generic.string.save'));
         } catch (Exception $e) {
             DB::rollBack();
+            $this->VersionNumber --;
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
@@ -213,6 +214,7 @@ class BaseComponent extends Component
             }
         } catch (Exception $e) {
             DB::rollBack();
+            $this->VersionNumber --;
             dd($e->getMessage());
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
@@ -241,6 +243,7 @@ class BaseComponent extends Component
             $this->object->save();
             $this->notify('success', __($messageKey));
         } catch (Exception $e) {
+            $this->VersionNumber --;
             $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
@@ -254,9 +257,7 @@ class BaseComponent extends Component
             if ($this->object->version_number != $this->VersionNumber) {
                 throw new \Exception("This object has already been updated by another user. Please refresh the page and try again.");
             }
-            if ($this->object->isDirty()) {
-                $this->VersionNumber ++;
-            }
+            $this->VersionNumber ++;
         }
     }
 

@@ -79,7 +79,6 @@ class Detail extends BaseComponent
         ];
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers($this->appCode);
-        $this->inputs['partner_id'] = "";
 
         if($this->isEditOrView())
         {
@@ -126,6 +125,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
+        $this->inputs['partner_id'] = "";
     }
 
     public function render()

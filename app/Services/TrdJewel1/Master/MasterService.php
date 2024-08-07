@@ -144,6 +144,17 @@ class MasterService
         })->toArray();
     }
 
+    public function getMatlSideMaterialOriginData($appCode)
+    {
+        $data = $this->getConfigData('MMATL_ORIGINS', $appCode);
+        return $data->map(function ($item) {
+            return [
+                'label' => $item->str1 . " - " . $item->str2,
+                'value' => $item->id,
+            ];
+        })->toArray();
+    }
+
     public function getMatlSideMaterialShapeData($appCode)
     {
         $data = $this->getConfigData('MMATL_JEWEL_GEMSHAPES', $appCode);
@@ -186,6 +197,7 @@ class MasterService
         return $this->mapData($data);
     }
 
+
     public function getPaymentTerm($appCode)
     {
         $data = $this->getConfigData('MPAYMENT_TERMS', $appCode);
@@ -198,7 +210,6 @@ class MasterService
         })->toArray();
         return $payments;
     }
-
     public function getSuppliers()
     {
         $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
@@ -209,6 +220,8 @@ class MasterService
             ];
         })->toArray();
     }
+
+
 
     public function getCustomers()
     {

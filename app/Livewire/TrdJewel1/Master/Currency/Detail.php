@@ -13,6 +13,7 @@ use Exception;
 class Detail extends BaseComponent
 {
     public $inputs = [];
+    public $currencyData;
     public $currencies = [];
     protected $masterService;
     protected function onPreRender()
@@ -23,25 +24,22 @@ class Detail extends BaseComponent
             'inputs.goldprice_curr' => $this->trans('gold_price_currency'),
             'inputs.goldprice_basecurr' => $this->trans('gold_price_base'),
         ];
-
-        $this->masterService = new MasterService();
-
-        $currencyData = $this->masterService->getCurrencyData($this->appCode);
-        $this->currencies = $currencyData['currencies'];
-        $defaultCurrency = $currencyData['defaultCurrency'];
-        $this->inputs['curr_id'] = $defaultCurrency['value'];
         if($this->isEditOrView())
         {
             $this->object = GoldPriceLog::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['log_date'] = dateFormat($this->object->log_date, 'd-m-Y');
-            $this->inputs['curr_id'] = $defaultCurrency['value'];
         }
     }
 
     public function onReset()
     {
         $this->reset('inputs');
+        $this->masterService = new MasterService();
+        $this->currencyData = $this->masterService->getCurrencyData($this->appCode);
+        $this->currencies = $this->currencyData['currencies'];
+        $defaultCurrency = $this->currencyData['defaultCurrency'];
+        $this->inputs['curr_id'] = $defaultCurrency['value'];
         $this->inputs['log_date']  = date('d-m-Y');
         $this->object = new GoldPriceLog();
     }

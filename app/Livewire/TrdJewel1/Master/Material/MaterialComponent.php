@@ -25,7 +25,7 @@ class MaterialComponent extends BaseComponent
     public $materials = [];
     public $matl_uoms = [];
     public $matl_boms = [];
-    public $product_code ="";
+    public $product_code = "";
 
     public $photo;
 
@@ -48,9 +48,12 @@ class MaterialComponent extends BaseComponent
     public $sideMaterialCut = [];
     public $sideMaterialClarity = [];
     public $sideMaterialJewelPurity = [];
+    public $partners = [];
     public $sideMaterialGemStone = [];
+    public $sideMaterialJewelOrigins = [];
     public $searchMode = false;
-    public $enableCategory1 = "true";
+    public $panelEnabled = "true";
+    public $orderedMaterial = false;
 
     protected $masterService;
 
@@ -63,41 +66,35 @@ class MaterialComponent extends BaseComponent
 
 
     public $rules = [
+        'materials.code' => 'required',
         'materials.jwl_buying_price' => 'required',
-            'materials.jwl_selling_price' => 'required',
-            'materials.jwl_category1' => 'required|string|min:0|max:255',
-            // 'materials.jwl_category2' => 'required|string|min:0|max:255',
-            'materials.jwl_carat' => 'required|string|min:0|max:255',
-            'materials.jwl_wgt_gold' => 'required',
-            'materials.name' => 'required|string|min:0|max:255',
-            // 'materials.descr' => 'required|string|min:0|max:255',
-            // 'matl_uoms.barcode' => 'required',
-            'matl_boms.*.base_matl_id' => 'required',
-            'matl_boms.*.jwl_sides_cnt' => 'required',
-            'matl_boms.*.jwl_sides_carat' => 'required',
-            'matl_boms.*.jwl_sides_price' => 'nullable',
-            'matl_boms.*.purity' => 'nullable',
-            'matl_boms.*.shapes' => 'nullable',
-            'matl_boms.*.clarity' => 'nullable',
-            'matl_boms.*.color' => 'nullable',
-            'matl_boms.*.cut' => 'nullable',
-            'matl_boms.*.gia_number' => 'nullable',
-            'matl_boms.*.gemstone' => 'nullable',
-            'matl_boms.*.gemcolor' => 'nullable',
-            'matl_boms.*.production_year' => 'nullable',
-            'matl_boms.*.ref_mark' => 'nullable',
-            // 'materials.code' => [
-            //     'required',
-            //     'string',
-            //     'min:1',
-            //     'max:50',
-            //     Rule::unique('sys-config1.config_appls', 'code')->ignore($this->object ? $this->object->id : null),
-            // ],
-
+        'materials.jwl_selling_price' => 'required',
+        'materials.jwl_category1' => 'required|string|min:0|max:255',
+        // 'materials.jwl_category2' => 'required|string|min:0|max:255',
+        'materials.jwl_carat' => 'required|string|min:0|max:255',
+        'materials.jwl_wgt_gold' => 'required',
+        'materials.name' => 'required|string|min:0|max:255',
+        // 'materials.descr' => 'required|string|min:0|max:255',
+        // 'matl_uoms.barcode' => 'required',
+        'matl_boms.*.base_matl_id' => 'required',
+        'matl_boms.*.jwl_sides_cnt' => 'required',
+        'matl_boms.*.jwl_sides_carat' => 'required',
+        'matl_boms.*.jwl_sides_price' => 'nullable',
+        'matl_boms.*.purity' => 'nullable',
+        'matl_boms.*.shapes' => 'nullable',
+        'matl_boms.*.clarity' => 'nullable',
+        'matl_boms.*.color' => 'nullable',
+        'matl_boms.*.cut' => 'nullable',
+        'matl_boms.*.gia_number' => 'nullable',
+        'matl_boms.*.gemstone' => 'nullable',
+        'matl_boms.*.gemcolor' => 'nullable',
+        'matl_boms.*.production_year' => 'nullable',
+        'matl_boms.*.ref_mark' => 'nullable'
     ];
 
     protected function onPreRender()
     {
+        $this->panelEnabled = $this->actionValue == 'Create' ? 'true' : 'false';
         $this->baseRoute = "TrdJewel1.Master.Material.Detail";
         // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
@@ -112,12 +109,15 @@ class MaterialComponent extends BaseComponent
             'materials.name'      => $this->trans('description'),
             'materials.descr'      => $this->trans('bom_description'),
             'matl_uoms.barcode'      => $this->trans('barcode'),
+            'materials.jwl_cost' => $this->trans('jwl_cost'),
+            'materials.gold_price'      => $this->trans('gold_price'),
             'materials.jwl_buying_price'      =>  $this->trans('buying_price'),
             'materials.jwl_selling_price'      => $this->trans('selling_price'),
             'matl_boms.*.base_matl_id' => $this->trans('material'),
             'matl_boms.*.jwl_sides_cnt' => $this->trans('quantity'),
             'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
+            'matl_boms.*.matl_origin_id' => $this->trans('origin'),
         ];
         $this->masterService = new MasterService();
         $this->baseMaterials = $this->masterService->getMatlBaseMaterialData($this->appCode);
@@ -132,26 +132,33 @@ class MaterialComponent extends BaseComponent
         $this->sideMaterialGiaColors = $this->masterService->getMatlSideMaterialGiaColorData($this->appCode);
         $this->sideMaterialGemStone = $this->masterService->getMatlSideMaterialGemstoneData($this->appCode);
         $this->sideMaterialJewelPurity = $this->masterService->getMatlSideMaterialPurityData($this->appCode);
+        $this->sideMaterialJewelOrigins = $this->masterService->getMatlSideMaterialOriginData($this->appCode);
+        $this->partners = $this->masterService->getCustomers($this->appCode);
 
-        $this->matl_uoms['matl_uom'] = 'PCS';
-        $this->materials['jwl_category1'] = "";
-        $this->materials['jwl_category2'] = "";
-        $this->materials['jwl_carat'] = "";
 
-        if($this->isEditOrView())
-        {
+        if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
-            // if($this->object->isItemExistonOrder($this->objectIdValue)){
-            //     $this->actionValue = "View";
-            // }
+            if ($this->object->isItemExistonOrder($this->objectIdValue)) {
+                $this->actionValue = "View";
+            }
         }
+        $this->orderedMaterial = !isNullOrEmptyString($this->materials['partner_id']);
     }
 
+    public function onPartnerChanged()
+    {
+        $this->orderedMaterial = !isNullOrEmptyString($this->materials['partner_id']);
+    }
 
     public function onReset()
     {
         $this->product_code = "";
         $this->reset('materials');
+        $this->materials['partner_id'] = 0;
+        $this->materials['jwl_category1'] = "";
+        $this->materials['jwl_category2'] = "";
+        $this->materials['jwl_carat'] = "";
+        $this->matl_uoms['matl_uom'] = 'PCS';
         $this->reset('matl_uoms');
         $this->reset('matl_boms');
         $this->object = new Material();
@@ -165,8 +172,7 @@ class MaterialComponent extends BaseComponent
     protected function loadMaterial($objectId)
     {
         $this->object = Material::withTrashed()->find($objectId);
-        if($this->object)
-        {
+        if ($this->object) {
             $this->object_uoms = $this->object->MatlUom[0];
             $this->object_boms = $this->object->MatlBom;
             $this->materials = populateArrayFromModel($this->object);
@@ -183,7 +189,7 @@ class MaterialComponent extends BaseComponent
                 $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
 
                 $decodedData = json_decode($detail->jwl_sides_spec, true);
-                switch ( $this->matl_boms[$key]['base_matl_id_note']) {
+                switch ($this->matl_boms[$key]['base_matl_id_note']) {
                     case Material::JEWELRY:
                         $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
                         break;
@@ -274,10 +280,10 @@ class MaterialComponent extends BaseComponent
                     $filePath = Attachment::saveAttachmentByFileName($image['url'], $this->object->id, class_basename($this->object), $image['filename']);
                     if ($filePath !== false) {
                     } else {
-                        $errorMessages[] = __($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
+                        $errorMessages[] = __($this->langBasePath . '.message.attachment_failed', ['filename' => $image['filename']]);
                     }
                 } catch (Exception $e) {
-                    $errorMessages[] = __($this->langBasePath.'.message.attachment_failed', ['filename' => $image['filename']]);
+                    $errorMessages[] = __($this->langBasePath . '.message.attachment_failed', ['filename' => $image['filename']]);
                 }
             }
         }
@@ -301,9 +307,9 @@ class MaterialComponent extends BaseComponent
         'submitImages'  => 'submitImages',
         'changeStatus'  => 'changeStatus',
         'tagScanned' => 'tagScanned',
-        'resetMaterial' => 'onReset'
+        'resetMaterial' => 'onReset',
+        'onPartnerChanged' => 'onPartnerChanged'
     ];
-
 
     public function changeStatus()
     {
@@ -321,8 +327,7 @@ class MaterialComponent extends BaseComponent
                 $this->object->deleted_at = null;
                 $messageKey = 'generic.string.enable';
             } else {
-                if($this->object->getAvailableMaterials())
-                {
+                if ($this->object->getAvailableMaterials()) {
                     $this->notify('error', "Barang masih ada di inventory, tidak bisa di nonaktifkan!");
                     return;
                 }
@@ -337,33 +342,92 @@ class MaterialComponent extends BaseComponent
             $this->object->save();
             $this->notify('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         $this->dispatch('refresh');
     }
 
+    public function getMatlCode()
+    {
+        $code = "";
+        $configSnum = null;
+        if ($this->materials['partner_id'] != 0) {
+            $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
+                ->where('code', '=', 'MMATL_SO_LASTID')
+                ->first();
+            $code = "SO";
+        } else {
+            if (!isNullOrEmptyString($this->materials['jwl_category1'])) {
+                $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
+                    ->where('code', '=', 'MMATL_' . $this->materials['jwl_category1'] . '_LASTID')
+                    ->first();
+                 $code = $this->materials['jwl_category1'];
+            } else {
+                $this->notify('error', "Mohon pilih customer/kategori1 untuk mendapatkan material code.");
+                return;
+            }
+        }
+
+        if ($configSnum != null) {
+            $stepCnt = $configSnum->step_cnt;
+            $proposedTrId = $configSnum->last_cnt + $stepCnt;
+            if ($proposedTrId > $configSnum->wrap_high) {
+                $proposedTrId = $configSnum->wrap_low;
+            }
+            $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+
+            // Set kode material dan update configSnum
+            $this->materials['code'] = $code . $proposedTrId;
+            $configSnum->last_cnt = $proposedTrId;
+            $configSnum->save();
+        } else {
+            $this->notify('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
+        }
+    }
+
+
     public function onValidateAndSave()
     {
         $this->generateMaterialDescriptionsFromBOMs();
         $this->object->fillAndSanitize($this->materials);
-        if($this->object->code == null)
+
+        // Cek kode material di database
+        if($this->object->isNew())
         {
-            $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
-            ->where('code', '=', 'MMATL_'.$this->materials['jwl_category1']."_LASTID")
-            ->first();
-            if ($configSnum != null) {
-                $stepCnt = $configSnum->step_cnt;
-                $proposedTrId = $configSnum->last_cnt + $stepCnt;
-                if ($proposedTrId > $configSnum->wrap_high) {
-                    $proposedTrId = $configSnum->wrap_low;
+            $code = $this->materials['code'];
+            if (isNullOrEmptyString($this->materials['partner_id'])) {
+                if (strpos($code, $this->materials['jwl_category1']) !== 0) {
+                    throw new \Exception("Kode material harus sesuai dengan kategori -> " . $this->materials['jwl_category1']);
                 }
-                $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
-                $configSnum->last_cnt = $proposedTrId;
-                $this->object->code = $this->materials['jwl_category1'].$proposedTrId;
-                $configSnum->save();
+            } else {
+                if (strpos($code, 'SO') !== 0) {
+                    throw new \Exception("Kode material harus dimulai dengan 'SO' untuk barang pesanan.");
+                }
+            }
+            $codeLetter = preg_replace('/\d/', '', $code);
+            $configCode = 'MMATL_' . $codeLetter . '_LASTID';
+            $existingMaterial = Material::where('code', '=', $code)->first();
+            if ($existingMaterial) {
+                throw new \Exception("Kode material telah digunakan.");
+            }
+            $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
+                ->where('code', '=', $configCode)
+                ->first();
+
+            if ($configSnum != null) {
+                $currentNumber = (int)preg_replace('/\D/', '', $code);
+                // if ($configSnum->last_cnt == $currentNumber) {
+                //     throw new \Exception("Kode material telah digunakan.");
+                // }
+
+                if ($configSnum->last_cnt < $currentNumber) {
+                    $configSnum->last_cnt = $currentNumber;
+                    $configSnum->save();
+                }
             }
         }
+
         $this->object->save();
 
         // Save Attachment
@@ -409,7 +473,7 @@ class MaterialComponent extends BaseComponent
                     'ref_mark' => $bomData['ref_mark'] ?? null,
                 ];
             }
-            $bomData['jwl_sides_spec']= json_encode($dataToSave);
+            $bomData['jwl_sides_spec'] = json_encode($dataToSave);
             $this->object_boms[$index]->fillAndSanitize($bomData);
             $this->object_boms[$index]->save();
         }
@@ -427,7 +491,7 @@ class MaterialComponent extends BaseComponent
         $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
     }
 
-    public function baseMaterialChange($key,$value)
+    public function baseMaterialChange($key, $value)
     {
         $base_matl_id_parts = explode('-', $value);
         $this->matl_boms[$key]['base_matl_id_value'] = $base_matl_id_parts[0];
@@ -456,6 +520,7 @@ class MaterialComponent extends BaseComponent
         $this->matl_boms[$this->bom_row]['color'] = "";
         $this->matl_boms[$this->bom_row]['gemstone'] = "";
         $this->matl_boms[$this->bom_row]['purity'] = "";
+        $this->matl_boms[$this->bom_row]['origin'] = 0;
         $this->bom_row++;
     }
 
@@ -491,8 +556,7 @@ class MaterialComponent extends BaseComponent
     {
         if (isset($tags)) {
             $tagCount = count($tags);
-            if($tagCount > 1)
-            {
+            if ($tagCount > 1) {
                 // Show error message with the number of tags
                 $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
             } else {
@@ -519,17 +583,15 @@ class MaterialComponent extends BaseComponent
 
     public function printBarcode()
     {
-        if (isset( $this->matl_uoms['barcode'])) {
-            if(isset($this->materials['descr']))
-            {
+        if (isset($this->matl_uoms['barcode'])) {
+            if (isset($this->materials['descr'])) {
                 $additionalParam = urlencode($this->object->id);
-                return redirect()->route('TrdJewel1.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey(""),'additionalParam'=> $additionalParam ]);
-            }else{
-                $this->notify('error',__($this->langBasePath.'.message.save_material_input'));
+                return redirect()->route('TrdJewel1.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey(""), 'additionalParam' => $additionalParam]);
+            } else {
+                $this->notify('error', __($this->langBasePath . '.message.save_material_input'));
             }
-
-        }else{
-            $this->notify('error',__($this->langBasePath.'.message.barcode_validation'));
+        } else {
+            $this->notify('error', __($this->langBasePath . '.message.barcode_validation'));
         }
     }
 }

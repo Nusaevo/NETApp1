@@ -46,8 +46,6 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
 
         $this->partnerTypes = $this->masterService->getPartnerTypes($this->appCode);
-        $this->inputs['grp'] = null;
-        $this->inputs['code'] = "";
 
         if($this->isEditOrView())
         {
@@ -66,6 +64,8 @@ class Detail extends BaseComponent
     public function onReset()
     {
         $this->reset('inputs');
+        $this->inputs['grp'] = null;
+        $this->inputs['code'] = "";
         $this->object = new Partner();
     }
 

@@ -42,7 +42,6 @@ class Detail extends BaseComponent
         ];
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications();
-        $this->inputs['app_id'] = null;
 
         if($this->isEditOrView())
         {
@@ -54,6 +53,7 @@ class Detail extends BaseComponent
     public function onReset()
     {
         $this->reset('inputs');
+        $this->inputs['app_id'] = null;
         $this->object = new ConfigConst();
     }
 

@@ -67,8 +67,6 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
         $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouses($this->appCode);
-        $this->inputs['wh_code'] = 18;
-        $this->inputs['partner_id'] = "";
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -119,6 +117,8 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
+        $this->inputs['wh_code'] = 18;
+        $this->inputs['partner_id'] = "";
     }
 
     protected $listeners = [

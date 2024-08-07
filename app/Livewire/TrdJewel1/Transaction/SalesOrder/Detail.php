@@ -80,8 +80,6 @@ class Detail extends BaseComponent
         $this->payments = $this->masterService->getPaymentTerm($this->appCode);
         $this->printSettings = $this->masterService->getPrintSettings($this->appCode);
         $this->printRemarks = $this->masterService->getPrintRemarks($this->appCode);
-        $this->inputs['partner_id'] = "";
-        $this->inputs['payment_terms_id'] = 129;
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -150,6 +148,8 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
+        $this->inputs['partner_id'] = "";
+        $this->inputs['payment_terms_id'] = 129;
     }
 
     public function render()

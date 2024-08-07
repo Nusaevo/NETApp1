@@ -20,15 +20,16 @@ trait BaseTrait
                 $model->updated_by = $userId;
                 $model->updated_at = now();
                 $model->setStatus(Status::ACTIVE);
+                $model->version_number = 1;
             }
         });
 
-        static::updating(function ($model) {
+        static::saving(function ($model) {
             if ($model->timestamps !== false) {
                 $userId = Auth::check() ? Auth::user()->code : 'SYSTEM';
                 $model->updated_by = $userId;
                 $model->updated_at = now();
-                $model->version_number++;
+                $model->version_number = $model->version_number + 1;
             }
         });
     }

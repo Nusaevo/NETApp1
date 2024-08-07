@@ -11,7 +11,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'document')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif accept=".pdf, .doc, .docx" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled"/>
+            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif accept=".pdf, .doc, .docx" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -77,7 +77,6 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                     initInputMask() {
                         let input = this.$refs.inputField;
                         if (input) {
-                            console.log('Initializing input mask for:', input.id);
 
                             Inputmask({
                                 alias: 'numeric',
@@ -95,7 +94,6 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                                 if (input.value.trim() === '') {
                                     input.value = '0';
                                 }
-                                console.log('Blur event for:', input.id, 'with value:', input.value);
                                 $wire.set('{{ $model }}', input.value);
                             });
                         }
@@ -106,7 +104,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
             @endif
 
             @elseif(isset($type) && $type === 'image')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" accept="image/*" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled"/>
+            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" accept="image/*" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -125,10 +123,16 @@ $id = str_replace(['.', '[', ']'], '_', $model);
         <!-- Refresh Button -->
         @if (isset($clickEvent) && $clickEvent !== '')
         <div class="d-flex align-items-center ms-2">
-            <button type="button" class="btn btn-secondary" wire:click="{{ $clickEvent }}" @if ((!empty($action) && $action==='View' ) || (isset($enabled) && $enabled==='false' )) disabled @endif>
-                {{ $buttonName }}
-            </button>
+            <span wire:loading.remove>
+                <button type="button" class="btn btn-secondary" wire:click="{{ $clickEvent }}" @if ((!empty($action) && $action==='View' ) || (isset($enabled) && $enabled==='false' )) disabled @endif>
+                    {{ $buttonName }}
+                </button>
+            </span>
+            <span wire:loading>
+                <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+            </span>
         </div>
         @endif
     </div>
 </div>
+
