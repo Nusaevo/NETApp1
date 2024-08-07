@@ -21,8 +21,8 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
-        $this->setSort('menu_header', 'asc');
-        $this->setSort('seq', 'asc');
+
+        $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
         $this->setSearchVisibilityStatus(false);
     }
