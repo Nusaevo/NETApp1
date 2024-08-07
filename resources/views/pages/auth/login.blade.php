@@ -35,11 +35,76 @@
         .btn-primary:hover {
             background-image: linear-gradient(to right, #004dbf, #29a6ff);
         }
+
+        .lds-ripple {
+            display: inline-block;
+            position: relative;
+            width: 64px;
+            height: 64px;
+        }
+
+        .lds-ripple div {
+            position: absolute;
+            border: 4px solid #1c4c5b;
+            opacity: 1;
+            border-radius: 50%;
+            animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        }
+
+        .lds-ripple div:nth-child(2) {
+            animation-delay: -0.5s;
+        }
+
+        @keyframes lds-ripple {
+            0% {
+                top: 28px;
+                left: 28px;
+                width: 0;
+                height: 0;
+                opacity: 1;
+            }
+
+            100% {
+                top: -1px;
+                left: -1px;
+                width: 58px;
+                height: 58px;
+                opacity: 0;
+            }
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+
+        .custom-loading-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            display: none;
+        }
+
+        .custom-loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 
     <!--begin::Signin Form-->
     <div class="form-wrapper">
-        <form method="POST" action="{{ route('login') }}" class="form w-100" novalidate="novalidate" id="kt_sign_in_form">
+        <form method="POST" action="{{ route('login') }}" class="form w-100" novalidate="novalidate" id="kt_sign_in_form" onsubmit="showLoader()">
             @csrf
 
             <!--begin::Heading-->
@@ -58,7 +123,7 @@
             <div class="form-group mb-4 position-relative">
                 <input class="form-control form-control-lg" type="password" name="password" id="password" autocomplete="off" placeholder="Password" required />
                 <!-- Toggle Button -->
-                <span class="password-toggle" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">Show</span>
+                <span class="password-toggle" onclick="togglePasswordVisibility()">Show</span>
             </div>
             <!--end::Input group-->
 
@@ -75,6 +140,14 @@
     </div>
     <!--end::Signin Form-->
 
+    <!-- Loader -->
+    <div id="custom-loading-container" class="custom-loading-container">
+        <div class="custom-loading-spinner lds-ripple">
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+
 </x-auth-layout>
 
 <script>
@@ -90,5 +163,14 @@
             passwordInput.type = 'password';
             toggleButton.textContent = 'Show'; // Update button text/icon
         }
+    }
+
+    function showLoader() {
+        var loadingContainer = document.getElementById('custom-loading-container');
+        var submitButton = document.getElementById('kt_sign_in_submit');
+
+        loadingContainer.style.display = 'flex'; // Show the loader
+        submitButton.disabled = true; // Disable the button
+        submitButton.innerHTML = 'Loading...'; // Change button text
     }
 </script>
