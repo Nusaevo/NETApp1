@@ -142,12 +142,12 @@ class MaterialComponent extends BaseComponent
                 $this->actionValue = "View";
             }
         }
-        $this->orderedMaterial = !isNullOrEmptyString($this->materials['partner_id']);
+        $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
     }
 
     public function onPartnerChanged()
     {
-        $this->orderedMaterial = !isNullOrEmptyString($this->materials['partner_id']);
+        $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
     }
 
     public function onReset()
