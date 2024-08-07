@@ -352,7 +352,7 @@ class MaterialComponent extends BaseComponent
     {
         $code = "";
         $configSnum = null;
-        if ($this->materials['partner_id'] != 0) {
+        if (!isNullOrEmptyNumber($this->materials['partner_id'])) {
             $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
                 ->where('code', '=', 'MMATL_SO_LASTID')
                 ->first();
