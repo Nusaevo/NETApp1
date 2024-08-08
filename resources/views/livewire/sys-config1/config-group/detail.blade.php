@@ -14,9 +14,9 @@
                         <x-ui-text-field label="Group Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true"  visible="true" />
                         <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue" onChanged="applicationChanged" />
                         <x-ui-text-field label="Group Descr" model="inputs.descr" type="text" :action="$actionValue" required="true" placeHolder="Enter Group Name" visible="true" />
-
+                        <div>
                         @livewire('sys-config1.config-group.right-data-table', ['groupId' => $objectIdValue,'appId' => $inputs['app_id'], 'selectedMenus' => $selectedMenus])
-
+                        </div>
                     </x-ui-card>
                 </div>
 

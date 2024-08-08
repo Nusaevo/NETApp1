@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\SysConfig1\ConfigGroup;
 
 use App\Livewire\Component\BaseDataTableComponent;
@@ -47,44 +46,50 @@ class RightDataTable extends BaseDataTableComponent
 
     public function updatedSelectedRows($value, $key)
     {
-        list($rowId, $field) = explode('.', $key);
-        $rowId = (int) $rowId;
+        // Parse the key to get rowId and field
+        $parts = explode('.', $key);
+        $rowId = (int) $parts[0];
+        $field = $parts[1] ?? 'selected';
 
-        // Ensuring the row exists in the array when updated.
         if (!isset($this->selectedRows[$rowId])) {
-            $this->selectedRows[$rowId] = ['menu_seq' => 1]; // Default sequence to 1
+            $this->selectedRows[$rowId] = ['menu_seq' => 1];
         }
 
         if ($field === 'selected') {
             if (!$value) {
-                // Unsetting the row only if 'selected' is explicitly set to false.
                 unset($this->selectedRows[$rowId]);
             } else {
-                // Marking as selected and defaulting the values if not already set.
                 $this->selectedRows[$rowId]['selected'] = true;
                 $this->selectedRows[$rowId] += [
                     'menu_seq' => $this->selectedRows[$rowId]['menu_seq'] ?? 1,
-                    'create' => $this->selectedRows[$rowId]['create'] ?? true,
-                    'read' => $this->selectedRows[$rowId]['read'] ?? true,
-                    'update' => $this->selectedRows[$rowId]['update'] ?? true,
-                    'delete' => $this->selectedRows[$rowId]['delete'] ?? true,
+                    'create' => true,
+                    'read' => true,
+                    'update' => true,
+                    'delete' => true,
                 ];
             }
         } else {
-            // Updating the specific field for the row.
             $this->selectedRows[$rowId][$field] = $value;
         }
 
-        // Emitting the update after making changes.
+        // Log for debugging
+        logger()->info('updatedSelectedRows', [
+            'rowId' => $rowId,
+            'field' => $field,
+            'value' => $value,
+            'selectedRows' => $this->selectedRows,
+        ]);
+
         $this->performUpdateActions();
     }
+
 
     public function columns(): array
     {
         return [
             Column::make("", "id")
                 ->format(function ($value, $row) {
-                    return "<input class='form-check-input' type='checkbox' wire:model='selectedRows.{$row->id}.selected'>";
+                    return "<input class='form-check-input' type='checkbox' wire:model.lazy='selectedRows.{$row->id}.selected'>";
                 })
                 ->html(),
             Column::make("Application Code", "ConfigAppl.name")
@@ -100,10 +105,9 @@ class RightDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row) {
                     $disabled = isset($this->selectedRows[$row->id]['selected']) && $this->selectedRows[$row->id]['selected'] ? '' : 'disabled';
                     $sequenceValue = $this->selectedRows[$row->id]['menu_seq'] ?? 1;
-                    return "<input class='form-control' type='number' wire:model='selectedRows.{$row->id}.menu_seq' value='{$sequenceValue}' {$disabled}>";
+                    return "<input class='form-control' type='number' wire:model.lazy='selectedRows.{$row->id}.menu_seq' value='{$sequenceValue}' {$disabled}>";
                 })
                 ->html(),
-            // Adjusting the remaining columns to disable inputs if not selected
             $this->actionColumn('Create', 'create'),
             $this->actionColumn('Read', 'read'),
             $this->actionColumn('Update', 'update'),
@@ -111,14 +115,13 @@ class RightDataTable extends BaseDataTableComponent
         ];
     }
 
-    // Helper function to create action columns with disabled logic
     protected function actionColumn($label, $actionField)
     {
         return Column::make($label, "id")
             ->format(function ($value, $row) use ($actionField) {
-                $isChecked = isset($this->selectedRows[$row->id][$actionField]) ? 'checked' : '';
+                $isChecked = isset($this->selectedRows[$row->id][$actionField]) && $this->selectedRows[$row->id][$actionField] ? 'checked' : '';
                 $disabled = isset($this->selectedRows[$row->id]['selected']) && $this->selectedRows[$row->id]['selected'] ? '' : 'disabled';
-                return "<input class='form-check-input' type='checkbox' wire:model='selectedRows.{$row->id}.{$actionField}' $isChecked $disabled>";
+                return "<input class='form-check-input' type='checkbox' wire:model.lazy='selectedRows.{$row->id}.{$actionField}' $isChecked $disabled>";
             })
             ->html();
     }
