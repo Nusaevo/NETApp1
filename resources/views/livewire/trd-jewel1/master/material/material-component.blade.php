@@ -59,15 +59,9 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
 
                     <div class="row">
-                        <x-ui-dropdown-select label="{{ $this->trans('category1') }}" clickEvent="" model="materials.jwl_category1" :options="$materialCategories1" :enabled="$panelEnabled" required="true" :action="$actionValue" onChanged="generateMaterialDescriptions" />
+                        <x-ui-dropdown-select label="{{ $this->trans('category1') }}" clickEvent="" model="materials.jwl_category1" :options="$materialCategories1" :enabled="$panelEnabled" required="true" :action="$actionValue" onChanged="onCategory1Changed" />
                         <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true"  :enabled="$panelEnabled" clickEvent="getMatlCode"  buttonName="Get Code"/>
                     </div>
-                    @if($orderedMaterial)
-                    <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('gold_price') }}" model="materials.gold_price" type="number" :action="$actionValue" />
-                        <x-ui-text-field label="{{ $this->trans('jwl_cost') }}" model="materials.jwl_cost" type="number" :action="$actionValue" />
-                    </div>
-                    @endif
                     <div class="row">
                         <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$actionValue" onChanged="generateMaterialDescriptions" />
                         <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged" />
@@ -84,6 +78,13 @@ use App\Models\TrdJewel1\Master\Material;
                         <x-ui-text-field label="{{ $this->trans('description') }} " model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" />
                         <x-ui-text-field label="{{ $this->trans('bom_description') }} " model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" />
                     </div>
+
+                    @if($orderedMaterial)
+                    <div class="row">
+                        <x-ui-text-field label="{{ $this->trans('gold_price') }}" model="materials.gold_price" type="number" :action="$actionValue" />
+                        <x-ui-text-field label="{{ $this->trans('jwl_cost') }}" model="materials.jwl_cost" type="number" :action="$actionValue" />
+                    </div>
+                    @endif
                 </x-ui-padding>
 
                 <x-ui-padding>

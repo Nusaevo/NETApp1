@@ -145,9 +145,25 @@ class MaterialComponent extends BaseComponent
         $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
     }
 
+    public function onCategory1Changed()
+    {
+        $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
+        if(!$this->orderedMaterial){
+            $this->materials['code'] = '';
+        }
+    }
+
     public function onPartnerChanged()
     {
         $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
+        if(!$this->orderedMaterial){
+            $this->materials['code'] = '';
+        }
+        else{
+            if (!isNullOrEmptyString($this->materials['code']) && strpos($this->materials['code'], 'SO') !== 0) {
+                $this->materials['code'] = '';
+            }
+        }
     }
 
     public function onReset()
@@ -158,6 +174,7 @@ class MaterialComponent extends BaseComponent
         $this->materials['jwl_category1'] = "";
         $this->materials['jwl_category2'] = "";
         $this->materials['jwl_carat'] = "";
+        $this->materials['code'] = '';
         $this->matl_uoms['matl_uom'] = 'PCS';
         $this->reset('matl_uoms');
         $this->reset('matl_boms');
