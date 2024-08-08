@@ -193,7 +193,9 @@ class BaseComponent extends Component
             $this->notify('success',__('generic.string.save'));
         } catch (Exception $e) {
             DB::rollBack();
-            $this->VersionNumber --;
+            if($this->isEditOrView()){
+                $this->VersionNumber --;
+            }
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
@@ -214,7 +216,9 @@ class BaseComponent extends Component
             }
         } catch (Exception $e) {
             DB::rollBack();
-            $this->VersionNumber --;
+            if($this->isEditOrView()){
+                $this->VersionNumber --;
+            }
             dd($e->getMessage());
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }

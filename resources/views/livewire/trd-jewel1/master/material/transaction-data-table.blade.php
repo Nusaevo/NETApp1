@@ -10,8 +10,8 @@
                 <x-ui-th width="150">Harga</x-ui-th>
             </x-slot>
             <x-slot name="rows">
-                @foreach ($data as $row)
-                    <tr>
+                @foreach ($data as $index => $row)
+                <tr wire:key="transaction-{{ $index }}">
                         <x-ui-td>{{ $row->partner_name }}</x-ui-td>
                         <x-ui-td>{{ $row->tr_date }}</x-ui-td>
                         <x-ui-td>{{ $row->tr_id }}</x-ui-td>

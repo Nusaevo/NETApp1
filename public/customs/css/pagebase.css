@@ -882,11 +882,6 @@ div[wire\:loading].loading-overlay {
 .filter-width {
     width: 150px  !important;
 }
-.dropdown-menu {
-    position: fixed !important;
-    z-index: 1050 !important;
-    max-width: 300px;
-}
 
 .dropdown-toggle::after {
     display: none;

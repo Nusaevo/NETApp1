@@ -74,17 +74,17 @@ use App\Models\TrdJewel1\Master\Material;
                         <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$actionValue" required="true" enabled="true" onChanged="generateMaterialDescriptions" />
                         <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" onChanged="sellingPriceChanged" />
                     </div>
-                    <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('description') }} " model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" />
-                        <x-ui-text-field label="{{ $this->trans('bom_description') }} " model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" />
-                    </div>
-
                     @if($orderedMaterial)
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('gold_price') }}" model="materials.gold_price" type="number" :action="$actionValue" />
                         <x-ui-text-field label="{{ $this->trans('jwl_cost') }}" model="materials.jwl_cost" type="number" :action="$actionValue" />
                     </div>
                     @endif
+                    <div class="row">
+                        <x-ui-text-field label="{{ $this->trans('description') }} " model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" />
+                        <x-ui-text-field label="{{ $this->trans('bom_description') }} " model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" />
+                    </div>
+
                 </x-ui-padding>
 
                 <x-ui-padding>
@@ -152,7 +152,9 @@ use App\Models\TrdJewel1\Master\Material;
         @if (!$searchMode && $actionValue !== 'Create')
         <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
+                <div wire:ignore>
                 @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
+                </div>
             </x-ui-card>
         </div>
         @endif

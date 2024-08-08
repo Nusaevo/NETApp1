@@ -274,32 +274,39 @@ class Material extends BaseModel
 
     public static function calculateSellingPrice($buyingPrice, $markup)
     {
-        if (empty($buyingPrice) || empty($markup)) {
-            return null;
-        }
-
-        $buyingPrice = toNumberFormatter($buyingPrice);
-        $markupAmount = $buyingPrice * (toNumberFormatter($markup) / 100);
-        return numberFormat($buyingPrice + $markupAmount);
-    }
-
-    public static function calculateMarkup($buyingPrice, $sellingPrice)
-    {
         if (empty($buyingPrice)) {
             return null;
         }
 
         $buyingPrice = toNumberFormatter($buyingPrice);
 
+        if (empty($markup) || toNumberFormatter($markup) == 0) {
+            return numberFormat($buyingPrice);
+        }
+
+        $markupAmount = $buyingPrice * (toNumberFormatter($markup) / 100);
+        return numberFormat($buyingPrice + $markupAmount);
+    }
+
+    public static function calculateMarkup($buyingPrice, $sellingPrice)
+    {
+        if (empty($buyingPrice) || empty($sellingPrice)) {
+            return null;
+        }
+
+        $buyingPrice = toNumberFormatter($buyingPrice);
+        $sellingPrice = toNumberFormatter($sellingPrice);
+
         if ($buyingPrice <= 0) {
             return null;
         }
 
-        if (empty($sellingPrice)) {
-            return null;
+        // If buying price equals selling price, markup is 0
+        if ($buyingPrice == $sellingPrice) {
+            return numberFormat(0);
         }
 
-        $newMarkupPercentage = ((toNumberFormatter($sellingPrice) - $buyingPrice) / $buyingPrice) * 100;
+        $newMarkupPercentage = (($sellingPrice - $buyingPrice) / $buyingPrice) * 100;
         return numberFormat($newMarkupPercentage);
     }
 

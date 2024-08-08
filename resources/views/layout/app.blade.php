@@ -176,22 +176,21 @@
         });
 
     </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOMContentLoaded event fired');
-        var loadingContainer = document.getElementById('custom-loading-container');
-        loadingContainer.style.display = 'flex';
-        console.log('Loading container displayed');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded event fired');
+            var loadingContainer = document.getElementById('custom-loading-container');
+            loadingContainer.style.display = 'flex';
+            console.log('Loading container displayed');
 
-        window.addEventListener('load', function() {
-            console.log('Window load event fired');
-            setTimeout(function() {
+            window.addEventListener('load', function() {
+                console.log('Window load event fired');
                 loadingContainer.style.display = 'none';
                 console.log('Loading container hidden');
-            }, 1000); // Add a delay of 1 second to observe the loader
+            });
         });
-    });
-</script>
+    </script>
+
     @livewireScripts
 </body>
 <!--end::Body-->

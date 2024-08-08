@@ -40,7 +40,9 @@ use App\Models\TrdJewel1\Master\Partner;
             @if ($actionValue === 'Edit')
             <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
                 <x-ui-card>
+                    <div wire:ignore>
                     @livewire('trd-jewel1.master.partner.transaction-data-table', ['partnerID' => $objectIdValue])
+                    </div>
                 </x-ui-card>
             </div>
             @endif

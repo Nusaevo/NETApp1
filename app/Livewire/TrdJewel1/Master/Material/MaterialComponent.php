@@ -64,10 +64,12 @@ class MaterialComponent extends BaseComponent
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
-
+    public $messages = [
+        'materials.jwl_buying_price.required_if' => 'Harga beli wajib diisi untuk material yang bukan pesanan',
+    ];
     public $rules = [
         'materials.code' => 'required',
-        'materials.jwl_buying_price' => 'required',
+        'materials.jwl_buying_price' => 'required_if:orderedMaterial,false',
         'materials.jwl_selling_price' => 'required',
         'materials.jwl_category1' => 'required|string|min:0|max:255',
         // 'materials.jwl_category2' => 'required|string|min:0|max:255',
@@ -176,6 +178,7 @@ class MaterialComponent extends BaseComponent
         $this->materials['jwl_carat'] = "";
         $this->materials['code'] = '';
         $this->matl_uoms['matl_uom'] = 'PCS';
+        $this->materials['markup'] = 0;
         $this->reset('matl_uoms');
         $this->reset('matl_boms');
         $this->object = new Material();
@@ -413,7 +416,7 @@ class MaterialComponent extends BaseComponent
         if($this->object->isNew())
         {
             $code = $this->materials['code'];
-            if (isNullOrEmptyString($this->materials['partner_id'])) {
+            if (isNullOrEmptyNumber($this->materials['partner_id'])) {
                 if (strpos($code, $this->materials['jwl_category1']) !== 0) {
                     throw new \Exception("Kode material harus sesuai dengan kategori -> " . $this->materials['jwl_category1']);
                 }
@@ -553,7 +556,7 @@ class MaterialComponent extends BaseComponent
 
     public function markupPriceChanged()
     {
-        if (empty($this->materials['jwl_buying_price']) || empty($this->materials['markup'])) {
+        if (empty($this->materials['jwl_buying_price'])) {
             return null;
         }
 
