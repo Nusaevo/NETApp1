@@ -413,7 +413,7 @@ class MaterialComponent extends BaseComponent
         if($this->object->isNew())
         {
             $code = $this->materials['code'];
-            if (isNullOrEmptyString($this->materials['partner_id'])) {
+            if (isNullOrEmptyNumber($this->materials['partner_id'])) {
                 if (strpos($code, $this->materials['jwl_category1']) !== 0) {
                     throw new \Exception("Kode material harus sesuai dengan kategori -> " . $this->materials['jwl_category1']);
                 }
