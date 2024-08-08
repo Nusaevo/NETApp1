@@ -290,21 +290,24 @@ class Material extends BaseModel
 
     public static function calculateMarkup($buyingPrice, $sellingPrice)
     {
-        if (empty($buyingPrice)) {
+        if (empty($buyingPrice) || empty($sellingPrice)) {
             return null;
         }
 
         $buyingPrice = toNumberFormatter($buyingPrice);
+        $sellingPrice = toNumberFormatter($sellingPrice);
 
         if ($buyingPrice <= 0) {
             return null;
         }
 
-        if (empty($sellingPrice)) {
-            return null;
+        // If buying price equals selling price, markup is 0
+        if ($buyingPrice == $sellingPrice) {
+            return numberFormat(0);
         }
 
-        $newMarkupPercentage = ((toNumberFormatter($sellingPrice) - $buyingPrice) / $buyingPrice) * 100;
+        $newMarkupPercentage = (($sellingPrice - $buyingPrice) / $buyingPrice) * 100;
         return numberFormat($newMarkupPercentage);
     }
+
 }
