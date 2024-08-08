@@ -11,7 +11,7 @@
             </x-slot>
             <x-slot name="rows">
                 @foreach ($data as $row)
-                    <tr>
+                <tr wire:key="transaction-{{ $row->id }}">
                         <x-ui-td>{{ $row->partner_name }}</x-ui-td>
                         <x-ui-td>{{ $row->tr_date }}</x-ui-td>
                         <x-ui-td>{{ $row->tr_id }}</x-ui-td>

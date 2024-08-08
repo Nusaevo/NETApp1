@@ -10,7 +10,7 @@
     @endif
 </div>
 @if(isset($enableDataTable) && strcmp($enableDataTable, 'true') === 0)
-    <div wire:ignore x-data="{
+    <div x-data="{
             initDataTable() {
                 let tableId = '{{ isset($id) ? $id : 'defaultTable' }}';
                 let tableElement = this.$refs.table;
@@ -60,7 +60,7 @@
                     {{ $headers }}
                 </tr>
             </thead>
-            <tbody wire:ignore.self>
+            <tbody>
                 {{ $rows }}
             </tbody>
         </table>

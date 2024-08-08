@@ -152,7 +152,9 @@ use App\Models\TrdJewel1\Master\Material;
         @if (!$searchMode && $actionValue !== 'Create')
         <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
+                <div wire:ignore>
                 @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
+                </div>
             </x-ui-card>
         </div>
         @endif
