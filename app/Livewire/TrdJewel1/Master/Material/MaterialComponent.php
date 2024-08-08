@@ -178,6 +178,7 @@ class MaterialComponent extends BaseComponent
         $this->materials['jwl_carat'] = "";
         $this->materials['code'] = '';
         $this->matl_uoms['matl_uom'] = 'PCS';
+        $this->materials['markup'] = 0;
         $this->reset('matl_uoms');
         $this->reset('matl_boms');
         $this->object = new Material();
@@ -555,7 +556,7 @@ class MaterialComponent extends BaseComponent
 
     public function markupPriceChanged()
     {
-        if (empty($this->materials['jwl_buying_price']) || empty($this->materials['markup'])) {
+        if (empty($this->materials['jwl_buying_price'])) {
             return null;
         }
 
