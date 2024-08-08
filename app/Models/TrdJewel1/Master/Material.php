@@ -274,11 +274,16 @@ class Material extends BaseModel
 
     public static function calculateSellingPrice($buyingPrice, $markup)
     {
-        if (empty($buyingPrice) || empty($markup)) {
+        if (empty($buyingPrice)) {
             return null;
         }
 
         $buyingPrice = toNumberFormatter($buyingPrice);
+
+        if (empty($markup) || toNumberFormatter($markup) == 0) {
+            return numberFormat($buyingPrice);
+        }
+
         $markupAmount = $buyingPrice * (toNumberFormatter($markup) / 100);
         return numberFormat($buyingPrice + $markupAmount);
     }
@@ -302,5 +307,4 @@ class Material extends BaseModel
         $newMarkupPercentage = ((toNumberFormatter($sellingPrice) - $buyingPrice) / $buyingPrice) * 100;
         return numberFormat($newMarkupPercentage);
     }
-
 }

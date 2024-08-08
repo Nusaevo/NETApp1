@@ -176,7 +176,7 @@
         });
 
     </script>
-  <script>
+  {{-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DOMContentLoaded event fired');
         var loadingContainer = document.getElementById('custom-loading-container');
@@ -191,7 +191,7 @@
             }, 1000); // Add a delay of 1 second to observe the loader
         });
     });
-</script>
+</script> --}}
     @livewireScripts
 </body>
 <!--end::Body-->
