@@ -64,10 +64,12 @@ class MaterialComponent extends BaseComponent
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
-
+    public $messages = [
+        'materials.jwl_buying_price.required_if' => 'Harga beli wajib diisi untuk material yang bukan pesanan',
+    ];
     public $rules = [
         'materials.code' => 'required',
-        'materials.jwl_buying_price' => 'required',
+        'materials.jwl_buying_price' => 'required_if:orderedMaterial,false',
         'materials.jwl_selling_price' => 'required',
         'materials.jwl_category1' => 'required|string|min:0|max:255',
         // 'materials.jwl_category2' => 'required|string|min:0|max:255',
