@@ -6,12 +6,12 @@ $id = str_replace(['.', '[', ']'], '_', $model);
     <div class="d-flex align-items-center">
         <div class="form-floating flex-grow-1">
             @if(isset($type) && $type === 'textarea')
-            <textarea wire:model.defer="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif autocomplete="off" wire:loading.attr="disabled"></textarea>
+            <textarea wire:model.lazy="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" @if(isset($onChanged) && $onChanged !=='' ) wire:keydown="{{ $onChanged }}" @endif autocomplete="off"></textarea>
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'document')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif accept=".pdf, .doc, .docx" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" />
+            <input wire:model.lazy="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif accept=".pdf, .doc, .docx" @if(isset($onChanged) && $onChanged !=='' ) wire:keydown="{{ $onChanged }}" @endif />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -38,12 +38,12 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                         });
                     }
                 }
-            }" x-init="initBarcode()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" x-ref="inputField">
+            }" x-init="initBarcode()" wire:model.lazy="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:keydown="{{ $onChanged }}" @endif x-ref="inputField">
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'code')
-            <input wire:model.defer="{{ $model }}" type="text" class="form-control @error($model) is-invalid @enderror" @if((isset($action) && ($action=='Edit' || $action=='View' )) || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" />
+            <input wire:model.lazy="{{ $model }}" type="text" class="form-control @error($model) is-invalid @enderror" @if((isset($action) && ($action=='Edit' || $action=='View' )) || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:keydown="{{ $onChanged }}" @endif />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
@@ -67,17 +67,19 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                         });
                     }
                 }
-            }" x-init="initDatepicker()" wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif readonly="readonly" wire:loading.attr="disabled" x-ref="inputField">
+            }" x-init="initDatepicker()" wire:model.lazy="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) @endif readonly="readonly" x-ref="inputField">
 
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @elseif(isset($type) && $type === 'number')
-            <input x-data="{
-                    initInputMask() {
-                        let input = this.$refs.inputField;
-                        if (input) {
+            <input
+            x-data="{
+                initInputMask() {
+                    let input = this.$refs.inputField;
+                    if (input) {
 
+                       const applyMask = () => {
                             Inputmask({
                                 alias: 'numeric',
                                 groupSeparator: '.',
@@ -90,26 +92,65 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                                 placeholder: '0'
                             }).mask(input);
 
-                            input.addEventListener('blur', () => {
-                                if (input.value.trim() === '') {
-                                    input.value = '0';
-                                }
+                            // Set the cursor position to the end of the input after applying the mask
+                            setTimeout(() => {
+                                input.selectionStart = input.selectionEnd = input.value.length;
+                            }, 0);
+                        };
+
+                        applyMask(); // Apply mask only once during initialization
+
+                        input.addEventListener('blur', () => {
+                            if (input.value.trim() === '') {
+                                input.value = '0';
+                            }
+                            @if(isset($onChanged) && $onChanged !== '')
+                            console.log('Blur event: Setting model to', input.value);
+                            $wire.set('{{ $model }}', input.value);
+                            @endif
+                        });
+
+                        @if(isset($onChanged) && $onChanged !== '')
+                        input.addEventListener('input', () => {
+                            // Update the Livewire model after every input change
+                            setTimeout(() => {
+                                console.log('Input event: Setting model to', input.value);
                                 $wire.set('{{ $model }}', input.value);
-                            });
-                        }
+
+                                console.log('Dispatching Livewire event: {{ $onChanged }}');
+                                Livewire.dispatch('{{ $onChanged }}');
+                            }, 0);
+                        });
+                        @endif
+                    } else {
+                        console.log('Input field not found');
                     }
-                }" x-init="initInputMask()" wire:model.defer="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" x-ref="inputField">
+                }
+            }"
+            x-init="initInputMask()"
+            id="{{ $id }}"
+            type="text"
+            class="form-control number-mask @error($model) is-invalid @enderror"
+            @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif
+            @if(isset($required) && $required==='true' ) required @endif
+            placeholder="{{ isset($label) ? $label : '' }}"
+            autocomplete="off"
+            x-ref="inputField"
+            @if(!isset($onChanged) || $onChanged === '')
+                wire:model.lazy="{{ $model }}"
+            @endif>
+
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
 
             @elseif(isset($type) && $type === 'image')
-            <input wire:model.defer="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" accept="image/*" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" />
+            <input wire:model.lazy="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" accept="image/*" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif @if(isset($onChanged) && $onChanged !=='' ) @endif />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
             @else
-            <input wire:model.defer="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:change="{{ $onChanged }}" @endif wire:loading.attr="disabled" />
+            <input wire:model.lazy="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:keydown="{{ $onChanged }}" @endif />
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif

@@ -58,6 +58,7 @@ class Detail extends BaseComponent
 
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
+        'currencyChanged' => 'currencyChanged'
     ];
 
     public function onValidateAndSave()
