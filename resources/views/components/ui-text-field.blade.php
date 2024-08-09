@@ -98,7 +98,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                             });
                         }
                     }
-                }" x-init="initInputMask()" wire:model.lazy="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:keyup="{{ $onChanged }}" @endif  x-ref="inputField">
+                }" x-init="initInputMask()" wire:model.debounce.300ms="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off" @if(isset($onChanged) && $onChanged !=='' ) wire:keyup="{{ $onChanged }}" @endif  x-ref="inputField">
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
