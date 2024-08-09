@@ -33,7 +33,7 @@
 
                                     </td>
                                     <td style="text-align: right; width: 50%;">
-                                        <p style="margin: 0; padding: 0;">Nomor Nota: <strong>{{ $this->object->id }}</strong></p>
+                                        <p style="margin: 0; padding: 0;">Nomor Nota: <strong>{{ $this->object->tr_id }}</strong></p>
                                         <p style="margin: 0; padding: 0;">Tanggal: <strong>{{ $this->object->tr_date }}</strong></p>
                                     </td>
                                 </tr>
