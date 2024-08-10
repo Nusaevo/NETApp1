@@ -14,9 +14,9 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <div class="row">
-                            <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" onChanged="saveCheck" />
+                            <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" onChanged="saveCheck" :enabled="$isPanelEnabled"/>
                             <x-ui-text-field-search label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers"
-                                required="true" :action="$actionValue" onChanged="saveCheck" />
+                                required="true" :action="$actionValue" onChanged="saveCheck" :enabled="$isPanelEnabled"/>
                         </div>
                         {{-- <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" clickEvent="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue"  />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue"  /> --}}
@@ -98,8 +98,8 @@
 
                                         </div>
                                         <div class="row">
-                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number" :onChanged="'changeQty('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true"  />
-                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price") }}' type="text" :onChanged="'changePrice('. $key .', $event.target.value)'" enabled="false" :action="$actionValue" required="true"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number"  enabled="false" :action="$actionValue" required="true"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price") }}' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true"  />
                                         </div>
                                     </x-slot>
                                     <x-slot name="button">

@@ -142,6 +142,11 @@ class Material extends BaseModel
         ]);
     }
 
+    public function isOrderedMaterial()
+    {
+        return !is_null($this->partner_id) && $this->partner_id !== '';
+    }
+
     public function getStockAttribute()
     {
         return $this->IvtBal ? $this->IvtBal->qty_oh : 0;

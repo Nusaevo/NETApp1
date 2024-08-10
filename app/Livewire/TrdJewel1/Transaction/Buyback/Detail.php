@@ -51,6 +51,7 @@ class Detail extends BaseComponent
     public $currency = [];
     public $orderDtls ;
     protected $masterService;
+    public $isPanelEnabled = "true";
 
 
     public $rules  = [
@@ -85,6 +86,9 @@ class Detail extends BaseComponent
             $this->object = ReturnHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->retrieveMaterials();
+        }
+        if(!empty($this->input_details)) {
+            $this->isPanelEnabled = "false";
         }
     }
 
@@ -125,7 +129,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
-        $this->inputs['partner_id'] = "";
+        $this->inputs['partner_id'] = 0;
     }
 
     public function render()
@@ -146,8 +150,9 @@ class Detail extends BaseComponent
             $this->notify('warning',__('generic.string.currency_needed'));
             return;
         }
-        if (empty($this->inputs['partner_id'])) {
+        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
+            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Customer"]));
             return;
         }
         $this->searchMaterials();
@@ -168,7 +173,7 @@ class Detail extends BaseComponent
         $this->inputs['wh_code'] = 18;
 
 
-        if (!isNullOrEmptyString($this->inputs['partner_id'])) {
+        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }

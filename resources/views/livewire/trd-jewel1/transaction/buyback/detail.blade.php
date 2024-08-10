@@ -14,9 +14,9 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <div class="row">
-                            <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" />
+                            <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                             <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']"
-                                :options="$partners" required="true" :action="$actionValue" enabled="{{ $actionValue === 'Edit' ? 'false' : '' }}" />
+                                :options="$partners" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
                         </div>
 
                     </x-ui-padding>

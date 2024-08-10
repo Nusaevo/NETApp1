@@ -51,6 +51,7 @@ class Detail extends BaseComponent
 
     public $printSettings = [];
     public $printRemarks = [];
+    public $isPanelEnabled = "true";
 
     public $rules  = [
         // 'inputs.payment_term_id' =>  'required',
@@ -110,6 +111,14 @@ class Detail extends BaseComponent
 
             $this->retrieveMaterials();
         }
+
+        if(!empty($this->input_details)) {
+            $this->isPanelEnabled = "false";
+        }
+
+        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
+            $this->isPanelEnabled = "true";
+        }
     }
 
 
@@ -148,8 +157,8 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
-        $this->inputs['partner_id'] = "";
-        $this->inputs['payment_terms_id'] = 129;
+        $this->inputs['partner_id'] = 0;
+        $this->inputs['payment_term_id'] = 129;
     }
 
     public function render()
@@ -167,11 +176,32 @@ class Detail extends BaseComponent
     ];
 
     public function OpenDialogBox(){
-        if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',__('generic.string.currency_needed'));
+        if (!$this->validateInputs()) {
             return;
         }
         $this->dispatch('openMaterialDialog');
+    }
+
+    protected function validateInputs()
+    {
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning', __('generic.string.currency_needed'));
+            return false;
+        }
+
+        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
+            $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
+            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Customer"]));
+            return false;
+        }
+
+        if (isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
+            $this->notify('warning', __('generic.error.field_required', ['field' => "Payment"]));
+            $this->addError('inputs.payment_terms_id', __('generic.error.field_required', ['field' => "Payment"]));
+            return false;
+        }
+
+        return true;
     }
 
     public function onValidateAndSave()
@@ -276,16 +306,9 @@ class Detail extends BaseComponent
 
     public function tagScanned($tags)
     {
-        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-
-        if ($this->currencyRate == 0) {
-            $this->dispatch('notify-swal', [
-                'type' => 'warning',
-                'message' => 'Diperlukan kurs mata uang.'
-            ]);
+        if (!$this->validateInputs()) {
             return;
         }
-
         $tagCount = count($tags);
 
         $usercode = Auth::check() ? Auth::user()->code : '';
@@ -301,6 +324,7 @@ class Detail extends BaseComponent
             $failedItems = []; // Variabel untuk menyimpan barcode yang gagal ditambahkan
             $notFoundItems = []; // Variabel untuk menyimpan barcode yang tidak ditemukan atau stok tidak ada
             $emptyStocks = []; // Variabel untuk menyimpan barcode yang stoknya kosong
+            $otherPartnerItems = []; // Variabel untuk menyimpan barcode dengan partner_id yang berbeda
 
             $maxTrSeq = $orderHdr->OrderDtl()->max('tr_seq') ?? 0;
             foreach ($tags as $barcode) {
@@ -311,7 +335,11 @@ class Detail extends BaseComponent
                     $notFoundItems[] = $barcode;
                     continue;
                 }
-
+                if (isset($material->partner_id) && $material->partner_id != $this->inputs['partner_id']) {
+                    // Jika partner_id ada dan tidak sama dengan inputs['partner_id'], tambahkan ke otherPartnerItems
+                    $otherPartnerItems[] = $barcode;
+                    continue;
+                }
                 $existingOrderDtl = $orderHdr->OrderDtl()->where('matl_id', $material->id)->first();
                 if ($existingOrderDtl) {
                     $failedItems[] = $material->code;
@@ -357,7 +385,9 @@ class Detail extends BaseComponent
             if (count($emptyStocks) > 0) {
                 $message .= "Material dengan stok kosong untuk " . count($emptyStocks) . " tag: <b>" . implode(', ', $emptyStocks) . "</b>.<br>";
             }
-
+            if (count($otherPartnerItems) > 0) {
+                $message .= "Material yang terkait dengan partner lain untuk " . count($otherPartnerItems) . " tag: <b>" . implode(', ', $otherPartnerItems) . "</b>.<br>";
+            }
             $this->notify('info',$message);
             $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
@@ -407,34 +437,29 @@ class Detail extends BaseComponent
             $this->notify('warning', __('generic.string.currency_needed'));
             return;
         }
-        // if (empty($this->inputs['payment_term_id'])) {
-        //     $this->dispatch('notify-swal', [
-        //         'type' => 'error',
-        //         'message' => 'Payment term is required.'
-        //     ]);
-        //     return;
-        // }
 
-        // if (empty($this->inputs['partner_id'])) {
-        //     $this->dispatch('notify-swal', [
-        //         'type' => 'error',
-        //         'message' => 'Partner is required.'
-        //     ]);
-        //     return;
-        // }
         $query = Material::getAvailableMaterials();
 
-         if (!empty($this->searchTerm)) {
-                $searchTermUpper = strtoupper($this->searchTerm);
-                $query->where(function($query) use ($searchTermUpper) {
-                    $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                          ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
-                          ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
-                });
+        if (!empty($this->inputs['partner_id'])) {
+            $query->where(function($query) {
+                $query->where('materials.partner_id', $this->inputs['partner_id'])
+                      ->orWhereNull('materials.partner_id');
+            });
         }
 
-        $this->materials =  $query->get();
+        // Lakukan pencarian berdasarkan searchTerm
+        if (!empty($this->searchTerm)) {
+            $searchTermUpper = strtoupper($this->searchTerm);
+            $query->where(function($query) use ($searchTermUpper) {
+                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
+            });
+        }
+
+        $this->materials = $query->get();
     }
+
 
     public function saveCheck()
     {
