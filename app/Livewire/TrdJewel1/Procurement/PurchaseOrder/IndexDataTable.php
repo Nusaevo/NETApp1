@@ -5,6 +5,7 @@ namespace App\Livewire\TrdJewel1\Procurement\PurchaseOrder;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\TrdJewel1\Transaction\OrderDtl;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
@@ -29,9 +30,9 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::with('OrderDtl')
-        ->where('tr_type', 'PO')
-        ->where('order_hdrs.status_code', Status::OPEN);
+        return OrderHdr::with(['OrderDtl', 'Partner'])
+            ->where('order_hdrs.tr_type', 'SO')
+            ->where('order_hdrs.status_code', Status::OPEN);
     }
     public function columns(): array
     {
@@ -42,26 +43,49 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-           Column::make('currency', "curr_rate")
+            Column::make('currency', "curr_rate")
                 ->hideIf(true)
                 ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->sortable()
                 ->searchable(),
-            Column::make($this->trans("supplier"), "Partner.name")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("matl_code"), "matl_codes")
-                ->label(function($row) {
-                    return $row->matl_codes;
+            Column::make($this->trans("supplier"), "partner_id")
+                ->format(function ($value, $row) {
+                    if ($row->partner_id) {
+                        return '<a href="' . route('TrdJewel1.Master.Partner.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->partner_id)
+                        ]) . '">' . $row->Partner->name . '</a>';
+                    } else {
+                        return '';
+                    }
                 })
-                ->sortable(),
+                ->html(),
+            Column::make($this->trans("matl_code"), 'id')
+                ->format(function ($value, $row) {
+                    // Manually load OrderDtl using a query
+                    $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
+                        ->where('tr_type', $row->tr_type)
+                        ->get();
+
+                    // Generate links if data is available
+                    $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
+                    $links = $matlCodes->map(function ($code, $id) {
+                        return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($id)
+                        ]) . '">' . $code . '</a>';
+                    });
+
+                    return $links->implode(', ');
+                })
+                ->html(),
             Column::make($this->trans("qty"), "total_qty")
-                ->label(function($row) {
+                ->label(function ($row) {
                     return $row->total_qty;
                 })
                 ->sortable(),
-             Column::make($this->trans("amt"), "total_amt_in_idr")
+            Column::make($this->trans("amt"), "total_amt_in_idr")
                 ->label(function ($row) {
                     $currencyRateNumeric = $row->curr_rate;
                     if ($currencyRateNumeric == 0) {
@@ -71,7 +95,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $totalInIdr = $totalAmt * $currencyRateNumeric;
                     return rupiah($totalInIdr);
                 })
-             ->sortable(),
+                ->sortable(),
             Column::make($this->trans('status'), "status_code")
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
@@ -121,7 +145,7 @@ class IndexDataTable extends BaseDataTableComponent
                         $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
                     });
                 }),
-                TextFilter::make('Kode Barang', 'matl_code')
+            TextFilter::make('Kode Barang', 'matl_code')
                 ->config([
                     'placeholder' => 'Search Material Code',
                     'maxlength' => '50',

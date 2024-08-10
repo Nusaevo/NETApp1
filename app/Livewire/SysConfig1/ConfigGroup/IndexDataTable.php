@@ -35,12 +35,19 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-           Column::make("Application","id")
-                ->format(function($value, $row, Column $column) {
-                    return optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name;
-                })
-                ->searchable()
-                ->sortable(),
+            Column::make("Application", "id")
+            ->format(function ($value, $row) {
+                if ($row->app_id) {
+                    return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->app_id)
+                    ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
+                } else {
+                    return '';
+                }
+            })
+            ->html()
+            ->sortable(),
             Column::make("Group Code", "code")
                 ->searchable()
                 ->sortable(),

@@ -6,6 +6,7 @@ use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
+use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\SysConfig1\ConfigRight;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,19 +42,44 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("customer"), "Partner.name"),
-            Column::make($this->trans("matl_code"), "matl_codes")
-                ->label(function($row) {
-                    return $row->matl_codes;
+            Column::make($this->trans("customer"), "partner_id")
+                ->format(function ($value, $row) {
+                    if ($row->partner_id) {
+                        return '<a href="' . route('TrdJewel1.Master.Partner.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->partner_id)
+                        ]) . '">' . $row->Partner->name . '</a>';
+                    } else {
+                        return '';
+                    }
                 })
-                ->sortable(),
+                ->html(),
+            Column::make($this->trans("matl_code"), 'id')
+                ->format(function ($value, $row) {
+                    // Manually load OrderDtl using a query
+                    $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
+                        ->where('tr_type', $row->tr_type)
+                        ->get();
+
+                    // Generate links if data is available
+                    $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
+                    $links = $matlCodes->map(function ($code, $id) {
+                        return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($id)
+                        ]) . '">' . $code . '</a>';
+                    });
+
+                    return $links->implode(', ');
+                })
+                ->html(),
             Column::make($this->trans("qty"), "total_qty")
-                ->label(function($row) {
+                ->label(function ($row) {
                     return currencyToNumeric($row->total_qty);
                 })
                 ->sortable(),
             Column::make($this->trans("amt"), "total_amt")
-                ->label(function($row) {
+                ->label(function ($row) {
                     return rupiah(currencyToNumeric($row->total_amt));
                 })
                 ->sortable(),
@@ -102,7 +128,7 @@ class IndexDataTable extends BaseDataTableComponent
                         $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
                     });
                 }),
-                TextFilter::make('Kode Barang', 'matl_code')
+            TextFilter::make('Kode Barang', 'matl_code')
                 ->config([
                     'placeholder' => 'Cari Kode Barang',
                     'maxlength' => '50',
