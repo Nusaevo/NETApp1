@@ -48,13 +48,13 @@
                                     </td>
                                     <td style="width: 50%;">
                                         <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
-                                        <p style="margin: 0; padding: 0;">Category : <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }} -
+                                        <p style="margin: 0; padding: 0;"> <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }}
                                                 {{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
 
                                         <p style="margin: 0; padding: 0;">Berat : {{ numberFormat($OrderDtl->Material->jwl_wgt_gold,2) }} Gram</p>
                                         <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
                                         <p style="margin: 0; padding: 0;">Deskripsi : {{ $OrderDtl->Material->name }}</p>
-                                        <p style="margin: 0; padding: 0;">Deskripsi Bahan : {{ $OrderDtl->Material->descr }}</p>
+                                        <p style="margin: 0; padding: 0;">Bahan : {{ $OrderDtl->Material->descr }}</p>
                                         <p style="margin: 0; padding: 0;">Qty : {{ currencyToNumeric($OrderDtl->qty) }} PCS</p>
                                     </td>
                                 </tr>
