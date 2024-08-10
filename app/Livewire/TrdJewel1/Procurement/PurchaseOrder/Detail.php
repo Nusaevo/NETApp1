@@ -44,8 +44,8 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.price' => 'required',
-        'input_details.*.qty' => 'required',
+        // 'input_details.*.price' => 'required',
+        // 'input_details.*.qty' => 'required',
     ];
 
     protected function onPreRender()
@@ -146,6 +146,19 @@ class Detail extends BaseComponent
         $this->dispatch('openMaterialDialog');
     }
 
+
+    public function changePrice($id, $value)
+    {
+        if (isset($this->input_details[$id]['qty'])) {
+            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
+            $this->input_details[$id]['amt'] = numberFormat($total) ;
+            $this->input_details[$id]['price'] = $total;
+            $this->countTotalAmount();
+            $this->SaveWithoutNotification();
+        }
+    }
+
+
     public function onValidateAndSave()
     {
         if($this->actionValue == 'Edit')
@@ -156,6 +169,18 @@ class Detail extends BaseComponent
                 return;
             }
 
+        }
+
+        foreach ($this->input_details as $index => $detail) {
+            $material = Material::find($detail['matl_id']);
+            if ($material && !$material->isOrderedMaterial()) {
+                // Check if the price is set for ordered material
+                if (empty($detail['price']) || $detail['price'] <= 0) {
+                    $this->notify('error', 'Harga wajib diisi untuk barang yang bukanan pesanan.');
+                    $this->addError("input_details.$index.price", 'Harga wajib diisi untuk barang yang bukan pesanan.');
+                    return;
+                }
+            }
         }
 
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {

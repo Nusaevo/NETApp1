@@ -58,7 +58,7 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        //'input_details.*.price' => 'required',
+        'input_details.*.selling_price' => ['required', 'numeric', 'gt:0'],
     ];
     protected function onPreRender()
     {
@@ -74,8 +74,9 @@ class Detail extends BaseComponent
             'input_details.*'              => $this->trans('product'),
             'input_details.*.matl_id' => $this->trans('product'),
             'input_details.*.qty' => $this->trans('qty'),
-            'input_details.*.price' => $this->trans('price'),
+            'input_details.*.selling_price' => $this->trans('selling_price'),
         ];
+
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers($this->appCode);
         $this->payments = $this->masterService->getPaymentTerm($this->appCode);

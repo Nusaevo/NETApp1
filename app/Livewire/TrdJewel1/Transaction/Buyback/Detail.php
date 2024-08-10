@@ -59,7 +59,7 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        //'input_details.*.price' => 'required',
+        'input_details.*.price' => ['required', 'numeric', 'gt:0'],
     ];
 
     protected function onPreRender()

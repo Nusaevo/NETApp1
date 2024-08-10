@@ -95,7 +95,6 @@
                                         </div>
                                         <div class="row">
                                             <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' type="text" :action="$actionValue" enabled="false"  />
-
                                         </div>
                                         <div class="row">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number"  enabled="false" :action="$actionValue" required="true"  />
