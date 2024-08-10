@@ -110,6 +110,7 @@ class MaterialComponent extends BaseComponent
             'materials.code'      => $this->trans('uom'),
             'materials.name'      => $this->trans('description'),
             'materials.descr'      => $this->trans('bom_description'),
+            'materials.remark'      => $this->trans('remark'),
             'matl_uoms.barcode'      => $this->trans('barcode'),
             'materials.jwl_cost' => $this->trans('jwl_cost'),
             'materials.gold_price'      => $this->trans('gold_price'),

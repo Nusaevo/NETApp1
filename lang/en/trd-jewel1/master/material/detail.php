@@ -39,6 +39,7 @@ return [
     'gold_price' => 'Gold Price/gr',
     'jwl_cost' => 'Cost',
     'origin' => 'Origin',
+    'remark' => 'Remark',
     'message' => [
         'product_notfound' => 'Product not found',
         'attachment_failed' => 'Failed to save attachment with filename :filename',

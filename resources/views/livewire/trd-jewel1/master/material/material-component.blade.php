@@ -84,7 +84,9 @@ use App\Models\TrdJewel1\Master\Material;
                         <x-ui-text-field label="{{ $this->trans('description') }} " model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" />
                         <x-ui-text-field label="{{ $this->trans('bom_description') }} " model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" />
                     </div>
-
+                    <div class="row">
+                        <x-ui-text-field label="{{ $this->trans('remark') }} " model="materials.remark" type="textarea" :action="$actionValue"/>
+                    </div>
                 </x-ui-padding>
 
                 <x-ui-padding>

@@ -82,6 +82,7 @@ class Material extends BaseModel
         'taxable',
         'info',
         'status_code',
+        'remark'
     ];
 
     public static function getNextSequenceValue()

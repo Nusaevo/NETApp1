@@ -39,6 +39,7 @@ return [
     'gold_price' => 'Harga Emas/gr',
     'jwl_cost' => 'Ongkos',
     'origin' => 'Asal',
+    'remark' => 'Keterangan',
     'message' => [
         'product_notfound' => 'Produk tidak ditemukan',
         'attachment_failed' => 'Gagal menyimpan file :filename',

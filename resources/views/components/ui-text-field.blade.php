@@ -6,7 +6,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
     <div class="d-flex align-items-center">
         <div class="form-floating flex-grow-1">
             @if(isset($type) && $type === 'textarea')
-            <textarea wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" @if(isset($onChanged) && $onChanged !=='' ) wire:keyup.debounce.500ms="{{ $onChanged }}" @endif autocomplete="off" ></textarea>
+            <textarea style="min-height: 150px;" wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($label) ? $label : '' }}" @if(isset($onChanged) && $onChanged !=='' ) wire:keyup.debounce.500ms="{{ $onChanged }}" @endif autocomplete="off" ></textarea>
             @if (!empty($label))
             <label for="{{ $id }}" class="@if(isset($required) && $required==='true') required @endif">{{ $label }}</label>
             @endif
