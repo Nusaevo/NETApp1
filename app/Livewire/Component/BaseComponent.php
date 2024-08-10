@@ -84,13 +84,13 @@ class BaseComponent extends Component
         $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
         $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
 
+        $this->onReset();
+        $this->onPreRender();
         // Check for valid permissions
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');
         }
 
-        $this->onReset();
-        $this->onPreRender();
         // Handle specific actions like 'Edit', 'View', and 'Create'
         if (in_array($this->actionValue, ['Edit', 'View'])) {
             if($this->object) {
