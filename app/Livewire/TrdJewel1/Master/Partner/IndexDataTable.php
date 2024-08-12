@@ -10,6 +10,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Services\SysConfig1\ConfigService;
 use App\Enums\Status;
+use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -77,21 +78,21 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             TextFilter::make('Kode Partner', 'code')
-                ->config([
-                    'placeholder' => 'Cari Kode Partner',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where('code', 'like', '%' . $value . '%');
-                }),
+            ->config([
+                'placeholder' => 'Cari Kode Partner',
+                'maxlength' => '50',
+            ])
+            ->filter(function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            })->setWireLive(),
             TextFilter::make('Nama', 'name')
                 ->config([
                     'placeholder' => 'Cari Nama',
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->where('name', 'like', '%' . $value . '%');
-                }),
+                    $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                })->setWireLive(),
             SelectFilter::make('Group', 'grp')
                 ->options([
                     '' => 'All', // Opsi untuk semua grup

@@ -127,7 +127,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereHas('Partner', function ($query) use ($value) {
                         $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
                     });
-                }),
+                })->setWireDebounce(50),
             TextFilter::make('Kode Barang', 'matl_code')
                 ->config([
                     'placeholder' => 'Cari Kode Barang',
@@ -142,7 +142,7 @@ class IndexDataTable extends BaseDataTableComponent
                             ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . $value . '%')
                             ->where('order_dtls.tr_type', 'SO');
                     });
-                }),
+                })->setWireDebounce(50),
             // SelectFilter::make('Status', 'status_code')
             //     ->options([
             //         Status::OPEN => 'Open',

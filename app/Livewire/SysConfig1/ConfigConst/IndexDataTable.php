@@ -100,7 +100,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereHas('configAppl', function ($query) use ($value) {
                         $query->where(DB::raw('UPPER(code)'), 'like', '%' . $value . '%');
                     });
-                }),
+                })->setWireLive(),
             TextFilter::make('Nama Aplikasi', 'appl_name')
                 ->config([
                     'placeholder' => 'Cari Nama Aplikasi',
@@ -111,7 +111,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereHas('configAppl', function ($query) use ($value) {
                         $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
                     });
-                }),
+                })->setWireLive(),
             TextFilter::make('Group', 'const_group')
                 ->config([
                     'placeholder' => 'Cari Group',
@@ -119,7 +119,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where('const_group', 'like', '%' . $value . '%');
-                }),
+                })->setWireLive(),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

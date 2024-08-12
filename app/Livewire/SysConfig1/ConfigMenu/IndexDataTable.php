@@ -96,7 +96,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereHas('configAppl', function ($query) use ($value) {
                         $query->where(DB::raw('UPPER(code)'), 'like', '%' . $value . '%');
                     });
-                }),
+                })->setWireLive(),
             TextFilter::make('Nama Aplikasi', 'appl_name')
                 ->config([
                     'placeholder' => 'Cari Nama Aplikasi',
@@ -107,7 +107,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereHas('configAppl', function ($query) use ($value) {
                         $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
                     });
-                }),
+                })->setWireLive(),
             TextFilter::make('Kode', 'code')
                 ->config([
                     'placeholder' => 'Cari Kode',
@@ -115,7 +115,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-                }),
+                })->setWireLive(),
             TextFilter::make('Header', 'menu_header')
                 ->config([
                     'placeholder' => 'Cari Menu Header',
@@ -123,7 +123,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where(DB::raw('UPPER(menu_header)'), 'like', '%' . strtoupper($value) . '%');
-                }),
+                })->setWireLive(),
             TextFilter::make('Caption', 'menu_caption')
                 ->config([
                     'placeholder' => 'Cari Menu Caption',
@@ -131,7 +131,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where(DB::raw('UPPER(menu_caption)'), 'like', '%' . strtoupper($value) . '%');
-                }),
+                })->setWireLive(),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

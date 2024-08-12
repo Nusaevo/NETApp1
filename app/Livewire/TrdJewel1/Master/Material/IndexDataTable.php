@@ -10,6 +10,7 @@ use App\Enums\Status;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -88,8 +89,8 @@ class IndexDataTable extends BaseDataTableComponent
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->where('code', 'like', '%' . $value . '%');
-                }),
+                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+                })->setWireLive(),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
@@ -100,7 +101,7 @@ class IndexDataTable extends BaseDataTableComponent
                     } else if ($value === '1') {
                         $builder->onlyTrashed();
                     }
-                }),
+                })->setWireLive(),
             SelectFilter::make('Stock', 'stock_filter')
                 ->options([
                     'all' => 'All',

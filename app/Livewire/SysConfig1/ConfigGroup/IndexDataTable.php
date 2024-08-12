@@ -91,7 +91,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-                }),
+                })->setWireLive(),
             TextFilter::make('Nama', 'name')
                 ->config([
                     'placeholder' => 'Cari Nama',
@@ -99,7 +99,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-            }),
+                })->setWireLive(),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
