@@ -51,7 +51,7 @@
                                         <p style="margin: 0; padding: 0;"> <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }}
                                                 {{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
 
-                                        <p style="margin: 0; padding: 0;">Berat : {{ numberFormat($OrderDtl->Material->jwl_wgt_gold,2) }} Gram</p>
+                                        <p style="margin: 0; padding: 0;">Berat : {{ $OrderDtl->Material->jwl_wgt_gold }} Gram</p>
                                         <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
                                         <p style="margin: 0; padding: 0;">Deskripsi : {{ $OrderDtl->Material->name }}</p>
                                         <p style="margin: 0; padding: 0;">Bahan : {{ $OrderDtl->Material->descr }}</p>
