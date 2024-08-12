@@ -53,7 +53,6 @@
 
                                         <p style="margin: 0; padding: 0;">Berat : {{ $OrderDtl->Material->jwl_wgt_gold }} Gram</p>
                                         <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
-                                        <p style="margin: 0; padding: 0;"> {{ $OrderDtl->Material->name }}</p>
                                         <p style="margin: 0; padding: 0;">Bahan : {{ $OrderDtl->Material->descr }}</p>
                                     </td>
                                 </tr>
