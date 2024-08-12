@@ -131,7 +131,7 @@ class IndexDataTable extends BaseDataTableComponent
                             ->from('return_dtls')
                             ->whereRaw('return_dtls.tr_id = return_hdrs.tr_id')
                             ->where(DB::raw('UPPER(return_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                            ->where('return_dtls.tr_type', 'SO');
+                            ->where('return_dtls.tr_type', 'BB');
                     });
                 })->setWireLive(),
             // SelectFilter::make('Status', 'status_code')
