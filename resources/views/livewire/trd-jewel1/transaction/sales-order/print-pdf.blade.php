@@ -49,7 +49,7 @@
                                     <td style="width: 50%;">
                                         <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
                                         <p style="margin: 0; padding: 0;"> <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }}
-                                                {{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
+                                                {{ $masterService->GetMatlCategory2String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
 
                                         <p style="margin: 0; padding: 0;">Berat : {{ $OrderDtl->Material->jwl_wgt_gold }} Gram</p>
                                         <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
