@@ -131,7 +131,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $builder->whereExists(function ($query) use ($value) {
                         $query->select(DB::raw(1))
                             ->from('return_dtls')
-                            ->whereRaw('return_dtls.tr_id = order_hdrs.tr_id')
+                            ->whereRaw('return_dtls.tr_id = return_hdrs.tr_id')
                             ->where(DB::raw('UPPER(return_dtls.matl_code)'), 'like', '%' . $value . '%')
                             ->where('return_dtls.tr_type', 'SO');
                     });
