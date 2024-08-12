@@ -17,12 +17,12 @@
 	</div>
 	<!--end::Menu item-->
 	<!--begin::Menu item-->
-	<div class="menu-item px-3 my-0">
+	{{-- <div class="menu-item px-3 my-0">
 		<a href="#" class="menu-link px-3 py-2" data-kt-element="mode" data-kt-value="system">
 			<span class="menu-icon" data-kt-element="icon">{!! getIcon('screen', 'fs-2') !!}</span>
 			<span class="menu-title">System</span>
 		</a>
-	</div>
+	</div> --}}
 	<!--end::Menu item-->
 </div>
 <!--end::Menu-->

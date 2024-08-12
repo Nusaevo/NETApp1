@@ -10,6 +10,7 @@ class Detail extends ConfigUserEditPage
     protected function onPreRender()
     {
         $this->bypassPermissions = true;
+        parent::onPreRender();
     }
 
     public function render()

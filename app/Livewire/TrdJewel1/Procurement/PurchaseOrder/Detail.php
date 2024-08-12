@@ -176,7 +176,7 @@ class Detail extends BaseComponent
             if ($material && !$material->isOrderedMaterial()) {
                 // Check if the price is set for ordered material
                 if (empty($detail['price']) || $detail['price'] <= 0) {
-                    $this->notify('error', 'Harga wajib diisi untuk barang yang bukanan pesanan.');
+                    $this->notify('error', 'Harga wajib diisi untuk barang yang bukan pesanan.');
                     $this->addError("input_details.$index.price", 'Harga wajib diisi untuk barang yang bukan pesanan.');
                     return;
                 }

@@ -174,12 +174,26 @@ class Detail extends BaseComponent
         'delete' => 'delete',
         'tagScanned' => 'tagScanned',
         'saveCheck' => 'saveCheck',
+        'onPartnerChanged' => 'onPartnerChanged'
     ];
 
-    public function OpenDialogBox(){
-        if (!$this->validateInputs()) {
-            return;
+    public function onPartnerChanged()
+    {
+        foreach ($this->input_details as $index => $detail) {
+            $material = Material::find($detail['matl_id']);
+            if ($material) {
+                if(!isNullOrEmptyNumber($material->partner_id) && $this->inputs['partner_id'] != $material->partner_id)
+                {
+                    $this->notify('error', $material->code.' adalah barang pesanan untuk customer lain, mohon cek kembali.');
+                    $this->addError("input_details.$index.matl_code",  $material->code.' adalah barang pesanan untuk customer lain, mohon cek kembali.');
+                    return;
+                }
+            }
         }
+        $this->saveCheck();
+    }
+
+    public function OpenDialogBox(){
         $this->dispatch('openMaterialDialog');
     }
 
@@ -224,7 +238,7 @@ class Detail extends BaseComponent
         }
         $this->inputs['wh_code'] = 18;
 
-        if (!isNullOrEmptyString($this->inputs['partner_id'])) {
+        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
@@ -464,6 +478,10 @@ class Detail extends BaseComponent
 
     public function saveCheck()
     {
+        if (!$this->validateInputs()) {
+            return;
+        }
+
         if (!$this->object->isNew())
             $this->SaveWithoutNotification();
     }

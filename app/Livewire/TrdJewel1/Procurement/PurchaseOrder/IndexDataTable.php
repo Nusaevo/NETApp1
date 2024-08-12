@@ -31,7 +31,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->where('order_hdrs.tr_type', 'SO')
+            ->where('order_hdrs.tr_type', 'PO')
             ->where('order_hdrs.status_code', Status::OPEN);
     }
     public function columns(): array

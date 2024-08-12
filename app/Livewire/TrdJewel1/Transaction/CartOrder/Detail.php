@@ -46,7 +46,7 @@ class Detail extends BaseComponent
             'input_details.*' => $this->trans('product'),
             'input_details.*.matl_id' => $this->trans('product'),
             'input_details.*.qty' => $this->trans('qty'),
-            'input_details.*.price' => $this->trans('price'),
+            'input_details.*.selling_price' => $this->trans('selling_price'),
         ];
         $usercode = Auth::check() ? Auth::user()->code : '';
 
@@ -58,8 +58,8 @@ class Detail extends BaseComponent
     }
 
     public $rules  = [
-        'input_details.*.price' => 'required',
         'input_details.*.qty' => 'required',
+        'input_details.*.selling_price' => ['required', 'numeric', 'gt:0'],
     ];
 
     protected function retrieveMaterials()

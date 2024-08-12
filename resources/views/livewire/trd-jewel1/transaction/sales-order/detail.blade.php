@@ -16,7 +16,7 @@
                         <div class="row">
                             <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled"/>
                             <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" onChanged="saveCheck"  :enabled="$isPanelEnabled"/>
-                            <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" onChanged="saveCheck"  :enabled="$isPanelEnabled"/>
+                            <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" onChanged="onPartnerChanged"  :enabled="$isPanelEnabled"/>
                         </div>
                     </x-ui-padding>
 
