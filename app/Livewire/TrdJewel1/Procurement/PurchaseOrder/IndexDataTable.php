@@ -140,9 +140,8 @@ class IndexDataTable extends BaseDataTableComponent
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $value = strtoupper($value);
                     $builder->whereHas('Partner', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
+                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                     });
                 })->setWireLive(),
             TextFilter::make('Kode Barang', 'matl_code')
@@ -151,12 +150,11 @@ class IndexDataTable extends BaseDataTableComponent
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $value = strtoupper($value);
                     $builder->whereExists(function ($query) use ($value) {
                         $query->select(DB::raw(1))
                             ->from('order_dtls')
                             ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
-                            ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . $value . '%')
+                            ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
                             ->where('order_dtls.tr_type', 'PO');
                     });
                 })->setWireLive(),
