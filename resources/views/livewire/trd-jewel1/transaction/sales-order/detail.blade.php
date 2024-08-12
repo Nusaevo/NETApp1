@@ -102,7 +102,6 @@
                                     </x-slot>
                                     <x-slot name="button">
                                         <x-ui-link-text type="close" :clickEvent="'deleteDetails(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
-
                                     </x-slot>
                                 </x-ui-list-body>
                             </tr>
