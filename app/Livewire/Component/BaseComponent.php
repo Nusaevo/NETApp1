@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Database\QueryException;
+use PDOException;
 class BaseComponent extends Component
 {
     public $object;
@@ -70,8 +71,14 @@ class BaseComponent extends Component
         }
 
         $this->onReset();
-        $this->onPreRender();
         $this->getRoute();
+        $initialRoute = $this->baseRoute;
+        $this->onPreRender();
+
+        // Logic for handling special components like material components that have hardcoded route
+        if ($initialRoute !== $this->baseRoute) {
+            $this->getRoute();
+        }
 
         // Check for valid permissions
         if (!$this->hasValidPermissions()) {
@@ -100,7 +107,7 @@ class BaseComponent extends Component
     // Translate method
     public function getRoute()
     {
-        if (empty($this->baseRoute)) {
+        if (isNullOrEmptyString($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
         $route = ConfigMenu::getRoute($this->baseRoute);
@@ -216,16 +223,27 @@ class BaseComponent extends Component
             $this->onValidateAndSave();
 
             DB::commit();
-            if(!$this->isEditOrView())
-            {
+            if (!$this->isEditOrView()) {
                 $this->onReset();
             }
-        } catch (Exception $e) {
+        } catch (QueryException $e) {
             DB::rollBack();
-            if($this->isEditOrView()){
-                $this->VersionNumber --;
+            if ($this->isEditOrView()) {
+                $this->VersionNumber--;
+            }
+
+            dd($e->getMessage());
+        } catch (PDOException $e) {
+            DB::rollBack();
+            if ($this->isEditOrView()) {
+                $this->VersionNumber--;
             }
             dd($e->getMessage());
+        } catch (Exception $e) {
+            DB::rollBack();
+            if ($this->isEditOrView()) {
+                $this->VersionNumber--;
+            }
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }

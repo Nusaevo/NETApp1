@@ -17,9 +17,28 @@ class OrderHdr extends BaseModel
     {
         parent::boot();
         static::deleting(function ($orderHdr) {
-            $orderHdr->DelivHdr()->Delete();
-            $orderHdr->BillingHdr()->Delete();
-            $orderHdr->OrderDtl()->Delete();
+            // Delete related DelivHdr and its DelivDtl
+            $delivHdr = $orderHdr->DelivHdr;
+            if ($delivHdr) {
+                foreach ($delivHdr->DelivDtl as $delivDtl) {
+                    $delivDtl->delete(); // Delete each DelivDtl
+                }
+                $delivHdr->delete(); // Delete the DelivHdr after its DelivDtl records are deleted
+            }
+
+            // Delete related BillingHdr and its BillingDtl
+            $billingHdr = $orderHdr->BillingHdr;
+            if ($billingHdr) {
+                foreach ($billingHdr->BillingDtl as $billingDtl) {
+                    $billingDtl->delete(); // Delete each BillingDtl
+                }
+                $billingHdr->delete(); // Delete the BillingHdr after its BillingDtl records are deleted
+            }
+
+            // Delete related OrderDtl records
+            foreach ($orderHdr->OrderDtl as $orderDtl) {
+                $orderDtl->delete(); // Delete each OrderDtl
+            }
         });
 
 
@@ -85,13 +104,13 @@ class OrderHdr extends BaseModel
     public function DelivHdr()
     {
         $values = $this->getTrTypeValues($this->tr_type);
-        return $this->hasMany(DelivHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['delivTrType']);
+        return $this->hasOne(DelivHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['delivTrType']);
     }
 
     public function BillingHdr()
     {
         $values = $this->getTrTypeValues($this->tr_type);
-        return $this->hasMany(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['billingTrType']);
+        return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['billingTrType']);
     }
 
     public function getTotalQtyAttribute()

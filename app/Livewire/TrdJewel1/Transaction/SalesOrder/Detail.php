@@ -270,31 +270,28 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            if($this->object->isOrderCompleted())
-            {
+            if ($this->object->isOrderCompleted()) {
                 $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
 
-            if(!$this->object->isOrderEnableToDelete())
-            {
+            if (!$this->object->isOrderEnableToDelete()) {
                 $this->notify('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
                 return;
             }
             //$this->updateVersionNumber();
             if (isset($this->object->status_code)) {
-                    $this->object->status_code =  Status::NONACTIVE;
-                }
-                $this->object->save();
-                $this->object->delete();
-                $messageKey = 'generic.string.disable';
+                $this->object->status_code =  Status::NONACTIVE;
+            }
             $this->object->save();
+            $this->object->delete();
+            $messageKey = 'generic.string.disable';
             $this->notify('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
-          return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
 
 

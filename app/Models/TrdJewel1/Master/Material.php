@@ -36,16 +36,16 @@ class Material extends BaseModel
                 $model->jwl_buying_price = $model->jwl_buying_price_idr;
 
                 // Add _text attributes for Rupiah
-                $model->jwl_selling_price_text = rupiah(numberFormat($model->jwl_selling_price_idr));
-                $model->jwl_buying_price_text = rupiah(numberFormat($model->jwl_buying_price_idr));
+                $model->jwl_selling_price_text = rupiah($model->jwl_selling_price_idr);
+                $model->jwl_buying_price_text = rupiah($model->jwl_buying_price_idr);
             } else {
                 // Show or process USD prices
                 $model->jwl_selling_price = $model->jwl_selling_price_usd * $currencyRate;
                 $model->jwl_buying_price = $model->jwl_buying_price_usd * $currencyRate;
 
                 // Add _text attributes for Dollar
-                $model->jwl_selling_price_text = dollar(numberFormat($model->jwl_selling_price_usd));
-                $model->jwl_buying_price_text = dollar(numberFormat($model->jwl_buying_price_usd));
+                $model->jwl_selling_price_text = dollar($model->jwl_selling_price_usd);
+                $model->jwl_buying_price_text = dollar($model->jwl_buying_price_usd);
             }
         });
 

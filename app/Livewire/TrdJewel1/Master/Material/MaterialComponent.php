@@ -67,20 +67,16 @@ class MaterialComponent extends BaseComponent
     public $rules = [
         'materials.code' => 'required',
         'materials.jwl_buying_price_usd' => [
-            'required_if:orderedMaterial,false',
-            'gt:0',
+            'required_if:orderedMaterial,false'
         ],
         'materials.jwl_selling_price_usd' => [
-            'required_if:orderedMaterial,false',
-            'gt:0',
+            'required_if:orderedMaterial,false'
         ],
         'materials.jwl_buying_price_idr' => [
-            'required_if:orderedMaterial,true',
-            'gt:0',
+            'required_if:orderedMaterial,true'
         ],
         'materials.jwl_selling_price_idr' => [
-            'required_if:orderedMaterial,true',
-             'gt:0',
+            'required_if:orderedMaterial,true'
         ],
         'materials.jwl_category1' => 'required|string|min:0|max:255',
         // 'materials.jwl_category2' => 'required|string|min:0|max:255',
@@ -108,8 +104,7 @@ class MaterialComponent extends BaseComponent
     protected function onPreRender()
     {
         $this->panelEnabled = $this->actionValue == 'Create' ? 'true' : 'false';
-        $this->baseRoute = "TrdJewel1.Master.Material.Detail";
-        parent::getRoute();
+        $this->baseRoute = 'TrdJewel1.Master.Material.Detail';
         // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
@@ -159,6 +154,7 @@ class MaterialComponent extends BaseComponent
                 $this->actionValue = "View";
             }
         }
+        $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
     }
 
     public function onCategory1Changed()
@@ -424,6 +420,29 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
+        if ($this->orderedMaterial) {
+            // Validate IDR prices
+            if ($this->materials['jwl_selling_price_idr'] <= 0) {
+                $this->addError('materials.jwl_selling_price_idr', ' IDR harga penjualan harus lebih besar dari 0.');
+                throw new \Exception('IDR harga penjualan harus lebih besar dari 0.');
+            }
+            if ($this->materials['jwl_buying_price_idr'] <= 0) {
+                $this->addError('materials.jwl_buying_price_idr', ' IDR harga pembelian harus lebih besar dari 0.');
+                throw new \Exception('IDR harga pembelian harus lebih besar dari 0.');
+            }
+        } else {
+            // Validate USD prices
+            if ($this->materials['jwl_buying_price_usd'] <= 0) {
+                $this->addError('materials.jwl_buying_price_usd', ' USD harga pembelian harus lebih besar dari 0.');
+                throw new \Exception('USD harga pembelian harus lebih besar dari 0.');
+            }
+
+            if ($this->materials['jwl_selling_price_usd'] <= 0) {
+                $this->addError('materials.jwl_selling_price_usd', ' USD harga penjualan harus lebih besar dari 0.');
+                throw new \Exception('USD harga penjualan harus lebih besar dari 0.');
+            }
+        }
+
         $this->generateMaterialDescriptionsFromBOMs();
         $this->object->fillAndSanitize($this->materials);
 

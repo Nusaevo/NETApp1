@@ -11,10 +11,15 @@ use App\Traits\BaseTrait;
 class ReturnHdr extends BaseModel
 {
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
+        static::deleting(function ($returnHdr) {
+            foreach ($returnHdr->ReturnDtl as $returnDtl) {
+                $returnDtl->delete();
+            }
+        });
     }
     protected $fillable = [
         'tr_id',

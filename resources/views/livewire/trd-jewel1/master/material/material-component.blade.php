@@ -73,7 +73,7 @@ use App\Models\TrdJewel1\Master\Material;
                     <div class="row">
                         <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="materials.jwl_carat" :options="$materialJewelPurity" required="true" :action="$actionValue" />
                         <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged"
-                            :enabled="$orderedMaterial !== 'false'"  />
+                            :enabled="$orderedMaterial ? 'false' : 'true'" />
                     </div>
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$actionValue" required="true" enabled="true" onChanged="generateMaterialDescriptions" />
