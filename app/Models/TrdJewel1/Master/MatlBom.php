@@ -35,6 +35,7 @@ class MatlBom extends BaseModel
         'jwl_sides_spec'
     ];
 
+    #region Attributes
     /**
      * Retrieve the JSON attribute as an array.
      *
@@ -55,9 +56,12 @@ class MatlBom extends BaseModel
     {
         $this->attributes['specs'] = $value ? json_encode($value) : null;
     }
+    #endregion
 
+    #region Relations
     public function ConfigConst()
     {
         return $this->belongsTo(ConfigConst::class, 'base_matl_id', 'id');
     }
+    #endregion
 }

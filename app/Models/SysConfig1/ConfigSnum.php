@@ -9,7 +9,7 @@ class ConfigSnum extends BaseModel
     protected $table = 'config_snums';
     protected $connection = 'sys-config1';
     use SoftDeletes;
-        
+
     protected $fillable = [
         'code',
         'app_id',
@@ -22,13 +22,18 @@ class ConfigSnum extends BaseModel
         'status_code'
     ];
 
-    public function scopeGetActiveData()
-    {
-        return $this->orderBy('code', 'asc')->get();
-    }
+    #region Relations
 
     public function ConfigAppl()
     {
         return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
+    }
+    #endregion
+
+    #region Attributes
+    #endregion
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('code', 'asc')->get();
     }
 }

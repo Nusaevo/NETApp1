@@ -11,7 +11,7 @@ class MatlUom extends BaseModel
 {
     protected $table = 'matl_uoms';
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
@@ -31,9 +31,10 @@ class MatlUom extends BaseModel
         'qty_fgi'
     ];
 
-    public function scopeFindMaterialId($query, $matl_id)
+    #region Relations
+    public function Material()
     {
-        return $query->where('matl_id', $matl_id);
+        return $this->belongsTo(Material::class, 'matl_id');
     }
 
     public function ivtBals()
@@ -44,6 +45,13 @@ class MatlUom extends BaseModel
     public function ivtBalUnits()
     {
         return $this->hasMany(IvtBalUnit::class, 'matl_id');
+    }
+
+    #endregion
+
+    public function scopeFindMaterialId($query, $matl_id)
+    {
+        return $query->where('matl_id', $matl_id);
     }
 
     public function createIvtBals()
@@ -75,11 +83,6 @@ class MatlUom extends BaseModel
             ];
         })->toArray();
         IvtBalUnit::insert($inventoryBalUnitsData);
-    }
-
-    public function Material()
-    {
-        return $this->belongsTo(Material::class, 'matl_id');
     }
 
 }

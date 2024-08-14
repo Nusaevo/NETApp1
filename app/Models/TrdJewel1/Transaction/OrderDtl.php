@@ -81,13 +81,7 @@ class OrderDtl extends BaseModel
     ];
 
 
-    public function scopeGetByOrderHdr($query, $id, $trType)
-    {
-        return $query->where('trhdr_id', $id)
-                     ->where('tr_type', $trType);
-    }
-
-
+    #region Relations
     public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id');
@@ -97,4 +91,14 @@ class OrderDtl extends BaseModel
     {
         return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+    #endregion
+
+
+
+    public function scopeGetByOrderHdr($query, $id, $trType)
+    {
+        return $query->where('trhdr_id', $id)
+                     ->where('tr_type', $trType);
+    }
+
 }

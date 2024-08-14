@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class CartHdr extends BaseModel
 {
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
@@ -26,10 +26,27 @@ class CartHdr extends BaseModel
         'status_code',
     ];
 
+    #region Relations
+
+    public function CartDtl()
+    {
+        return $this->hasMany(CartDtl::class, 'trhdr_id', 'id');
+    }
+
+    #endregion
+
+    #region Attributes
     public function getTotalQtyAttribute()
     {
         return $this->CartDtl()->sum('qty');
     }
+
+    public function getTotalAmtAttribute()
+    {
+        return $this->CartDtl()->sum('amt');
+    }
+
+    #endregion
 
     public static function getCartDetailCount($usercode)
     {
@@ -39,15 +56,5 @@ class CartHdr extends BaseModel
                     ->withCount('cartDtl')
                     ->first()
                     ->cart_dtl_count ?? 0;
-    }
-
-    public function getTotalAmtAttribute()
-    {
-        return $this->CartDtl()->sum('amt');
-    }
-
-    public function CartDtl()
-    {
-        return $this->hasMany(CartDtl::class, 'trhdr_id', 'id');
     }
 }

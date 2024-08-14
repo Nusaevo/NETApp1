@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class BillingDtl extends BaseModel
 {
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
@@ -43,6 +43,7 @@ class BillingDtl extends BaseModel
                      ->where('tr_type', $trType);
     }
 
+    #region Relations
     public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id');
@@ -52,4 +53,5 @@ class BillingDtl extends BaseModel
     {
         return $this->belongsTo(BillingHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+    #endregion
 }

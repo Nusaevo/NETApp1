@@ -15,7 +15,7 @@ class Partner extends BaseModel
     const SALESMAN = 'S';
     const BANK = 'B';
     use SoftDeletes;
-        
+
     public static function boot()
     {
         parent::boot();
@@ -53,6 +53,13 @@ class Partner extends BaseModel
         'status_code'
     ];
 
+    #region Relations
+    public function OrderHdr()
+    {
+        return $this->belongsTo(OrderHdr::class, 'partner_id', 'id');
+    }
+    #endregion
+
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();
@@ -61,11 +68,6 @@ class Partner extends BaseModel
     public function scopeGetByGrp($query, $grp)
     {
         return $query->where('grp', $grp)->get();
-    }
-
-    public function OrderHdr()
-    {
-        return $this->belongsTo(OrderHdr::class, 'partner_id', 'id');
     }
 
     public static function generateNewCode($name)

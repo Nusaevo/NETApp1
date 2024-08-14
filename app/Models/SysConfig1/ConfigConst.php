@@ -33,15 +33,21 @@ class ConfigConst extends BaseModel
         'num2',
         'note1',
     ];
-
-    public function scopeGetActiveData()
-    {
-        return $this->orderBy('str1', 'asc')->get();
-    }
+    #region Relations
 
     public function ConfigAppl()
     {
         return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
+    }
+
+    #endregion
+
+    #region Attributes
+    #endregion
+
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('str1', 'asc')->get();
     }
 
 }

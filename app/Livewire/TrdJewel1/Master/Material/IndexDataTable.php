@@ -29,7 +29,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return Material::query()->with('IvtBal');
+        return Material::with(['IvtBal'])->select('materials.*');
     }
 
     public function columns(): array
@@ -50,12 +50,12 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("selling_price"), "jwl_selling_price_usd")
-                ->format(function ($value, $row, Column $column) {
-                    return dollar($value);
+            Column::make($this->trans("selling_price"), "jwl_selling_price_text")
+                ->label(function ($row) {
+                    return $row->jwl_selling_price_text;
                 })
-                ->searchable()
                 ->sortable(),
+
             Column::make($this->trans("status"), "status_code")
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);

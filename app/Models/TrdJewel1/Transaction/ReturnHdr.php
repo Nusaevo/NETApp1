@@ -38,14 +38,7 @@ class ReturnHdr extends BaseModel
         'status_code'
     ];
 
-
-    public function isOrderCompleted(): bool
-    {
-        if ($this->status_code == Status::COMPLETED) {
-            return true;
-        }
-        return false;
-    }
+    #region Relations
 
     public function Partner()
     {
@@ -56,6 +49,10 @@ class ReturnHdr extends BaseModel
     {
         return $this->hasMany(ReturnDtl::class, 'trhdr_id', 'id');
     }
+
+    #endregion
+
+    #region Attributes
 
     public function getTotalQtyAttribute()
     {
@@ -71,5 +68,15 @@ class ReturnHdr extends BaseModel
     {
         $matlCodes = $this->ReturnDtl()->pluck('matl_code')->toArray();
         return implode(', ', $matlCodes);
+    }
+
+    #endregion
+
+    public function isOrderCompleted(): bool
+    {
+        if ($this->status_code == Status::COMPLETED) {
+            return true;
+        }
+        return false;
     }
 }

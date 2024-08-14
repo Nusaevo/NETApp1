@@ -26,39 +26,7 @@ class Material extends BaseModel
             if (array_key_exists('jwl_wgt_gold', $model->attributes)) {
                 $model->jwl_wgt_gold = numberFormat($model->attributes['jwl_wgt_gold'], 2);
             }
-
-            $orderedMaterial = !isNullOrEmptyNumber($model->partner_id);
-            $currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-
-            if ($orderedMaterial) {
-                // Show or process IDR prices
-                $model->jwl_selling_price = $model->jwl_selling_price_idr;
-                $model->jwl_buying_price = $model->jwl_buying_price_idr;
-
-                // Add _text attributes for Rupiah
-                $model->jwl_selling_price_text = rupiah($model->jwl_selling_price_idr);
-                $model->jwl_buying_price_text = rupiah($model->jwl_buying_price_idr);
-            } else {
-                // Show or process USD prices
-                $model->jwl_selling_price = $model->jwl_selling_price_usd * $currencyRate;
-                $model->jwl_buying_price = $model->jwl_buying_price_usd * $currencyRate;
-
-                // Add _text attributes for Dollar
-                $model->jwl_selling_price_text = dollar($model->jwl_selling_price_usd);
-                $model->jwl_buying_price_text = dollar($model->jwl_buying_price_usd);
-            }
         });
-
-        static::saving(function ($model) {
-            // Remove the properties before saving
-            unset($model->attributes['jwl_selling_price']);
-            unset($model->attributes['jwl_buying_price']);
-
-            // Optionally, remove the _text attributes if they should not be saved
-            unset($model->attributes['jwl_selling_price_text']);
-            unset($model->attributes['jwl_buying_price_text']);
-        });
-
 
         // static::created(function ($model) {
         //     $model->insertIvtBalData();
@@ -119,25 +87,7 @@ class Material extends BaseModel
         'remark'
     ];
 
-    public static function getNextSequenceValue()
-    {
-        $sequenceName = 'materials_id_seq';
-
-        $currentSequenceValue = DB::select("SELECT last_value FROM $sequenceName")[0]->last_value;
-
-        return $currentSequenceValue;
-    }
-
-    public function hasQuantity()
-    {
-        $exists = DB::table('ivt_bals')
-            ->where('matl_id', $this->id)
-            ->where('qty_oh', '>', 0)
-            ->exists();
-
-        return $exists;
-    }
-
+    #region Relations
     public function MatlUom()
     {
         return $this->hasMany(MatlUom::class, 'matl_id');
@@ -148,6 +98,67 @@ class Material extends BaseModel
         return $this->hasMany(MatlBom::class, 'matl_id');
     }
 
+
+    public function ivtBal()
+    {
+        return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
+            'qty_oh' => '$0.00'
+        ]);
+    }
+    #endregion
+
+    #region Attributes
+    public function getJwlSellingPriceTextAttribute()
+    {
+        $orderedMaterial = !isNullOrEmptyNumber($this->partner_id);
+        if ($orderedMaterial) {
+            return rupiah($this->jwl_selling_price_idr);
+        } else {
+            return dollar($this->jwl_selling_price_usd);
+        }
+    }
+
+    // Getter for jwl_buying_price_text
+    public function getJwlBuyingPriceTextAttribute()
+    {
+        $orderedMaterial = !isNullOrEmptyNumber($this->partner_id);
+
+        if ($orderedMaterial) {
+            return rupiah($this->jwl_buying_price_idr);
+        } else {
+            return dollar($this->jwl_buying_price_usd);
+        }
+    }
+
+    // Getter for jwl_selling_price
+    public function getJwlSellingPriceAttribute()
+    {
+        $orderedMaterial = !isNullOrEmptyNumber($this->partner_id);
+        $currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($orderedMaterial) {
+            return $this->jwl_selling_price_idr;
+        } else {
+            return $this->jwl_selling_price_usd * $currencyRate;
+        }
+    }
+
+    // Getter for jwl_buying_price
+    public function getJwlBuyingPriceAttribute()
+    {
+        $orderedMaterial = !isNullOrEmptyNumber($this->partner_id);
+        $currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+        if ($orderedMaterial) {
+            return $this->jwl_buying_price_idr;
+        } else {
+            return $this->jwl_buying_price_usd * $currencyRate;
+        }
+    }
+
+    #endregion
+
+
     public static function getAvailableMaterials()
     {
         return self::whereHas('ivtBal', function ($query) {
@@ -156,6 +167,7 @@ class Material extends BaseModel
                 ->whereNull('materials.deleted_at')
                 ->distinct();
     }
+
 
     public static function checkMaterialStockByMatlId($matlId)
     {
@@ -168,12 +180,14 @@ class Material extends BaseModel
             ->first();
     }
 
-
-    public function ivtBal()
+    public function hasQuantity()
     {
-        return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
-            'qty_oh' => '$0.00'
-        ]);
+        $exists = DB::table('ivt_bals')
+            ->where('matl_id', $this->id)
+            ->where('qty_oh', '>', 0)
+            ->exists();
+
+        return $exists;
     }
 
     public function isOrderedMaterial()

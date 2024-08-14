@@ -22,13 +22,20 @@ class ConfigVar extends BaseModel
         'default_value'
     ];
 
-    public function scopeGetActiveData()
-    {
-        return $this->orderBy('code', 'asc')->get();
-    }
+    #region Relations
 
     public function ConfigAppl()
     {
         return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
+    }
+
+    #endregion
+
+    #region Attributes
+    #endregion
+
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('code', 'asc')->get();
     }
 }

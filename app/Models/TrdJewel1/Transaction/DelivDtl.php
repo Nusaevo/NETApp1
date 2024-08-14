@@ -114,6 +114,8 @@ class DelivDtl extends BaseModel
     }
 
 
+    #region Relations
+
     public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id');
@@ -123,4 +125,5 @@ class DelivDtl extends BaseModel
     {
         return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+    #endregion
 }

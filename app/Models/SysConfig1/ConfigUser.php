@@ -93,6 +93,17 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         $this->fill($sanitizedAttributes);
     }
 
+    #region Relations
+    public function ConfigGroup()
+    {
+        return $this->belongsToMany(ConfigGroup::class, 'config_grpusers', 'user_id', 'group_id');
+    }
+    #endregion
+
+    #region Attributes
+    #endregion
+
+
     /**
      * The attributes that should be cast to native types.
      *
@@ -116,12 +127,6 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     {
         return $this->orderBy('name', 'asc')->get();
     }
-
-    public function ConfigGroup()
-    {
-        return $this->belongsToMany(ConfigGroup::class, 'config_grpusers', 'user_id', 'group_id');
-    }
-
     public function isNew()
     {
         $isNew = empty($this->id);

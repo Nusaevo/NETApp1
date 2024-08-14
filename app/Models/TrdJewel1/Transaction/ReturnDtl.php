@@ -12,7 +12,7 @@ use App\Traits\BaseTrait;
 class ReturnDtl extends BaseModel
 {
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
@@ -109,6 +109,7 @@ class ReturnDtl extends BaseModel
         'qty_reff',
     ];
 
+    #region Relations
     public function ReturnHdr()
     {
         return $this->belongsTo(ReturnHdr::class, 'trhdr_id', 'id');
@@ -119,15 +120,16 @@ class ReturnDtl extends BaseModel
         return $this->belongsTo(OrderDtl::class, 'dlvdtl_id', 'id')->where('tr_type', 'SO');;
     }
 
+    public function Material()
+    {
+        return $this->belongsTo(Material::class, 'matl_id');
+    }
+    #endregion
+
+
     public function scopeGetByOrderHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)
         ->where('tr_type', $trType);;
     }
-
-    public function Material()
-    {
-        return $this->belongsTo(Material::class, 'matl_id');
-    }
-
 }

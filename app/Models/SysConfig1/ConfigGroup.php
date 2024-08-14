@@ -9,7 +9,7 @@ class ConfigGroup extends BaseModel
     protected $table = 'config_groups';
     protected $connection = 'sys-config1';
     use SoftDeletes;
-    
+
     public static function boot()
     {
         parent::boot();
@@ -27,10 +27,7 @@ class ConfigGroup extends BaseModel
         'status_code'
     ];
 
-    public function scopeGetActiveData()
-    {
-        return $this->orderBy('code', 'asc')->get();
-    }
+    #region Relations
 
     public function ConfigAppl()
     {
@@ -50,5 +47,15 @@ class ConfigGroup extends BaseModel
     public function ConfigUser()
     {
         return $this->belongsToMany(ConfigUser::class, 'config_grpusers', 'group_id', 'user_id');
+    }
+
+    #endregion
+
+    #region Attributes
+    #endregion
+
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('code', 'asc')->get();
     }
 }

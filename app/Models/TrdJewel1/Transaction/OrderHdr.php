@@ -85,6 +85,7 @@ class OrderHdr extends BaseModel
         'print_remarks',
     ];
 
+    #region Relations
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
@@ -112,7 +113,9 @@ class OrderHdr extends BaseModel
         $values = $this->getTrTypeValues($this->tr_type);
         return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['billingTrType']);
     }
+    #endregion
 
+    #region Attributes
     public function getTotalQtyAttribute()
     {
         return currencyToNumeric($this->OrderDtl()->sum('qty'));
@@ -128,6 +131,7 @@ class OrderHdr extends BaseModel
         $matlCodes = $this->OrderDtl()->pluck('matl_code')->toArray();
         return implode(', ', $matlCodes);
     }
+    #endregion
 
 
     public static function getByCreatedByAndTrType($createdBy, $trType)

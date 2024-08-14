@@ -30,6 +30,8 @@ class ConfigRight extends BaseModel
         'app_code'
     ];
 
+    #region Relations
+
     public function ConfigGroup()
     {
         return $this->belongsTo(ConfigGroup::class, 'group_id', 'id');
@@ -45,6 +47,10 @@ class ConfigRight extends BaseModel
         return $this->belongsTo(ConfigMenu::class, 'menu_id', 'id');
     }
 
+    #endregion
+
+    #region Attributes
+    #endregion
     public static function getPermissionsByMenu($menu, $appCode = null)
     {
         $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];

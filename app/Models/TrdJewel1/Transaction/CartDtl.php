@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class CartDtl extends BaseModel
 {
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
@@ -32,13 +32,15 @@ class CartDtl extends BaseModel
         'amt'
     ];
 
-    public function scopeGetByCartHdr($query, $id)
-    {
-        return $query->where('trhdr_id', $id);
-    }
-
+    #region Relations
     public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id');
+    }
+    #endregion
+
+    public function scopeGetByCartHdr($query, $id)
+    {
+        return $query->where('trhdr_id', $id);
     }
 }

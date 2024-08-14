@@ -10,7 +10,7 @@ use App\Traits\BaseTrait;
 class PaymentHdr extends BaseModel
 {
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
@@ -35,6 +35,7 @@ class PaymentHdr extends BaseModel
         'status_code'
     ];
 
+    #region Relations
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
@@ -49,4 +50,5 @@ class PaymentHdr extends BaseModel
     {
         return self::where('created_by', $createdBy)->where('tr_type', $trType)->get();
     }
+    #endregion
 }

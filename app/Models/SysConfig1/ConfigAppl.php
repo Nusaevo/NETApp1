@@ -11,7 +11,7 @@ class ConfigAppl extends BaseModel
     protected $connection = 'sys-config1';
 
     use SoftDeletes;
-    
+
     public static function boot()
     {
         parent::boot();
@@ -29,13 +29,20 @@ class ConfigAppl extends BaseModel
         'status_code'
     ];
 
-    public function scopeGetActiveData()
-    {
-        return $this->orderBy('code', 'asc')->get();
-    }
+    #region Relations
 
     public function ConfigMenu()
     {
         return $this->hasMany(ConfigMenu::class, 'app_id', 'id');
+    }
+
+    #endregion
+
+    #region Attributes
+    #endregion
+
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('code', 'asc')->get();
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class DelivHdr extends BaseModel
 {
     use SoftDeletes;
-        
+
     protected static function boot()
     {
         parent::boot();
@@ -26,6 +26,7 @@ class DelivHdr extends BaseModel
         'status_code'
     ];
 
+    #region Relations
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
@@ -35,4 +36,5 @@ class DelivHdr extends BaseModel
     {
         return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+    #endregion
 }

@@ -10,7 +10,7 @@ class ConfigMenu extends BaseModel
     protected $table = 'config_menus';
     protected $connection = 'sys-config1';
     use SoftDeletes;
-    
+
 
     public static function boot()
     {
@@ -30,16 +30,22 @@ class ConfigMenu extends BaseModel
         'menu_link'
     ];
 
+    #region Relations
+
+    public function ConfigAppl()
+    {
+        return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
+    }
+
+    #endregion
+
+    #region Attributes
+    #endregion
     public function scopeGetActiveData()
     {
         return $this->orderBy('menu_header', 'asc')
                     ->orderBy('seq', 'asc')
                     ->get();
-    }
-
-    public function ConfigAppl()
-    {
-        return $this->belongsTo(ConfigAppl::class, 'app_id', 'id');
     }
 
     public static function getMenuNameByLink($menuLink)
