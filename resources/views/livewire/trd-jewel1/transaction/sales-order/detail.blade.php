@@ -59,7 +59,7 @@
                                                         <img src="{{ $imagePath }}" alt="Material Image" style="width: 100px; height: 100px; object-fit: cover;">
                                                     </td>
                                                     <td> Kode Produk : {{ $material->code }} <br> Deskripsi Material : {{ $material->name }} <br> Deskripsi Bahan : {{ $material->descr }}</td>
-                                                    <td>{{ rupiah(currencyToNumeric($material->jwl_selling_price) * $currencyRate)}}</td>
+                                                    <td>{{ rupiah(currencyToNumeric($material->jwl_selling_price_usd) * $currencyRate)}}</td>
                                                 </tr>
                                                 @endforeach
                                             </x-slot>

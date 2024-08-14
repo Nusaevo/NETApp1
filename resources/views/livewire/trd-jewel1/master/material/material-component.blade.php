@@ -64,15 +64,25 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
                     <div class="row">
                         <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$actionValue" onChanged="generateMaterialDescriptions" />
-                        <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.jwl_buying_price" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged" />
+                        @if($orderedMaterial)
+                        <x-ui-text-field label="{{ $this->trans('buying_price_idr') }}" model="materials.jwl_buying_price_idr" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged" enabled="false" />
+                        @else
+                        <x-ui-text-field label="{{ $this->trans('buying_price_usd') }}" model="materials.jwl_buying_price_usd" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged" />
+                        @endif
                     </div>
                     <div class="row">
                         <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="materials.jwl_carat" :options="$materialJewelPurity" required="true" :action="$actionValue" />
-                        <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged" />
+                        <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged"
+                            :enabled="$orderedMaterial !== 'false'"  />
                     </div>
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$actionValue" required="true" enabled="true" onChanged="generateMaterialDescriptions" />
-                        <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.jwl_selling_price" type="number" :action="$actionValue" required="true" onChanged="sellingPriceChanged" />
+
+                        @if($orderedMaterial)
+                            <x-ui-text-field label="{{ $this->trans('selling_price_idr') }}" model="materials.jwl_selling_price_idr" type="number" :action="$actionValue" required="true" onChanged="sellingPriceChanged" />
+                        @else
+                            <x-ui-text-field label="{{ $this->trans('selling_price_usd') }}" model="materials.jwl_selling_price_usd" type="number" :action="$actionValue" required="true" onChanged="sellingPriceChanged" />
+                        @endif
                     </div>
                     @if($orderedMaterial)
                     <div class="row">

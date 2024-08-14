@@ -44,6 +44,7 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
+        'input_details.*.price' => ['required', 'gt:0'],
         // 'input_details.*.price' => 'required',
         // 'input_details.*.qty' => 'required',
     ];
@@ -90,12 +91,9 @@ class Detail extends BaseComponent
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material?->name;
                 $this->input_details[$key]['id'] = $detail->id;
-                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
-                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['price'] = currencyToNumeric($detail->price);
-                $this->input_details[$key]['selling_price'] = currencyToNumeric($detail->Material->jwl_selling_price);
-                $this->input_details[$key]['sub_total'] = currencyToNumeric($detail->amt);
+                $this->input_details[$key]['selling_price'] = $detail->Material->jwl_selling_price;
+                $this->input_details[$key]['sub_total'] = $detail->amt;
+                $this->input_details[$key]['isOrderedMaterial'] = $detail->Material->isOrderedMaterial();
                 $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
             }
@@ -171,17 +169,17 @@ class Detail extends BaseComponent
 
         }
 
-        foreach ($this->input_details as $index => $detail) {
-            $material = Material::find($detail['matl_id']);
-            if ($material && !$material->isOrderedMaterial()) {
-                // Check if the price is set for ordered material
-                if (empty($detail['price']) || $detail['price'] <= 0) {
-                    $this->notify('error', 'Harga wajib diisi untuk barang yang bukan pesanan.');
-                    $this->addError("input_details.$index.price", 'Harga wajib diisi untuk barang yang bukan pesanan.');
-                    return;
-                }
-            }
-        }
+        // foreach ($this->input_details as $index => $detail) {
+        //     $material = Material::find($detail['matl_id']);
+        //     if ($material && !$material->isOrderedMaterial()) {
+        //         // Check if the price is set for ordered material
+        //         if (empty($detail['price']) || $detail['price'] <= 0) {
+        //             $this->notify('error', 'Harga wajib diisi untuk barang yang bukan pesanan.');
+        //             $this->addError("input_details.$index.price", 'Harga wajib diisi untuk barang yang bukan pesanan.');
+        //             return;
+        //         }
+        //     }
+        // }
 
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
@@ -215,8 +213,9 @@ class Detail extends BaseComponent
             $detail['matl_uom'] = $material->MatlUom[0]->id;
             $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
             $detail['barcode'] = $material->MatlUom[0]->barcode;
-            $detail['price'] = currencyToNumeric($material->jwl_buying_price) ?? 0;
-            $detail['selling_price'] = currencyToNumeric($material->jwl_selling_price) ?? 0;
+            $detail['price'] = $material->jwl_buying_price ?? 0;
+            $detail['selling_price'] = $material->jwl_selling_price ?? 0;
+            $detail['isOrderedMaterial'] = $material->isOrderedMaterial();
             $detail['qty'] = 1;
             $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
             $maxTrSeq++;

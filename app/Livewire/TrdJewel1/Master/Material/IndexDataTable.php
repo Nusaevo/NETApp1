@@ -50,7 +50,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("selling_price"), "jwl_selling_price")
+            Column::make($this->trans("selling_price"), "jwl_selling_price_usd")
                 ->format(function ($value, $row, Column $column) {
                     return dollar($value);
                 })

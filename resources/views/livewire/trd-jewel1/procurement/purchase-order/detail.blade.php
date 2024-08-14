@@ -94,11 +94,15 @@
                                             <x-ui-text-field model="input_details.{{ $key }}.matl_descr" label='{{ $this->trans("description") }}' type="text" :action="$actionValue" enabled="false"  />
                                         </div>
                                         <div class="row">
-                                            <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' type="text" :action="$actionValue" enabled="false"  />
+                                            <x-ui-text-field model="input_details.{{ $key }}.selling_price" label='{{ $this->trans("selling_price") }}' type="number" :action="$actionValue" enabled="false"  />
                                         </div>
                                         <div class="row">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty" label='{{ $this->trans("qty") }}' type="number"  enabled="false" :action="$actionValue" required="true"  />
-                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price") }}' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true"  enabled="false"/>
+                                            @if($detail['isOrderedMaterial'])
+                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price_idr") }}' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true"  enabled="false"/>
+                                            @else
+                                            <x-ui-text-field model="input_details.{{ $key }}.price" label='{{ $this->trans("price_usd") }}' type="number" :onChanged="'changePrice('. $key .', $event.target.value)'" :action="$actionValue" required="true"  enabled="false"/>
+                                            @endif
                                         </div>
                                     </x-slot>
                                     <x-slot name="button">

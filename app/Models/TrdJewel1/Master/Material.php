@@ -26,7 +26,40 @@ class Material extends BaseModel
             if (array_key_exists('jwl_wgt_gold', $model->attributes)) {
                 $model->jwl_wgt_gold = numberFormat($model->attributes['jwl_wgt_gold'], 2);
             }
+
+            $orderedMaterial = !isNullOrEmptyNumber($model->partner_id);
+            $currencyRate = GoldPriceLog::GetTodayCurrencyRate();
+
+            if ($orderedMaterial) {
+                // Show or process IDR prices
+                $model->jwl_selling_price = $model->jwl_selling_price_idr;
+                $model->jwl_buying_price = $model->jwl_buying_price_idr;
+
+                // Add _text attributes for Rupiah
+                $model->jwl_selling_price_text = rupiah(numberFormat($model->jwl_selling_price_idr));
+                $model->jwl_buying_price_text = rupiah(numberFormat($model->jwl_buying_price_idr));
+            } else {
+                // Show or process USD prices
+                $model->jwl_selling_price = $model->jwl_selling_price_usd * $currencyRate;
+                $model->jwl_buying_price = $model->jwl_buying_price_usd * $currencyRate;
+
+                // Add _text attributes for Dollar
+                $model->jwl_selling_price_text = dollar(numberFormat($model->jwl_selling_price_usd));
+                $model->jwl_buying_price_text = dollar(numberFormat($model->jwl_buying_price_usd));
+            }
         });
+
+        static::saving(function ($model) {
+            // Remove the properties before saving
+            unset($model->attributes['jwl_selling_price']);
+            unset($model->attributes['jwl_buying_price']);
+
+            // Optionally, remove the _text attributes if they should not be saved
+            unset($model->attributes['jwl_selling_price_text']);
+            unset($model->attributes['jwl_buying_price_text']);
+        });
+
+
         // static::created(function ($model) {
         //     $model->insertIvtBalData();
         // });
@@ -67,14 +100,15 @@ class Material extends BaseModel
         'jwl_sides_carat',
         'jwl_sides_cnt',
         'jwl_sides_matl',
-        'jwl_selling_price_usd',
-        'jwl_selling_price',
         'jwl_sides_calc_method',
         'jwl_matl_price',
         'jwl_sellprc_calc_method',
         'jwl_price_markup_id',
         'jwl_price_markup_code',
-        'jwl_buying_price',
+        'jwl_buying_price_usd',
+        'jwl_buying_price_idr',
+        'jwl_selling_price_usd',
+        'jwl_selling_price_idr',
         'brand',
         'dimension',
         'wgt',
@@ -116,12 +150,11 @@ class Material extends BaseModel
 
     public static function getAvailableMaterials()
     {
-        return self::query()
-            ->join('ivt_bals', 'materials.id', '=', 'ivt_bals.matl_id')
-            ->where('ivt_bals.qty_oh', '>', 0)
-            ->whereNull('materials.deleted_at')
-            ->select('materials.*')
-            ->distinct();
+        return self::whereHas('ivtBal', function ($query) {
+                    $query->where('qty_oh', '>', 0);
+                })
+                ->whereNull('materials.deleted_at')
+                ->distinct();
     }
 
     public static function checkMaterialStockByMatlId($matlId)
@@ -145,7 +178,7 @@ class Material extends BaseModel
 
     public function isOrderedMaterial()
     {
-        return !is_null($this->partner_id) && $this->partner_id !== '';
+        return  !isNullOrEmptyNumber($this->partner_id);
     }
 
     public function getStockAttribute()

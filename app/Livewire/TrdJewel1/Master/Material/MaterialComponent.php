@@ -64,13 +64,24 @@ class MaterialComponent extends BaseComponent
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
-    public $messages = [
-        'materials.jwl_buying_price.required_if' => 'Harga beli wajib diisi untuk material yang bukan pesanan',
-    ];
     public $rules = [
         'materials.code' => 'required',
-        'materials.jwl_buying_price' => 'required_if:orderedMaterial,false',
-        'materials.jwl_selling_price' => 'required',
+        'materials.jwl_buying_price_usd' => [
+            'required_if:orderedMaterial,false',
+            'gt:0',
+        ],
+        'materials.jwl_selling_price_usd' => [
+            'required_if:orderedMaterial,false',
+            'gt:0',
+        ],
+        'materials.jwl_buying_price_idr' => [
+            'required_if:orderedMaterial,true',
+            'gt:0',
+        ],
+        'materials.jwl_selling_price_idr' => [
+            'required_if:orderedMaterial,true',
+             'gt:0',
+        ],
         'materials.jwl_category1' => 'required|string|min:0|max:255',
         // 'materials.jwl_category2' => 'required|string|min:0|max:255',
         'materials.jwl_carat' => 'required|string|min:0|max:255',
@@ -98,6 +109,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->panelEnabled = $this->actionValue == 'Create' ? 'true' : 'false';
         $this->baseRoute = "TrdJewel1.Master.Material.Detail";
+        parent::getRoute();
         // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
@@ -114,8 +126,10 @@ class MaterialComponent extends BaseComponent
             'matl_uoms.barcode'      => $this->trans('barcode'),
             'materials.jwl_cost' => $this->trans('jwl_cost'),
             'materials.gold_price'      => $this->trans('gold_price'),
-            'materials.jwl_buying_price'      =>  $this->trans('buying_price'),
-            'materials.jwl_selling_price'      => $this->trans('selling_price'),
+            'materials.jwl_buying_price_usd'      =>  $this->trans('buying_price_usd'),
+            'materials.jwl_selling_price_usd'      => $this->trans('selling_price_usd'),
+            'materials.jwl_buying_price_idr'      =>  $this->trans('buying_price_idr'),
+            'materials.jwl_selling_price_idr'      => $this->trans('selling_price_idr'),
             'matl_boms.*.base_matl_id' => $this->trans('material'),
             'matl_boms.*.jwl_sides_cnt' => $this->trans('quantity'),
             'matl_boms.*.jwl_sides_carat' => $this->trans('carat'),
@@ -145,7 +159,6 @@ class MaterialComponent extends BaseComponent
                 $this->actionValue = "View";
             }
         }
-        $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
     }
 
     public function onCategory1Changed()
@@ -239,6 +252,7 @@ class MaterialComponent extends BaseComponent
             }
             $this->sellingPriceChanged();
         }
+        $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
     }
 
     public function searchProduct()
@@ -557,20 +571,22 @@ class MaterialComponent extends BaseComponent
 
     public function markupPriceChanged()
     {
-        if (empty($this->materials['jwl_buying_price'])) {
-            return null;
+        if (empty($this->materials['jwl_buying_price_usd'])) {
+            return;
         }
-
-        $this->materials['jwl_selling_price'] = Material::calculateSellingPrice($this->materials['jwl_buying_price'], $this->materials['markup']);
+        $this->materials['jwl_selling_price_usd'] = Material::calculateSellingPrice($this->materials['jwl_buying_price_usd'], $this->materials['markup']);
     }
 
     public function sellingPriceChanged()
     {
-        if (empty($this->materials['jwl_buying_price'])) {
+        if($this->orderedMaterial){
+            $this->materials['jwl_buying_price_idr'] = $this->materials['jwl_selling_price_idr'];
             return;
         }
-
-        $this->materials['markup'] = Material::calculateMarkup($this->materials['jwl_buying_price'], $this->materials['jwl_selling_price']);
+        if (empty($this->materials['jwl_buying_price_usd'])) {
+            return;
+        }
+        $this->materials['markup'] = Material::calculateMarkup($this->materials['jwl_buying_price_usd'], $this->materials['jwl_selling_price_usd']);
     }
 
     public function tagScanned($tags)

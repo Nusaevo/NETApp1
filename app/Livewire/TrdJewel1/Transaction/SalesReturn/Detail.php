@@ -78,7 +78,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['order_qty'] = ceil(currencyToNumeric($detail->OrderDtl->qty));
                 $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
                 $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['selling_price'] =int_qty( $detail->Material->jwl_selling_price) ?? 0;
+                $this->input_details[$key]['selling_price'] =int_qty( $detail->Material->jwl_selling_price_usd) ?? 0;
                 $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
                 $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material->Attachment[0]->getUrl();

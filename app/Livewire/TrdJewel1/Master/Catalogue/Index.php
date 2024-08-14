@@ -105,9 +105,7 @@ class Index extends BaseComponent
                 ]);
                 return;
             }
-            // Calculate the price
-            $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
-
+            $price = $material->jwl_selling_price;
             // Get the cartHdr by user code and tr_type = cart
             $cartHdr = CartHdr::where('created_by', $usercode)
                 ->where('tr_type', 'C')
@@ -147,7 +145,7 @@ class Index extends BaseComponent
                     'qty_reff' => 1,
                     'tr_type' => 'C',
                     'tr_seq' => $maxTrSeq,
-                    'price' => $price,
+                    'price' => $material->jwl_selling_price,
                 ]);
 
                 DB::commit();

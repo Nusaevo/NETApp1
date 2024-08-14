@@ -59,7 +59,7 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.price' => ['required', 'numeric', 'gt:0'],
+        'input_details.*.price' => ['required', 'gt:0'],
     ];
 
     protected function onPreRender()
@@ -103,13 +103,9 @@ class Detail extends BaseComponent
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material->name;
                 $this->input_details[$key]['id'] = $detail->id;
-                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
-                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->OrderDtl->price));
-                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
+                $this->input_details[$key]['selling_price'] = ($detail->OrderDtl->price);
 
-                $this->input_details[$key]['sub_total'] = currencyToNumeric($detail->amt);
+                $this->input_details[$key]['sub_total'] = $detail->amt;
                 $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
             }

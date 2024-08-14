@@ -71,20 +71,7 @@ class BaseComponent extends Component
 
         $this->onReset();
         $this->onPreRender();
-        // Set base route if not already set
-        if (empty($this->baseRoute)) {
-            $this->baseRoute = Route::currentRouteName();
-        }
-        $route = ConfigMenu::getRoute($this->baseRoute);
-        $this->baseRenderRoute = strtolower($route);
-        $this->renderRoute = 'livewire.' . $this->baseRenderRoute;
-
-        // Convert base route to URL segments
-        $fullUrl = str_replace('.', '/', $this->baseRoute);
-        $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);
-        $this->permissions = ConfigRight::getPermissionsByMenu($menu_link);
-        $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
-        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
+        $this->getRoute();
 
         // Check for valid permissions
         if (!$this->hasValidPermissions()) {
@@ -108,6 +95,24 @@ class BaseComponent extends Component
             $this->route .=  $this->baseRoute.'.Detail';
             $this->renderRoute .=  '.index';
         }
+    }
+
+    // Translate method
+    public function getRoute()
+    {
+        if (empty($this->baseRoute)) {
+            $this->baseRoute = Route::currentRouteName();
+        }
+        $route = ConfigMenu::getRoute($this->baseRoute);
+        $this->baseRenderRoute = strtolower($route);
+        $this->renderRoute = 'livewire.' . $this->baseRenderRoute;
+
+        // Convert base route to URL segments
+        $fullUrl = str_replace('.', '/', $this->baseRoute);
+        $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);
+        $this->permissions = ConfigRight::getPermissionsByMenu($menu_link);
+        $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
+        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
     }
 
     // Translate method

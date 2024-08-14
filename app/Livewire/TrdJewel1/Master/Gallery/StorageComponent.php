@@ -16,7 +16,7 @@ class StorageComponent extends BaseComponent
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isDialogBoxComponent = true)
     {
         $this->isDialogBoxComponent = $isDialogBoxComponent;
-        if($isDialogBoxComponent == true)
+        if($isDialogBoxComponent)
         {
             $this->bypassPermissions = true;
         }

@@ -59,7 +59,7 @@ class Detail extends BaseComponent
 
     public $rules  = [
         'input_details.*.qty' => 'required',
-        'input_details.*.selling_price' => ['required', 'numeric', 'gt:0'],
+        'input_details.*.selling_price' => ['required',  'gt:0'],
     ];
 
     protected function retrieveMaterials()
@@ -74,13 +74,10 @@ class Detail extends BaseComponent
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['checked'] = 1;
                 $this->input_details[$key]['id'] = $detail->id;
-                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
-                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
                 $this->input_details[$key]['name'] = $detail->Material->name ?? "";
                 $this->input_details[$key]['matl_descr'] = $detail->Material->descr ?? "";
-                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['selling_price'] = $detail->price;
+                $this->input_details[$key]['sub_total'] = rupiah(($detail->amt));
                 $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode ?? "";
                 $imagePath = $detail->Material?->Attachment?->first()?->getUrl() ?? null;
 
@@ -235,7 +232,6 @@ class Detail extends BaseComponent
                 }
 
 
-                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
                 $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
                 $maxTrSeq++;
 
@@ -247,7 +243,7 @@ class Detail extends BaseComponent
                     'qty' => 1,
                     'tr_type' => 'C',
                     'tr_seq' => $maxTrSeq,
-                    'price' => $price,
+                    'price' => $material->jwl_selling_price,
                 ]);
                 $addedItems[] = $material->code;
             }
@@ -293,8 +289,8 @@ class Detail extends BaseComponent
             $detail['matl_uom'] = $material->MatlUom[0]->id;
             $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
             $detail['barcode'] = $material->MatlUom[0]->barcode;
-            $detail['price'] = currencyToNumeric($material->jwl_buying_price) ?? 0;
-            $detail['selling_price'] = currencyToNumeric($material->jwl_selling_price) ?? 0;
+            $detail['price'] = $material->jwl_buying_price ?? 0;
+            $detail['selling_price'] = $material->jwl_selling_price ?? 0;
             $detail['qty'] = 1;
             $detail['amt'] = $detail['qty'] * $detail['price'];
         }
@@ -407,7 +403,7 @@ class Detail extends BaseComponent
                     return;
                 }
 
-                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
+                $price = currencyToNumeric($material->jwl_selling_price_usd) * $this->currencyRate;
                 $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
                 $maxTrSeq++;
 

@@ -58,7 +58,7 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.selling_price' => ['required', 'numeric', 'gt:0'],
+        'input_details.*.selling_price' => ['required', 'gt:0'  ],
     ];
     protected function onPreRender()
     {
@@ -134,11 +134,8 @@ class Detail extends BaseComponent
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material->name;
                 $this->input_details[$key]['id'] = $detail->id;
-                $this->input_details[$key]['price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['qty'] = ceil(currencyToNumeric($detail->qty));
-                $this->input_details[$key]['amt'] = ceil(currencyToNumeric($detail->amt));
-                $this->input_details[$key]['selling_price'] = ceil(currencyToNumeric($detail->price));
-                $this->input_details[$key]['sub_total'] = rupiah(ceil(currencyToNumeric($detail->amt)));
+                $this->input_details[$key]['selling_price'] = ceil($detail->price);
+                $this->input_details[$key]['sub_total'] = rupiah(($detail->amt));
                 $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
             }
@@ -367,7 +364,6 @@ class Detail extends BaseComponent
                     continue;
                 }
 
-                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
                 $maxTrSeq++;
                 $newDetails[] = [
                     'qty_reff' => 1,
@@ -378,7 +374,7 @@ class Detail extends BaseComponent
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_seq' => $maxTrSeq,
-                    'price' => $price,
+                    'price' => $material->jwl_selling_price,
                 ];
                 $addedItems[] = $material->code;
             }
@@ -546,7 +542,6 @@ class Detail extends BaseComponent
                     return;
                 }
 
-                $price = currencyToNumeric($material->jwl_selling_price) * $this->currencyRate;
                 $maxTrSeq++;
 
                 $newDetails[] = [
@@ -558,7 +553,7 @@ class Detail extends BaseComponent
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_seq' => $maxTrSeq,
-                    'price' => $price,
+                    'price' => $material->jwl_selling_price,
                 ];
             }
             $this->input_details = array_merge($this->input_details, $newDetails);

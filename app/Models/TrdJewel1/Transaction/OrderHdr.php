@@ -242,7 +242,7 @@ class OrderHdr extends BaseModel
             }
             $this->save();
 
-            if ($createBillingDelivery == true) {
+            if ($createBillingDelivery) {
                 $delivHdr = DelivHdr::firstOrNew(['tr_id' => $this->tr_id, 'tr_type' => $delivTrType]);
                 $delivHdr->fillAndSanitize([
                     'tr_id' => $this->tr_id,
@@ -291,7 +291,7 @@ class OrderHdr extends BaseModel
                 }
                 $orderDtl->save();
 
-                if ($createBillingDelivery == true) {
+                if ($createBillingDelivery) {
                     $delivDtl = DelivDtl::firstOrNew([
                         'trhdr_id' => $orderDtl->trhdr_id,
                         'tr_seq' => $orderDtl->tr_seq,
