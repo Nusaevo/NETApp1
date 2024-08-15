@@ -14,10 +14,18 @@ use Illuminate\Support\Facades\DB;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $groups;
     public $rules = [
         'inputs.name' => 'required|string|min:1|max:100'
     ];
+
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
+    #endregion
+
+    #region Populate Data methods
 
     protected function onPreRender()
     {
@@ -47,14 +55,16 @@ class Detail extends BaseComponent
         $this->object = new ConfigUser();
     }
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-    ];
 
     public function render()
     {
         return view($this->renderRoute);
     }
+
+
+    #endregion
+
+    #region CRUD Methods
 
     public function onValidateAndSave()
     {
@@ -86,4 +96,12 @@ class Detail extends BaseComponent
             }
         }
     }
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
+
 }

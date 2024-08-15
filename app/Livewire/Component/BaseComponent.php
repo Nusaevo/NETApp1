@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
 use PDOException;
+
 class BaseComponent extends Component
 {
     public $object;
@@ -51,58 +52,85 @@ class BaseComponent extends Component
         app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
         $this->additionalParam = $additionalParam;
-        $this->appCode =  Session::get('app_code', '');
+        $this->appCode = Session::get('app_code', '');
 
-        $this->action = $action ? $action : null;
-        $this->objectId = $action ? $objectId : null;
-
-        // Decrypt action value if provided
-        if ($actionValue !== null) {
-            $this->actionValue = $actionValue;
-        } else {
-            $this->actionValue = $action ? decryptWithSessionKey($action) : null;
-        }
-
-        // Decrypt object ID value if provided
-        if ($objectIdValue !== null) {
-            $this->objectIdValue = $objectIdValue;
-        } else {
-            $this->objectIdValue = $objectId ? decryptWithSessionKey($objectId) : null;
-        }
+        $this->setActionAndObject($action, $objectId);
+        $this->setActionValue($action, $actionValue);
+        $this->setObjectIdValue($objectId, $objectIdValue);
 
         $this->onReset();
         $this->getRoute();
+
+        $this->handleRouteChange();
+        $this->checkPermissions();
+        $this->handleActionSpecificLogic();
+    }
+
+    private function setActionAndObject($action, $objectId)
+    {
+        $this->action = $action ? $action : null;
+        $this->objectId = $action ? $objectId : null;
+    }
+
+    private function setActionValue($action, $actionValue)
+    {
+        $this->actionValue = $actionValue !== null
+            ? $actionValue
+            : ($action ? decryptWithSessionKey($action) : null);
+    }
+
+    private function setObjectIdValue($objectId, $objectIdValue)
+    {
+        $this->objectIdValue = $objectIdValue !== null
+            ? $objectIdValue
+            : ($objectId ? decryptWithSessionKey($objectId) : null);
+    }
+
+    private function handleRouteChange()
+    {
         $initialRoute = $this->baseRoute;
         $this->onPreRender();
 
-        // Logic for handling special components like material components that have hardcoded route
         if ($initialRoute !== $this->baseRoute) {
             $this->getRoute();
         }
+    }
 
-        // Check for valid permissions
+    private function checkPermissions()
+    {
         if (!$this->hasValidPermissions()) {
             abort(403, 'You don\'t have access to this page.');
         }
+    }
 
-        // Handle specific actions like 'Edit', 'View', and 'Create'
+    private function handleActionSpecificLogic()
+    {
         if (in_array($this->actionValue, ['Edit', 'View'])) {
-            if($this->object) {
-                $this->status = Status::getStatusString($this->object->status_code);
-                $this->VersionNumber = $this->object->version_number;
-            }
+            $this->handleEditViewAction();
         } elseif ($this->actionValue === 'Create') {
-            if ($this->objectIdValue !== null) {
-                if($this->object) {
-                    $this->status = Status::getStatusString($this->object->status_code);
-                    $this->VersionNumber = $this->object->version_number;
-                }
-            }
+            $this->handleCreateAction();
         } else {
-            $this->route .=  $this->baseRoute.'.Detail';
-            $this->renderRoute .=  '.index';
+            $this->route .=  $this->baseRoute . '.Detail';
+            $this->renderRoute .= '.index';
         }
     }
+
+    private function handleEditViewAction()
+    {
+        if ($this->object) {
+            $this->status = Status::getStatusString($this->object->status_code);
+            $this->VersionNumber = $this->object->version_number;
+        }
+    }
+
+    private function handleCreateAction()
+    {
+        if ($this->objectIdValue !== null && $this->object) {
+            $this->status = Status::getStatusString($this->object->status_code);
+            $this->VersionNumber = $this->object->version_number;
+        }
+    }
+
 
     // Translate method
     public function getRoute()
@@ -162,7 +190,7 @@ class BaseComponent extends Component
     protected function validateForm()
     {
         try {
-            $this->validate($this->rules,[],$this->customValidationAttributes);
+            $this->validate($this->rules, [], $this->customValidationAttributes);
         } catch (Exception $e) {
             $this->notify('error', __('generic.error.create', ['message' => $e->getMessage()]));
             throw $e;
@@ -198,16 +226,15 @@ class BaseComponent extends Component
             // Log::info('Execution time for onValidateAndSave: ' . ($end - $start) . ' seconds');
 
             DB::commit();
-            if(!$this->isEditOrView())
-            {
+            if (!$this->isEditOrView()) {
                 $this->onReset();
             }
 
-            $this->notify('success',__('generic.string.save'));
+            $this->notify('success', __('generic.string.save'));
         } catch (Exception $e) {
             DB::rollBack();
-            if($this->isEditOrView()){
-                $this->VersionNumber --;
+            if ($this->isEditOrView()) {
+                $this->VersionNumber--;
             }
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
@@ -271,8 +298,8 @@ class BaseComponent extends Component
             $this->object->save();
             $this->notify('success', __($messageKey));
         } catch (Exception $e) {
-            $this->VersionNumber --;
-            $this->notify('error',__('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->VersionNumber--;
+            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         $this->dispatch('refresh');
@@ -285,7 +312,7 @@ class BaseComponent extends Component
             if ($this->object->version_number != $this->VersionNumber) {
                 throw new \Exception("This object has already been updated by another user. Please refresh the page and try again.");
             }
-            $this->VersionNumber ++;
+            $this->VersionNumber++;
         }
     }
 
@@ -298,7 +325,5 @@ class BaseComponent extends Component
         return redirect()->to($previousUrl);
     }
 
-    protected function onReset()
-    {
-    }
+    protected function onReset() {}
 }

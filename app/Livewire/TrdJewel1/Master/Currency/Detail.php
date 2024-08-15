@@ -12,10 +12,24 @@ use Exception;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $inputs = [];
     public $currencyData;
     public $currencies = [];
     protected $masterService;
+
+    public $rules = [
+        'inputs.curr_id' => 'required|integer',
+        'inputs.curr_rate' => 'required',
+        'inputs.goldprice_curr' => 'required',
+        'inputs.goldprice_basecurr' => 'required',
+    ];
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus'
+    ];
+    #endregion
+
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -44,21 +58,15 @@ class Detail extends BaseComponent
         $this->object = new GoldPriceLog();
     }
 
-    public $rules = [
-        'inputs.curr_id' => 'required|integer',
-        'inputs.curr_rate' => 'required',
-        'inputs.goldprice_curr' => 'required',
-        'inputs.goldprice_basecurr' => 'required',
-    ];
 
     public function render()
     {
         return view($this->renderRoute);
     }
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus'
-    ];
+    #endregion
+
+    #region CRUD Methods
 
     public function onValidateAndSave()
     {
@@ -77,6 +85,13 @@ class Detail extends BaseComponent
         $this->object->save();
     }
 
+    public function changeStatus()
+    {
+        $this->change();
+    }
+    #endregion
+
+    #region Component Events
 
     public function currencyChanged()
     {
@@ -88,8 +103,6 @@ class Detail extends BaseComponent
         $this->inputs['goldprice_curr'] = $goldPrice;
     }
 
-    public function changeStatus()
-    {
-        $this->change();
-    }
+    #endregion
+
 }

@@ -44,6 +44,7 @@ class KTBootstrap
         addHtmlAttribute('body', 'data-kt-name', getName());
     }
 
+    //Add custom assets
     public static function addAssets()
     {
     }

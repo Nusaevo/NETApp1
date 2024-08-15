@@ -25,6 +25,7 @@ use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $object_detail;
     public $inputs = [];
     public $input_details = [];
@@ -58,8 +59,20 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.selling_price' => ['required', 'gt:0'  ],
+        'input_details.*.selling_price' => ['required', 'gt:0'],
     ];
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+        'changeItem'  => 'changeItem',
+        'materialSaved' => 'materialSaved',
+        'delete' => 'delete',
+        'tagScanned' => 'tagScanned',
+        'saveCheck' => 'saveCheck',
+        'onPartnerChanged' => 'onPartnerChanged'
+    ];
+    #endregion
+
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -164,34 +177,35 @@ class Detail extends BaseComponent
         return view($this->renderRoute);
     }
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-        'changeItem'  => 'changeItem',
-        'materialSaved' => 'materialSaved',
-        'delete' => 'delete',
-        'tagScanned' => 'tagScanned',
-        'saveCheck' => 'saveCheck',
-        'onPartnerChanged' => 'onPartnerChanged'
-    ];
+    #endregion
 
-    public function onPartnerChanged()
+    #region CRUD Methods
+
+    public function delete()
     {
-        foreach ($this->input_details as $index => $detail) {
-            $material = Material::find($detail['matl_id']);
-            if ($material) {
-                if(!isNullOrEmptyNumber($material->partner_id) && $this->inputs['partner_id'] != $material->partner_id)
-                {
-                    $this->notify('error', $material->code.' adalah barang pesanan untuk customer lain, mohon cek kembali.');
-                    $this->addError("input_details.$index.matl_code",  $material->code.' adalah barang pesanan untuk customer lain, mohon cek kembali.');
-                    return;
-                }
+        try {
+            if ($this->object->isOrderCompleted()) {
+                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                return;
             }
-        }
-        $this->saveCheck();
-    }
 
-    public function OpenDialogBox(){
-        $this->dispatch('openMaterialDialog');
+            if (!$this->object->isOrderEnableToDelete()) {
+                $this->notify('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+                return;
+            }
+            //$this->updateVersionNumber();
+            if (isset($this->object->status_code)) {
+                $this->object->status_code =  Status::NONACTIVE;
+            }
+            $this->object->save();
+            $this->object->delete();
+            $messageKey = 'generic.string.disable';
+            $this->notify('success', __($messageKey));
+        } catch (Exception $e) {
+            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+        }
+
+        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
 
     protected function validateInputs()
@@ -262,38 +276,32 @@ class Detail extends BaseComponent
             ];
         }, $printRemarks);
     }
+    #endregion
+
+    #region Component Events
+    public function onPartnerChanged()
+    {
+        foreach ($this->input_details as $index => $detail) {
+            $material = Material::find($detail['matl_id']);
+            if ($material) {
+                if(!isNullOrEmptyNumber($material->partner_id) && $this->inputs['partner_id'] != $material->partner_id)
+                {
+                    $this->notify('error', $material->code.' adalah barang pesanan untuk customer lain, mohon cek kembali.');
+                    $this->addError("input_details.$index.matl_code",  $material->code.' adalah barang pesanan untuk customer lain, mohon cek kembali.');
+                    return;
+                }
+            }
+        }
+        $this->saveCheck();
+    }
+
+    public function OpenDialogBox(){
+        $this->dispatch('openMaterialDialog');
+    }
 
     public function Add()
     {
     }
-
-    public function delete()
-    {
-        try {
-            if ($this->object->isOrderCompleted()) {
-                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
-            }
-
-            if (!$this->object->isOrderEnableToDelete()) {
-                $this->notify('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
-                return;
-            }
-            //$this->updateVersionNumber();
-            if (isset($this->object->status_code)) {
-                $this->object->status_code =  Status::NONACTIVE;
-            }
-            $this->object->save();
-            $this->object->delete();
-            $messageKey = 'generic.string.disable';
-            $this->notify('success', __($messageKey));
-        } catch (Exception $e) {
-            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        }
-
-        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-    }
-
 
     public function deleteDetails($index)
     {
@@ -574,5 +582,6 @@ class Detail extends BaseComponent
             ]);
         }
     }
+    #endregion
 
 }

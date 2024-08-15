@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $trType = "SO";
     public $object_detail;
     public $inputs = [];
@@ -34,7 +35,15 @@ class Detail extends BaseComponent
     public $returnIds = [];
     public $searchTerm = '';
     public $selectedMaterials = [];
+    protected $listeners = [
+        'changeStatus' => 'changeStatus',
+        'materialSaved' => 'materialSaved',
+        'tagScanned' => 'tagScanned',
+        'delete' => 'delete'
+    ];
+    #endregion
 
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -94,20 +103,9 @@ class Detail extends BaseComponent
         return view($this->renderRoute);
     }
 
-    protected $listeners = [
-        'changeStatus' => 'changeStatus',
-        'materialSaved' => 'materialSaved',
-        'tagScanned' => 'tagScanned',
-        'delete' => 'delete'
-    ];
+    #endregion
 
-    public function OpenDialogBox(){
-        if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',__('generic.string.currency_needed'));
-            return;
-        }
-        $this->dispatch('openMaterialDialog');
-    }
+    #region CRUD Methods
 
     public function onValidateAndSave()
     {
@@ -120,6 +118,18 @@ class Detail extends BaseComponent
             $this->object_detail[$index]->fillAndSanitize($data);
             $this->object_detail[$index]->save();
         }
+    }
+
+    #endregion
+
+    #region Component Events
+
+    public function OpenDialogBox(){
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning',__('generic.string.currency_needed'));
+            return;
+        }
+        $this->dispatch('openMaterialDialog');
     }
 
     public function Checkout()
@@ -438,4 +448,7 @@ class Detail extends BaseComponent
             ]);
         }
     }
+    #endregion
+
+
 }

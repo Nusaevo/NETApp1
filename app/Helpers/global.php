@@ -44,7 +44,7 @@ if (!function_exists('isNullOrEmptyString')) {
      * @return void
      */
     function isNullOrEmptyString($str) {
-        return (!isset($str) || trim($str) === '');
+        return !isset($str) || trim($str) === '';
     }
 }
 
@@ -56,7 +56,7 @@ if (!function_exists('isNullOrEmptyNumber')) {
      * @return bool
      */
     function isNullOrEmptyNumber($num) {
-        return (!isset($num) || $num === null || $num === '' || $num == 0);
+        return !isset($num) || $num === null || $num === '' || $num == 0;
     }
 }
 

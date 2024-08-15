@@ -16,6 +16,7 @@ use Exception;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $object_detail;
     public $inputs = [];
     public $input_details = [];
@@ -48,7 +49,16 @@ class Detail extends BaseComponent
         // 'input_details.*.price' => 'required',
         // 'input_details.*.qty' => 'required',
     ];
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+        'changeItem'  => 'changeItem',
+        'materialSaved' => 'materialSaved',
+        'delete' => 'delete',
+        'saveCheck' => 'saveCheck',
+    ];
+    #endregion
 
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -79,7 +89,6 @@ class Detail extends BaseComponent
             $this->isPanelEnabled = "false";
         }
     }
-
     protected function retrieveMaterials()
     {
         if ($this->object) {
@@ -101,11 +110,6 @@ class Detail extends BaseComponent
         }
     }
 
-    public function render()
-    {
-        return view($this->renderRoute);
-    }
-
 
     public function onReset()
     {
@@ -123,39 +127,13 @@ class Detail extends BaseComponent
         $this->inputs['partner_id'] = 0;
     }
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-        'changeItem'  => 'changeItem',
-        'materialSaved' => 'materialSaved',
-        'delete' => 'delete',
-        'saveCheck' => 'saveCheck',
-    ];
-
-    public function OpenDialogBox(){
-        if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',__('generic.string.currency_needed'));
-            return;
-        }
-        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Supplier"]));
-            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Supplier"]));
-            return;
-        }
-        $this->dispatch('openMaterialDialog');
-    }
-
-
-    public function changePrice($id, $value)
+    public function render()
     {
-        if (isset($this->input_details[$id]['qty'])) {
-            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
-            $this->input_details[$id]['amt'] = numberFormat($total) ;
-            $this->input_details[$id]['price'] = $total;
-            $this->countTotalAmount();
-            $this->SaveWithoutNotification();
-        }
+        return view($this->renderRoute);
     }
+    #endregion
 
+    #region CRUD Methods
 
     public function onValidateAndSave()
     {
@@ -195,43 +173,6 @@ class Detail extends BaseComponent
             ]);
         }
         $this->retrieveMaterials();
-    }
-
-    public function addDetails($material_id = null)
-    {
-        $this->showModal = true;
-        $this->dispatch('toggle-modal');
-        $detail = [
-            'tr_type' => $this->trType,
-        ];
-        $material = Material::find($material_id);
-        if ($material) {
-            $detail['matl_id'] = $material->id;
-            $detail['matl_code'] = $material->code;
-            $detail['matl_descr'] = $material->descr ?? "";
-            $detail['name'] = $material->name ?? "";
-            $detail['matl_uom'] = $material->MatlUom[0]->id;
-            $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
-            $detail['barcode'] = $material->MatlUom[0]->barcode;
-            $detail['price'] = $material->jwl_buying_price ?? 0;
-            $detail['selling_price'] = $material->jwl_selling_price ?? 0;
-            $detail['isOrderedMaterial'] = $material->isOrderedMaterial();
-            $detail['qty'] = 1;
-            $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
-            $maxTrSeq++;
-            $detail['tr_seq'] = $maxTrSeq;
-        }
-        array_push($this->input_details, $detail);
-        $newDetail = end($this->input_details);
-        $this->newItems[] = $newDetail;
-        $this->countTotalAmount();
-    }
-
-    public function Add()
-    {
-        // $this->dispatch('materialSaved', 2);
-        // $this->dispatch('materialSaved', 3);
-        // $this->dispatch('materialSaved', 4);
     }
 
     public function materialSaved($material_id)
@@ -276,12 +217,6 @@ class Detail extends BaseComponent
         $this->countTotalAmount();
     }
 
-    public function saveCheck()
-    {
-        if (!$this->object->isNew())
-            $this->SaveWithoutNotification();
-    }
-
 
     public function delete()
     {
@@ -310,6 +245,76 @@ class Detail extends BaseComponent
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
+    #endregion
+
+    #region Component Events
+
+    public function saveCheck()
+    {
+        if (!$this->object->isNew())
+            $this->SaveWithoutNotification();
+    }
+
+    public function OpenDialogBox(){
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning',__('generic.string.currency_needed'));
+            return;
+        }
+        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
+            $this->notify('warning', __('generic.error.field_required', ['field' => "Supplier"]));
+            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Supplier"]));
+            return;
+        }
+        $this->dispatch('openMaterialDialog');
+    }
+
+
+    public function changePrice($id, $value)
+    {
+        if (isset($this->input_details[$id]['qty'])) {
+            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
+            $this->input_details[$id]['amt'] = numberFormat($total) ;
+            $this->input_details[$id]['price'] = $total;
+            $this->countTotalAmount();
+            $this->SaveWithoutNotification();
+        }
+    }
+    public function addDetails($material_id = null)
+    {
+        $this->showModal = true;
+        $this->dispatch('toggle-modal');
+        $detail = [
+            'tr_type' => $this->trType,
+        ];
+        $material = Material::find($material_id);
+        if ($material) {
+            $detail['matl_id'] = $material->id;
+            $detail['matl_code'] = $material->code;
+            $detail['matl_descr'] = $material->descr ?? "";
+            $detail['name'] = $material->name ?? "";
+            $detail['matl_uom'] = $material->MatlUom[0]->id;
+            $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
+            $detail['barcode'] = $material->MatlUom[0]->barcode;
+            $detail['price'] = $material->jwl_buying_price ?? 0;
+            $detail['selling_price'] = $material->jwl_selling_price ?? 0;
+            $detail['isOrderedMaterial'] = $material->isOrderedMaterial();
+            $detail['qty'] = 1;
+            $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
+            $maxTrSeq++;
+            $detail['tr_seq'] = $maxTrSeq;
+        }
+        array_push($this->input_details, $detail);
+        $newDetail = end($this->input_details);
+        $this->newItems[] = $newDetail;
+        $this->countTotalAmount();
+    }
+
+    public function Add()
+    {
+        // $this->dispatch('materialSaved', 2);
+        // $this->dispatch('materialSaved', 3);
+        // $this->dispatch('materialSaved', 4);
+    }
 
     public function countTotalAmount()
     {
@@ -321,4 +326,8 @@ class Detail extends BaseComponent
         }
         $this->inputs['amt'] = $this->total_amount;
     }
+    #endregion
+
+
+
 }

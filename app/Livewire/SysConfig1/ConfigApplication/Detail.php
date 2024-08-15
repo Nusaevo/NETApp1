@@ -7,10 +7,9 @@ use App\Models\SysConfig1\ConfigAppl;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $inputs = [];
     public $group_codes;
-
-
     public $rules = [
         'inputs.code' => 'required|string|min:1|max:100',
         'inputs.name' => 'required|string|min:1|max:100',
@@ -18,6 +17,13 @@ class Detail extends BaseComponent
         'inputs.descr' => 'string|min:1|max:500',
     ];
 
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
+
+    #endregion
+
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -41,14 +47,19 @@ class Detail extends BaseComponent
         $this->object = new ConfigAppl();
     }
 
+
     public function render()
     {
         return view($this->renderRoute);
     }
+    #endregion
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-    ];
+    #region CRUD Methods
+
+    public function changeStatus()
+    {
+        $this->change();
+    }
 
     public function onValidateAndSave()
     {
@@ -56,8 +67,9 @@ class Detail extends BaseComponent
         $this->object->save();
     }
 
-    public function changeStatus()
-    {
-        $this->change();
-    }
+    #endregion
+
+    #region Components Events
+
+    #endregion
 }

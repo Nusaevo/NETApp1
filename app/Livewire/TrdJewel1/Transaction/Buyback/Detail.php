@@ -28,6 +28,7 @@ use App\Services\TrdJewel1\Master\MasterService;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $object_detail;
     public $inputs = [];
     public $input_details = [];
@@ -61,7 +62,16 @@ class Detail extends BaseComponent
         'inputs.tr_date' => 'required',
         'input_details.*.price' => ['required', 'gt:0'],
     ];
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+        'changeItem'  => 'changeItem',
+        'materialSaved' => 'materialSaved',
+        'delete' => 'delete',
+        'saveCheck' => 'saveCheck'
+    ];
+    #endregion
 
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -133,28 +143,9 @@ class Detail extends BaseComponent
         return view($this->renderRoute);
     }
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-        'changeItem'  => 'changeItem',
-        'materialSaved' => 'materialSaved',
-        'delete' => 'delete',
-        'saveCheck' => 'saveCheck'
-    ];
+    #endregion
 
-    public function OpenDialogBox(){
-        if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',__('generic.string.currency_needed'));
-            return;
-        }
-        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
-            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Customer"]));
-            return;
-        }
-        $this->searchMaterials();
-        $this->dispatch('openMaterialDialog');
-    }
-
+    #region CRUD Methods
     public function onValidateAndSave()
     {
         if($this->actionValue == 'Edit')
@@ -244,90 +235,10 @@ class Detail extends BaseComponent
     }
 
 
-    public function deleteDetails($index)
-    {
-        if (isset($this->input_details[$index]['id'])) {
-            $deletedItemId = $this->input_details[$index]['id'];
-            $returnDtl = ReturnDtl::withTrashed()->find($deletedItemId);
-            if ($returnDtl) {
-                $returnDtl->forceDelete();
-            }
-        }
-        unset($this->input_details[$index]);
-        $this->input_details = array_values($this->input_details);
-        $this->countTotalAmount();
-    }
 
-    public function changePrice($id, $value)
-    {
-        if (isset($this->input_details[$id]['qty'])) {
-            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
-            $this->input_details[$id]['amt'] = numberFormat($total) ;
-            $this->input_details[$id]['price'] = $total;
-            $this->countTotalAmount();
-            $this->SaveWithoutNotification();
-        }
-    }
+    #endregion
 
-    public function countTotalAmount()
-    {
-        $this->total_amount = 0;
-        foreach ($this->input_details as $item_id => $input_detail) {
-            if (isset($input_detail['price'])) {
-                $this->total_amount += $input_detail['price'];
-            }
-        }
-        $this->inputs['amt'] = $this->total_amount;
-    }
-
-    public function searchMaterials()
-    {
-        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-        if ($this->currencyRate == 0) {
-            $this->notify('warning', __('generic.string.currency_needed'));
-            return;
-        }
-
-        $partnerId = $this->inputs['partner_id'];
-        if (empty($partnerId)) {
-            $this->notify('warning', 'Partner ID is required');
-            return;
-        }
-
-        $searchTermUpper = strtoupper($this->searchTerm ?? '');
-
-        $query = DB::table('order_dtls')
-            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
-            ->join('materials', 'order_dtls.matl_id', '=', 'materials.id')
-            ->select(
-                'order_dtls.id as orderDtlId',
-                'order_dtls.price',
-                'order_hdrs.tr_id',
-                'order_hdrs.id as orderHdrId',
-                'materials.code as materialCode',
-                'materials.name as materialName',
-                'materials.descr as materialDescr'
-            )
-            ->distinct()
-            ->where('order_hdrs.partner_id', $partnerId)
-            ->where('order_hdrs.tr_type', 'SO')
-            ->where('order_dtls.tr_type', 'SO')
-            ->where('order_dtls.qty_reff','>', 0)
-            ->whereNull('order_hdrs.deleted_at')
-            ->whereNull('order_dtls.deleted_at');
-
-        if ($searchTermUpper) {
-            $query->where(function($subQuery) use ($searchTermUpper) {
-                $subQuery->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                    ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
-                    ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
-            });
-        }
-
-        $this->orderDtls = $query->get()->map(function ($item) {
-            return (array) $item;
-        })->toArray();
-    }
+    #region Component Events
 
     public function saveCheck()
     {
@@ -335,6 +246,19 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
     }
 
+    public function OpenDialogBox(){
+        if ($this->inputs['curr_rate'] == 0) {
+            $this->notify('warning',__('generic.string.currency_needed'));
+            return;
+        }
+        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
+            $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
+            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Customer"]));
+            return;
+        }
+        $this->searchMaterials();
+        $this->dispatch('openMaterialDialog');
+    }
     public function addSelectedToCart()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -425,5 +349,6 @@ class Detail extends BaseComponent
             ]);
         }
     }
+    #endregion
 
 }

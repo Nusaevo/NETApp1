@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class Detail extends BaseComponent
 {
+
+    #region Constant Variables
     public $inputs = [];
     public $applications;
     public $status = '';
@@ -28,6 +30,12 @@ class Detail extends BaseComponent
         // 'inputs.code' => [ 'required'],
     ];
 
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
+    #endregion
+
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -61,11 +69,9 @@ class Detail extends BaseComponent
     {
         return view($this->renderRoute);
     }
+    #endregion
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-    ];
-
+    #region CRUD Methods
     public function onValidateAndSave()
     {
         $application = ConfigAppl::find($this->inputs['app_id']);
@@ -78,4 +84,10 @@ class Detail extends BaseComponent
     {
         $this->change();
     }
+    #endregion
+
+    #region Components Events
+    #endregion
+
+
 }

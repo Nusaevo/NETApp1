@@ -11,6 +11,7 @@ use Exception;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
     public $inputs = [];
     public $applications;
     protected $configService;
@@ -19,6 +20,14 @@ class Detail extends BaseComponent
         'inputs.app_id' => 'required',
         'inputs.code' => 'required',
     ];
+
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
+
+    #endregion
+
+    #region Populate Data methods
 
     protected function onPreRender()
     {
@@ -54,9 +63,9 @@ class Detail extends BaseComponent
         return view($this->renderRoute);
     }
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-    ];
+    #endregion
+
+    #region CRUD Methods
 
     public function onValidateAndSave()
     {
@@ -70,4 +79,11 @@ class Detail extends BaseComponent
     {
         $this->change();
     }
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
 }

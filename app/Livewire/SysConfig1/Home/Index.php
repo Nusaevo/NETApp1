@@ -7,6 +7,12 @@ use App\Livewire\Component\BaseComponent;
 use Livewire\Attributes\Layout;
 class Index extends BaseComponent
 {
+    #region Constant Variables
+
+
+    #endregion
+
+    #region Populate Data methods
     protected function onPreRender()
     {
         $this->bypassPermissions = true;
@@ -16,4 +22,17 @@ class Index extends BaseComponent
     {
         return view('livewire.index');
     }
+
+    #endregion
+
+    #region CRUD Methods
+
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
+
 }

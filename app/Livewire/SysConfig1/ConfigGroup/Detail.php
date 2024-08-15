@@ -16,6 +16,8 @@ use App\Enums\Status;
 
 class Detail extends BaseComponent
 {
+
+    #region Constant Variables
     public $inputs = [];
     public $applications;
     public $users;
@@ -35,6 +37,16 @@ class Detail extends BaseComponent
         //     Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
         // ],
     ];
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+        'selectedMenus' => 'selectedMenus',
+        'selectedUserIds' => 'selectedUserIds'
+    ];
+
+
+    #endregion
+
+    #region Populate Data methods
 
     protected function onPreRender()
     {
@@ -65,37 +77,11 @@ class Detail extends BaseComponent
         $this->object = new ConfigGroup();
     }
 
-    public function applicationChanged()
-    {
-        $this->selectedMenus = [];
-        $this->dispatch('applicationChanged', $this->inputs['app_id'], $this->selectedMenus);
-    }
-
-    // public function refreshUser()
-    // {
-    //     $usersData = ConfigUser::GetActiveData();
-
-    //     $this->users = $usersData->map(function ($user) {
-    //         return [
-    //             'label' => $user->id . ' - ' . $user->name,
-    //             'value' => $user->id,
-    //         ];
-    //     })->toArray();
-
-    //     $this->inputs['user_id'] = null;
-    // }
 
     public function render()
     {
         return view($this->renderRoute);
     }
-
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-        'selectedMenus' => 'selectedMenus',
-        'selectedUserIds' => 'selectedUserIds'
-    ];
-
     public function populateSelectedRights()
     {
         if (!is_null($this->object->id)) {
@@ -126,15 +112,9 @@ class Detail extends BaseComponent
         }
     }
 
-    public function selectedMenus($selectedMenus)
-    {
-        $this->selectedMenus = $selectedMenus;
-    }
+    #endregion
 
-    public function selectedUserIds($selectedUserIds)
-    {
-        $this->selectedUserIds = $selectedUserIds;
-    }
+    #region CRUD Methods
 
     public function validateApplicationUsers()
     {
@@ -199,4 +179,31 @@ class Detail extends BaseComponent
     {
         $this->change();
     }
+
+    #endregion
+
+    #region Components Events
+
+    public function applicationChanged()
+    {
+        $this->selectedMenus = [];
+        $this->dispatch('applicationChanged', $this->inputs['app_id'], $this->selectedMenus);
+    }
+
+    public function selectedMenus($selectedMenus)
+    {
+        $this->selectedMenus = $selectedMenus;
+    }
+
+    public function selectedUserIds($selectedUserIds)
+    {
+        $this->selectedUserIds = $selectedUserIds;
+    }
+
+    #endregion
+
+
+
+
+
 }

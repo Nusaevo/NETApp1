@@ -9,6 +9,8 @@ use App\Services\SysConfig1\ConfigService;
 
 class Detail extends BaseComponent
 {
+
+    #region Constant Variables
     public $inputs = [];
     public $applications;
     protected $configService;
@@ -19,6 +21,14 @@ class Detail extends BaseComponent
         'inputs.menu_caption' => 'required|string|min:1|max:100',
         'inputs.menu_link' => 'required|string|min:1|max:100',
     ];
+
+    protected $listeners = [
+        'changeStatus'  => 'changeStatus',
+    ];
+
+    #endregion
+
+    #region Populate Data methods
 
     protected function onPreRender()
     {
@@ -54,9 +64,9 @@ class Detail extends BaseComponent
         return view($this->renderRoute);
     }
 
-    protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-    ];
+    #endregion
+
+    #region CRUD Methods
 
     public function onValidateAndSave()
     {
@@ -70,4 +80,12 @@ class Detail extends BaseComponent
     {
         $this->change();
     }
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
+
 }

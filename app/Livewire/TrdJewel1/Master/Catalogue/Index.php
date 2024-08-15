@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
 class Index extends BaseComponent
 {
     use WithPagination;
-
+    #region Constant Variables
     public $currencyRate;
 
     public $inputs = [
@@ -27,6 +27,9 @@ class Index extends BaseComponent
         'code' => ''
     ];
 
+    #endregion
+
+    #region Populate Data methods
     public function render()
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
@@ -58,6 +61,15 @@ class Index extends BaseComponent
     protected function onPreRender()
     {
     }
+
+    #endregion
+
+    #region CRUD Methods
+
+
+    #endregion
+
+    #region Component Events
 
     public function View($id)
     {
@@ -105,7 +117,6 @@ class Index extends BaseComponent
                 ]);
                 return;
             }
-            $price = $material->jwl_selling_price;
             // Get the cartHdr by user code and tr_type = cart
             $cartHdr = CartHdr::where('created_by', $usercode)
                 ->where('tr_type', 'C')
@@ -172,4 +183,10 @@ class Index extends BaseComponent
             ]);
         }
     }
+    #endregion
+
+
+
+
+
 }

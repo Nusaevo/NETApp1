@@ -7,26 +7,27 @@ use App\Models\TrdJewel1\Master\Material;
 
 class PrintPdf extends BaseComponent
 {
+    #region Constant Variables
+
     public $object;
 
+    #endregion
+
+    #region Populate Data methods
     protected function onPreRender()
     {
         $additionalParams = explode(';', urldecode($this->additionalParam));
         $this->object = Material::withTrashed()->whereIn('id', $additionalParams)->first();
     }
 
-    protected function onLoadForEdit()
-    {
-
-    }
-
     public function render()
     {
         return view($this->renderRoute);
     }
-    protected function onPopulateDropdowns()
-    {
-    }
+
+    #endregion
+
+    #region CRUD Methods
 
     protected function onReset()
     {
@@ -35,4 +36,12 @@ class PrintPdf extends BaseComponent
     public function onValidateAndSave()
     {
     }
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
+
 }

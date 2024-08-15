@@ -10,9 +10,15 @@ use App\Services\TrdJewel1\Master\MasterService;
 
 class PrintPdf extends BaseComponent
 {
+    #region Constant Variables
     public $printSettings = [];
     public $printRemarks = [];
     public $isShowPrice = false;
+
+    #endregion
+
+    #region Populate Data methods
+
     public function onPreRender()
     {
         $masterService = new MasterService();
@@ -23,7 +29,7 @@ class PrintPdf extends BaseComponent
         $this->printSettings = json_decode($this->object->print_settings, true) ?? $this->printSettings;
         if ($this->object->print_settings) {
             $savedSettings = json_decode($this->object->print_settings, true);
-            foreach ($this->printSettings as &$setting) {
+            foreach ($this->printSettings as $setting) {
                 foreach ($savedSettings as $savedSetting) {
                     if ($setting['code'] === $savedSetting['code'] && $setting['value'] === $savedSetting['value']) {
                         $setting['checked'] = $savedSetting['checked'];
@@ -36,7 +42,7 @@ class PrintPdf extends BaseComponent
 
         if ($this->object->print_remarks) {
             $savedRemarks = json_decode($this->object->print_remarks, true);
-            foreach ($this->printRemarks as &$remark) {
+            foreach ($this->printRemarks as $remark) {
                 foreach ($savedRemarks as $savedRemark) {
                     if ($remark['code'] === $savedRemark['code'] && $remark['value'] === $savedRemark['value']) {
                         $remark['checked'] = $savedRemark['checked'];
@@ -61,4 +67,18 @@ class PrintPdf extends BaseComponent
     {
         return view($this->renderRoute);
     }
+
+    #endregion
+
+    #region CRUD Methods
+
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
+
+
 }

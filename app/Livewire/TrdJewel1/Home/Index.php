@@ -7,11 +7,16 @@ use Carbon\Carbon;  // Carbon for handling dates
 
 class Index extends BaseComponent
 {
+    #region Constant Variables
+
     public $currencyRates = [];
     public $goldPrices = [];
     public $todayCurrencyRate;
     public $todayGoldPrice;
 
+    #endregion
+
+    #region Populate Data methods
 
     protected function onPreRender()
     {
@@ -59,4 +64,19 @@ class Index extends BaseComponent
         ]);
 
     }
+
+    #endregion
+
+    #region CRUD Methods
+
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
+
+
+
 }

@@ -7,6 +7,13 @@ use Livewire\Component;
 
 class Detail extends BaseComponent
 {
+    #region Constant Variables
+
+
+    #endregion
+
+    #region Populate Data methods
+
     protected function onPreRender()
     {
 
@@ -15,4 +22,16 @@ class Detail extends BaseComponent
     {
         return view($this->renderRoute);
     }
+
+    #endregion
+
+    #region CRUD Methods
+
+
+    #endregion
+
+    #region Component Events
+
+
+    #endregion
 }
