@@ -26,6 +26,13 @@ class UserDataTable extends BaseDataTableComponent
         $this->selectedRows = $selectedUserIds;
     }
 
+    public function builder(): Builder
+    {
+        return ConfigUser::query()
+            ->orderBy('code')
+            ->orderBy('name');
+    }
+
     public function performUpdateActions()
     {
         $this->dispatch('selectedUserIds', $this->selectedRows);

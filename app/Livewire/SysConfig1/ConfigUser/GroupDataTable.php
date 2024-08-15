@@ -32,7 +32,9 @@ class GroupDataTable extends BaseDataTableComponent
             ->whereHas('configGroupUser', function ($query) {
                 $query->where('user_id', $this->userID);
             })
-            ->orderBy('code');
+            ->join('config_appls', 'config_groups.app_id', '=', 'config_appls.id')
+            ->orderBy('config_appls.name', 'ASC')
+            ->orderBy('config_groups.descr', 'ASC');
     }
 
 
