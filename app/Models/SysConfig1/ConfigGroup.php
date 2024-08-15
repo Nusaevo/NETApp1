@@ -39,6 +39,10 @@ class ConfigGroup extends BaseModel
         return $this->hasMany(ConfigRight::class, 'group_id', 'id');
     }
 
+    public function ConfigGroupUser()
+    {
+        return $this->hasMany(ConfigGroupUser::class, 'group_id', 'id');
+    }
     // public function ConfigUser()
     // {
     //     return $this->belongsTo(ConfigUser::class, 'user_id', 'id');

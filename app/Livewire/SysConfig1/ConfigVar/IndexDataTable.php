@@ -7,10 +7,8 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\SysConfig1\ConfigVar;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Illuminate\Support\Facades\Crypt;
-use App\Models\SysConfig1\ConfigRight;
-use Exception;
-use App\Enums\Status;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -36,8 +34,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Application", "ConfigAppl.name")
-                ->searchable()
+            Column::make("Application", "id")
+                ->format(function ($value, $row) {
+                    if ($row->app_id) {
+                        return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->app_id)
+                        ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
+                    } else {
+                        return '';
+                    }
+                })
+                ->html()
                 ->sortable(),
             Column::make("Var Code", "code")
                 ->searchable()
@@ -49,10 +57,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable(),
             Column::make("Default Value", "default_value")
-                 ->searchable()
-                 ->sortable(),
+                ->searchable()
+                ->sortable(),
             Column::make('Created Date', 'created_at')
-                 ->sortable(),
+                ->sortable(),
             Column::make('Actions', 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -72,6 +80,33 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('Aplikasi', 'application')
+                ->config([
+                    'placeholder' => 'Cari Kode/Nama Aplikasi',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereHas('configAppl', function ($query) use ($value) {
+                        $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
+                            ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                    });
+                })->setWireLive(),
+            TextFilter::make('Var Code', 'code')
+                ->config([
+                    'placeholder' => 'Cari Var code',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+                })->setWireLive(),
+            TextFilter::make('Var Group', 'var_group')
+                ->config([
+                    'placeholder' => 'Cari Var Group',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(var_group)'), 'like', '%' . strtoupper($value) . '%');
+                })->setWireLive(),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

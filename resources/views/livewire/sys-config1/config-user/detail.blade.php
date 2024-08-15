@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card title="{{ $actionValue }} {!! $menuName !!}" status="{{ $status }}">
-        <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
+        <x-ui-tab-view id="myTab" tabs="general,groups"> </x-ui-tab-view>
 
 
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
@@ -26,6 +26,11 @@
                         @endif
                         <x-ui-text-field label="Confirm New Password" model="inputs.confirmnewpassword" type="password" :action="$actionValue" placeHolder="Enter same Password" visible="true" />
                     </div>
+                </x-ui-card>
+            </div>
+            <div class="tab-pane fade show" id="groups" role="tabpanel" aria-labelledby="groups-tab">
+                <x-ui-card>
+                    @livewire('sys-config1.config-user.group-data-table', ['userID' => $objectIdValue])
                 </x-ui-card>
             </div>
             {{-- <div class="tab-pane fade" id="credential" role="tabpanel" aria-labelledby="credential-tab">

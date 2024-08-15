@@ -84,9 +84,20 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('Aplikasi', 'application')
+            ->config([
+                'placeholder' => 'Cari Kode/Nama Aplikasi',
+                'maxlength' => '50',
+            ])
+            ->filter(function (Builder $builder, string $value) {
+                $builder->whereHas('configAppl', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
+                          ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            })->setWireLive(),
             TextFilter::make('Kode', 'code')
                 ->config([
-                    'placeholder' => 'Cari Kode',
+                    'placeholder' => 'Cari Kode Group',
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
@@ -94,7 +105,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })->setWireLive(),
             TextFilter::make('Nama', 'name')
                 ->config([
-                    'placeholder' => 'Cari Nama',
+                    'placeholder' => 'Cari Nama Group',
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {

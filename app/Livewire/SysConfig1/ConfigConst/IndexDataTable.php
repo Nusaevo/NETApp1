@@ -90,28 +90,17 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Kode Aplikasi', 'appl_code')
-                ->config([
-                    'placeholder' => 'Cari Kode Aplikasi',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $value = strtoupper($value);
-                    $builder->whereHas('configAppl', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(code)'), 'like', '%' . $value . '%');
-                    });
-                })->setWireLive(),
-            TextFilter::make('Nama Aplikasi', 'appl_name')
-                ->config([
-                    'placeholder' => 'Cari Nama Aplikasi',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $value = strtoupper($value);
-                    $builder->whereHas('configAppl', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . $value . '%');
-                    });
-                })->setWireLive(),
+            TextFilter::make('Aplikasi', 'application')
+            ->config([
+                'placeholder' => 'Cari Kode/Nama Aplikasi',
+                'maxlength' => '50',
+            ])
+            ->filter(function (Builder $builder, string $value) {
+                $builder->whereHas('configAppl', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
+                          ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            })->setWireLive(),
             TextFilter::make('Group', 'const_group')
                 ->config([
                     'placeholder' => 'Cari Group',
