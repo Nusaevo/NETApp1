@@ -67,13 +67,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('LoginID', 'loginID')
+            TextFilter::make('LoginID', 'code')
                 ->config([
                     'placeholder' => 'Cari User LoginID',
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(loginID)'), 'like', '%' . strtoupper($value) . '%');
+                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
                 })->setWireLive(),
             TextFilter::make('Email', 'email')
                 ->config([
