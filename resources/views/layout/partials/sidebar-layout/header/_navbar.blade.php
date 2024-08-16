@@ -47,6 +47,7 @@
     @livewire('component.cart-component')
     @endif
     @endif
+    @livewire('component.search-menu-component')
     <div class="app-navbar-item ms-1 ms-md-4" id="kt_header_user_menu_toggle">
 
         <!--begin::Menu wrapper-->
