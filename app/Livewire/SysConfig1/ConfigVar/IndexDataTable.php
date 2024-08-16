@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Support\Facades\DB;
+use App\Services\SysConfig1\ConfigService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigVar::class;
-
+    protected $configService ;
+    protected $accessible_appids ;
 
 
     public function mount(): void
@@ -22,12 +24,15 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setFilter('Status', 0);
         $this->setSearchVisibilityStatus(false);
+        $this->configService = new ConfigService();
+        $this->accessible_appids = $this->configService->getAppIds();
     }
 
     public function builder(): Builder
     {
         return ConfigVar::query()
             ->withTrashed()
+            ->whereIn('app_id', $this->accessible_appids)
             ->select();
     }
 

@@ -4,13 +4,9 @@ namespace App\Livewire\SysConfig1\ConfigUser;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigUserInfo;
-use App\Models\SysConfig1\ConfigGroup;
-use Illuminate\Validation\Rule;
-use App\Models\SysConfig1\ConfigAppl;
-use Illuminate\Support\Facades\Crypt;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Detail extends BaseComponent
 {

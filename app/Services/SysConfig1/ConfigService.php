@@ -9,9 +9,15 @@ use Illuminate\Support\Facades\Auth;
 
 class ConfigService
 {
-    public function getActiveApplications()
+    public function getActiveApplications($accessRequired = false)
     {
         $applicationsData = ConfigAppl::GetActiveData();
+
+        if ($accessRequired) {
+            $accessibleAppIds = $this->getAppIds();
+            $applicationsData = $applicationsData->whereIn('id', $accessibleAppIds);
+        }
+
         return $applicationsData->map(function ($data) {
             return [
                 'label' => $data->code . ' - ' . $data->name,

@@ -43,7 +43,7 @@ class Detail extends BaseComponent
         ];
 
         $this->configService = new ConfigService();
-        $this->applications = $this->configService->getActiveApplications();
+        $this->applications = $this->configService->getActiveApplications(true);
         if($this->isEditOrView())
         {
             $this->object = ConfigSnum::withTrashed()->find($this->objectIdValue);

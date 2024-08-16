@@ -7,25 +7,57 @@
         <style>
             body {}
 
-            [data-bs-theme="dark"] body {
-                background-image: url('{{ image('auth/bg7-dark.jpg') }}');
+            [data-bs-theme="dark"] body::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url('{{ asset('customs/images/background_error.jpg') }}');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                opacity: 0.3; /* Menambah opacity pada background image */
+                z-index: -1; /* Pastikan overlay berada di belakang konten */
             }
 
+            body::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url('{{ asset('customs/images/background_error.jpg') }}');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                opacity: 0.3; /* Menambah opacity pada background image */
+                z-index: -1; /* Pastikan overlay berada di belakang konten */
+            }
 
             body {
+                position: relative;
                 font-family: 'Arial', sans-serif;
                 color: #333;
-                background-image: url('{{ image('auth/bg7.jpg') }}');
                 text-align: center;
                 padding: 50px;
+                overflow: hidden; /* Untuk menghindari masalah layout */
             }
 
             h1 {
-                color: #e74c3c;
+                color: #e74c3c; /* Warna merah */
+                font-size: 36px; /* Ukuran font lebih besar */
+                font-weight: bold; /* Tebal */
+                margin-bottom: 20px;
+                text-transform: uppercase; /* Huruf kapital semua */
             }
 
             p {
                 font-size: 18px;
+                color: #e74c3c; /* Warna merah untuk pesan */
+                font-weight: bold;
             }
 
             a {
@@ -37,6 +69,7 @@
                 border-radius: 5px;
                 font-weight: bold;
                 transition: background-color 0.3s ease;
+                margin: 5px;
             }
 
             a:hover {
@@ -53,6 +86,8 @@
             }
 
         </style>
+
+
         <!--end::Page bg image-->
 
         <!--begin::Title-->

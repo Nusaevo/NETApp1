@@ -103,13 +103,13 @@ class IndexDataTable extends BaseDataTableComponent
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
                 })->setWireLive(),
-            TextFilter::make('Nama', 'name')
+            TextFilter::make('Nama', 'descr')
                 ->config([
                     'placeholder' => 'Cari Nama Group',
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                    $builder->where(DB::raw('UPPER(descr)'), 'like', '%' . strtoupper($value) . '%');
                 })->setWireLive(),
             SelectFilter::make('Status', 'Status')
                 ->options([

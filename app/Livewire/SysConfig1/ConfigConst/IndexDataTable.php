@@ -11,10 +11,12 @@ use App\Models\SysConfig1\ConfigRight;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
-
+use App\Services\SysConfig1\ConfigService;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigConst::class;
+    protected $configService ;
+    protected $accessible_appids ;
 
     public function mount(): void
     {
@@ -23,12 +25,15 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
         $this->setSearchVisibilityStatus(false);
+        $this->configService = new ConfigService();
+        $this->accessible_appids = $this->configService->getAppIds();
     }
 
     public function builder(): Builder
     {
         return ConfigConst::query()
             ->withTrashed()
+            ->whereIn('app_id', $this->accessible_appids)
             ->select();
     }
 

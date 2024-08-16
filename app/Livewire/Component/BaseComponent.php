@@ -51,19 +51,25 @@ class BaseComponent extends Component
     {
         app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
-        $this->additionalParam = $additionalParam;
-        $this->appCode = Session::get('app_code', '');
+        try {
+            $this->additionalParam = $additionalParam;
+            $this->appCode = Session::get('app_code', '');
 
-        $this->setActionAndObject($action, $objectId);
-        $this->setActionValue($action, $actionValue);
-        $this->setObjectIdValue($objectId, $objectIdValue);
+            $this->setActionAndObject($action, $objectId);
+            $this->setActionValue($action, $actionValue);
+            $this->setObjectIdValue($objectId, $objectIdValue);
 
-        $this->onReset();
-        $this->getRoute();
+            $this->onReset();
+            $this->getRoute();
 
-        $this->handleRouteChange();
-        $this->checkPermissions();
-        $this->handleActionSpecificLogic();
+            $this->handleRouteChange();
+            $this->checkPermissions();
+            $this->handleActionSpecificLogic();
+        } catch (Exception $e) {
+            Log::Error("Method Mount :". $e->getMessage());
+            $this->notify('error', "Failed to load page, error :".$e->getMessage());
+            throw $e;
+        }
     }
 
     private function setActionAndObject($action, $objectId)
@@ -192,6 +198,7 @@ class BaseComponent extends Component
         try {
             $this->validate($this->rules, [], $this->customValidationAttributes);
         } catch (Exception $e) {
+            Log::Error("Method ValidateForm :". $e->getMessage());
             $this->notify('error', __('generic.error.create', ['message' => $e->getMessage()]));
             throw $e;
         }
@@ -200,7 +207,6 @@ class BaseComponent extends Component
     // Notify method
     protected function notify($type, $message)
     {
-
         $this->dispatch('notify-swal', [
             'type' => $type,
             'message' => $message,
@@ -236,6 +242,7 @@ class BaseComponent extends Component
             if ($this->isEditOrView()) {
                 $this->VersionNumber--;
             }
+            Log::Error("Method Save :". $e->getMessage());
             $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
@@ -254,6 +261,7 @@ class BaseComponent extends Component
                 $this->onReset();
             }
         } catch (QueryException $e) {
+            Log::Error("Method SaveWithoutNotification :". $e->getMessage());
             DB::rollBack();
             if ($this->isEditOrView()) {
                 $this->VersionNumber--;
@@ -261,12 +269,14 @@ class BaseComponent extends Component
 
             dd($e->getMessage());
         } catch (PDOException $e) {
+            Log::Error("Method SaveWithoutNotification :". $e->getMessage());
             DB::rollBack();
             if ($this->isEditOrView()) {
                 $this->VersionNumber--;
             }
             dd($e->getMessage());
         } catch (Exception $e) {
+            Log::Error("Method SaveWithoutNotification :". $e->getMessage());
             DB::rollBack();
             if ($this->isEditOrView()) {
                 $this->VersionNumber--;
@@ -298,6 +308,7 @@ class BaseComponent extends Component
             $this->object->save();
             $this->notify('success', __($messageKey));
         } catch (Exception $e) {
+            Log::Error("Method Change :". $e->getMessage());
             $this->VersionNumber--;
             $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }

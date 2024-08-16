@@ -49,7 +49,7 @@ class Detail extends BaseComponent
             'inputs.str2'      => 'Str2'
         ];
         $this->configService = new ConfigService();
-        $this->applications = $this->configService->getActiveApplications();
+        $this->applications = $this->configService->getActiveApplications(true);
 
         if($this->isEditOrView())
         {

@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\DB;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigUser::class;
+    protected $configService ;
+    protected $accessible_appids ;
 
     public function mount(): void
     {
