@@ -4,7 +4,7 @@
     <style>
         body {
             position: relative;
-            background-image: url('customs/images/background.jpg');
+            background-image: url('customs/images/background.jpeg');
             background-size: cover;
             background-repeat: no-repeat;
             font-family: 'Poppins', sans-serif;
