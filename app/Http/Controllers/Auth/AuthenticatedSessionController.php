@@ -56,20 +56,20 @@ class AuthenticatedSessionController extends Controller
     {
         try {
             $userId = Auth::id();
-            Log::info('Attempting to destroy session for user ID: ' . $userId);
+            //Log::info('Attempting to destroy session for user ID: ' . $userId);
 
             if (!$userId) {
                 throw new \Exception('User is not authenticated.');
             }
 
             Auth::guard('web')->logout();
-            Log::info('User logged out.');
+            //Log::info('User logged out.');
 
             $request->session()->invalidate();
-            Log::info('Session invalidated.');
+            //Log::info('Session invalidated.');
 
             $request->session()->regenerateToken();
-            Log::info('Session token regenerated.');
+            //Log::info('Session token regenerated.');
 
             return redirect('/')->with('message', 'Logged out successfully');
         } catch (\Exception $e) {
