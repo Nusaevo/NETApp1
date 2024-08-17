@@ -58,7 +58,7 @@
         #custom_search_content {
             position: absolute;
             top: 100%;
-            right: 0;
+            right: -50px;
             transform: translateX(100%);
             width: 325px;
             background-color: #fff;
