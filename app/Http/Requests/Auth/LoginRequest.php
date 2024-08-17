@@ -36,7 +36,18 @@ class LoginRequest extends FormRequest
             'password' => ['required', 'string'],
         ];
     }
-
+    /**
+     * Get the error messages for the defined validation rules.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'code.required' => 'UserName is required',
+            'password.required' => 'Password is required',
+        ];
+    }
     /**
      * Attempt to authenticate the request's credentials.
      *
@@ -90,7 +101,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'code' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -104,6 +115,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey()
     {
-        return Str::transliterate(Str::lower($this->input('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->input('code')).'|'.$this->ip());
     }
 }
