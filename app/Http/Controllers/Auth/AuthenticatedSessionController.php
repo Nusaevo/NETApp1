@@ -19,7 +19,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function create()
     {
-        addJavascriptFile('assets/js/custom/authentication/sign-in/general.js');
+        // addJavascriptFile('assets/js/custom/authentication/sign-in/general.js');
 
         return view('pages/auth.login');
     }
@@ -71,7 +71,7 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerateToken();
             Log::info('Session token regenerated.');
 
-            // return redirect('/');
+            return redirect('/')->with('message', 'Logged out successfully');
         } catch (\Exception $e) {
             Log::error('Error during logout: ' . $e->getMessage());
             return redirect('/')->with('error', 'There was a problem logging you out.');

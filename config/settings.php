@@ -58,14 +58,14 @@ return [
     # Theme Vendors
 
     'KT_THEME_VENDORS' => [
-        'datatables' => [
-            'css' => [
-                'assets/plugins/custom/datatables/datatables.bundle.css',
-            ],
-            'js' => [
-                'assets/plugins/custom/datatables/datatables.bundle.js',
-            ],
-        ],
+        // 'datatables' => [
+        //     'css' => [
+        //         'assets/plugins/custom/datatables/datatables.bundle.css',
+        //     ],
+        //     'js' => [
+        //         'assets/plugins/custom/datatables/datatables.bundle.js',
+        //     ],
+        // ],
         'formrepeater' => [
             'js' => [
                 'assets/plugins/custom/formrepeater/formrepeater.bundle.js',

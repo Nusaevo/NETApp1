@@ -100,7 +100,7 @@
     <!--begin::Menu item-->
     <div class="menu-item px-5" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-placement="left-start" data-kt-menu-offset="-15px, 0">
         <a href="#" class="menu-link px-5">
-			<span class="menu-title position-relative">Mode 
+			<span class="menu-title position-relative">Mode
 			<span class="ms-5 position-absolute translate-middle-y top-50 end-0">{!! getIcon('night-day', 'theme-light-show fs-2') !!} {!! getIcon('moon', 'theme-dark-show fs-2') !!}</span></span>
 		</a>
 		@include('partials/theme-mode/__menu')
@@ -174,10 +174,22 @@
     <!--end::Menu item-->
     <!--begin::Menu item-->
     <div class="menu-item px-5">
-        <a class="button-ajax menu-link px-5" href="#" data-action="{{ route('logout') }}" data-method="post" data-csrf="{{ csrf_token() }}" data-reload="true">
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+        <a class="menu-link px-5" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             Sign Out
         </a>
     </div>
+
+    @push('scripts')
+    <script>
+        function logoutUser() {
+            document.getElementById('logout-form').submit();
+        }
+    </script>
+    @endpush
+
     <!--end::Menu item-->
 </div>
 <!--end::User account menu-->

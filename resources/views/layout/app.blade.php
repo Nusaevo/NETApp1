@@ -178,15 +178,15 @@
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOMContentLoaded event fired');
+            //console.log('DOMContentLoaded event fired');
             var loadingContainer = document.getElementById('custom-loading-container');
             loadingContainer.style.display = 'flex';
-            console.log('Loading container displayed');
+            //console.log('Loading container displayed');
 
             window.addEventListener('load', function() {
-                console.log('Window load event fired');
+                //console.log('Window load event fired');
                 loadingContainer.style.display = 'none';
-                console.log('Loading container hidden');
+                //console.log('Loading container hidden');
             });
         });
     </script>
