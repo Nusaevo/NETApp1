@@ -286,7 +286,6 @@ class Detail extends BaseComponent
 
     public function addDetails($material_id = null)
     {
-        $this->dispatch('toggle-modal');
         $detail = [
             'tr_type' => $this->trType,
         ];

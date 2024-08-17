@@ -10,12 +10,6 @@
         </select>
     </div>
 
-    <!-- Loading Indicator -->
-    <span wire:loading.remove></span>
-    <span wire:loading>
-        <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
-    </span>
-
 @push('scripts')
 <script>
 

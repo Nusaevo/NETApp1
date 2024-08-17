@@ -32,7 +32,6 @@ class Detail extends BaseComponent
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
-    public $showModal = false;
     public $currency = [];
 
     public $returnIds = [];
@@ -188,8 +187,12 @@ class Detail extends BaseComponent
                     $this->notify('error',__($this->langBasePath.'.message.product_duplicated'));
                     return;
                 }
+
             }
-            $this->addDetails($material_id);
+
+            if(!$this->addDetails($material_id)){
+                return;
+            }
             $this->SaveWithoutNotification();
             $this->notify('success', __($this->langBasePath.'.message.product_added'));
             $this->dispatch('closeMaterialDialog');
@@ -279,35 +282,61 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
         }
     }
+
     public function addDetails($material_id = null)
     {
-        $this->showModal = true;
-        $this->dispatch('toggle-modal');
         $detail = [
             'tr_type' => $this->trType,
         ];
         $material = Material::find($material_id);
-        if ($material) {
-            $detail['matl_id'] = $material->id;
-            $detail['matl_code'] = $material->code;
-            $detail['matl_descr'] = $material->descr ?? "";
-            $detail['name'] = $material->name ?? "";
-            $detail['matl_uom'] = $material->MatlUom[0]->id;
-            $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
-            $detail['barcode'] = $material->MatlUom[0]->barcode;
-            $detail['price'] = $material->jwl_buying_price ?? 0;
-            $detail['selling_price'] = $material->jwl_selling_price ?? 0;
-            $detail['isOrderedMaterial'] = $material->isOrderedMaterial();
-            $detail['qty'] = 1;
-            $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
-            $maxTrSeq++;
-            $detail['tr_seq'] = $maxTrSeq;
+
+        if (!$material) {
+            $this->notify('error', 'Material tidak ditemukan.');
+            return false;
         }
+
+        if (!$this->object->isNew()) {
+            if ($this->object->isItemHasOrderedMaterial()) {
+
+                $hasOrderedMaterialInNota = $this->object->OrderDtl->contains(function ($orderDtl) {
+                    return $orderDtl->Material && $orderDtl->Material->isOrderedMaterial();
+                });
+
+                if ($hasOrderedMaterialInNota && !$material->isOrderedMaterial()) {
+                    $this->notify('error','Material yang bukan pesanan tidak boleh digabungkan dengan material pesanan dalam satu nota.');
+                    return false;
+                }
+
+                if (!$hasOrderedMaterialInNota && $material->isOrderedMaterial()) {
+                    $this->notify('error','Material pesanan tidak boleh digabungkan dengan material yang bukan material pesanan dalam satu nota.');
+                    return false;
+                }
+            }
+        }
+
+        $detail['matl_id'] = $material->id;
+        $detail['matl_code'] = $material->code;
+        $detail['matl_descr'] = $material->descr ?? "";
+        $detail['name'] = $material->name ?? "";
+        $detail['matl_uom'] = $material->MatlUom[0]->id;
+        $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
+        $detail['barcode'] = $material->MatlUom[0]->barcode;
+        $detail['price'] = $material->jwl_buying_price ?? 0;
+        $detail['selling_price'] = $material->jwl_selling_price ?? 0;
+        $detail['isOrderedMaterial'] = $material->isOrderedMaterial();
+        $detail['qty'] = 1;
+        $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
+        $maxTrSeq++;
+        $detail['tr_seq'] = $maxTrSeq;
+
         array_push($this->input_details, $detail);
         $newDetail = end($this->input_details);
         $this->newItems[] = $newDetail;
         $this->countTotalAmount();
+
+        return true;
     }
+
 
     public function Add()
     {

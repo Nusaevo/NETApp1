@@ -149,6 +149,16 @@ class OrderHdr extends BaseModel
         return false;
     }
 
+    public function isItemHasOrderedMaterial(): bool
+    {
+        foreach ($this->OrderDtl as $orderDtl) {
+            if ($orderDtl->Material && $orderDtl->Material->isOrderedMaterial()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function isOrderEnableToDelete(): bool
     {
         if ($this->tr_type == 'PO') {
@@ -221,6 +231,7 @@ class OrderHdr extends BaseModel
 
         return false;
     }
+
     /**
      * Saves all details related to the purchase order, including delivery and billing information.
      *

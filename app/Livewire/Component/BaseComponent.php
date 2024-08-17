@@ -39,6 +39,7 @@ class BaseComponent extends Component
     public $baseRenderRoute;
     public $renderRoute;
     public $route;
+    public $resetAfterCreate = true;
 
     public $additionalParam;
     public $customValidationAttributes;
@@ -232,7 +233,7 @@ class BaseComponent extends Component
             // Log::info('Execution time for onValidateAndSave: ' . ($end - $start) . ' seconds');
 
             DB::commit();
-            if (!$this->isEditOrView()) {
+            if (!$this->isEditOrView() && $this->resetAfterCreate) {
                 $this->onReset();
             }
 
@@ -257,7 +258,7 @@ class BaseComponent extends Component
             $this->onValidateAndSave();
 
             DB::commit();
-            if (!$this->isEditOrView()) {
+            if (!$this->isEditOrView() && $this->resetAfterCreate) {
                 $this->onReset();
             }
         } catch (QueryException $e) {
