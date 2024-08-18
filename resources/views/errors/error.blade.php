@@ -95,7 +95,7 @@
             <h1>{{ $errorCode }} - {{ $errorTitle }}</h1>
             <p>{{ $errorMessage }}</p>
             <a href="{{ url('/') }}">Back to Home</a>
-            @if ($errorCode === 431)
+            @if ($errorCode === 422)
             <a href="{{ route('TrdJewel1.Master.Currency.Detail', ['action' => encryptWithSessionKey('Create')]) }}" class="btn-secondary">Go to Master Currency</a>
             @endif
         </div>

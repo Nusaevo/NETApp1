@@ -78,7 +78,7 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            abort(431, __('generic.string.currency_needed'));
+            abort(422, __('generic.string.currency_needed'));
         }
         $this->customValidationAttributes  = [
             'inputs.tr_date'      => $this->trans('tr_date'),
