@@ -139,10 +139,7 @@ class Detail extends BaseComponent
         });
 
         if (empty($selectedItems)) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Harap pilih item dahulu sebelum checkout'
-            ]);
+            $this->notify('error', 'Harap pilih item dahulu sebelum checkout');
             return;
         }
 
@@ -188,10 +185,7 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->dispatch('notify-swal', [
-                'type' => 'warning',
-                'message' => 'Diperlukan kurs mata uang.'
-            ]);
+            $this->notify('warning', 'Diperlukan kurs mata uang.');
             return;
         }
 
@@ -376,10 +370,7 @@ class Detail extends BaseComponent
         }
 
         if (empty($this->selectedMaterials)) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
-            ]);
+            $this->notify('error', 'Harap pilih item dahulu sebelum menambahkan ke cart');
             return;
         }
 
@@ -405,10 +396,7 @@ class Detail extends BaseComponent
 
                 if ($existingOrderDtl) {
                     DB::rollback();
-                    $this->dispatch('notify-swal', [
-                        'type' => 'error',
-                        'message' => "Item {$material->code} sudah ada di cart"
-                    ]);
+                    $this->notify('error',"Item {$material->code} sudah ada di cart");
                     return;
                 }
 
@@ -431,20 +419,14 @@ class Detail extends BaseComponent
 
             DB::commit();
 
-            $this->dispatch('notify-swal', [
-                'type' => 'success',
-                'message' => 'Berhasil menambahkan item ke cart'
-            ]);
+            $this->notify('success', 'Berhasil menambahkan item ke cart');
             $this->selectedMaterials = [];
             $this->retrieveMaterials();
             $this->searchMaterials();
             $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
-            ]);
+            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart');
         }
     }
     #endregion

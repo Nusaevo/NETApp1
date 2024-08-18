@@ -101,20 +101,14 @@ class Index extends BaseComponent
             $material = Material::find($material_id);
             if (!$material) {
                 DB::rollback();
-                $this->dispatch('notify-swal', [
-                    'type' => 'error',
-                    'message' => 'Material not found'
-                ]);
+                $this->notify('error', 'Material not found');
                 return;
             }
 
             // Check if the material has quantity
             if (!$material->hasQuantity()) {
                 DB::rollback();
-                $this->dispatch('notify-swal', [
-                    'type' => 'error',
-                    'message' => 'Material out of stock'
-                ]);
+                $this->notify('error', 'Material out of stock');
                 return;
             }
             // Get the cartHdr by user code and tr_type = cart
@@ -161,26 +155,17 @@ class Index extends BaseComponent
 
                 DB::commit();
 
-                $this->dispatch('notify-swal', [
-                    'type' => 'success',
-                    'message' => 'Berhasil menambahkan item ke cart'
-                ]);
+                $this->notify('success', 'Berhasil menambahkan item ke cart');
                 $this->dispatch('updateCartCount');
             } else {
                 DB::rollback();
 
-                $this->dispatch('notify-swal', [
-                    'type' => 'error',
-                    'message' => 'Item sudah dimasukkan ke cart'
-                ]);
+                $this->notify('error', 'Item sudah dimasukkan ke cart');
             }
         } catch (\Exception $e) {
             DB::rollback();
 
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke cart'
-            ]);
+            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart');
         }
     }
     #endregion

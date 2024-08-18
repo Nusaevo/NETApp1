@@ -269,10 +269,8 @@ class Detail extends BaseComponent
         }
 
         if (empty($this->selectedMaterials)) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
-            ]);
+
+            $this->notify('error', 'Harap pilih item dahulu sebelum menambahkan ke cart');
             return;
         }
 
@@ -303,10 +301,7 @@ class Detail extends BaseComponent
 
                 if ($existingReturnDtl) {
                     DB::rollback();
-                    $this->dispatch('notify-swal', [
-                        'type' => 'error',
-                        'message' => "Item {$material->code} sudah ada di Order"
-                    ]);
+                    $this->notify('error', "Item {$material->code} sudah ada di Order");
                     return;
                 }
 
@@ -335,18 +330,12 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
             DB::commit();
 
-            $this->dispatch('notify-swal', [
-                'type' => 'success',
-                'message' => 'Berhasil menambahkan item ke nota'
-            ]);
+            $this->notify('success', 'Berhasil menambahkan item ke nota');
             $this->selectedMaterials = [];
             $this->searchMaterials();
         } catch (\Exception $e) {
             DB::rollback();
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
-            ]);
+            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke Order');
         }
     }
     #endregion

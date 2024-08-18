@@ -126,16 +126,12 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->object->save();
             $this->object->updateObject($this->object->version_number);
             $this->object->delete();
-            $this->dispatch('notify-swal', [
-                'type' => 'success',
-                'message' => __('generic.string.disable', ['object' => "object"])
-            ]);
+
+            $this->notify('success', __('generic.string.disable', ['object' => "object"]));
         } catch (Exception $e) {
             // Handle the exception
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => __('generic.string.disable', ['object' => "object", 'message' => $e->getMessage()])
-            ]);
+
+            $this->notify('error', __('generic.string.disable', ['object' => "object", 'message' => $e->getMessage()]));
         }
         $this->dispatch('refreshData');
     }

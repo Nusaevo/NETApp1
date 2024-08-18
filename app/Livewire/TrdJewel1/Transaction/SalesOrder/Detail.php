@@ -497,26 +497,17 @@ class Detail extends BaseComponent
         }
 
         if (empty($this->selectedMaterials)) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Harap pilih item dahulu sebelum menambahkan ke cart'
-            ]);
+            $this->notify('error', 'Harap pilih item dahulu sebelum menambahkan ke cart');
             return;
         }
 
         if (empty($this->inputs['payment_term_id'])) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Payment term is required.'
-            ]);
+            $this->notify('warning', __('generic.error.field_required', ['field' => "Payment term"]));
             return;
         }
 
         if (empty($this->inputs['partner_id'])) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Partner is required.'
-            ]);
+            $this->notify('warning', __('generic.error.field_required', ['field' => "Partner"]));
             return;
         }
 
@@ -540,10 +531,7 @@ class Detail extends BaseComponent
 
                 if ($existingOrderDtl) {
                     DB::rollback();
-                    $this->dispatch('notify-swal', [
-                        'type' => 'error',
-                        'message' => "Item {$material->code} sudah ada di Order"
-                    ]);
+                    $this->notify('error',"Item {$material->code} sudah ada di Order");
                     return;
                 }
 
@@ -566,20 +554,14 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
             DB::commit();
 
-            $this->dispatch('notify-swal', [
-                'type' => 'success',
-                'message' => 'Berhasil menambahkan item ke cart'
-            ]);
+            $this->notify('success', 'Berhasil menambahkan item ke cart');
             $this->selectedMaterials = [];
             $this->searchMaterials();
             $this->retrieveMaterials();
         } catch (\Exception $e) {
             DD($e);
             DB::rollback();
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menambahkan item ke Order'
-            ]);
+            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke Order');
         }
     }
     #endregion
