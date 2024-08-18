@@ -53,7 +53,7 @@ class Handler extends ExceptionHandler
                     403 => 'Forbidden',
                     404 => 'Not Found',
                     500 => 'Internal Server Error',
-                    431 => 'Error'
+                    422 => 'Error'
                 ];
                 $errorTitle = $titles[$statusCode] ?? 'Error';
                 $errorMessage = $exception->getMessage() ?: 'Sorry, something went wrong.';
