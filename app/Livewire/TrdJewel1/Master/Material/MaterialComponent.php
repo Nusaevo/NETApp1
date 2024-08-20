@@ -131,7 +131,7 @@ class MaterialComponent extends BaseComponent
             'materials.jwl_category2'      => $this->trans('category2'),
             'materials.jwl_wgt_gold'      => $this->trans('weight'),
             'materials.jwl_carat' => $this->trans('carat'),
-            'materials.code'      => $this->trans('uom'),
+            'materials.code'      => $this->trans('code'),
             'materials.name'      => $this->trans('description'),
             'materials.descr'      => $this->trans('bom_description'),
             'materials.remark'      => $this->trans('remark'),

@@ -33,10 +33,13 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return ConfigSnum::query()
-            ->withTrashed()
-            ->whereIn('app_id', $this->accessible_appids)
-            ->select();
+        $query = ConfigSnum::query()->withTrashed();
+
+        if (!empty($this->accessible_appids)) {
+            $query->whereIn('app_id', $this->accessible_appids);
+        }
+
+        return $query->select();
     }
 
     public function columns(): array

@@ -12,11 +12,12 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 use App\Services\SysConfig1\ConfigService;
+
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigConst::class;
-    protected $configService ;
-    protected $accessible_appids ;
+    protected $configService;
+    protected $accessible_appids;
 
     public function mount(): void
     {
@@ -31,28 +32,32 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return ConfigConst::query()
-            ->withTrashed()
-            ->whereIn('app_id', $this->accessible_appids)
-            ->select();
+        $query = ConfigConst::query()->withTrashed();
+
+        if (!empty($this->accessible_appids)) {
+            $query->whereIn('app_id', $this->accessible_appids);
+        }
+
+        return $query->select();
     }
+
 
     public function columns(): array
     {
         return [
             Column::make("Application", "id")
-            ->format(function ($value, $row) {
-                if ($row->app_id) {
-                    return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
-                        'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->app_id)
-                    ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
-                } else {
-                    return '';
-                }
-            })
-            ->html()
-            ->sortable(),
+                ->format(function ($value, $row) {
+                    if ($row->app_id) {
+                        return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->app_id)
+                        ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
+                    } else {
+                        return '';
+                    }
+                })
+                ->html()
+                ->sortable(),
             Column::make("Const Group", "const_group")
                 ->searchable()
                 ->sortable(),
@@ -96,16 +101,18 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             TextFilter::make('Aplikasi', 'application')
-            ->config([
-                'placeholder' => 'Cari Kode/Nama Aplikasi',
-                'maxlength' => '50',
-            ])
-            ->filter(function (Builder $builder, string $value) {
-                $builder->whereHas('configAppl', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
-                          ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            })->setWireLive(),
+                ->config([
+                    'placeholder' => 'Cari Kode/Nama Aplikasi',
+                    'maxlength' => '50',
+                ])
+                ->filter(function (Builder $builder, ?string $value) {
+                    if ($value) {
+                        $builder->whereHas('configAppl', function ($query) use ($value) {
+                            $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
+                                  ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                        });
+                    }
+                })->setWireLive(),
             TextFilter::make('Group', 'const_group')
                 ->config([
                     'placeholder' => 'Cari Group',
@@ -119,8 +126,11 @@ class IndexDataTable extends BaseDataTableComponent
                     '0' => 'Active',
                     '1' => 'Non Active'
                 ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
+                    if ($value === '0') {
+                        $builder->withoutTrashed();
+                    } else if ($value === '1') {
+                        $builder->onlyTrashed();
+                    }
                 }),
         ];
     }
