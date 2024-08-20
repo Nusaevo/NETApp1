@@ -31,38 +31,6 @@ if (!function_exists('dollar')) {
     }
 }
 
-
-if (!function_exists('getDefaultCurrencyStr1')) {
-    function getDefaultCurrencyStr1()
-    {
-        $app_code = Session::get('app_code');
-        $defaultCurrency = DB::connection('sys-config1')
-        ->table('config_consts')
-        ->select('str1')
-        ->where('const_group', 'MCURRENCY_CODE')
-        ->where('app_code', $app_code)
-        ->whereNull('deleted_at')
-        ->orderByDesc('num1')
-        ->first();
-
-        return $defaultCurrency ? $defaultCurrency->str1 : '';
-    }
-}
-
-if (!function_exists('globalCurrency')) {
-    function globalCurrency($price = 0, $use_name = true)
-    {
-        $currencyStr1 = getDefaultCurrencyStr1();
-        $formattedPrice = numberFormat($price, 2, ',', '.');
-        if ($use_name) {
-            return $currencyStr1 . ' ' . $formattedPrice;
-        } else {
-            return $formattedPrice;
-        }
-    }
-}
-
-
 if (!function_exists('qty')) {
     function qty($qty = 0, $behind_comma = 0)
     {

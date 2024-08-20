@@ -9,6 +9,8 @@ use App\Models\TrdJewel1\Transaction\OrderDtl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\ConfigConst;
+use App\Enums\Constant;
+
 class Material extends BaseModel
 {
     protected $table = 'materials';
@@ -17,6 +19,13 @@ class Material extends BaseModel
     const GEMSTONE = 'GEMSTONE';
     const DIAMOND = 'DIAMOND';
     use SoftDeletes;
+    protected $connection;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
 
     protected static function boot()
     {

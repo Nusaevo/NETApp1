@@ -4,11 +4,19 @@ namespace App\Models\TrdJewel1\Master;
 use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Constant;
+
 class MatlBom extends BaseModel
 {
     protected $table = 'matl_boms';
     use SoftDeletes;
+    protected $connection;
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
 
     protected static function boot()
     {

@@ -7,7 +7,7 @@ use App\Traits\BaseTrait;
 class ConfigVar extends BaseModel
 {
     protected $table = 'config_vars';
-    protected $connection = 'sys-config1';
+
     use SoftDeletes;
 
     use SoftDeletes;

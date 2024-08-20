@@ -63,7 +63,7 @@ return [
             ]) : [],
         ],
 
-        'sys-config1' => [
+        'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
@@ -77,13 +77,15 @@ return [
             'schema' => 'public',
             'sslmode' => 'prefer',
         ],
-        'pgsql' => [
+
+        'trdjewel1' => [
             'driver' => 'pgsql',
-            'host' => env('POS_DB_HOST', '127.0.0.1'),
-            'port' => env('POS_DB_PORT', '5433'),
-            'database' => env('POS_DB_DATABASE', ''),
-            'username' => env('POS_DB_USERNAME', ''),
-            'password' => env('POS_DB_PASSWORD', ''),
+            'url' => env('DATABASE_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5433'),
+            'database' => env('TRDJEWEL1_CONNECTION', ''),
+            'username' => env('DB_USERNAME', ''),
+            'password' => env('DB_PASSWORD', ''),
             'charset' => 'utf8',
             'prefix' => '',
             'schema' => 'public',

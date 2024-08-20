@@ -18,8 +18,6 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     use SoftDeletes;
     use BaseTrait;
 
-    protected $connection = 'sys-config1';
-
 
     public static function boot()
     {

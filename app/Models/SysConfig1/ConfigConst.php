@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ConfigConst extends BaseModel
 {
     protected $table = 'config_consts';
-    protected $connection = 'sys-config1';
 
     use SoftDeletes;
 

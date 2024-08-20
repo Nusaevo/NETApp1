@@ -4,6 +4,7 @@ namespace App\Services\TrdJewel1\Master;
 
 use Illuminate\Support\Facades\DB;
 use App\Models\TrdJewel1\Master\Partner;
+use App\Enums\Constant;
 
 class MasterService
 {
@@ -11,7 +12,7 @@ class MasterService
 
     public function __construct()
     {
-        $this->connection = DB::connection('sys-config1');
+        $this->connection = DB::connection(Constant::SysConfig1_ConnectionString());
     }
 
     protected function getConfigData($constGroup, $appCode)
@@ -267,6 +268,7 @@ class MasterService
 
         return $options;
     }
+
     public function getPrintRemarks($appCode)
     {
         $data = $this->getConfigData('TRX_NJ_REMARK', $appCode);
@@ -282,4 +284,31 @@ class MasterService
 
         return $options;
     }
+
+    public function getDefaultCurrencyStr1($appCode): string
+    {
+        $defaultCurrency = $this->connection
+            ->table('config_consts')
+            ->select('str1')
+            ->where('const_group', 'MCURRENCY_CODE')
+            ->where('app_code', $appCode)
+            ->whereNull('deleted_at')
+            ->orderByDesc('num1')
+            ->first();
+
+        return $defaultCurrency ? $defaultCurrency->str1 : '';
+    }
+
+    public function globalCurrency($price = 0, $use_name = true, $appCode = null): string
+    {
+        $currencyStr1 = $this->getDefaultCurrencyStr1($appCode);
+        $formattedPrice = number_format($price, 2, ',', '.');
+        if ($use_name) {
+            return $currencyStr1 . ' ' . $formattedPrice;
+        } else {
+            return $formattedPrice;
+        }
+    }
+
+
 }

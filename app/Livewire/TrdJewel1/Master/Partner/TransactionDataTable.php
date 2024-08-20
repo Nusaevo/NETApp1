@@ -10,6 +10,7 @@ use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
+use App\Enums\Constant;
 
 class TransactionDataTable extends Component
 {
@@ -78,7 +79,7 @@ class TransactionDataTable extends Component
             $bindings['partnerID'] = $this->partnerID;
         }
 
-        return DB::select($finalQuery, $bindings);
+        return DB::connection(Constant::Trdjewel1_ConnectionString())->select($finalQuery, $bindings);
     }
 
     public function render()

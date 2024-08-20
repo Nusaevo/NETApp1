@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ConfigGroup extends BaseModel
 {
     protected $table = 'config_groups';
-    protected $connection = 'sys-config1';
     use SoftDeletes;
 
     public static function boot()

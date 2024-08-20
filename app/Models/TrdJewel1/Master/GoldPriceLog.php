@@ -5,11 +5,20 @@ namespace App\Models\TrdJewel1\Master;
 use App\Models\Base\BaseModel;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Constant;
+
 class GoldPriceLog extends BaseModel
 {
     protected $table = 'goldprice_logs';
     use SoftDeletes;
-   
+    protected $connection ='trd-jewel1';
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
+
     public static function boot()
     {
         parent::boot();

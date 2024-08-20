@@ -4,9 +4,18 @@ namespace App\Models\TrdJewel1\Transaction;
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Constant;
+
 class BillingDtl extends BaseModel
 {
     use SoftDeletes;
+    protected $connection;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
 
     protected static function boot()
     {

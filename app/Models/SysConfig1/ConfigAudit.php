@@ -10,7 +10,6 @@ class ConfigAudit extends BaseModel
     use HasFactory, SoftDeletes;
 
     protected $table = 'config_audits';
-    protected $connection = 'sys-config1';
     protected $fillable = [
         'app_code',
         'key_code',

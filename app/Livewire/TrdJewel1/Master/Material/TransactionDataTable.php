@@ -4,7 +4,7 @@ namespace App\Livewire\TrdJewel1\Master\Material;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Status;
-
+use App\Enums\Constant;
 class TransactionDataTable extends Component
 {
     public int $perPage = 50;
@@ -72,7 +72,7 @@ class TransactionDataTable extends Component
             $bindings['materialID'] = $this->materialID;
         }
 
-        return DB::select($finalQuery, $bindings);
+        return DB::connection(Constant::Trdjewel1_ConnectionString())->select($finalQuery, $bindings);
     }
 
     public function render()

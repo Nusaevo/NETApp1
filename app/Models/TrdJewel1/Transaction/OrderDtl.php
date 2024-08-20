@@ -8,10 +8,17 @@ use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Inventories\IvtBalUnit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Constant;
 class OrderDtl extends BaseModel
 {
     use SoftDeletes;
+    protected $connection;
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
     protected static function boot()
     {
         parent::boot();

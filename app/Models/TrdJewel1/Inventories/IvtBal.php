@@ -3,11 +3,19 @@
 namespace App\Models\TrdJewel1\Inventories;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Base\BaseModel;
+use App\Enums\Constant;
 
 class IvtBal extends BaseModel
 {
     protected $table = 'ivt_bals';
     public $timestamps = false;
+    protected $connection;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
 
     public static function boot()
     {

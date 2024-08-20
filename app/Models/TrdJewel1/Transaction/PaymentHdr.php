@@ -6,11 +6,18 @@ use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\TrdJewel1\Transaction\PaymentDtl;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Constant;
 use App\Traits\BaseTrait;
 class PaymentHdr extends BaseModel
 {
     use SoftDeletes;
+    protected $connection;
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
     protected static function boot()
     {
         parent::boot();

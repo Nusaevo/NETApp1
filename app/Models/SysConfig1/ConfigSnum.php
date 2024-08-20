@@ -7,7 +7,7 @@ use App\Traits\BaseTrait;
 class ConfigSnum extends BaseModel
 {
     protected $table = 'config_snums';
-    protected $connection = 'sys-config1';
+
     use SoftDeletes;
 
     protected $fillable = [

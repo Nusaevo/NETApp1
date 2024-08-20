@@ -9,11 +9,18 @@ use App\Enums\Status;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Constant;
 
 class OrderHdr extends BaseModel
 {
     use SoftDeletes;
+    protected $connection;
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
     protected static function boot()
     {
         parent::boot();

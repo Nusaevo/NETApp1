@@ -5,12 +5,19 @@ namespace App\Models\Base;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
+use App\Enums\Constant;
 
 class Attachment extends Model
 {
     use HasFactory;
 
     protected $table = 'attachments';
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
 
     protected $fillable = [
         'name',

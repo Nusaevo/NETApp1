@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ConfigMenu extends BaseModel
 {
     protected $table = 'config_menus';
-    protected $connection = 'sys-config1';
     use SoftDeletes;
 
 

@@ -7,6 +7,8 @@ use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Enums\Constant;
+
 class Partner extends BaseModel
 {
     protected $table = 'partners';
@@ -15,6 +17,14 @@ class Partner extends BaseModel
     const SALESMAN = 'S';
     const BANK = 'B';
     use SoftDeletes;
+    protected $connection;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::Trdjewel1_ConnectionString();
+    }
+
 
     public static function boot()
     {

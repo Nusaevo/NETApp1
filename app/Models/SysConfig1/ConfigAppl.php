@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ConfigAppl extends BaseModel
 {
     protected $table = 'config_appls';
-    protected $connection = 'sys-config1';
 
     use SoftDeletes;
 

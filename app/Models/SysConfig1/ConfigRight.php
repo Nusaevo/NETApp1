@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Request;
 class ConfigRight extends BaseModel
 {
     protected $table = 'config_rights';
-    protected $connection = 'sys-config1';
+
     use SoftDeletes;
         public static function boot()
     {
