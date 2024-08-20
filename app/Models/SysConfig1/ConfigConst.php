@@ -3,6 +3,7 @@
 namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
 use Illuminate\Support\Facades\DB;
+use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Database\Eloquent\SoftDeletes;
 class ConfigConst extends BaseModel
 {
@@ -15,6 +16,20 @@ class ConfigConst extends BaseModel
     public static function boot()
     {
         parent::boot();
+        static::created(function ($model) {
+            if ($model->const_group === 'MMATL_CATEGL1') {
+                ConfigSnum::create([
+                    'code' => "MMATL_".$model->str1."_LASTID",
+                    'app_id' => $model->app_id,
+                    'app_code' => $model->app_code,
+                    'last_cnt' => 1,
+                    'wrap_low' => 1,
+                    'wrap_high' => 99999999,
+                    'step_cnt' => 1,
+                    'descr' => "Serial Number untuk Barang dengan Category " . $model->str1
+                ]);
+            }
+        });
     }
 
     protected $fillable = [
