@@ -12,6 +12,7 @@ class Constant
 
     public static function Trdjewel1_ConnectionString(): string
     {
-          return Str::lower(config('database.connections.trdjewel1.database'));
+        //return Str::lower(config('database.connections.trdjewel1.database'));
+        return "trdjewel1";
     }
 }
