@@ -2,10 +2,10 @@
 
 namespace App\Models\TrdJewel1\Transaction;
 
-use App\Models\Base\BaseModel;
+use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
-class CartHdr extends BaseModel
+class CartHdr extends TrdJewel1BaseModel
 {
     use SoftDeletes;
     protected $connection;

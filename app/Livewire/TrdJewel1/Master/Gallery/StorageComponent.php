@@ -5,7 +5,7 @@ namespace App\Livewire\TrdJewel1\Master\Gallery;
 use App\Livewire\Component\BaseComponent;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
-use App\Models\Base\Attachment;
+use App\Models\TrdJewel1\Base\Attachment;
 
 class StorageComponent extends BaseComponent
 {

@@ -2,12 +2,12 @@
 
 namespace App\Models\TrdJewel1\Master;
 
-use App\Models\Base\BaseModel;
+use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class GoldPriceLog extends BaseModel
+class GoldPriceLog extends TrdJewel1BaseModel
 {
     protected $table = 'goldprice_logs';
     use SoftDeletes;
