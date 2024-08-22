@@ -40,10 +40,11 @@ class Detail extends BaseComponent
         ];
         if($this->isEditOrView())
         {
-            $this->object = GoldPriceLog::withTrashed()->find($this->objectIdValue);
+            $this->object = GoldPriceLog::find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['log_date'] = dateFormat($this->object->log_date, 'd-m-Y');
         }
+        $this->permissions['delete'] = false;
     }
 
     public function onReset()

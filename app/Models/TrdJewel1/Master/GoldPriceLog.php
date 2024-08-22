@@ -10,7 +10,6 @@ use App\Enums\Constant;
 class GoldPriceLog extends TrdJewel1BaseModel
 {
     protected $table = 'goldprice_logs';
-    use SoftDeletes;
     protected $connection ='trd-jewel1';
 
     public function __construct(array $attributes = [])
