@@ -5,10 +5,8 @@ namespace App\Livewire\TrdJewel1\Master\Currency;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
-use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use App\Enums\Status;
+use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -68,13 +66,14 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Status', 'Status')
-                ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
+            DateFilter::make($this->trans('From Date'), 'from_date')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('log_date', '>=', $value);
+                }),
+
+            DateFilter::make($this->trans('To Date'), 'to_date')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('log_date', '<=', $value);
                 }),
         ];
     }
