@@ -59,7 +59,19 @@
 
     function deleteImage(imageId) {
         if (confirm('Are you sure you want to delete this image?')) {
-            Livewire.dispatch('deleteImage', imageId);
+            Livewire.dispatch('deleteImage',{ imageId : imageId } );
+        }
+    }
+
+
+    function deleteSelectedImages() {
+        const checkboxes = document.querySelectorAll('.gallery-checkbox:checked');
+        const imageIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.imageId);
+
+        if (imageIds.length > 0) {
+            Livewire.dispatch('deleteSelectedImages', { imageIds: imageIds });
+        } else {
+            alert('No images selected for deletion.');
         }
     }
 
