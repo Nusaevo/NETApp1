@@ -14,18 +14,22 @@ Homestead.yaml
 auth.json
 npm-debug.log
 yarn-error.log
-<<<<<<< Updated upstream
 /.idea
 /.vscode
-=======
 _ide_helper.php
 _ide_helper_models.php
 .phpstorm.meta.php
 composer.lock
-.env
+package-lock.json
 ### macOS ###
 # General
 .DS_Store
 .AppleDouble
 .LSOverride
->>>>>>> Stashed changes
+# Livewire and Laravel Mix
+/public/mix-manifest.json
+/public/vendor/livewire/livewire.esm.js
+/public/vendor/livewire/livewire.js
+/public/vendor/livewire/livewire.min.js
+/public/vendor/livewire/livewire.min.js.map
+/public/vendor/livewire/manifest.json
