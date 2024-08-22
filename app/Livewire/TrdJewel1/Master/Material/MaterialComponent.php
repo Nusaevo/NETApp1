@@ -8,7 +8,7 @@ use App\Models\TrdJewel1\Master\MatlUom;
 use App\Models\TrdJewel1\Master\MatlBom;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
-use App\Models\Base\Attachment;
+use App\Models\TrdJewel1\Base\Attachment;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;

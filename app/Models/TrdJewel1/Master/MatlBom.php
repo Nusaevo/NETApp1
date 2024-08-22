@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Models\TrdJewel1\Master;
-use App\Models\Base\BaseModel;
+use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class MatlBom extends BaseModel
+class MatlBom extends TrdJewel1BaseModel
 {
     protected $table = 'matl_boms';
     use SoftDeletes;

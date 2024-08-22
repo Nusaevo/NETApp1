@@ -5,7 +5,7 @@ namespace App\Models\Base;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Base\Attachment;
+use App\Models\TrdJewel1\Base\Attachment;
 use App\Traits\BaseTrait;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;

@@ -2,10 +2,10 @@
 
 namespace App\Models\TrdJewel1\Inventories;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Base\BaseModel;
+use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
 use App\Enums\Constant;
 
-class IvtBal extends BaseModel
+class IvtBal extends TrdJewel1BaseModel
 {
     protected $table = 'ivt_bals';
     public $timestamps = false;
