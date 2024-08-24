@@ -50,7 +50,6 @@ class BaseComponent extends Component
     // Mount method to initialize the component
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        Log::debug("test jenkins");
         app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
         try {
