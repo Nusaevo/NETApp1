@@ -86,25 +86,34 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
             Column::make($this->trans("amt"), "total_amt_in_idr")
-            ->label(function ($row) {
-                $currencyRateNumeric = $row->curr_rate;
-                $totalAmtInIdr = 0;
+                ->label(function ($row) {
+                    $currencyRateNumeric = $row->curr_rate;
+                    $totalAmt = 0;
 
-                $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
+                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
 
-                foreach ($orderDetails as $detail) {
-                    if ($detail->Material->isOrderedMaterial()) {
-                        $totalAmtInIdr += currencyToNumeric($detail->amt);
-                    } else {
-                        $totalAmtInIdr += currencyToNumeric($detail->amt) * $currencyRateNumeric;
+                    if ($orderDetails->isEmpty()) {
+                        return 'N/A';
                     }
-                }
 
-                return rupiah($totalAmtInIdr);
-            })
-            ->sortable(),
+                    $firstDetail = $orderDetails->first();
+
+                    if ($firstDetail->Material->isOrderedMaterial()) {
+                        foreach ($orderDetails as $detail) {
+                            $totalAmt += currencyToNumeric($detail->amt);
+                        }
+                        return rupiah($totalAmt);
+                    } else {
+                        foreach ($orderDetails as $detail) {
+                            $totalAmt += currencyToNumeric($detail->amt);
+                        }
+                        return dollar($totalAmt);
+                    }
+                })
+                ->sortable(),
+
             Column::make($this->trans('status'), "status_code")
-            ->sortable()
+                ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),

@@ -210,22 +210,24 @@ class Detail extends BaseComponent
 
     protected function validateInputs()
     {
-        if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning', __('generic.string.currency_needed'));
-            return false;
-        }
+       if(empty($this->input_details)) {
+            if ($this->inputs['curr_rate'] == 0) {
+                $this->notify('warning', __('generic.string.currency_needed'));
+                return false;
+            }
 
-        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
-            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Customer"]));
-            return false;
-        }
+            if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
+                $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
+                $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Customer"]));
+                return false;
+            }
 
-        if (isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Payment"]));
-            $this->addError('inputs.payment_terms_id', __('generic.error.field_required', ['field' => "Payment"]));
-            return false;
-        }
+            if (isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
+                $this->notify('warning', __('generic.error.field_required', ['field' => "Payment"]));
+                $this->addError('inputs.payment_terms_id', __('generic.error.field_required', ['field' => "Payment"]));
+                return false;
+            }
+       }
 
         return true;
     }
@@ -296,6 +298,9 @@ class Detail extends BaseComponent
     }
 
     public function OpenDialogBox(){
+        if (!$this->validateInputs()) {
+            return;
+        }
         $this->dispatch('openMaterialDialog');
     }
 
