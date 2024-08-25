@@ -87,7 +87,6 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("amt"), "total_amt_in_idr")
                 ->label(function ($row) {
-                    $currencyRateNumeric = $row->curr_rate;
                     $totalAmt = 0;
 
                     $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();

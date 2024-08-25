@@ -218,10 +218,6 @@ class Detail extends BaseComponent
         }
 
         $partnerId = $this->inputs['partner_id'] ?? 0;
-        // if (empty($partnerId)) {
-        //     $this->notify('warning', 'Partner ID is required');
-        //     return;
-        // }
 
         $searchTermUpper = strtoupper($this->searchTerm ?? '');
         $connection = Constant::Trdjewel1_ConnectionString();
