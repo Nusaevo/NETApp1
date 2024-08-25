@@ -61,7 +61,7 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.price' => ['required', 'gt:0'],
+        'input_details.*.price' => ['required', 'not_in:0'],
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',

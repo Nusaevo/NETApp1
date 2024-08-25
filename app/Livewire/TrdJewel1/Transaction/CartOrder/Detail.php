@@ -69,7 +69,7 @@ class Detail extends BaseComponent
 
     public $rules  = [
         'input_details.*.qty' => 'required',
-        'input_details.*.selling_price' => ['required',  'gt:0'],
+        'input_details.*.selling_price' => ['required',  'not_in:0'],
     ];
 
     protected function retrieveMaterials()
