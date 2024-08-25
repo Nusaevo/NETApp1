@@ -218,10 +218,6 @@ class Detail extends BaseComponent
         }
 
         $partnerId = $this->inputs['partner_id'] ?? 0;
-        // if (empty($partnerId)) {
-        //     $this->notify('warning', 'Partner ID is required');
-        //     return;
-        // }
 
         $searchTermUpper = strtoupper($this->searchTerm ?? '');
         $connection = Constant::Trdjewel1_ConnectionString();
@@ -260,7 +256,7 @@ class Detail extends BaseComponent
     public function countTotalAmount()
     {
         $this->total_amount = 0;
-        foreach ($this->input_details as $item_id => $input_detail) {
+        foreach ($this->input_details as $input_detail) {
             if (isset($input_detail['price'])) {
                 $this->total_amount += $input_detail['price'];
             }
