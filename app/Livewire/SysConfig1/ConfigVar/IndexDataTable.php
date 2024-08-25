@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\SysConfig1\ConfigVar;
 
 use App\Livewire\Component\BaseDataTableComponent;
@@ -14,9 +13,8 @@ use App\Services\SysConfig1\ConfigService;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigVar::class;
-    protected $configService ;
-    protected $accessible_appids ;
-
+    protected $configService;
+    protected $accessible_appids;
 
     public function mount(): void
     {
@@ -31,47 +29,37 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         $query = ConfigVar::query()->withTrashed();
-
         if (!empty($this->accessible_appids)) {
             $query->whereIn('app_id', $this->accessible_appids);
         }
-
         return $query->select();
     }
-
 
     public function columns(): array
     {
         return [
-            Column::make("Application", "id")
+            Column::make($this->trans("Application"), "id")
                 ->format(function ($value, $row) {
-                    if ($row->app_id) {
-                        return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->app_id)
-                        ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
-                    } else {
-                        return '';
-                    }
+                    return $this->formatApplicationLink($row);
                 })
                 ->html()
                 ->sortable(),
-            Column::make("Var Code", "code")
+            Column::make($this->trans("Var Code"), "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Var Group", "var_group")
+            Column::make($this->trans("Var Group"), "var_group")
                 ->searchable()
                 ->sortable(),
-            Column::make("Seq", "seq")
+            Column::make($this->trans("Seq"), "seq")
                 ->searchable()
                 ->sortable(),
-            Column::make("Default Value", "default_value")
+            Column::make($this->trans("Default Value"), "default_value")
                 ->searchable()
                 ->sortable(),
-            Column::make('Created Date', 'created_at')
+            Column::make($this->trans('Created Date'), 'created_at')
                 ->sortable(),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
+            Column::make($this->trans('Actions'), 'id')
+                ->format(function ($value, $row) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [],
@@ -86,36 +74,32 @@ class IndexDataTable extends BaseDataTableComponent
         ];
     }
 
+    protected function formatApplicationLink($row)
+    {
+        if ($row->app_id) {
+            return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($row->app_id)
+            ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
+        }
+        return '';
+    }
+
     public function filters(): array
     {
         return [
-            TextFilter::make('Aplikasi', 'application')
-                ->config([
-                    'placeholder' => 'Cari Kode/Nama Aplikasi',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereHas('configAppl', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
-                            ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                    });
-                })->setWireLive(),
-            TextFilter::make('Var Code', 'code')
-                ->config([
-                    'placeholder' => 'Cari Var code',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
-            TextFilter::make('Var Group', 'var_group')
-                ->config([
-                    'placeholder' => 'Cari Var Group',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(var_group)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
+            $this->createTextFilter('Aplikasi', 'application', 'Cari Kode/Nama Aplikasi', function (Builder $builder, string $value) {
+                $builder->whereHas('configAppl', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
+                          ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
+            $this->createTextFilter('Var Code', 'code', 'Cari Var Code', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Var Group', 'var_group', 'Cari Var Group', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(var_group)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

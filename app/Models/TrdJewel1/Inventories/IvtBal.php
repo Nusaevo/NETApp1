@@ -43,14 +43,4 @@ class IvtBal extends TrdJewel1BaseModel
         return $this->orderBy('code', 'asc')->get();
     }
 
-    public function scopeGetByGrp($query, $grp)
-    {
-        return $query->where('grp', $grp)->get();
-    }
-
-    public function scopeFindItemWarehouse($query, $matl_id, $warehouse_id)
-    {
-        return $query->where('matl_id', $matl_id)->where('wh_id', $warehouse_id);
-    }
-
 }

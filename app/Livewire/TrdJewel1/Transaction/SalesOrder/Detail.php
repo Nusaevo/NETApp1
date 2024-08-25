@@ -100,7 +100,7 @@ class Detail extends BaseComponent
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             if ($this->object->print_settings) {
                 $savedSettings = json_decode($this->object->print_settings, true);
-                foreach ($this->printSettings as &$setting) {
+                foreach ($this->printSettings as $setting) {
                     foreach ($savedSettings as $savedSetting) {
                         if ($setting['code'] === $savedSetting['code'] && $setting['value'] === $savedSetting['value']) {
                             $setting['checked'] = $savedSetting['checked'];
@@ -112,7 +112,7 @@ class Detail extends BaseComponent
 
             if ($this->object->print_remarks) {
                 $savedSettings = json_decode($this->object->print_remarks, true);
-                foreach ($this->printRemarks as &$setting) {
+                foreach ($this->printRemarks as $setting) {
                     foreach ($savedSettings as $savedSetting) {
                         if ($setting['code'] === $savedSetting['code'] && $setting['value'] === $savedSetting['value']) {
                             $setting['checked'] = $savedSetting['checked'];

@@ -100,27 +100,15 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Aplikasi', 'application')
-                ->config([
-                    'placeholder' => 'Cari Kode/Nama Aplikasi',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, ?string $value) {
-                    if ($value) {
-                        $builder->whereHas('configAppl', function ($query) use ($value) {
-                            $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
-                                  ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                        });
-                    }
-                })->setWireLive(),
-            TextFilter::make('Group', 'const_group')
-                ->config([
-                    'placeholder' => 'Cari Group',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where('const_group', 'like', '%' . $value . '%');
-                })->setWireLive(),
+            $this->createTextFilter('Aplikasi', 'application', 'Cari Kode/Nama Aplikasi', function (Builder $builder, string $value) {
+                $builder->whereHas('configAppl', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
+                          ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
+            $this->createTextFilter('Group', 'const_group', 'Cari Group', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(const_group)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
