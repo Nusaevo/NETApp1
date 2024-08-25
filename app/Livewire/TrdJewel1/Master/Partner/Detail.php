@@ -102,10 +102,13 @@ class Detail extends BaseComponent
         // }
 
         $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));
-        if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
-            $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode produk.';
-            $this->addError('inputs.name', $errorMessage);
-            throw new Exception($errorMessage);
+        if(!$this->object->isNew())
+        {
+            if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
+                $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode produk.';
+                $this->addError('inputs.name', $errorMessage);
+                throw new Exception($errorMessage);
+            }
         }
 
         if (isNullOrEmptyString($this->inputs['code'])) {

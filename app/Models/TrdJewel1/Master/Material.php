@@ -191,13 +191,13 @@ class Material extends TrdJewel1BaseModel
 
     public function hasQuantity()
     {
-        $exists = DB::table('ivt_bals')
-            ->where('matl_id', $this->id)
+        $exists = IvtBal::where('matl_id', $this->id)
             ->where('qty_oh', '>', 0)
             ->exists();
 
         return $exists;
     }
+
 
     public function isOrderedMaterial()
     {

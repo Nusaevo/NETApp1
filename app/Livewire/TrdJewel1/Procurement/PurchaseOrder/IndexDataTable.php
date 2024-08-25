@@ -86,18 +86,25 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
             Column::make($this->trans("amt"), "total_amt_in_idr")
-                ->label(function ($row) {
-                    $currencyRateNumeric = $row->curr_rate;
-                    if ($currencyRateNumeric == 0) {
-                        return 'N/A';
+            ->label(function ($row) {
+                $currencyRateNumeric = $row->curr_rate;
+                $totalAmtInIdr = 0;
+
+                $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
+
+                foreach ($orderDetails as $detail) {
+                    if ($detail->Material->isOrderedMaterial()) {
+                        $totalAmtInIdr += currencyToNumeric($detail->amt);
+                    } else {
+                        $totalAmtInIdr += currencyToNumeric($detail->amt) * $currencyRateNumeric;
                     }
-                    $totalAmt = $row->total_amt;
-                    $totalInIdr = $totalAmt * $currencyRateNumeric;
-                    return rupiah($totalInIdr);
-                })
-                ->sortable(),
+                }
+
+                return rupiah($totalAmtInIdr);
+            })
+            ->sortable(),
             Column::make($this->trans('status'), "status_code")
-                ->sortable()
+            ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),

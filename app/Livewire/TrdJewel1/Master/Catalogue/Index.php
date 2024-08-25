@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Support\Carbon;
+use Exception;
 
 class Index extends BaseComponent
 {
@@ -100,16 +101,12 @@ class Index extends BaseComponent
             // Find the material by ID
             $material = Material::find($material_id);
             if (!$material) {
-                DB::rollback();
-                $this->notify('error', 'Material not found');
-                return;
+                throw new Exception('Material not found.');
             }
 
             // Check if the material has quantity
             if (!$material->hasQuantity()) {
-                DB::rollback();
-                $this->notify('error', 'Material out of stock');
-                return;
+                throw new Exception('Material out of stock.');
             }
             // Get the cartHdr by user code and tr_type = cart
             $cartHdr = CartHdr::where('created_by', $usercode)
@@ -158,14 +155,11 @@ class Index extends BaseComponent
                 $this->notify('success', 'Berhasil menambahkan item ke cart');
                 $this->dispatch('updateCartCount');
             } else {
-                DB::rollback();
-
-                $this->notify('error', 'Item sudah dimasukkan ke cart');
+                throw new Exception('Item sudah dimasukkan ke cart');
             }
         } catch (\Exception $e) {
             DB::rollback();
-
-            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart');
+            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart. ' . $e->getMessage());
         }
     }
     #endregion

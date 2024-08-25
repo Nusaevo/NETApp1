@@ -12,6 +12,7 @@ use App\Models\TrdJewel1\Master\GoldPriceLog;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Exception;
 
 class Detail extends BaseComponent
 {
@@ -395,9 +396,7 @@ class Detail extends BaseComponent
                 $existingOrderDtl = $cartHdr->CartDtl()->where('matl_id', $material_id)->first();
 
                 if ($existingOrderDtl) {
-                    DB::rollback();
-                    $this->notify('error',"Item {$material->code} sudah ada di cart");
-                    return;
+                    throw new Exception("Item {$material->code} sudah ada di cart");
                 }
 
                 $price = currencyToNumeric($material->jwl_selling_price_usd) * $this->currencyRate;
@@ -426,7 +425,7 @@ class Detail extends BaseComponent
             $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart');
+            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart. ' . $e->getMessage());
         }
     }
     #endregion
