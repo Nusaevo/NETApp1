@@ -83,14 +83,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Barang', 'name')
-                ->config([
-                    'placeholder' => 'Cari Kode Barang',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
+            $this->createTextFilter('Barang', 'name', 'Cari Kode Barang', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

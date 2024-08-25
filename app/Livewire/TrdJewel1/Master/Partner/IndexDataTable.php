@@ -77,22 +77,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Kode Partner', 'code')
-            ->config([
-                'placeholder' => 'Cari Kode Partner',
-                'maxlength' => '50',
-            ])
-            ->filter(function (Builder $builder, string $value) {
+            $this->createTextFilter('Partner', 'code', 'Cari Kode Partner', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-            })->setWireLive(),
-            TextFilter::make('Nama', 'name')
-                ->config([
-                    'placeholder' => 'Cari Nama',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
+            }),
+            $this->createTextFilter('Nama', 'name', 'Cari Nama', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Group', 'grp')
                 ->options([
                     '' => 'All', // Opsi untuk semua grup

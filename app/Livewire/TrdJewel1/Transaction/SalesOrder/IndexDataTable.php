@@ -117,30 +117,20 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Customer', 'customer_name')
-                ->config([
-                    'placeholder' => 'Cari Customer',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereHas('Partner', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                    });
-                })->setWireDebounce(50),
-            TextFilter::make('Kode Barang', 'matl_code')
-                ->config([
-                    'placeholder' => 'Cari Kode Barang',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereExists(function ($query) use ($value) {
-                        $query->select(DB::raw(1))
-                            ->from('order_dtls')
-                            ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
-                            ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                            ->where('order_dtls.tr_type', 'SO');
-                    });
-                })->setWireDebounce(50),
+            $this->createTextFilter('Customer', 'name', 'Cari Customer', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
+            $this->createTextFilter('Barang', 'matl_code', 'Cari Barang', function (Builder $builder, string $value) {
+                $builder->whereExists(function ($query) use ($value) {
+                    $query->select(DB::raw(1))
+                        ->from('order_dtls')
+                        ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
+                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
+                        ->where('order_dtls.tr_type', 'SO');
+                });
+            }),
             // SelectFilter::make('Status', 'status_code')
             //     ->options([
             //         Status::OPEN => 'Open',
