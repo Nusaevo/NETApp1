@@ -123,7 +123,9 @@
             <div class="form-group mb-4 position-relative">
                 <input class="form-control form-control-lg" type="password" name="password" id="password" autocomplete="off" placeholder="Password" required />
                 <!-- Toggle Button -->
-                <span class="password-toggle" onclick="togglePasswordVisibility()">Show</span>
+                <span class="password-toggle" role="button" tabindex="0" onclick="togglePasswordVisibility()" onkeydown="handleKeyDown(event)" onkeypress="handleKeyPress(event)" onkeyup="handleKeyUp(event)">
+                    Show
+                </span>
             </div>
             <!--end::Input group-->
 

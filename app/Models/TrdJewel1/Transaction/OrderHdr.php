@@ -363,7 +363,6 @@ class OrderHdr extends TrdJewel1BaseModel
         ]);
 
         $inputDetail['tr_id'] = $this->tr_id;
-        $inputDetail['tr_seq'] = $inputDetail['tr_seq'];
         $inputDetail['trhdr_id'] = $this->id;
         $inputDetail['qty_reff'] = $inputDetail['qty'];
         $inputDetail['tr_type'] = $trType;

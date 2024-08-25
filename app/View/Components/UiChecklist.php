@@ -2,39 +2,32 @@
 
 namespace App\View\Components;
 
-use Illuminate\View\Component;
-
-class UiChecklist extends Component
+class UiChecklist extends UiBaseComponent
 {
-    public $label;
-    public $model;
     public $options;
-    public $required;
-    public $enabled;
-    public $visible;
-    public $action;
     public $selectedValue;
-    public $onChanged;
     public $span;
     public $modelType;
-    public $clickEvent;
-    public $id;
 
-    public function __construct( $options, $label = '', $model = '', $selectedValue = null, $required = 'false',
-    $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full', $modelType = '')
-    {
-        $this->label = $label;
-        $this->model = $model;
+    public function __construct(
+        $options,
+        $label = '',
+        $model = '',
+        $selectedValue = null,
+        $required = 'false',
+        $enabled = 'true',
+        $visible = 'true',
+        $action = '',
+        $onChanged = '',
+        $span = 'Full',
+        $modelType = ''
+    ) {
+        parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, null, str_replace(['.', '[', ']'], '_', $model));
+
         $this->options = $options;
         $this->selectedValue = $selectedValue;
-        $this->required = $required;
-        $this->enabled = $enabled;
-        $this->visible = $visible;
-        $this->action = $action;
-        $this->onChanged = $onChanged;
         $this->span = $span;
         $this->modelType = $modelType;
-        $this->id = str_replace(['.', '[', ']'], '_', $model);
     }
 
     public function render()

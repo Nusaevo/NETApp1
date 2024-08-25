@@ -25,7 +25,6 @@ class BillingHdr extends TrdJewel1BaseModel
     protected $fillable = [
         'tr_id',
         'tr_type',
-        'tr_id',
         'tr_date',
         'reff_code',
         'partner_id',

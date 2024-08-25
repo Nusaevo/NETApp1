@@ -2,30 +2,18 @@
 
 namespace App\View\Components;
 
-use Illuminate\View\Component;
-
-class UiTextField extends Component
+class UiTextField extends UiBaseComponent
 {
-    public $label;
-    public $model;
     public $type;
-    public $enabled;
-    public $required;
-    public $visible;
     public $placeHolder;
     public $span;
-    public $onChanged;
-    public $action;
     public $rows;
-    public $id;
-    public $clickEvent;
     public $buttonName;
 
     public function __construct(
         $model,
         $label = '',
         $type = 'text',
-        $labelClass = '',
         $action = '',
         $required = 'false',
         $enabled = 'true',
@@ -37,18 +25,12 @@ class UiTextField extends Component
         $clickEvent = '',
         $buttonName = ""
     ) {
-        $this->label = $label;
-        $this->model = $model;
+        parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, $clickEvent, str_replace(['.', '[', ']'], '_', $model));
+
         $this->type = $type;
-        $this->action = $action;
-        $this->enabled = $enabled;
-        $this->required = $required;
-        $this->visible = $visible;
         $this->placeHolder = $placeHolder;
         $this->span = $span;
-        $this->onChanged = $onChanged;
         $this->rows = $rows;
-        $this->clickEvent = $clickEvent;
         $this->buttonName = $buttonName;
     }
 
@@ -57,3 +39,4 @@ class UiTextField extends Component
         return view('components.ui-text-field');
     }
 }
+

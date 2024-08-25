@@ -9,94 +9,94 @@ use Illuminate\Support\Facades\Validator;
 
 class SampleUserApi
 {
-    public function datatableList(Request $request)
-    {
-        $draw = $request->input('draw', 0);
-        $start = $request->input('start', 0);
-        $length = $request->input('length', 10);
-        $columns = $request->input('columns');
-        $searchValue = $request->input('search.value');
+    // public function datatableList(Request $request)
+    // {
+    //     $draw = $request->input('draw', 0);
+    //     $start = $request->input('start', 0);
+    //     $length = $request->input('length', 10);
+    //     $columns = $request->input('columns');
+    //     $searchValue = $request->input('search.value');
 
-        $orderColumn = $request->input('order.0.column', 0); // Get the order column index
-        $orderDir = $request->input('order.0.dir', 'asc'); // Get the order direction (ASC or DESC)
+    //     $orderColumn = $request->input('order.0.column', 0); // Get the order column index
+    //     $orderDir = $request->input('order.0.dir', 'asc'); // Get the order direction (ASC or DESC)
 
-        $query =ConfigUser::query()->with('roles');
+    //     $query =ConfigUser::query()->with('roles');
 
-        if ($searchValue) {
-            $searchColumns = ['name', 'email'];
-            $query->where(function ($query) use ($searchValue, $searchColumns) {
-                foreach ($searchColumns as $column) {
-                    $query->orWhere(DB::raw("LOWER($column)"), 'LIKE', '%' . strtolower($searchValue) . '%');
-                }
-            });
-        }
+    //     if ($searchValue) {
+    //         $searchColumns = ['name', 'email'];
+    //         $query->where(function ($query) use ($searchValue, $searchColumns) {
+    //             foreach ($searchColumns as $column) {
+    //                 $query->orWhere(DB::raw("LOWER($column)"), 'LIKE', '%' . strtolower($searchValue) . '%');
+    //             }
+    //         });
+    //     }
 
-        // Get the column name for ordering based on the orderColumn index
-        $orderColumnName = $columns[$orderColumn]['data'] ?? 'id';
+    //     // Get the column name for ordering based on the orderColumn index
+    //     $orderColumnName = $columns[$orderColumn]['data'] ?? 'id';
 
-        // exclude core user for demo purpose
-        $query->whereNotIn('id', [1]);
+    //     // exclude core user for demo purpose
+    //     $query->whereNotIn('id', [1]);
 
-        // Apply ordering to the query
-        $query->orderBy($orderColumnName, $orderDir);
+    //     // Apply ordering to the query
+    //     $query->orderBy($orderColumnName, $orderDir);
 
-        $totalRecords = $query->count();
+    //     $totalRecords = $query->count();
 
-        $records = $query->offset($start)->limit($length)->get();
+    //     $records = $query->offset($start)->limit($length)->get();
 
-        $data = [
-            'draw' => $draw,
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $totalRecords,
-            'data' => $records,
-            'orderColumnName' => $orderColumnName,
-        ];
+    //     $data = [
+    //         'draw' => $draw,
+    //         'recordsTotal' => $totalRecords,
+    //         'recordsFiltered' => $totalRecords,
+    //         'data' => $records,
+    //         'orderColumnName' => $orderColumnName,
+    //     ];
 
-        return $data;
-    }
+    //     return $data;
+    // }
 
-    public function create(Request $request)
-    {
-        $user = $request->all();
+    // public function create(Request $request)
+    // {
+    //     $user = $request->all();
 
-        $rules = [
-            'name' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-        ];
+    //     $rules = [
+    //         'name' => 'required|string',
+    //         'email' => 'required|email|unique:users,email',
+    //     ];
 
-        $validator = Validator::make($user, $rules);
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
-        }
+    //     $validator = Validator::make($user, $rules);
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 400);
+    //     }
 
-        $updated =ConfigUser::create($user);
+    //     $updated =ConfigUser::create($user);
 
-        return response()->json(['success' => $updated]);
-    }
+    //     return response()->json(['success' => $updated]);
+    // }
 
-    public function get($id)
-    {
-        return ConfigUser::findOrFail($id);
-    }
+    // public function get($id)
+    // {
+    //     return ConfigUser::findOrFail($id);
+    // }
 
-    public function update($id, Request $request)
-    {
-        $data = $request->validate([
-            'code' => 'required|string',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'role' => 'required|string',
-        ]);
+    // public function update($id, Request $request)
+    // {
+    //     $data = $request->validate([
+    //         'code' => 'required|string',
+    //         'email' => 'required|email|unique:users,email,' . $id,
+    //         'role' => 'required|string',
+    //     ]);
 
-        $user =ConfigUser::findOrFail($id);
-        $user->update($data);
+    //     $user =ConfigUser::findOrFail($id);
+    //     $user->update($data);
 
-        $user->assignRole($request->role);
+    //     $user->assignRole($request->role);
 
-        return response()->json(['success' => true]);
-    }
+    //     return response()->json(['success' => true]);
+    // }
 
-    public function delete($id)
-    {
-        return ConfigUser::destroy($id);
-    }
+    // public function delete($id)
+    // {
+    //     return ConfigUser::destroy($id);
+    // }
 }
