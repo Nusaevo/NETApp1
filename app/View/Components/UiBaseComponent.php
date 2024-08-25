@@ -31,5 +31,8 @@ class UiBaseComponent extends Component
 
     public function render()
     {
+        // This method should not be called as this component does not render any view.
+        throw new \BadMethodCallException('Render method is not implemented because this component does not render a view.');
     }
+
 }
