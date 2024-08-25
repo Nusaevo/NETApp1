@@ -442,7 +442,7 @@ class Detail extends BaseComponent
     public function countTotalAmount()
     {
         $this->total_amount = 0;
-        foreach ($this->input_details as $item_id => $input_detail) {
+        foreach ($this->input_details as $input_detail) {
             if (isset($input_detail['qty']) && isset($input_detail['price'])) {
                 $this->total_amount += $input_detail['price'] * $input_detail['qty'];
             }
