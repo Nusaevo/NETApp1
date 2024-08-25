@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\TrdJewel1\Transaction\Buyback;
 
 use App\Livewire\Component\BaseDataTableComponent;
@@ -7,7 +6,6 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdJewel1\Transaction\ReturnHdr;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use App\Models\TrdJewel1\Transaction\ReturnDtl;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ReturnHdr::class;
+
     public function mount(): void
     {
         $this->setSearchVisibilityStatus(false);
@@ -41,33 +40,12 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("customer"), "partner_id")
                 ->format(function ($value, $row) {
-                    if ($row->partner_id) {
-                        return '<a href="' . route('TrdJewel1.Master.Partner.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->partner_id)
-                        ]) . '">' . $row->Partner->name . '</a>';
-                    } else {
-                        return '';
-                    }
+                    return $this->formatPartnerLink($row);
                 })
                 ->html(),
             Column::make($this->trans("matl_code"), 'id')
                 ->format(function ($value, $row) {
-                    // Manually load OrderDtl using a query
-                    $orderDtl = ReturnDtl::where('tr_id', $row->tr_id)
-                        ->where('tr_type', $row->tr_type)
-                        ->get();
-
-                    // Generate links if data is available
-                    $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
-                    $links = $matlCodes->map(function ($code, $id) {
-                        return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($id)
-                        ]) . '">' . $code . '</a>';
-                    });
-
-                    return $links->implode(', ');
+                    return $this->formatMaterialLinks($row);
                 })
                 ->html(),
             Column::make($this->trans("qty"), "total_qty")
@@ -82,11 +60,11 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans('status'), "status_code")
                 ->sortable()
-                ->format(function ($value, $row, Column $column) {
+                ->format(function ($value) {
                     return Status::getStatusString($value);
                 }),
             Column::make($this->trans("action"), 'id')
-                ->format(function ($value, $row, Column $column) {
+                ->format(function ($value, $row) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [],
@@ -98,13 +76,34 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-            // Column::make('', 'id')
-            //     ->format(function ($value, $row, Column $column) {
-            //         $secondButton = '<a href="' . route('TrdJewel1.Transaction.SalesOrder.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($row->id)]) . '" class="btn btn-primary btn-sm" style="margin-left: 5px; text-decoration: none;">Print</a>';
-
-            //         return "<div class='text-center'>". $secondButton."</div>";
-            //     })->html(),
         ];
+    }
+
+    protected function formatPartnerLink($row)
+    {
+        if ($row->partner_id) {
+            return '<a href="' . route('TrdJewel1.Master.Partner.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($row->partner_id)
+            ]) . '">' . $row->Partner->name . '</a>';
+        }
+        return '';
+    }
+
+    protected function formatMaterialLinks($row)
+    {
+        $orderDtl = ReturnDtl::where('tr_id', $row->tr_id)
+            ->where('tr_type', $row->tr_type)
+            ->get();
+
+        $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
+        $links = $matlCodes->map(function ($code, $id) {
+            return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($id)
+            ]) . '">' . $code . '</a>';
+        });
+        return $links->implode(', ');
     }
 
     public function filters(): array
@@ -116,9 +115,7 @@ class IndexDataTable extends BaseDataTableComponent
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->whereHas('Partner', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                    });
+                    $this->applyCustomerFilter($builder, $value);
                 })->setWireLive(),
             TextFilter::make('Kode Barang', 'matl_code')
                 ->config([
@@ -126,34 +123,26 @@ class IndexDataTable extends BaseDataTableComponent
                     'maxlength' => '50',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->whereExists(function ($query) use ($value) {
-                        $query->select(DB::raw(1))
-                            ->from('return_dtls')
-                            ->whereRaw('return_dtls.tr_id = return_hdrs.tr_id')
-                            ->where(DB::raw('UPPER(return_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                            ->where('return_dtls.tr_type', 'BB');
-                    });
+                    $this->applyMaterialFilter($builder, $value);
                 })->setWireLive(),
-            // SelectFilter::make('Status', 'status_code')
-            //     ->options([
-            //         Status::OPEN => 'Open',
-            //         Status::COMPLETED => 'Selesai',
-            //         '' => 'Semua',
-            //     ])->filter(function ($builder, $value) {
-            //         if ($value === Status::ACTIVE) {
-            //             $builder->where('order_hdrs.status_code', Status::ACTIVE);
-            //         } else if ($value === Status::COMPLETED) {
-            //             $builder->where('order_hdrs.status_code', Status::COMPLETED);
-            //         } else if ($value === '') {
-            //             $builder->withTrashed();
-            //         }
-            //     }),
-            // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '>=', $value);
-            // }),
-            // DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '<=', $value);
-            // }),
         ];
+    }
+
+    protected function applyCustomerFilter(Builder $builder, string $value)
+    {
+        $builder->whereHas('Partner', function ($query) use ($value) {
+            $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+        });
+    }
+
+    protected function applyMaterialFilter(Builder $builder, string $value)
+    {
+        $builder->whereExists(function ($query) use ($value) {
+            $query->select(DB::raw(1))
+                ->from('return_dtls')
+                ->whereRaw('return_dtls.tr_id = return_hdrs.tr_id')
+                ->where(DB::raw('UPPER(return_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
+                ->where('return_dtls.tr_type', 'BB');
+        });
     }
 }

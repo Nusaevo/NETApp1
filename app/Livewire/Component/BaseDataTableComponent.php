@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\SysConfig1\ConfigMenu;
 use App\Models\Util\GenericExport;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 abstract class BaseDataTableComponent extends DataTableComponent
 {
@@ -152,6 +153,17 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->permissions = ConfigRight::getPermissionsByMenu($customRoute ? $customRoute : $this->menu_link);
     }
 
+
+    public function createTextFilter($name, $field, $placeholder, $filterCallback)
+    {
+        return TextFilter::make($name, $field)
+            ->config([
+                'placeholder' => $placeholder,
+                'maxlength' => '500',
+            ])
+            ->filter($filterCallback)
+            ->setWireLive();
+    }
     // public function bulkActions(): array
     // {
     //     return [

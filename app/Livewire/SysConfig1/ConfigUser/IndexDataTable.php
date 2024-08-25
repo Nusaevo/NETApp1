@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire\SysConfig1\ConfigUser;
 
 use App\Livewire\Component\BaseDataTableComponent;
@@ -7,19 +6,13 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigRight;
-use Illuminate\Support\Facades\Crypt;
-use Exception;
+use Illuminate\Support\Facades\DB;
 use App\Enums\Status;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-
-use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigUser::class;
-    protected $configService ;
-    protected $accessible_appids ;
 
     public function mount(): void
     {
@@ -33,25 +26,25 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("LoginID", "code")
+            Column::make($this->trans("LoginID"), "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Name", "name")
+            Column::make($this->trans("Name"), "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Email", "email")
+            Column::make($this->trans("Email"), "email")
                 ->searchable()
                 ->sortable(),
-            Column::make("Status", "status_code")
+            Column::make($this->trans("Status"), "status_code")
                 ->searchable()
                 ->sortable()
-                ->format(function ($value, $row, Column $column) {
+                ->format(function ($value) {
                     return Status::getStatusString($value);
                 }),
-            Column::make('Created Date', 'created_at')
+            Column::make($this->trans('Created Date'), 'created_at')
                 ->sortable(),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
+            Column::make($this->trans('Actions'), 'id')
+                ->format(function ($value, $row) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [],
@@ -69,30 +62,15 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('LoginID', 'code')
-                ->config([
-                    'placeholder' => 'Cari User LoginID',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
-            TextFilter::make('Email', 'email')
-                ->config([
-                    'placeholder' => 'Cari Email',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(email)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
-            TextFilter::make('Nama', 'name')
-                ->config([
-                    'placeholder' => 'Cari Nama',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
+            $this->createTextFilter('LoginID', 'code', 'Cari User LoginID', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Email', 'email', 'Cari Email', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(email)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Nama', 'name', 'Cari Nama User', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

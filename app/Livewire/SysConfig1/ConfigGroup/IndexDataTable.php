@@ -1,17 +1,15 @@
 <?php
-
 namespace App\Livewire\SysConfig1\ConfigGroup;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\SysConfig1\ConfigGroup;
-use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Enums\Status;
-use Exception;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Support\Facades\DB;
+
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigGroup::class;
@@ -35,38 +33,28 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Application", "id")
-            ->format(function ($value, $row) {
-                if ($row->app_id) {
-                    return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
-                        'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->app_id)
-                    ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
-                } else {
-                    return '';
-                }
-            })
-            ->html()
-            ->sortable(),
-            Column::make("Group Code", "code")
+            Column::make($this->trans("Application"), "id")
+                ->format(function ($value, $row) {
+                    return $this->formatApplicationLink($row);
+                })
+                ->html()
+                ->sortable(),
+            Column::make($this->trans("Group Code"), "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Group Name", "descr")
+            Column::make($this->trans("Group Name"), "descr")
                 ->searchable()
                 ->sortable(),
-            // Column::make("User LoginID", "ConfigUser.code")
-            //         ->searchable()
-            //         ->sortable(),
-            Column::make("Status", "status_code")
+            Column::make($this->trans("Status"), "status_code")
                 ->searchable()
                 ->sortable()
-                ->format(function ($value, $row, Column $column) {
+                ->format(function ($value) {
                     return Status::getStatusString($value);
                 }),
-            Column::make('Created Date', 'created_at')
+            Column::make($this->trans('Created Date'), 'created_at')
                 ->sortable(),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
+            Column::make($this->trans('Actions'), 'id')
+                ->format(function ($value, $row) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [],
@@ -81,36 +69,32 @@ class IndexDataTable extends BaseDataTableComponent
         ];
     }
 
+    protected function formatApplicationLink($row)
+    {
+        if ($row->app_id) {
+            return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($row->app_id)
+            ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
+        }
+        return '';
+    }
+
     public function filters(): array
     {
         return [
-            TextFilter::make('Aplikasi', 'application')
-            ->config([
-                'placeholder' => 'Cari Kode/Nama Aplikasi',
-                'maxlength' => '50',
-            ])
-            ->filter(function (Builder $builder, string $value) {
+            $this->createTextFilter('Aplikasi', 'application', 'Cari Kode/Nama Aplikasi', function (Builder $builder, string $value) {
                 $builder->whereHas('configAppl', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
                           ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            })->setWireLive(),
-            TextFilter::make('Kode', 'code')
-                ->config([
-                    'placeholder' => 'Cari Kode Group',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
-            TextFilter::make('Nama', 'descr')
-                ->config([
-                    'placeholder' => 'Cari Nama Group',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(descr)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
+            }),
+            $this->createTextFilter('Kode', 'code', 'Cari Kode Group', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Nama', 'descr', 'Cari Nama Group', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(descr)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',

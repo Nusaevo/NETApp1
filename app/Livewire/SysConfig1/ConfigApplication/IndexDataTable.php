@@ -7,7 +7,6 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\SysConfig1\ConfigAppl;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use App\Models\SysConfig1\ConfigRight;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
@@ -35,25 +34,25 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Application Code", "code")
+            Column::make($this->trans("Application Code"), "code")
                 ->searchable()
                 ->sortable(),
-            Column::make("Name", "name")
+            Column::make($this->trans("Name"), "name")
                 ->searchable()
                 ->sortable(),
-            Column::make("Latest Version", "latest_version")
+            Column::make($this->trans("Latest Version"), "latest_version")
                 ->searchable()
                 ->sortable(),
-            Column::make("Status", "status_code")
+            Column::make($this->trans("Status"), "status_code")
                 ->searchable()
                 ->sortable()
-                ->format(function ($value, $row, Column $column) {
+                ->format(function ($value) {
                     return Status::getStatusString($value);
                 }),
-            Column::make('Created Date', 'created_at')
+            Column::make($this->trans('Created Date'), 'created_at')
                 ->sortable(),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
+            Column::make($this->trans('Actions'), 'id')
+                ->format(function ($value, $row) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [],
@@ -71,22 +70,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Kode Aplikasi', 'code')
-                ->config([
-                    'placeholder' => 'Cari Kode Aplikasi',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
-            TextFilter::make('Nama', 'name')
-                ->config([
-                    'placeholder' => 'Cari Nama',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                })->setWireLive(),
+            $this->createTextFilter('Kode', 'code', 'Cari Kode Aplikasi', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Nama', 'name', 'Cari Nama Aplikasi', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
