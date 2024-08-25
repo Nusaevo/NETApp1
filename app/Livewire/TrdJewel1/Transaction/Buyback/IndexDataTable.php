@@ -109,40 +109,20 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Customer', 'customer_name')
-                ->config([
-                    'placeholder' => 'Cari Customer',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $this->applyCustomerFilter($builder, $value);
-                })->setWireLive(),
-            TextFilter::make('Kode Barang', 'matl_code')
-                ->config([
-                    'placeholder' => 'Cari Kode Barang',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $this->applyMaterialFilter($builder, $value);
-                })->setWireLive(),
+            $this->createTextFilter('Customer', 'name', 'Cari Customer', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
+            $this->createTextFilter('Barang', 'matl_code', 'Cari Barang', function (Builder $builder, string $value) {
+                $builder->whereExists(function ($query) use ($value) {
+                    $query->select(DB::raw(1))
+                        ->from('return_dtls')
+                        ->whereRaw('return_dtls.tr_id = return_hdrs.tr_id')
+                        ->where(DB::raw('UPPER(return_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
+                        ->where('return_dtls.tr_type', 'BB');
+                });
+            }),
         ];
-    }
-
-    protected function applyCustomerFilter(Builder $builder, string $value)
-    {
-        $builder->whereHas('Partner', function ($query) use ($value) {
-            $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-        });
-    }
-
-    protected function applyMaterialFilter(Builder $builder, string $value)
-    {
-        $builder->whereExists(function ($query) use ($value) {
-            $query->select(DB::raw(1))
-                ->from('return_dtls')
-                ->whereRaw('return_dtls.tr_id = return_hdrs.tr_id')
-                ->where(DB::raw('UPPER(return_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                ->where('return_dtls.tr_type', 'BB');
-        });
     }
 }

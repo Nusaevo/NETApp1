@@ -69,9 +69,9 @@ class MaterialComponent extends BaseComponent
         'materials.jwl_buying_price_idr' => [
             'required_if:orderedMaterial,true'
         ],
-        'materials.jwl_selling_price_idr' => [
-            'required_if:orderedMaterial,true'
-        ],
+        // 'materials.jwl_selling_price_idr' => [
+        //     'required_if:orderedMaterial,true'
+        // ],
         'materials.jwl_category1' => 'required|string|min:0|max:255',
         // 'materials.jwl_category2' => 'required|string|min:0|max:255',
         'materials.jwl_carat' => 'required|string|min:0|max:255',

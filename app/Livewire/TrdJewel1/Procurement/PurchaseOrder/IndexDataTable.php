@@ -86,18 +86,25 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
             Column::make($this->trans("amt"), "total_amt_in_idr")
-                ->label(function ($row) {
-                    $currencyRateNumeric = $row->curr_rate;
-                    if ($currencyRateNumeric == 0) {
-                        return 'N/A';
+            ->label(function ($row) {
+                $currencyRateNumeric = $row->curr_rate;
+                $totalAmtInIdr = 0;
+
+                $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
+
+                foreach ($orderDetails as $detail) {
+                    if ($detail->Material->isOrderedMaterial()) {
+                        $totalAmtInIdr += currencyToNumeric($detail->amt);
+                    } else {
+                        $totalAmtInIdr += currencyToNumeric($detail->amt) * $currencyRateNumeric;
                     }
-                    $totalAmt = $row->total_amt;
-                    $totalInIdr = $totalAmt * $currencyRateNumeric;
-                    return rupiah($totalInIdr);
-                })
-                ->sortable(),
+                }
+
+                return rupiah($totalAmtInIdr);
+            })
+            ->sortable(),
             Column::make($this->trans('status'), "status_code")
-                ->sortable()
+            ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
@@ -134,30 +141,20 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Supplier', 'supplier_name')
-                ->config([
-                    'placeholder' => 'Cari Supplier',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereHas('Partner', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                    });
-                })->setWireLive(),
-            TextFilter::make('Kode Barang', 'matl_code')
-                ->config([
-                    'placeholder' => 'Search Material Code',
-                    'maxlength' => '50',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereExists(function ($query) use ($value) {
-                        $query->select(DB::raw(1))
-                            ->from('order_dtls')
-                            ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
-                            ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                            ->where('order_dtls.tr_type', 'PO');
-                    });
-                })->setWireLive(),
+            $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
+                $builder->whereExists(function ($query) use ($value) {
+                    $query->select(DB::raw(1))
+                        ->from('order_dtls')
+                        ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
+                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
+                        ->where('order_dtls.tr_type', 'PO');
+                });
+            }),
+            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
             // SelectFilter::make('Status', 'status_code')
             //     ->options([
             //         Status::OPEN => 'Open',

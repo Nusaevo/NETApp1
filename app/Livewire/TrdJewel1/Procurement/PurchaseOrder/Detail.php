@@ -348,12 +348,19 @@ class Detail extends BaseComponent
     public function countTotalAmount()
     {
         $this->total_amount = 0;
+
         foreach ($this->input_details as $item_id => $input_detail) {
             if (isset($input_detail['price'])) {
-                $this->total_amount += $input_detail['price'];
+                if (isset($input_detail['isOrderedMaterial']) && $input_detail['isOrderedMaterial']) {
+                    $this->total_amount += $input_detail['price'];
+                } else {
+                    $this->total_amount += $input_detail['price'] * $this->inputs['curr_rate'];
+                }
             }
         }
+
         $this->inputs['amt'] = $this->total_amount;
+        $this->total_amount = rupiah($this->total_amount);
     }
     #endregion
 
