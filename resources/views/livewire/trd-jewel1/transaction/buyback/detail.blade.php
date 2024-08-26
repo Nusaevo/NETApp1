@@ -128,6 +128,7 @@
     // dump($object->id);
     @endphp
 </div>
+@push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('openMaterialDialog', function() {
@@ -140,4 +141,4 @@
     });
 
 </script>
-
+@endpush
