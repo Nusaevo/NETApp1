@@ -78,8 +78,10 @@ class SidebarMenu extends Component
                 ];
 
                 if (trim($menuHeader) !== '') {
-                    if (!isset($mainMenu[$menuHeader])) {
-                        $mainMenu[$menuHeader] = [
+                    $menuHeaderKey = strtolower(trim($menuHeader));
+
+                    if (!isset($mainMenu[$menuHeaderKey])) {
+                        $mainMenu[$menuHeaderKey] = [
                             'title' => $menuHeader,
                             'icon' => '<span class="bullet bullet-dot"></span>',
                             'classes' => ['item' => 'menu-accordion'],
@@ -92,10 +94,11 @@ class SidebarMenu extends Component
                             ],
                         ];
                     }
-                    $mainMenu[$menuHeader]['sub']['items'][] = $menuItem;
+                    $mainMenu[$menuHeaderKey]['sub']['items'][] = $menuItem;
                 } else {
                     $mainMenu[] = $menuItem;
                 }
+
             }
         }
 
