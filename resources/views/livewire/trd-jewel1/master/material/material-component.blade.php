@@ -178,9 +178,9 @@ use App\Models\TrdJewel1\Master\Material;
         </div>
         {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
 
-        @if (!$searchMode)
+        {{--@if (!$searchMode)--}}
         @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => $actionValue])
-        @endif
+        {{-- @endif--}}
 
         @if (!$searchMode && $actionValue == 'Edit')
 

@@ -6,6 +6,7 @@ use App\Models\SysConfig1\ConfigMenu;
 use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 class SidebarMenu extends Component
 {
@@ -15,7 +16,7 @@ class SidebarMenu extends Component
     public function mount()
     {
         $this->baseRoute = $this->getBaseRoute();
-        $this->menus = $this->generateMenu(auth()->user()->id);
+        $this->menus = $this->generateMenu(Auth::id());
     }
 
     private function getBaseRoute()

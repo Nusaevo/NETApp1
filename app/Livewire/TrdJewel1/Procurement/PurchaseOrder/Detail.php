@@ -321,9 +321,14 @@ class Detail extends BaseComponent
         $detail['matl_uom'] = $material->MatlUom[0]->id;
         $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
         $detail['barcode'] = $material->MatlUom[0]->barcode;
-        $detail['price'] = $material->jwl_buying_price ?? 0;
-        $detail['selling_price'] = $material->jwl_selling_price ?? 0;
         $detail['isOrderedMaterial'] = $material->isOrderedMaterial();
+        if($material->isOrderedMaterial()){
+            $detail['price'] = $material->jwl_buying_price_idr ?? 0;
+            $detail['selling_price'] = $material->jwl_selling_price_idr ?? 0;
+        }else{
+            $detail['price'] = $material->jwl_buying_price_usd ?? 0;
+            $detail['selling_price'] = $material->jwl_selling_price_usd ?? 0;
+        }
         $detail['qty'] = 1;
         $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
         $maxTrSeq++;
@@ -351,11 +356,7 @@ class Detail extends BaseComponent
 
         foreach ($this->input_details as $input_detail) {
             if (isset($input_detail['price'])) {
-                if (isset($input_detail['isOrderedMaterial']) && $input_detail['isOrderedMaterial']) {
-                    $this->total_amount += $input_detail['price'];
-                } else {
-                    $this->total_amount += $input_detail['price'] * $this->inputs['curr_rate'];
-                }
+                $this->total_amount += $input_detail['price'];
             }
         }
 

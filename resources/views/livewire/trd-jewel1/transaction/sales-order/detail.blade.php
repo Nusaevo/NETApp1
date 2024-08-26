@@ -15,7 +15,6 @@
                     <x-ui-padding>
                         <div class="row">
                             <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled"/>
-                            <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" required="true" :action="$actionValue" onChanged="saveCheck"  :enabled="$isPanelEnabled"/>
                             <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" onChanged="onPartnerChanged"  :enabled="$isPanelEnabled"/>
                         </div>
                     </x-ui-padding>
@@ -112,6 +111,11 @@
                         </x-slot>
                     </x-ui-list-table>
                     @if($actionValue == 'Edit')
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" :action="$actionValue" onChanged="saveCheck" />
+                        </div>
+                    </div>
                     <div class="print-options">
                         <table>
                             <thead>
@@ -177,6 +181,7 @@
     // dump($object->id);
     @endphp
 </div>
+@push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('openMaterialDialog', function() {
@@ -189,4 +194,5 @@
     });
 
 </script>
+@endpush
 

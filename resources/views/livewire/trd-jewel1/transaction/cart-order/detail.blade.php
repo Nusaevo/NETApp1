@@ -121,6 +121,7 @@
         </x-ui-footer>
     </x-ui-page-card>
 
+    @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             window.addEventListener('openMaterialDialog', function() {
@@ -133,4 +134,5 @@
         });
 
     </script>
+    @endpush
 
