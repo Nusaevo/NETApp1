@@ -19,6 +19,8 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchVisibilityStatus(false);
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
+        $this->setDefaultSort('tr_date', 'desc');
+        $this->setDefaultSort('tr_id', 'desc');
     }
 
     public function builder(): Builder
