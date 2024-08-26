@@ -263,19 +263,6 @@ class Detail extends BaseComponent
         }
         $this->inputs['amt'] = $this->total_amount;
     }
-    public function deleteDetails($index)
-    {
-        if (isset($this->input_details[$index]['id'])) {
-            $deletedItemId = $this->input_details[$index]['id'];
-            $returnDtl = ReturnDtl::withTrashed()->find($deletedItemId);
-            if ($returnDtl) {
-                $returnDtl->forceDelete();
-            }
-        }
-        unset($this->input_details[$index]);
-        $this->input_details = array_values($this->input_details);
-        $this->countTotalAmount();
-    }
     public function Add()
     {
     }
@@ -307,7 +294,29 @@ class Detail extends BaseComponent
     #endregion
 
     #region Component Events
-
+    public function changePrice($id, $value)
+    {
+        if (isset($this->input_details[$id]['qty'])) {
+            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
+            $this->input_details[$id]['amt'] = numberFormat($total) ;
+            $this->input_details[$id]['price'] = $total;
+            $this->countTotalAmount();
+            $this->SaveWithoutNotification();
+        }
+    }
+    public function deleteDetails($index)
+    {
+        if (isset($this->input_details[$index]['id'])) {
+            $deletedItemId = $this->input_details[$index]['id'];
+            $returnDtl = ReturnDtl::withTrashed()->find($deletedItemId);
+            if ($returnDtl) {
+                $returnDtl->forceDelete();
+            }
+        }
+        unset($this->input_details[$index]);
+        $this->input_details = array_values($this->input_details);
+        $this->countTotalAmount();
+    }
     public function saveCheck()
     {
         if (!$this->object->isNew())
