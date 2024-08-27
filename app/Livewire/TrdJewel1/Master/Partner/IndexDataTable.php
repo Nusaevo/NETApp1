@@ -20,7 +20,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
-        $this->setSearchVisibilityStatus(false);
+        $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
 
     }
