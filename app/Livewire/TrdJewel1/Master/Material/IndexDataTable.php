@@ -21,7 +21,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
-        $this->setSearchVisibilityStatus(false);
+        $this->setSearchDisabled();
         $this->setFilter('Status', 0);
         $this->setFilter('stock_filter', 'above_0');
         $this->setDefaultSort('created_at', 'desc');
