@@ -21,7 +21,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->customRoute = "";
         $this->getPermission($this->customRoute);
         $this->setFilter('Status', 0);
-        $this->setSearchVisibilityStatus(false);
+        $this->setSearchDisabled();
         $this->configService = new ConfigService();
         $this->accessible_appids = $this->configService->getAppIds();
     }
