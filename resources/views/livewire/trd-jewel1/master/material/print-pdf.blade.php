@@ -15,7 +15,7 @@
                 <!-- Label -->
                 <div class="label-container">
                     <div class="label-code">{{ $object->code }}</div>
-                    <div class="label-price">{{ numberFormat(currencyToNumeric($object->jwl_selling_price_usd)) }}</div>
+                    <div class="label-price">{{ $object->jwl_selling_price_text }}</div>
                     <div class="label-name">{{ $object->name }}</div>
                     <div class="label-descr" id="label-descr">{{ $object->descr }}</div>
                 </div>

@@ -16,8 +16,7 @@ class PrintPdf extends BaseComponent
     #region Populate Data methods
     protected function onPreRender()
     {
-        $additionalParams = explode(';', urldecode($this->additionalParam));
-        $this->object = Material::withTrashed()->whereIn('id', $additionalParams)->first();
+        $this->object = Material::withTrashed()->find($this->objectIdValue);
     }
 
     public function render()
@@ -41,7 +40,5 @@ class PrintPdf extends BaseComponent
 
     #region Component Events
 
-
     #endregion
-
 }
