@@ -92,7 +92,8 @@ class MaterialComponent extends BaseComponent
         'matl_boms.*.gemstone' => 'nullable',
         'matl_boms.*.gemcolor' => 'nullable',
         'matl_boms.*.production_year' => 'nullable',
-        'matl_boms.*.ref_mark' => 'nullable'
+        'matl_boms.*.ref_mark' => 'nullable',
+        'matl_uoms.barcode' => 'required'
     ];
 
 

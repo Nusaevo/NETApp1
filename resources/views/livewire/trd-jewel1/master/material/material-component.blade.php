@@ -183,11 +183,10 @@ use App\Models\TrdJewel1\Master\Material;
         {{-- @endif--}}
 
         @if (!$searchMode && $actionValue == 'Edit')
-
         @include('layout.customs.buttons.disable')
+        @endif
 
         <x-ui-button clickEvent="printBarcode" cssClass="btn btn-secondary" button-name="Print Label" action="Edit" />
-        @endif
 
         @if($searchMode)
         <x-ui-button clickEvent="SaveWithoutNotification" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
