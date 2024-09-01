@@ -349,7 +349,7 @@ class MaterialComponent extends BaseComponent
         }
 
         if(!$this->searchMode){
-            return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
+            return redirect()->route('TrdJewel1.Master.Material.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
