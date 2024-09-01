@@ -93,7 +93,9 @@ class MaterialComponent extends BaseComponent
         'matl_boms.*.gemcolor' => 'nullable',
         'matl_boms.*.production_year' => 'nullable',
         'matl_boms.*.ref_mark' => 'nullable',
-        'matl_uoms.barcode' => 'required'
+        'matl_uoms.barcode' => [
+            'required_if:orderedMaterial,false'
+        ],
     ];
 
 
@@ -702,17 +704,47 @@ class MaterialComponent extends BaseComponent
 
     public function printBarcode()
     {
-        if (isset($this->matl_uoms['barcode'])) {
-            if (isset($this->materials['descr'])) {
-                $additionalParam = urlencode($this->object->id);
-                return redirect()->route('TrdJewel1.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey(""), 'additionalParam' => $additionalParam]);
-            } else {
-                $this->notify('error', __($this->langBasePath . '.message.save_material_input'));
-            }
-        } else {
-            $this->notify('error', __($this->langBasePath . '.message.barcode_validation'));
+        if (empty($this->materials['code'])) {
+            $this->notify('error', __('generic.error.field_required', ['field' => "Code"]));
+            $this->addError('materials.code', __('generic.error.field_required', ['field' => "Code"]));
+            return;
         }
+
+        if (empty($this->materials['name'])) {
+            $this->notify('error', __('generic.error.field_required', ['field' => "Name"]));
+            $this->addError('materials.name', __('generic.error.field_required', ['field' => "Name"]));
+            return;
+        }
+
+        // if (empty($this->materials['descr'])) {
+        //     $this->notify('error', __('generic.error.field_required', ['field' => "Description"]));
+        //     $this->addError('materials.descr', __('generic.error.field_required', ['field' => "Description"]));
+        //     return;
+        // }
+        $sellingPrice = 0;
+        if ($this->orderedMaterial) {
+            $sellingPrice = rupiah($this->materials['jwl_selling_price_idr'] ?? 0);
+        } else {
+            $sellingPrice = dollar($this->materials['jwl_selling_price_usd'] ?? 0);
+        }
+        $additionalData = [
+            'code' => $this->materials['code'] ?? "",
+            'name' => $this->materials['name'] ?? "",
+            'jwl_selling_price' => $sellingPrice,
+            'descr' => $this->materials['descr'] ?? "",
+        ];
+
+        $additionalParam = urlencode(json_encode($additionalData));
+        $url = route('TrdJewel1.Master.Material.PrintPdf', [
+            "action" => encryptWithSessionKey('Edit'),
+            'objectId' => 0,
+            'additionalParam' => $additionalParam
+        ]);
+        $this->dispatch('open-print-tab', [
+            'url' => $url
+        ]);
     }
+
     #endregion
 
 }

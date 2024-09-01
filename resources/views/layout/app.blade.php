@@ -173,6 +173,15 @@
                     }
                 });
             });
+
+            Livewire.on('open-print-tab', (data) => {
+                let url = data[0].url || '';
+                if (url) {
+                    window.open(url, '_blank');
+                } else {
+                    console.error('URL is not provided or is empty.');
+                }
+            });
         });
 
     </script>

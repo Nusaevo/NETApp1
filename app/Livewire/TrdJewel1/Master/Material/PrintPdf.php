@@ -10,19 +10,26 @@ class PrintPdf extends BaseComponent
     #region Constant Variables
 
     public $object;
+    public $data = [];
 
     #endregion
 
     #region Populate Data methods
+
     protected function onPreRender()
     {
-        $additionalParams = explode(';', urldecode($this->additionalParam));
-        $this->object = Material::withTrashed()->whereIn('id', $additionalParams)->first();
+        $decodedParams = json_decode(urldecode($this->additionalParam), true);
+
+        if (is_array($decodedParams)) {
+            $this->data = $decodedParams;
+        } else {
+            $this->notify('error', __('Invalid parameter data.'));
+        }
     }
 
     public function render()
     {
-        return view($this->renderRoute);
+        return view($this->renderRoute, ['data' => $this->data]);
     }
 
     #endregion
@@ -41,7 +48,5 @@ class PrintPdf extends BaseComponent
 
     #region Component Events
 
-
     #endregion
-
 }
