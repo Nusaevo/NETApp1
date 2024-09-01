@@ -10,26 +10,18 @@ class PrintPdf extends BaseComponent
     #region Constant Variables
 
     public $object;
-    public $data = [];
 
     #endregion
 
     #region Populate Data methods
-
     protected function onPreRender()
     {
-        $decodedParams = json_decode(urldecode($this->additionalParam), true);
-
-        if (is_array($decodedParams)) {
-            $this->data = $decodedParams;
-        } else {
-            $this->notify('error', __('Invalid parameter data.'));
-        }
+        $this->object = Material::withTrashed()->find($this->objectIdValue);
     }
 
     public function render()
     {
-        return view($this->renderRoute, ['data' => $this->data]);
+        return view($this->renderRoute);
     }
 
     #endregion

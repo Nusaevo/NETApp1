@@ -92,10 +92,7 @@ class MaterialComponent extends BaseComponent
         'matl_boms.*.gemstone' => 'nullable',
         'matl_boms.*.gemcolor' => 'nullable',
         'matl_boms.*.production_year' => 'nullable',
-        'matl_boms.*.ref_mark' => 'nullable',
-        'matl_uoms.barcode' => [
-            'required_if:orderedMaterial,false'
-        ],
+        'matl_boms.*.ref_mark' => 'nullable'
     ];
 
 
@@ -344,12 +341,35 @@ class MaterialComponent extends BaseComponent
 
         $this->saveAttachment();
         $this->saveUOMs();
+
         $this->handleBOMs();
 
         if (!$this->object->isNew()) {
             $this->deleteRemovedItems();
         }
 
+        if(!$this->searchMode){
+            return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);
+        }
+    }
+
+    public function addPurchaseOrder()
+    {
+        if (!isset($this->object->id)) {
+            $this->notify('error', "Harap save barang terlebih dahulu!");
+            return;
+        }
+
+        // if(!$this->orderedMaterial){
+        //     if (empty($this->matl_uoms['barcode'])) {
+        //         $this->notify('error', "Untuk barang non pesanan, harap isi kode barang");
+        //         $this->addError('matl_uoms.barcode', "Untuk barang non pesanan, harap isi kode barang");
+        //         return;
+        //     }
+        // }
         $this->dispatch('materialSaved', $this->object->id);
     }
 
@@ -675,6 +695,11 @@ class MaterialComponent extends BaseComponent
 
     public function tagScanned($tags)
     {
+        if (!isset($this->object->id)) {
+            $this->notify('error', "Harap save barang terlebih dahulu!");
+            return;
+        }
+
         if (isset($tags)) {
             $tagCount = count($tags);
             if ($tagCount > 1) {
@@ -686,6 +711,7 @@ class MaterialComponent extends BaseComponent
                     $this->notify('error', 'RFID telah digunakan sebelumnya');
                 } else {
                     $this->matl_uoms['barcode'] = $tags[0];
+                    $this->saveUOMs();
                     $this->notify('success', 'RFID berhasil discan');
                 }
             }
@@ -704,41 +730,14 @@ class MaterialComponent extends BaseComponent
 
     public function printBarcode()
     {
-        if (empty($this->materials['code'])) {
-            $this->notify('error', __('generic.error.field_required', ['field' => "Code"]));
-            $this->addError('materials.code', __('generic.error.field_required', ['field' => "Code"]));
+        if (!isset($this->object->id)) {
+            $this->notify('error', "Harap save barang terlebih dahulu!");
             return;
         }
 
-        if (empty($this->materials['name'])) {
-            $this->notify('error', __('generic.error.field_required', ['field' => "Name"]));
-            $this->addError('materials.name', __('generic.error.field_required', ['field' => "Name"]));
-            return;
-        }
-
-        // if (empty($this->materials['descr'])) {
-        //     $this->notify('error', __('generic.error.field_required', ['field' => "Description"]));
-        //     $this->addError('materials.descr', __('generic.error.field_required', ['field' => "Description"]));
-        //     return;
-        // }
-        $sellingPrice = 0;
-        if ($this->orderedMaterial) {
-            $sellingPrice = rupiah($this->materials['jwl_selling_price_idr'] ?? 0);
-        } else {
-            $sellingPrice = dollar($this->materials['jwl_selling_price_usd'] ?? 0);
-        }
-        $additionalData = [
-            'code' => $this->materials['code'] ?? "",
-            'name' => $this->materials['name'] ?? "",
-            'jwl_selling_price' => $sellingPrice,
-            'descr' => $this->materials['descr'] ?? "",
-        ];
-
-        $additionalParam = urlencode(json_encode($additionalData));
         $url = route('TrdJewel1.Master.Material.PrintPdf', [
             "action" => encryptWithSessionKey('Edit'),
-            'objectId' => 0,
-            'additionalParam' => $additionalParam
+            "objectId" => encryptWithSessionKey($this->object->id)
         ]);
         $this->dispatch('open-print-tab', [
             'url' => $url

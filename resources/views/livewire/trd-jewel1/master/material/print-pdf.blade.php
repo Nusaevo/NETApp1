@@ -1,7 +1,7 @@
 <div>
-{{--  <div>
+<div>
     <x-ui-button clickEvent="" type="Back" button-name="Back" />
-</div>  --}}
+</div>
 <div class="card">
     <div class="card-body">
         <div class="container mb-5 mt-3">
@@ -14,10 +14,10 @@
             <div id="print">
                 <!-- Label -->
                 <div class="label-container">
-                    <div class="label-code">{{ $data['code'] }}</div>
-                    <div class="label-price">{{ $data['jwl_selling_price'] }}</div>
-                    <div class="label-name">{{ $data['name'] }}</div>
-                    <div class="label-descr" id="label-descr">{{ $data['descr'] }}</div>
+                    <div class="label-code">{{ $object->code }}</div>
+                    <div class="label-price">{{ $object->jwl_selling_price_text }}</div>
+                    <div class="label-name">{{ $object->name }}</div>
+                    <div class="label-descr" id="label-descr">{{ $object->descr }}</div>
                 </div>
             </div>
         </div>
