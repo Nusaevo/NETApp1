@@ -963,7 +963,7 @@ div[wire\:loading].loading-overlay {
 }
 
 /* For devices with a width of 768px or more */
-@media (min-width: 768px) {
+@media (min-width: 1300px) {
     .print-options {
         width: 50%;
     }
