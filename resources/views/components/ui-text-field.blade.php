@@ -128,7 +128,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
                     {{ $buttonName }}
                 </button>
             </span>
-            <span wire:loading>
+            <span wire:loading wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
                 <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
             </span>
         </div>
