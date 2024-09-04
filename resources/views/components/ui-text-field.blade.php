@@ -123,7 +123,7 @@ $id = str_replace(['.', '[', ']'], '_', $model);
         <!-- Refresh Button -->
         @if (isset($clickEvent) && $clickEvent !== '')
         <div class="d-flex align-items-center ms-2">
-            <span wire:loading.remove>
+            <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
                 <button type="button" class="btn btn-secondary" wire:click="{{ $clickEvent }}" @if ((!empty($action) && $action==='View' ) || (isset($enabled) && $enabled==='false' )) disabled @endif>
                     {{ $buttonName }}
                 </button>
