@@ -30,7 +30,8 @@
                             <table style="width: 100%;">
                                 <tr>
                                     <td style="text-align: left; width: 50%;">
-
+                                        <p style="margin: 0; padding: 0;">Alamat : Ruko Pluit Village No.59</strong></p>
+                                        <p style="margin: 0; padding: 0;">Telp : +62.216683859</strong></p>
                                     </td>
                                     <td style="text-align: right; width: 50%;">
                                         <p style="margin: 0; padding: 0;">Nomor Nota: <strong>{{ $this->object->tr_id }}</strong></p>
@@ -62,8 +63,8 @@
                                     <td>KETERANGAN:</td>
                                 </tr>
                                 <tr class="item">
-                                    <td class="description" style="font-size: 10px; margin: 0; padding: 0;">
-                                        <ul style="margin: 0; padding: 2px; line-height: 1.5;">
+                                    <td class="description" style="font-size: 8px; margin: 0; padding: 0;">
+                                        <ul style="margin: 0; padding: 2px; line-height: 1;">
                                             @foreach ($printRemarks as $remark)
                                             @if ($remark['checked'])
                                             <li>{{ $remark['label'] }}</li>
