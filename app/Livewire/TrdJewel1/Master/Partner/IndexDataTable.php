@@ -33,9 +33,14 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans('code'), "code")
-                ->searchable()
-                ->sortable(),
+            Column::make($this->trans("code"), "code")
+            ->format(function ($value, $row) {
+                    return '<a href="' . route('TrdJewel1.Master.Partner.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->id)
+                    ]) . '">' . $row->code . '</a>';
+            })
+            ->html(),
             Column::make($this->trans('group'), "grp")
                 ->searchable()
                 ->sortable()
