@@ -179,7 +179,7 @@ use App\Models\TrdJewel1\Master\Material;
         {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
 
         {{--@if (!$searchMode)--}}
-        @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => $actionValue])
+        @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => 'Edit'])
         {{-- @endif--}}
 
         @if (!$searchMode && $actionValue == 'Edit')
@@ -192,7 +192,7 @@ use App\Models\TrdJewel1\Master\Material;
         <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
         <x-ui-button clickEvent="addPurchaseOrder" button-name="Add Item" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
         @else
-        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+        <x-ui-button clickEvent="Save" button-name="Save" loading="true" action="Edit" cssClass="btn-primary" iconPath="save.svg" />
         @endif
 
     </x-ui-footer>
