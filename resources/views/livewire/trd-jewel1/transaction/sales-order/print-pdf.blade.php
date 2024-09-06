@@ -47,7 +47,7 @@
                                         </td>
                                         <td style="text-align: right; width: 100%;">
                                             <ul style="list-style: none; margin: 0; padding: 0; line-height: 1; padding-top: 40px;">
-                                                <li style="font-size: 8px;">No: <strong>{{ $this->object->tr_id }}</li>
+                                                <li>No: <strong>{{ $this->object->tr_id }}</li>
                                                 <li style="font-size: 8px;">Tgl: <strong>{{ $this->object->tr_date }}</li>
                                             </ul>
                                         </td>
