@@ -124,15 +124,16 @@ class MasterService
     {
         $data = $this->connection
             ->table('config_consts')
-            ->select('str2')
+            ->select('str1', 'str2')
             ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
             ->where('app_code', $appCode)
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
 
-        return $data ? $data->str2 : null;
+        return $data ? $data->str1 . " - " . $data->str2 : null;
     }
+
 
     public function getMatlBaseMaterialData($appCode)
     {
