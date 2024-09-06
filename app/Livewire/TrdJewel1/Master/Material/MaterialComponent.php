@@ -42,7 +42,6 @@ class MaterialComponent extends BaseComponent
     public $capturedImages = [];
     public $deleteImages = [];
 
-
     public $materialJewelPurity = [];
     public $sideMaterialShapes = [];
     public $sideMaterialGiaColors = [];
@@ -100,6 +99,7 @@ class MaterialComponent extends BaseComponent
         'captureImages'  => 'captureImages',
         'runExe'  => 'runExe',
         'submitImages'  => 'submitImages',
+        'submitAttachmentsFromStorage'  => 'submitAttachmentsFromStorage',
         'changeStatus'  => 'changeStatus',
         'tagScanned' => 'tagScanned',
         'resetMaterial' => 'onReset',
@@ -265,6 +265,16 @@ class MaterialComponent extends BaseComponent
             }
             $this->deleteImages = [];
         }
+
+        foreach ($this->capturedImages as $image) {
+            if (isset($image['storage_id'])) {
+                try {
+                    Attachment::deleteAttachmentById($image['storage_id']);
+                } catch (Exception $e) {
+                }
+            }
+        }
+
         // Save new attachments
         if (!empty($this->capturedImages)) {
             foreach ($this->capturedImages as $image) {
@@ -348,7 +358,7 @@ class MaterialComponent extends BaseComponent
             $this->deleteRemovedItems();
         }
 
-        if(!$this->searchMode){
+        if(!$this->searchMode && $this->actionValue == "Create"){
             return redirect()->route('TrdJewel1.Master.Material.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
@@ -564,12 +574,35 @@ class MaterialComponent extends BaseComponent
             }
         }
     }
+
     public function submitImages($imageByteArrays)
     {
         foreach ($imageByteArrays as $byteArray) {
             $dataUrl = 'data:image/jpeg;base64,' . base64_encode(implode('', array_map('chr', $byteArray)));
             $filename = uniqid() . '.jpg';
             $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename];
+        }
+    }
+
+    public function submitAttachmentsFromStorage($attachmentIds)
+    {
+        foreach ($attachmentIds as $attachmentId) {
+            $attachment = Attachment::find($attachmentId);
+            if ($attachment) {
+                $url = $attachment->getUrl();
+                $imageData = file_get_contents($url);
+                $imageBase64 = base64_encode($imageData);
+                $dataUrl = 'data:image/jpeg;base64,' . $imageBase64;
+
+                $filename = uniqid() . '.jpg';
+
+                $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename, 'storage_id' => $attachment->id];
+                $this->notify('success', 'Images submitted successfully.');
+                $this->dispatch('closeStorageDialog');
+
+            } else {
+                $this->notify('error', 'Attachment with ID ' . $attachmentId . ' not found.');
+            }
         }
     }
 
@@ -586,6 +619,7 @@ class MaterialComponent extends BaseComponent
             unset($this->capturedImages[$index]);
         }
     }
+
     public function getMatlCode()
     {
         $code = "";

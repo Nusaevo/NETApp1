@@ -13,27 +13,20 @@ class StorageComponent extends BaseComponent
 
     public $images = [];
     public $isDialogBoxComponent;
+
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isDialogBoxComponent = true)
     {
         $this->isDialogBoxComponent = $isDialogBoxComponent;
-        if($isDialogBoxComponent)
-        {
-            $this->bypassPermissions = true;
-        }
+        $this->bypassPermissions = $isDialogBoxComponent;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
     public function render()
     {
-        if($this->isDialogBoxComponent == false)
-        {
-            $attachments = Attachment::where('attached_objecttype', 'NetStorage')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-        }else{
-            $attachments = Attachment::where('attached_objecttype', 'NetStorage')
-            ->orderBy('created_at', 'desc')->get();
-        }
+        $query = Attachment::where('attached_objecttype', 'NetStorage')
+            ->orderBy('created_at', 'desc');
+
+        $attachments = $this->isDialogBoxComponent ? $query->get() : $query->paginate(15);
 
         return view('livewire.trd-jewel1.master.gallery.storage-component', ['attachments' => $attachments]);
     }
@@ -43,27 +36,32 @@ class StorageComponent extends BaseComponent
     }
 
     protected $listeners = [
-        'captureImages'  => 'captureImages',
-        'deleteImage'  => 'deleteImage',
+        'captureImages' => 'captureImages',
+        'deleteImage' => 'deleteImage',
         'deleteSelectedImages' => 'deleteSelectedImages',
         'submitImages' => 'submitImages'
     ];
 
     public function submitImages($imageByteArrays)
     {
+        if ($this->isDialogBoxComponent) {
+            return;
+        }
+
         $this->dispatch('saveImages', $imageByteArrays);
-        $this->notify('success', 'Images submitted successfully: ');
+        $this->notify('success', 'Images submitted successfully.');
     }
 
     public function captureImages($imageData)
     {
+        if ($this->isDialogBoxComponent) {
+            return;
+        }
+
         $filename = uniqid() . '_' . time() . '.jpg';
         $filePath = Attachment::saveAttachmentByFileName($imageData, null, 'NetStorage', $filename);
-        if ($filePath) {
-            $this->notify('success', 'Image uploaded successfully.');
-        } else {
-            $this->notify('error','Image upload failed.');
-        }
+        $message = $filePath ? 'Image uploaded successfully.' : 'Image upload failed.';
+        $this->notify($filePath ? 'success' : 'error', $message);
     }
 
     public function selectImage($imageId)
@@ -73,21 +71,26 @@ class StorageComponent extends BaseComponent
 
     public function deleteImage($imageId)
     {
+        if ($this->isDialogBoxComponent) {
+            return;
+        }
+
         $attachment = Attachment::find($imageId);
         if ($attachment) {
             $deleted = Attachment::deleteAttachmentById($imageId);
-            if ($deleted) {
-                $this->notify('success','Image deleted successfully.');
-            } else {
-                $this->notify('error','Image deletion failed.');
-            }
+            $message = $deleted ? 'Image deleted successfully.' : 'Image deletion failed.';
+            $this->notify($deleted ? 'success' : 'error', $message);
         } else {
-            $this->notify('error','Image not found.');
+            $this->notify('error', 'Image not found.');
         }
     }
 
     public function deleteSelectedImages($imageIds)
     {
+        if ($this->isDialogBoxComponent) {
+            return;
+        }
+
         foreach ($imageIds as $imageId) {
             $this->deleteImage($imageId);
         }
