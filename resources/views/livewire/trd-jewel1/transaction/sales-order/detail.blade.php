@@ -174,7 +174,13 @@
             <x-ui-button :action="$actionValue" clickEvent="createReturn"
                 cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
             @endif --}}
+            @php
+            $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
+            @endphp
             @include('layout.customs.transaction-form-footer')
+            <x-ui-button :action="$actionValue" clickEvent="{{ route($printPdfRoute,
+            ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($object->id)]) }}"
+                cssClass="btn-primary" type="Route" loading="true" button-name="Print" iconPath="print.svg" />
         </x-ui-footer>
     </x-ui-page-card>
     @php
