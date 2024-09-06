@@ -4,6 +4,10 @@
 
     $masterService = new MasterService();
     @endphp
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+        </style>
+
     <div class="container mb-5 mt-3">
         <div>
             <x-ui-button clickEvent="" type="Back" button-name="Back" />
@@ -27,18 +31,28 @@
                     @foreach ($object->OrderDtl as $OrderDtl)
                     <div class="invoice-box-container">
                         <div class="invoice-box">
-                            <table style="width: 100%;">
-                                <tr>
-                                    <td style="text-align: left; width: 50%;">
-                                        <p style="margin: 0; padding: 0;">Alamat : Ruko Pluit Village No.59</strong></p>
-                                        <p style="margin: 0; padding: 0;">Telp : +62.216683859</strong></p>
-                                    </td>
-                                    <td style="text-align: right; width: 50%;">
-                                        <p style="margin: 0; padding: 0;">Nomor Nota: <strong>{{ $this->object->tr_id }}</strong></p>
-                                        <p style="margin: 0; padding: 0;">Tanggal: <strong>{{ $this->object->tr_date }}</strong></p>
-                                    </td>
-                                </tr>
-                            </table>
+                            <div style="display: flex; justify-content: center; align-items: center; min-height: 100px; width: 100%;">
+                                <!-- Kontainer konten yang di tengah -->
+                                <table style="width: 100%;">
+                                    <tr>
+                                        <td style="width: 70%; text-align: center; vertical-align: middle;">
+                                            <div style="text-align: center; display: inline-block;  margin-left: 200px;">
+                                                <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 100px; height: auto; margin-bottom: 5px;">
+                                                <ul style="list-style: none; margin: 0; padding: 0; line-height: 1;">
+                                                    <li style="font-size: 8px;">Alamat: Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
+                                                    <li style="font-size: 8px;">Telp: +62.216683859</li>
+                                                    <li style="font-size: 8px;">Email: wijayamas28@yahoo.com</li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right; width: 100%;">
+                                            <p style="margin: 0; padding: 0;">Nomor Nota: <strong>{{ $this->object->tr_id }}</strong></p>
+                                            <p style="margin: 0; padding: 0;">Tanggal: <strong>{{ $this->object->tr_date }}</strong></p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
                             <table style="margin-top: 0px;">
                                 <tr class="information">
                                     <td style="width: 50%; vertical-align: top;">
