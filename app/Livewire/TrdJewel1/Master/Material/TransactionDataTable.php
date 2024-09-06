@@ -19,9 +19,11 @@ class TransactionDataTable extends Component
     {
         $baseQuery = "
             SELECT
+                order_hdrs.id as id,
                 order_hdrs.tr_id as tr_id,
                 order_hdrs.tr_type as tr_type,
                 order_hdrs.tr_date as tr_date,
+                partners.id as partner_id,
                 partners.name as partner_name,
                 SUM(order_dtls.amt) as total_price,
                 'order' as source
@@ -35,14 +37,16 @@ class TransactionDataTable extends Component
             $baseQuery .= " AND order_dtls.matl_id = :materialID";
         }
 
-        $baseQuery .= " GROUP BY order_hdrs.tr_id, order_hdrs.tr_type, order_hdrs.tr_date, partners.name";
+        $baseQuery .= " GROUP BY order_hdrs.id,order_hdrs.tr_id, order_hdrs.tr_type, order_hdrs.tr_date, partners.id, partners.name";
 
         $unionQuery = "
             UNION ALL
             SELECT
+                return_hdrs.id as id,
                 return_hdrs.tr_id as tr_id,
                 return_hdrs.tr_type as tr_type,
                 return_hdrs.tr_date as tr_date,
+                partners.id as partner_id,
                 partners.name as partner_name,
                 SUM(return_dtls.amt) as total_price,
                 'return' as source
@@ -56,7 +60,7 @@ class TransactionDataTable extends Component
             $unionQuery .= " AND return_dtls.matl_id = :materialID";
         }
 
-        $unionQuery .= " GROUP BY return_hdrs.tr_id, return_hdrs.tr_type, return_hdrs.tr_date, partners.name";
+        $unionQuery .= " GROUP BY return_hdrs.id, return_hdrs.tr_id, return_hdrs.tr_type, return_hdrs.tr_date, partners.id, partners.name";
 
         $finalQuery = $baseQuery . $unionQuery . "
             ORDER BY tr_date DESC, tr_id DESC

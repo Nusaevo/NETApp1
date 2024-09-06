@@ -47,8 +47,17 @@ class IndexDataTable extends BaseDataTableComponent
                 ->hideIf(true)
                 ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
-                ->sortable()
-                ->searchable(),
+                ->format(function ($value, $row) {
+                    if ($row->partner_id) {
+                        return '<a href="' . route('TrdJewel1.Procurement.PurchaseOrder.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->id)
+                        ]) . '">' . $row->tr_id . '</a>';
+                    } else {
+                        return '';
+                    }
+                })
+                ->html(),
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
@@ -125,14 +134,14 @@ class IndexDataTable extends BaseDataTableComponent
                         'row' => $row,
                         'row' => $row,
                         'custom_actions' => [
-                            [
-                                'label' => 'Print',
-                                'route' => route('TrdJewel1.Procurement.PurchaseOrder.PrintPdf', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($row->id)
-                                ]),
-                                'icon' => 'bi bi-printer'
-                            ],
+                            // [
+                            //     'label' => 'Print',
+                            //     'route' => route('TrdJewel1.Procurement.PurchaseOrder.PrintPdf', [
+                            //         'action' => encryptWithSessionKey('Edit'),
+                            //         'objectId' => encryptWithSessionKey($row->id)
+                            //     ]),
+                            //     'icon' => 'bi bi-printer'
+                            // ],
                         ],
                         'enable_this_row' => true,
                         'allow_details' => false,

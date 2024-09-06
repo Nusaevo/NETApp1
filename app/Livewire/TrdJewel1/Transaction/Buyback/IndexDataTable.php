@@ -36,7 +36,17 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("date"), "tr_date")
                 ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
-                ->sortable(),
+                ->format(function ($value, $row) {
+                    if ($row->partner_id) {
+                        return '<a href="' . route('TrdJewel1.Transaction.Buyback.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->id)
+                        ]) . '">' . $row->tr_id . '</a>';
+                    } else {
+                        return '';
+                    }
+                })
+                ->html(),
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),

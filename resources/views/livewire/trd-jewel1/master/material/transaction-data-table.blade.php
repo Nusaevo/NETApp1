@@ -12,9 +12,51 @@
             <x-slot name="rows">
                 @foreach ($data as $index => $row)
                 <tr wire:key="transaction-{{ $index }}">
-                        <x-ui-td>{{ $row->partner_name }}</x-ui-td>
+                        <x-ui-td>
+                            @if ($row->partner_id)
+                                <!-- Tautan ke detail partner -->
+                                <a href="{{ route('TrdJewel1.Master.Partner.Detail', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($row->partner_id)
+                                ]) }}">
+                                    {{ $row->partner_name }}
+                                </a>
+                            @else
+                                {{ $row->partner_name }}
+                            @endif
+                        </x-ui-td>
                         <x-ui-td>{{ $row->tr_date }}</x-ui-td>
-                        <x-ui-td>{{ $row->tr_id }}</x-ui-td>
+                        <x-ui-td>
+                            @php
+                                $trLink = '';
+                                switch ($row->tr_type) {
+                                    case 'BB': // Buy Back
+                                        $trLink = '<a href="' . route('TrdJewel1.Transaction.Buyback.Detail', [
+                                            'action' => encryptWithSessionKey('Edit'),
+                                            'objectId' => encryptWithSessionKey($row->id)
+                                        ]) . '">' . $row->tr_id . '</a>';
+                                        break;
+                                    case 'SO': // Sales Order
+                                        $trLink = '<a href="' . route('TrdJewel1.Transaction.SalesOrder.Detail', [
+                                            'action' => encryptWithSessionKey('Edit'),
+                                            'objectId' => encryptWithSessionKey($row->id)
+                                        ]) . '">' . $row->tr_id . '</a>';
+                                        break;
+                                    case 'PO': // Purchase Order
+                                        $trLink = '<a href="' . route('TrdJewel1.Procurement.PurchaseOrder.Detail', [
+                                            'action' => encryptWithSessionKey('Edit'),
+                                            'objectId' => encryptWithSessionKey($row->id)
+                                        ]) . '">' . $row->tr_id . '</a>';
+                                        break;
+                                    default:
+                                        $trLink = $row->tr_id;
+                                        break;
+                                }
+                            @endphp
+
+                            {!! $trLink !!} <!-- Tampilkan link transaksi yang dihasilkan -->
+                        </x-ui-td>
+
                         <x-ui-td>
                             @switch($row->tr_type)
                                 @case('BB')
