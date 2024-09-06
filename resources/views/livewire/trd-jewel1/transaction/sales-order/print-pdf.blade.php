@@ -39,16 +39,19 @@
                                             <div style="text-align: center; display: inline-block;  margin-left: 200px;">
                                                 <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 100px; height: auto; margin-bottom: 5px;">
                                                 <ul style="list-style: none; margin: 0; padding: 0; line-height: 1;">
-                                                    <li style="font-size: 8px;">Alamat: Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
-                                                    <li style="font-size: 8px;">Telp: +62.216683859</li>
-                                                    <li style="font-size: 8px;">Email: wijayamas28@yahoo.com</li>
+                                                    <li style="font-size: 8px;">Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
+                                                    <li style="font-size: 8px;">+62.216683859</li>
+                                                    <li style="font-size: 8px;">wijayamas28@yahoo.com</li>
                                                 </ul>
                                             </div>
                                         </td>
                                         <td style="text-align: right; width: 100%;">
-                                            <p style="margin: 0; padding: 0;">Nomor Nota: <strong>{{ $this->object->tr_id }}</strong></p>
-                                            <p style="margin: 0; padding: 0;">Tanggal: <strong>{{ $this->object->tr_date }}</strong></p>
+                                            <ul style="list-style: none; margin: 0; padding: 0; line-height: 1; padding-top: 40px;">
+                                                <li style="font-size: 8px;">No: <strong>{{ $this->object->tr_id }}</li>
+                                                <li style="font-size: 8px;">Tgl: <strong>{{ $this->object->tr_date }}</li>
+                                            </ul>
                                         </td>
+
                                     </tr>
                                 </table>
                             </div>
@@ -216,9 +219,7 @@
                 box-shadow: none;
                 margin: 0;
                 padding: 5mm 10mm;
-                /* Padding atas, bawah, kiri, dan kanan */
                 height: auto;
-                /* Sesuaikan tinggi dengan konten */
                 page-break-after: always;
             }
         }
