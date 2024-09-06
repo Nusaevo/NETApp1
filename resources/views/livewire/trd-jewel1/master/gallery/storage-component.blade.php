@@ -87,29 +87,18 @@
         }
     }
 
-    async function submitSelectedImages() {
+    function submitSelectedImages() {
         const checkboxes = document.querySelectorAll('.gallery-checkbox:checked');
-        const totalFiles = checkboxes.length;
-        let uploadedFiles = 0;
+        const attachmentIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.imageId);
 
-        const imageByteArrays = await Promise.all(
-            Array.from(checkboxes).map(async checkbox => {
-                const imageUrl = checkbox.dataset.imageUrl;
-                const byteArray = await readImageAsByteArray(imageUrl);
-                uploadedFiles++;
-                return byteArray;
-            })
-        );
-
-        console.log('Selected Image Byte Arrays:', imageByteArrays);
-
-        if (imageByteArrays.length > 0) {
-            Livewire.dispatch('submitImages', { imageByteArrays : imageByteArrays });
+        if (attachmentIds.length > 0) {
+            Livewire.dispatch('submitAttachmentsFromStorage', { attachmentIds: attachmentIds });
             resetSelectedImages();
         } else {
             alert('No images selected');
         }
     }
+
 
     function resetSelectedImages() {
         const checkboxes = document.querySelectorAll('.gallery-checkbox:checked');

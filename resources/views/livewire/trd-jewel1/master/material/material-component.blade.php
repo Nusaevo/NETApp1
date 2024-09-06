@@ -198,3 +198,17 @@ use App\Models\TrdJewel1\Master\Material;
     </x-ui-footer>
 </x-ui-page-card>
 </div>
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        window.addEventListener('openStorageDialog', function() {
+            $('#storageDialogBox').modal('show');
+        });
+
+        window.addEventListener('closeStorageDialog', function() {
+            $('#storageDialogBox').modal('hide');
+        });
+    });
+
+</script>
+@endpush
