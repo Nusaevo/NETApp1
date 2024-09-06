@@ -68,7 +68,7 @@
         }
     </script>
     @endpush
-    @else
+   {{--  @else
     <div class="image-button-container" style="visibility: hidden">
         <button id="btnAdd" class="btn btn-secondary" onclick="toggleAddPopup()">
             <span wire:loading.remove>
@@ -136,6 +136,6 @@
             });
         }
     </script>
-    @endpush
+    @endpush  --}}
     {{--  @endif  --}}
 </div>
