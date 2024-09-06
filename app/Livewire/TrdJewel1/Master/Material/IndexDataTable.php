@@ -36,8 +36,13 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             Column::make($this->trans("code"), "code")
-                ->searchable()
-                ->sortable(),
+            ->format(function ($value, $row) {
+                    return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->id)
+                    ]) . '">' . $row->code . '</a>';
+            })
+            ->html(),
             Column::make($this->trans("description_material"), "name")
                 ->searchable()
                 ->sortable(),

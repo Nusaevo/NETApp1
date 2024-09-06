@@ -297,6 +297,7 @@ class Detail extends BaseComponent
         $this->saveCheck();
     }
 
+
     public function OpenDialogBox(){
         if (!$this->validateInputs()) {
             return;
@@ -357,8 +358,9 @@ class Detail extends BaseComponent
                     $notFoundItems[] = $barcode;
                     continue;
                 }
-                if (isset($material->partner_id) && $material->partner_id != $this->inputs['partner_id']) {
-                    // Jika partner_id ada dan tidak sama dengan inputs['partner_id'], tambahkan ke otherPartnerItems
+
+                if(!isNullOrEmptyNumber($material->partner_id) && $this->inputs['partner_id'] != $material->partner_id){
+                    // Jika partner_id ada, tidak sama dengan 0, dan tidak sama dengan inputs['partner_id'], tambahkan ke otherPartnerItems
                     $otherPartnerItems[] = $barcode;
                     continue;
                 }
@@ -384,7 +386,7 @@ class Detail extends BaseComponent
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_seq' => $maxTrSeq,
-                    'price' => $material->jwl_selling_price,
+                    'selling_price' => $material->jwl_selling_price,
                 ];
                 $addedItems[] = $material->code;
             }
@@ -551,7 +553,7 @@ class Detail extends BaseComponent
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_seq' => $maxTrSeq,
-                    'price' => $material->jwl_selling_price,
+                    'selling_price' => $material->jwl_selling_price,
                 ];
             }
             $this->input_details = array_merge($this->input_details, $newDetails);

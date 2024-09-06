@@ -164,7 +164,7 @@
                 let confirmButtonText = 'Ok';
 
                 Swal.fire({
-                    text: message
+                    html: message
                     , icon: icon
                     , buttonsStyling: false
                     , confirmButtonText: confirmButtonText
