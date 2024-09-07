@@ -48,16 +48,18 @@ class Index extends BaseComponent
             order_hdrs.tr_type AS tr_type,
             order_hdrs.tr_date AS tr_date,
             materials.jwl_category1 AS category,
+            materials.jwl_category2 AS category2,
             materials.code AS material_code,
             materials.jwl_wgt_gold AS material_gold,
             materials.jwl_carat AS material_carat,
             materials.descr AS material_descr,
             order_dtls.price AS price,
             CAST(REGEXP_REPLACE(materials.code, '\\D', '', 'g') AS INTEGER) AS code_number,
+            so_hdr.tr_date AS tr_date,
             so_hdr.tr_id AS no_nota,
             so_hdr.partner_id AS partner_id,
+            so_dtl.price AS selling_price,
             partners.name AS partner_name,
-            -- Subquery to get the first attachment for each material
             (SELECT path
              FROM attachments
              WHERE attached_objecttype = 'Material'
@@ -67,9 +69,10 @@ class Index extends BaseComponent
              ORDER BY created_at
              LIMIT 1) AS file_url
         FROM materials
-        LEFT JOIN order_dtls ON order_dtls.matl_id = materials.id AND order_dtls.deleted_at IS NULL
-        LEFT JOIN order_hdrs ON order_hdrs.tr_id = order_dtls.tr_id AND order_hdrs.tr_type = 'PO' AND order_hdrs.deleted_at IS NULL
-        LEFT JOIN order_hdrs AS so_hdr ON so_hdr.tr_id = order_dtls.tr_id AND so_hdr.tr_type = 'SO' AND so_hdr.deleted_at IS NULL
+        LEFT JOIN order_dtls ON order_dtls.matl_id = materials.id  AND order_dtls.tr_type = 'PO' AND order_dtls.deleted_at IS NULL
+        LEFT JOIN order_hdrs ON order_hdrs.id = order_dtls.trhdr_id AND order_hdrs.tr_type = 'PO' AND order_hdrs.deleted_at IS NULL
+        LEFT outer JOIN order_dtls AS so_dtl ON materials.id = so_dtl.matl_id AND so_dtl.tr_type = 'SO' AND so_dtl.deleted_at IS NULL
+        LEFT outer JOIN order_hdrs AS so_hdr ON so_hdr.id = so_dtl.trhdr_id AND so_hdr.tr_type = 'SO' AND so_hdr.deleted_at IS NULL
         LEFT JOIN partners ON partners.id = so_hdr.partner_id
         WHERE materials.deleted_at IS NULL
     ";

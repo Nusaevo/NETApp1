@@ -1041,3 +1041,27 @@ div[wire\:loading].loading-overlay {
         display: none;
     }
 }
+.ui-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ui-table th, .ui-table td {
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    text-align: left;
+}
+
+.ui-table thead th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.ui-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.ui-table tbody tr:hover {
+    background-color: #e2e6ea;
+}
