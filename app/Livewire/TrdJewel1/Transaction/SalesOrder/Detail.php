@@ -59,7 +59,7 @@ class Detail extends BaseComponent
         // 'inputs.partner_id' =>  'required',
         // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.selling_price' => ['required', 'not_in:0'],
+        'input_details.*.price' => ['required', 'not_in:0'],
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -386,7 +386,7 @@ class Detail extends BaseComponent
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_seq' => $maxTrSeq,
-                    'selling_price' => $material->jwl_selling_price,
+                    'price' => $material->jwl_selling_price,
                 ];
                 $addedItems[] = $material->code;
             }
@@ -553,7 +553,7 @@ class Detail extends BaseComponent
                     'qty' => 1,
                     'qty_reff' => 1,
                     'tr_seq' => $maxTrSeq,
-                    'selling_price' => $material->jwl_selling_price,
+                    'price' => $material->jwl_selling_price,
                 ];
             }
             $this->input_details = array_merge($this->input_details, $newDetails);
