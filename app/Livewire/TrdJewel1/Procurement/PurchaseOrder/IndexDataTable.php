@@ -60,14 +60,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
-                    if ($row->partner_id) {
                         return '<a href="' . route('TrdJewel1.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->partner_id)
                         ]) . '">' . $row->Partner->name . '</a>';
-                    } else {
-                        return '';
-                    }
                 })
                 ->html(),
             Column::make($this->trans("matl_code"), 'id')
