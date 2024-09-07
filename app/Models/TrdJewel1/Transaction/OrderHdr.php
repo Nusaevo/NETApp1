@@ -249,129 +249,28 @@ class OrderHdr extends TrdJewel1BaseModel
     {
         DB::beginTransaction();
         try {
-            // Initialize Transaction Types
             list($delivTrType, $billingTrType, $code) = $this->initializeTransactionTypes($trType);
 
-            // Fill and sanitize input, generate transaction ID
             $this->fillAndSanitize($inputs);
-            if ($this->tr_id === null || $this->tr_id == 0) {
-                $configSnum = ConfigSnum::where('app_code', '=', $appCode)
-                    ->where('code', '=', $code)
-                    ->first();
-                if ($configSnum != null) {
-                    $stepCnt = $configSnum->step_cnt;
-                    $proposedTrId = $configSnum->last_cnt + $stepCnt;
-                    if ($proposedTrId > $configSnum->wrap_high) {
-                        $proposedTrId = $configSnum->wrap_low;
-                    }
-                    $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
-                    $configSnum->last_cnt = $proposedTrId;
-                    $this->tr_id = $proposedTrId;
-                    $configSnum->save();
-                }
-            }
+            $this->generateTransactionId($appCode, $code);
 
             if ($this->isNew()) {
                 $this->status_code = Status::OPEN;
             }
             $this->save();
 
-            // Create delivery and billing headers if needed
             if ($createBillingDelivery) {
-                $this->createDeliveryHeader($delivTrType, $inputs);
-                $this->createBillingHeader($billingTrType);
+                $this->createDeliveryAndBillingHeaders($delivTrType, $billingTrType, $inputs);
             }
 
-            // Save order details
-            foreach ($input_details as $index => $inputDetail) {
-                // Create or update order details
-                $orderDtl = OrderDtl::firstOrNew([
-                    'tr_id' => $this->tr_id,
-                    'tr_seq' => $inputDetail['tr_seq'],
-                ]);
-
-                $inputDetail['tr_id'] = $this->tr_id;
-                $inputDetail['trhdr_id'] = $this->id;
-                $inputDetail['qty_reff'] = $inputDetail['qty'];
-                $inputDetail['tr_type'] = $trType;
-                $orderDtl->fillAndSanitize($inputDetail);
-
-                if ($orderDtl->isNew()) {
-                    $orderDtl->status_code = Status::OPEN;
-                }
-                $orderDtl->save();
-
-                // Create delivery and billing details if needed
-                if ($createBillingDelivery) {
-                    $delivDtl = DelivDtl::firstOrNew([
-                        'trhdr_id' => $orderDtl->trhdr_id,
-                        'tr_seq' => $orderDtl->tr_seq,
-                        'tr_type' => $delivTrType,
-                    ]);
-                    $delivDtl->fillAndSanitize([
-                        'trhdr_id' => $orderDtl->trhdr_id,
-                        'tr_type' => $delivTrType,
-                        'tr_id' => $this->tr_id,
-                        'tr_seq' => $orderDtl->tr_seq,
-                        'reffdtl_id' => $orderDtl->id,
-                        'reffhdrtr_type' => $orderDtl->tr_type,
-                        'reffhdrtr_id' => $this->tr_id,
-                        'reffdtltr_seq' => $orderDtl->tr_seq,
-                        'matl_id' => $orderDtl->matl_id,
-                        'matl_code' => $orderDtl->matl_code,
-                        'matl_descr' => $orderDtl->matl_descr,
-                        'matl_uom' => $orderDtl->matl_uom,
-                        'wh_code' => $inputs['wh_code'],
-                        'qty' => $orderDtl->qty,
-                        'qty_reff' => $orderDtl->qty_reff,
-                    ]);
-                    if ($delivDtl->isNew()) {
-                        $delivDtl->status_code = Status::OPEN;
-                    }
-                    $delivDtl->save();
-
-                    // Create billing detail
-                    $billingDtl = BillingDtl::firstOrNew([
-                        'trhdr_id' => $delivDtl->trhdr_id,
-                        'tr_seq' => $delivDtl->tr_seq,
-                        'tr_type' => $billingTrType,
-                    ]);
-                    $billingDtl->fillAndSanitize([
-                        'trhdr_id' => $delivDtl->trhdr_id,
-                        'tr_type' => $billingTrType,
-                        'tr_id' => $delivDtl->tr_id,
-                        'tr_seq' => $delivDtl->tr_seq,
-                        'dlvdtl_id' => $delivDtl->id,
-                        'dlvhdrtr_type' => $delivDtl->tr_type,
-                        'dlvhdrtr_id' => $delivDtl->tr_id,
-                        'dlvdtltr_seq' => $delivDtl->tr_seq,
-                        'matl_id' => $delivDtl->matl_id,
-                        'matl_code' => $delivDtl->matl_code,
-                        'matl_uom' => $delivDtl->matl_uom,
-                        'descr' => '',
-                        'qty' => $delivDtl->qty,
-                        'qty_uom' => '',
-                        'qty_base' => $delivDtl->qty,
-                        'price' => $delivDtl->price,
-                        'price_uom' => '',
-                        'price_base' => $delivDtl->trhdr_id,
-                        'amt' => $delivDtl->amt,
-                        'amt_reff' => $delivDtl->amt,
-                    ]);
-                    if ($billingDtl->isNew()) {
-                        $billingDtl->status_code = Status::OPEN;
-                    }
-                    $billingDtl->save();
-                }
-            }
+            $this->saveOrderDetails($input_details, $trType, $inputs, $createBillingDelivery, $delivTrType, $billingTrType);
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            throw $e; // Re-throw the exception after rollback
+            throw $e;
         }
     }
-
 
     private function initializeTransactionTypes($trType)
     {
@@ -380,5 +279,164 @@ class OrderHdr extends TrdJewel1BaseModel
         } else {
             return ["SD", "ARB", "SALESORDER_LASTID"];
         }
+    }
+
+    private function generateTransactionId($appCode, $code)
+    {
+        if ($this->tr_id === null || $this->tr_id == 0) {
+            $configSnum = ConfigSnum::where('app_code', '=', $appCode)
+                ->where('code', '=', $code)
+                ->first();
+            if ($configSnum != null) {
+                $stepCnt = $configSnum->step_cnt;
+                $proposedTrId = $configSnum->last_cnt + $stepCnt;
+                if ($proposedTrId > $configSnum->wrap_high) {
+                    $proposedTrId = $configSnum->wrap_low;
+                }
+                $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+                $configSnum->last_cnt = $proposedTrId;
+                $this->tr_id = $proposedTrId;
+                $configSnum->save();
+            }
+        }
+    }
+
+    private function createDeliveryAndBillingHeaders($delivTrType, $billingTrType, $inputs)
+    {
+        $this->createDeliveryHeader($delivTrType, $inputs);
+        $this->createBillingHeader($billingTrType);
+    }
+
+    private function createDeliveryHeader($delivTrType, $inputs)
+    {
+        $delivHdr = DelivHdr::firstOrNew(['tr_id' => $this->tr_id, 'tr_type' => $delivTrType]);
+        $delivHdr->fillAndSanitize([
+            'tr_id' => $this->tr_id,
+            'tr_type' => $delivTrType,
+            'tr_date' => $this->tr_date,
+            'partner_id' => $this->partner_id,
+            'partner_code' => $this->partner_code,
+            'deliv_by' => $inputs['deliv_by'] ?? '',
+        ]);
+        if ($delivHdr->isNew()) {
+            $delivHdr->status_code = Status::OPEN;
+        }
+        $delivHdr->save();
+    }
+
+    private function createBillingHeader($billingTrType)
+    {
+        $billingHdr = BillingHdr::firstOrNew(['tr_id' => $this->tr_id, 'tr_type' => $billingTrType]);
+        $billingHdr->fillAndSanitize([
+            'tr_id' => $this->tr_id,
+            'tr_type' => $billingTrType,
+            'tr_date' => $this->tr_date,
+            'partner_id' => $this->partner_id,
+            'partner_code' => $this->partner_code,
+            'payment_term_id' => $this->payment_term_id,
+            'payment_term' => '',
+            'payment_due_days' => 0,
+        ]);
+        if ($billingHdr->isNew()) {
+            $billingHdr->status_code = Status::OPEN;
+        }
+        $billingHdr->save();
+    }
+
+    private function saveOrderDetails($input_details, $trType, $inputs, $createBillingDelivery, $delivTrType, $billingTrType)
+    {
+        foreach ($input_details as $index => $inputDetail) {
+            $orderDtl = $this->createOrUpdateOrderDetail($inputDetail, $trType);
+
+            if ($createBillingDelivery) {
+                $this->createDeliveryDetail($orderDtl, $inputs, $delivTrType);
+                $this->createBillingDetail($orderDtl, $billingTrType);
+            }
+        }
+    }
+
+    private function createOrUpdateOrderDetail($inputDetail, $trType)
+    {
+        $orderDtl = OrderDtl::firstOrNew([
+            'tr_id' => $this->tr_id,
+            'tr_seq' => $inputDetail['tr_seq'],
+        ]);
+
+        $inputDetail['tr_id'] = $this->tr_id;
+        $inputDetail['trhdr_id'] = $this->id;
+        $inputDetail['qty_reff'] = $inputDetail['qty'];
+        $inputDetail['tr_type'] = $trType;
+        $orderDtl->fillAndSanitize($inputDetail);
+        if ($orderDtl->isNew()) {
+            $orderDtl->status_code = Status::OPEN;
+        }
+        $orderDtl->save();
+
+        return $orderDtl;
+    }
+
+    private function createDeliveryDetail($orderDtl, $inputs, $delivTrType)
+    {
+        $delivDtl = DelivDtl::firstOrNew([
+            'trhdr_id' => $orderDtl->trhdr_id,
+            'tr_seq' => $orderDtl->tr_seq,
+            'tr_type' => $delivTrType,
+        ]);
+        $delivDtl->fillAndSanitize([
+            'trhdr_id' => $orderDtl->trhdr_id,
+            'tr_type' => $delivTrType,
+            'tr_id' => $this->tr_id,
+            'tr_seq' => $orderDtl->tr_seq,
+            'reffdtl_id' => $orderDtl->id,
+            'reffhdrtr_type' => $orderDtl->tr_type,
+            'reffhdrtr_id' => $this->tr_id,
+            'reffdtltr_seq' => $orderDtl->tr_seq,
+            'matl_id' => $orderDtl->matl_id,
+            'matl_code' => $orderDtl->matl_code,
+            'matl_descr' => $orderDtl->matl_descr,
+            'matl_uom' => $orderDtl->matl_uom,
+            'wh_code' => $inputs['wh_code'],
+            'qty' => $orderDtl->qty,
+            'qty_reff' => $orderDtl->qty_reff,
+        ]);
+        if ($delivDtl->isNew()) {
+            $delivDtl->status_code = Status::OPEN;
+        }
+        $delivDtl->save();
+    }
+
+    private function createBillingDetail($delivDtl, $billingTrType)
+    {
+        $billingDtl = BillingDtl::firstOrNew([
+            'trhdr_id' => $delivDtl->trhdr_id,
+            'tr_seq' => $delivDtl->tr_seq,
+            'tr_type' => $billingTrType,
+        ]);
+        $billingDtl->fillAndSanitize([
+            'trhdr_id' => $delivDtl->trhdr_id,
+            'tr_type' => $billingTrType,
+            'tr_id' => $delivDtl->tr_id,
+            'tr_seq' => $delivDtl->tr_seq,
+            'dlvdtl_id' => $delivDtl->id,
+            'dlvhdrtr_type' => $delivDtl->tr_type,
+            'dlvhdrtr_id' => $delivDtl->tr_id,
+            'dlvdtltr_seq' => $delivDtl->tr_seq,
+            'matl_id' => $delivDtl->matl_id,
+            'matl_code' => $delivDtl->matl_code,
+            'matl_uom' => $delivDtl->matl_uom,
+            'descr' => '',
+            'qty' => $delivDtl->qty,
+            'qty_uom' => '',
+            'qty_base' => $delivDtl->qty,
+            'price' => $delivDtl->price,
+            'price_uom' => '',
+            'price_base' => $delivDtl->trhdr_id,
+            'amt' => $delivDtl->amt,
+            'amt_reff' => $delivDtl->amt,
+        ]);
+        if ($billingDtl->isNew()) {
+            $billingDtl->status_code = Status::OPEN;
+        }
+        $billingDtl->save();
     }
 }
