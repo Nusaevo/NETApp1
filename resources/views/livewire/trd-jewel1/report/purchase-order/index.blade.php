@@ -30,8 +30,8 @@
                     <th class="min-w-100" style="text-align: center;">Code</th>
                     <th class="min-w-200px" style="text-align: center;">Foto</th>
                     <th class="min-w-300px" style="text-align: center;">Descr</th>
-                    <th class="min-w-200px" style="text-align: center;">Modal</th>
-                    <th class="min-w-200px" style="text-align: center;">Jual</th>
+                    <th class="min-w-100px" style="text-align: center;">Modal</th>
+                    <th class="min-w-300px" style="text-align: center;">Jual</th>
                 </x-slot>
 
                 <x-slot name="rows">
@@ -46,7 +46,7 @@
                                         : 'https://via.placeholder.com/200';
 
                                 @endphp
-                                <img src="{{ $imageUrl }}" alt="Material Photo" style="width: 100px; height: 100px;">
+                                <img src="{{ $imageUrl }}" alt="Material Photo" style="width: 100px; height: 110px;">
                             </td>
 
 
