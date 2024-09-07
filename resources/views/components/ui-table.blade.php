@@ -9,6 +9,7 @@
         </div>
     @endif
 </div>
+
 @if(isset($enableDataTable) && strcmp($enableDataTable, 'true') === 0)
     <div x-data="{
             initDataTable() {
@@ -53,10 +54,10 @@
             }
         }"
         x-init="initDataTable()"
-        class="table-container">
-        <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" x-ref="table">
+        class="table-container" style="margin: 20px; padding: 10px;">
+        <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" x-ref="table" style="width: 100%; border-collapse: collapse;">
             <thead>
-                <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200" style="border-bottom: 2px solid #dee2e6; background-color: #f8f9fa;">
                     {{ $headers }}
                 </tr>
             </thead>
@@ -65,27 +66,27 @@
             </tbody>
         </table>
         @isset($footer)
-        <div class="d-flex justify-content-end mt-4">
+        <div class="d-flex justify-content-end mt-4" style="border-top: 1px solid #dee2e6; padding-top: 10px;">
             {{ $footer }}
         </div>
         @endisset
     </div>
 @else
-    <div class="table-container">
-        <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover">
-            <thead>
-                <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                    {{ $headers }}
-                </tr>
-            </thead>
-            <tbody>
-                {{ $rows }}
-            </tbody>
-        </table>
-        @isset($footer)
-        <div class="d-flex justify-content-end mt-4">
-            {{ $footer }}
-        </div>
-        @endisset
+<div style="margin: 20px; padding: 10px;">
+    <table {{ isset($id) ? 'id='.$id : 'id=customTableId' }} class="ui-table">
+        <thead>
+            <tr class="fw-bold fs-6 text-gray-800">
+                {{ $headers }}
+            </tr>
+        </thead>
+        <tbody>
+            {{ $rows }}
+        </tbody>
+    </table>
+    @isset($footer)
+    <div class="d-flex justify-content-end mt-4" style="border-top: 1px solid #dee2e6; padding-top: 10px;">
+        {{ $footer }}
     </div>
+    @endisset
+</div>
 @endif

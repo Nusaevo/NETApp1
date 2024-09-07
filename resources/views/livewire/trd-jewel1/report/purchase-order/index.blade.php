@@ -30,8 +30,8 @@
                     <th class="min-w-100" style="text-align: center;">Code</th>
                     <th class="min-w-200px" style="text-align: center;">Foto</th>
                     <th class="min-w-300px" style="text-align: center;">Descr</th>
-                    <th class="min-w-200px" style="text-align: center;">Modal</th>
-                    <th class="min-w-200px" style="text-align: center;">Jual</th>
+                    <th class="min-w-100px" style="text-align: center;">Modal</th>
+                    <th class="min-w-300px" style="text-align: center;">Jual</th>
                 </x-slot>
 
                 <x-slot name="rows">
@@ -46,13 +46,18 @@
                                         : 'https://via.placeholder.com/200';
 
                                 @endphp
-                                <img src="{{ $imageUrl }}" alt="Material Photo" style="width: 100px; height: 100px;">
+                                <img src="{{ $imageUrl }}" alt="Material Photo" style="width: 100px; height: 110px;">
                             </td>
 
 
                             <td>
+                                @if(!empty($res->category2))
+                                <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $res->category) }}
+                                    {{ $masterService->GetMatlCategory2String($this->appCode, $res->category2) }}</strong>
+                                @endif
+
                                 @if(!empty($res->material_gold))
-                                {{ numberFormat($res->material_gold, 2) }} Gram
+                                <br>{{ numberFormat($res->material_gold, 2) }} Gram
                                 @endif
 
                                 @if(!empty($res->material_carat))
@@ -63,12 +68,16 @@
                                     <br>{{ e($res->material_descr) }}
                                 @endif
                             </td>
-                            <td>{{ rupiah(toNumberFormatter(currencyToNumeric($res->price)))  }}</td>
+                            <td>{{ dollar(toNumberFormatter(currencyToNumeric($res->price)))  }}</td>
                             <td>
                                 @if(!empty($res->no_nota))
-                                No Nota Jual : {{ $res->no_nota }}
+                                No Nota : {{ $res->no_nota }}
                                 <br>
                                 Customer :  {{  $res->partner_name }}
+                                <br>
+                                Harga Jual : {{ rupiah(toNumberFormatter(currencyToNumeric($res->selling_price)))  }}
+                                <br>
+                                Tanggal :   {{  $res->tr_date }}
                                 @endif
 
                             </td>
