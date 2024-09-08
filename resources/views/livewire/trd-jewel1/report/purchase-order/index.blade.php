@@ -17,7 +17,7 @@
                 <div class="card-footer d-flex justify-content-end">
                     <div>
                         <x-ui-button clickEvent="search" button-name="Search" loading="true" action="Edit" cssClass="btn-primary" />
-                        <button type="button" class="btn btn-light text-capitalize border-0" onclick="printInvoice()">
+                        <button type="button" class="btn btn-light text-capitalize border-0" onclick="printReport()">
                             <i class="fas fa-print text-primary"></i> Print
                         </button>
                 </div>
@@ -46,7 +46,7 @@
                                         : 'https://via.placeholder.com/200';
 
                                 @endphp
-                                <img src="{{ $imageUrl }}" alt="Material Photo" style="width: 100px; height: 110px;">
+                                <img src="{{ $imageUrl }}" alt="Material Photo" style="width: 100px; height: 105px;">
                             </td>
 
 
@@ -91,42 +91,3 @@
 
     </x-ui-page-card>
 </div>
-<style>
-    @media print {
-        body * {
-            visibility: hidden;
-        }
-
-        #print, #print * {
-            visibility: visible;
-        }
-
-        #print {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: auto;
-            box-sizing: border-box;
-        }
-
-        .btn, .d-flex {
-            display: none;
-        }
-
-        #LaporanPenerimaan {
-            border: none;
-            box-shadow: none;
-            margin: 0;
-            padding: 5mm 10mm;
-            height: auto;
-            page-break-after: always;
-        }
-    }
-
-</style>
-<script type="text/javascript">
-    function printInvoice() {
-        window.print();
-    }
-</script>

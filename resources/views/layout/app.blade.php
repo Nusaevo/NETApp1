@@ -199,7 +199,11 @@
             });
         });
     </script>
-
+    <script type="text/javascript">
+        function printReport() {
+            window.print();
+        }
+    </script>
     @livewireScripts
 </body>
 <!--end::Body-->

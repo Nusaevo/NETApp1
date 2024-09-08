@@ -1041,6 +1041,12 @@ div[wire\:loading].loading-overlay {
         display: none;
     }
 }
+
+.ui-table-container {
+    width: 100%;
+    overflow-x: auto; /* Enables horizontal scrolling */
+}
+
 .ui-table {
     width: 100%;
     border-collapse: collapse;
@@ -1064,4 +1070,32 @@ div[wire\:loading].loading-overlay {
 
 .ui-table tbody tr:hover {
     background-color: #e2e6ea;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #print, #print * {
+        visibility: visible;
+    }
+
+    #print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: auto;
+        box-sizing: border-box;
+        overflow-x: visible;
+    }
+
+    .ui-table-container {
+        overflow-x: visible;
+    }
+
+    .ui-table {
+        width: 100%;
+    }
 }
