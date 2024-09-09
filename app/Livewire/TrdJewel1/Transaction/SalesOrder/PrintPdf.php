@@ -14,6 +14,7 @@ class PrintPdf extends BaseComponent
     public $printSettings = [];
     public $printRemarks = [];
     public $isShowPrice = false;
+    public $isShowLogo = false;
 
     #endregion
 
@@ -38,6 +39,7 @@ class PrintPdf extends BaseComponent
                 }
             }unset($settings);
             $this->isShowPrice = $this->isSettingChecked($this->printSettings, 'A1');
+            $this->isShowLogo = $this->isSettingChecked($this->printSettings, 'A2');
         }
 
         if ($this->object->print_remarks) {

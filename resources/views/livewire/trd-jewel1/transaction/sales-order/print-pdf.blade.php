@@ -35,8 +35,19 @@
                                 <!-- Kontainer konten yang di tengah -->
                                 <table style="width: 100%;">
                                     <tr>
-                                        <td style="width: 70%; text-align: center; vertical-align: middle;">
-                                            <div style="text-align: center; display: inline-block;  margin-left: 200px;">
+                                        @if ($isShowLogo)
+                                        <td style="width: 20%; text-align: left; vertical-align: middle;">
+                                            <div style="text-align: left; display: inline-block;">
+                                                <img src="{{ asset('customs/logos/TrdJewel1.png') }}" alt="Logo TrdJewel1" style="width: 100px; height: auto; margin-bottom: 5px;">
+                                            </div>
+                                        </td>
+                                        @else
+                                        <td style="width: 20%;"></td>
+                                        @endif
+
+                                        <!-- Kolom untuk logo Wijaya Mas dan detail kontak -->
+                                        <td style="width: 60%; text-align: center; vertical-align: middle;">
+                                            <div style="text-align: center; display: inline-block;">
                                                 <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 100px; height: auto; margin-bottom: 5px;">
                                                 <ul style="list-style: none; margin: 0; padding: 0; line-height: 1;">
                                                     <li style="font-size: 8px;">Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
@@ -45,15 +56,17 @@
                                                 </ul>
                                             </div>
                                         </td>
-                                        <td style="text-align: right; width: 100%;">
+
+                                        <!-- Kolom untuk nomor transaksi dan tanggal -->
+                                        <td style="width: 20%; text-align: right; vertical-align: top;">
                                             <ul style="list-style: none; margin: 0; padding: 0; line-height: 1; padding-top: 40px;">
-                                                <li>No: <strong>{{ $this->object->tr_id }}</li>
-                                                <li style="font-size: 8px;">Tgl: <strong>{{ $this->object->tr_date }}</li>
+                                                <li style="font-size: 8px;">No: <strong>{{ $this->object->tr_id }}</strong></li>
+                                                <li style="font-size: 8px;">Tgl: <strong>{{ $this->object->tr_date }}</strong></li>
                                             </ul>
                                         </td>
-
                                     </tr>
                                 </table>
+
                             </div>
 
                             <table style="margin-top: 0px;">
