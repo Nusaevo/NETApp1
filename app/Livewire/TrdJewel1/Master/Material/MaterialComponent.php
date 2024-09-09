@@ -54,6 +54,7 @@ class MaterialComponent extends BaseComponent
     public $sideMaterialJewelOrigins = [];
     public $searchMode = false;
     public $panelEnabled = "true";
+    public $btnAction = "true";
     public $orderedMaterial = false;
 
     protected $masterService;
@@ -121,6 +122,7 @@ class MaterialComponent extends BaseComponent
     protected function onPreRender()
     {
         $this->panelEnabled = $this->actionValue == 'Create' ? 'true' : 'false';
+        $this->customActionValue = 'Edit';
         $this->baseRoute = 'TrdJewel1.Master.Material.Detail';
         // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
