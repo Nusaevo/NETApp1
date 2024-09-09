@@ -46,7 +46,7 @@ class Attachment extends Model
     public static function saveAttachmentByFileName($imageDataUrl, $objectId = null, $objectType, $filename)
     {
         // Get the upload path from .env
-        $uploadPath = config('app.storage_path');
+        $uploadPath = config('app.storage_path'). "/TrdJewel1";
         // Create attachment data
         $attachmentData = [
             'name' => $filename,
@@ -109,7 +109,7 @@ class Attachment extends Model
             ->first();
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path');
+            $uploadPath = config('app.storage_path'). "/TrdJewel1";
             $path = $uploadPath . "/" . $attachment->path;
 
             if (File::exists($path)) {
@@ -128,9 +128,8 @@ class Attachment extends Model
         $attachment = self::find($imageId);
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path');
+            $uploadPath = config('app.storage_path') . "/TrdJewel1";
             $path = $uploadPath . "/" . $attachment->path;
-
             if (File::exists($path)) {
                 File::delete($path);
             }
@@ -145,7 +144,7 @@ class Attachment extends Model
 
     public function getUrl()
     {
-        $uploadPath = config('app.storage_url');
+        $uploadPath = config('app.storage_url'). "/TrdJewel1";
         $fullPath = $uploadPath . "/" . $this->path;
         $urlPath = str_replace("/", '/', $fullPath);
         return $urlPath;
@@ -153,7 +152,7 @@ class Attachment extends Model
 
     public function getUrlAttribute()
     {
-        $uploadPath = config('app.storage_url');
+        $uploadPath = config('app.storage_url'). "/TrdJewel1";
         $fullPath = $uploadPath . "/" . $this->path;
         return str_replace("/", '/', $fullPath);
     }
