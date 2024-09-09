@@ -25,6 +25,7 @@ class BaseComponent extends Component
     // Decrypted object ID and action
     public $objectIdValue;
     public $actionValue = 'Create';
+    public $customActionValue = '';
     public $inputs = [];
     public $status = '';
     public $VersionNumber;
@@ -177,6 +178,7 @@ class BaseComponent extends Component
         }
 
         if ($this->actionValue === 'Edit' && !$this->permissions['update']) {
+            $this->customActionValue = "View";
             $this->actionValue = 'View';
         }
 

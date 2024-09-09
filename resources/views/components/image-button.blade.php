@@ -1,5 +1,5 @@
 <div>
-    {{--  @if (isset($action) && $action !== 'View')  --}}
+    @if (isset($action) && $action !== 'View')
     <div class="image-button-container">
         <button id="btnAdd" class="btn btn-secondary" onclick="toggleAddPopup()">
             <span wire:loading.remove>
@@ -68,7 +68,7 @@
         }
     </script>
     @endpush
-   {{--  @else
+  @else
     <div class="image-button-container" style="visibility: hidden">
         <button id="btnAdd" class="btn btn-secondary" onclick="toggleAddPopup()">
             <span wire:loading.remove>
@@ -136,6 +136,6 @@
             });
         }
     </script>
-    @endpush  --}}
-    {{--  @endif  --}}
+    @endpush
+    @endif
 </div>

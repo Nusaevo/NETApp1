@@ -33,7 +33,7 @@ use App\Models\TrdJewel1\Master\Material;
                             </div>
 
                             <div class="button-container">
-                                <x-image-button :action="$actionValue" :hideStorageButton="true"></x-image-button>
+                                <x-image-button :action="$customActionValue" :hideStorageButton="true"></x-image-button>
 
                                 <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                     <x-slot name="body">
@@ -179,20 +179,18 @@ use App\Models\TrdJewel1\Master\Material;
         {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
 
         {{--@if (!$searchMode)--}}
-        @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => 'Edit'])
+        @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => "$customActionValue"])
         {{-- @endif--}}
 
         @if (!$searchMode && $actionValue == 'Edit')
         @include('layout.customs.buttons.disable')
         @endif
 
-        <x-ui-button clickEvent="printBarcode" cssClass="btn btn-primary" button-name="Print Label" action="Edit" />
+        <x-ui-button clickEvent="printBarcode" cssClass="btn btn-primary" button-name="Print Label" :action="$customActionValue" />
+        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$customActionValue" cssClass="btn-primary" iconPath="save.svg" />
 
         @if($searchMode)
-        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
         <x-ui-button clickEvent="addPurchaseOrder" button-name="Add Item" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
-        @else
-        <x-ui-button clickEvent="Save" button-name="Save" loading="true" action="Edit" cssClass="btn-primary" iconPath="save.svg" />
         @endif
 
     </x-ui-footer>

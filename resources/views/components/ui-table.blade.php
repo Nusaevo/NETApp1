@@ -72,7 +72,7 @@
         @endisset
     </div>
 @else
-<div style="margin: 20px; padding: 10px;">
+<div style="margin: 20px; padding: 10px;" class='ui-table-container'>
     <table {{ isset($id) ? 'id='.$id : 'id=customTableId' }} class="ui-table">
         <thead>
             <tr class="fw-bold fs-6 text-gray-800">
