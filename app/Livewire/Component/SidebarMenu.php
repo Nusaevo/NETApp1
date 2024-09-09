@@ -33,6 +33,10 @@ class SidebarMenu extends Component
     private function generateMenu($userId)
     {
         $app_code = Session::get('app_code');
+        $mainMenu = [];
+        if (empty($app_code)) {
+            return $mainMenu;
+        }
         $mainMenu = [
             [
                 'title' => 'Home',

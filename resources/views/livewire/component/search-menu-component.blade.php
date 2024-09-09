@@ -13,7 +13,7 @@
         </div>
 
         <!-- Search results container -->
-        <div id="custom_search_content" class="menu menu-sub menu-sub-dropdown p-7 w-325px w-md-375px"  wire:ignore.self>
+        <div id="custom_search_content" class="menu menu-sub menu-sub-dropdown p-7 w-325px w-md-375px" wire:ignore.self>
             <!--begin::Wrapper-->
             <div>
                 <input type="text" class="form-control" placeholder="Search Menu..." wire:model="searchTerm" wire:keydown="onSearchChanged">
@@ -23,6 +23,9 @@
                     <div class="scroll-y mh-200px mh-lg-350px">
                         @foreach($results as $result)
                         <a href="{{ route(str_replace('/', '.', $result->menu_link)) }}" class="d-flex text-gray-900 text-hover-primary align-items-center mb-5">
+                            @if(!isNullOrEmptyString($result->menu_header))
+                            {{ $result->menu_header }} /
+                            @endif
                             {{ $result->menu_caption }}
                         </a>
                         @endforeach
@@ -43,6 +46,7 @@
             var searchContent = document.getElementById('custom_search_content');
             searchContent.classList.toggle('active'); // Toggle the active class to slide in/out
         });
+
     </script>
 
 
@@ -68,7 +72,8 @@
             padding: 10px;
             opacity: 0;
             transition: transform 0.3s ease, opacity 0.3s ease;
-            display: none; /* Ensure it's hidden initially */
+            display: none;
+            /* Ensure it's hidden initially */
         }
 
         /* Activate the search content on toggle */
@@ -149,7 +154,9 @@
             text-align: center;
             margin-top: 20px;
         }
+
     </style>
 
 
 </div>
+

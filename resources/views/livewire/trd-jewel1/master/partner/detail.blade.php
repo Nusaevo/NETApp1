@@ -37,7 +37,6 @@ use App\Models\TrdJewel1\Master\Partner;
                         @endif </div>
                 </x-ui-card>
             </div>
-            @if ($actionValue === 'Edit')
             <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
                 <x-ui-card>
                     <div wire:ignore>
@@ -45,7 +44,6 @@ use App\Models\TrdJewel1\Master\Partner;
                     </div>
                 </x-ui-card>
             </div>
-            @endif
         </x-ui-tab-view-content>
         @include('layout.customs.form-footer')
     </x-ui-page-card>

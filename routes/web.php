@@ -81,11 +81,16 @@ Route::middleware('auth')->group(function () {
         Route::resource('/user-management/permissions', PermissionManagementController::class);
     });
 
+
     // Route::get('/', [DashboardController::class, 'index']);
     Route::get('/', function () {
         $app_code = Session::get('app_code');
-        return redirect($app_code ? '/' . $app_code . '/Home' : '/');
+        if (empty($app_code)) {
+            return redirect('/SysConfig1/Error');
+        }
+        return redirect('/' . $app_code . '/Home');
     });
+
     // Additional non-standard routes go here
 });
 
