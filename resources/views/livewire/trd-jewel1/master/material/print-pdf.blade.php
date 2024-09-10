@@ -115,6 +115,7 @@
         font-size: 8px;
         font-family: Arial, sans-serif;
         font-weight: bold;
+        padding-left: 5px; /* Adjust the value as needed */
     }
 
     .label-descr {
@@ -123,10 +124,10 @@
         max-width: 100%;
         word-break: break-all;
         font-weight: bold;
-        /* Ensure words break to next line */
-        white-space: pre-wrap;
-        /* Preserve whitespace and wrap as necessary */
+        white-space: pre-wrap; /* Preserve whitespace and wrap as necessary */
+        padding-left: 5px; /* Adjust the value as needed */
     }
+
 
     @media print {
         body * {
