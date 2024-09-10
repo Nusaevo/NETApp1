@@ -39,7 +39,7 @@
                                             @if ($isShowLogo)
                                             <td style="width: 20%; text-align: left; vertical-align: middle;">
                                                 <div style="text-align: left;">
-                                                    <img src="{{ asset('customs/logos/TrdJewel1.png') }}" alt="Logo TrdJewel1" style="width: 180px; height: 90px; margin-bottom: 5px;">
+                                                    <img src="{{ asset('customs/logos/TrdJewel1.png') }}" alt="Logo TrdJewel1" style="width: 140px; height: 60px; margin-bottom: 5px;">
                                                 </div>
                                             </td>
                                             @else
