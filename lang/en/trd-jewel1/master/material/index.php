@@ -8,4 +8,5 @@ return [
     'created_date' => 'Created Date',
     'action' => 'Action',
     'selling_price' => 'Selling Price',
+    'buying_price' => 'Buying Price',
 ];
