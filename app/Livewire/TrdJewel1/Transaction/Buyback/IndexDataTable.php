@@ -102,6 +102,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $orderDtl = ReturnDtl::where('tr_id', $row->tr_id)
             ->where('tr_type', $row->tr_type)
+            ->orderBy('id')
             ->get();
 
         $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');

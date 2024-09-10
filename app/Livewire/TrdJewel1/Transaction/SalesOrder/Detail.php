@@ -466,9 +466,11 @@ class Detail extends BaseComponent
         if (!empty($this->inputs['partner_id'])) {
             $query->where(function($query) {
                 $query->where('materials.partner_id', $this->inputs['partner_id'])
-                      ->WhereNull('materials.partner_id');
+                      ->orWhere('materials.partner_id', 0);
             });
         }
+
+
 
         if (!empty($this->searchTerm)) {
             $searchTermUpper = strtoupper($this->searchTerm);
