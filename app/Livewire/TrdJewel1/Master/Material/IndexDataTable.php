@@ -55,6 +55,11 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("buying_price"), "jwl_buying_price_text")
+                ->label(function ($row) {
+                    return $row->jwl_buying_price_text;
+                })
+                ->sortable(),
             Column::make($this->trans("selling_price"), "jwl_selling_price_text")
                 ->label(function ($row) {
                     return $row->jwl_selling_price_text;
