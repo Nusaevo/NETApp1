@@ -682,7 +682,7 @@ class MaterialComponent extends BaseComponent
     public function addBoms()
     {
         $bomsDetail['jwl_sides_price'] = 0;
-        $bomsDetail['jwl_sides_cnt'] = 1;
+        $bomsDetail['jwl_sides_cnt'] = 0;
         $bomsDetail['base_matl_id_value'] = "";
         $bomsDetail['base_matl_id_note'] = "";
         $this->matl_boms[] = $bomsDetail;

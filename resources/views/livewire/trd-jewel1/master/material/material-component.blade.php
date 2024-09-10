@@ -54,7 +54,7 @@ use App\Models\TrdJewel1\Master\Material;
                     @endif
                     <div class="row">
                         <div class="col-sm-6">
-                        <x-ui-text-field-search label='{{ $this->trans("partner") }}' clickEvent="" model="materials.partner_id" :selectedValue="$materials['partner_id']" :enabled="$panelEnabled" :options="$partners" required="true" :action="$actionValue" onChanged="onPartnerChanged" />
+                        <x-ui-text-field-search type="int" label='{{ $this->trans("partner") }}' clickEvent="" model="materials.partner_id" :selectedValue="$materials['partner_id']" :enabled="$panelEnabled" :options="$partners" required="true" :action="$actionValue" onChanged="onPartnerChanged" />
                         </div>
                     </div>
 
