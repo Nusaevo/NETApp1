@@ -107,19 +107,22 @@
     .label-price {
         font-size: 12px;
         font-family: Arial, sans-serif;
+        font-weight: bold;
     }
 
     .label-name {
         margin-top: 5px;
         font-size: 8px;
         font-family: Arial, sans-serif;
+        font-weight: bold;
     }
 
     .label-descr {
         font-family: Arial, sans-serif;
-        font-size: 8px;
+        font-size: 7px;
         max-width: 100%;
         word-break: break-all;
+        font-weight: bold;
         /* Ensure words break to next line */
         white-space: pre-wrap;
         /* Preserve whitespace and wrap as necessary */

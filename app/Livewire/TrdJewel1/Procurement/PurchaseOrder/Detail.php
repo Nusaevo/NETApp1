@@ -361,8 +361,14 @@ class Detail extends BaseComponent
         }
 
         $this->inputs['amt'] = $this->total_amount;
-        $this->total_amount = rupiah($this->total_amount);
+
+        if (isset($this->input_details[0]['isOrderedMaterial']) && $this->input_details[0]['isOrderedMaterial'] === true) {
+            $this->total_amount = rupiah($this->total_amount);
+        } else {
+            $this->total_amount = dollar($this->total_amount);
+        }
     }
+
     #endregion
 
 
