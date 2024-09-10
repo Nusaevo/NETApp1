@@ -7,6 +7,6 @@ return [
     'status' => 'Status',
     'created_date' => 'Tgl dibuat',
     'action' => 'Aksi',
-    'selling_price' => 'Selling Price',
+    'selling_price' => 'Harga Jual',
     'buying_price' => 'Modal',
 ];
