@@ -31,85 +31,88 @@
                     @foreach ($object->OrderDtl as $OrderDtl)
                     <div class="invoice-box-container">
                         <div class="invoice-box">
-                            <div style="display: flex; justify-content: center; align-items: center; min-height: 100px; width: 100%;">
-                                <!-- Kontainer konten yang di tengah -->
-                                <table style="width: 100%;">
-                                    <tr>
-                                        @if ($isShowLogo)
-                                        <td style="width: 20%; text-align: left; vertical-align: middle;">
-                                            <div style="text-align: left;">
-                                                <img src="{{ asset('customs/logos/TrdJewel1.png') }}" alt="Logo TrdJewel1" style="width: 150px; height: 90px; margin-bottom: 5px;">
-                                            </div>
-                                        </td>
-                                        @else
-                                        <td style="width: 20%;"></td>
-                                        @endif
+                            <div style="padding-left: 10px; padding-right:10px;">
+                                <div style="display: flex; justify-content: center; align-items: center; min-height: 100px; width: 100%;">
+                                    <!-- Kontainer konten yang di tengah -->
+                                    <table style="width: 100%;">
+                                        <tr>
+                                            @if ($isShowLogo)
+                                            <td style="width: 20%; text-align: left; vertical-align: middle;">
+                                                <div style="text-align: left;">
+                                                    <img src="{{ asset('customs/logos/TrdJewel1.png') }}" alt="Logo TrdJewel1" style="width: 150px; height: 90px; margin-bottom: 5px;">
+                                                </div>
+                                            </td>
+                                            @else
+                                            <td style="width: 20%;"></td>
+                                            @endif
 
-                                        <!-- Kolom untuk logo Wijaya Mas dan detail kontak -->
-                                        <td style="width: 60%; text-align: center; vertical-align: middle;">
-                                            <div style="text-align: center; display: inline-block;">
-                                                <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 100px; height: auto; margin-bottom: 5px;">
-                                                <ul style="list-style: none; margin: 0; padding: 0; line-height: 1;">
-                                                    <li style="font-size: 8px;">Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
-                                                    <li style="font-size: 8px;">+62.216683859</li>
-                                                    <li style="font-size: 8px;">wijayamas28@yahoo.com</li>
+                                            <!-- Kolom untuk logo Wijaya Mas dan detail kontak -->
+                                            <td style="width: 60%; text-align: center; vertical-align: middle;">
+                                                <div style="text-align: center; display: inline-block;">
+                                                    <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 100px; height: auto; margin-bottom: 5px;">
+                                                    <ul style="list-style: none; margin: 0; padding: 0; line-height: 1;">
+                                                        <li style="font-size: 8px;">Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
+                                                        <li style="font-size: 8px;">+62.216683859</li>
+                                                        <li style="font-size: 8px;">wijayamas28@yahoo.com</li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+
+                                            <!-- Kolom untuk nomor transaksi dan tanggal -->
+                                            <td style="width: 20%; text-align: right; vertical-align: top;">
+                                                <ul style="list-style: none; margin: 0; padding: 0; line-height: 1; padding-top: 40px;">
+                                                    <li style="font-size: 8px;">No: <strong>{{ $this->object->tr_id }}</strong></li>
+                                                    <li style="font-size: 8px;">Tgl: <strong>{{ $this->object->tr_date }}</strong></li>
                                                 </ul>
-                                            </div>
-                                        </td>
+                                            </td>
+                                        </tr>
+                                    </table>
 
-                                        <!-- Kolom untuk nomor transaksi dan tanggal -->
-                                        <td style="width: 20%; text-align: right; vertical-align: top;">
-                                            <ul style="list-style: none; margin: 0; padding: 0; line-height: 1; padding-top: 40px;">
-                                                <li style="font-size: 8px;">No: <strong>{{ $this->object->tr_id }}</strong></li>
-                                                <li style="font-size: 8px;">Tgl: <strong>{{ $this->object->tr_date }}</strong></li>
-                                            </ul>
+                                </div>
+
+                                <table style="margin-top: 0px;">
+                                    <tr class="information">
+                                        <td style="width: 50%; vertical-align: top;">
+                                            @php
+                                            $imagePath = $OrderDtl->Material->Attachment->first() ? $OrderDtl->Material->Attachment->first()->getUrl() : 'https://via.placeholder.com/200';
+                                            @endphp
+                                            <img src="{{ $imagePath }}" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
+                                        </td>
+                                        <td style="width: 50%;">
+                                            <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
+                                            <p style="margin: 0; padding: 0;"> <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }}
+                                                    {{ $masterService->GetMatlCategory2String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
+
+                                            <p style="margin: 0; padding: 0;">Berat : {{ $OrderDtl->Material->jwl_wgt_gold }} Gram</p>
+                                            <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
+                                            <p style="margin: 0; padding: 0;">Bahan : {{ $OrderDtl->Material->descr }}</p>
                                         </td>
                                     </tr>
                                 </table>
-
+                                <table style="margin-top: 10px;">
+                                    <tr class="heading">
+                                        <td>KETERANGAN:</td>
+                                    </tr>
+                                    <tr class="item">
+                                        <td class="description" style="font-size: 8px; margin: 0; padding: 0;">
+                                            <ul style="margin: 0; padding: 2px; line-height: 1;">
+                                                @foreach ($printRemarks as $remark)
+                                                @if ($remark['checked'])
+                                                <li>{{ $remark['label'] }}</li>
+                                                @endif
+                                                @endforeach
+                                            </ul>
+                                        </td>
+                                        <td class="item-price" style="text-align: right; width: 50%;">
+                                            @if ($isShowPrice)
+                                            <p style="margin: 0; padding: 0; font-size: 18px;"><b> {{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</b></p>
+                                            <p style="margin: 0; padding: 0; font-size: 12px;">{{ terbilang(currencyToNumeric($OrderDtl->price)) }}</p>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                </table>
                             </div>
 
-                            <table style="margin-top: 0px;">
-                                <tr class="information">
-                                    <td style="width: 50%; vertical-align: top;">
-                                        @php
-                                        $imagePath = $OrderDtl->Material->Attachment->first() ? $OrderDtl->Material->Attachment->first()->getUrl() : 'https://via.placeholder.com/200';
-                                        @endphp
-                                        <img src="{{ $imagePath }}" alt="Material Image" style="width: 200px; height: 200px; object-fit: cover;">
-                                    </td>
-                                    <td style="width: 50%;">
-                                        <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
-                                        <p style="margin: 0; padding: 0;"> <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }}
-                                                {{ $masterService->GetMatlCategory2String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
-
-                                        <p style="margin: 0; padding: 0;">Berat : {{ $OrderDtl->Material->jwl_wgt_gold }} Gram</p>
-                                        <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
-                                        <p style="margin: 0; padding: 0;">Bahan : {{ $OrderDtl->Material->descr }}</p>
-                                    </td>
-                                </tr>
-                            </table>
-                            <table style="margin-top: 10px;">
-                                <tr class="heading">
-                                    <td>KETERANGAN:</td>
-                                </tr>
-                                <tr class="item">
-                                    <td class="description" style="font-size: 8px; margin: 0; padding: 0;">
-                                        <ul style="margin: 0; padding: 2px; line-height: 1;">
-                                            @foreach ($printRemarks as $remark)
-                                            @if ($remark['checked'])
-                                            <li>{{ $remark['label'] }}</li>
-                                            @endif
-                                            @endforeach
-                                        </ul>
-                                    </td>
-                                    <td class="item-price" style="text-align: right; width: 50%;">
-                                        @if ($isShowPrice)
-                                        <p style="margin: 0; padding: 0; font-size: 18px;"><b> {{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</b></p>
-                                        <p style="margin: 0; padding: 0; font-size: 12px;">{{ terbilang(currencyToNumeric($OrderDtl->price)) }}</p>
-                                        @endif
-                                    </td>
-                                </tr>
-                            </table>
                         </div>
                     </div>
                     @endforeach
@@ -165,6 +168,7 @@
             /* Ubah untuk menyesuaikan konten */
             box-sizing: border-box;
             page-break-inside: avoid;
+            margin-left: 5px;
         }
 
         .invoice-box {
