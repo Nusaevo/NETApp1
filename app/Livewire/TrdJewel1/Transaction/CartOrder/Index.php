@@ -81,7 +81,7 @@ class Index extends BaseComponent
             }
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
-                $this->input_details[$key]['checked'] = 1;
+                $this->input_details[$key]['checked'] = true;
                 $this->input_details[$key]['id'] = $detail->id;
                 $this->input_details[$key]['name'] = $detail->Material->name ?? "";
                 $this->input_details[$key]['matl_descr'] = $detail->Material->descr ?? "";
@@ -135,7 +135,7 @@ class Index extends BaseComponent
     public function Checkout()
     {
         $selectedItems = array_filter($this->input_details, function ($item) {
-            return $item['checked'] == 1;
+            return !empty($item['checked']) && (bool) $item['checked'] === true;
         });
 
         if (empty($selectedItems)) {
