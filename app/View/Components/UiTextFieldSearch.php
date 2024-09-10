@@ -7,10 +7,11 @@ class UiTextFieldSearch extends UiBaseComponent
     public $selectedValue;
     public $span;
     public $modelType;
+    public string $type;
 
     public function __construct($options, $label = '', $model = '', $selectedValue = null, $required = 'false',
                                 $enabled = 'true', $visible = 'true', $action = '', $onChanged = '', $span = 'Full',
-                                $modelType = '', $clickEvent = null)
+                                $modelType = '', $clickEvent = null, $type = 'string')
     {
         parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, $clickEvent);
 
@@ -18,6 +19,7 @@ class UiTextFieldSearch extends UiBaseComponent
         $this->selectedValue = $selectedValue;
         $this->span = $span;
         $this->modelType = $modelType;
+        $this->type = $type;
     }
 
     public function render()

@@ -7,7 +7,7 @@ class UiDropdownSelect extends UiBaseComponent
     public $selectedValue;
     public $span;
     public $modelType;
-
+    public string $type;
     public function __construct(
         $options,
         $label = '',
@@ -20,7 +20,8 @@ class UiDropdownSelect extends UiBaseComponent
         $onChanged = '',
         $span = 'Full',
         $modelType = '',
-        $clickEvent = null
+        $clickEvent = null,
+        $type = 'string'
     ) {
         parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, $clickEvent, str_replace(['.', '[', ']'], '_', $model));
 
@@ -28,6 +29,7 @@ class UiDropdownSelect extends UiBaseComponent
         $this->selectedValue = $selectedValue;
         $this->span = $span;
         $this->modelType = $modelType;
+        $this->type = $type;
     }
 
     public function render()

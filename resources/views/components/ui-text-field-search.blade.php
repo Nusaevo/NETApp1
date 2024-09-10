@@ -1,10 +1,11 @@
 @php
 $id = str_replace(['.', '[', ']'], '_', $model);
+$blankValue = (isset($type) && $type === 'int') ? '0' : '';
 @endphp
 <div class="mb-5 col-sm" @if(isset($span)) span="{{ $span }}" @endif>
     <div class="form-floating">
         <select id="{{ $id }}" class="form-select responsive-input @error($model) is-invalid @enderror @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif" wire:model="{{ $model }}" data-toggle="tooltip" title="Select an option" @if ((!empty($action) && $action==='View' ) || (isset($enabled) && $enabled==='false' )) disabled @endif wire:loading.attr="disabled">
-            <option value=""></option>
+            <option value="{{ $blankValue }}"></option>
             @if (!is_null($options))
             @foreach ($options as $option)
             <option value="{{ $option['value'] }}" {{ $selectedValue == $option['value'] ? 'selected' : '' }}>{{ $option['label'] }}</option>

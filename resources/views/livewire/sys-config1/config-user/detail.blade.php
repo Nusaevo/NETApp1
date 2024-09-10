@@ -17,7 +17,7 @@
                         <x-ui-text-field label="Department" model="inputs.dept" type="text" :action="$actionValue" placeHolder="Enter Department (optional)" visible="true" />
                     </div>
                     <div class="row">
-                        {{-- <x-ui-text-field-search label="Test" model="inputs.dept"
+                        {{-- <<x-ui-text-field-search type="int" label="Test" model="inputs.dept"
                             :options="$applications"  name="Application" :action="$actionValue" placeHolder="Search application" /> --}}
                         @if ($actionValue == 'Create')
                         <x-ui-text-field label="Password" model="inputs.newpassword" type="password" :action="$actionValue" placeHolder="Enter a secure password with at least 8 characters, including lowercase, uppercase, and numbers. (e.g., Password123)" required="true" visible="true" />
