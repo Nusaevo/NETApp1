@@ -66,6 +66,7 @@ class IndexDataTable extends BaseDataTableComponent
                     // Manually load OrderDtl using a query
                     $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
                         ->where('tr_type', $row->tr_type)
+                        ->orderBy('id')
                         ->get();
 
                     // Generate links if data is available
