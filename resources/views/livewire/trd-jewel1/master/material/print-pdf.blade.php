@@ -89,37 +89,37 @@
     .label-descr {
         padding: 0;
         text-align: left;
-        /* Align ke kiri */
         width: 100%;
-        /* Pastikan elemen menggunakan seluruh lebar container */
         margin: 0;
-        /* Hilangkan margin default */
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+        font-smooth: always;
     }
 
     .label-code {
         font-size: 16px;
         font-weight: bold;
         margin-top: -6mm;
-        font-family: Arial, sans-serif;
+        font-family: Arial;
         /* Geser sedikit ke atas */
     }
 
     .label-price {
         font-size: 12px;
-        font-family: Arial, sans-serif;
+        font-family: Arial;
         font-weight: bold;
     }
 
     .label-name {
         margin-top: 5px;
         font-size: 8px;
-        font-family: Arial, sans-serif;
+        font-family: Arial;
         font-weight: bold;
         padding-left: 5px; /* Adjust the value as needed */
     }
 
     .label-descr {
-        font-family: Arial, sans-serif;
+        font-family: Arial;
         font-size: 7px;
         max-width: 100%;
         word-break: break-all;
