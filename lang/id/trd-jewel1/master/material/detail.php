@@ -16,7 +16,7 @@ return [
     'selling_price_idr' => 'Harga Jual (IDR)',
     'input' => 'Input Material',
     'uom' => 'Satuan',
-    'barcode' => 'Kode Batang',
+    'barcode' => 'Kode RFID',
     'material' => 'Bahan',
     'quantity' => 'Kuantitas',
     'carat' => 'Berat(gram/carat)',

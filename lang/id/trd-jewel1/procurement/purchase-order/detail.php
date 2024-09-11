@@ -11,7 +11,7 @@ return [
     'price_usd' => 'Harga Beli (USD)',
     'price_idr' => 'Harga Beli (IDR)',
     'code' => 'Kode Produk',
-    'barcode' => 'Kode Batang',
+    'barcode' => 'Kode RFID',
     'name' => 'Deskripsi Material',
     'description' => 'Deskripsi Bahan',
     'selling_price' => 'Harga Jual (IDR)',

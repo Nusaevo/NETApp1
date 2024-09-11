@@ -126,10 +126,6 @@ class Index extends BaseComponent
     #region Component Events
 
     public function OpenDialogBox(){
-        if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',__('generic.string.currency_needed'));
-            return;
-        }
         $this->dispatch('openMaterialDialog');
     }
 
