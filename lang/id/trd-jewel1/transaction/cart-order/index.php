@@ -9,7 +9,7 @@ return [
     'qty' => 'Kuantitas',
     'price' => 'Harga Beli',
     'code' => 'Kode Produk',
-    'barcode' => 'Kode Batang',
+    'barcode' => 'Kode RFID',
     'name' => 'Deskripsi Material',
     'description' => 'Deskripsi Bahan',
     'selling_price' => 'Harga Jual (IDR)',
