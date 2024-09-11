@@ -42,19 +42,19 @@ class Index extends BaseComponent
         $query = Material::getAvailableMaterials();
 
         if (!empty($this->inputs['name'])) {
-            $query->where('name', 'like', '%' . strtoupper($this->inputs['name']) . '%');
+            $query->whereRaw('UPPER(name) LIKE ?', ['%' . strtoupper($this->inputs['name']) . '%']);
         }
         if (!empty($this->inputs['description'])) {
-            $query->where('descr', 'like', '%' . strtoupper($this->inputs['description']) . '%');
+            $query->whereRaw('UPPER(descr) LIKE ?', ['%' . strtoupper($this->inputs['description']) . '%']);
         }
         if (!empty($this->inputs['selling_price1']) && !empty($this->inputs['selling_price2'])) {
             $query->whereBetween('jwl_selling_price', [$this->inputs['selling_price1'], $this->inputs['selling_price2']]);
         }
         if (!empty($this->inputs['code'])) {
-            $query->where('code', 'like', '%' . strtoupper($this->inputs['code']) . '%');
+            $query->whereRaw('UPPER(code) = ?', [strtoupper($this->inputs['code'])]);
         }
 
-        $materials = $query->orderBy('created_at', 'desc')->paginate(18);
+        $materials = $query->orderBy('created_at', 'desc')->paginate(12);
 
         return view('livewire.trd-jewel1.master.catalogue.index', ['materials' => $materials]);
     }

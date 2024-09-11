@@ -48,6 +48,7 @@ class Index extends BaseComponent
     protected function onPreRender()
     {
         $this->actionValue = 'Create';
+        $this->baseRoute = 'TrdJewel1.Transaction.CartOrder.Index';
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
@@ -100,7 +101,7 @@ class Index extends BaseComponent
 
     public function render()
     {
-        return view('livewire.trd-jewel1.transaction.cart-order.index');
+        return view($this->renderRoute);
     }
 
     #endregion

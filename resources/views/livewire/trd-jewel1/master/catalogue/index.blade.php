@@ -1,6 +1,6 @@
  <div>
      <x-ui-page-card title="{!! $menuName !!}">
-         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="false">
+         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
              <div class="card-body">
                  <div class="row">
                      <x-ui-text-field label="Code Barang" model="inputs.code" type="text" action="Edit" />
@@ -53,10 +53,12 @@
                      <x-ui-button :clickEvent="'addToCart(' . $material->id . ', \'' . $material->code . '\')'" button-name="Add To Cart" loading="true" action="Edit" cssClass="btn-primary" />
                      @endif
                  </div>
-
              </div>
              @endforeach
          </div>
+         <div class="pagination-container">
+            @include('components.ui-pagination', ['paginator' => $materials])
+        </div>
 
      </x-ui-page-card>
  </div>
