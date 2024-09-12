@@ -41,7 +41,7 @@ class DelivHdr extends TrdJewel1BaseModel
 
     public function DelivDtl()
     {
-        return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+        return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('seq');
     }
     #endregion
 }

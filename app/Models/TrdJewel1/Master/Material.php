@@ -104,9 +104,8 @@ class Material extends TrdJewel1BaseModel
 
     public function MatlBom()
     {
-        return $this->hasMany(MatlBom::class, 'matl_id');
+        return $this->hasMany(MatlBom::class, 'matl_id')->orderBy('seq');
     }
-
 
     public function ivtBal()
     {
