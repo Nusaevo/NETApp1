@@ -42,7 +42,7 @@
                             <td>
                                 @php
                                     $imageUrl = $res->file_url
-                                        ? config('app.storage_url') . '/' . ltrim($res->file_url, '/')
+                                        ? config('app.storage_url') . "/TrdJewel1" . '/' . ltrim($res->file_url, '/')
                                         : 'https://via.placeholder.com/200';
 
                                 @endphp
