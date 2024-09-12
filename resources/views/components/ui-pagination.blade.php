@@ -42,6 +42,6 @@
             $start = ($paginator->currentPage() - 1) * $paginator->perPage() + 1;
             $end = min($paginator->currentPage() * $paginator->perPage(), $paginator->total());
         @endphp
-        <p>Showing paginator {{ $start }}-{{ $end }} of {{ $paginator->total() }}</p>
+        <p>Showing {{ $start }}-{{ $end }} of {{ $paginator->total() }}</p>
     </div>
 @endif
