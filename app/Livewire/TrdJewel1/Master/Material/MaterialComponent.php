@@ -353,7 +353,6 @@ class MaterialComponent extends BaseComponent
 
         $this->saveAttachment();
         $this->saveUOMs();
-
         $this->handleBOMs();
 
         if (!$this->object->isNew()) {

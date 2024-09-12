@@ -46,7 +46,7 @@ class BillingHdr extends TrdJewel1BaseModel
 
     public function BillingDtl()
     {
-        return $this->hasMany(BillingDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+        return $this->hasMany(BillingDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('seq');
     }
     #endregion
 }
