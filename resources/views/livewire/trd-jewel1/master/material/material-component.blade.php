@@ -63,7 +63,7 @@ use App\Models\TrdJewel1\Master\Material;
                         <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true"  :enabled="$panelEnabled" clickEvent="getMatlCode"  buttonName="Get Code"/>
                     </div>
                     <div class="row">
-                        <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$actionValue" onChanged="generateMaterialDescriptions" />
+                        <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$customActionValue" onChanged="generateMaterialDescriptions" />
                         @if($orderedMaterial)
                         <x-ui-text-field label="{{ $this->trans('buying_price_idr') }}" model="materials.jwl_buying_price_idr" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged" enabled="false" />
                         @else
@@ -71,23 +71,23 @@ use App\Models\TrdJewel1\Master\Material;
                         @endif
                     </div>
                     <div class="row">
-                        <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="materials.jwl_carat" :options="$materialJewelPurity" required="true" :action="$actionValue" />
-                        <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged"
+                        <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="materials.jwl_carat" :options="$materialJewelPurity" required="true" :action="$customActionValue" />
+                        <x-ui-text-field label="{{ $this->trans('markup_price') }}" model="materials.markup" type="number" :action="$customActionValue" required="true" onChanged="markupPriceChanged"
                             :enabled="$orderedMaterial ? 'false' : 'true'" />
                     </div>
                     <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$actionValue" required="true" enabled="true" onChanged="generateMaterialDescriptions" />
+                        <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$customActionValue" required="true" enabled="true" onChanged="generateMaterialDescriptions" />
 
                         @if($orderedMaterial)
-                            <x-ui-text-field label="{{ $this->trans('selling_price_idr') }}" model="materials.jwl_selling_price_idr" type="number" :action="$actionValue" required="true" onChanged="sellingPriceChanged" />
+                            <x-ui-text-field label="{{ $this->trans('selling_price_idr') }}" model="materials.jwl_selling_price_idr" type="number" :action="$customActionValue" required="true" onChanged="sellingPriceChanged" />
                         @else
-                            <x-ui-text-field label="{{ $this->trans('selling_price_usd') }}" model="materials.jwl_selling_price_usd" type="number" :action="$actionValue" required="true" onChanged="sellingPriceChanged" />
+                            <x-ui-text-field label="{{ $this->trans('selling_price_usd') }}" model="materials.jwl_selling_price_usd" type="number" :action="$customActionValue" required="true" onChanged="sellingPriceChanged" />
                         @endif
                     </div>
                     @if($orderedMaterial)
                     <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('gold_price') }}" model="materials.gold_price" type="number" :action="$actionValue" />
-                        <x-ui-text-field label="{{ $this->trans('jwl_cost') }}" model="materials.jwl_cost" type="number" :action="$actionValue" />
+                        <x-ui-text-field label="{{ $this->trans('gold_price') }}" model="materials.gold_price" type="number" :action="$customActionValue" />
+                        <x-ui-text-field label="{{ $this->trans('jwl_cost') }}" model="materials.jwl_cost" type="number" :action="$customActionValue" />
                     </div>
                     @endif
                     <div class="row">
@@ -95,14 +95,14 @@ use App\Models\TrdJewel1\Master\Material;
                         <x-ui-text-field label="{{ $this->trans('bom_description') }} " model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" />
                     </div>
                     <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('remark') }} " model="materials.remark" type="textarea" :action="$actionValue"/>
+                        <x-ui-text-field label="{{ $this->trans('remark') }} " model="materials.remark" type="textarea" :action="$customActionValue"/>
                     </div>
                 </x-ui-padding>
 
                 <x-ui-padding>
                     <x-ui-list-table id="Table" title="{{ $this->trans('side_materials') }}">
                         <x-slot name="button">
-                            <x-ui-button clickEvent="addBoms" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnAdd') }}" :action="$actionValue" />
+                            <x-ui-button clickEvent="addBoms" cssClass="btn btn-secondary" iconPath="add.svg" button-name="{{ $this->trans('btnAdd') }}" :action="$customActionValue" />
                         </x-slot>
                         <x-slot name="body">
                             @foreach($matl_boms as $key => $matl_bom)
@@ -112,39 +112,39 @@ use App\Models\TrdJewel1\Master\Material;
                                         @if($orderedMaterial)
                                         <div class="row">
                                             <div class="col-sm-6">
-                                            <x-ui-dropdown-select label="{{ $this->trans('origin') }}" clickEvent="" model="matl_boms.{{ $key }}.matl_origin_id" :options="$sideMaterialJewelOrigins" required="true" :action="$actionValue" />
+                                            <x-ui-dropdown-select label="{{ $this->trans('origin') }}" clickEvent="" model="matl_boms.{{ $key }}.matl_origin_id" :options="$sideMaterialJewelOrigins" required="true" :action="$customActionValue" />
                                             </div>
                                         </div>
                                         @endif
                                         <div class="row">
-                                            <x-ui-dropdown-select label="{{ $this->trans('material') }}" clickEvent="" model="matl_boms.{{ $key }}.base_matl_id" :options="$baseMaterials" required="true" :action="$actionValue"
+                                            <x-ui-dropdown-select label="{{ $this->trans('material') }}" clickEvent="" model="matl_boms.{{ $key }}.base_matl_id" :options="$baseMaterials" required="true" :action="$customActionValue"
                                                 :onChanged="'baseMaterialChange('. $key .', '. (!empty('$event.target.value') ? '$event.target.value' : 'null') .')'"/>
-                                            <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$actionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />
+                                            <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$customActionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />
                                         </div>
                                         <div class="row">
-                                            <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$actionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />
-                                            <x-ui-text-field label="{{ $this->trans('price') }}" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$actionValue" required="true" />
+                                            <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$customActionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />
+                                            <x-ui-text-field label="{{ $this->trans('price') }}" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$customActionValue" required="true" />
                                         </div>
                                         @isset($matl_bom['base_matl_id_note'])
                                             @if($matl_bom['base_matl_id_note'] == Material::JEWELRY)
-                                                <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$actionValue"/>
+                                                <x-ui-dropdown-select label="{{ $this->trans('purity') }}" clickEvent="" model="matl_boms.{{ $key }}.purity" :options="$sideMaterialJewelPurity" required="false" :action="$customActionValue"/>
                                             @elseif($matl_bom['base_matl_id_note'] == Material::DIAMOND)
                                                 <div class="row">
-                                                    <x-ui-dropdown-select label="{{ $this->trans('clarity') }}" clickEvent="" model="matl_boms.{{ $key }}.clarity" :options="$sideMaterialClarity" required="false" :action="$actionValue" />
+                                                    <x-ui-dropdown-select label="{{ $this->trans('clarity') }}" clickEvent="" model="matl_boms.{{ $key }}.clarity" :options="$sideMaterialClarity" required="false" :action="$customActionValue" />
                                                 </div>
                                                 <div class="row">
-                                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" clickEvent="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGiaColors" required="false" :action="$actionValue" />
-                                                    <x-ui-dropdown-select label="{{ $this->trans('cut') }}" clickEvent="" model="matl_boms.{{ $key }}.cut" :options="$sideMaterialCut" required="false" :action="$actionValue" />
+                                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" clickEvent="" model="matl_boms.{{ $key }}.color" :options="$sideMaterialGiaColors" required="false" :action="$customActionValue" />
+                                                    <x-ui-dropdown-select label="{{ $this->trans('cut') }}" clickEvent="" model="matl_boms.{{ $key }}.cut" :options="$sideMaterialCut" required="false" :action="$customActionValue" />
                                                 </div>
-                                                <x-ui-text-field label="{{ $this->trans('gia_number') }}" model="matl_boms.{{ $key }}.gia_number" type="number" :action="$actionValue" required="false" />
+                                                <x-ui-text-field label="{{ $this->trans('gia_number') }}" model="matl_boms.{{ $key }}.gia_number" type="number" :action="$customActionValue" required="false" />
                                             @elseif($matl_bom['base_matl_id_note'] == Material::GEMSTONE)
                                                 <div class="row">
-                                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" clickEvent="" model="matl_boms.{{ $key }}.gemcolor" :options="$sideMaterialGemColors" required="false" :action="$actionValue" />
+                                                    <x-ui-dropdown-select label="{{ $this->trans('color') }}" clickEvent="" model="matl_boms.{{ $key }}.gemcolor" :options="$sideMaterialGemColors" required="false" :action="$customActionValue" />
                                                 </div>
                                             @elseif($matl_bom['base_matl_id_note'] == Material::GOLD)
                                                 <div class="row">
-                                                    <x-ui-text-field label="{{ $this->trans('production_year') }}" model="matl_boms.{{ $key }}.production_year" type="number" :action="$actionValue" required="false" />
-                                                    <x-ui-text-field label="{{ $this->trans('ref_mark') }}" model="matl_boms.{{ $key }}.ref_mark" type="text" :action="$actionValue" required="false" />
+                                                    <x-ui-text-field label="{{ $this->trans('production_year') }}" model="matl_boms.{{ $key }}.production_year" type="number" :action="$customActionValue" required="false" />
+                                                    <x-ui-text-field label="{{ $this->trans('ref_mark') }}" model="matl_boms.{{ $key }}.ref_mark" type="text" :action="$customActionValue" required="false" />
                                                 </div>
                                             @endif
                                         @endisset
