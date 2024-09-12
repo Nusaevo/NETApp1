@@ -1076,6 +1076,12 @@ div[wire\:loading].loading-overlay {
     body * {
         visibility: hidden;
     }
+    @page {
+        margin-top: 0px;
+        margin-left: 0px;
+        margin-right: 30px;
+        margin-bottom: 20px;
+    }
 
     #print, #print * {
         visibility: visible;

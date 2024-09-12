@@ -130,10 +130,11 @@
 
     <style>
         @page {
-            size: 210mm 140mm;
+           /* size: 210mm 140mm;*/
             /* Ukuran khusus 210 x 140 mm */
-            margin: 0 10mm;
+           /* margin: 0 10mm;*/
             /* Margin kanan dan kiri */
+            margin: 0;
         }
 
 
