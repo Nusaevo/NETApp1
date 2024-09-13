@@ -63,7 +63,9 @@ use App\Models\TrdJewel1\Master\Material;
                         <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true"  :enabled="$panelEnabled" clickEvent="getMatlCode"  buttonName="Get Code"/>
                     </div>
                     <div class="row">
-                        <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$customActionValue" onChanged="generateMaterialDescriptions" />
+                        <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$customActionValue" />
+
+                        {{--  <x-ui-dropdown-select label="{{ $this->trans('category2') }}" clickEvent="" model="materials.jwl_category2" :options="$materialCategories2" required="false" :action="$customActionValue" onChanged="generateMaterialDescriptions" />  --}}
                         @if($orderedMaterial)
                         <x-ui-text-field label="{{ $this->trans('buying_price_idr') }}" model="materials.jwl_buying_price_idr" type="number" :action="$actionValue" required="true" onChanged="markupPriceChanged" enabled="false" />
                         @else
@@ -76,7 +78,8 @@ use App\Models\TrdJewel1\Master\Material;
                             :enabled="$orderedMaterial ? 'false' : 'true'" />
                     </div>
                     <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$customActionValue" required="true" enabled="true" onChanged="generateMaterialDescriptions" />
+                        {{--  <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$customActionValue" required="true" enabled="true" onChanged="generateMaterialDescriptions" />  --}}
+                        <x-ui-text-field label="{{ $this->trans('weight') }}" model="materials.jwl_wgt_gold" type="number" :action="$customActionValue" required="true" enabled="true" />
 
                         @if($orderedMaterial)
                             <x-ui-text-field label="{{ $this->trans('selling_price_idr') }}" model="materials.jwl_selling_price_idr" type="number" :action="$customActionValue" required="true" onChanged="sellingPriceChanged" />
@@ -91,8 +94,8 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
                     @endif
                     <div class="row">
-                        <x-ui-text-field label="{{ $this->trans('description') }} " model="materials.name" type="text" :action="$actionValue" required="true" enabled="false" />
-                        <x-ui-text-field label="{{ $this->trans('bom_description') }} " model="materials.descr" type="text" :action="$actionValue" required="true" enabled="false" />
+                        <x-ui-text-field label="{{ $this->trans('description') }} " model="materials.name" type="text" :action="$actionValue" required="false" enabled="false" />
+                        <x-ui-text-field label="{{ $this->trans('bom_description') }} " model="materials.descr" type="text" :action="$actionValue" required="false" enabled="false" />
                     </div>
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('remark') }} " model="materials.remark" type="textarea" :action="$customActionValue"/>
@@ -119,10 +122,12 @@ use App\Models\TrdJewel1\Master\Material;
                                         <div class="row">
                                             <x-ui-dropdown-select label="{{ $this->trans('material') }}" clickEvent="" model="matl_boms.{{ $key }}.base_matl_id" :options="$baseMaterials" required="true" :action="$customActionValue"
                                                 :onChanged="'baseMaterialChange('. $key .', '. (!empty('$event.target.value') ? '$event.target.value' : 'null') .')'"/>
-                                            <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$customActionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />
+                                            {{--  <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$customActionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />  --}}
+                                             <x-ui-text-field label="{{ $this->trans('quantity') }}" model="matl_boms.{{ $key }}.jwl_sides_cnt" type="number" :action="$customActionValue" required="true"/>
                                         </div>
                                         <div class="row">
-                                            <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$customActionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />
+                                            {{--  <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$customActionValue" required="true" onChanged="generateMaterialDescriptionsFromBOMs" />  --}}
+                                            <x-ui-text-field label="{{ $this->trans('carat') }}" model="matl_boms.{{ $key }}.jwl_sides_carat" type="number" :action="$customActionValue" required="true" />
                                             <x-ui-text-field label="{{ $this->trans('price') }}" model="matl_boms.{{ $key }}.jwl_sides_price" type="number" :action="$customActionValue" required="true" />
                                         </div>
                                         @isset($matl_bom['base_matl_id_note'])

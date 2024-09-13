@@ -76,7 +76,7 @@ class MaterialComponent extends BaseComponent
         // 'materials.jwl_category2' => 'required|string|min:0|max:255',
         'materials.jwl_carat' => 'required|string|min:0|max:255',
         'materials.jwl_wgt_gold' => 'required',
-        'materials.name' => 'required|string|min:0|max:255',
+        // 'materials.name' => 'required|string|min:0|max:255',
         // 'materials.descr' => 'required|string|min:0|max:255',
         // 'matl_uoms.barcode' => 'required',
         'matl_boms.*.base_matl_id' => 'required',
@@ -342,6 +342,7 @@ class MaterialComponent extends BaseComponent
     public function onValidateAndSave()
     {
         $this->validatePrices();
+        $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
         $this->generateMaterialDescriptionsFromBOMs();
         $this->object->fillAndSanitize($this->materials);
 
