@@ -20,5 +20,7 @@ return [
         'password_mismatch' => "Kata sandi tidak cocok. Pastikan kata sandi baru Anda sesuai dengan konfirmasi kata sandi.",
         'password_must_be_filled' => "Kata sandi harus diisi.",
         'field_required' => "Field :field harus diisi. Harap lengkapi :field untuk melanjutkan.",
+        'duplicate_code' => "Kode ini sudah dipakai. Silakan gunakan kode yang berbeda.",
+        'duplicate_name' => "Nama ini sudah dipakai. Silakan gunakan nama yang berbeda.",
     ],
 ];

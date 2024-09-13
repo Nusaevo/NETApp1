@@ -22,5 +22,7 @@ return [
         'password_mismatch' => "Password mismatch. Please make sure your new password matches the confirmation password.",
         'password_must_be_filled' => "Password must be filled.",
         'field_required' => "The :field field is required. Please fill out the :field to proceed.",
+        'duplicate_code' => "The code already exists. Please use a different code.",
+        'duplicate_name' => "The nam already exists. Please use a different name.",
     ],
 ];

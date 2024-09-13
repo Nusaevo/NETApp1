@@ -71,6 +71,11 @@ class Detail extends BaseComponent
         $this->validatePassword();
 
         $this->object->fillAndSanitize($this->inputs);
+        if($this->object->isDuplicateCode())
+        {
+            $this->addError('inputs.code', __('generic.error.duplicate_code'));
+            throw new Exception(__('generic.error.duplicate_code'));
+        }
         $this->object->save();
     }
 
