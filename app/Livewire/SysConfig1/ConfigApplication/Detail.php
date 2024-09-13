@@ -4,6 +4,7 @@ namespace App\Livewire\SysConfig1\ConfigApplication;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigAppl;
+use Exception;
 
 class Detail extends BaseComponent
 {
@@ -64,6 +65,13 @@ class Detail extends BaseComponent
     public function onValidateAndSave()
     {
         $this->object->fillAndSanitize($this->inputs);
+
+        if($this->object->isDuplicateCode())
+        {
+            $this->addError('inputs.code', __('generic.error.duplicate_code'));
+            throw new Exception(__('generic.error.duplicate_code'));
+        }
+
         $this->object->save();
     }
 

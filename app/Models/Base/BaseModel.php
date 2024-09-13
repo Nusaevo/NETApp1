@@ -107,4 +107,50 @@ class BaseModel extends Model
         }
         $this->fill($sanitizedAttributes);
     }
+
+    public function isDuplicateCode()
+    {
+        // Check if the model has a column 'code'
+        if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'code')) {
+            // Convert code to uppercase for case-insensitive comparison
+            $upperCode = strtoupper($this->code);
+
+            // Perform a query to check for duplicates with case-insensitive comparison
+            $query = $this->newQuery()
+                ->whereRaw('UPPER(code) = ?', [$upperCode]);
+
+            // Exclude the current model instance from the check if it is not new
+            if (!$this->isNew()) {
+                $query->where('id', '!=', $this->id);
+            }
+
+            return $query->exists();
+        }
+
+        return false; // Return false if 'code' column does not exist
+    }
+
+    public function isDuplicateName()
+    {
+        // Check if the model has a column 'name'
+        if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'name')) {
+            // Convert name to uppercase for case-insensitive comparison
+            $upperName = strtoupper($this->name);
+
+            // Perform a query to check for duplicates with case-insensitive comparison
+            $query = $this->newQuery()
+                ->whereRaw('UPPER(name) = ?', [$upperName]);
+
+            // Exclude the current model instance from the check if it is not new
+            if (!$this->isNew()) {
+                $query->where('id', '!=', $this->id);
+            }
+
+            return $query->exists();
+        }
+
+        return false; // Return false if 'name' column does not exist
+    }
+
+
 }
