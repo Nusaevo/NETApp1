@@ -541,7 +541,6 @@ class MaterialComponent extends BaseComponent
 
     public function onCategory1Changed()
     {
-        $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
         if (!$this->orderedMaterial) {
             $this->materials['code'] = '';
         }
@@ -671,7 +670,6 @@ class MaterialComponent extends BaseComponent
         $base_matl_id_parts = explode('-', $value);
         $this->matl_boms[$key]['base_matl_id_value'] = $base_matl_id_parts[0];
         $this->matl_boms[$key]['base_matl_id_note'] =  $base_matl_id_parts[1];
-        $this->generateMaterialDescriptionsFromBOMs();
     }
 
     public function generateMaterialDescriptionsFromBOMs()
