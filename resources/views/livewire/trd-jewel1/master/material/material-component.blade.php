@@ -22,7 +22,7 @@ use App\Models\TrdJewel1\Master\Material;
                                 <div class="photo-box">
                                     <img src="{{ $image['url'] }}" alt="Captured Image" class="photo-box-image">
                                     <div class="image-close-button">
-                                        <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'" class="btn btn-link" name="x" :action="$actionValue" />
+                                        <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'" class="btn btn-link" name="x" :action="$customActionValue" />
                                     </div>
                                 </div>
                                 @empty
