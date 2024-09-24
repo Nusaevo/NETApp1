@@ -19,7 +19,7 @@ class Detail extends BaseComponent
     ];
 
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
+        'changeStatuss'  => 'changeStatus',
     ];
 
     #endregion
