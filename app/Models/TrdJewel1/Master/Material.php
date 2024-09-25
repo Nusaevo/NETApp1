@@ -19,13 +19,7 @@ class Material extends TrdJewel1BaseModel
     const GEMSTONE = 'GEMSTONE';
     const DIAMOND = 'DIAMOND';
     use SoftDeletes;
-    protected $connection;
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->connection = Constant::Trdjewel1_ConnectionString();
-    }
 
     protected static function boot()
     {

@@ -10,13 +10,6 @@ use App\Enums\Constant;
 class GoldPriceLog extends TrdJewel1BaseModel
 {
     protected $table = 'goldprice_logs';
-    protected $connection ='trd-jewel1';
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->connection = Constant::Trdjewel1_ConnectionString();
-    }
 
     public static function boot()
     {
