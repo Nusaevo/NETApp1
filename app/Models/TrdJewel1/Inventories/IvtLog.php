@@ -8,13 +8,7 @@ use App\Enums\Constant;
 
 class IvtLog extends Model
 {
-    protected $connection;
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->connection = Constant::Trdjewel1_ConnectionString();
-    }
 
     protected static function boot()
     {

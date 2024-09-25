@@ -13,13 +13,7 @@ class MatlUom extends TrdJewel1BaseModel
 {
     protected $table = 'matl_uoms';
     use SoftDeletes;
-    protected $connection;
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->connection = Constant::Trdjewel1_ConnectionString();
-    }
 
     protected static function boot()
     {

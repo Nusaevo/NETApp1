@@ -17,13 +17,7 @@ class Partner extends TrdJewel1BaseModel
     const SALESMAN = 'S';
     const BANK = 'B';
     use SoftDeletes;
-    protected $connection;
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->connection = Constant::Trdjewel1_ConnectionString();
-    }
 
 
     public static function boot()

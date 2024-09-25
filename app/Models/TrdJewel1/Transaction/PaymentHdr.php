@@ -11,13 +11,7 @@ use App\Traits\BaseTrait;
 class PaymentHdr extends TrdJewel1BaseModel
 {
     use SoftDeletes;
-    protected $connection;
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->connection = Constant::Trdjewel1_ConnectionString();
-    }
     protected static function boot()
     {
         parent::boot();
