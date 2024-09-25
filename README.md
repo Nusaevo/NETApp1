@@ -1,66 +1,99 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<h1>Project Documentation</h1>
+<hr>
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+<h2>Table of Contents</h2>
+<ul>
+    <li><a href="#how-to-run-the-project">How to Run the Project</a></li>
+    <li><a href="#github-workflow">GitHub Workflow</a></li>
+    <li><a href="#livewire-concepts">Livewire 3 Concepts</a></li>
+</ul>
 
-## About Laravel
+<hr>
+<h2 id="how-to-run-the-project">How to Run the Project</h2>
+<hr>
+<ol>
+    <li><strong>Clone the Repository</strong> (if you haven't already):
+        <pre><code>git clone https://github.com/andrych17/NETApp1.git cd NETApp1</code></pre>
+    </li>
+    <li><strong>Install Node.js Dependencies</strong>:
+        <pre><code>npm install npm run dev</code></pre>
+    </li>
+    <li><strong>Install PHP Dependencies</strong>:
+        <pre><code>composer install</code></pre>
+    </li>
+    <li><strong>Set Up the Environment</strong>: 
+        <p>Copy the <code>.env.example</code> file to create your own <code>.env</code> file:</p>
+        <pre><code>cp .env.example .env</code></pre>
+        <p>Then, generate an application key:</p>
+        <pre><code>php artisan key:generate</code></pre>
+    </li>
+    <li><strong>Run the Application</strong>:
+        <p>Start the Laravel development server:</p>
+        <pre><code>php artisan serve</code></pre>
+    </li>
+    <li><strong>Access the Application</strong>:
+        <p>Open your web browser and go to <a href="http://localhost:8000">http://localhost:8000</a> to see the application in action.</p>
+    </li>
+</ol>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<hr>
+<h2 id="github-workflow">GitHub Workflow</h2>
+<hr>
+<p>To collaborate on this project using Git and GitHub, please follow the steps outlined below.</p>
+<h3>Branch Naming Convention</h3>
+<p>All development work should be done on a feature branch. Use the following naming convention for your branches:</p>
+<pre><code>dev-yourname-#issue-number-description</code></pre>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<p><strong>Examples:</strong></p>
+<ul>
+    <li><code>dev-andry-#45-fix-login-bug</code></li>
+    <li><code>dev-alex-#23-add-user-profile-module</code></li>
+</ul>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+<h3>Clone the Repository</h3>
+<p>Start by cloning the repository to your local machine:</p>
+<pre><code>git clone https://github.com/andrych17/NETApp1.git cd NETApp1</code></pre>
 
-## Learning Laravel
+<h3>Switch to the Staging Branch</h3>
+<p>Check out the <code>staging</code> branch and ensure it's up to date:</p>
+<pre><code>git checkout staging git pull origin staging</code></pre>
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+<h3>Create a New Feature Branch</h3>
+<p>Create a new branch from the <code>staging</code> branch using the naming convention:</p>
+<pre><code>git checkout -b dev-yourname-#issue-number-description</code></pre>
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+<h3>Make Your Changes</h3>
+<p>Now you're ready to make changes to the codebase. Implement your feature or bug fix as required.</p>
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+<h3>Commit Your Changes</h3>
+<p>After making changes, add and commit them to your branch:</p>
+<pre><code>git add . git commit -m "A brief description of the changes made"</code></pre>
 
-## Laravel Sponsors
+<h3>Push Your Branch to GitHub</h3>
+<p>Push your feature branch to the remote repository:</p>
+<pre><code>git push origin dev-yourname-#issue-number-description</code></pre>
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+<h3>Create a Pull Request</h3>
+<p>Once your branch is pushed to GitHub, create a Pull Request (PR) to merge your changes into the <code>staging</code> branch:</p>
+<ol>
+    <li>Navigate to the repository on GitHub.</li>
+    <li>Click on the "Compare &amp; pull request" button next to your recently pushed branch.</li>
+    <li>Ensure the base branch is set to <code>staging</code> and the compare branch is your feature branch.</li>
+    <li>Provide a clear title and description for your PR, referencing the issue number if applicable.</li>
+    <li>Submit the Pull Request.</li>
+</ol>
 
-### Premium Partners
+<hr>
+<h2 id="livewire-concepts">Livewire 3 Concepts</h2>
+<hr>
+<h3>Models</h3>
+<p>In Livewire 3, models are typically used to represent the data you are working with. For this project, the models can be found in <code>app/models/appcode</code>. You can bind your Livewire components directly to Eloquent models, allowing for seamless data manipulation and retrieval. When you update the model in the component, it automatically reflects in the database.</p>
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+<h3>Livewire Components</h3>
+<p>Livewire components are the building blocks of your application. Each component can contain its own logic, rendering, and lifecycle hooks. For this project, Livewire components are stored in <code>app/Livewire/appcode</code>. You can create components for different parts of your application, allowing you to organize your code better. Components are written in PHP and can be rendered in Blade views, located in <code>resources/Livewire/appcode</code>.</p>
 
-## Contributing
+<h3>Resource Blade Views</h3>
+<p>Resource Blade views are used to display and manage your resources (like models). They are integrated with Livewire components to provide a reactive user interface. You can define views for creating, updating, and displaying your models, making it easier to manage CRUD operations without writing much JavaScript. These views will use lowercase letters and dashes in their naming conventions, reflecting the structure of the Livewire components.</p>
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<h3>Services</h3>
+<p>For service methods, you can create a service class in <code>app/Services/appcode</code> to store various methods that can be called from your application configuration, such as <code>SysConfig1</code>, according to the app code.</p>
