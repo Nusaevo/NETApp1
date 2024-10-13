@@ -26,6 +26,8 @@ class UserDataTable extends BaseDataTableComponent
         $this->selectedRows = $selectedUserIds;
     }
 
+    protected $listeners = [ 'renderUserTable' => 'render'];
+
     public function builder(): Builder
     {
         return ConfigUser::query()

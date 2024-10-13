@@ -18,7 +18,7 @@ class Detail extends BaseComponent
 
     public $rules = [
         'inputs.app_id' => 'required',
-        'inputs.code' => 'required',
+        'inputs.code' => 'required|string|min:1|max:100',
     ];
 
     protected $listeners = [

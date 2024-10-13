@@ -32,13 +32,18 @@ class RightDataTable extends BaseDataTableComponent
 
     public function applicationChanged($appId, $selectedMenus)
     {
+        // Clear previous data to ensure fresh render
+        $this->selectedRows = [];
         $this->appId = $appId;
         $this->selectedRows = $selectedMenus ?: [];
+        $this->dispatch('renderRightTable');
     }
+
 
     protected $listeners = [
         'applicationChanged' => 'applicationChanged',
-    ];
+        'renderRightTable' => 'render'];
+
 
     public function performUpdateActions()
     {
@@ -89,10 +94,11 @@ class RightDataTable extends BaseDataTableComponent
     {
         return [
             Column::make("", "id")
-                ->format(function ($value, $row) {
-                    return "<input class='form-check-input' type='checkbox' wire:model.lazy='selectedRows.{$row->id}.selected'>";
-                })
-                ->html(),
+            ->format(function ($value, $row) {
+                return "<input class='form-check-input' type='checkbox' wire:model.lazy='selectedRows.{$row->id}.selected' wire:key='row-{$row->id}'>";
+            })
+            ->html(),
+
             Column::make("Application Code", "ConfigAppl.name")
                 ->searchable()
                 ->sortable(),

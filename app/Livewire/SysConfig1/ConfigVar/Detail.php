@@ -17,6 +17,7 @@ class Detail extends BaseComponent
     protected $configService;
 
     public $rules= [
+        'inputs.code' => 'required|string|min:1|max:100',
         'inputs.app_id' => 'required',
         'inputs.var_group' => 'required|string|min:1|max:50',
         'inputs.seq' =>  'required',
