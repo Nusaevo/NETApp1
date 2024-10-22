@@ -1,5 +1,5 @@
 <?php
-namespace App\Livewire\TrdRetail1\Home;
+namespace App\Livewire\TrdRetail2\Home;
 
 use App\Livewire\Component\BaseComponent;
 use Carbon\Carbon;

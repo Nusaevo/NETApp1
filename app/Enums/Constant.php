@@ -21,4 +21,10 @@ class Constant
         //return Str::lower(config('database.connections.trdjewel1.database'));
         return "trdretail1";
     }
+
+    public static function TrdRetail2_ConnectionString(): string
+    {
+        //return Str::lower(config('database.connections.trdjewel1.database'));
+        return "trdretail2";
+    }
 }

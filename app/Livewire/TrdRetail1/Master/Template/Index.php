@@ -1,13 +1,12 @@
 <?php
-
 namespace App\Livewire\TrdRetail1\Master\Template;
 
 use App\Livewire\Component\BaseComponent;
 use Livewire\WithFileUploads;
 use App\Models\TrdRetail1\Master\Material;
+use App\Models\TrdRetail1\Base\Attachment;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Collection;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
 
 class Index extends BaseComponent
@@ -20,86 +19,127 @@ class Index extends BaseComponent
     {
         return view('livewire.trd-retail1.master.template.index');
     }
-
     protected function onPreRender()
     {
-        // Custom logic for pre-render
-    }
 
-    // Function to handle file upload and process the Excel file
+    }
+    // Function to handle file upload and process the Excel file, including extracting images
     public function uploadExcel()
     {
-        // Validate the uploaded file
-
-
-        // Begin the database transaction
         DB::beginTransaction();
         try {
-            // Read the Excel file into a collection
-            $collection = Excel::toCollection(null, $this->file);
+            // Load the Excel file using PhpSpreadsheet
+            $spreadsheet = IOFactory::load($this->file->getRealPath());
+            $sheet = $spreadsheet->getActiveSheet();
 
-            // Assuming the first sheet in the Excel file
-            $rows = $collection->first();
-            dd($rows);
-            // Iterate over the rows and insert them into the materials table
-            foreach ($rows as $row) {
-                // Check if the row is completely empty
-                if (empty(array_filter($row->toArray()))) {
-                    // If all values in the row are empty, stop processing
-                    break;
+            // Get all rows of data
+            $rows = $sheet->toArray();
+            foreach ($rows as $rowIndex => $row) {
+                if ($rowIndex < 1) {
+                    continue; // Skip the header row
+                }
+                if (empty(array_filter($row))) {
+                    break; // Stop processing if the row is completely empty
                 }
 
-                // Check if 'kode_barang' is empty
-                $kodeBarang = $row['kode_barang'] ?? null;
+                // Retrieve relevant columns (adjust based on your Excel structure)
+                $kodeBarang = $row[0]; // Assuming 'Kode Barang' is in the first column
+                $kategori = $row[1] ?? "test";
+                $jenis = $row[2];
+                $merk = $row[3];
+                $uom = $row[4];
+                $note = $row[5];
 
-                // If 'kode_barang' is missing, generate one based on the last inserted material ID
+                // Generate 'Kode Barang' if missing
                 if (empty($kodeBarang)) {
-                    $lastId = Material::max('id') + 1; // Get the last ID and increment by 1
-                    $kodeBarang = 'MAT-' . str_pad($lastId, 6, '0', STR_PAD_LEFT); // Example format: MAT-000001
+                    $lastId = Material::max('id') + 1;
+                    $kodeBarang = 'MAT-' . str_pad($lastId, 6, '0', STR_PAD_LEFT);
                 }
 
-                // Insert the material into the materials table
+                // Insert the material data into the database
                 $material = Material::create([
-                    'code' => $kodeBarang,  // Use generated or existing 'kode_barang'
-                    'name' => $row['kategori'] ?? null, // Assuming the 'name' is mapped to 'kategori'
-                    'descr' => $row['jenis'] ?? null,
-                    'brand' => $row['merk'] ?? null,
-                    'uom' => $row['uom'] ?? null,
-                    'img_file' => $row['gambar'] ?? null, // Assuming the file path or URL is in the 'gambar' column
-                    'info' => $row['note'] ?? null,
+                    'code' => $kodeBarang,
+                    'name' => $kategori ?? null,
+                    'descr' => $jenis ?? null,
+                    'brand' => $merk ?? null,
+                    'uom' => $uom ?? null,
+                    'info' => $note ?? null,
                 ]);
 
-                // Save the image attachment for the material
-                if (!empty($row['gambar'])) {
-                    $this->saveAttachment($material->id, $row['gambar'], $kodeBarang);
-                }
+                // Process images embedded in the Excel file
+                $this->processExcelImages($sheet, $rowIndex, $material->id, $kodeBarang);
             }
 
-            // Commit the transaction
             DB::commit();
-
-            // Notify the user about the successful upload
             $this->notify('success', 'File uploaded and materials added successfully!');
         } catch (Exception $e) {
-            // Rollback the transaction in case of any errors
             DB::rollback();
             $this->notify('error', 'Failed to upload the file: ' . $e->getMessage());
         }
     }
 
-    // Function to handle saving of attachments (images, files)
-    public function saveAttachment($materialId, $imagePath, $filename)
+    // Process and save images from the Excel sheet
+    public function processExcelImages($sheet, $rowIndex, $materialId, $kodeBarang)
+    {
+        foreach ($sheet->getDrawingCollection() as $drawing) {
+            if ($drawing->getCoordinates()) {
+                $cellCoordinates = $drawing->getCoordinates();
+                $currentRow = $sheet->getCell($cellCoordinates)->getRow();
+                if ($currentRow == $rowIndex + 1) {
+                    if ($drawing instanceof \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing) {
+                        // Convert image resource to binary data
+                        ob_start();
+                        switch ($drawing->getMimeType()) {
+                            case \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing::MIMETYPE_PNG:
+                                imagepng($drawing->getImageResource());
+                                $imageExtension = 'png';
+                                break;
+                            case \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing::MIMETYPE_JPEG:
+                                imagejpeg($drawing->getImageResource());
+                                $imageExtension = 'jpg';
+                                break;
+                            case \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing::MIMETYPE_GIF:
+                                imagegif($drawing->getImageResource());
+                                $imageExtension = 'gif';
+                                break;
+                            default:
+                                throw new Exception("Unsupported image type.");
+                        }
+                        $imageBytes = ob_get_contents();
+                        ob_end_clean();
+
+                    } elseif ($drawing instanceof \PhpOffice\PhpSpreadsheet\Worksheet\Drawing) {
+                        // Handle external images
+                        $imagePath = $drawing->getPath();
+                        $imageExtension = pathinfo($imagePath, PATHINFO_EXTENSION);
+                        $imageBytes = file_get_contents($imagePath);
+                    }
+
+                    // Generate image name and save the attachment
+                    $imageName = $kodeBarang . '.' . $imageExtension;
+                    $this->saveAttachment($materialId, $imageBytes, $imageName, $kodeBarang);
+                }
+            }
+        }
+    }
+
+    // Save the image data to a file
+    public function saveAttachment($materialId, $imageBytes, $filename, $kodeBarang)
     {
         try {
-            // Check if the image path is valid and exists
-            if (!empty($imagePath)) {
-                // Save the image path as an attachment for the material
-                $filePath = Attachment::saveAttachmentByFileName($imagePath, $materialId, 'Material', $filename);
+            $directoryPath = 'storage/attachments/';
+            if (!file_exists($directoryPath)) {
+                mkdir($directoryPath, 0755, true);
+            }
 
-                // Check if the attachment was saved successfully
-                if ($filePath === false) {
-                    throw new Exception("Failed to save attachment for $filename.");
-                }
+            $fullFilePath = $directoryPath . $filename;
+            $file = fopen($fullFilePath, 'wb');
+            fwrite($file, $imageBytes);
+            fclose($file);
+
+            $filePath = Attachment::saveAttachmentByFileName($fullFilePath, $materialId, 'Material', $filename);
+            if ($filePath === false) {
+                throw new Exception("Failed to save attachment for $filename.");
             }
         } catch (Exception $e) {
             throw new Exception("Failed to save attachment: " . $e->getMessage());
