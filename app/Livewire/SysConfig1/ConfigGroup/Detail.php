@@ -29,13 +29,7 @@ class Detail extends BaseComponent
     public $rules= [
         'inputs.app_id' =>  'required',
         'inputs.descr' => 'required|string|min:1|max:100',
-        // 'inputs.code' => [
-        //     'required',
-        //     'string',
-        //     'min:1',
-        //     'max:50',
-        //     Rule::unique('config.config_groups', 'code')->ignore($this->object ? $this->object->id : null),
-        // ],
+        'inputs.code' => 'required|string|min:1|max:100',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -75,6 +69,9 @@ class Detail extends BaseComponent
         $this->inputs['app_id'] = null;
         $this->selectedMenus = [];
         $this->object = new ConfigGroup();
+        $this->dispatch('renderRightTable');
+        $this->dispatch('renderUserTable');
+        $this->dispatch('applicationChanged', appId: $this->inputs['app_id'], selectedMenus: $this->selectedMenus);
     }
 
 
@@ -138,6 +135,7 @@ class Detail extends BaseComponent
                 ->get();
         }
         if ($existingConfigGroups->isNotEmpty()) {
+            dd($existingConfigGroups);
             $existingUserIds = $existingConfigGroups->flatMap(function ($configGroup) {
                 if ($configGroup->ConfigUser) {
                     return $configGroup->ConfigUser->pluck('id');
@@ -192,7 +190,7 @@ class Detail extends BaseComponent
     public function applicationChanged()
     {
         $this->selectedMenus = [];
-        $this->dispatch('applicationChanged', $this->inputs['app_id'], $this->selectedMenus);
+        $this->dispatch('applicationChanged', appId: $this->inputs['app_id'], selectedMenus: $this->selectedMenus);
     }
 
     public function selectedMenus($selectedMenus)
