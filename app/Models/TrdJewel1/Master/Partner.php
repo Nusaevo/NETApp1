@@ -77,22 +77,16 @@ class Partner extends TrdJewel1BaseModel
     public static function generateNewCode($name)
     {
         $initialCode = strtoupper(substr($name, 0, 1));
-
         $latestCode = self::where('code', 'LIKE', $initialCode . '%')
-                            ->orderBy('code', 'desc')
-                            ->pluck('code')
-                            ->first();
+                      ->orderByRaw("CAST(SUBSTRING(code, LENGTH(?) + 1) AS INTEGER) DESC", [$initialCode])
+                      ->pluck('code')
+                      ->first();
 
         if ($latestCode) {
-            $numericPart = substr($latestCode, strlen($initialCode));
-
-            if (is_numeric($numericPart)) {
-                $newNumber = intval($numericPart) + 1;
-                return $initialCode . $newNumber;
-            }
+            $numericPart = intval(substr($latestCode, 1)) + 1;
+            return $initialCode . $numericPart;
+        } else {
+            return $initialCode . '1';
         }
-
-        return $initialCode . '1';
     }
-
 }
