@@ -115,20 +115,27 @@ class BaseModel extends Model
             // Convert code to uppercase for case-insensitive comparison
             $upperCode = strtoupper($this->code);
 
-            // Perform a query to check for duplicates with case-insensitive comparison
-            $query = $this->newQuery()
-                ->whereRaw('UPPER(code) = ?', [$upperCode]);
+            // Initialize the query to check for duplicates with case-insensitive comparison
+            $query = $this->newQuery()->whereRaw('UPPER(code) = ?', [$upperCode]);
+
+            // Check if the table has an 'app_id' column
+            if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'app_id')) {
+                // Add condition to check that the app_id is the same
+                $query->where('app_id', '=', $this->app_id);
+            }
 
             // Exclude the current model instance from the check if it is not new
             if (!$this->isNew()) {
                 $query->where('id', '!=', $this->id);
             }
 
+            // Return true if a duplicate exists
             return $query->exists();
         }
 
         return false; // Return false if 'code' column does not exist
     }
+
 
     public function isDuplicateName()
     {
@@ -140,6 +147,12 @@ class BaseModel extends Model
             // Perform a query to check for duplicates with case-insensitive comparison
             $query = $this->newQuery()
                 ->whereRaw('UPPER(name) = ?', [$upperName]);
+
+            // Check if the table has an 'app_id' column
+            if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'app_id')) {
+                // Add condition to check that the app_id is the same
+                $query->where('app_id', '=', $this->app_id);
+            }
 
             // Exclude the current model instance from the check if it is not new
             if (!$this->isNew()) {
