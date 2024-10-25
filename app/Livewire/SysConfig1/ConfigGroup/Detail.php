@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Livewire\SysConfig1\ConfigGroup;
+
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigGroup;
 use App\Models\SysConfig1\ConfigAppl;
@@ -26,7 +27,7 @@ class Detail extends BaseComponent
     protected $configService;
 
 
-    public $rules= [
+    public $rules = [
         'inputs.app_id' =>  'required',
         'inputs.descr' => 'required|string|min:1|max:100',
         'inputs.code' => 'required|string|min:1|max:100',
@@ -53,8 +54,7 @@ class Detail extends BaseComponent
         ];
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications();
-        if($this->isEditOrView())
-        {
+        if ($this->isEditOrView()) {
             $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->applicationChanged();

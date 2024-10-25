@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Livewire\SrvInsur\Home;
+namespace App\Livewire\TrdRetail2\Master\Partner;
 use App\Livewire\Component\BaseComponent;
-
 class Index extends BaseComponent
 {
     protected function onPreRender()
     {
-        $this->bypassPermissions = true;
+
     }
 
     public function render()
     {
-        return view('livewire.index');
+        return view($this->renderRoute);
     }
 }

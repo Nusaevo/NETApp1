@@ -27,4 +27,10 @@ class Constant
         //return Str::lower(config('database.connections.trdjewel1.database'));
         return "trdretail2";
     }
+
+    public static function SrvInsur1_ConnectionString(): string
+    {
+        //return Str::lower(config('database.connections.srvinsur1.database'));
+        return "srvinsur1";
+    }
 }

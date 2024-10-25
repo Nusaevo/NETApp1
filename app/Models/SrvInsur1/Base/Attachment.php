@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\TrdRetail2\Base;
+namespace App\Models\SrvInsur1\Base;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +16,7 @@ class Attachment extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::TrdRetail2_ConnectionString();
+        $this->connection = Constant::SrvInsur1_ConnectionString();
     }
 
     protected $fillable = [
@@ -109,7 +109,7 @@ class Attachment extends Model
             ->first();
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path'). "/TrdRetail2";
+            $uploadPath = config('app.storage_path'). "/SrvInsur1";
             $path = $uploadPath . "/" . $attachment->path;
 
             if (File::exists($path)) {
@@ -128,7 +128,7 @@ class Attachment extends Model
         $attachment = self::find($imageId);
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path') . "/TrdRetail2";
+            $uploadPath = config('app.storage_path') . "/SrvInsur1";
             $path = $uploadPath . "/" . $attachment->path;
             if (File::exists($path)) {
                 File::delete($path);
@@ -144,7 +144,7 @@ class Attachment extends Model
 
     public function getUrl()
     {
-        $uploadPath = config('app.storage_url'). "/TrdRetail2";
+        $uploadPath = config('app.storage_url'). "/SrvInsur1";
         $fullPath = $uploadPath . "/" . $this->path;
         $urlPath = str_replace("/", '/', $fullPath);
         return $urlPath;
@@ -152,7 +152,7 @@ class Attachment extends Model
 
     public function getUrlAttribute()
     {
-        $uploadPath = config('app.storage_url'). "/TrdRetail2";
+        $uploadPath = config('app.storage_url'). "/SrvInsur1";
         $fullPath = $uploadPath . "/" . $this->path;
         return str_replace("/", '/', $fullPath);
     }
