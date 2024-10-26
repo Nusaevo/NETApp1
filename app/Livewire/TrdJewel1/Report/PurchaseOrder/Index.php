@@ -89,7 +89,7 @@ class Index extends BaseComponent
 
         $query .= " ORDER BY CAST(REGEXP_REPLACE(materials.code, '\\D', '', 'g') AS INTEGER) ASC";
 
-        $this->results = DB::connection(Constant::Trdjewel1_ConnectionString())->select($query, $bindings);
+        $this->results = DB::connection(Constant::AppConn())->select($query, $bindings);
     }
 
     public function resetFilters()

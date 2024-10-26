@@ -4,6 +4,9 @@ use App\Models\SysConfig1\ConfigMenu;
 use App\Models\SysConfig1\ConfigUser;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigRight;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Session;
+
 if (!function_exists('populateArrayFromModel')) {
     /**
      * Populate an array with all column values from a model.
@@ -78,6 +81,22 @@ if (!function_exists('isNullOrEmptyDateTime')) {
             return false;
         } catch (Exception $e) {
             return true;
+        }
+    }
+}
+
+if (!function_exists('initDatabaseConnection')) {
+    /**
+     * Initialize the database connection dynamically based on session data.
+     */
+    function initDatabaseConnection()
+    {
+        $currentDatabase = config('database.connections.main.database');
+        $sessionDatabase = Session::get('database');
+
+        // Set the database connection if the session database value is different
+        if ($sessionDatabase && $currentDatabase !== $sessionDatabase) {
+            Config::set('database.connections.main.database', $sessionDatabase);
         }
     }
 }

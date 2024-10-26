@@ -13,6 +13,7 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Models\SysConfig1\ConfigMenu;
 use App\Models\Util\GenericExport;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Support\Facades\Session;
 
 abstract class BaseDataTableComponent extends DataTableComponent
 {
@@ -44,6 +45,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
         if (empty($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
+        initDatabaseConnection();
 
         $this->route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($this->route);

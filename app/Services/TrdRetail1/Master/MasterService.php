@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Services\TrdRetail2\Master;
+namespace App\Services\TrdRetail1\Master;
 
 use Illuminate\Support\Facades\DB;
-use App\Models\TrdRetail2\Master\Partner;
+// use App\Models\TrdRetail1\Master\Partner;
 use App\Enums\Constant;
 use App\Services\Base\BaseService;
 
@@ -201,29 +201,29 @@ class MasterService extends BaseService
         })->toArray();
         return $payments;
     }
-    public function getSuppliers()
-    {
-        $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
-        return $suppliersData->map(function ($data) {
-            return [
-                'label' => $data->code . " - " . $data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-    }
+    // public function getSuppliers()
+    // {
+    //     $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
+    //     return $suppliersData->map(function ($data) {
+    //         return [
+    //             'label' => $data->code . " - " . $data->name,
+    //             'value' => $data->id,
+    //         ];
+    //     })->toArray();
+    // }
 
 
 
-    public function getCustomers()
-    {
-        $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
-        return $suppliersData->map(function ($data) {
-            return [
-                'label' => $data->code . " - " . $data->name,
-                'value' => $data->id,
-            ];
-        })->toArray();
-    }
+    // public function getCustomers()
+    // {
+    //     $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
+    //     return $suppliersData->map(function ($data) {
+    //         return [
+    //             'label' => $data->code . " - " . $data->name,
+    //             'value' => $data->id,
+    //         ];
+    //     })->toArray();
+    // }
 
     public function getWarehouses($appCode)
     {
@@ -299,4 +299,6 @@ class MasterService extends BaseService
             return $formattedPrice;
         }
     }
+
+
 }

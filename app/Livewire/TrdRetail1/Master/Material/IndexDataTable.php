@@ -16,7 +16,6 @@ class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Material::class;
 
-
     public function mount(): void
     {
         $this->customRoute = "";

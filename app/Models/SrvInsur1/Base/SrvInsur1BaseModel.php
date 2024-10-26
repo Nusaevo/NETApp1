@@ -15,7 +15,7 @@ class SrvInsur1BaseModel extends BaseModel
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::SrvInsur1_ConnectionString();
+        $this->connection = Constant::AppConn();
     }
 
     public function Attachment()

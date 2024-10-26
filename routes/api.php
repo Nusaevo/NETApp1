@@ -6,6 +6,8 @@ use App\Actions\SampleUserApi;
 use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Utils\PasswordEncryptionController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -107,4 +109,7 @@ Route::prefix('v1')->group(function () {
     Route::delete('/permissions/{id}', function ($id) {
         return app(SamplePermissionApi::class)->delete($id);
     });
+
+    Route::post('/encrypt-password', [PasswordEncryptionController::class, 'encryptPassword']);
+    Route::post('/decrypt-password', [PasswordEncryptionController::class, 'decryptPassword']);
 });

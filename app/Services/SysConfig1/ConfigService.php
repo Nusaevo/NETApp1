@@ -6,9 +6,15 @@ use App\Models\SysConfig1\ConfigAppl;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Base\BaseService;
 
-class ConfigService
+class ConfigService extends BaseService
 {
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
     public function getActiveApplications($accessRequired = false)
     {
         $applicationsData = ConfigAppl::GetActiveData();
