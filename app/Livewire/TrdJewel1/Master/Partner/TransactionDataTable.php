@@ -77,7 +77,7 @@ class TransactionDataTable extends Component
             $bindings['partnerID'] = $this->partnerID;
         }
 
-        return DB::connection(Constant::Trdjewel1_ConnectionString())->select($finalQuery, $bindings);
+        return DB::connection(Constant::AppConn())->select($finalQuery, $bindings);
     }
 
     public function render()

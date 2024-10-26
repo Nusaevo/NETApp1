@@ -33,7 +33,7 @@ use App\Models\TrdJewel1\Master\Material;
                             </div>
 
                             <div class="button-container">
-                                <x-image-button :action="$customActionValue" :hideStorageButton="true"></x-image-button>
+                                <x-ui-image-button :action="$customActionValue" :hideStorageButton="true"></x-ui-image-button>
 
                                 <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                     <x-slot name="body">
@@ -59,7 +59,7 @@ use App\Models\TrdJewel1\Master\Material;
                     </div>
 
                     <div class="row">
-                        <x-ui-dropdown-select label="{{ $this->trans('category') }}" clickEvent="" model="materials.category" :options="$materialCategories1" :enabled="$panelEnabled" required="true" :action="$actionValue" onChanged="onCategory1Changed" />
+                        <x-ui-dropdown-select label="{{ $this->trans('category1') }}" clickEvent="" model="materials.jwl_category1" :options="$materialCategories1" :enabled="$panelEnabled" required="true" :action="$actionValue" onChanged="onCategory1Changed" />
                         <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code" :action="$actionValue" required="true"  :enabled="$panelEnabled" clickEvent="getMatlCode"  buttonName="Get Code"/>
                     </div>
                     <div class="row">

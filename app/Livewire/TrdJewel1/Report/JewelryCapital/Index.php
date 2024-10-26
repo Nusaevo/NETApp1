@@ -30,7 +30,7 @@ class Index extends BaseComponent
         GROUP BY category
         ";
 
-        $this->results = DB::connection(Constant::Trdjewel1_ConnectionString())->select($query);
+        $this->results = DB::connection(Constant::AppConn())->select($query);
     }
 
 

@@ -33,7 +33,7 @@ use App\Models\TrdRetail1\Master\Material;
                             </div>
 
                             <div class="button-container">
-                                <x-image-button :action="$customActionValue" :hideStorageButton="true"></x-image-button>
+                                <x-ui-image-button :action="$customActionValue" :hideStorageButton="true"></x-ui-image-button>
 
                                 <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                     <x-slot name="body">

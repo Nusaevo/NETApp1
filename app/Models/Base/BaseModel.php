@@ -34,6 +34,7 @@ class BaseModel extends Model
             }
         });
         self::bootUpdatesCreatedByAndUpdatedAt();
+        initDatabaseConnection();
     }
 
     public function getAllColumns()

@@ -5,19 +5,18 @@ namespace App\Services\TrdRetail1\Master;
 use Illuminate\Support\Facades\DB;
 // use App\Models\TrdRetail1\Master\Partner;
 use App\Enums\Constant;
+use App\Services\Base\BaseService;
 
-class MasterService
+class MasterService extends BaseService
 {
-    protected $connection;
-
     public function __construct()
     {
-        $this->connection = DB::connection(Constant::SysConfig1_ConnectionString());
+        parent::__construct();
     }
 
     protected function getConfigData($constGroup, $appCode)
     {
-        return $this->connection
+        return $this->configConnection
             ->table('config_consts')
             ->select('id', 'str1', 'str2', 'note1')
             ->where('const_group', $constGroup)
@@ -25,16 +24,6 @@ class MasterService
             ->whereNull('deleted_at')
             ->orderBy('seq')
             ->get();
-    }
-
-    protected function mapData($data)
-    {
-        return $data->map(function ($item) {
-            return [
-                'label' => $item->str1 . " - " . $item->str2,
-                'value' => $item->str1,
-            ];
-        })->toArray();
     }
 
     public function getCurrencyData($appCode)
@@ -82,7 +71,7 @@ class MasterService
 
     public function getMatlCategory1String($appCode, $str1)
     {
-        $data = $this->connection
+        $data = $this->configConnection
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL1')
@@ -102,7 +91,7 @@ class MasterService
 
     public function getMatlCategory2String($appCode, $str1)
     {
-        $data = $this->connection
+        $data = $this->configConnection
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL2')
@@ -122,7 +111,7 @@ class MasterService
 
     public function getMatlJewelPurityString($appCode, $str1)
     {
-        $data = $this->connection
+        $data = $this->configConnection
             ->table('config_consts')
             ->select('str1', 'str2')
             ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
@@ -238,7 +227,7 @@ class MasterService
 
     public function getWarehouses($appCode)
     {
-        return $this->connection
+        return $this->configConnection
             ->table('config_consts')
             ->select('id', 'str1')
             ->where('const_group', 'WAREHOUSE_LOC')
@@ -288,7 +277,7 @@ class MasterService
 
     public function getDefaultCurrencyStr1($appCode): string
     {
-        $defaultCurrency = $this->connection
+        $defaultCurrency = $this->configConnection
             ->table('config_consts')
             ->select('str1')
             ->where('const_group', 'MCURRENCY_CODE')

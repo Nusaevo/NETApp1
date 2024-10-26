@@ -220,7 +220,7 @@ class Detail extends BaseComponent
         $partnerId = $this->inputs['partner_id'] ?? 0;
 
         $searchTermUpper = strtoupper($this->searchTerm ?? '');
-        $connection = Constant::Trdjewel1_ConnectionString();
+        $connection = Constant::AppConn();
         $query = DB::connection($connection)->table('order_dtls')
             ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
             ->join('materials', 'order_dtls.matl_id', '=', 'materials.id')

@@ -15,7 +15,7 @@ class TrdRetail2BaseModel extends BaseModel
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::TrdRetail2_ConnectionString();
+        $this->connection = Constant::AppConn();
     }
 
     public function Attachment()

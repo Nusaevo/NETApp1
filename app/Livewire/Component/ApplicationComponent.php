@@ -32,17 +32,26 @@ class ApplicationComponent extends Component
             $this->selectedApplication = $sessionValue;
         } else {
             if (!empty($applicationsData[0])) {
-                $this->selectedApplication = $applicationsData[0]->code;
-                Session::put('app_code', $this->selectedApplication);
+                Session::put('app_code', $applicationsData[0]->code);
+                Session::put('database', $applicationsData[0]->database);
             }
         }
     }
 
     public function configApplicationChanged($selectedApplication)
     {
-        Session::put('app_code', $selectedApplication);
-        return redirect($selectedApplication ? '/' . $selectedApplication . '/Home' : '/');
+        $selectedApp = ConfigAppl::where('code', $selectedApplication)->first();
+
+        if ($selectedApp) {
+            Session::put('app_code', $selectedApplication);
+            Session::put('database', $selectedApp->database);
+
+            return redirect('/' . $selectedApplication . '/Home');
+        }
+
+        return redirect('/');
     }
+
 
     public function render()
     {
