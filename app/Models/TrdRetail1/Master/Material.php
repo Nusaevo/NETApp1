@@ -26,25 +26,34 @@ class Material extends TrdRetail1BaseModel
         'descr',
         'type_code',
         'class_code',
-        'partner_id',
-        'partner_code',
-        'matl_price',
-        'sellprc_calc_method',
-        'price_markup_id',
-        'price_markup_code',
-        'buying_price_usd',
-        'buying_price_idr',
-        'selling_price_usd',
-        'selling_price_idr',
+        'category',
+        'remarks',
         'brand',
         'dimension',
         'wgt',
         'qty_min',
+        'specs',
+        'supplier_id',
+        'supplier_code',
+        'supplier_id1',
+        'supplier_id2',
+        'supplier_id3',
+        'matl_price',
+        'sellprc_calc_method',
+        'price_markup_id',
+        'price_markup_code',
+        'buying_price',
+        'selling_price',
+        'partner_id',
+        'partner_code',
         'taxable',
         'info',
         'status_code',
-        'remark'
+        'created_by',
+        'updated_by',
+        'remarks'
     ];
+
 
     #region Relations
     public function MatlUom()
@@ -52,10 +61,6 @@ class Material extends TrdRetail1BaseModel
         return $this->hasMany(MatlUom::class, 'matl_id');
     }
 
-    public function MatlBom()
-    {
-        return $this->hasMany(MatlBom::class, 'matl_id')->orderBy('seq');
-    }
 
     public function ivtBal()
     {

@@ -53,6 +53,7 @@ class BaseComponent extends Component
     {
         app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
+        config(['database.connections.main.database' => Session::get('app_code') ]);
         try {
             $this->additionalParam = $additionalParam;
             $this->appCode = Session::get('app_code', '');

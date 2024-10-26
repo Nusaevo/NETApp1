@@ -16,6 +16,7 @@ class Detail extends BaseComponent
         'inputs.name' => 'required|string|min:1|max:100',
         'inputs.latest_version' => 'string|min:1|max:15',
         'inputs.descr' => 'string|min:1|max:500',
+        'inputs.database' => 'required|string|min:1|max:100',
     ];
 
     protected $listeners = [
@@ -34,6 +35,7 @@ class Detail extends BaseComponent
             'inputs.code'      => 'Application Code',
             'inputs.latest_version' => 'Application Version',
             'inputs.descr' => 'Description',
+            'inputs.database' => 'Database',
         ];
         if($this->isEditOrView())
         {

@@ -7,7 +7,6 @@ class Index extends BaseComponent
 {
     protected function onPreRender()
     {
-
     }
 
     public function render()

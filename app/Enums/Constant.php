@@ -33,4 +33,9 @@ class Constant
         //return Str::lower(config('database.connections.srvinsur1.database'));
         return "srvinsur1";
     }
+
+    public static function Main_ConnectionString(): string
+    {
+        return "main";
+    }
 }
