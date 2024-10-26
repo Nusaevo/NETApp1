@@ -227,6 +227,12 @@ div[wire\:loading].loading-overlay {
     font-size: 0.75rem;
     color: #dc3545;
 }
+
+.placeholder-text {
+    color: grey;
+    font-style: italic;
+    font-size: 0.75rem;
+}
 @media (max-width: 767px) {
 
     .responsive-label {
@@ -1041,6 +1047,7 @@ div[wire\:loading].loading-overlay {
         display: none;
     }
 }
+
 
 .ui-table-container {
     width: 100%;
