@@ -1,9 +1,9 @@
 <div>
 <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
-   
+
 
     <div class="table-container">
-        @livewire('trd-jewel1.master.currency.index-data-table')
+        @livewire($baseRenderRoute.'.index-data-table')
     </div>
 </x-ui-page-card>
 </div>

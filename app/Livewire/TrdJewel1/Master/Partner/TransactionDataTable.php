@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Livewire\TrdJewel1\Master\Partner;
+use App\Livewire\Component\BaseComponent;
 
 use Livewire\Component;
 use Rappasoft\LaravelLivewireTables\Views\Column;
@@ -12,14 +13,15 @@ use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
 
-class TransactionDataTable extends Component
+class TransactionDataTable extends BaseComponent
 {
     public int $perPage = 50;
     public $partnerID;
 
-    public function mount($partnerID = null): void
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->partnerID = $partnerID;
+        $this->bypassPermissions = true;
+        $this->partnerID = $objectId;
     }
 
     public function getData()

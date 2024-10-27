@@ -37,7 +37,7 @@ use App\Models\TrdRetail1\Master\Material;
 
                                 <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                     <x-slot name="body">
-                                        @livewire('trd-jewel1.master.gallery.storage-component', [ 'isDialogBoxComponent' => true])
+                                        @livewire($appCode.'.master.gallery.storage-component', [ 'isDialogBoxComponent' => true])
                                     </x-slot>
                                 </x-ui-dialog-box>
                             </div>
@@ -95,7 +95,7 @@ use App\Models\TrdRetail1\Master\Material;
         <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
                 <div wire:ignore>
-                @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
+                @livewire($appCode.'.master.material.transaction-data-table', ['materialID' => $objectIdValue])
                 </div>
             </x-ui-card>
         </div>

@@ -260,7 +260,7 @@ class Detail extends BaseComponent
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {
-            return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
+            return redirect()->route($this->appCode.'.Transaction.SalesOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

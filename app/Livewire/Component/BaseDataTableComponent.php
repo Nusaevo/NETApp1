@@ -22,6 +22,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $route;
     public $customRoute;
     public $langBasePath;
+    public $appCode;
 
     public $baseRenderRoute;
     public $renderRoute;
@@ -46,6 +47,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->baseRoute = Route::currentRouteName();
         }
         initDatabaseConnection();
+        $this->appCode = Session::get('app_code', '');
 
         $this->route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($this->route);

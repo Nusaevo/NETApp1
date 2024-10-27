@@ -1,18 +1,20 @@
 <?php
 namespace App\Livewire\TrdJewel1\Master\Material;
+use App\Livewire\Component\BaseComponent;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Status;
 use App\Enums\Constant;
-class TransactionDataTable extends Component
+class TransactionDataTable extends BaseComponent
 {
     public int $perPage = 50;
     public $materialID;
 
-    public function mount($materialID = null): void
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->materialID = $materialID;
+        $this->bypassPermissions = true;
+        $this->materialID = $objectId;
     }
 
     public function getData()

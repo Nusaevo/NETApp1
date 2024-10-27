@@ -164,7 +164,7 @@
                     @include('layout.customs.buttons.create', ['route' => 'TrdJewel1.Procurement.PurchaseReturn.Detail', 'objectId' => $object->id])
 
                     <div class="table-container">
-                        @livewire('trd-jewel1.procurement.purchase-order.purchase-return-data-table', ['returnIds' => $returnIds])
+                        @livewire($appCode.'.procurement.purchase-order.purchase-return-data-table', ['returnIds' => $returnIds])
                     </div>
                 </x-ui-card>
             </div> --}}

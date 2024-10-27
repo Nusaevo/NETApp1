@@ -56,7 +56,7 @@ class Index extends BaseComponent
 
         $materials = $query->orderBy('created_at', 'desc')->paginate(12);
 
-        return view('livewire.trd-jewel1.master.catalogue.index', ['materials' => $materials]);
+        return view($this->renderRoute, ['materials' => $materials]);
     }
 
     protected function onPreRender()

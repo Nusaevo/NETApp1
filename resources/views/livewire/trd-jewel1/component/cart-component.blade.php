@@ -2,7 +2,7 @@
     <!--begin::Menu wrapper-->
     <div class="cursor-pointer position-relative symbol" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end" style="width: 40px; height: 40px; line-height: 40px;">
         <!-- Cart icon with adjusted font size and position -->
-        <a href="{{ route('TrdJewel1.Transaction.CartOrder') }}" class="menu-link px-5">
+        <a href="{{ route($appCode.'.Transaction.CartOrder') }}" class="menu-link px-5">
             <i class="fas fa-shopping-cart" style="font-size: 24px;"></i>
         </a>
 
