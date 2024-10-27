@@ -17,8 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $dbUsername = env('DB_ENCRYPTED_USERNAME') ? Crypt::decrypt(env('DB_ENCRYPTED_USERNAME')) : env('DB_USERNAME');
-        $dbPassword = env('DB_ENCRYPTED_PASSWORD') ? Crypt::decrypt(env('DB_ENCRYPTED_PASSWORD')) : env('DB_PASSWORD');
+        $dbUsername = Crypt::decrypt(env('DB_USERNAME'));
+        $dbPassword = Crypt::decrypt(env('DB_PASSWORD'));
 
         // Set konfigurasi database secara manual
         Config::set('database.connections.pgsql.username', $dbUsername);
