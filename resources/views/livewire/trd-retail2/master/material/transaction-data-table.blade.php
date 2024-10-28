@@ -15,7 +15,7 @@
                         <x-ui-td>
                             @if ($row->partner_id)
                                 <!-- Tautan ke detail partner -->
-                                <a href="{{ route('TrdRetail2.Master.Partner.Detail', [
+                                <a href="{{ route($appCode.'.Master.Partner.Detail', [
                                     'action' => encryptWithSessionKey('Edit'),
                                     'objectId' => encryptWithSessionKey($row->partner_id)
                                 ]) }}">
@@ -31,19 +31,19 @@
                                 $trLink = '';
                                 switch ($row->tr_type) {
                                     case 'BB': // Buy Back
-                                        $trLink = '<a href="' . route('TrdRetail2.Transaction.Buyback.Detail', [
+                                        $trLink = '<a href="' . route($appCode.'.Transaction.Buyback.Detail', [
                                             'action' => encryptWithSessionKey('Edit'),
                                             'objectId' => encryptWithSessionKey($row->id)
                                         ]) . '">' . $row->tr_id . '</a>';
                                         break;
                                     case 'SO': // Sales Order
-                                        $trLink = '<a href="' . route('TrdRetail2.Transaction.SalesOrder.Detail', [
+                                        $trLink = '<a href="' . route($appCode.'.Transaction.SalesOrder.Detail', [
                                             'action' => encryptWithSessionKey('Edit'),
                                             'objectId' => encryptWithSessionKey($row->id)
                                         ]) . '">' . $row->tr_id . '</a>';
                                         break;
                                     case 'PO': // Purchase Order
-                                        $trLink = '<a href="' . route('TrdRetail2.Procurement.PurchaseOrder.Detail', [
+                                        $trLink = '<a href="' . route($appCode.'.Procurement.PurchaseOrder.Detail', [
                                             'action' => encryptWithSessionKey('Edit'),
                                             'objectId' => encryptWithSessionKey($row->id)
                                         ]) . '">' . $row->tr_id . '</a>';
