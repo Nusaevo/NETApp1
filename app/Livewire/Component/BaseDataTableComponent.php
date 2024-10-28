@@ -25,7 +25,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $appCode;
 
     public $baseRenderRoute;
-    public $renderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
     public $menu_link;
 
@@ -51,7 +50,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
         $this->route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($this->route);
-        $this->renderRoute = 'livewire/' . $this->baseRenderRoute;
 
         // Convert base route to URL segments
 

@@ -95,7 +95,7 @@ use App\Models\TrdRetail1\Master\Material;
         <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
                 <div wire:ignore>
-                @livewire($appCode.'.master.material.transaction-data-table', ['materialID' => $objectIdValue])
+                @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
                 </div>
             </x-ui-card>
         </div>

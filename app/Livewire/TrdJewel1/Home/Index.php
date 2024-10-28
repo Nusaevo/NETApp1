@@ -58,7 +58,8 @@ class Index extends BaseComponent
 
     public function render()
     {
-        return view('livewire.trd-jewel1.home.index', [
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute, [
             'currencyRates' => $this->currencyRates,
             'goldPrices' => $this->goldPrices,
         ]);

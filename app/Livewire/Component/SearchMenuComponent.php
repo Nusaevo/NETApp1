@@ -57,7 +57,9 @@ class SearchMenuComponent extends Component
 
     public function render()
     {
-        return view('livewire.component.search-menu-component', [
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+
+        return view($renderRoute, [
             'results' => $this->results,
         ]);
     }

@@ -83,7 +83,8 @@ class TransactionDataTable extends BaseComponent
 
     public function render()
     {
-        return view('livewire.trd-jewel1.master.material.transaction-data-table', [
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute, [
             'data' => $this->getData(),
         ]);
     }

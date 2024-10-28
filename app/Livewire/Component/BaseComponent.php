@@ -121,7 +121,7 @@ class BaseComponent extends Component
             $this->handleCreateAction();
         } else {
             $this->route .=  $this->baseRoute . '.Detail';
-            $this->renderRoute .= '.index';
+            // $this->renderRoute .= '.index';
         }
     }
 
@@ -150,8 +150,7 @@ class BaseComponent extends Component
         }
         $route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($route);
-        $this->renderRoute = 'livewire.' . $this->baseRenderRoute;
-
+        // $this->renderRoute = 'livewire.' . $this->baseRenderRoute;
         // Convert base route to URL segments
         $fullUrl = str_replace('.', '/', $this->baseRoute);
         $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);

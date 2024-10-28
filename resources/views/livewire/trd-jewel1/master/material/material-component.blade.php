@@ -166,7 +166,7 @@ use App\Models\TrdJewel1\Master\Material;
                 </x-ui-padding>
             </x-ui-card>
         </div>
-        @if (!$searchMode && $actionValue !== 'Create')
+        {{-- @if (!$searchMode && $actionValue !== 'Create')
         <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
             <x-ui-card>
                 @livewire($appCode.'.master.material.transaction-data-table', [
@@ -176,7 +176,7 @@ use App\Models\TrdJewel1\Master\Material;
                 </div>
             </x-ui-card>
         </div>
-        @endif
+        @endif --}}
     </x-ui-tab-view-content>
 
     <x-ui-footer>

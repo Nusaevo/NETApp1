@@ -55,8 +55,8 @@ class Index extends BaseComponent
         }
 
         $materials = $query->orderBy('created_at', 'desc')->paginate(12);
-
-        return view($this->renderRoute, ['materials' => $materials]);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute, ['materials' => $materials]);
     }
 
     protected function onPreRender()

@@ -25,6 +25,7 @@ class CartComponent extends Component
 
     public function render()
     {
-        return view('livewire.trd-jewel1.component.cart-component');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 }
