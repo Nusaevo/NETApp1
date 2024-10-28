@@ -48,7 +48,7 @@ class Index extends BaseComponent
     protected function onPreRender()
     {
         $this->actionValue = 'Create';
-        $this->baseRoute = 'TrdJewel1.Transaction.CartOrder.Index';
+        $this->baseRoute = $this->appCode.'.Transaction.CartOrder.Index';
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
@@ -101,7 +101,8 @@ class Index extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 
     #endregion
@@ -170,7 +171,7 @@ class Index extends BaseComponent
         $this->inputs['tr_type'] = "SO";
         $order_header->saveOrder($this->appCode,  $this->inputs['tr_type'], $this->inputs, $selectedItems, [], true);
 
-        return redirect()->route('TrdJewel1.Transaction.SalesOrder.Detail', [
+        return redirect()->route($this->appCode.'.Transaction.SalesOrder.Detail', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($order_header->id)
         ]);

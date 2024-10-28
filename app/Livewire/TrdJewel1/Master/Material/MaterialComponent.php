@@ -123,7 +123,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->panelEnabled = $this->actionValue == 'Create' ? 'true' : 'false';
         $this->customActionValue = 'Edit';
-        $this->baseRoute = 'TrdJewel1.Master.Material.Detail';
+        $this->baseRoute = $this->appCode.'.Master.Material.Detail';
         // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
@@ -251,7 +251,8 @@ class MaterialComponent extends BaseComponent
 
     public function render()
     {
-        return view('livewire.trd-jewel1.master.material.material-component');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
     #endregion
 
@@ -361,7 +362,7 @@ class MaterialComponent extends BaseComponent
         }
 
         if(!$this->searchMode && $this->actionValue == "Create"){
-            return redirect()->route('TrdJewel1.Master.Material.Detail', [
+            return redirect()->route($this->appCode.'.Master.Material.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -769,7 +770,7 @@ class MaterialComponent extends BaseComponent
             return;
         }
 
-        $url = route('TrdJewel1.Master.Material.PrintPdf', [
+        $url = route($this->appCode.'.Master.Material.PrintPdf', [
             "action" => encryptWithSessionKey('Edit'),
             "objectId" => encryptWithSessionKey($this->object->id)
         ]);

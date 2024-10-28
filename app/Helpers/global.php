@@ -100,3 +100,19 @@ if (!function_exists('initDatabaseConnection')) {
         }
     }
 }
+
+if (!function_exists('getViewPath')) {
+    function getViewPath($namespace, $className)
+    {
+        // Remove 'App' prefix if it exists in the namespace
+        $namespaceWithoutApp = preg_replace('/^App\\\\/', '', $namespace);
+
+        // Format the namespace to a dot-separated path with class name
+        $baseRoute = $namespaceWithoutApp . '/' . $className;
+        $baseRoute = str_replace('\\', '/', $baseRoute);
+        $baseRoute = str_replace('/', '.', $baseRoute);
+
+        // Retrieve the route using ConfigMenu::getRoute
+        return ConfigMenu::getRoute($baseRoute);
+    }
+}

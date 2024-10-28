@@ -128,7 +128,8 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
     #endregion
 
@@ -166,7 +167,7 @@ class Detail extends BaseComponent
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {
-            return redirect()->route('TrdJewel1.Procurement.PurchaseOrder.Detail', [
+            return redirect()->route($this->appCode.'.Procurement.PurchaseOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

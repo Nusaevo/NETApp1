@@ -17,7 +17,8 @@ class Index extends BaseComponent
 
     public function render()
     {
-        return view('livewire.trd-retail1.master.template.index');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
     protected function onPreRender()
     {

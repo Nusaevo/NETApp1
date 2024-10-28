@@ -141,7 +141,8 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 
     #endregion
@@ -200,7 +201,7 @@ class Detail extends BaseComponent
             $this->object_detail[$index]->save();
         }
         if ($this->actionValue == 'Create') {
-            return redirect()->route('TrdJewel1.Transaction.Buyback.Detail', [
+            return redirect()->route($this->appCode.'.Transaction.Buyback.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

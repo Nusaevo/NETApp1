@@ -251,7 +251,8 @@ class MaterialComponent extends BaseComponent
 
     public function render()
     {
-        return view('livewire.trd-retail1.master.material.material-component');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
     #endregion
 

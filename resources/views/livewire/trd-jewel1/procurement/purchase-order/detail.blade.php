@@ -63,7 +63,7 @@
 
                             <x-ui-dialog-box id="materialDialogBox" :width="'2000px'" :height="'2000px'">
                                 <x-slot name="body">
-                                    @livewire('trd-jewel1.master.material.material-component', [
+                                    @livewire($appCode.'.master.material.material-component', [
                                     'actionValue' => $matl_action,
                                     'objectIdValue' => $matl_objectId,
                                     'searchMode' => true

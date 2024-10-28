@@ -27,8 +27,8 @@ class StorageComponent extends BaseComponent
             ->orderBy('created_at', 'desc');
 
         $attachments = $this->isDialogBoxComponent ? $query->get() : $query->paginate(15);
-
-        return view('livewire.trd-jewel1.master.gallery.storage-component', ['attachments' => $attachments]);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute, ['attachments' => $attachments]);
     }
 
     protected function onPreRender()
