@@ -74,6 +74,31 @@
         </div>
       </x-ui-tab-view-content>
       @include('layout.customs.form-footer')
+
+      <div class="netDesign">
+      Design:
+      <ol>
+      <li>Partner Type:
+        <ul>
+        <li> C - CUSTOMER</li>
+        <li> I - INSURANCE/ASURANSI</li>
+        <li>A - Agent</li>
+        <li>W - WAJIB PAJAK</li>
+        <li>B - BANK</li>
+      </ul> </li>
+      <li>Partner Code atuo generate seq dengan Format:
+        <h1>Ixxxxx
+        Dimana: <br>
+        I = Huruf pertama dari partner Type <br>
+        xxxxx = nomor urut <br>
+      </li>
+      <li>Field customer + npwp wp required saat partner type = "W - WAJIB PAJAK" hidden untuk partner type lain <br>
+      Filed Customer berisi customer code sebagai link ke data utama</li>
+      <li>Contaact Name, Phone, Email bisa lebih dari 1</li>
+      <li>Bank Name, Bank AC bisa lebih dari 1</li>
+        </ol>
+      </div>
+
     </x-ui-page-card>
   </div>
 </div>

@@ -34,9 +34,7 @@
             <div class="row">
              <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue"
               required="true" placeHolder="Enter Name" />
-            </div>
-            <div class="row">
-            <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea"
+             <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea"
               :action="$actionValue" required="true" />
             </div>
             <div class="row">
@@ -74,6 +72,11 @@
         </div>
       </x-ui-tab-view-content>
       @include('layout.customs.form-footer')
+
+      <div class="netDesign">
+       test data
+      </div>
+
     </x-ui-page-card>
   </div>
 </div>
