@@ -1,18 +1,25 @@
 <?php
 namespace App\Livewire\TrdRetail2\Master\Material;
+use App\Livewire\Component\BaseComponent;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Status;
 use App\Enums\Constant;
-class TransactionDataTable extends Component
+class TransactionDataTable extends BaseComponent
 {
     public int $perPage = 50;
     public $materialID;
 
-    public function mount($materialID = null): void
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->materialID = $materialID;
+        $this->bypassPermissions = true;
+        $this->materialID = $objectIdValue;
+        parent::mount($action, $objectId, $actionValue, $objectIdValue);
+    }
+
+    protected function onPreRender()
+    {
     }
 
     public function getData()
@@ -76,7 +83,7 @@ class TransactionDataTable extends Component
             $bindings['materialID'] = $this->materialID;
         }
 
-        return DB::connection(Constant::TrdRetail2_ConnectionString())->select($finalQuery, $bindings);
+        return DB::connection(Constant::AppConn())->select($finalQuery, $bindings);
     }
 
     public function render()

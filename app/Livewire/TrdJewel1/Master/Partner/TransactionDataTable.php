@@ -21,7 +21,12 @@ class TransactionDataTable extends BaseComponent
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         $this->bypassPermissions = true;
-        $this->partnerID = $objectId;
+        $this->materialID = $objectIdValue;
+        parent::mount($action, $objectId, $actionValue, $objectIdValue);
+    }
+
+    protected function onPreRender()
+    {
     }
 
     public function getData()

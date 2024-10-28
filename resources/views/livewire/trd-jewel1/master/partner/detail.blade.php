@@ -40,7 +40,7 @@ use App\Models\TrdJewel1\Master\Partner;
             <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
                 <x-ui-card>
                     <div wire:ignore>
-                        @livewire($appCode.'.master.partner.transaction-data-table', [
+                        @livewire($currentRoute.'.transaction-data-table', [
                             'actionValue' => $actionValue,
                             'objectIdValue' => $objectIdValue
                             ])
