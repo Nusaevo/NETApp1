@@ -33,7 +33,7 @@ class ApplicationComponent extends Component
         } else {
             if (!empty($applicationsData[0])) {
                 Session::put('app_code', $applicationsData[0]->code);
-                Session::put('database', $applicationsData[0]->database);
+                Session::put('database', $applicationsData[0]->db_name);
             }
         }
     }
@@ -44,7 +44,7 @@ class ApplicationComponent extends Component
 
         if ($selectedApp) {
             Session::put('app_code', $selectedApplication);
-            Session::put('database', $selectedApp->database);
+            Session::put('database', $selectedApp->db_name);
 
             return redirect('/' . $selectedApplication . '/Home');
         }

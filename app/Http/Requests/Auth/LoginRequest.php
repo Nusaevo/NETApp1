@@ -77,7 +77,7 @@ class LoginRequest extends FormRequest
             $firstApp = ConfigAppl::find($firstAppId);
             if ($firstApp) {
                 Session::put('app_code', $firstApp->code);
-                Session::put('database', $firstApp->database);
+                Session::put('database', $firstApp->db_name);
             }
         }
         RateLimiter::clear($this->throttleKey());
