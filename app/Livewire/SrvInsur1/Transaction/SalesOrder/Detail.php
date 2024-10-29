@@ -80,81 +80,81 @@ class Detail extends BaseComponent
         // if ($this->currencyRate == 0) {
         //     abort(422, __('generic.string.currency_needed'));
         // }
-        $this->customValidationAttributes  = [
-            'inputs.tr_date'      => $this->trans('tr_date'),
-            'inputs.payment_term_id'      => $this->trans('payment'),
-            'inputs.partner_id'      => $this->trans('partner'),
-            'input_details.*'              => $this->trans('product'),
-            'input_details.*.matl_id' => $this->trans('product'),
-            'input_details.*.qty' => $this->trans('qty'),
-            'input_details.*.price' => $this->trans('selling_price'),
-        ];
+        // $this->customValidationAttributes  = [
+        //     'inputs.tr_date'      => $this->trans('tr_date'),
+        //     'inputs.payment_term_id'      => $this->trans('payment'),
+        //     'inputs.partner_id'      => $this->trans('partner'),
+        //     'input_details.*'              => $this->trans('product'),
+        //     'input_details.*.matl_id' => $this->trans('product'),
+        //     'input_details.*.qty' => $this->trans('qty'),
+        //     'input_details.*.price' => $this->trans('selling_price'),
+        // ];
 
-        $this->masterService = new MasterService();
-        $this->partners = $this->masterService->getCustomers($this->appCode);
-        $this->payments = $this->masterService->getPaymentTerm($this->appCode);
-        $this->printSettings = $this->masterService->getPrintSettings($this->appCode);
-        $this->printRemarks = $this->masterService->getPrintRemarks($this->appCode);
-        if($this->isEditOrView())
-        {
-            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            if ($this->object->print_settings) {
-                $savedSettings = json_decode($this->object->print_settings, true);
-                foreach ($this->printSettings as &$settings) {
-                    foreach ($savedSettings as $savedSetting) {
-                        if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
-                            $settings['checked'] = $savedSetting['checked'];
-                            break;
-                        }
-                    }
-                } unset($settings);
-            }
+        // $this->masterService = new MasterService();
+        // $this->partners = $this->masterService->getCustomers($this->appCode);
+        // $this->payments = $this->masterService->getPaymentTerm($this->appCode);
+        // $this->printSettings = $this->masterService->getPrintSettings($this->appCode);
+        // $this->printRemarks = $this->masterService->getPrintRemarks($this->appCode);
+        // if($this->isEditOrView())
+        // {
+        //     $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
+        //     if ($this->object->print_settings) {
+        //         $savedSettings = json_decode($this->object->print_settings, true);
+        //         foreach ($this->printSettings as &$settings) {
+        //             foreach ($savedSettings as $savedSetting) {
+        //                 if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
+        //                     $settings['checked'] = $savedSetting['checked'];
+        //                     break;
+        //                 }
+        //             }
+        //         } unset($settings);
+        //     }
 
-            if ($this->object->print_remarks) {
-                $savedSettings = json_decode($this->object->print_remarks, true);
-                foreach ($this->printRemarks as &$settings) {
-                    foreach ($savedSettings as $savedSetting) {
-                        if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
-                            $settings['checked'] = $savedSetting['checked'];
-                            break;
-                        }
-                    }
-                } unset($settings);
-            }
-            $this->inputs = populateArrayFromModel($this->object);
+        //     if ($this->object->print_remarks) {
+        //         $savedSettings = json_decode($this->object->print_remarks, true);
+        //         foreach ($this->printRemarks as &$settings) {
+        //             foreach ($savedSettings as $savedSetting) {
+        //                 if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
+        //                     $settings['checked'] = $savedSetting['checked'];
+        //                     break;
+        //                 }
+        //             }
+        //         } unset($settings);
+        //     }
+        //     $this->inputs = populateArrayFromModel($this->object);
 
-            $this->retrieveMaterials();
-        }
+        //     $this->retrieveMaterials();
+        // }
 
-        if(!empty($this->input_details)) {
-            $this->isPanelEnabled = "false";
-        }
+        // if(!empty($this->input_details)) {
+        //     $this->isPanelEnabled = "false";
+        // }
 
-        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $this->isPanelEnabled = "true";
-        }
+        // if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
+        //     $this->isPanelEnabled = "true";
+        // }
     }
 
 
-    protected function retrieveMaterials()
-    {
-        if ($this->object) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->trType)->orderBy('tr_seq')->get();
-            if (is_null($this->object_detail) || $this->object_detail->isEmpty()) {
-                return;
-            }
-            foreach ($this->object_detail as $key => $detail) {
-                $this->input_details[$key] =  populateArrayFromModel($detail);
-                $this->input_details[$key]['name'] = $detail->Material->name;
-                $this->input_details[$key]['id'] = $detail->id;
-                $this->input_details[$key]['price'] = ceil($detail->price);
-                $this->input_details[$key]['sub_total'] = rupiah(($detail->amt));
-                $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
-                $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
-            }
-            $this->countTotalAmount();
-        }
-    }
+    // protected function retrieveMaterials()
+    // {
+    //     if ($this->object) {
+    //         $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->trType)->orderBy('tr_seq')->get();
+    //         if (is_null($this->object_detail) || $this->object_detail->isEmpty()) {
+    //             return;
+    //         }
+    //         foreach ($this->object_detail as $key => $detail) {
+    //             $this->input_details[$key] =  populateArrayFromModel($detail);
+    //             $this->input_details[$key]['name'] = $detail->Material->name;
+    //             $this->input_details[$key]['id'] = $detail->id;
+    //             $this->input_details[$key]['price'] = ceil($detail->price);
+    //             $this->input_details[$key]['sub_total'] = rupiah(($detail->amt));
+    //             $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
+    //             $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
+    //         }
+    //         $this->countTotalAmount();
+    //     }
+    // }
 
     public function onReset()
     {
@@ -162,14 +162,13 @@ class Detail extends BaseComponent
         $this->reset('input_details');
         $this->object = new OrderHdr();
         $this->object_detail = [];
-        $this->total_amount = 0;
-        $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        $this->inputs['curr_code'] = "USD";
-        // $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
-        $this->inputs['partner_id'] = 0;
-        $this->inputs['payment_term_id'] = 129;
+        $this->inputs = [
+            'jenis_ass' => null,
+            'kode_ass' => null,
+            'tertanggung' => null,
+            'pelanggan' => null,
+        ];
+
     }
 
     public function render()
