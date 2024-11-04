@@ -65,17 +65,17 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->permissions = ConfigRight::getPermissionsByMenu($this->menu_link);
 
         $this->setPrimaryKey('id');
-        $this->setTableAttributes([
-            'class' => 'data-table',
-        ]);
+        // $this->setTableAttributes([
+        //     'class' => 'data-table',
+        // ]);
 
-        $this->setTheadAttributes([
-            'class' => 'data-table-header',
-        ]);
+        // $this->setTheadAttributes([
+        //     'class' => 'data-table-header',
+        // ]);
 
-        $this->setTbodyAttributes([
-            'class' => 'data-table-body',
-        ]);
+        // $this->setTbodyAttributes([
+        //     'class' => 'data-table-body',
+        // ]);
         $this->setTdAttributes(function(Column $column, $row, $columnIndex, $rowIndex) {
             if ($column->isField('deleted_at')) {
               return [
@@ -166,37 +166,37 @@ abstract class BaseDataTableComponent extends DataTableComponent
             ->filter($filterCallback)
             ->setWireLive();
     }
-    // public function bulkActions(): array
-    // {
-    //     return [
-    //         'export' => 'Export excel',
-    //     ];
-    // }
+    public function bulkActions(): array
+    {
+        return [
+            'export' => 'Export excel',
+        ];
+    }
 
-    // public function export()
-    // {
-    //     // Start query
-    //     $query = $this->model::query();
+    public function export()
+    {
+        // Start query
+        $query = $this->model::query();
 
-    //     // Check and apply filters if any
-    //     if ($filters = $this->getFilters()) {
-    //         foreach ($filters as $filter => $value) {
-    //             // Apply the filter to the query. This might require custom logic depending on how your filters are set up.
-    //             // Example:
-    //             // if ($filter === 'status' && $value) {
-    //             //     $query->where('status', $value);
-    //             // }
-    //         }
-    //     }
+        // Check and apply filters if any
+        if ($filters = $this->getFilters()) {
+            foreach ($filters as $filter => $value) {
+                // Apply the filter to the query. This might require custom logic depending on how your filters are set up.
+                // Example:
+                // if ($filter === 'status' && $value) {
+                //     $query->where('status', $value);
+                // }
+            }
+        }
 
-    //     // You may need to modify this part to ensure $data contains the results you want to export
-    //     $data = $query->get();
+        // You may need to modify this part to ensure $data contains the results you want to export
+        $data = $query->get();
 
-    //     // Define the filename based on the model's basename and the current timestamp
-    //     $filename = class_basename($this->model) . '-export-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+        // Define the filename based on the model's basename and the current timestamp
+        $filename = class_basename($this->model) . '-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
 
-    //     // Return the Excel download response
-    //     return Excel::download(new GenericExport($data), $filename);
-    // }
+        // Return the Excel download response
+        return Excel::download(new GenericExport($data), $filename);
+    }
 
 }

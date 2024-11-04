@@ -52,6 +52,35 @@ class ConfigService extends BaseService
         return [];
     }
 
+    public function getApp()
+    {
+        $appIds = $this->getAppIds();
+
+        return ConfigAppl::whereIn('id', $appIds)
+            ->orderBy('id')
+            ->get();
+    }
+
+    public function getAppCodes()
+    {
+        if (Auth::check()) {
+            $userId = Auth::id();
+            $appIds = ConfigUser::where('id', $userId)
+                        ->with(['ConfigGroup' => function($query) {
+                            $query->select('app_Code')->orderBy('app_Code', 'desc');
+                        }])
+                        ->firstOrFail()
+                        ->ConfigGroup
+                        ->pluck('app_Code')
+                        ->unique()
+                        ->toArray();
+
+            return $appIds;
+        }
+
+        return [];
+    }
+
     public function getConstValueByStr1($const_group, $str1)
     {
         $configConst = ConfigConst::where('const_group', $const_group)
