@@ -7,13 +7,19 @@
             </div>
 
             <div class="d-flex justify-content-end mt-3">
-                <!-- Use wire:click to call the uploadExcel method -->
-                <button type="button" class="btn btn-primary" wire:click="uploadExcel" wire:loading.attr="disabled">Upload</button>
+                <!-- Disable the button and show loading until file upload completes -->
+                <div class="d-flex justify-content-end mt-3">
+                    <!-- Change button text to 'Loading...' during both file upload and processing stages -->
+                    <button type="button" class="btn btn-primary" wire:click="uploadExcel" wire:target="file,uploadExcel" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="file,uploadExcel">Upload</span>
+                        <span wire:loading wire:target="file,uploadExcel">Loading...</span>
+                    </button>
+                </div>
             </div>
         </form>
 
         <div class="table-container mt-4">
-            @livewire($currentRoute.'.index-data-table')
+            @livewire($currentRoute . '.index-data-table')
         </div>
     </x-ui-page-card>
 

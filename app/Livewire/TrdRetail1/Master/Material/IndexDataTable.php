@@ -117,19 +117,22 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'export' => 'Export Excel',
             'downloadTemplate' => 'Download Template',
         ];
     }
 
     public function downloadTemplate()
     {
-        // Define the template header structure
-        $headers = [['Kode Barang', 'Kode Barcode', 'Kategori', 'Merk', 'Jenis', 'Warna', 'UOM', 'Harga Jual', 'Note']];
+        $templateData = [
+            ['1. Update kolom yang berwarna kuning'],
+            ['2. Kolom warna merah tidak boleh di update (posisi bisa di hide kolom di template)'],
+            ['3. Setelah upload selesai, kolom dengan warna putih akan terisi'],
+            [], [],
+            ['kategori', 'merk', 'jenis', 'No', 'Kode Warna', 'Nama Warna', 'UOM', 'Harga Jual', 'STOK', 'Kode Barang', 'Kode Barcode', 'Keterangan', 'Status'] // Headers
+        ];
 
-        // Create a temporary file with the header
         $filename = 'Material_Template_' . now()->format('Y-m-d') . '.xlsx';
 
-        return \Excel::download(new GenericExport(collect($headers)), $filename);
+        return \Excel::download(new GenericExport(collect($templateData), [], 'materials'), $filename);
     }
 }

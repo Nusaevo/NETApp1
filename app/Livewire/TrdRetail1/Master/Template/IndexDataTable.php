@@ -23,12 +23,13 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setDefaultSort('created_at', 'desc');
         $this->showCreateButton = false;
     }
-    protected $listeners = [ 'renderAuditTable' => 'render'];
+
+    protected $listeners = ['renderAuditTable' => 'render'];
 
     public function builder(): Builder
     {
         return AppAudit::query()
-        ->select();
+            ->select();
     }
 
     public function columns(): array
@@ -45,6 +46,26 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Created By", "created_by")
                 ->searchable()
                 ->sortable(),
+            Column::make("Progress", "progress")
+                ->sortable()
+                ->format(function ($value, $row) {
+                    $color = $row->status_code === Status::ERROR ? '#dc3545' : '#28a745'; // Red for error, green otherwise
+                    return '
+                        <div style="width: 100%; background-color: #e9ecef; border-radius: 5px;">
+                            <div style="width: ' . $value . '%; background-color: ' . $color . '; height: 10px; border-radius: 5px;"></div>
+                        </div>
+                        <small>' . $value . '%</small>
+                    ';
+                })
+                ->html(),
+            Column::make("Status", "status_code")
+                ->searchable()
+                ->sortable()
+                ->format(function ($value, $row, Column $column) {
+                    $color = $value === Status::ERROR ? 'red' : 'black'; // Red text for error, black otherwise
+                    return '<span style="color: ' . $color . ';">' . Status::getStatusString($value) . '</span>';
+                })
+                ->html(),
             Column::make("Created Date", "created_at")
                 ->sortable(),
             Column::make("Actions", "id")
@@ -52,10 +73,11 @@ class IndexDataTable extends BaseDataTableComponent
                     $buttons = '<div class="btn-group">';
 
                     // Download Result Button
-                    $buttons .= '<button wire:click="downloadResult(' . $row->id . ')" class="btn btn-sm btn-primary">Download Result</button>';
-                    // Conditionally show Reupload button if status is success
-                    if (strpos($row->audit_trail, 'success') !== false) {
-                        $buttons .= '<button wire:click="reupload(' . $row->id . ')" class="btn btn-sm btn-secondary">Reupload</button>';
+                    $buttons .= '<x-ui-button clickEvent="downloadResult(' . $row->id . ')" button-name="Download Result" loading="true" cssClass="btn-primary" iconPath="download.svg" />';
+
+                    // Conditionally show Reupload button if status is error
+                    if ($row->status_code === Status::ERROR) {
+                        $buttons .= '<x-ui-button clickEvent="reupload(' . $row->id . ')" button-name="Reupload" loading="true" cssClass="btn-secondary" iconPath="reupload.svg" />';
                     }
 
                     $buttons .= '</div>';
@@ -64,6 +86,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
         ];
     }
+
 
     public function filters(): array
     {

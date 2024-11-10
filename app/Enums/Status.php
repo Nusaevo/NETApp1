@@ -18,6 +18,8 @@ class Status
     const OPEN = 'O';
     const VOID = 'V';
     const POSTED = 'P';
+    const SUCCESS = 'S';
+    const ERROR = 'E';
 
     /**
      * Get the full status string from the abbreviation.
@@ -42,6 +44,8 @@ class Status
             self::OPEN => 'OPEN',
             self::VOID => 'VOID',
             self::POSTED => 'POSTED',
+            self::SUCCESS => 'SUCCESS',
+            self::ERROR => 'ERROR',
         ];
 
         return $statuses[$abbreviation] ?? 'Unknown Status';

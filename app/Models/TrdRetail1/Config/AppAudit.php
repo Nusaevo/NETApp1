@@ -3,9 +3,6 @@
 namespace App\Models\TrdRetail1\Config;
 
 use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
-use App\Models\Base\BaseModel\Attachment;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 class AppAudit extends TrdRetail1BaseModel
 {
@@ -16,8 +13,10 @@ class AppAudit extends TrdRetail1BaseModel
         'key_code',
         'log_time',
         'action_code',
+        'progress',
         'audit_trail',
         'table_name',
+        'status_code',
         'created_at',
         'created_by'
     ];
@@ -26,7 +25,6 @@ class AppAudit extends TrdRetail1BaseModel
     {
         parent::boot();
 
-
         static::creating(function ($appAudit) {
             $appAudit->created_by = Auth::user()->code ?? 'system';
             $appAudit->created_at = now();
@@ -34,14 +32,14 @@ class AppAudit extends TrdRetail1BaseModel
     }
 
     /**
-     * Scope method to get ordered data by log time
+     * Scope method to get ordered data by log time.
      */
     public function scopeGetOrderedData($query)
     {
         return $query->orderBy('log_time', 'desc')->get();
     }
 
-       /**
+    /**
      * Update audit trail with progress and status message.
      *
      * @param int $progress The progress percentage.
@@ -49,10 +47,13 @@ class AppAudit extends TrdRetail1BaseModel
      */
     public function updateAuditTrail($progress, $message)
     {
-        $statusUpdate = "[Progress: {$progress}%] {$message}";
+        // Determine status code based on progress
+        $statusCode = $progress === 100 ? 'S' : ($progress === 0 ? 'E' : 'P'); // 'S' = Success, 'E' = Error, 'P' = Processing
 
         $this->update([
-            'audit_trail' => $statusUpdate,
+            'audit_trail' => $message,     // Only the message is stored here
+            'status_code' => $statusCode,
+            'progress' => $progress,       // Update the progress column directly
         ]);
     }
 
@@ -63,6 +64,8 @@ class AppAudit extends TrdRetail1BaseModel
     {
         $this->update([
             'audit_trail' => "Re-upload attempt started at " . now(),
+            'status_code' => 'P',
+            'progress' => 0,
         ]);
     }
 }
