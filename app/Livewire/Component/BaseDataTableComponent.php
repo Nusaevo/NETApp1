@@ -193,7 +193,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     //     $data = $query->get();
 
     //     // Define the filename based on the model's basename and the current timestamp
-    //     $filename = class_basename($this->model) . '-export-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+    //     $filename = class_basename($this->model) . '-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
 
     //     // Return the Excel download response
     //     return Excel::download(new GenericExport($data), $filename);

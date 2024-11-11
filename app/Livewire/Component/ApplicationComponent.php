@@ -18,8 +18,7 @@ class ApplicationComponent extends Component
     public function mount()
     {
         $configService = new ConfigService();
-        $appIds = $configService->getAppIds();
-        $applicationsData = ConfigAppl::whereIn('id', $appIds)->orderBy('id')->get();
+        $applicationsData = $configService->getApp();
         $this->applications = $applicationsData->map(function ($data) {
             return [
                 'label' => $data->name,

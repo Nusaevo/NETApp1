@@ -150,30 +150,12 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
             'matl_boms.*.matl_origin_id' => $this->trans('origin'),
         ];
-        $this->masterService = new MasterService();
-        $this->baseMaterials = $this->masterService->getMatlBaseMaterialData($this->appCode);
-        $this->materialUOMs = $this->masterService->getUOMData($this->appCode);
-        $this->materialCategories1 = $this->masterService->getMatlCategory1Data($this->appCode);
-        $this->materialCategories2 = $this->masterService->getMatlCategory2Data($this->appCode);
-        $this->materialJewelPurity = $this->masterService->getMatlJewelPurityData($this->appCode);
-        $this->sideMaterialShapes = $this->masterService->getMatlSideMaterialShapeData($this->appCode);
-        $this->sideMaterialClarity = $this->masterService->getMatlSideMaterialClarityData($this->appCode);
-        $this->sideMaterialCut = $this->masterService->getMatlSideMaterialCutData($this->appCode);
-        $this->sideMaterialGemColors = $this->masterService->getMatlSideMaterialGemColorData($this->appCode);
-        $this->sideMaterialGiaColors = $this->masterService->getMatlSideMaterialGiaColorData($this->appCode);
-        $this->sideMaterialGemStone = $this->masterService->getMatlSideMaterialGemstoneData($this->appCode);
-        $this->sideMaterialJewelPurity = $this->masterService->getMatlSideMaterialPurityData($this->appCode);
-        $this->sideMaterialJewelOrigins = $this->masterService->getMatlSideMaterialOriginData($this->appCode);
-        $this->partners = $this->masterService->getCustomers($this->appCode);
-
-
-        if ($this->isEditOrView()) {
-            $this->loadMaterial($this->objectIdValue);
-            if ($this->object->isItemExistonOrder($this->objectIdValue)) {
-                $this->actionValue = "View";
-            }
-        }
-        $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
+        // if ($this->isEditOrView()) {
+        //     $this->loadMaterial($this->objectIdValue);
+        //     if ($this->object->isItemExistonOrder($this->objectIdValue)) {
+        //         $this->actionValue = "View";
+        //     }
+        // }
     }
     public function onReset()
     {
