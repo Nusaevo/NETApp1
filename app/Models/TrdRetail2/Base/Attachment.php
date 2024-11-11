@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\TrdRetail1\Base;
+namespace App\Models\TrdRetail2\Base;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +16,7 @@ class Attachment extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::TrdRetail1_ConnectionString();
+        $this->connection = Constant::AppConn();
     }
 
     protected $fillable = [
@@ -46,7 +46,7 @@ class Attachment extends Model
     public static function saveAttachmentByFileName($imageDataUrl, $objectId = null, $objectType, $filename)
     {
         // Get the upload path from .env
-        $uploadPath = config('app.storage_path'). "/TrdRetail1";
+        $uploadPath = config('app.storage_path'). "/TrdRetail2";
         // Create attachment data
         $attachmentData = [
             'name' => $filename,
@@ -109,7 +109,7 @@ class Attachment extends Model
             ->first();
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path'). "/TrdRetail1";
+            $uploadPath = config('app.storage_path'). "/TrdRetail2";
             $path = $uploadPath . "/" . $attachment->path;
 
             if (File::exists($path)) {
@@ -128,7 +128,7 @@ class Attachment extends Model
         $attachment = self::find($imageId);
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path') . "/TrdRetail1";
+            $uploadPath = config('app.storage_path') . "/TrdRetail2";
             $path = $uploadPath . "/" . $attachment->path;
             if (File::exists($path)) {
                 File::delete($path);
@@ -144,7 +144,7 @@ class Attachment extends Model
 
     public function getUrl()
     {
-        $uploadPath = config('app.storage_url'). "/TrdRetail1";
+        $uploadPath = config('app.storage_url'). "/TrdRetail2";
         $fullPath = $uploadPath . "/" . $this->path;
         $urlPath = str_replace("/", '/', $fullPath);
         return $urlPath;
@@ -152,7 +152,7 @@ class Attachment extends Model
 
     public function getUrlAttribute()
     {
-        $uploadPath = config('app.storage_url'). "/TrdRetail1";
+        $uploadPath = config('app.storage_url'). "/TrdRetail2";
         $fullPath = $uploadPath . "/" . $this->path;
         return str_replace("/", '/', $fullPath);
     }

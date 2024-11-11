@@ -18,19 +18,19 @@
                             $trLink = '';
                             switch ($row->tr_type) {
                                 case 'BB': // Buy Back
-                                    $trLink = '<a href="' . route('TrdJewel1.Transaction.Buyback.Detail', [
+                                    $trLink = '<a href="' . route($appCode.'.Transaction.Buyback.Detail', [
                                         'action' => encryptWithSessionKey('Edit'),
                                         'objectId' => encryptWithSessionKey($row->id)
                                     ]) . '">' . $row->tr_id . '</a>';
                                     break;
                                 case 'SO': // Sales Order
-                                    $trLink = '<a href="' . route('TrdJewel1.Transaction.SalesOrder.Detail', [
+                                    $trLink = '<a href="' . route($appCode.'.Transaction.SalesOrder.Detail', [
                                         'action' => encryptWithSessionKey('Edit'),
                                         'objectId' => encryptWithSessionKey($row->id)
                                     ]) . '">' . $row->tr_id . '</a>';
                                     break;
                                 case 'PO': // Purchase Order
-                                    $trLink = '<a href="' . route('TrdJewel1.Procurement.PurchaseOrder.Detail', [
+                                    $trLink = '<a href="' . route($appCode.'.Procurement.PurchaseOrder.Detail', [
                                         'action' => encryptWithSessionKey('Edit'),
                                         'objectId' => encryptWithSessionKey($row->id)
                                     ]) . '">' . $row->tr_id . '</a>';
@@ -73,7 +73,7 @@
                             }
 
                             $links = $details->map(function ($detail) {
-                                return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
+                                return '<a href="' . route($appCode.'.Master.Material.Detail', [
                                     'action' => encryptWithSessionKey('Edit'),
                                     'objectId' => encryptWithSessionKey($detail->matl_id)
                                 ]) . '">' . $detail->matl_code . '</a>';

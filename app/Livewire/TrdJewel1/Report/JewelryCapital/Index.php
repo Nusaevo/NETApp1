@@ -30,7 +30,7 @@ class Index extends BaseComponent
         GROUP BY category
         ";
 
-        $this->results = DB::connection(Constant::Trdjewel1_ConnectionString())->select($query);
+        $this->results = DB::connection(Constant::AppConn())->select($query);
     }
 
 
@@ -44,7 +44,8 @@ class Index extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 
     public function resetResult()

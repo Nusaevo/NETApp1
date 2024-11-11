@@ -7,11 +7,11 @@ class Index extends BaseComponent
 {
     protected function onPreRender()
     {
-
     }
 
     public function render()
     {
-        return view($this->renderRoute);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 }

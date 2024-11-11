@@ -17,7 +17,8 @@ class RfidScanners extends Component
 
     public function render()
     {
-        return view('livewire.component.rfid-scanner');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 
     public function startScan()

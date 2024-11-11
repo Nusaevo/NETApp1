@@ -6,7 +6,7 @@ use App\Http\Controllers\Apps\UserManagementController;
 use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Utils\PasswordEncryptionController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -93,6 +93,9 @@ Route::middleware('auth')->group(function () {
 
     // Additional non-standard routes go here
 });
+
+
+Route::get('/password-encryption', [PasswordEncryptionController::class, 'showEncryptionForm'])->name('password.encryption.form');
 
 Route::get('/error', function () {
     abort(500);

@@ -123,7 +123,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->panelEnabled = $this->actionValue == 'Create' ? 'true' : 'false';
         $this->customActionValue = 'Edit';
-        $this->baseRoute = 'TrdJewel1.Master.Material.Detail';
+        $this->baseRoute = $this->appCode.'.Master.Material.Detail';
         // $this->langBasePath = 'trd-jewel1/master/material/detail';
         $this->customValidationAttributes  = [
             'materials'                => $this->trans('input'),
@@ -150,30 +150,12 @@ class MaterialComponent extends BaseComponent
             'matl_boms.*.jwl_sides_price' => $this->trans('price'),
             'matl_boms.*.matl_origin_id' => $this->trans('origin'),
         ];
-        $this->masterService = new MasterService();
-        $this->baseMaterials = $this->masterService->getMatlBaseMaterialData($this->appCode);
-        $this->materialUOMs = $this->masterService->getUOMData($this->appCode);
-        $this->materialCategories1 = $this->masterService->getMatlCategory1Data($this->appCode);
-        $this->materialCategories2 = $this->masterService->getMatlCategory2Data($this->appCode);
-        $this->materialJewelPurity = $this->masterService->getMatlJewelPurityData($this->appCode);
-        $this->sideMaterialShapes = $this->masterService->getMatlSideMaterialShapeData($this->appCode);
-        $this->sideMaterialClarity = $this->masterService->getMatlSideMaterialClarityData($this->appCode);
-        $this->sideMaterialCut = $this->masterService->getMatlSideMaterialCutData($this->appCode);
-        $this->sideMaterialGemColors = $this->masterService->getMatlSideMaterialGemColorData($this->appCode);
-        $this->sideMaterialGiaColors = $this->masterService->getMatlSideMaterialGiaColorData($this->appCode);
-        $this->sideMaterialGemStone = $this->masterService->getMatlSideMaterialGemstoneData($this->appCode);
-        $this->sideMaterialJewelPurity = $this->masterService->getMatlSideMaterialPurityData($this->appCode);
-        $this->sideMaterialJewelOrigins = $this->masterService->getMatlSideMaterialOriginData($this->appCode);
-        $this->partners = $this->masterService->getCustomers($this->appCode);
-
-
-        if ($this->isEditOrView()) {
-            $this->loadMaterial($this->objectIdValue);
-            if ($this->object->isItemExistonOrder($this->objectIdValue)) {
-                $this->actionValue = "View";
-            }
-        }
-        $this->orderedMaterial = !isNullOrEmptyNumber($this->materials['partner_id']);
+        // if ($this->isEditOrView()) {
+        //     $this->loadMaterial($this->objectIdValue);
+        //     if ($this->object->isItemExistonOrder($this->objectIdValue)) {
+        //         $this->actionValue = "View";
+        //     }
+        // }
     }
     public function onReset()
     {
@@ -251,7 +233,8 @@ class MaterialComponent extends BaseComponent
 
     public function render()
     {
-        return view('livewire.trd-jewel1.master.material.material-component');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
     #endregion
 
@@ -361,7 +344,7 @@ class MaterialComponent extends BaseComponent
         }
 
         if(!$this->searchMode && $this->actionValue == "Create"){
-            return redirect()->route('TrdJewel1.Master.Material.Detail', [
+            return redirect()->route($this->appCode.'.Master.Material.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -769,7 +752,7 @@ class MaterialComponent extends BaseComponent
             return;
         }
 
-        $url = route('TrdJewel1.Master.Material.PrintPdf', [
+        $url = route($this->appCode.'.Master.Material.PrintPdf', [
             "action" => encryptWithSessionKey('Edit'),
             "objectId" => encryptWithSessionKey($this->object->id)
         ]);

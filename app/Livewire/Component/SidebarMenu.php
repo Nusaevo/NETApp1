@@ -112,6 +112,7 @@ class SidebarMenu extends Component
 
     public function render()
     {
-        return view('livewire.component.sidebar-menu');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 }

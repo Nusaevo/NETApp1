@@ -37,7 +37,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make($this->trans("code"), "code")
             ->format(function ($value, $row) {
-                    return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
+                    return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey($row->id)
                     ]) . '">' . $row->code . '</a>';

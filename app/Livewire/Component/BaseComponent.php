@@ -38,7 +38,7 @@ class BaseComponent extends Component
     public $langBasePath;
     // Route to blade PHP
     public $baseRenderRoute;
-    public $renderRoute;
+    public $currentRoute;
     public $route;
     public $resetAfterCreate = true;
 
@@ -53,6 +53,8 @@ class BaseComponent extends Component
     {
         app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
+
+        initDatabaseConnection();
         try {
             $this->additionalParam = $additionalParam;
             $this->appCode = Session::get('app_code', '');
@@ -113,15 +115,22 @@ class BaseComponent extends Component
 
     private function handleActionSpecificLogic()
     {
+        $this->currentRoute = $this->baseRenderRoute;
+
         if (in_array($this->actionValue, ['Edit', 'View'])) {
             $this->handleEditViewAction();
         } elseif ($this->actionValue === 'Create') {
             $this->handleCreateAction();
         } else {
-            $this->route .=  $this->baseRoute . '.Detail';
-            $this->renderRoute .= '.index';
+            $this->route .= $this->baseRoute . '.Detail';
+            return;
         }
+
+        $segments = explode('.', $this->currentRoute);
+        array_pop($segments);
+        $this->currentRoute = implode('.', $segments);
     }
+
 
     private function handleEditViewAction()
     {
@@ -148,7 +157,6 @@ class BaseComponent extends Component
         }
         $route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($route);
-        $this->renderRoute = 'livewire.' . $this->baseRenderRoute;
 
         // Convert base route to URL segments
         $fullUrl = str_replace('.', '/', $this->baseRoute);

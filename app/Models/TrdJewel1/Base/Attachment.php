@@ -16,7 +16,7 @@ class Attachment extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::Trdjewel1_ConnectionString();
+        $this->connection = Constant::AppConn();
     }
 
     protected $fillable = [

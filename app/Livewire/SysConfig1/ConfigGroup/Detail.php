@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Livewire\SysConfig1\ConfigGroup;
+
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigGroup;
 use App\Models\SysConfig1\ConfigAppl;
@@ -26,7 +27,7 @@ class Detail extends BaseComponent
     protected $configService;
 
 
-    public $rules= [
+    public $rules = [
         'inputs.app_id' =>  'required',
         'inputs.descr' => 'required|string|min:1|max:100',
         'inputs.code' => 'required|string|min:1|max:100',
@@ -53,8 +54,7 @@ class Detail extends BaseComponent
         ];
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications();
-        if($this->isEditOrView())
-        {
+        if ($this->isEditOrView()) {
             $this->object = ConfigGroup::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->applicationChanged();
@@ -77,7 +77,8 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
     public function populateSelectedRights()
     {
@@ -155,11 +156,11 @@ class Detail extends BaseComponent
         $application = ConfigAppl::find($this->inputs['app_id']);
         $this->inputs['app_code'] = $application->code;
         $this->object->fillAndSanitize($this->inputs);
-        // if($this->object->isDuplicateCode())
-        // {
-        //     $this->addError('inputs.code', __('generic.error.duplicate_code'));
-        //     throw new Exception(__('generic.error.duplicate_code'));
-        // }
+        if($this->object->isDuplicateCode())
+        {
+            $this->addError('inputs.code', __('generic.error.duplicate_code'));
+            throw new Exception(__('generic.error.duplicate_code'));
+        }
         $this->object->save();
         $userIds = array_keys(array_filter($this->selectedUserIds, function ($value) {
             return $value['selected'] ?? false;

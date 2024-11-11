@@ -4,6 +4,9 @@ use App\Models\SysConfig1\ConfigMenu;
 use App\Models\SysConfig1\ConfigUser;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigRight;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Session;
+
 if (!function_exists('populateArrayFromModel')) {
     /**
      * Populate an array with all column values from a model.
@@ -79,5 +82,37 @@ if (!function_exists('isNullOrEmptyDateTime')) {
         } catch (Exception $e) {
             return true;
         }
+    }
+}
+
+if (!function_exists('initDatabaseConnection')) {
+    /**
+     * Initialize the database connection dynamically based on session data.
+     */
+    function initDatabaseConnection()
+    {
+        $currentDatabase = config('database.connections.main.database');
+        $sessionDatabase = Session::get('database');
+
+        // Set the database connection if the session database value is different
+        if ($sessionDatabase && $currentDatabase !== $sessionDatabase) {
+            Config::set('database.connections.main.database', $sessionDatabase);
+        }
+    }
+}
+
+if (!function_exists('getViewPath')) {
+    function getViewPath($namespace, $className)
+    {
+        // Remove 'App' prefix if it exists in the namespace
+        $namespaceWithoutApp = preg_replace('/^App\\\\/', '', $namespace);
+
+        // Format the namespace to a dot-separated path with class name
+        $baseRoute = $namespaceWithoutApp . '/' . $className;
+        $baseRoute = str_replace('\\', '/', $baseRoute);
+        $baseRoute = str_replace('/', '.', $baseRoute);
+
+        // Retrieve the route using ConfigMenu::getRoute
+        return ConfigMenu::getRoute($baseRoute);
     }
 }

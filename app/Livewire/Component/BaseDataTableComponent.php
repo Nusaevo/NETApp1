@@ -13,6 +13,7 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Models\SysConfig1\ConfigMenu;
 use App\Models\Util\GenericExport;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Support\Facades\Session;
 
 abstract class BaseDataTableComponent extends DataTableComponent
 {
@@ -21,9 +22,9 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $route;
     public $customRoute;
     public $langBasePath;
+    public $appCode;
 
     public $baseRenderRoute;
-    public $renderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
     public $menu_link;
 
@@ -44,10 +45,11 @@ abstract class BaseDataTableComponent extends DataTableComponent
         if (empty($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
+        initDatabaseConnection();
+        $this->appCode = Session::get('app_code', '');
 
         $this->route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($this->route);
-        $this->renderRoute = 'livewire/' . $this->baseRenderRoute;
 
         // Convert base route to URL segments
 
@@ -191,7 +193,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     //     $data = $query->get();
 
     //     // Define the filename based on the model's basename and the current timestamp
-    //     $filename = class_basename($this->model) . '-export-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+    //     $filename = class_basename($this->model) . '-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
 
     //     // Return the Excel download response
     //     return Excel::download(new GenericExport($data), $filename);

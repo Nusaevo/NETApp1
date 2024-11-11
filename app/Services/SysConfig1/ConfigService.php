@@ -6,9 +6,15 @@ use App\Models\SysConfig1\ConfigAppl;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Base\BaseService;
 
-class ConfigService
+class ConfigService extends BaseService
 {
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
     public function getActiveApplications($accessRequired = false)
     {
         $applicationsData = ConfigAppl::GetActiveData();
@@ -37,6 +43,35 @@ class ConfigService
                         ->firstOrFail()
                         ->ConfigGroup
                         ->pluck('app_id')
+                        ->unique()
+                        ->toArray();
+
+            return $appIds;
+        }
+
+        return [];
+    }
+
+    public function getApp()
+    {
+        $appIds = $this->getAppIds();
+
+        return ConfigAppl::whereIn('id', $appIds)
+            ->orderBy('id')
+            ->get();
+    }
+
+    public function getAppCodes()
+    {
+        if (Auth::check()) {
+            $userId = Auth::id();
+            $appIds = ConfigUser::where('id', $userId)
+                        ->with(['ConfigGroup' => function($query) {
+                            $query->select('app_Code')->orderBy('app_Code', 'desc');
+                        }])
+                        ->firstOrFail()
+                        ->ConfigGroup
+                        ->pluck('app_Code')
                         ->unique()
                         ->toArray();
 

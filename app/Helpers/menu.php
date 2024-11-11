@@ -65,9 +65,9 @@ if (!function_exists('generateMenu')) {
     function buildMenuItems($mainMenu, $configMenus)
     {
         foreach ($configMenus as $configMenu) {
-            if (!Route::has(str_replace('/', '.', $configMenu->menu_link))) {
-                continue;
-            }
+            // if (!Route::has(str_replace('/', '.', $configMenu->menu_link))) {
+            //     continue;
+            // }
             $menuHeader = $configMenu->menu_header;
             $menuItem = createMenuItem($configMenu);
 

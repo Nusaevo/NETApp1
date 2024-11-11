@@ -3,7 +3,7 @@
 <div class="gallery-header">
     <div class="button-group">
         @if(isset($permissions['create']) && $permissions['create'])
-        <x-image-button hideStorageButton="true" action="Edit" class="btn btn-secondary"></x-image-button>
+        <x-ui-image-button hideStorageButton="true" action="Edit" class="btn btn-secondary"></x-ui-image-button>
         @endif
 
         <button id="btnDeleteSelected" class="btn btn-danger gallery-btn-delete-selected" style="display: none;" onclick="deleteSelectedImages()">

@@ -62,7 +62,8 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        return view($this->renderRoute);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 
     #endregion
@@ -75,11 +76,11 @@ class Detail extends BaseComponent
         $this->inputs['app_code'] = $application->code;
         $this->object->fillAndSanitize($this->inputs);
 
-        if($this->object->isDuplicateCode())
-        {
-            $this->addError('inputs.code', __('generic.error.duplicate_code'));
-            throw new Exception(__('generic.error.duplicate_code'));
-        }
+        // if($this->object->isDuplicateCode())
+        // {
+        //     $this->addError('inputs.code', __('generic.error.duplicate_code'));
+        //     throw new Exception(__('generic.error.duplicate_code'));
+        // }
         $this->object->save();
     }
 

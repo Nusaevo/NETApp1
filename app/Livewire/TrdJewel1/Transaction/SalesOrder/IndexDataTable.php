@@ -40,7 +40,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
-                        return '<a href="' . route('TrdJewel1.Transaction.SalesOrder.Detail', [
+                        return '<a href="' . route($this->appCode.'.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
                         ]) . '">' . $row->tr_id . '</a>';
@@ -52,7 +52,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
-                        return '<a href="' . route('TrdJewel1.Master.Partner.Detail', [
+                        return '<a href="' . route($this->appCode.'.Master.Partner.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->partner_id)
                         ]) . '">' . $row->Partner->name . '</a>';
@@ -72,7 +72,7 @@ class IndexDataTable extends BaseDataTableComponent
                     // Generate links if data is available
                     $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
                     $links = $matlCodes->map(function ($code, $id) {
-                        return '<a href="' . route('TrdJewel1.Master.Material.Detail', [
+                        return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($id)
                         ]) . '">' . $code . '</a>';
@@ -103,7 +103,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'custom_actions' => [
                             [
                                 'label' => 'Print',
-                                'route' => route('TrdJewel1.Transaction.SalesOrder.PrintPdf', [
+                                'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
                                     'action' => encryptWithSessionKey('Edit'),
                                     'objectId' => encryptWithSessionKey($row->id)
                                 ]),
