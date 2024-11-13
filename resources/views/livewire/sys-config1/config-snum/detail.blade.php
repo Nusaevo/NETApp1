@@ -10,14 +10,14 @@
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                     <x-ui-card>
                         <x-ui-text-field label="Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true"  visible="true" />
-                        <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue" />
+                        <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue"  visible="{{ $isSysConfig1 ? 'true' : 'false' }}"/>
                         <x-ui-text-field label="Last Count" model="inputs.last_cnt" type="number" :action="$actionValue"  visible="true" />
                         <div class="row">
                             <x-ui-text-field label="Wrap Low" model="inputs.wrap_low" type="number" :action="$actionValue"  visible="true" />
                             <x-ui-text-field label="Wrap High" model="inputs.wrap_high" type="number" :action="$actionValue"  visible="true" />
                         </div>
                         <x-ui-text-field label="Step Count" model="inputs.step_cnt" type="number" :action="$actionValue"  visible="true" />
-                        <x-ui-text-field label="Descr" model="inputs.descr" type="text" :action="$actionValue" required="false"  visible="true"/>
+                        <x-ui-text-field label="Descr" model="inputs.descr" type="text" :action="$actionValue" required="false"  visible="false"/>
                     </x-ui-card>
                 </div>
             </x-ui-tab-view-content>

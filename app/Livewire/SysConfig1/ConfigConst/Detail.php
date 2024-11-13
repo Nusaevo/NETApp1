@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Crypt;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 
 class Detail extends BaseComponent
@@ -19,6 +20,7 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $applications;
     public $status = '';
+    public $isSysConfig1;
     protected $configService;
 
     public $rules= [
@@ -38,6 +40,7 @@ class Detail extends BaseComponent
     #region Populate Data methods
     protected function onPreRender()
     {
+        $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
         $this->customValidationAttributes  = [
             'inputs'                => 'Input',
             'inputs.*'              => 'Input',
@@ -55,6 +58,10 @@ class Detail extends BaseComponent
         {
             $this->object = ConfigConst::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
+        }
+
+        if (!$this->isSysConfig1) {
+            $this->inputs['app_id'] = Session::get('app_id');
         }
     }
 
@@ -75,8 +82,11 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-        $application = ConfigAppl::find($this->inputs['app_id']);
-        $this->inputs['app_code'] = $application->code;
+        if ($this->isSysConfig1) {
+            $application = ConfigAppl::find($this->inputs['app_id']);
+            $this->inputs['app_code'] = $application->code;
+        }
+
         $this->object->fillAndSanitize($this->inputs);
 
         $this->object->save();

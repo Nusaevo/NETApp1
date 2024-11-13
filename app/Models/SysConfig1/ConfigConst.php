@@ -5,6 +5,8 @@ use App\Models\Base\BaseModel;
 use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Session;
+use App\Enums\Constant;
 class ConfigConst extends BaseModel
 {
     protected $table = 'config_consts';
@@ -13,6 +15,47 @@ class ConfigConst extends BaseModel
 
     const CURRENCY_DOLLAR_ID = '125';
     const CURRENCY_RUPIAH_ID = '124';
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+
+        // Set the database connection based on app_code session
+        if (Session::get('app_code') !== 'SysConfig1') {
+            $this->connection = Constant::AppConn();
+            // Set fillable fields without app_id and app_code if not SysConfig1
+            $this->fillable = [
+                'const_group',
+                'group_id',
+                'group_code',
+                'user_id',
+                'user_code',
+                'seq',
+                'str1',
+                'str2',
+                'num1',
+                'num2',
+                'note1',
+            ];
+        } else {
+            // Full fillable fields if app_code is SysConfig1
+            $this->fillable = [
+                'const_group',
+                'app_id',
+                'app_code',
+                'group_id',
+                'group_code',
+                'user_id',
+                'user_code',
+                'seq',
+                'str1',
+                'str2',
+                'num1',
+                'num2',
+                'note1',
+            ];
+        }
+    }
+
     public static function boot()
     {
         parent::boot();
@@ -32,21 +75,6 @@ class ConfigConst extends BaseModel
         });
     }
 
-    protected $fillable = [
-        'const_group',
-        'app_id',
-        'app_code',
-        'group_id',
-        'group_code',
-        'user_id',
-        'user_code',
-        'seq',
-        'str1',
-        'str2',
-        'num1',
-        'num2',
-        'note1',
-    ];
     #region Relations
 
     public function ConfigAppl()

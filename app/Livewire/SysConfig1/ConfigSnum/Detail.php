@@ -7,6 +7,7 @@ use App\Models\SysConfig1\ConfigSnum;
 use App\Models\SysConfig1\ConfigAppl;
 use App\Services\SysConfig1\ConfigService;
 use Exception;
+use Illuminate\Support\Facades\Session;
 
 
 class Detail extends BaseComponent
@@ -15,6 +16,7 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $applications;
     protected $configService;
+    public $isSysConfig1;
 
     public $rules = [
         'inputs.app_id' => 'required',
@@ -31,6 +33,7 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
+        $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
         $this->customValidationAttributes  = [
             'inputs'                => 'Input',
             'inputs.*'              => 'Input',
@@ -48,6 +51,10 @@ class Detail extends BaseComponent
         {
             $this->object = ConfigSnum::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
+        }
+
+        if (!$this->isSysConfig1) {
+            $this->inputs['app_id'] = Session::get('app_id');
         }
     }
 
@@ -70,8 +77,11 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $application = ConfigAppl::find($this->inputs['app_id']);
-        $this->inputs['app_code'] = $application->code;
+        if ($this->isSysConfig1) {
+            $application = ConfigAppl::find($this->inputs['app_id']);
+            $this->inputs['app_code'] = $application->code;
+        }
+
         $this->object->fillAndSanitize($this->inputs);
         if($this->object->isDuplicateCode())
         {

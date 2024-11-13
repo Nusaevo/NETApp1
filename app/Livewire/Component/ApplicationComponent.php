@@ -42,6 +42,7 @@ class ApplicationComponent extends Component
         $selectedApp = ConfigAppl::where('code', $selectedApplication)->first();
 
         if ($selectedApp) {
+            Session::put('app_id', $selectedApp->id);
             Session::put('app_code', $selectedApplication);
             Session::put('database', $selectedApp->db_name);
 
@@ -50,6 +51,7 @@ class ApplicationComponent extends Component
 
         return redirect('/');
     }
+
 
 
     public function render()

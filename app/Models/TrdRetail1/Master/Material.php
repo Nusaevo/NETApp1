@@ -9,7 +9,7 @@ use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Transaction\OrderDtl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\TrdRetail1\Config\AppAudit;
+use App\Models\TrdRetail1\Config\ConfigAudit;
 
 class Material extends TrdRetail1BaseModel
 {
@@ -56,7 +56,7 @@ class Material extends TrdRetail1BaseModel
     ];
 
 
-    public static function validateExcelUpload($dataTable, AppAudit $audit)
+    public static function validateExcelUpload($dataTable, ConfigAudit $audit)
     {
         $errors = [];
         $minRequiredColumns = 9;
@@ -111,7 +111,7 @@ class Material extends TrdRetail1BaseModel
         ];
     }
 
-    public static function processExcelUpload($dataTable, AppAudit $audit)
+    public static function processExcelUpload($dataTable, ConfigAudit $audit)
     {
         DB::beginTransaction();
         $errorMessages = [];

@@ -9,7 +9,7 @@
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                 <x-ui-card>
                     {{-- <x-ui-text-field label="Const Code" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="true"  visible="true" /> --}}
-                    <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue" />
+                    <x-ui-dropdown-select label="Application" clickEvent="refreshApplication" model="inputs.app_id" :options="$applications" required="true" :action="$actionValue"  visible="{{ $isSysConfig1 ? 'true' : 'false' }}"/>
                     <div class="row">
                         <x-ui-text-field label="Const Group" model="inputs.const_group" type="text" :action="$actionValue" required="true" visible="true" />
                         <x-ui-text-field label="Seq" model="inputs.seq" type="number" :action="$actionValue" required="true" visible="true" />

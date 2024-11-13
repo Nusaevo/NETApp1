@@ -16,11 +16,11 @@ class MasterService extends BaseService
 
     protected function getConfigData($constGroup, $appCode)
     {
-        return $this->configConnection
+        return $this->mainConnection
             ->table('config_consts')
             ->select('id', 'str1', 'str2', 'note1')
             ->where('const_group', $constGroup)
-            ->where('app_code', $appCode)
+
             ->whereNull('deleted_at')
             ->orderBy('seq')
             ->get();
@@ -71,11 +71,11 @@ class MasterService extends BaseService
 
     public function getMatlCategory1String($appCode, $str1)
     {
-        $data = $this->configConnection
+        $data = $this->mainConnection
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL1')
-            ->where('app_code', $appCode)
+
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -91,11 +91,11 @@ class MasterService extends BaseService
 
     public function getMatlCategory2String($appCode, $str1)
     {
-        $data = $this->configConnection
+        $data = $this->mainConnection
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL2')
-            ->where('app_code', $appCode)
+
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -111,11 +111,11 @@ class MasterService extends BaseService
 
     public function getMatlJewelPurityString($appCode, $str1)
     {
-        $data = $this->configConnection
+        $data = $this->mainConnection
             ->table('config_consts')
             ->select('str1', 'str2')
             ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
-            ->where('app_code', $appCode)
+
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -227,11 +227,11 @@ class MasterService extends BaseService
 
     public function getWarehouses($appCode)
     {
-        return $this->configConnection
+        return $this->mainConnection
             ->table('config_consts')
             ->select('id', 'str1')
             ->where('const_group', 'WAREHOUSE_LOC')
-            ->where('app_code', $appCode)
+
             ->whereNull('deleted_at')
             ->orderBy('seq')
             ->get()
@@ -277,11 +277,11 @@ class MasterService extends BaseService
 
     public function getDefaultCurrencyStr1($appCode): string
     {
-        $defaultCurrency = $this->configConnection
+        $defaultCurrency = $this->mainConnection
             ->table('config_consts')
             ->select('str1')
             ->where('const_group', 'MCURRENCY_CODE')
-            ->where('app_code', $appCode)
+
             ->whereNull('deleted_at')
             ->orderByDesc('num1')
             ->first();
