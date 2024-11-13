@@ -3,7 +3,7 @@ namespace App\Livewire\TrdRetail1\Master\Template;
 
 use App\Livewire\Component\BaseComponent;
 use Livewire\WithFileUploads;
-use App\Models\TrdRetail1\Config\AppAudit;
+use App\Models\TrdRetail1\Config\ConfigAudit;
 use App\Models\TrdRetail1\Master\Material;
 use App\Jobs\ProcessExcelUploadJob;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -62,7 +62,7 @@ class Index extends BaseComponent
             $dataTable = array_slice($sheet->toArray(), 1);
 
             // Create a new audit record
-            $audit = AppAudit::create([
+            $audit = ConfigAudit::create([
                 'log_time' => now(),
                 'action_code' => 'UPLOAD',
                 'audit_trail' => "Starting upload process for sheet: $sheetName",
@@ -70,7 +70,7 @@ class Index extends BaseComponent
             ]);
 
             // Dispatch the job with the model and audit class
-            ProcessExcelUploadJob::dispatch($sheetName, $dataTable, $audit->id, $modelClass, AppAudit::class);
+            ProcessExcelUploadJob::dispatch($sheetName, $dataTable, $audit->id, $modelClass, ConfigAudit::class);
         } catch (Exception $e) {
         }
         $this->dispatch('renderAuditTable');

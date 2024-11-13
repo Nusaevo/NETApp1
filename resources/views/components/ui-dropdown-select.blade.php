@@ -1,9 +1,11 @@
 @php
-$id = str_replace(['.', '[', ']'], '_', $model);
-$blankValue = (isset($type) && $type === 'int') ? '0' : '';
+    $id = str_replace(['.', '[', ']'], '_', $model);
+    $blankValue = (isset($type) && $type === 'int') ? '0' : '';
 @endphp
 
-<div wire:ignore.self class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif>
+<div wire:ignore.self class="col-sm mb-5"
+     @if(isset($span)) span="{{ $span }}" @endif
+     @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
     <div class="form-floating">
         <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}"
                 @if(isset($modelType) && $modelType === 'lazy') wire:model.lazy="{{ isset($model) ? $model : '' }}"
