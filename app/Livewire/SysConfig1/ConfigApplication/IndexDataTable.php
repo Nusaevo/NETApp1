@@ -40,6 +40,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Name"), "name")
                 ->searchable()
                 ->sortable(),
+            Column::make("Seq", "seq")
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("Latest Version"), "latest_version")
                 ->searchable()
                 ->sortable(),

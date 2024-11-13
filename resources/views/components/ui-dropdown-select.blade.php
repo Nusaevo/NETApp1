@@ -1,9 +1,11 @@
 @php
-$id = str_replace(['.', '[', ']'], '_', $model);
-$blankValue = (isset($type) && $type === 'int') ? '0' : '';
+    $id = str_replace(['.', '[', ']'], '_', $model);
+    $blankValue = (isset($type) && $type === 'int') ? '0' : '';
 @endphp
 
-<div wire:ignore.self class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif>
+<div wire:ignore.self class="col-sm mb-5"
+     @if(isset($span)) span="{{ $span }}" @endif
+     @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
     <div class="form-floating">
         <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}"
                 @if(isset($modelType) && $modelType === 'lazy') wire:model.lazy="{{ isset($model) ? $model : '' }}"
@@ -41,12 +43,12 @@ $blankValue = (isset($type) && $type === 'int') ? '0' : '';
     </div>
 
     <!-- Refresh Button -->
-    @if (isset($clickEvent) && $clickEvent !== '')
+    {{-- @if (isset($clickEvent) && $clickEvent !== '')
         @if ((isset($enabled) && ($enabled === 'always' || $enabled === 'true')) || ((!empty($action) && $action !== 'View') && (isset($enabled) && $enabled !== 'false')))
             <button type="button" wire:click="{{ $clickEvent }}" wire:loading.attr="disabled" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="Refresh your search to get the latest data"
                     @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif>
                 <i class="bi bi-arrow-repeat"></i>
             </button>
         @endif
-    @endif
+    @endif --}}
 </div>

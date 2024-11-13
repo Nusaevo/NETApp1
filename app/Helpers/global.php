@@ -97,6 +97,7 @@ if (!function_exists('initDatabaseConnection')) {
         // Set the database connection if the session database value is different
         if ($sessionDatabase && $currentDatabase !== $sessionDatabase) {
             Config::set('database.connections.main.database', $sessionDatabase);
+            Artisan::call('config:clear');
         }
     }
 }

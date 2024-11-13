@@ -38,7 +38,9 @@ class ConfigService extends BaseService
             $userId = Auth::id();
             $appIds = ConfigUser::where('id', $userId)
                         ->with(['ConfigGroup' => function($query) {
-                            $query->select('app_id')->orderBy('app_id', 'desc');
+                            $query->join('config_appls', 'config_groups.app_id', '=', 'config_appls.id')
+                            ->select('config_groups.app_id')
+                            ->orderBy('config_appls.seq');
                         }])
                         ->firstOrFail()
                         ->ConfigGroup
@@ -57,7 +59,7 @@ class ConfigService extends BaseService
         $appIds = $this->getAppIds();
 
         return ConfigAppl::whereIn('id', $appIds)
-            ->orderBy('id')
+            ->orderBy('seq')
             ->get();
     }
 
@@ -67,7 +69,9 @@ class ConfigService extends BaseService
             $userId = Auth::id();
             $appIds = ConfigUser::where('id', $userId)
                         ->with(['ConfigGroup' => function($query) {
-                            $query->select('app_Code')->orderBy('app_Code', 'desc');
+                            $query->join('config_appls', 'config_groups.app_id', '=', 'config_appls.id')
+                            ->select('config_appls.code')
+                            ->orderBy('config_appls.seq');
                         }])
                         ->firstOrFail()
                         ->ConfigGroup

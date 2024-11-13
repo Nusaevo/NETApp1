@@ -27,6 +27,7 @@ class Index extends BaseComponent
 
     public function search()
     {
+        initDatabaseConnection();
         if (isNullOrEmptyNumber($this->category)) {
             $this->notify('warning', __('generic.error.field_required', ['field' => "Category"]));
             $this->addError('category', "Mohon lengkapi");

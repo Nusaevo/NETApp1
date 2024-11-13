@@ -1,9 +1,11 @@
 @php
-$id = str_replace(['.', '[', ']'], '_', $model);
-$blankValue = (isset($type) && $type === 'int') ? '0' : '';
+    $id = str_replace(['.', '[', ']'], '_', $model);
+    $blankValue = (isset($type) && $type === 'int') ? '0' : '';
 @endphp
 
-<div class="mb-5 col-sm" @if(isset($span)) span="{{ $span }}" @endif>
+<div wire:ignore.self class="col-sm mb-5"
+     @if(isset($span)) span="{{ $span }}" @endif
+     @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
     <div class="form-floating">
         <select id="{{ $id }}"
                 class="form-select responsive-input @error($model) is-invalid @enderror
