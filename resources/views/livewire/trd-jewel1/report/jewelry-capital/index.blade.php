@@ -6,7 +6,6 @@
     @endphp
     <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
-            <form wire:submit.prevent="search">
                 <div class="card-footer d-flex justify-content-end">
                     <div>
                         <button type="button" class="btn btn-light text-capitalize border-0" onclick="printReport()">
@@ -14,7 +13,6 @@
                         </button>
                     </div>
                 </div>
-            </form>
         </x-ui-expandable-card>
         <div id="print">
             <x-ui-table id="LaporanPenerimaan">

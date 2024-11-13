@@ -7,13 +7,13 @@
         <div class="form-floating flex-grow-1">
             @if(isset($type) && $type === 'textarea')
                 <textarea style="min-height: 150px;" wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
-                          @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                          @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                           @if(isset($required) && $required === 'true') required @endif
                           placeholder="{{ isset($label) ? $label : '' }}"
                           @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif autocomplete="off"></textarea>
             @elseif(isset($type) && $type === 'document')
                 <input wire:model="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror"
-                       @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                       @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif accept=".pdf, .doc, .docx"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'barcode')
@@ -36,13 +36,13 @@
                             }
                         }
                     }" x-init="initBarcode()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
-                       @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                       @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif x-ref="inputField">
             @elseif(isset($type) && $type === 'code')
                 <input wire:model="{{ $model }}" type="text" class="form-control @error($model) is-invalid @enderror"
-                       @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                       @if ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
@@ -65,7 +65,7 @@
                             }
                         }
                     }" x-init="initDatepicker()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
-                       @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                       @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        readonly="readonly" x-ref="inputField"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
@@ -94,18 +94,18 @@
                             }
                         }
                     }" x-init="initInputMask()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror"
-                       @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                       @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif x-ref="inputField">
             @elseif(isset($type) && $type === 'image')
                 <input wire:model="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" accept="image/*"
-                       @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                       @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @else
                 <input wire:model="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control @error($model) is-invalid @enderror"
-                       @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
+                       @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
@@ -127,7 +127,7 @@
             <div class="d-flex align-items-center ms-2">
                 <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
                     <button type="button" class="btn btn-secondary" wire:click="{{ $clickEvent }}"
-                            @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif>
+                            @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
                         {{ $buttonName }}
                     </button>
                 </span>

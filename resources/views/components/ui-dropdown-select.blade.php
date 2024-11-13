@@ -41,12 +41,12 @@ $blankValue = (isset($type) && $type === 'int') ? '0' : '';
     </div>
 
     <!-- Refresh Button -->
-    @if (isset($clickEvent) && $clickEvent !== '')
+    {{-- @if (isset($clickEvent) && $clickEvent !== '')
         @if ((isset($enabled) && ($enabled === 'always' || $enabled === 'true')) || ((!empty($action) && $action !== 'View') && (isset($enabled) && $enabled !== 'false')))
             <button type="button" wire:click="{{ $clickEvent }}" wire:loading.attr="disabled" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="Refresh your search to get the latest data"
                     @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif>
                 <i class="bi bi-arrow-repeat"></i>
             </button>
         @endif
-    @endif
+    @endif --}}
 </div>

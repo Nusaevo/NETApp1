@@ -6,7 +6,6 @@
     @endphp
     <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
-            <form wire:submit.prevent="search">
                 <div class="card-body">
                     <div class="row">
                         <x-ui-dropdown-select label="Cari Kategori Barang" model="category" :options="$materialCategories1" action="Edit" />
@@ -21,7 +20,7 @@
                             <i class="fas fa-print text-primary"></i> Print
                         </button>
                 </div>
-            </form>
+
         </x-ui-expandable-card>
         <div id="print">
             <x-ui-table id="LaporanPenerimaan">
