@@ -12,12 +12,14 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 use App\Services\SysConfig1\ConfigService;
+use Illuminate\Support\Facades\Session;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigConst::class;
     protected $configService;
     protected $accessible_appids;
+    protected $isSysConfig1;
 
     public function mount(): void
     {
@@ -27,7 +29,12 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
         $this->configService = new ConfigService();
-        $this->accessible_appids = $this->configService->getAppIds();
+        $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
+        $sessionAppId = Session::get('app_id');
+
+        if ($this->isSysConfig1) {
+            $this->accessible_appids = $this->configService->getAppIds();
+        }
     }
 
     public function builder(): Builder
@@ -44,8 +51,11 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function columns(): array
     {
-        return [
-            Column::make("Application", "id")
+        $columns = [];
+
+        // Check session app_code
+        if ($this->isSysConfig1) {
+            $columns[] = Column::make("Application", "id")
                 ->format(function ($value, $row) {
                     if ($row->app_id) {
                         return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
@@ -57,7 +67,11 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html()
-                ->sortable(),
+                ->sortable();
+        }
+
+        // Add other columns
+        $columns = array_merge($columns, [
             Column::make("Const Group", "const_group")
                 ->searchable()
                 ->sortable(),
@@ -94,7 +108,9 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-        ];
+        ]);
+
+        return $columns;
     }
 
     public function filters(): array

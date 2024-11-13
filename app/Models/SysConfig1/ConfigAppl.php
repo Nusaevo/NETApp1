@@ -26,7 +26,8 @@ class ConfigAppl extends BaseModel
         'latest_version',
         'descr',
         'status_code',
-        'db_name'
+        'db_name',
+        'seq'
     ];
 
     #region Relations

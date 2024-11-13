@@ -4,7 +4,7 @@ namespace App\Livewire\TrdRetail1\Master\Template;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\TrdRetail1\Config\AppAudit;
+use App\Models\TrdRetail1\Config\ConfigAudit;
 use App\Enums\Status;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    protected $model = AppAudit::class;
+    protected $model = ConfigAudit::class;
 
     public function mount(): void
     {
@@ -28,7 +28,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return AppAudit::query()
+        return ConfigAudit::query()
             ->select();
     }
 

@@ -4,9 +4,9 @@ namespace App\Models\TrdRetail1\Config;
 
 use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
 use Illuminate\Support\Facades\Auth;
-class AppAudit extends TrdRetail1BaseModel
+class ConfigAudit extends TrdRetail1BaseModel
 {
-    protected $table = 'app_audits';
+    protected $table = 'config_audits';
     public $timestamps = false;
 
     protected $fillable = [

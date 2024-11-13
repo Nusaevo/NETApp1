@@ -10,12 +10,14 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Support\Facades\DB;
 use App\Services\SysConfig1\ConfigService;
 use App\Enums\Status;
+use Illuminate\Support\Facades\Session;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigSnum::class;
     protected $configService;
     protected $accessible_appids;
+    protected $isSysConfig1;
 
     public function mount(): void
     {
@@ -25,7 +27,10 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
         $this->configService = new ConfigService();
-        $this->accessible_appids = $this->configService->getAppIds();
+        $sessionAppId = Session::get('app_id');
+        if ($this->isSysConfig1) {
+            $this->accessible_appids = $this->configService->getAppIds();
+        }
     }
 
     public function builder(): Builder
@@ -39,13 +44,20 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function columns(): array
     {
-        return [
-            Column::make($this->trans("Application"), "id")
+        $columns = [];
+
+        // Check if the session app_code is 'SysConfig1'
+        if ($this->isSysConfig1) {
+            $columns[] = Column::make($this->trans("Application"), "id")
                 ->format(function ($value, $row) {
                     return $this->formatApplicationLink($row);
                 })
                 ->html()
-                ->sortable(),
+                ->sortable();
+        }
+
+        // Add the other columns
+        $columns = array_merge($columns, [
             Column::make($this->trans("Code"), "code")
                 ->searchable()
                 ->sortable(),
@@ -76,7 +88,9 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-        ];
+        ]);
+
+        return $columns;
     }
 
     protected function formatApplicationLink($row)
