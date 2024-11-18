@@ -98,7 +98,11 @@ class IndexDataTable extends BaseDataTableComponent
 
         if ($this->isSysConfig1) {
             // Add Config Application Filter only for SysConfig1
-            $configApplOptions = ConfigAppl::orderBy('seq')->pluck('name', 'id')->toArray();
+            $configApplOptions = ConfigAppl::whereNotNull('db_name')
+            ->where('db_name', '!=', '')
+            ->orderBy('seq')
+            ->pluck('name', 'id')
+            ->toArray();
             if (!empty($configApplOptions)) {
                 $filters[] = SelectFilter::make('Config Appl', 'app_id')
                     ->options($configApplOptions)
@@ -140,23 +144,13 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $configAppl = ConfigAppl::find($appId);
 
-        if ($configAppl && $configAppl->db_name) {
+        if ($configAppl && $configAppl->code) {
             // Generate a unique connection name
-            $newConnectionName = "{$configAppl->db_name}";
+            $newConnectionName = "{$configAppl->code}";
 
             // If the connection name has not changed, skip rendering
             if ($this->connectionName === $newConnectionName) {
                 return; // Exit early if no change
-            }
-
-            // Check if the connection is already configured
-            if (!Config::has("database.connections.{$newConnectionName}")) {
-                $baseConnection = Config::get("database.connections.main");
-
-                // Set the new connection dynamically
-                Config::set("database.connections.{$newConnectionName}", array_merge($baseConnection, [
-                    'database' => $configAppl->db_name,
-                ]));
             }
 
             // Update the connection name for this instance

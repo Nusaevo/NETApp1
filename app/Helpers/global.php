@@ -5,55 +5,9 @@ use App\Models\SysConfig1\ConfigUser;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session;
 use App\Models\SysConfig1\ConfigAppl;
+use Illuminate\Support\Facades\Session;
 use App\Enums\Constant;
-if (!function_exists('addDynamicConnections')) {
-    /**
-     * Dynamically add database connections based on a hardcoded query.
-     */
-    function addDynamicConnections()
-    {
-        $configConnectionName = Constant::ConfigConn();
-
-        // Log the connection name
-        Log::info('Config Connection Name:', [$configConnectionName]);
-
-        $baseConnection = Config::get("database.connections.{$configConnectionName}");
-
-        // Log the base connection
-        Log::info('Base Connection:', $baseConnection);
-
-        // Execute the query
-        try {
-            $configApps = DB::connection($configConnectionName)->select('SELECT code, db_name FROM config_appls');
-            Log::info('Fetched Config Apps:', $configApps);
-        } catch (\Exception $e) {
-            Log::error('Error Fetching Config Apps:', ['error' => $e->getMessage()]);
-            throw $e;
-        }
-
-        foreach ($configApps as $app) {
-            // Log each app's config
-            Log::info('App Config:', (array) $app);
-
-            $newConnection = array_merge($baseConnection, [
-                'driver'   => 'pgsql',
-                'database' => $app->db_name,
-                'host'     => $baseConnection['host'],
-                'port'     => $baseConnection['port'],
-                'username' => $baseConnection['username'],
-                'password' => $baseConnection['password'],
-            ]);
-
-            // Log the new connection
-            Log::info('New Connection:', $newConnection);
-
-            // Dynamically set the connection
-            Config::set("database.connections.{$app->code}", $newConnection);
-        }
-    }
-}
 
 if (!function_exists('populateArrayFromModel')) {
     /**
