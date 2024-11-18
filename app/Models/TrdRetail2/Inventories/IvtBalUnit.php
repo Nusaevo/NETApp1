@@ -17,7 +17,7 @@ class IvtBalUnit extends TrdRetail2BaseModel
     {
         parent::boot();
         static::saving(function ($IvtBalUnit) {
-            $qty_oh = currencyToNumeric($IvtBalUnit->qty_oh);
+            $qty_oh = $IvtBalUnit->qty_oh;
             $IvtBalUnit->qty_oh = $qty_oh;
         });
     }

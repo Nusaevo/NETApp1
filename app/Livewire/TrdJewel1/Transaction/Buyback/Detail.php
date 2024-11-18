@@ -383,7 +383,7 @@ class Detail extends BaseComponent
                     return;
                 }
 
-                $price = currencyToNumeric($orderDtl->price);
+                $price = $orderDtl->price;
                 $maxTrSeq++;
                 $newDetails[] = [
                     'tr_seq' => $maxTrSeq,

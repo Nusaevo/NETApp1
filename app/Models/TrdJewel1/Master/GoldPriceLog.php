@@ -37,7 +37,7 @@ class GoldPriceLog extends TrdJewel1BaseModel
             ->orderBy('log_date', 'asc')
             ->first(['log_date', 'curr_rate']);
 
-        return $currencyRatesData ? currencyToNumeric($currencyRatesData->curr_rate) : 0;
+        return $currencyRatesData ? $currencyRatesData->curr_rate : 0;
     }
 
     public static function calculateGoldPrice($baseCurrency, $currentRate)

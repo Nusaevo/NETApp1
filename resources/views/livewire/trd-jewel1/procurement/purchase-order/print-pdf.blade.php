@@ -55,9 +55,9 @@
                             <td class="item">{{ $key +1 }}</td>
                             <td> {{ $OrderDtl->matl_code }}</td>
                             <td> {{ $OrderDtl->matl_descr }}</td>
-                            <td>  {{ceil(currencyToNumeric($OrderDtl->qty))}}</td>
+                            <td>  {{ceil($OrderDtl->qty)}}</td>
                             {{-- <td>  {{$OrderDtl->qty }} {{ $OrderDtl->Material->MatlUom[0]->name }}</td> --}}
-                            <td class="item"> {{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }} </td>
+                            <td class="item"> {{ rupiah(ceil($OrderDtl->price)) }} </td>
 
                         </tr>
                         @endif

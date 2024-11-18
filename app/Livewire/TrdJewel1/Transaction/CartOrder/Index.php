@@ -396,7 +396,7 @@ class Index extends BaseComponent
                     throw new Exception("Item {$material->code} sudah ada di cart");
                 }
 
-                $price = currencyToNumeric($material->jwl_selling_price_usd) * $this->currencyRate;
+                $price = $material->jwl_selling_price_usd * $this->currencyRate;
                 $maxTrSeq = $cartHdr->CartDtl()->max('tr_seq') ?? 0;
                 $maxTrSeq++;
 

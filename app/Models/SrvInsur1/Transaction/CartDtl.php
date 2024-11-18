@@ -15,8 +15,8 @@ class CartDtl extends TrdJewel1BaseModel
     {
         parent::boot();
         static::saving(function ($cartDtl) {
-            $qty = currencyToNumeric($cartDtl->qty);
-            $price = currencyToNumeric($cartDtl->price);
+            $qty = $cartDtl->qty;
+            $price = $cartDtl->price;
             $cartDtl->amt = $qty * $price;
         });
     }

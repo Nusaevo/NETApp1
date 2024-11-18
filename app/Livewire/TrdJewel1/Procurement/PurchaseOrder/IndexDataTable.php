@@ -105,12 +105,12 @@ class IndexDataTable extends BaseDataTableComponent
 
                     if ($firstDetail->Material->isOrderedMaterial()) {
                         foreach ($orderDetails as $detail) {
-                            $totalAmt += currencyToNumeric($detail->amt);
+                            $totalAmt += $detail->amt;
                         }
                         return rupiah($totalAmt);
                     } else {
                         foreach ($orderDetails as $detail) {
-                            $totalAmt += currencyToNumeric($detail->amt);
+                            $totalAmt += $detail->amt;
                         }
                         return dollar($totalAmt);
                     }
