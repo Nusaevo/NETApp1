@@ -5,6 +5,7 @@ namespace App\Models\TrdRetail2\Base;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Session;
 use App\Enums\Constant;
 
 class Attachment extends Model
@@ -16,7 +17,8 @@ class Attachment extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::AppConn();
+        $sessionAppCode = Session::get('app_code');
+        $this->connection = $sessionAppCode ?: Session::get('app_code');
     }
 
     protected $fillable = [

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use App\Enums\Constant;
+use Illuminate\Support\Facades\Session;
 
 class Attachment extends Model
 {
@@ -16,7 +17,8 @@ class Attachment extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::AppConn();
+        $sessionAppCode = Session::get('app_code');
+        $this->connection = $sessionAppCode;
     }
 
     protected $fillable = [

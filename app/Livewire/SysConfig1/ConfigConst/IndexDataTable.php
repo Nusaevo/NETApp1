@@ -5,21 +5,18 @@ namespace App\Livewire\SysConfig1\ConfigConst;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\SysConfig1\ConfigConst;
+use App\Models\SysConfig1\ConfigAppl;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use App\Models\SysConfig1\ConfigRight;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use App\Enums\Status;
-use Illuminate\Support\Facades\DB;
-use App\Services\SysConfig1\ConfigService;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigConst::class;
-    protected $configService;
-    protected $accessible_appids;
-    protected $isSysConfig1;
+    public $selectedAppId; // Selected application ID
+    public $connectionName; // Current database connection name
+    public $isSysConfig1; // Boolean to determine if the session app_code is 'SysConfig1'
 
     public function mount(): void
     {
@@ -28,50 +25,35 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
-        $this->configService = new ConfigService();
-        $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
-        $sessionAppId = Session::get('app_id');
 
-        if ($this->isSysConfig1) {
-            $this->accessible_appids = $this->configService->getAppIds();
+        $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
+        // Set selectedAppId based on session or default to SysConfig1
+        if (!$this->isSysConfig1) {
+            $this->selectedAppId = Session::get('app_id');
+        } else {
+            $this->selectedAppId = 1; // Default application ID for SysConfig1
         }
+
+        $this->updateDatabaseConnection($this->selectedAppId);
     }
+
+    protected $listeners = ['renderConst' => 'render'];
 
     public function builder(): Builder
     {
-        $query = ConfigConst::query()->withTrashed();
-
-        if (!empty($this->accessible_appids)) {
-            $query->whereIn('app_id', $this->accessible_appids);
+        if (!$this->connectionName) {
+            throw new \Exception("Connection name is not set. Ensure 'updateDatabaseConnection' is called first.");
         }
 
-        return $query->select();
-    }
+        $modelInstance = new ConfigConst();
+        $modelInstance->setConnection($this->connectionName);
 
+        return $modelInstance->newQuery()->withTrashed();
+    }
 
     public function columns(): array
     {
-        $columns = [];
-
-        // Check session app_code
-        if ($this->isSysConfig1) {
-            $columns[] = Column::make("Application", "id")
-                ->format(function ($value, $row) {
-                    if ($row->app_id) {
-                        return '<a href="' . route('SysConfig1.ConfigApplication.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->app_id)
-                        ]) . '">' . optional($row->configAppl)->code . ' - ' . optional($row->configAppl)->name . '</a>';
-                    } else {
-                        return '';
-                    }
-                })
-                ->html()
-                ->sortable();
-        }
-
-        // Add other columns
-        $columns = array_merge($columns, [
+        return [
             Column::make("Const Group", "const_group")
                 ->searchable()
                 ->sortable(),
@@ -99,43 +81,100 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
-                        'custom_actions' => [],
+                        'custom_actions' => [
+                            [
+                                'label' => 'Edit',
+                                'route' => route('SysConfig1.ConfigConst.Detail', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($row->id),
+                                    'additionalParam' => $this->selectedAppId
+                                ]),
+                                'icon' => 'bi bi-pencil'
+                            ],
+                        ],
                         'enable_this_row' => true,
                         'allow_details' => false,
-                        'allow_edit' => true,
+                        'allow_edit' => false,
                         'allow_disable' => false,
                         'allow_delete' => false,
                         'permissions' => $this->permissions
                     ]);
                 }),
-        ]);
-
-        return $columns;
+        ];
     }
 
     public function filters(): array
     {
-        return [
-            $this->createTextFilter('Aplikasi', 'application', 'Cari Kode/Nama Aplikasi', function (Builder $builder, string $value) {
-                $builder->whereHas('configAppl', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%')
-                          ->orWhere(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
-            $this->createTextFilter('Group', 'const_group', 'Cari Group', function (Builder $builder, string $value) {
+        $filters = [];
+
+        if ($this->isSysConfig1) {
+            // Add Config Application Filter only for SysConfig1
+            $configApplOptions = ConfigAppl::orderBy('seq')->pluck('name', 'id')->toArray();
+            if (!empty($configApplOptions)) {
+                $filters[] = SelectFilter::make('Config Appl', 'app_id')
+                    ->options($configApplOptions)
+                    ->filter(function (Builder $builder, $value) {
+                        $this->selectedAppId = $value;
+                        $this->updateDatabaseConnection($this->selectedAppId);
+                    });
+            }
+        }
+
+        // Add Group Filter
+        $filters[] = $this->createTextFilter(
+            'Group',
+            'const_group',
+            'Search Group',
+            function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(const_group)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            SelectFilter::make('Status', 'Status')
-                ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') {
-                        $builder->withoutTrashed();
-                    } else if ($value === '1') {
-                        $builder->onlyTrashed();
-                    }
-                }),
-        ];
+            }
+        );
+
+        // Add Status Filter
+        $filters[] = SelectFilter::make('Status', 'status')
+            ->options([
+                '0' => 'Active',
+                '1' => 'Inactive',
+            ])
+            ->filter(function (Builder $builder, string $value) {
+                if ($value === '0') {
+                    $builder->withoutTrashed();
+                } elseif ($value === '1') {
+                    $builder->onlyTrashed();
+                }
+            });
+
+        return $filters;
+    }
+
+    protected function updateDatabaseConnection($appId)
+    {
+        $configAppl = ConfigAppl::find($appId);
+
+        if ($configAppl && $configAppl->db_name) {
+            // Generate a unique connection name
+            $newConnectionName = "{$configAppl->db_name}";
+
+            // If the connection name has not changed, skip rendering
+            if ($this->connectionName === $newConnectionName) {
+                return; // Exit early if no change
+            }
+
+            // Check if the connection is already configured
+            if (!Config::has("database.connections.{$newConnectionName}")) {
+                $baseConnection = Config::get("database.connections.main");
+
+                // Set the new connection dynamically
+                Config::set("database.connections.{$newConnectionName}", array_merge($baseConnection, [
+                    'database' => $configAppl->db_name,
+                ]));
+            }
+
+            // Update the connection name for this instance
+            $this->connectionName = $newConnectionName;
+
+            // Dispatch the refresh event only if the connection name changed
+            $this->dispatch('renderConst');
+        }
     }
 }

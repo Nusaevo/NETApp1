@@ -16,7 +16,8 @@ class TrdJewel1BaseModel extends BaseModel
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::AppConn();
+        $sessionAppCode = Session::get('app_code');
+        $this->connection = $sessionAppCode;
     }
 
     public function Attachment()

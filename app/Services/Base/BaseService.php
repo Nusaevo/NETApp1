@@ -1,8 +1,8 @@
 <?php
-
 namespace App\Services\Base;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use App\Enums\Constant;
 
 class BaseService
@@ -12,10 +12,8 @@ class BaseService
 
     public function __construct($mainConnectionName = null, $configConnectionName = null)
     {
-        // Set main connection to 'app' by default, or use the provided connection name
-        $this->setMainConnection($mainConnectionName ?? Constant::AppConn());
-
-        // Set config connection to 'config' by default, or use the provided connection name
+        $appCodeConnection = Session::get('databasee', 'pgsql');
+        $this->setMainConnection($mainConnectionName ?? $appCodeConnection);
         $this->setConfigConnection($configConnectionName ?? Constant::ConfigConn());
     }
 

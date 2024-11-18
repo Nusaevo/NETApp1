@@ -6,6 +6,7 @@ use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\DB;
 use App\Services\TrdJewel1\Master\MasterService;
 use App\Enums\Constant;
+use Illuminate\Support\Facades\Session;
 
 class Index extends BaseComponent
 {
@@ -27,7 +28,6 @@ class Index extends BaseComponent
 
     public function search()
     {
-        initDatabaseConnection();
         if (isNullOrEmptyNumber($this->category)) {
             $this->notify('warning', __('generic.error.field_required', ['field' => "Category"]));
             $this->addError('category', "Mohon lengkapi");
@@ -90,7 +90,7 @@ class Index extends BaseComponent
 
         $query .= " ORDER BY CAST(REGEXP_REPLACE(materials.code, '\\D', '', 'g') AS INTEGER) ASC";
 
-        $this->results = DB::connection(Constant::AppConn())->select($query, $bindings);
+        $this->results = DB::connection(Session::get('app_code'))->select($query, $bindings);
     }
 
     public function resetFilters()

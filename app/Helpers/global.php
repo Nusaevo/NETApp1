@@ -6,6 +6,48 @@ use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigRight;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session;
+use App\Models\SysConfig1\ConfigAppl;
+use App\Enums\Constant;
+if (!function_exists('addDynamicConnections')) {
+    /**
+     * Dynamically add database connections based on a hardcoded query.
+     */
+    function addDynamicConnections()
+    {
+        // Use ConfigConn() to fetch configurations from the correct database connection
+        $configConnectionName = Constant::ConfigConn();
+
+        // Execute a hardcoded query to fetch all ConfigAppl records
+        $configApps = DB::connection($configConnectionName)->select('SELECT code, db_name FROM config_appls');
+
+        foreach ($configApps as $app) {
+            // Ensure the app_code and database name are valid
+            if (empty($app->code) || empty($app->db_name)) {
+                continue; // Skip if app_code or db_name is not provided
+            }
+
+            // Retrieve the base connection using AppConn
+            $baseConnection = Config::get("database.connections." . Constant::ConfigConn());
+
+            // Build a new connection array by overriding dynamic values
+            $newConnection = array_merge($baseConnection, [
+                'driver'   => $baseConnection['driver'] ?? 'pgsql',          // Default driver
+                'database' => $app->db_name,                                 // Dynamic database name
+                'host'     => $app->host ?? $baseConnection['host'],         // Optional: Override host
+                'port'     => $app->port ?? $baseConnection['port'],         // Optional: Override port
+                'username' => $app->username ?? $baseConnection['username'], // Optional: Override username
+                'password' => $app->password ?? $baseConnection['password'], // Optional: Override password
+                'charset'  => $baseConnection['charset'] ?? 'utf8',          // Character set
+                'prefix'   => $baseConnection['prefix'] ?? '',               // Table prefix
+                'schema'   => $baseConnection['schema'] ?? 'public',         // Schema for PostgreSQL
+                'sslmode'  => $baseConnection['sslmode'] ?? 'prefer',        // SSL mode for PostgreSQL
+            ]);
+
+            // Use app_code as the connection name
+            Config::set("database.connections.{$app->code}", $newConnection);
+        }
+    }
+}
 
 if (!function_exists('populateArrayFromModel')) {
     /**

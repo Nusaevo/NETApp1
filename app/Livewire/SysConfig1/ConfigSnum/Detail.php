@@ -6,62 +6,63 @@ use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\SysConfig1\ConfigAppl;
 use App\Services\SysConfig1\ConfigService;
-use Exception;
 use Illuminate\Support\Facades\Session;
-
 
 class Detail extends BaseComponent
 {
     #region Constant Variables
-    public $inputs = [];
-    public $applications;
-    protected $configService;
+    public $applications; // Stores the list of applications
+    public $status = '';
     public $isSysConfig1;
+    protected $configService;
+    public $application; // Selected application
+    public $selectedApplication; // Holds the currently selected application
+    public $isEnabled;
 
     public $rules = [
-        'inputs.app_id' => 'required',
-        'inputs.code' => 'required|string|min:1|max:100',
+        'inputs.code' => 'required|string|min:1|max:50',
+        'inputs.last_cnt' => 'required|integer',
+        'inputs.descr' => 'string|min:1|max:255',
     ];
 
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
+        'applicationChanged' => 'onApplicationChanged',
     ];
-
     #endregion
 
-    #region Populate Data methods
-
+    #region Populate Data Methods
     protected function onPreRender()
     {
         $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
-        $this->customValidationAttributes  = [
-            'inputs'                => 'Input',
-            'inputs.*'              => 'Input',
-            'inputs.code'           => 'Code',
-            'inputs.last_cnt'      => 'Last Count',
-            'inputs.wrap_low'      => 'Wrap Low',
-            'inputs.wrap_high'      => 'Wrap High',
-            'inputs.step_cnt'      => 'Step Count',
-            'inputs.descr'      => 'Description'
+        $this->customValidationAttributes = [
+            'inputs' => 'Input',
+            'inputs.code' => 'Code',
+            'inputs.last_cnt' => 'Last Count',
+            'inputs.descr' => 'Description',
         ];
-
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications(true);
-        if($this->isEditOrView())
-        {
-            $this->object = ConfigSnum::withTrashed()->find($this->objectIdValue);
-            $this->inputs = populateArrayFromModel($this->object);
-        }
 
-        if (!$this->isSysConfig1) {
-            $this->inputs['app_id'] = Session::get('app_id');
+        $this->isEnabled = $this->actionValue === 'Create' ? 'true' : 'false';
+
+        if ($this->isEditOrView()) {
+            // Fetch the application based on the additionalParam
+            $this->application = ConfigAppl::find($this->additionalParam);
+            $this->selectedApplication = $this->additionalParam;
+
+            if ($this->application) {
+                $this->object = new ConfigSnum();
+                $this->object->setConnection($this->application->code);
+                $this->object = $this->object->withTrashed()->find($this->objectIdValue);
+                $this->inputs = populateArrayFromModel($this->object);
+            }
         }
     }
-
 
     public function onReset()
     {
         $this->reset('inputs');
+        $this->selectedApplication = null;
         $this->object = new ConfigSnum();
     }
 
@@ -70,36 +71,31 @@ class Detail extends BaseComponent
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
-
     #endregion
 
     #region CRUD Methods
-
     public function onValidateAndSave()
     {
-        if ($this->isSysConfig1) {
-            $application = ConfigAppl::find($this->inputs['app_id']);
-            $this->inputs['app_code'] = $application->code;
+        if (!$this->application) {
+            throw new \Exception("Application not selected. Please select an application.");
         }
 
         $this->object->fillAndSanitize($this->inputs);
-        if($this->object->isDuplicateCode())
-        {
-            $this->addError('inputs.code', __('generic.error.duplicate_code'));
-            throw new Exception(__('generic.error.duplicate_code'));
-        }
+        $this->object->setConnection($this->application->code);
         $this->object->save();
     }
-
-    public function changeStatus()
-    {
-        $this->change();
-    }
-
     #endregion
 
     #region Component Events
+    public function applicationChanged($applicationId)
+    {
+        // Find the application by its ID
+        $this->application = ConfigAppl::find($applicationId);
+        $this->selectedApplication = $applicationId;
 
-
+        if ($this->application) {
+            $this->object->setConnection($this->application->code);
+        }
+    }
     #endregion
 }

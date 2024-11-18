@@ -12,6 +12,7 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
+use Illuminate\Support\Facades\Session;
 
 class TransactionDataTable extends BaseComponent
 {
@@ -84,7 +85,7 @@ class TransactionDataTable extends BaseComponent
             $bindings['partnerID'] = $this->partnerID;
         }
 
-        return DB::connection(Constant::AppConn())->select($finalQuery, $bindings);
+        return DB::connection(Session::get('app_code'))->select($finalQuery, $bindings);
     }
 
     public function render()
