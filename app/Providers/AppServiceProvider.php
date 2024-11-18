@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
         Config::set('database.connections.pgsql.password', $dbPassword);
         Config::set('database.connections.main.username', $dbUsername);
         Config::set('database.connections.main.password', $dbPassword);
+        if ($this->app->runningInConsole() && !$this->app->runningUnitTests()) {
+            return;
+        }
         addDynamicConnections();
     }
 
