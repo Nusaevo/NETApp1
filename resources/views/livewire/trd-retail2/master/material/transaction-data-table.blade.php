@@ -74,9 +74,9 @@
                         </x-ui-td>
                         <x-ui-td>
                             @if ($row->tr_type == 'PO')
-                                {{ dollar(currencyToNumeric($row->total_price)) }}
+                                {{ dollar($row->total_price) }}
                             @else
-                                {{ rupiah(currencyToNumeric($row->total_price)) }}
+                                {{ rupiah($row->total_price) }}
                             @endif
                         </x-ui-td>
                     </tr>

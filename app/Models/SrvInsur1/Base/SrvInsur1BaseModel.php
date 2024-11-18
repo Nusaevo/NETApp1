@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\SrvInsur1\Base\Attachment;
 use App\Enums\Constant;
 use App\Models\Base\BaseModel;
+use Illuminate\Support\Facades\Session;
 
 
 class SrvInsur1BaseModel extends BaseModel
@@ -15,8 +16,10 @@ class SrvInsur1BaseModel extends BaseModel
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::AppConn();
+        $sessionAppCode = Session::get('app_code');
+        $this->connection = $sessionAppCode;
     }
+
 
     public function Attachment()
     {

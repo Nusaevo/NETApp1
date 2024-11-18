@@ -17,8 +17,8 @@ class OrderDtl extends SrvInsur1BaseModel
     {
         parent::boot();
         static::saving(function ($orderDtl) {
-            $qty = currencyToNumeric($orderDtl->qty);
-            $price = currencyToNumeric($orderDtl->price);
+            $qty = $orderDtl->qty;
+            $price = $orderDtl->price;
             $orderDtl->amt = $qty * $price;
         });
         static::deleting(function ($orderDtl) {
@@ -32,12 +32,12 @@ class OrderDtl extends SrvInsur1BaseModel
                     $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
                         ->where('wh_id', $delivDtl->wh_code)
                         ->first();
-                    $qtyChange = (float)currencyToNumeric($delivDtl->qty);
+                    $qtyChange = (float)$delivDtl->qty;
                     if ($delivDtl->tr_type === 'PD') {
                         $qtyChange = -$qtyChange;
                     }
                     if ($existingBal) {
-                        $existingBalQty = currencyToNumeric($existingBal->qty_oh);
+                        $existingBalQty = $existingBal->qty_oh;
                         $newQty = $existingBalQty + $qtyChange;
                         $existingBal->qty_oh = $newQty;
                         $existingBal->save();
@@ -46,7 +46,7 @@ class OrderDtl extends SrvInsur1BaseModel
                             ->where('wh_id', $delivDtl->wh_code)
                             ->first();
                         if ($existingBalUnit) {
-                            $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+                            $existingBalUnitQty = $existingBalUnit->qty_oh;
                             $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
                             $existingBalUnit->save();
                         }

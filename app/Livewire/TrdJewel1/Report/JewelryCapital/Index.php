@@ -6,6 +6,7 @@ use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\DB;
 use App\Services\TrdJewel1\Master\MasterService;
 use App\Enums\Constant;
+use Illuminate\Support\Facades\Session;
 
 class Index extends BaseComponent
 {
@@ -31,7 +32,7 @@ class Index extends BaseComponent
         GROUP BY category
         ";
 
-        $this->results = DB::connection(Constant::AppConn())->select($query);
+        $this->results = DB::connection(Session::get('app_code'))->select($query);
     }
 
 

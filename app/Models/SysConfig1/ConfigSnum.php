@@ -4,16 +4,20 @@ use App\Models\Base\BaseModel;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
+use Illuminate\Support\Facades\Session;
+use App\Enums\Constant;
 class ConfigSnum extends BaseModel
 {
     protected $table = 'config_snums';
 
     use SoftDeletes;
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+    }
 
     protected $fillable = [
         'code',
-        'app_id',
-        'app_code',
         'last_cnt',
         'wrap_low',
         'wrap_high',

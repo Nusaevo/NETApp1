@@ -28,7 +28,7 @@ class DelivDtl extends TrdJewel1BaseModel
             }
 
             if ($existingBal) {
-                $existingBalQty = currencyToNumeric($existingBal->qty_oh);
+                $existingBalQty = $existingBal->qty_oh;
                 $newQty = $existingBalQty + $qtyChange;
                 $existingBal->qty_oh = $newQty;
                 $existingBal->save();
@@ -38,7 +38,7 @@ class DelivDtl extends TrdJewel1BaseModel
                     ->where('wh_id', $delivDtl->wh_code)
                     ->first();
                 if ($existingBalUnit) {
-                    $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+                    $existingBalUnitQty = $existingBalUnit->qty_oh;
                     $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
                     $existingBalUnit->save();
                 }
@@ -74,7 +74,7 @@ class DelivDtl extends TrdJewel1BaseModel
         //         $qtyChange = -$qtyChange;
         //     }
         //     if ($existingBal) {
-        //         $existingBalQty = currencyToNumeric($existingBal->qty_oh);
+        //         $existingBalQty = $existingBal->qty_oh;
         //         $newQty = $existingBalQty - $qtyChange;
         //         $existingBal->qty_oh = $newQty;
         //         $existingBal->save();
@@ -84,7 +84,7 @@ class DelivDtl extends TrdJewel1BaseModel
         //             ->where('wh_id', $delivDtl->wh_code)
         //             ->first();
         //         if ($existingBalUnit) {
-        //             $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+        //             $existingBalUnitQty = $existingBalUnit->qty_oh;
         //             $existingBalUnit->qty_oh = $existingBalUnitQty - $qtyChange;
         //             $existingBalUnit->save();
         //         }

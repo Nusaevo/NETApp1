@@ -11,29 +11,26 @@ use Illuminate\Support\Facades\Crypt;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
-
-
 class Detail extends BaseComponent
 {
-
     #region Constant Variables
-    public $inputs = [];
-    public $applications;
+    public $applications; // Stores the list of applications
     public $status = '';
     public $isSysConfig1;
     protected $configService;
+    public $application;
+    public $selectedApplication; // Holds the currently selected application
+    public $isEnabled;
 
-    public $rules= [
-        'inputs.app_id' => 'required',
+    public $rules = [
         'inputs.const_group' => 'required|string|min:1|max:50',
-        'inputs.seq' =>  'required',
+        'inputs.seq' => 'required',
         'inputs.str1' => 'required|string|min:1|max:50',
         'inputs.str2' => 'string|min:1|max:50',
-        // 'inputs.code' => [ 'required'],
     ];
 
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
+        'changeStatus' => 'changeStatus',
     ];
     #endregion
 
@@ -41,34 +38,39 @@ class Detail extends BaseComponent
     protected function onPreRender()
     {
         $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
-        $this->customValidationAttributes  = [
-            'inputs'                => 'Input',
-            'inputs.*'              => 'Input',
-            'inputs.code'           => 'Const Code',
-            'inputs.const_group'           => 'Const Group',
-            'inputs.seq'      => 'Const Seq',
-            'inputs.app_id'      => 'Const Application',
-            'inputs.str1'      => 'Str1',
-            'inputs.str2'      => 'Str2'
+        $this->customValidationAttributes = [
+            'inputs' => 'Input',
+            'inputs.*' => 'Input',
+            'inputs.const_group' => 'Const Group',
+            'inputs.seq' => 'Const Seq',
+            'inputs.str1' => 'Str1',
+            'inputs.str2' => 'Str2',
         ];
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications(true);
 
-        if($this->isEditOrView())
-        {
-            $this->object = ConfigConst::withTrashed()->find($this->objectIdValue);
-            $this->inputs = populateArrayFromModel($this->object);
+        $this->isEnabled = $this->actionValue === 'Create' ? 'true' : 'false';
+        if (!$this->isSysConfig1) {
+            $this->object->setConnection(Session::get('app_code'));
         }
 
-        if (!$this->isSysConfig1) {
-            $this->inputs['app_id'] = Session::get('app_id');
+        if ($this->isEditOrView()) {
+            // Fetch the application based on the additionalParam
+            $this->application = ConfigAppl::find($this->additionalParam);
+            $this->selectedApplication = $this->additionalParam;
+            if ($this->application) {
+                $this->object = new ConfigConst();
+                $this->object->setConnection($this->application->code);
+                $this->object = $this->object->withTrashed()->find($this->objectIdValue);
+                $this->inputs = populateArrayFromModel($this->object);
+            }
         }
     }
 
     public function onReset()
     {
         $this->reset('inputs');
-        $this->inputs['app_id'] = null;
+        $this->selectedApplication = null;
         $this->object = new ConfigConst();
     }
 
@@ -82,13 +84,8 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-        if ($this->isSysConfig1) {
-            $application = ConfigAppl::find($this->inputs['app_id']);
-            $this->inputs['app_code'] = $application->code;
-        }
-
         $this->object->fillAndSanitize($this->inputs);
-
+        $this->object->setConnection($this->application->code);
         $this->object->save();
     }
 
@@ -99,7 +96,11 @@ class Detail extends BaseComponent
     #endregion
 
     #region Components Events
+
+    public function applicationChanged()
+    {
+        // Find the application by its ID
+        $this->application = ConfigAppl::find($this->selectedApplication);
+    }
     #endregion
-
-
 }

@@ -60,7 +60,7 @@
                                                         Deskripsi Bahan: {{ $orderDtl['materialDescr'] }}
                                                     </td>
                                                     <td>
-                                                        {{ rupiah(currencyToNumeric($orderDtl['price'])) }}
+                                                        {{ rupiah($orderDtl['price']) }}
                                                     </td>
                                                 </tr>
                                                 @endforeach

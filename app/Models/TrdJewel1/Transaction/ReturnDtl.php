@@ -27,7 +27,7 @@ class ReturnDtl extends TrdJewel1BaseModel
         //     }
 
         //     if ($existingBal) {
-        //         $existingBalQty = currencyToNumeric($existingBal->qty_oh);
+        //         $existingBalQty = $existingBal->qty_oh;
         //         $newQty = $existingBalQty + $qtyChange;
         //         $existingBal->qty_oh = $newQty;
         //         $existingBal->save();
@@ -37,7 +37,7 @@ class ReturnDtl extends TrdJewel1BaseModel
         //             ->where('wh_id', $delivDtl->wh_code)
         //             ->first();
         //         if ($existingBalUnit) {
-        //             $existingBalUnitQty = currencyToNumeric($existingBalUnit->qty_oh);
+        //             $existingBalUnitQty = $existingBalUnit->qty_oh;
         //             $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
         //             $existingBalUnit->save();
         //         }
@@ -66,8 +66,8 @@ class ReturnDtl extends TrdJewel1BaseModel
         static::created(function ($returnDtl) {
             $OrderDtl = $returnDtl->OrderDtl;  // Assuming the relation method name is OrderDtl
             if ($OrderDtl) {
-                $OrderDtlQtyReff = ceil(currencyToNumeric($OrderDtl->qty_reff));
-                $returnQty = ceil(currencyToNumeric($OrderDtl->qty));
+                $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
+                $returnQty = ceil($OrderDtl->qty);
                 $newQtyReff = $OrderDtlQtyReff - $returnQty;
                 $OrderDtl->qty_reff = number_format($newQtyReff, 2);
                 $OrderDtl->save();
@@ -77,8 +77,8 @@ class ReturnDtl extends TrdJewel1BaseModel
         static::deleting(function ($returnDtl) {
                 $OrderDtl = $returnDtl->OrderDtl;
                 if ($OrderDtl) {
-                    $OrderDtlQtyReff = ceil(currencyToNumeric($OrderDtl->qty_reff));
-                    $returnQty =  ceil(currencyToNumeric($OrderDtl->qty));
+                    $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
+                    $returnQty =  ceil($OrderDtl->qty);
                     $newQtyReff = $OrderDtlQtyReff + $returnQty;
                     $OrderDtl->qty_reff = number_format($newQtyReff, 2);
                     $OrderDtl->save();

@@ -58,12 +58,12 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans("qty"), "total_qty")
                 ->label(function ($row) {
-                    return currencyToNumeric($row->total_qty);
+                    return $row->total_qty;
                 })
                 ->sortable(),
             Column::make($this->trans("amt"), "total_amt")
                 ->label(function ($row) {
-                    return rupiah(currencyToNumeric($row->total_amt));
+                    return rupiah($row->total_amt);
                 })
                 ->sortable(),
             Column::make($this->trans('status'), "status_code")

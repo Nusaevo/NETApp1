@@ -45,7 +45,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
         if (empty($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
-        initDatabaseConnection();
         $this->appCode = Session::get('app_code', '');
 
         $this->route = ConfigMenu::getRoute($this->baseRoute);

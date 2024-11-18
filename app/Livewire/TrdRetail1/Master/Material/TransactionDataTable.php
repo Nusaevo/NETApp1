@@ -6,6 +6,7 @@ use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Status;
 use App\Enums\Constant;
+use Illuminate\Support\Facades\Session;
 class TransactionDataTable extends BaseComponent
 {
     public int $perPage = 50;
@@ -83,7 +84,7 @@ class TransactionDataTable extends BaseComponent
             $bindings['materialID'] = $this->materialID;
         }
 
-        return DB::connection(Constant::AppConn())->select($finalQuery, $bindings);
+        return DB::connection(Session::get('app_code'))->select($finalQuery, $bindings);
     }
 
     public function render()

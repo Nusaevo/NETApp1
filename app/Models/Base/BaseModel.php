@@ -28,13 +28,12 @@ class BaseModel extends Model
             foreach ($attributes as $attribute) {
                 $value = $model->getAllColumnValues($attribute);
                 if (is_string($value) && preg_match('/^\$[\d,]+\.\d{2}$/', $value)) {
-                    $value = (float) currencyToNumeric($value);
+                    $value = (float) $value;
                 }
                 $model->{$attribute} = $value;
             }
         });
         self::bootUpdatesCreatedByAndUpdatedAt();
-        initDatabaseConnection();
     }
 
     public function getAllColumns()

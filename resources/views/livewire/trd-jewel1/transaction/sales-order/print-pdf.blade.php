@@ -105,8 +105,8 @@
                                         </td>
                                         <td class="item-price" style="text-align: right; width: 50%;">
                                             @if ($isShowPrice)
-                                            <p style="margin: 0; padding: 0; font-size: 18px;"><b> {{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</b></p>
-                                            <p style="margin: 0; padding: 0; font-size: 12px;">{{ terbilang(currencyToNumeric($OrderDtl->price)) }}</p>
+                                            <p style="margin: 0; padding: 0; font-size: 18px;"><b> {{ rupiah(ceil($OrderDtl->price)) }}</b></p>
+                                            <p style="margin: 0; padding: 0; font-size: 12px;">{{ terbilang($OrderDtl->price) }}</p>
                                             @endif
                                         </td>
                                     </tr>

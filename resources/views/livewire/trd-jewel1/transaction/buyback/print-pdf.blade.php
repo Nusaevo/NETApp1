@@ -62,7 +62,7 @@
                                                             <b>{{ $OrderDtl->Material->jwl_category1 }} </b> : {{ $OrderDtl->Material->jwl_category2 }}<br>
                                                             <b>Deskripsi Bahan : </b>{{ $OrderDtl->name }}<br>
                                                             <b>Deskripsi Bahan : </b>{{ $OrderDtl->matl_descr }}<br>
-                                                            <div class="price"><b>Price : </b>{{ rupiah(ceil(currencyToNumeric($OrderDtl->price))) }}</div><br>
+                                                            <div class="price"><b>Price : </b>{{ rupiah(ceil($OrderDtl->price)) }}</div><br>
                                                             <b>Qty : </b>1
                                                         </td>
                                                     </tr>
@@ -84,8 +84,8 @@
                                                 </ul>
                                             </td>
                                             <td>
-                                                {{ rupiah(currencyToNumeric($OrderDtl->price)) }} <br>
-                                                {{ terbilang(currencyToNumeric($OrderDtl->price)) }}
+                                                {{ rupiah($OrderDtl->price) }} <br>
+                                                {{ terbilang($OrderDtl->price) }}
                                             </td>
                                         </tr>
                                     </table>

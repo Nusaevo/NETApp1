@@ -39,11 +39,11 @@
                      <div class="text-center">
                          @if($material->isOrderedMaterial())
                          <strong>
-                             {{ rupiah(currencyToNumeric($material->jwl_selling_price_idr)) }}</strong>
+                             {{ rupiah($material->jwl_selling_price_idr) }}</strong>
                          @else
                          <strong>
-                             {{ dollar(currencyToNumeric($material->jwl_selling_price_usd)) }} -
-                             {{ rupiah(currencyToNumeric($material->jwl_selling_price_usd) * $currencyRate) }}</strong>
+                             {{ dollar($material->jwl_selling_price_usd) }} -
+                             {{ rupiah($material->jwl_selling_price_usd) * $currencyRate }}</strong>
                          @endif
 
                      </div>
