@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 
 use App\Enums\Constant;
 use App\Models\SysConfig1\ConfigSnum;
+use Illuminate\Support\Facades\Session;
 use function PHPUnit\Framework\throwException;
 use App\Services\TrdJewel1\Master\MasterService;
 
@@ -221,7 +222,7 @@ class Detail extends BaseComponent
         $partnerId = $this->inputs['partner_id'] ?? 0;
 
         $searchTermUpper = strtoupper($this->searchTerm ?? '');
-        $connection = Constant::AppConn();
+        $connection = Session::get('app_code');
         $query = DB::connection($connection)->table('order_dtls')
             ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
             ->join('materials', 'order_dtls.matl_id', '=', 'materials.id')
