@@ -57,12 +57,12 @@ class ReturnHdr extends TrdJewel1BaseModel
 
     public function getTotalQtyAttribute()
     {
-        return $this->ReturnDtl()->sum('qty');
+        return (int) $this->ReturnDtl()->sum('qty');
     }
 
     public function getTotalAmtAttribute()
     {
-        return $this->ReturnDtl()->sum('amt');
+        return (int) $this->ReturnDtl()->sum('amt');
     }
 
     public function getMatlCodesAttribute()

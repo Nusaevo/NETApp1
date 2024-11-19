@@ -43,7 +43,7 @@
                          @else
                          <strong>
                              {{ dollar($material->jwl_selling_price_usd) }} -
-                             {{ rupiah($material->jwl_selling_price_usd) * $currencyRate }}</strong>
+                             {{ rupiah($material->jwl_selling_price_usd * $currencyRate) }}</strong>
                          @endif
 
                      </div>
