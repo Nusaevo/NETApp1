@@ -120,12 +120,12 @@ class OrderHdr extends TrdJewel1BaseModel
     #region Attributes
     public function getTotalQtyAttribute()
     {
-        return $this->OrderDtl()->sum('qty');
+        return (int) $this->OrderDtl()->sum('qty');
     }
 
     public function getTotalAmtAttribute()
     {
-        return $this->OrderDtl()->sum('amt');
+        return (int) $this->OrderDtl()->sum('amt');
     }
 
     public function getMatlCodesAttribute()

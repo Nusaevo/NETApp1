@@ -40,12 +40,12 @@ class CartHdr extends TrdJewel1BaseModel
     #region Attributes
     public function getTotalQtyAttribute()
     {
-        return $this->CartDtl()->sum('qty');
+        return (int) $this->CartDtl()->sum('qty');
     }
 
     public function getTotalAmtAttribute()
     {
-        return $this->CartDtl()->sum('amt');
+        return (int) $this->CartDtl()->sum('amt');
     }
 
     #endregion
