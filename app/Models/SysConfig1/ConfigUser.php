@@ -18,21 +18,26 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     use SoftDeletes;
     use BaseTrait;
 
-
-    public static function boot()
+    protected static function boot()
     {
         parent::boot();
+
         static::retrieved(function ($model) {
             $attributes = $model->getAllColumns();
 
             foreach ($attributes as $attribute) {
                 $value = $model->getAllColumnValues($attribute);
-                if (is_string($value) && preg_match('/^\$[\d,]+\.\d{2}$/', $value)) {
-                    $value = (float) $value;
+                if (is_numeric($value) && strpos($value, '.') !== false) {
+                    $decimalPart = explode('.', $value)[1];
+                    if ((int)$decimalPart === 0) {
+                        $value = (int)$value;
+                    }
                 }
+
                 $model->{$attribute} = $value;
             }
         });
+
         self::bootUpdatesCreatedByAndUpdatedAt();
     }
     /**
