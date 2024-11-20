@@ -26,60 +26,113 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setDefaultSort('created_at', 'desc');
     }
 
+    public function builder(): Builder
+    {
+        return Material::with(['IvtBal'])->select('materials.*');
+    }
+
     public function columns(): array
     {
         return [
-            Column::make($this->trans('code'), 'code')
+            Column::make($this->trans('color_code'), 'specs->color_code')
                 ->format(function ($value, $row) {
-                    return '<a href="' .
-                        route($this->appCode . '.Master.Material.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->id),
-                        ]) .
-                        '">' .
-                        $row->code .
-                        '</a>';
+                    return $row['specs->color_code'] ?? '';
+                })
+                ->sortable(),
+            Column::make($this->trans('color_name'), 'specs->color_name')
+                ->format(function ($value, $row) {
+                    return $row['specs->color_name'] ?? '';
+                })
+                ->sortable(),
+            Column::make($this->trans('photo'), 'id')
+                ->format(function ($value, $row) {
+                    $firstAttachment = $row->Attachment->first();
+                    $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
+                    return $imageUrl
+                        ? '<img src="' . $imageUrl . '" alt="Foto" style="width: 100px; height: 100px; object-fit: cover;">'
+                        : '<span>No Image</span>';
                 })
                 ->html(),
+            Column::make($this->trans('uom'), 'id')
+                ->format(function ($value, $row) {
+                    return $row->MatlUom[0]->matl_uom ?? '';
+                })
+                ->sortable(),
             Column::make($this->trans('selling_price'), 'selling_price_text')
                 ->label(function ($row) {
                     return $row->selling_price_text;
                 })
                 ->sortable(),
-            Column::make('Qty Onhand', 'IvtBal.qty_oh')
-                ->format(function ($value, $row, Column $column) {
+            Column::make($this->trans('stock'), 'IvtBal.qty_oh')
+                ->format(function ($value, $row) {
                     return $row->IvtBal?->qty_oh ?? 0;
                 })
-                ->searchable()
                 ->sortable(),
-            Column::make($this->trans('status'), 'status_code')
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
+            Column::make($this->trans('code'), 'code')
+                ->sortable(),
+            Column::make($this->trans('barcode'), 'id')
+                ->format(function ($value, $row) {
+                    return $row->MatlUom[0]->barcode ?? '';
                 })
-                ->searchable()
                 ->sortable(),
-            Column::make($this->trans('created_date'), 'created_at')->sortable(),
-            Column::make($this->trans('action'), 'id')->format(function ($value, $row, Column $column) {
-                return view('layout.customs.data-table-action', [
-                    'row' => $row,
-                    'custom_actions' => [],
-                    'enable_this_row' => true,
-                    'allow_details' => false,
-                    'allow_edit' => true,
-                    'allow_disable' => false,
-                    'allow_delete' => false,
-                    'permissions' => $this->permissions,
-                ]);
-            }),
+            Column::make($this->trans('remarks'), 'remarks')
+                ->sortable(),
+            Column::make($this->trans('action'), 'id')
+                ->format(function ($value, $row, Column $column) {
+                    return view('layout.customs.data-table-action', [
+                        'row' => $row,
+                        'custom_actions' => [],
+                        'enable_this_row' => true,
+                        'allow_details' => false,
+                        'allow_edit' => true,
+                        'allow_disable' => false,
+                        'allow_delete' => false,
+                        'permissions' => $this->permissions
+                    ]);
+                }),
         ];
     }
 
     public function filters(): array
     {
+        $categories = Material::distinct('category')
+            ->pluck('category', 'category')
+            ->toArray();
+        $brands = Material::distinct('brand')
+            ->pluck('brand', 'brand')
+            ->toArray();
+        $types = Material::distinct('type_code')
+            ->pluck('type_code', 'type_code')
+            ->toArray();
+
         return [
             $this->createTextFilter('Barang', 'name', 'Cari Kode Barang', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
             }),
+            SelectFilter::make($this->trans('kategori'), 'kategori')
+                ->options(['' => 'All'] + $categories) // Add 'All' option manually
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('category', $value);
+                    }
+                })
+                ->setWireLive(),
+            SelectFilter::make($this->trans('brand'), 'brand')
+                ->options(['' => 'All'] + $brands) // Add 'All' option manually
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('brand', $value);
+                    }
+                })
+                ->setWireLive(),
+            SelectFilter::make($this->trans('type'), 'type_code')
+                ->options(['' => 'All'] + $types) // Add 'All' option manually
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('type_code', $value);
+                    }
+                })
+                ->setWireLive(),
             SelectFilter::make('Status', 'Status')
                 ->options([
                     '0' => 'Active',
@@ -114,6 +167,7 @@ class IndexDataTable extends BaseDataTableComponent
                 }),
         ];
     }
+
     public function bulkActions(): array
     {
         return [
@@ -123,16 +177,25 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function downloadTemplate()
     {
-        $templateData = [
-            ['1. Update kolom yang berwarna kuning'],
-            ['2. Kolom warna merah tidak boleh di update (posisi bisa di hide kolom di template)'],
-            ['3. Setelah upload selesai, kolom dengan warna putih akan terisi'],
-            [], [],
-            ['kategori', 'merk', 'jenis', 'No', 'Kode Warna', 'Nama Warna', 'UOM', 'Harga Jual', 'STOK', 'Kode Barang', 'Kode Barcode', 'Keterangan', 'Status'] // Headers
+        $headers = [
+            'Kategori*',    // Required field
+            'Merk*',        // Required field
+            'Jenis*',       // Required field
+            'No',           // Optional field
+            'Kode Warna',   // Optional field
+            'Nama Warna',   // Optional field
+            'UOM*',         // Required field
+            'Harga Jual*',  // Required field
+            'STOK',         // Optional field
+            'Kode Barang',  // Optional field
+            'Kode Barcode', // Optional field
+            'Keterangan'    // Optional field
         ];
 
-        $filename = 'Material_Template_' . now()->format('Y-m-d') . '.xlsx';
+        $filename = Material::FILENAME_PREFIX . now()->format('Y-m-d') . '.xlsx';
 
-        return \Excel::download(new GenericExport(collect($templateData), [], 'materials'), $filename);
+        return \Excel::download(new GenericExport([], $headers, Material::SHEET_NAME), $filename);
     }
+
+
 }

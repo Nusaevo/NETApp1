@@ -85,7 +85,9 @@ class Detail extends BaseComponent
     public function onValidateAndSave()
     {
         $this->object->fillAndSanitize($this->inputs);
-        $this->object->setConnection($this->application->code);
+        if ($this->isEditOrView()) {
+            $this->object->setConnection($this->application->code);
+        }
         $this->object->save();
     }
 
@@ -100,7 +102,12 @@ class Detail extends BaseComponent
     public function applicationChanged()
     {
         // Find the application by its ID
-        $this->application = ConfigAppl::find($this->selectedApplication);
+        $this->application = ConfigAppl::find($applicationId);
+        $this->selectedApplication = $applicationId;
+
+        if ($this->application) {
+            $this->object->setConnection($this->application->code);
+        }
     }
     #endregion
 }

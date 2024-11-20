@@ -14,7 +14,6 @@ use Exception;
 class UserDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigUser::class;
-    public int $perPage = 50;
     public $selectedRows = [];
     public $groupId;
 

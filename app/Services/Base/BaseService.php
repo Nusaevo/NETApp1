@@ -12,9 +12,16 @@ class BaseService
 
     public function __construct($mainConnectionName = null, $configConnectionName = null)
     {
-        $appCodeConnection = Session::get('databasee', 'pgsql');
-        $this->setMainConnection($mainConnectionName ?? $appCodeConnection);
-        $this->setConfigConnection($configConnectionName ?? Constant::ConfigConn());
+        $appCodeConnection = Session::get('app_code');
+
+        // Check session value and set appropriate connection
+        if (Session::get('app_code') === 'SysConfig1') {
+            $this->setMainConnection(Constant::ConfigConn());
+        } else {
+            $this->setMainConnection($appCodeConnection);
+        }
+
+        $this->setConfigConnection(Constant::ConfigConn());
     }
 
     public function setMainConnection($connectionName)

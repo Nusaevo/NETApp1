@@ -165,6 +165,14 @@ abstract class BaseDataTableComponent extends DataTableComponent
             ->filter($filterCallback)
             ->setWireLive();
     }
+
+    protected function notify($type, $message)
+    {
+        $this->dispatch('notify-swal', [
+            'type' => $type,
+            'message' => $message,
+        ]);
+    }
     // public function bulkActions(): array
     // {
     //     return [

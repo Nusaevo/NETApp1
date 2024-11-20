@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\DB;
 class GroupDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigGroup::class;
-    public int $perPage = 50;
     public $userID;
 
     public function mount($userID = null): void

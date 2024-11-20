@@ -9,7 +9,6 @@ use App\Models\SysConfig1\ConfigMenu;
 class RightDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigMenu::class;
-    public int $perPage = 50;
     public $selectedRows = [];
     public $enableActionCheckboxes = false;
     public $groupId;

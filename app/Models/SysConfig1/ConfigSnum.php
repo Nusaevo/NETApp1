@@ -14,6 +14,8 @@ class ConfigSnum extends BaseModel
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
+        $sessionAppCode = Session::get('app_code');
+        $this->connection = $sessionAppCode;
     }
 
     protected $fillable = [
