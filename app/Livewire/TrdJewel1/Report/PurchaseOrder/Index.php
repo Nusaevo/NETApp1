@@ -21,7 +21,7 @@ class Index extends BaseComponent
     protected function onPreRender()
     {
         $this->masterService = new MasterService();
-        $this->materialCategories1 = $this->masterService->getMatlCategory1Data($this->appCode);
+        $this->materialCategories1 = $this->masterService->getMatlCategory1Data();
         $this->resetFilters();
     }
 
