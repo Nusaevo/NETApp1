@@ -453,8 +453,7 @@ class MaterialComponent extends BaseComponent
     {
         $codeLetter = preg_replace('/\d/', '', $code);
         $configCode = 'MMATL_' . $codeLetter . '_LASTID';
-        $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
-            ->where('code', '=', $configCode)
+        $configSnum = ConfigSnum::where('code', '=', $configCode)
             ->first();
 
         if ($configSnum != null) {
@@ -627,14 +626,12 @@ class MaterialComponent extends BaseComponent
         $code = "";
         $configSnum = null;
         if (!isNullOrEmptyNumber($this->materials['partner_id'])) {
-            $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
-                ->where('code', '=', 'MMATL_SO_LASTID')
+            $configSnum = ConfigSnum::where('code', '=', 'MMATL_SO_LASTID')
                 ->first();
             $code = "SO";
         } else {
             if (!isNullOrEmptyString($this->materials['jwl_category1'])) {
-                $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
-                    ->where('code', '=', 'MMATL_' . $this->materials['jwl_category1'] . '_LASTID')
+                $configSnum = ConfigSnum::where('code', '=', 'MMATL_' . $this->materials['jwl_category1'] . '_LASTID')
                     ->first();
                 $code = $this->materials['jwl_category1'];
             } else {

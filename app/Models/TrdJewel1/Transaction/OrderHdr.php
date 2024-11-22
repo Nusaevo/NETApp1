@@ -278,8 +278,7 @@ class OrderHdr extends TrdJewel1BaseModel
     private function generateTransactionId($appCode, $code)
     {
         if ($this->tr_id === null || $this->tr_id == 0) {
-            $configSnum = ConfigSnum::where('app_code', '=', $appCode)
-                ->where('code', '=', $code)
+            $configSnum = ConfigSnum::where('code', '=', $code)
                 ->first();
             if ($configSnum != null) {
                 $stepCnt = $configSnum->step_cnt;
