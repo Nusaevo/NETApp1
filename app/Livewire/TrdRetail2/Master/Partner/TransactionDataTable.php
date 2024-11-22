@@ -19,7 +19,9 @@ class TransactionDataTable extends Component
 
     public function mount($partnerID = null): void
     {
+        $this->bypassPermissions = true;
         $this->partnerID = $partnerID;
+        parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
     public function getData()

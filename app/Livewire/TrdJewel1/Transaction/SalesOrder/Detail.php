@@ -91,10 +91,10 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
-        $this->partners = $this->masterService->getCustomers($this->appCode);
-        $this->payments = $this->masterService->getPaymentTerm($this->appCode);
-        $this->printSettings = $this->masterService->getPrintSettings($this->appCode);
-        $this->printRemarks = $this->masterService->getPrintRemarks($this->appCode);
+        $this->partners = $this->masterService->getCustomers();
+        $this->payments = $this->masterService->getPaymentTerm();
+        $this->printSettings = $this->masterService->getPrintSettings();
+        $this->printRemarks = $this->masterService->getPrintRemarks();
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
