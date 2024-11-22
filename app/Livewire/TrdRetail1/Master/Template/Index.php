@@ -8,6 +8,9 @@ use App\Models\TrdRetail1\Master\Material;
 use App\Jobs\ProcessExcelUploadJob;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
+use Illuminate\Support\Str;
+use Livewire\Livewire;
+use App\Enums\Status;
 
 class Index extends BaseComponent
 {
@@ -15,14 +18,16 @@ class Index extends BaseComponent
 
     public $file;
     public $auditId;
+    public $isUploading = false;
 
     // Public mapper for sheet names to model classes
     public $modelMap = [
-        'materials' => Material::class,
+        'Material Template' => Material::class,
         // Add other mappings as needed
         // 'Product' => Product::class,
         // 'Inventory' => Inventory::class,
     ];
+    protected $listeners = ['uploadExcel' => 'handleUploadExcel'];
 
     protected function onPreRender()
     {
@@ -33,46 +38,61 @@ class Index extends BaseComponent
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
-
-    public function uploadExcel()
+    public function handleUploadExcel($fileData, $fileName)
     {
-        if (!$this->file) {
-            $this->notify('error', 'No file uploaded. Please select a file to upload.');
-            return;
-        }
-
         try {
-            // Load the spreadsheet
-            $spreadsheet = IOFactory::load($this->file->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
+            // Decode the base64 file data
+            $fileContent = base64_decode(preg_replace('#^data:application/vnd\..+;base64,#i', '', $fileData));
 
-            // Get the sheet name
+            // Save file temporarily
+            $tempPath = storage_path('app/temp_' . uniqid() . '.xlsx');
+            file_put_contents($tempPath, $fileContent);
+
+            // Load spreadsheet
+            $spreadsheet = IOFactory::load($tempPath);
+            $sheet = $spreadsheet->getActiveSheet();
             $sheetName = $sheet->getTitle();
 
-            // Check if the sheet name has a corresponding model in the mapper
+            // Validate sheet name
             if (!array_key_exists($sheetName, $this->modelMap)) {
-                $this->notify('error', 'Invalid sheet name. Please ensure the sheet name is correct.');
+                $availableSheets = implode(', ', array_keys($this->modelMap));
+                $this->dispatchBrowserEvent('uploadFailed', [
+                    'message' => "Nama sheet template '{$sheetName}' tidak ditemukan. Harap gunakan salah satu dari: {$availableSheets}."
+                ]);
                 return;
             }
 
-            // Get the model class based on the sheet name from the mapper
+            // Map sheet name to the model class
             $modelClass = $this->modelMap[$sheetName];
 
-            // Convert sheet data to an array, skipping the first row (header)
-            $dataTable = array_slice($sheet->toArray(), 1);
-
-            // Create a new audit record
+            // Log audit
             $audit = ConfigAudit::create([
                 'log_time' => now(),
                 'action_code' => 'UPLOAD',
                 'audit_trail' => "Starting upload process for sheet: $sheetName",
                 'table_name' => $sheetName,
+                'status_code' => Status::IN_PROGRESS,
             ]);
 
-            // Dispatch the job with the model and audit class
-            ProcessExcelUploadJob::dispatch($sheetName, $dataTable, $audit->id, $modelClass, ConfigAudit::class);
-        } catch (Exception $e) {
+            // Dispatch renderAuditTable for frontend update
+            $this->dispatch('renderAuditTable');
+
+            // Dispatch processing job
+            ProcessExcelUploadJob::dispatch($sheetName, $sheet->toArray(), $audit->id, $modelClass, ConfigAudit::class);
+
+        } catch (\Exception $e) {
+            $this->notify('error', $e->getMessage());
         }
-        $this->dispatch('renderAuditTable');
+    }
+
+    public function pollRefresh()
+    {
+        // Check if there are any incomplete jobs in the database
+        $incompleteJobs = ConfigAudit::where('progress', '<', 100)
+            ->where('action_code', 'UPLOAD')
+            ->exists();
+        if ($incompleteJobs) {
+            $this->dispatch('renderAuditTable');
+        }
     }
 }

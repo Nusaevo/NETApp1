@@ -69,35 +69,45 @@
                        @if(isset($required) && $required === 'true') required @endif
                        readonly="readonly" x-ref="inputField"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
-            @elseif(isset($type) && $type === 'number')
-                <input x-data="{
-                        initInputMask() {
-                            let input = this.$refs.inputField;
-                            if (input) {
-                                Inputmask({
-                                    alias: 'numeric',
-                                    groupSeparator: '.',
-                                    radixPoint: ',',
-                                    autoGroup: true,
-                                    digitsOptional: true,
-                                    rightAlign: false,
-                                    clearIncomplete: true,
-                                    allowMinus: false,
-                                    placeholder: '0'
-                                }).mask(input);
-                                input.addEventListener('blur', () => {
-                                    if (input.value.trim() === '') {
-                                        input.value = '0';
-                                    }
-                                    $wire.set('{{ $model }}', input.value);
-                                });
-                            }
-                        }
-                    }" x-init="initInputMask()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control number-mask @error($model) is-invalid @enderror"
-                       @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
-                       @if(isset($required) && $required === 'true') required @endif
-                       placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
-                       @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif x-ref="inputField">
+                       @elseif(isset($type) && $type === 'number')
+                       <input x-data="{
+                               initInputMask() {
+                                   let input = this.$refs.inputField;
+                                   if (input) {
+                                       Inputmask({
+                                           alias: 'numeric',
+                                           groupSeparator: '.',  // Pemisah ribuan
+                                           radixPoint: ',',      // Pemisah desimal
+                                           autoGroup: true,
+                                           digits: 2,            // Jumlah desimal
+                                           rightAlign: false,
+                                           clearIncomplete: true,
+                                           allowMinus: false,
+                                           placeholder: '0'
+                                       }).mask(input);
+
+                                       // Sinkronkan nilai dengan Livewire setelah format
+                                       input.addEventListener('blur', () => {
+                                           if (input.value.trim() === '') {
+                                               input.value = '0';
+                                           }
+                                           $wire.set('{{ $model }}', input.inputmask.unmaskedvalue().replace(',', '.'));
+                                       });
+                                   }
+                               }
+                           }"
+                           x-init="initInputMask()"
+                           wire:model="{{ $model }}"
+                           id="{{ $id }}"
+                           type="text"
+                           class="form-control number-mask @error($model) is-invalid @enderror"
+                           @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
+                           @if(isset($required) && $required === 'true') required @endif
+                           placeholder="{{ isset($label) ? $label : '' }}"
+                           autocomplete="off"
+                           @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
+                           x-ref="inputField">
+
             @elseif(isset($type) && $type === 'image')
                 <input wire:model="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" accept="image/*"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif

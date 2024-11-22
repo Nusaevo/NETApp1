@@ -9,17 +9,7 @@ class ConfigAudit extends TrdRetail1BaseModel
     protected $table = 'config_audits';
     public $timestamps = false;
 
-    protected $fillable = [
-        'key_code',
-        'log_time',
-        'action_code',
-        'progress',
-        'audit_trail',
-        'table_name',
-        'status_code',
-        'created_at',
-        'created_by'
-    ];
+    protected $fillable = ['key_code', 'log_time', 'action_code', 'progress', 'audit_trail', 'table_name', 'status_code', 'created_at', 'created_by'];
 
     protected static function boot()
     {
@@ -40,20 +30,19 @@ class ConfigAudit extends TrdRetail1BaseModel
     }
 
     /**
-     * Update audit trail with progress and status message.
+     * Update audit trail with progress, status code, and message.
      *
      * @param int $progress The progress percentage.
      * @param string $message The status or error message to append to the audit trail.
+     * @param string|null $statusCode Optional status code ('S' = Success, 'E' = Error, 'P' = Processing).
+     *                                 Defaults to null and infers from progress.
      */
-    public function updateAuditTrail($progress, $message)
+    public function updateAuditTrail($progress, $message, $statusCode = null)
     {
-        // Determine status code based on progress
-        $statusCode = $progress === 100 ? 'S' : ($progress === 0 ? 'E' : 'P'); // 'S' = Success, 'E' = Error, 'P' = Processing
-
         $this->update([
-            'audit_trail' => $message,     // Only the message is stored here
-            'status_code' => $statusCode,
-            'progress' => $progress,       // Update the progress column directly
+            'audit_trail' => $message, // Update the message
+            'status_code' => $statusCode, // Explicit status code
+            'progress' => $progress, // Update progress
         ]);
     }
 
@@ -63,7 +52,7 @@ class ConfigAudit extends TrdRetail1BaseModel
     public function resetForReupload()
     {
         $this->update([
-            'audit_trail' => "Re-upload attempt started at " . now(),
+            'audit_trail' => 'Re-upload attempt started at ' . now(),
             'status_code' => 'P',
             'progress' => 0,
         ]);

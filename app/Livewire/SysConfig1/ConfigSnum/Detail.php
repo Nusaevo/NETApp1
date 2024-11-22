@@ -81,7 +81,9 @@ class Detail extends BaseComponent
         }
 
         $this->object->fillAndSanitize($this->inputs);
-        $this->object->setConnection($this->application->code);
+        if ($this->isEditOrView()) {
+            $this->object->setConnection($this->application->code);
+        }
         $this->object->save();
     }
     #endregion

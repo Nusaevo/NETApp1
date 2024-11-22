@@ -1,47 +1,57 @@
 <div>
     <x-ui-page-card title="Upload Materials via Excel">
-        <form enctype="multipart/form-data" class="upload-form">
-            <div class="form-group">
-                <input type="file" wire:model="file" class="form-control" accept=".xlsx, .xls">
-                @error('file') <span class="error">{{ $message }}</span> @enderror
-            </div>
+        <!-- File Upload Button -->
+        <div class="form-group position-relative">
+            <!-- Button with Loading Indicator -->
+            <button id="btnUploadExcel" class="btn btn-secondary" wire:loading.attr="disabled" wire:target="uploadExcel" onclick="triggerFileInput()">
+                <span wire:loading.remove>
+                    <i class="bi bi-upload"></i> Upload Excel
+                </span>
+                <span wire:loading>
+                    <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+                    Loading...
+                </span>
+            </button>
 
-            <div class="d-flex justify-content-end mt-3">
-                <!-- Disable the button and show loading until file upload completes -->
-                <div class="d-flex justify-content-end mt-3">
-                    <!-- Change button text to 'Loading...' during both file upload and processing stages -->
-                    <button type="button" class="btn btn-primary" wire:click="uploadExcel" wire:target="file,uploadExcel" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="file,uploadExcel">Upload</span>
-                        <span wire:loading wire:target="file,uploadExcel">Loading...</span>
-                    </button>
-                </div>
-            </div>
-        </form>
+            <!-- Hidden File Input -->
+            <input type="file" id="excelInput" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event)">
+        </div>
 
+        <!-- Table Section -->
         <div class="table-container mt-4">
-            @livewire($currentRoute . '.index-data-table')
+            <div wire:poll.5s="pollRefresh">
+                @livewire('trd-retail1.master.template.index-data-table')
+            </div>
         </div>
     </x-ui-page-card>
 
-    <style>
-        /* Style for the form container */
-        .upload-form {
-            padding: 20px; /* Add padding around the form */
-            border-radius: 5px;
-            background-color: #f8f9fa; /* Light background color */
+    <!-- JavaScript -->
+    @push('scripts')
+    <script>
+        function triggerFileInput() {
+            const input = document.getElementById('excelInput');
+            input.click();
         }
 
-        /* Style for the error message */
-        .error {
-            color: #e3342f; /* Red color for error */
-            font-size: 14px;
-            margin-top: 5px;
-            display: block;
-        }
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (!['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'].includes(file.type)) {
+                    alert('Invalid file type. Please upload an Excel file.');
+                    return;
+                }
 
-        /* Optional: additional padding for the table container */
-        .table-container {
-            padding-top: 20px;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    // Dispatch file content to Livewire
+                    Livewire.dispatch('uploadExcel', {
+                        fileData: e.target.result,
+                        fileName: file.name
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
         }
-    </style>
+    </script>
+    @endpush
 </div>

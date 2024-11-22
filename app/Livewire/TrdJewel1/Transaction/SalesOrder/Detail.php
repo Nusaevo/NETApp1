@@ -147,7 +147,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key] =  populateArrayFromModel($detail);
                 $this->input_details[$key]['name'] = $detail->Material->name;
                 $this->input_details[$key]['id'] = $detail->id;
-                $this->input_details[$key]['price'] = ceil($detail->price);
+                $this->input_details[$key]['price'] = $detail->price;
                 $this->input_details[$key]['sub_total'] = rupiah(($detail->amt));
                 $this->input_details[$key]['barcode'] = $detail->Material->MatlUom[0]->barcode;
                 $this->input_details[$key]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;

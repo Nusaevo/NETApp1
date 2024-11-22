@@ -41,11 +41,19 @@
             @endif
             @if($custom_actions && isset($custom_actions))
             @foreach ($custom_actions as $action)
-            <li>
-                <a class="dropdown-item btn btn-sm" href="{{ $action['route'] }}" style="text-decoration: none;">
-                    <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
-                </a>
-            </li>
+                @if(!isset($action['condition']) || $action['condition'])
+                    <li>
+                        @if(isset($action['onClick']))
+                            <a class="dropdown-item btn btn-sm" href="#" wire:click="{{ $action['onClick'] }}">
+                                <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
+                            </a>
+                        @else
+                            <a class="dropdown-item btn btn-sm" href="{{ $action['route'] }}" style="text-decoration: none;">
+                                <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
+                            </a>
+                        @endif
+                    </li>
+                @endif
             @endforeach
             @endif
         </ul>
@@ -73,9 +81,17 @@
         @endif
         @if($custom_actions && isset($custom_actions))
         @foreach ($custom_actions as $action)
-        <button class="btn btn-info btn-sm" href="{{ $action['route'] }}">
-            <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
-        </button>
+            @if(!isset($action['condition']) || $action['condition'])
+                @if(isset($action['onClick']))
+                    <button class="btn btn-info btn-sm" wire:click="{{ $action['onClick'] }}">
+                        <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
+                    </button>
+                @else
+                    <button class="btn btn-info btn-sm" onclick="window.location='{{ $action['route'] }}'">
+                        <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
+                    </button>
+                @endif
+            @endif
         @endforeach
         @endif
     </div>

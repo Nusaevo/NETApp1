@@ -21,16 +21,25 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
-        $this->showCreateButton = false;
     }
 
     protected $listeners = ['renderAuditTable' => 'render'];
 
+    public function configure(): void
+    {
+        parent::configure();
+        $this->setConfigurableAreas([
+            'toolbar-left-start' => null,
+        ]);
+    }
+
     public function builder(): Builder
     {
         return ConfigAudit::query()
+            ->where('action_code', 'UPLOAD')
             ->select();
     }
+
 
     public function columns(): array
     {
@@ -62,31 +71,60 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
-                    $color = $value === Status::ERROR ? 'red' : 'black'; // Red text for error, black otherwise
+                    $color = $value === Status::ERROR ? 'red' : 'black';
                     return '<span style="color: ' . $color . ';">' . Status::getStatusString($value) . '</span>';
                 })
                 ->html(),
             Column::make("Created Date", "created_at")
                 ->sortable(),
             Column::make("Actions", "id")
-                ->format(function ($value, $row) {
-                    $buttons = '<div class="btn-group">';
-
-                    // Download Result Button
-                    $buttons .= '<x-ui-button clickEvent="downloadResult(' . $row->id . ')" button-name="Download Result" loading="true" cssClass="btn-primary" iconPath="download.svg" />';
-
-                    // Conditionally show Reupload button if status is error
-                    if ($row->status_code === Status::ERROR) {
-                        $buttons .= '<x-ui-button clickEvent="reupload(' . $row->id . ')" button-name="Reupload" loading="true" cssClass="btn-secondary" iconPath="reupload.svg" />';
-                    }
-
-                    $buttons .= '</div>';
-                    return $buttons;
-                })
-                ->html(),
+            ->format(function ($value, $row, Column $column) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                   'custom_actions' => [
+                        [
+                            'label' => 'Download Result',
+                            'onClick' => "downloadResult($row->id)",
+                            'icon' => 'bi bi-download'
+                        ],
+                        // [
+                        //     'label' => 'Reupload',
+                        //     'onClick' => "reupload($row->id)",
+                        //     'icon' => 'bi bi-arrow-repeat',
+                        //     'condition' => $row->status_code === Status::ERROR
+                        // ],
+                    ],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => false,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
 
+    public function downloadResult($id)
+    {
+        $audit = ConfigAudit::find($id);
+
+        // Dapatkan attachment terkait
+        $attachment = $audit->Attachment;
+        if (!$attachment[0] || !$attachment[0]->getUrl()) {
+            $this->notify('error', 'Attachment not found for this record.');
+            return;
+        }
+
+
+        return redirect($attachment[0]->getUrl());
+    }
+
+
+    public function reupload($id)
+    {
+
+    }
 
     public function filters(): array
     {

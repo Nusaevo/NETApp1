@@ -25,7 +25,6 @@ class MasterService extends BaseService
             ->orderBy('seq')
             ->get();
     }
-
     public function getCurrencyData($appCode)
     {
         $data = $this->getConfigData('MCURRENCY_CODE', $appCode);

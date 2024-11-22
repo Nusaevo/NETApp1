@@ -38,7 +38,7 @@
 
                                     <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                         <x-slot name="body">
-                                            @livewire('trd-jewel1.master.gallery.storage-component', ['isDialogBoxComponent' => true])
+                                            @livewire($appCode.'.master.gallery.storage-component', ['isDialogBoxComponent' => true])
                                         </x-slot>
                                     </x-ui-dialog-box>
                                 </div>
@@ -48,61 +48,53 @@
                     <x-ui-padding>
 
                         <div class="row">
-                            <x-ui-text-field label="{{ $this->trans('category') }}" model="materials.category"
-                                type="text" :action="$actionValue" required="true" enabled="true" />
+                            <x-ui-dropdown-select label="{{ $this->trans('category') }}" clickEvent="" model="materials.category"
+                                :options="$materialCategories" :enabled="$panelEnabled" required="true" :action="$actionValue" onChanged="onCategoryChanged" />
                             <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code" type="code"
                                 :action="$actionValue" required="true" :enabled="$panelEnabled" clickEvent="getMatlCode"
                                 buttonName="Get Code" />
+                            <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
+                                    type="text" :action="$actionValue" enabled="true" />
                         </div>
                         <div class="row">
                             <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
                                 :action="$actionValue" required="true" enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('barcode') }}" model="materials.brand"
-                                type="text" :action="$actionValue" required="true" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
+                                    type="text" :action="$actionValue" required="true" enabled="true" />
                         </div>
                         <div class="row">
-                            <div class="col-sm-6">
-                                <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
-                                    type="text" :action="$actionValue" required="true" enabled="true" />
-                            </div>
+                            <x-ui-text-field label="{{ $this->trans('color_code') }}" model="materials.color_code" type="text"
+                                :action="$actionValue" required="false" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('color_name') }}" model="materials.color_name"
+                                    type="text" :action="$actionValue" required="false" enabled="true" />
                         </div>
                         <div class="row">
                             <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name" type="text"
                                 :action="$actionValue" required="true" enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.buying_price"
-                                type="number" :action="$actionValue" required="true" />
+                        </div>
+                        <div class="row">
+                                <x-ui-text-field label="{{ $this->trans('remarks') }} " model="materials.remarks"
+                                    type="textarea" :action="$customActionValue" />
                         </div>
 
                         <div class="row">
-                            <x-ui-text-field label="{{ $this->trans('specs') }}" model="materials.specs" type="text"
-                                :action="$actionValue" required="true" enabled="true" />
+                                <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.selling_price"
+                                    type="number" :action="$actionValue" required="false" enabled="true" />
+                                <x-ui-dropdown-select label="{{ $this->trans('uom') }}" clickEvent="" model="matl_uoms.matl_uom"
+                                        :options="$materialUOMs" :enabled="$panelEnabled" required="true" :action="$actionValue"/>
+                        </div>
+
+                        <div class="row">
+                            <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.buying_price"
+                                type="number" :action="$actionValue" required="false" enabled="true" />
                             <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs" type="number"
                                 :action="$actionValue" required="true" />
-                        </div>
-                        <div class="row">
-                            <x-ui-text-field label="{{ $this->trans('dimension') }}" model="materials.dimension"
-                                type="text" :action="$actionValue" required="true" enabled="true" />
                             <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock" type="text"
-                                :action="$actionValue" required="true" enabled="true" />
-                        </div>
-
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <x-ui-text-field label="{{ $this->trans('uom') }}" model="materials.uom"
-                                    type="text" :action="$actionValue" required="true" enabled="true" />
-                            </div>
+                                :action="$actionValue" required="true" enabled="false" />
                         </div>
                         <div class="row">
-                            <div class="col-sm-6">
-                                <x-ui-text-field label="{{ $this->trans('selling_price') }}" model="materials.selling_price"
-                                    type="number" :action="$actionValue" required="true" enabled="true" />
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <x-ui-text-field label="{{ $this->trans('remark') }} " model="materials.remark"
-                                    type="textarea" :action="$customActionValue" />
-                            </div>
+                            <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag" type="text"
+                                :action="$actionValue" required="false" enabled="false"/>
                         </div>
                     </x-ui-padding>
                 </x-ui-card>
@@ -124,8 +116,8 @@
                 @include('layout.customs.buttons.disable')
             @endif
 
-            <x-ui-button clickEvent="printBarcode" cssClass="btn btn-primary" button-name="Print Label"
-                :action="$customActionValue" />
+            {{-- <x-ui-button clickEvent="printBarcode" cssClass="btn btn-primary" button-name="Print Label"
+                :action="$customActionValue" /> --}}
             <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$customActionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
 

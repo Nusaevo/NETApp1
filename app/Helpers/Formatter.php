@@ -31,6 +31,33 @@ if (!function_exists('dollar')) {
     }
 }
 
+if (!function_exists('convertFormattedNumber')) {
+    /**
+     * Convert a formatted number (e.g., "30,000" or "30.000,50") to a numeric value.
+     *
+     * @param string $formattedNumber The number in string format with commas/dots.
+     * @return float|int The numeric representation of the formatted number.
+     */
+    function convertFormattedNumber($formattedNumber)
+    {
+        if (is_null($formattedNumber) || $formattedNumber === '') {
+            return 0; // Default to 0 if input is empty or null
+        }
+
+        // Remove thousand separators (comma or dot based on locale)
+        $numberWithoutSeparators = str_replace(['.', ','], '', $formattedNumber);
+
+        // Replace the final dot with a decimal point for float conversion
+        if (strpos($formattedNumber, ',') !== false && strpos($formattedNumber, '.') !== false) {
+            $numberWithoutSeparators = str_replace(',', '.', $formattedNumber);
+        }
+
+        // Return the numeric value
+        return is_numeric($numberWithoutSeparators) ? (float) $numberWithoutSeparators : 0;
+    }
+}
+
+
 if (!function_exists('qty')) {
     function qty($qty = 0, $behind_comma = 0)
     {
@@ -111,6 +138,25 @@ if (!function_exists('isFormattedNumeric')) {
         return is_numeric($testValue);
     }
 }
+
+if (!function_exists('isValidNumeric')) {
+    /**
+     * Validate if a value is numeric after normalizing separators (e.g., comma to dot).
+     *
+     * @param mixed $value The value to validate.
+     * @return bool True if the value is numeric, false otherwise.
+     */
+    function isValidNumeric($value)
+    {
+        // Replace comma with dot (e.g., "12,34" becomes "12.34")
+        $normalizedValue = str_replace(',', '.', $value);
+
+        // Check if the normalized value is numeric
+        return is_numeric($normalizedValue);
+    }
+}
+
+
 
 if (!function_exists('isDateAttribute')) {
     if (!function_exists('isDateAttribute')) {
