@@ -107,7 +107,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         return [
             $this->createTextFilter('Barang', 'name', 'Cari Kode Barang', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+                $builder->where(DB::raw('UPPER(code)'), '=', strtoupper($value));
             }),
             SelectFilter::make($this->trans('kategori'), 'kategori')
                 ->options(['' => 'All'] + $categories) // Add 'All' option manually

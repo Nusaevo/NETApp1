@@ -91,7 +91,7 @@ class Detail extends BaseComponent
             'input_details.*.price' => $this->trans('price'),
         ];
         $this->masterService = new MasterService();
-        $this->partners = $this->masterService->getCustomers($this->appCode);
+        $this->partners = $this->masterService->getCustomers();
 
         if($this->isEditOrView())
         {

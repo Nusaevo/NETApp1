@@ -54,7 +54,7 @@ class Detail extends BaseComponent
 
         $this->masterService = new MasterService();
 
-        $this->partnerTypes = $this->masterService->getPartnerTypes($this->appCode);
+        $this->partnerTypes = $this->masterService->getPartnerTypes();
 
         if($this->isEditOrView())
         {
