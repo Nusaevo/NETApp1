@@ -51,7 +51,7 @@ class Detail extends BaseComponent
     {
         $this->reset('inputs');
         $this->masterService = new MasterService();
-        $this->currencyData = $this->masterService->getCurrencyData($this->appCode);
+        $this->currencyData = $this->masterService->getCurrencyData();
         $this->currencies = $this->currencyData['currencies'];
         $defaultCurrency = $this->currencyData['defaultCurrency'];
         $this->inputs['curr_id'] = $defaultCurrency['value'];
