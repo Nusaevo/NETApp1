@@ -38,31 +38,32 @@ class Index extends BaseComponent
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
-    public function handleUploadExcel($fileData, $fileName)
+
+
+    public function uploadExcel()
     {
+        // Validasi file
+        $this->validate([
+            'file' => 'required|mimes:xlsx,xls|max:10240',
+        ]);
+
         try {
-            // Decode the base64 file data
-            $fileContent = base64_decode(preg_replace('#^data:application/vnd\..+;base64,#i', '', $fileData));
+            // Simpan file sementara
+            $filePath = $this->file->store('temp');
 
-            // Save file temporarily
-            $tempPath = storage_path('app/temp_' . uniqid() . '.xlsx');
-            file_put_contents($tempPath, $fileContent);
-
-            // Load spreadsheet
-            $spreadsheet = IOFactory::load($tempPath);
+            // Load file Excel menggunakan PhpSpreadsheet
+            $spreadsheet = IOFactory::load(storage_path('app/' . $filePath));
             $sheet = $spreadsheet->getActiveSheet();
             $sheetName = $sheet->getTitle();
 
             // Validate sheet name
             if (!array_key_exists($sheetName, $this->modelMap)) {
                 $availableSheets = implode(', ', array_keys($this->modelMap));
-                $this->dispatchBrowserEvent('uploadFailed', [
-                    'message' => "Nama sheet template '{$sheetName}' tidak ditemukan. Harap gunakan salah satu dari: {$availableSheets}."
-                ]);
+                $this->notify('error', "Sheet '{$sheetName}' not found. Use one of the following: {$availableSheets}.");
                 return;
             }
 
-            // Map sheet name to the model class
+            // Map sheet name to model class
             $modelClass = $this->modelMap[$sheetName];
 
             // Log audit
@@ -74,15 +75,16 @@ class Index extends BaseComponent
                 'status_code' => Status::IN_PROGRESS,
             ]);
 
-            // Dispatch renderAuditTable for frontend update
-            $this->dispatch('renderAuditTable');
-
-            // Dispatch processing job
+            // Dispatch job for processing
             ProcessExcelUploadJob::dispatch($sheetName, $sheet->toArray(), $audit->id, $modelClass, ConfigAudit::class);
 
+            session()->flash('message', 'File uploaded successfully.');
+
         } catch (\Exception $e) {
-            $this->notify('error', $e->getMessage());
+            session()->flash('error', 'Failed to process the Excel file: ' . $e->getMessage());
         }
+        $this->file = null;
+        $this->dispatch('renderAuditTable');
     }
 
     public function pollRefresh()

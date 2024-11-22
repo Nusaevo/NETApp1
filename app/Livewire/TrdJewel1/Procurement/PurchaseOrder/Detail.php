@@ -77,7 +77,7 @@ class Detail extends BaseComponent
 
         $this->masterService = new MasterService();
         $this->suppliers = $this->masterService->getSuppliers();
-        $this->warehouses = $this->masterService->getWarehouses($this->appCode);
+        $this->warehouses = $this->masterService->getWarehouses();
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);

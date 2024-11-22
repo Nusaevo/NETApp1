@@ -33,13 +33,13 @@ class MasterService extends BaseService
             ->orderBy('seq')
             ->get();
     }
-    public function isValidMatlCategory($str2)
+    public function isValidMatlCategory($str1)
     {
         $result = $this->mainConnection
             ->table('config_consts')
             ->select('str1')
             ->where('const_group', 'MMATL_CATEGL1')
-            ->where('str2', $str2)
+            ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
         return $result ? $result->str1 : null;

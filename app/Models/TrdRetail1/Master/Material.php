@@ -136,7 +136,7 @@ class Material extends TrdRetail1BaseModel
                 $message .= "Harga jual harus berupa angka positif. ";
             }
 
-            if (!isValidNumeric($stock) || $stock < 0) {
+            if ($stock !== null && (!isValidNumeric($stock) || $stock < 0)) {
                 $status = "Error";
                 $message .= "Stok harus berupa angka dan minimal 0. ";
             }
@@ -248,11 +248,13 @@ class Material extends TrdRetail1BaseModel
                 }
 
                 // Handle stock update
-                $ivtBal = $material->IvtBal()->first();
-                if ($ivtBal) {
-                    $ivtBal->update(['qty_oh' => $stock]);
-                } else {
-                    $material->IvtBal()->create(['qty_oh' => $stock]);
+                if ($stock !== null && is_numeric($stock)) {
+                    $ivtBal = $material->IvtBal()->first();
+                    if ($ivtBal) {
+                        $ivtBal->update(['qty_oh' => $stock]);
+                    } else {
+                        $material->IvtBal()->create(['qty_oh' => $stock]);
+                    }
                 }
 
                 // Handle UOM and Barcode

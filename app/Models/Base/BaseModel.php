@@ -81,8 +81,7 @@ class BaseModel extends Model
     {
         if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'tr_id')) {
             $app_code = Session::get('app_code');
-            $configSnum = ConfigSnum::where('app_code', '=', $app_code)
-                ->where('code', '=', $code)
+            $configSnum = ConfigSnum::where('code', '=', $code)
                 ->first();
             if ($configSnum != null) {
                 $stepCnt = $configSnum->step_cnt;
