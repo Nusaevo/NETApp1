@@ -22,11 +22,16 @@ class Index extends BaseComponent
 
     // Public mapper for sheet names to model classes
     public $modelMap = [
-        'Material Template' => Material::class,
-        // Add other mappings as needed
-        // 'Product' => Product::class,
-        // 'Inventory' => Inventory::class,
+        'Material_Create_Template' => [
+            'model' => Material::class,
+            'param' => 'Create',
+        ],
+        'Material_Update_Template' => [
+            'model' => Material::class,
+            'param' => 'Update',
+        ],
     ];
+
     protected $listeners = ['uploadExcel' => 'handleUploadExcel'];
 
     protected function onPreRender()
@@ -39,32 +44,31 @@ class Index extends BaseComponent
         return view($renderRoute);
     }
 
-
-    public function uploadExcel()
+    public function handleUploadExcel($fileData, $fileName)
     {
-        // Validasi file
-        $this->validate([
-            'file' => 'required|mimes:xlsx,xls|max:10240',
-        ]);
-
         try {
-            // Simpan file sementara
-            $filePath = $this->file->store('temp');
+            // Decode the base64 file data
+            $fileContent = base64_decode(preg_replace('#^data:application/vnd\..+;base64,#i', '', $fileData));
 
-            // Load file Excel menggunakan PhpSpreadsheet
-            $spreadsheet = IOFactory::load(storage_path('app/' . $filePath));
+            // Save file temporarily
+            $tempPath = storage_path('app/temp_' . uniqid() . '.xlsx');
+            file_put_contents($tempPath, $fileContent);
+
+            // Load spreadsheet
+            $spreadsheet = IOFactory::load($tempPath);
             $sheet = $spreadsheet->getActiveSheet();
             $sheetName = $sheet->getTitle();
 
-            // Validate sheet name
-            if (!array_key_exists($sheetName, $this->modelMap)) {
+            // Validate sheet name and fetch model and param
+            if (!isset($this->modelMap[$sheetName])) {
                 $availableSheets = implode(', ', array_keys($this->modelMap));
-                $this->notify('error', "Sheet '{$sheetName}' not found. Use one of the following: {$availableSheets}.");
+                $this->dispatch('error', "Nama sheet template '{$sheetName}' tidak ditemukan. Harap gunakan salah satu dari: {$availableSheets}.");
                 return;
             }
 
-            // Map sheet name to model class
-            $modelClass = $this->modelMap[$sheetName];
+            $modelData = $this->modelMap[$sheetName];
+            $modelClass = $modelData['model'];
+            $param = $modelData['param'];
 
             // Log audit
             $audit = ConfigAudit::create([
@@ -74,18 +78,17 @@ class Index extends BaseComponent
                 'table_name' => $sheetName,
                 'status_code' => Status::IN_PROGRESS,
             ]);
-
-            // Dispatch job for processing
-            ProcessExcelUploadJob::dispatch($sheetName, $sheet->toArray(), $audit->id, $modelClass, ConfigAudit::class);
-
-            session()->flash('message', 'File uploaded successfully.');
+            // Dispatch processing job with param parameter
+            ProcessExcelUploadJob::dispatch($sheetName, $sheet->toArray(), $audit->id, $modelClass, ConfigAudit::class, $param);
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to process the Excel file: ' . $e->getMessage());
+            $this->dispatch('error', $e->getMessage());
         }
-        $this->file = null;
+
+        $this->dispatch('excelUploadComplete');
         $this->dispatch('renderAuditTable');
     }
+
 
     public function pollRefresh()
     {

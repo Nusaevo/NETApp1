@@ -318,7 +318,7 @@ class MaterialComponent extends BaseComponent
                 $messageKey = 'generic.string.enable';
             } else {
                 if ($this->object->getAvailableMaterials()) {
-                    $this->notify('error', "Barang masih ada di inventory, tidak bisa di nonaktifkan!");
+                    $this->dispatch('error', "Barang masih ada di inventory, tidak bisa di nonaktifkan!");
                     return;
                 }
                 if (isset($this->object->status_code)) {
@@ -330,9 +330,9 @@ class MaterialComponent extends BaseComponent
             }
 
             $this->object->save();
-            $this->notify('success', __($messageKey));
+            $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         $this->dispatch('refresh');
@@ -372,13 +372,13 @@ class MaterialComponent extends BaseComponent
     public function addPurchaseOrder()
     {
         if (!isset($this->object->id)) {
-            $this->notify('error', "Harap save barang terlebih dahulu!");
+            $this->dispatch('error', "Harap save barang terlebih dahulu!");
             return;
         }
 
         // if(!$this->orderedMaterial){
         //     if (empty($this->matl_uoms['barcode'])) {
-        //         $this->notify('error', "Untuk barang non pesanan, harap isi kode barang");
+        //         $this->dispatch('error', "Untuk barang non pesanan, harap isi kode barang");
         //         $this->addError('matl_uoms.barcode', "Untuk barang non pesanan, harap isi kode barang");
         //         return;
         //     }
@@ -566,12 +566,12 @@ class MaterialComponent extends BaseComponent
 
             if ($material) {
                 if ($material->isItemExistonAnotherPO($material->id)) {
-                    $this->notify('error', "Penerimaan barang sudah dibuat untuk item ini");
+                    $this->dispatch('error', "Penerimaan barang sudah dibuat untuk item ini");
                 } else {
                     $this->loadMaterial($material->id);
                 }
             } else {
-                $this->notify('error', __($this->langBasePath . '.message.product_notfound'));
+                $this->dispatch('error', __($this->langBasePath . '.message.product_notfound'));
             }
         }
     }
@@ -598,11 +598,11 @@ class MaterialComponent extends BaseComponent
                 $filename = uniqid() . '.jpg';
 
                 $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename, 'storage_id' => $attachment->id];
-                $this->notify('success', 'Images submitted successfully.');
+                $this->dispatch('success', 'Images submitted successfully.');
                 $this->dispatch('closeStorageDialog');
 
             } else {
-                $this->notify('error', 'Attachment with ID ' . $attachmentId . ' not found.');
+                $this->dispatch('error', 'Attachment with ID ' . $attachmentId . ' not found.');
             }
         }
     }
@@ -635,7 +635,7 @@ class MaterialComponent extends BaseComponent
                     ->first();
                 $code = $this->materials['jwl_category1'];
             } else {
-                $this->notify('error', "Mohon pilih customer/kategori1 untuk mendapatkan material code.");
+                $this->dispatch('error', "Mohon pilih customer/kategori1 untuk mendapatkan material code.");
                 return;
             }
         }
@@ -653,7 +653,7 @@ class MaterialComponent extends BaseComponent
             $configSnum->last_cnt = $proposedTrId;
             $configSnum->save();
         } else {
-            $this->notify('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
+            $this->dispatch('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
         }
     }
 
@@ -728,7 +728,7 @@ class MaterialComponent extends BaseComponent
     public function tagScanned($tags)
     {
         if (!isset($this->object->id)) {
-            $this->notify('error', "Harap save barang terlebih dahulu!");
+            $this->dispatch('error', "Harap save barang terlebih dahulu!");
             return;
         }
 
@@ -736,15 +736,15 @@ class MaterialComponent extends BaseComponent
             $tagCount = count($tags);
             if ($tagCount > 1) {
                 // Show error message with the number of tags
-                $this->notify('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
+                $this->dispatch('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
             } else {
                 // Process a single tag
                 if (!$this->isUniqueBarcode($tags)) {
-                    $this->notify('error', 'RFID telah digunakan sebelumnya');
+                    $this->dispatch('error', 'RFID telah digunakan sebelumnya');
                 } else {
                     $this->matl_uoms['barcode'] = $tags[0];
                     $this->saveUOMs();
-                    $this->notify('success', 'RFID berhasil discan');
+                    $this->dispatch('success', 'RFID berhasil discan');
                 }
             }
         }
@@ -763,7 +763,7 @@ class MaterialComponent extends BaseComponent
     public function printBarcode()
     {
         if (!isset($this->object->id)) {
-            $this->notify('error', "Harap save barang terlebih dahulu!");
+            $this->dispatch('error', "Harap save barang terlebih dahulu!");
             return;
         }
 

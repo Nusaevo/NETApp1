@@ -112,7 +112,7 @@ class IndexDataTable extends BaseDataTableComponent
         // Dapatkan attachment terkait
         $attachment = $audit->Attachment;
         if (!$attachment[0] || !$attachment[0]->getUrl()) {
-            $this->notify('error', 'Attachment not found for this record.');
+            $this->dispatch('error', 'Attachment not found for this record.');
             return;
         }
 

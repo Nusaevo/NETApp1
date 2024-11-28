@@ -49,7 +49,7 @@ class StorageComponent extends BaseComponent
         }
 
         $this->dispatch('saveImages', $imageByteArrays);
-        $this->notify('success', 'Images submitted successfully.');
+        $this->dispatch('success', 'Images submitted successfully.');
     }
 
     public function captureImages($imageData)
@@ -61,7 +61,7 @@ class StorageComponent extends BaseComponent
         $filename = uniqid() . '_' . time() . '.jpg';
         $filePath = Attachment::saveAttachmentByFileName($imageData, null, 'NetStorage', $filename);
         $message = $filePath ? 'Image uploaded successfully.' : 'Image upload failed.';
-        $this->notify($filePath ? 'success' : 'error', $message);
+        $this->dispatch($filePath ? 'success' : 'error', $message);
     }
 
     public function selectImage($imageId)
@@ -79,9 +79,9 @@ class StorageComponent extends BaseComponent
         if ($attachment) {
             $deleted = Attachment::deleteAttachmentById($imageId);
             $message = $deleted ? 'Image deleted successfully.' : 'Image deletion failed.';
-            $this->notify($deleted ? 'success' : 'error', $message);
+            $this->dispatch($deleted ? 'success' : 'error', $message);
         } else {
-            $this->notify('error', 'Image not found.');
+            $this->dispatch('error', 'Image not found.');
         }
     }
 

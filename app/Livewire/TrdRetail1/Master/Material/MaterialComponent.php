@@ -151,6 +151,11 @@ class MaterialComponent extends BaseComponent
             'color_code' => $this->materials['color_code'] ?? '',
             'color_name' => $this->materials['color_name'] ?? '',
         ]);
+        $this->masterService = new MasterService();
+        $this->materials['name'] = $this->masterService->getMatlCategoryString($this->materials['category']). ' '
+        . $this->materials['brand'] . ' '
+        . $this->materials['type_code'];
+
 
         $this->object->fillAndSanitize($this->materials);
         if ($this->object->isNew()) {
@@ -180,7 +185,7 @@ class MaterialComponent extends BaseComponent
                 ->first();
             $code = $this->materials['category'];
         } else {
-            $this->notify('error', "Mohon pilih kategori untuk mendapatkan material code.");
+            $this->dispatch('error', "Mohon pilih kategori untuk mendapatkan material code.");
             return;
         }
 
@@ -197,7 +202,7 @@ class MaterialComponent extends BaseComponent
             $configSnum->last_cnt = $proposedTrId;
             $configSnum->save();
         } else {
-            $this->notify('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
+            $this->dispatch('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
         }
     }
     private function saveUOMs()
@@ -249,11 +254,11 @@ class MaterialComponent extends BaseComponent
                 $filename = uniqid() . '.jpg';
 
                 $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename, 'storage_id' => $attachment->id];
-                $this->notify('success', 'Images submitted successfully.');
+                $this->dispatch('success', 'Images submitted successfully.');
                 $this->dispatch('closeStorageDialog');
 
             } else {
-                $this->notify('error', 'Attachment with ID ' . $attachmentId . ' not found.');
+                $this->dispatch('error', 'Attachment with ID ' . $attachmentId . ' not found.');
             }
         }
     }

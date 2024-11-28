@@ -45,7 +45,6 @@ class MasterService extends BaseService
         return $result ? $result->str1 : null;
     }
 
-
     public function getPartnerTypes($appCode)
     {
         $data = $this->getConfigData('PARTNERS_TYPE');

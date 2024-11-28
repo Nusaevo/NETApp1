@@ -155,7 +155,7 @@ class Detail extends BaseComponent
         {
             if($this->object->isOrderCompleted())
             {
-                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
         }
@@ -215,7 +215,7 @@ class Detail extends BaseComponent
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
         if ($this->currencyRate == 0) {
-            $this->notify('warning', __('generic.string.currency_needed'));
+            $this->dispatch('warning', __('generic.string.currency_needed'));
             return;
         }
 
@@ -273,7 +273,7 @@ class Detail extends BaseComponent
     {
         try {
             if ($this->object->isOrderCompleted()) {
-                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
             //$this->updateVersionNumber();
@@ -283,9 +283,9 @@ class Detail extends BaseComponent
             $this->object->save();
             $this->object->delete();
             $messageKey = 'generic.string.disable';
-            $this->notify('success', __($messageKey));
+            $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
@@ -327,11 +327,11 @@ class Detail extends BaseComponent
 
     public function OpenDialogBox(){
         if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',__('generic.string.currency_needed'));
+            $this->dispatch('warning',__('generic.string.currency_needed'));
             return;
         }
         if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Customer"]));
+            $this->dispatch('warning', __('generic.error.field_required', ['field' => "Customer"]));
             $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Customer"]));
             return;
         }
@@ -343,13 +343,13 @@ class Detail extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->notify('warning', __('generic.string.currency_needed'));
+            $this->dispatch('warning', __('generic.string.currency_needed'));
             return;
         }
 
         if (empty($this->selectedMaterials)) {
 
-            $this->notify('error', 'Harap pilih item dahulu sebelum menambahkan ke cart');
+            $this->dispatch('error', 'Harap pilih item dahulu sebelum menambahkan ke cart');
             return;
         }
 
@@ -380,7 +380,7 @@ class Detail extends BaseComponent
 
                 if ($existingReturnDtl) {
                     DB::rollback();
-                    $this->notify('error', "Item {$material->code} sudah ada di Order");
+                    $this->dispatch('error', "Item {$material->code} sudah ada di Order");
                     return;
                 }
 
@@ -409,12 +409,12 @@ class Detail extends BaseComponent
             $this->SaveWithoutNotification();
             DB::commit();
 
-            $this->notify('success', 'Berhasil menambahkan item ke nota');
+            $this->dispatch('success', 'Berhasil menambahkan item ke nota');
             $this->selectedMaterials = [];
             $this->searchMaterials();
         } catch (\Exception $e) {
             DB::rollback();
-            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke Order');
+            $this->dispatch('error', 'Terjadi kesalahan saat menambahkan item ke Order');
         }
     }
     #endregion

@@ -19,7 +19,6 @@ class IndexDataTable extends BaseDataTableComponent
     protected $masterService;
     public $filters = [];
     public $materialCategories;
-
     public function mount(): void
     {
         $this->customRoute = '';
@@ -32,9 +31,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         $query = Material::query();
-
         return $query->with(['IvtBal'])->select('materials.*');
     }
+
 
     public function columns(): array
     {
@@ -105,7 +104,7 @@ class IndexDataTable extends BaseDataTableComponent
             ->options($kategoriOptions)
             ->filter(function (Builder $builder, string $value) {
                 $this->filters['kategori'] = $value;
-                if (empty($this->filters['kategori']) && empty($this->filters['brand']) && empty($this->filters['type_code'])) {
+                if ($this->filters['kategori'] === '-1' && $this->filters['brand'] === '-1' && $this->filters['type_code'] === '-1') {
                     return $builder->whereRaw('1 = 0');
                 }
 
@@ -122,9 +121,10 @@ class IndexDataTable extends BaseDataTableComponent
             ->filter(function (Builder $builder, string $value) {
                 $this->filters['brand'] = $value;
 
-                if (empty($this->filters['kategori']) && empty($this->filters['brand']) && empty($this->filters['type_code'])) {
+                if ($this->filters['kategori'] === '-1' && $this->filters['brand'] === '-1' && $this->filters['type_code'] === '-1') {
                     return $builder->whereRaw('1 = 0');
                 }
+
 
                 $builder->where('brand', $value);
             });
@@ -139,9 +139,10 @@ class IndexDataTable extends BaseDataTableComponent
             ->filter(function (Builder $builder, string $value) {
                 $this->filters['type_code'] = $value;
 
-                if (empty($this->filters['kategori']) && empty($this->filters['brand']) && empty($this->filters['type_code'])) {
+                if ($this->filters['kategori'] === '-1' && $this->filters['brand'] === '-1' && $this->filters['type_code'] === '-1') {
                     return $builder->whereRaw('1 = 0');
                 }
+
 
                 $builder->where('type_code', $value);
             });
@@ -180,51 +181,51 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function downloadUpdateTemplate()
     {
+        // Define headers based on the new template
         $headers = [
-            'Kategori', // Optional field
-            'Merk*', // Required field
-            'Jenis*', // Required field
-            'No*', // Required field
-            'Kode Warna', // Optional field
-            'Nama Warna', // Optional field
-            'UOM*', // Required field
-            'Harga Jual*', // Required field
-            'STOK', // Optional field
-            'Kode Barang', // Optional field
-            'Kode Barcode', // Optional field
-            'Nama Barang', // Optional field
-            'Non Aktif', // Optional field
-            'Keterangan', // Optional field
-            'Version', // Optional field
+            'Kode Warna',    // Optional field
+            'Nama Warna',    // Optional field
+            'UOM*',          // Required field
+            'Harga Jual*',   // Required field
+            'STOK',          // Optional field
+            'Kode Barang',   // Required field
+            'Kode Barcode',  // Optional field
+            'Nama Barang',   // Optional field
+            'Non Aktif',     // Optional field
+            'Keterangan',    // Optional field
+            'Version',       // Optional field
         ];
 
         $selectedIds = $this->getSelected(); // IDs of the selected rows
-        $selectedRows = Material::whereIn('id', $selectedIds)->get();
+        $data = [];
 
-        $data = $selectedRows
-            ->map(function ($row) {
-                return [
-                    'Kategori' => $row->category ?? '',
-                    'Merk*' => $row->brand ?? '',
-                    'Jenis*' => $row->type_code ?? '',
-                    'No*' => $row->id,
-                    'Kode Warna' => $row->specs['color_code'] ?? '',
-                    'Nama Warna' => $row->specs['color_name'] ?? '',
-                    'UOM*' => $row->MatlUom[0]->uom ?? '',
-                    'Harga Jual*' => $row->selling_price ?? '',
-                    'STOK' => $row->stock ?? '',
-                    'Kode Barang' => $row->code ?? '',
-                    'Kode Barcode' => $row->MatlUom[0]->barcode ?? '',
-                    'Nama Barang' => $row->name ?? '',
-                    'Non Aktif' => $row->deleted_at ? 'Yes' : 'No',
-                    'Keterangan' => $row->remarks ?? '',
-                    'Version' => $row->version_number ?? '',
+        // Fetch materials for the selected IDs
+        foreach ($selectedIds as $id) {
+            $material = Material::find($id);
+            if ($material) {
+                $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
+
+                $data[] = [
+                    'Kode Warna' => $specs['color_code'] ?? '', // Access JSON field
+                    'Nama Warna' => $specs['color_name'] ?? '', // Access JSON field
+                    'UOM*' => $material->MatlUom[0]->matl_uom ?? '', // Access related model data
+                    'Harga Jual*' => $material->selling_price ?? '',
+                    'STOK' => $material->stock ?? '',
+                    'Kode Barang' => $material->code ?? '', // Required
+                    'Kode Barcode' => $material->MatlUom[0]->barcode ?? '', // Optional
+                    'Nama Barang' => $material->name ?? '',
+                    'Non Aktif' => $material->deleted_at ? 'Yes' : 'No',
+                    'Keterangan' => $material->remarks ?? '',
+                    'Version' => $material->version_number ?? '',
                 ];
-            })
-            ->toArray();
+            }
+        }
 
+        // Define the filename
         $filename = 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
 
+        // Download the Excel file
         return \Excel::download(new GenericExport($data, $headers, 'Material_Update_Template'), $filename);
     }
+
 }

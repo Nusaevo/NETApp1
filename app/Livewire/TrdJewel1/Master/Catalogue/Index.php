@@ -90,7 +90,7 @@ class Index extends BaseComponent
     public function addToCart($material_id, $material_code)
     {
         if ($this->currencyRate == 0) {
-            $this->notify('warning', __('generic.string.currency_needed'));
+            $this->dispatch('warning', __('generic.string.currency_needed'));
             return;
         }
         $usercode = Auth::check() ? Auth::user()->code : '';
@@ -152,14 +152,14 @@ class Index extends BaseComponent
 
                 DB::commit();
 
-                $this->notify('success', 'Berhasil menambahkan item ke cart');
+                $this->dispatch('success', 'Berhasil menambahkan item ke cart');
                 $this->dispatch('updateCartCount');
             } else {
                 throw new Exception('Item sudah dimasukkan ke cart');
             }
         } catch (\Exception $e) {
             DB::rollback();
-            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart. ' . $e->getMessage());
+            $this->dispatch('error', 'Terjadi kesalahan saat menambahkan item ke cart. ' . $e->getMessage());
         }
     }
     #endregion

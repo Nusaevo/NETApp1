@@ -137,7 +137,7 @@ class Index extends BaseComponent
         });
 
         if (empty($selectedItems)) {
-            $this->notify('error', 'Harap pilih item dahulu sebelum checkout');
+            $this->dispatch('error', 'Harap pilih item dahulu sebelum checkout');
             return;
         }
 
@@ -155,7 +155,7 @@ class Index extends BaseComponent
         }
 
         if (!empty($outOfStockItems)) {
-            $this->notify('error','Beberapa material tidak memiliki stok: ' . implode(', ', $outOfStockItems), "Mohon cek kembali!");
+            $this->dispatch('error','Beberapa material tidak memiliki stok: ' . implode(', ', $outOfStockItems), "Mohon cek kembali!");
             return;
         }
 
@@ -183,7 +183,7 @@ class Index extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->notify('warning', 'Diperlukan kurs mata uang.');
+            $this->dispatch('warning', 'Diperlukan kurs mata uang.');
             return;
         }
 
@@ -266,12 +266,12 @@ class Index extends BaseComponent
             if (count($emptyStocks) > 0) {
                 $message .= "Material dengan stok kosong untuk " . count($emptyStocks) . " tag: <b>" . implode(', ', $emptyStocks) . "</b>.<br>";
             }
-            $this->notify('info',$message);
+            $this->dispatch('info',$message);
             $this->retrieveMaterials();
             $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->notify('error',  'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage());
+            $this->dispatch('error',  'Terjadi kesalahan saat menambahkan item ke keranjang: ' . $e->getMessage());
         }
     }
 
@@ -342,7 +342,7 @@ class Index extends BaseComponent
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
 
         if ($this->currencyRate == 0) {
-            $this->notify('warning', __('generic.string.currency_needed'));
+            $this->dispatch('warning', __('generic.string.currency_needed'));
             return;
         }
 
@@ -363,12 +363,12 @@ class Index extends BaseComponent
     {
         $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
         if ($this->currencyRate == 0) {
-            $this->notify('warning', __('generic.string.currency_needed'));
+            $this->dispatch('warning', __('generic.string.currency_needed'));
             return;
         }
 
         if (empty($this->selectedMaterials)) {
-            $this->notify('error', 'Harap pilih item dahulu sebelum menambahkan ke cart');
+            $this->dispatch('error', 'Harap pilih item dahulu sebelum menambahkan ke cart');
             return;
         }
 
@@ -415,14 +415,14 @@ class Index extends BaseComponent
 
             DB::commit();
 
-            $this->notify('success', 'Berhasil menambahkan item ke cart');
+            $this->dispatch('success', 'Berhasil menambahkan item ke cart');
             $this->selectedMaterials = [];
             $this->retrieveMaterials();
             $this->searchMaterials();
             $this->dispatch('updateCartCount');
         } catch (\Exception $e) {
             DB::rollback();
-            $this->notify('error', 'Terjadi kesalahan saat menambahkan item ke cart. ' . $e->getMessage());
+            $this->dispatch('error', 'Terjadi kesalahan saat menambahkan item ke cart. ' . $e->getMessage());
         }
     }
     #endregion
