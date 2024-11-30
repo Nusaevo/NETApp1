@@ -181,19 +181,19 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function downloadUpdateTemplate()
     {
-        // Define headers based on the new template
         $headers = [
-            'Kode Warna',    // Optional field
-            'Nama Warna',    // Optional field
-            'UOM*',          // Required field
-            'Harga Jual*',   // Required field
-            'STOK',          // Optional field
-            'Kode Barang',   // Required field
-            'Kode Barcode',  // Optional field
-            'Nama Barang',   // Optional field
-            'Non Aktif',     // Optional field
-            'Keterangan',    // Optional field
-            'Version',       // Optional field
+            'No*',            // Required field
+            'Kode Warna',     // Optional field
+            'Nama Warna',     // Optional field
+            'UOM*',           // Required field
+            'Harga Jual*',    // Required field
+            'STOK',           // Optional field
+            'Kode Barang',    // Required field
+            'Kode Barcode',   // Optional field
+            'Nama Barang',    // Optional field
+            'Non Aktif',      // Optional field
+            'Keterangan',     // Optional field
+            'Version',        // Optional field
         ];
 
         $selectedIds = $this->getSelected(); // IDs of the selected rows
@@ -206,13 +206,14 @@ class IndexDataTable extends BaseDataTableComponent
                 $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
 
                 $data[] = [
-                    'Kode Warna' => $specs['color_code'] ?? '', // Access JSON field
-                    'Nama Warna' => $specs['color_name'] ?? '', // Access JSON field
-                    'UOM*' => $material->MatlUom[0]->matl_uom ?? '', // Access related model data
+                    'No*' => $id,                                    // Tambahkan ID sebagai nomor urut
+                    'Kode Warna' => $specs['color_code'] ?? '',      // JSON field
+                    'Nama Warna' => $specs['color_name'] ?? '',      // JSON field
+                    'UOM*' => $material->MatlUom[0]->matl_uom ?? '', // Relational field
                     'Harga Jual*' => $material->selling_price ?? '',
                     'STOK' => $material->stock ?? '',
-                    'Kode Barang' => $material->code ?? '', // Required
-                    'Kode Barcode' => $material->MatlUom[0]->barcode ?? '', // Optional
+                    'Kode Barang' => $material->code ?? '',
+                    'Kode Barcode' => $material->MatlUom[0]->barcode ?? '',
                     'Nama Barang' => $material->name ?? '',
                     'Non Aktif' => $material->deleted_at ? 'Yes' : 'No',
                     'Keterangan' => $material->remarks ?? '',
@@ -221,11 +222,10 @@ class IndexDataTable extends BaseDataTableComponent
             }
         }
 
-        // Define the filename
-        $filename = 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
+        $filename = Material::FILENAME_PREFIX . '_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
 
-        // Download the Excel file
-        return \Excel::download(new GenericExport($data, $headers, 'Material_Update_Template'), $filename);
+        return \Excel::download(new GenericExport($data, $headers, Material::FILENAME_PREFIX . '_Update_Template'), $filename);
     }
+
 
 }
