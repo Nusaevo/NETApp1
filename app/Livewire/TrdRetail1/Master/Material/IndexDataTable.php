@@ -26,6 +26,9 @@ class IndexDataTable extends BaseDataTableComponent
         $this->materialCategories = $this->masterService->getMatlCategoryData(); // Mengambil kategori material
         $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
+        $this->setFilter('kategori', "");
+        $this->setFilter('brand', "");
+        $this->setFilter('type_code', "");
     }
 
     public function builder(): Builder
@@ -97,14 +100,14 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Kategori Filter
         $kategoriOptions = array_merge(
-            ['-1' => 'Pilih Kategori'],
+            ['' => 'Pilih Kategori'],
             collect($this->materialCategories)->pluck('label', 'value')->toArray()
         );
         $filters[] = SelectFilter::make($this->trans('Kategori'), 'kategori')
             ->options($kategoriOptions)
             ->filter(function (Builder $builder, string $value) {
                 $this->filters['kategori'] = $value;
-                if ($this->filters['kategori'] === '-1' && $this->filters['brand'] === '-1' && $this->filters['type_code'] === '-1') {
+                if ($this->filters['kategori'] === '' && $this->filters['brand'] === '' && $this->filters['type_code'] === '') {
                     return $builder->whereRaw('1 = 0');
                 }
 
@@ -113,7 +116,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Brand Filter
         $brandOptions = array_merge(
-            ['-1' => 'Pilih Merek'], // Prepend "Pilih Merek"
+            ['' => 'Pilih Merek'], // Prepend "Pilih Merek"
             Material::distinct('brand')->pluck('brand', 'brand')->toArray()
         );
         $filters[] = SelectFilter::make($this->trans('Brand'), 'brand')
@@ -121,7 +124,7 @@ class IndexDataTable extends BaseDataTableComponent
             ->filter(function (Builder $builder, string $value) {
                 $this->filters['brand'] = $value;
 
-                if ($this->filters['kategori'] === '-1' && $this->filters['brand'] === '-1' && $this->filters['type_code'] === '-1') {
+                if ($this->filters['kategori'] === '' && $this->filters['brand'] === '' && $this->filters['type_code'] === '') {
                     return $builder->whereRaw('1 = 0');
                 }
 
@@ -131,7 +134,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Type Filter
         $typeOptions = array_merge(
-            ['-1' => 'Pilih Jenis'], // Prepend "Pilih Jenis"
+            ['' => 'Pilih Jenis'], // Prepend "Pilih Jenis"
             Material::distinct('type_code')->pluck('type_code', 'type_code')->toArray()
         );
         $filters[] = SelectFilter::make($this->trans('Type'), 'type_code')
@@ -139,7 +142,7 @@ class IndexDataTable extends BaseDataTableComponent
             ->filter(function (Builder $builder, string $value) {
                 $this->filters['type_code'] = $value;
 
-                if ($this->filters['kategori'] === '-1' && $this->filters['brand'] === '-1' && $this->filters['type_code'] === '-1') {
+                if ($this->filters['kategori'] === '' && $this->filters['brand'] === '' && $this->filters['type_code'] === '') {
                     return $builder->whereRaw('1 = 0');
                 }
 

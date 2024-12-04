@@ -145,6 +145,35 @@ class Material extends TrdRetail1BaseModel
         ];
     }
 
+
+    public static function generateMaterialCode($category)
+    {
+        if (isNullOrEmptyString($category)) {
+            throw new \InvalidArgumentException("Mohon pilih kategori untuk mendapatkan material code.");
+        }
+
+        $configSnum = ConfigSnum::where('code', '=', 'MMATL_' . $category . '_LASTID')->first();
+
+        if ($configSnum) {
+            $stepCnt = $configSnum->step_cnt;
+            $proposedTrId = $configSnum->last_cnt + $stepCnt;
+
+            if ($proposedTrId > $configSnum->wrap_high) {
+                $proposedTrId = $configSnum->wrap_low;
+            }
+
+            $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+            $materialCode = $category . $proposedTrId;
+
+            $configSnum->last_cnt = $proposedTrId;
+            $configSnum->save();
+
+            return $materialCode;
+        }
+
+        throw new \RuntimeException("Tidak ada kode ditemukan untuk kategori produk ini.");
+    }
+
     public static function processExcelUpload($dataTable, $audit, $param)
     {
         $masterService = new MasterService();
@@ -164,19 +193,20 @@ class Material extends TrdRetail1BaseModel
 
                 if ($param === 'Create') {
                     // Proses untuk template Create
-                    $no = $row[0] ?? '';
-                    $category = $row[1] ?? '';
-                    $brand = $row[2] ?? '';
-                    $type = $row[3] ?? '';
-                    $colorCode = $row[4] ?? '';
-                    $colorName = $row[5] ?? '';
-                    $uom = $row[6] ?? '';
-                    $sellingPrice = convertFormattedNumber($row[7]);
-                    $remarks = $row[8] ?? '';
-                    $barcode = $row[9] ?? '';
+                    $category = $row[0] ?? ''; // Kategori*
+                    $brand = $row[1] ?? '';    // Merk*
+                    $type = $row[2] ?? '';     // Jenis*
+                    $no = $row[3] ?? '';       // No*
+                    $colorCode = $row[4] ?? ''; // Kode Warna (Optional)
+                    $colorName = $row[5] ?? ''; // Nama Warna (Optional)
+                    $uom = $row[6] ?? '';       // UOM*
+                    $sellingPrice = convertFormattedNumber($row[7]); // Harga Jual*
+                    $remarks = $row[8] ?? '';   // Keterangan (Optional)
+                    $barcode = $row[9] ?? '';   // Kode Barcode (Optional)
+
 
                     // Generate kode material
-                    $materialCode = $masterService->generateMaterialCode($category);
+                    $materialCode =  Material::generateMaterialCode($category);
 
                     // Buat material baru
                     $material = Material::create([
