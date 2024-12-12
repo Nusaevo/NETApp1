@@ -11,6 +11,9 @@ use App\Services\TrdRetail1\Master\MasterService;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -185,21 +188,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function downloadUpdateTemplate()
     {
         $headers = [
-            'No*',            // Required field
-            'Kode Warna',     // Optional field
-            'Nama Warna',     // Optional field
-            'UOM*',           // Required field
-            'Harga Jual*',    // Required field
-            'STOK',           // Optional field
-            'Kode Barang',    // Required field
-            'Kode Barcode',   // Optional field
-            'Nama Barang',    // Optional field
-            'Non Aktif',      // Optional field
-            'Keterangan',     // Optional field
-            'Version',        // Optional field
+            'No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK',
+            'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif',
+            'Keterangan', 'Version',
         ];
 
-        $selectedIds = $this->getSelected(); // IDs of the selected rows
+        $selectedIds = $this->getSelected();
         $data = [];
 
         // Fetch materials for the selected IDs
@@ -209,10 +203,10 @@ class IndexDataTable extends BaseDataTableComponent
                 $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
 
                 $data[] = [
-                    'No*' => $id,                                    // Tambahkan ID sebagai nomor urut
-                    'Kode Warna' => $specs['color_code'] ?? '',      // JSON field
-                    'Nama Warna' => $specs['color_name'] ?? '',      // JSON field
-                    'UOM*' => $material->MatlUom[0]->matl_uom ?? '', // Relational field
+                    'No*' => $id,
+                    'Kode Warna' => $specs['color_code'] ?? '',
+                    'Nama Warna' => $specs['color_name'] ?? '',
+                    'UOM*' => $material->MatlUom[0]->matl_uom ?? '',
                     'Harga Jual*' => $material->selling_price ?? '',
                     'STOK' => $material->stock ?? '',
                     'Kode Barang' => $material->code ?? '',
@@ -225,10 +219,39 @@ class IndexDataTable extends BaseDataTableComponent
             }
         }
 
+        // Create spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Add headers
+        $sheet->fromArray($headers, null, 'A1');
+
+        // Add data
+        $rowIndex = 2; // Start from the second row
+        foreach ($data as $row) {
+            $sheet->fromArray(array_values($row), null, "A{$rowIndex}");
+            $rowIndex++;
+        }
+
+        // Lock the "Kode Barang" column (Column G)
+        $sheet->getStyle('G2:G' . $rowIndex)->getProtection()->setLocked(Protection::PROTECTION_PROTECTED);
+
+        // Protect the sheet to prevent adding or deleting columns
+        $sheet->getProtection()->setSheet(true); // Enable sheet protection
+        $sheet->getProtection()->setSort(false); // Disable sorting
+        $sheet->getProtection()->setInsertColumns(false); // Prevent adding columns
+        $sheet->getProtection()->setDeleteColumns(false); // Prevent deleting columns
+        $sheet->getProtection()->setInsertRows(true); // Allow inserting rows if needed
+        $sheet->getProtection()->setDeleteRows(false); // Prevent deleting rows
+        $sheet->getProtection()->setPassword('andry'); // Set a password for protection
+
+        $writer = new Xlsx($spreadsheet);
         $filename = Material::FILENAME_PREFIX . '_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
+        $temp_file = tempnam(sys_get_temp_dir(), $filename);
 
-        return \Excel::download(new GenericExport($data, $headers, Material::FILENAME_PREFIX . '_Update_Template'), $filename);
+        $writer->save($temp_file);
+
+        return response()->download($temp_file, $filename)->deleteFileAfterSend(true);
     }
-
 
 }
