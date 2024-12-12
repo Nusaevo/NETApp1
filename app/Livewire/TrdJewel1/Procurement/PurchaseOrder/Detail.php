@@ -141,7 +141,7 @@ class Detail extends BaseComponent
         {
             if($this->object->isOrderCompleted())
             {
-                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
 
@@ -152,7 +152,7 @@ class Detail extends BaseComponent
         //     if ($material && !$material->isOrderedMaterial()) {
         //         // Check if the price is set for ordered material
         //         if (empty($detail['price']) || $detail['price'] <= 0) {
-        //             $this->notify('error', 'Harga wajib diisi untuk barang yang bukan pesanan.');
+        //             $this->dispatch('error', 'Harga wajib diisi untuk barang yang bukan pesanan.');
         //             $this->addError("input_details.$index.price", 'Harga wajib diisi untuk barang yang bukan pesanan.');
         //             return;
         //         }
@@ -181,11 +181,11 @@ class Detail extends BaseComponent
             if (isset($this->input_details)) {
                 $matl_ids = array_column($this->input_details, 'matl_id');
                 if ($this->object->isItemHasBuyBack($material_id)) {
-                    $this->notify('error', 'Item ini sudah ada di PO lain.');
+                    $this->dispatch('error', 'Item ini sudah ada di PO lain.');
                     return;
                 }
                 if (in_array($material_id, $matl_ids)) {
-                    $this->notify('error',__($this->langBasePath.'.message.product_duplicated'));
+                    $this->dispatch('error',__($this->langBasePath.'.message.product_duplicated'));
                     return;
                 }
 
@@ -195,10 +195,10 @@ class Detail extends BaseComponent
                 return;
             }
             $this->SaveWithoutNotification();
-            $this->notify('success', __($this->langBasePath.'.message.product_added'));
+            $this->dispatch('success', __($this->langBasePath.'.message.product_added'));
             $this->dispatch('closeMaterialDialog');
         } catch (Exception $e) {
-            $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
 
@@ -206,7 +206,7 @@ class Detail extends BaseComponent
     public function deleteDetails($index)
     {
         if ($this->object->isItemHasSalesOrder($this->input_details[$index]['matl_id'])) {
-            $this->notify('warning', 'Item ini tidak bisa dihapus, karena item sudah terjual.');
+            $this->dispatch('warning', 'Item ini tidak bisa dihapus, karena item sudah terjual.');
             return;
         }
         if (isset($this->input_details[$index]['id'])) {
@@ -226,12 +226,12 @@ class Detail extends BaseComponent
     {
         try {
             if ($this->object->isOrderCompleted()) {
-                $this->notify('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
 
             if (!$this->object->isOrderEnableToDelete()) {
-                $this->notify('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+                $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
                 return;
             }
 
@@ -242,9 +242,9 @@ class Detail extends BaseComponent
             $this->object->save();
             $this->object->delete();
             $messageKey = 'generic.string.disable';
-            $this->notify('success', __($messageKey));
+            $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
-            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
@@ -261,11 +261,11 @@ class Detail extends BaseComponent
 
     public function OpenDialogBox(){
         if ($this->inputs['curr_rate'] == 0) {
-            $this->notify('warning',__('generic.string.currency_needed'));
+            $this->dispatch('warning',__('generic.string.currency_needed'));
             return;
         }
         if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Supplier"]));
+            $this->dispatch('warning', __('generic.error.field_required', ['field' => "Supplier"]));
             $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Supplier"]));
             return;
         }
@@ -292,7 +292,7 @@ class Detail extends BaseComponent
         $material = Material::find($material_id);
 
         if (!$material) {
-            $this->notify('error', 'Material tidak ditemukan.');
+            $this->dispatch('error', 'Material tidak ditemukan.');
             return false;
         }
 
@@ -304,12 +304,12 @@ class Detail extends BaseComponent
                 });
 
                 if ($hasOrderedMaterialInNota && !$material->isOrderedMaterial()) {
-                    $this->notify('error','Material yang bukan pesanan tidak boleh digabungkan dengan material pesanan dalam satu nota.');
+                    $this->dispatch('error','Material yang bukan pesanan tidak boleh digabungkan dengan material pesanan dalam satu nota.');
                     return false;
                 }
 
                 if (!$hasOrderedMaterialInNota && $material->isOrderedMaterial()) {
-                    $this->notify('error','Material pesanan tidak boleh digabungkan dengan material yang bukan material pesanan dalam satu nota.');
+                    $this->dispatch('error','Material pesanan tidak boleh digabungkan dengan material yang bukan material pesanan dalam satu nota.');
                     return false;
                 }
             }

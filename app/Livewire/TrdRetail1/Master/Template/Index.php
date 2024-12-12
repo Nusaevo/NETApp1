@@ -22,11 +22,16 @@ class Index extends BaseComponent
 
     // Public mapper for sheet names to model classes
     public $modelMap = [
-        'Material Template' => Material::class,
-        // Add other mappings as needed
-        // 'Product' => Product::class,
-        // 'Inventory' => Inventory::class,
+        'Material_Create_Template' => [
+            'model' => Material::class,
+            'param' => 'Create',
+        ],
+        'Material_Update_Template' => [
+            'model' => Material::class,
+            'param' => 'Update',
+        ],
     ];
+
     protected $listeners = ['uploadExcel' => 'handleUploadExcel'];
 
     protected function onPreRender()
@@ -38,6 +43,7 @@ class Index extends BaseComponent
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
+
     public function handleUploadExcel($fileData, $fileName)
     {
         try {
@@ -53,17 +59,16 @@ class Index extends BaseComponent
             $sheet = $spreadsheet->getActiveSheet();
             $sheetName = $sheet->getTitle();
 
-            // Validate sheet name
-            if (!array_key_exists($sheetName, $this->modelMap)) {
+            // Validate sheet name and fetch model and param
+            if (!isset($this->modelMap[$sheetName])) {
                 $availableSheets = implode(', ', array_keys($this->modelMap));
-                $this->dispatchBrowserEvent('uploadFailed', [
-                    'message' => "Nama sheet template '{$sheetName}' tidak ditemukan. Harap gunakan salah satu dari: {$availableSheets}."
-                ]);
+                $this->dispatch('error', "Nama sheet template '{$sheetName}' tidak ditemukan. Harap gunakan salah satu dari: {$availableSheets}.");
                 return;
             }
 
-            // Map sheet name to the model class
-            $modelClass = $this->modelMap[$sheetName];
+            $modelData = $this->modelMap[$sheetName];
+            $modelClass = $modelData['model'];
+            $param = $modelData['param'];
 
             // Log audit
             $audit = ConfigAudit::create([
@@ -73,17 +78,17 @@ class Index extends BaseComponent
                 'table_name' => $sheetName,
                 'status_code' => Status::IN_PROGRESS,
             ]);
-
-            // Dispatch renderAuditTable for frontend update
-            $this->dispatch('renderAuditTable');
-
-            // Dispatch processing job
-            ProcessExcelUploadJob::dispatch($sheetName, $sheet->toArray(), $audit->id, $modelClass, ConfigAudit::class);
+            // Dispatch processing job with param parameter
+            ProcessExcelUploadJob::dispatch($sheetName, $sheet->toArray(), $audit->id, $modelClass, ConfigAudit::class, $param);
 
         } catch (\Exception $e) {
-            $this->notify('error', $e->getMessage());
+            $this->dispatch('error', $e->getMessage());
         }
+
+        $this->dispatch('excelUploadComplete');
+        $this->dispatch('renderAuditTable');
     }
+
 
     public function pollRefresh()
     {

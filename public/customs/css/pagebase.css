@@ -1112,3 +1112,17 @@ div[wire\:loading].loading-overlay {
         width: 100%;
     }
 }
+/* Ensure the dropdown menu adjusts to text content */
+.dropdown-menu {
+    min-width: auto !important; /* Allows width to adapt to content */
+    padding: 0.5rem 1rem !important; /* Adds sufficient space inside */
+    box-sizing: border-box !important; /* Includes padding in the width calculation */
+    white-space: nowrap !important; /* Prevents text from wrapping */
+}
+
+/* Specific adjustments for dropdown-menu-end */
+.dropdown-menu.dropdown-menu-end {
+    max-width: none !important; /* Remove any restrictions on max width */
+    width: auto !important; /* Let the width adapt to content */
+    text-align: left !important; /* Ensure proper text alignment */
+}

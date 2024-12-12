@@ -30,13 +30,13 @@ class Index extends BaseComponent
     {
         initDatabaseConnection();
         if (isNullOrEmptyNumber($this->category)) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Category"]));
+            $this->dispatch('warning', __('generic.error.field_required', ['field' => "Category"]));
             $this->addError('category', "Mohon lengkapi");
             return;
         }
 
         if (isNullOrEmptyNumber($this->startCode)) {
-            $this->notify('warning', __('generic.error.field_required', ['field' => "Kode Awal"]));
+            $this->dispatch('warning', __('generic.error.field_required', ['field' => "Kode Awal"]));
             $this->addError('startCode',  "Mohon lengkapi");
             return;
         }

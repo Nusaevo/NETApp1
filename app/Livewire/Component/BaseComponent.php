@@ -70,7 +70,7 @@ class BaseComponent extends Component
             $this->handleActionSpecificLogic();
         } catch (Exception $e) {
             Log::Error("Method Mount :". $e->getMessage());
-            $this->notify('error', "Failed to load page, error :".$e->getMessage());
+            $this->dispatch('error', "Failed to load page, error :".$e->getMessage());
             throw $e;
         }
     }
@@ -209,7 +209,7 @@ class BaseComponent extends Component
             $this->validate($this->rules, [], $this->customValidationAttributes);
         } catch (Exception $e) {
             Log::Error("Method ValidateForm :". $e->getMessage());
-            $this->notify('error', __('generic.error.create', ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.create', ['message' => $e->getMessage()]));
             throw $e;
         }
     }
@@ -246,14 +246,14 @@ class BaseComponent extends Component
                 $this->onReset();
             }
 
-            $this->notify('success', __('generic.string.save'));
+            $this->dispatch('success', __('generic.string.save'));
         } catch (Exception $e) {
             DB::rollBack();
             if ($this->isEditOrView()) {
                 $this->VersionNumber--;
             }
             Log::Error("Method Save :". $e->getMessage());
-            $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
 
@@ -291,7 +291,7 @@ class BaseComponent extends Component
             if ($this->isEditOrView()) {
                 $this->VersionNumber--;
             }
-            $this->notify('error', __('generic.error.save', ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
 
@@ -316,11 +316,11 @@ class BaseComponent extends Component
             }
 
             $this->object->save();
-            $this->notify('success', __($messageKey));
+            $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
             Log::Error("Method Change :". $e->getMessage());
             $this->VersionNumber--;
-            $this->notify('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
         $this->dispatch('refresh');
