@@ -5,11 +5,9 @@ namespace App\Livewire\TrdRetail1\Master\Material;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdRetail1\Master\Material;
-use App\Models\SysConfig1\ConfigRight;
 use App\Models\Util\GenericExport;
 use App\Services\TrdRetail1\Master\MasterService;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -20,143 +18,177 @@ class IndexDataTable extends BaseDataTableComponent
     protected $model = Material::class;
 
     protected $masterService;
-    public $filters = [];
     public $materialCategories;
+
     public function mount(): void
     {
         $this->customRoute = '';
         $this->masterService = new MasterService();
-        $this->materialCategories = $this->masterService->getMatlCategoryData(); // Mengambil kategori material
+        $this->materialCategories = $this->masterService->getMatlCategoryData();
+
+        // Disable default search
         $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
-        $this->setFilter('kategori', "");
-        $this->setFilter('brand', "");
-        $this->setFilter('type_code', "");
     }
 
+    /**
+     * ==================================================
+     *  BUILDER:
+     *   - Always start with an empty query using whereRaw('1=0')
+     * ==================================================
+     */
     public function builder(): Builder
     {
-        $query = Material::query();
-        return $query->with(['IvtBal'])->select('materials.*');
+        return Material::query()
+            ->with(['IvtBal'])
+            ->select('materials.*')
+            ->whereRaw('1=0'); // Start with an empty query by default
     }
 
-
+    /**
+     * ==================================================
+     *  DATA COLUMNS: Define table columns
+     * ==================================================
+     */
     public function columns(): array
     {
         return [
-            Column::make($this->trans('color_code'), 'specs->color_code')
-                ->format(function ($value, $row) {
-                    return $row['specs->color_code'] ?? '';
-                })
+            Column::make('Color Code', 'specs->color_code')
+                ->format(fn($value, $row) => $row['specs->color_code'] ?? '')
                 ->sortable(),
-            Column::make($this->trans('color_name'), 'specs->color_name')
-                ->format(function ($value, $row) {
-                    return $row['specs->color_name'] ?? '';
-                })
+
+            Column::make('Color Name', 'specs->color_name')
+                ->format(fn($value, $row) => $row['specs->color_name'] ?? '')
                 ->sortable(),
-            Column::make($this->trans('photo'), 'id')
+
+            Column::make('Photo', 'id')
                 ->format(function ($value, $row) {
                     $firstAttachment = $row->Attachment->first();
                     $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-                    return $imageUrl ? '<img src="' . $imageUrl . '" alt="Foto" style="width: 100px; height: 100px; object-fit: cover;">' : '<span>No Image</span>';
+                    return $imageUrl
+                        ? '<img src="' . $imageUrl . '" alt="Photo" style="width: 100px; height: 100px; object-fit: cover;">'
+                        : '<span>No Image</span>';
                 })
                 ->html(),
-            Column::make($this->trans('uom'), 'id')
-                ->format(function ($value, $row) {
-                    return $row->MatlUom[0]->matl_uom ?? '';
-                })
+
+            Column::make('UOM', 'id')
+                ->format(fn($value, $row) => $row->MatlUom[0]->matl_uom ?? '')
                 ->sortable(),
-            Column::make($this->trans('selling_price'), 'selling_price_text')
-                ->label(function ($row) {
-                    return $row->selling_price_text;
-                })
+
+            Column::make('Selling Price', 'selling_price_text')
+                ->label(fn($row) => $row->selling_price_text)
                 ->sortable(),
-            Column::make($this->trans('stock'), 'IvtBal.qty_oh')
-                ->format(function ($value, $row) {
-                    return $row->IvtBal?->qty_oh ?? 0;
-                })
+
+            Column::make('Stock', 'IvtBal.qty_oh')
+                ->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)
                 ->sortable(),
-            Column::make($this->trans('code'), 'code')->sortable(),
-            Column::make($this->trans('barcode'), 'id')
-                ->format(function ($value, $row) {
-                    return $row->MatlUom[0]->barcode ?? '';
-                })
+
+            Column::make('Code', 'code')
                 ->sortable(),
-            Column::make($this->trans('remarks'), 'remarks')->sortable(),
-            Column::make($this->trans('action'), 'id')->format(function ($value, $row, Column $column) {
-                return view('layout.customs.data-table-action', [
-                    'row' => $row,
-                    'custom_actions' => [],
-                    'enable_this_row' => true,
-                    'allow_details' => false,
-                    'allow_edit' => true,
-                    'allow_disable' => false,
-                    'allow_delete' => false,
-                    'permissions' => $this->permissions,
-                ]);
-            }),
+
+            Column::make('Barcode', 'id')
+                ->format(fn($value, $row) => $row->MatlUom[0]->barcode ?? '')
+                ->sortable(),
+
+            Column::make('Remarks', 'remarks')
+                ->sortable(),
+
+            Column::make('Action', 'id')
+                ->format(function ($value, $row, $column) {
+                    return view('layout.customs.data-table-action', [
+                        'row' => $row,
+                        'custom_actions' => [],
+                        'enable_this_row' => true,
+                        'allow_details' => false,
+                        'allow_edit' => true,
+                        'allow_disable' => false,
+                        'allow_delete' => false,
+                        'permissions' => $this->permissions,
+                    ]);
+                }),
         ];
     }
+
+    /**
+     * ==================================================
+     *  FILTERS: Add filtering logic for multiple filters
+     * ==================================================
+     */
     public function filters(): array
     {
-        $filters = [];
-
-        // Kategori Filter
         $kategoriOptions = array_merge(
-            ['' => 'Pilih Kategori'],
+            ['' => 'Select Category'],
             collect($this->materialCategories)->pluck('label', 'value')->toArray()
         );
-        $filters[] = SelectFilter::make($this->trans('Kategori'), 'kategori')
-            ->options($kategoriOptions)
-            ->filter(function (Builder $builder, string $value) {
-                $this->filters['kategori'] = $value;
-                if ($this->filters['kategori'] === '' && $this->filters['brand'] === '' && $this->filters['type_code'] === '') {
-                    return $builder->whereRaw('1 = 0');
-                }
 
-                $builder->where('category', $value);
-            });
-
-        // Brand Filter
         $brandOptions = array_merge(
-            ['' => 'Pilih Merek'], // Prepend "Pilih Merek"
+            ['' => 'Select Brand'],
             Material::distinct('brand')->pluck('brand', 'brand')->toArray()
         );
-        $filters[] = SelectFilter::make($this->trans('Brand'), 'brand')
-            ->options($brandOptions)
-            ->filter(function (Builder $builder, string $value) {
-                $this->filters['brand'] = $value;
 
-                if ($this->filters['kategori'] === '' && $this->filters['brand'] === '' && $this->filters['type_code'] === '') {
-                    return $builder->whereRaw('1 = 0');
-                }
-
-
-                $builder->where('brand', $value);
-            });
-
-        // Type Filter
         $typeOptions = array_merge(
-            ['' => 'Pilih Jenis'], // Prepend "Pilih Jenis"
+            ['' => 'Select Type'],
             Material::distinct('type_code')->pluck('type_code', 'type_code')->toArray()
         );
-        $filters[] = SelectFilter::make($this->trans('Type'), 'type_code')
-            ->options($typeOptions)
-            ->filter(function (Builder $builder, string $value) {
-                $this->filters['type_code'] = $value;
 
-                if ($this->filters['kategori'] === '' && $this->filters['brand'] === '' && $this->filters['type_code'] === '') {
-                    return $builder->whereRaw('1 = 0');
-                }
+        return [
+            // Category Filter
+            SelectFilter::make('Category', 'category')
+                ->options($kategoriOptions)
+                ->filter(function (Builder $query, string $value) {
+                    if ($value !== '') {
+                        if ($this->isFirstFilterApplied($query)) {
+                            $query->getQuery()->wheres = [];
+                        }
+                        $query->where('category', $value);
+                    }
+                })
+                ->setWireLive(true),
 
+            // Brand Filter
+            SelectFilter::make('Brand', 'brand')
+                ->options($brandOptions)
+                ->filter(function (Builder $query, string $value) {
+                    if ($value !== '') {
+                        if ($this->isFirstFilterApplied($query)) {
+                            $query->getQuery()->wheres = [];
+                        }
+                        $query->where('brand', $value);
+                    }
+                })
+                ->setWireLive(true),
 
-                $builder->where('type_code', $value);
-            });
-
-        return $filters;
+            // Type Filter
+            SelectFilter::make('Type', 'type_code')
+                ->options($typeOptions)
+                ->filter(function (Builder $query, string $value) {
+                    if ($value !== '') {
+                        if ($this->isFirstFilterApplied($query)) {
+                            $query->getQuery()->wheres = [];
+                        }
+                        $query->where('type_code', $value);
+                    }
+                })
+                ->setWireLive(true),
+        ];
     }
 
+    /**
+     * ==================================================
+     *  HELPER: Check if this is the first applied filter
+     * ==================================================
+     */
+    protected function isFirstFilterApplied(Builder $query): bool
+    {
+        // Check if the query has only one where condition (whereRaw('1=0'))
+        return count($query->getQuery()->wheres) === 1 && $query->getQuery()->wheres[0]['type'] === 'raw';
+    }
 
+    /**
+     * ==================================================
+     *  BULK ACTIONS: Optional bulk operations
+     * ==================================================
+     */
     public function bulkActions(): array
     {
         return [
@@ -164,94 +196,4 @@ class IndexDataTable extends BaseDataTableComponent
             'downloadUpdateTemplate' => 'Download Update Template',
         ];
     }
-
-    public function downloadCreateTemplate()
-    {
-        $headers = [
-            'Kategori*', // Required field
-            'Merk*', // Required field
-            'Jenis*', // Required field
-            'No*', // Required field
-            'Kode Warna', // Optional field
-            'Nama Warna', // Optional field
-            'UOM*', // Required field
-            'Harga Jual*', // Required field
-            'Keterangan', // Optional field
-            'Kode Barcode', // Optional field
-        ];
-
-        $filename = 'Material_Create_Template_' . now()->format('Y-m-d') . '.xlsx';
-
-        return \Excel::download(new GenericExport([], $headers, 'Material_Create_Template'), $filename);
-    }
-
-    public function downloadUpdateTemplate()
-    {
-        $headers = [
-            'No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK',
-            'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif',
-            'Keterangan', 'Version',
-        ];
-
-        $selectedIds = $this->getSelected();
-        $data = [];
-
-        // Fetch materials for the selected IDs
-        foreach ($selectedIds as $id) {
-            $material = Material::find($id);
-            if ($material) {
-                $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
-
-                $data[] = [
-                    'No*' => $id,
-                    'Kode Warna' => $specs['color_code'] ?? '',
-                    'Nama Warna' => $specs['color_name'] ?? '',
-                    'UOM*' => $material->MatlUom[0]->matl_uom ?? '',
-                    'Harga Jual*' => $material->selling_price ?? '',
-                    'STOK' => $material->stock ?? '',
-                    'Kode Barang' => $material->code ?? '',
-                    'Kode Barcode' => $material->MatlUom[0]->barcode ?? '',
-                    'Nama Barang' => $material->name ?? '',
-                    'Non Aktif' => $material->deleted_at ? 'Yes' : 'No',
-                    'Keterangan' => $material->remarks ?? '',
-                    'Version' => $material->version_number ?? '',
-                ];
-            }
-        }
-
-        // Create spreadsheet
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Add headers
-        $sheet->fromArray($headers, null, 'A1');
-
-        // Add data
-        $rowIndex = 2; // Start from the second row
-        foreach ($data as $row) {
-            $sheet->fromArray(array_values($row), null, "A{$rowIndex}");
-            $rowIndex++;
-        }
-
-        // Lock the "Kode Barang" column (Column G)
-        $sheet->getStyle('G2:G' . $rowIndex)->getProtection()->setLocked(Protection::PROTECTION_PROTECTED);
-
-        // Protect the sheet to prevent adding or deleting columns
-        $sheet->getProtection()->setSheet(true); // Enable sheet protection
-        $sheet->getProtection()->setSort(false); // Disable sorting
-        $sheet->getProtection()->setInsertColumns(false); // Prevent adding columns
-        $sheet->getProtection()->setDeleteColumns(false); // Prevent deleting columns
-        $sheet->getProtection()->setInsertRows(true); // Allow inserting rows if needed
-        $sheet->getProtection()->setDeleteRows(false); // Prevent deleting rows
-        $sheet->getProtection()->setPassword('andry'); // Set a password for protection
-
-        $writer = new Xlsx($spreadsheet);
-        $filename = Material::FILENAME_PREFIX . '_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
-        $temp_file = tempnam(sys_get_temp_dir(), $filename);
-
-        $writer->save($temp_file);
-
-        return response()->download($temp_file, $filename)->deleteFileAfterSend(true);
-    }
-
 }
