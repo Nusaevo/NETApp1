@@ -6,6 +6,7 @@ use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdRetail1\Master\Material;
 use App\Models\Util\GenericExport;
+use App\Models\Util\GenericExcelExport;
 use App\Services\TrdRetail1\Master\MasterService;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,59 +54,42 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('Color Code', 'specs->color_code')
-                ->format(fn($value, $row) => $row['specs->color_code'] ?? '')
-                ->sortable(),
+            Column::make('Color Code', 'specs->color_code')->format(fn($value, $row) => $row['specs->color_code'] ?? '')->sortable(),
 
-            Column::make('Color Name', 'specs->color_name')
-                ->format(fn($value, $row) => $row['specs->color_name'] ?? '')
-                ->sortable(),
+            Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
 
             Column::make('Photo', 'id')
                 ->format(function ($value, $row) {
                     $firstAttachment = $row->Attachment->first();
                     $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-                    return $imageUrl
-                        ? '<img src="' . $imageUrl . '" alt="Photo" style="width: 100px; height: 100px; object-fit: cover;">'
-                        : '<span>No Image</span>';
+                    return $imageUrl ? '<img src="' . $imageUrl . '" alt="Photo" style="width: 100px; height: 100px; object-fit: cover;">' : '<span>No Image</span>';
                 })
                 ->html(),
 
-            Column::make('UOM', 'id')
-                ->format(fn($value, $row) => $row->MatlUom[0]->matl_uom ?? '')
-                ->sortable(),
+            Column::make('UOM', 'id')->format(fn($value, $row) => $row->MatlUom[0]->matl_uom ?? '')->sortable(),
 
-            Column::make('Selling Price', 'selling_price_text')
-                ->label(fn($row) => $row->selling_price_text)
-                ->sortable(),
+            Column::make('Selling Price', 'selling_price_text')->label(fn($row) => $row->selling_price_text)->sortable(),
 
-            Column::make('Stock', 'IvtBal.qty_oh')
-                ->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)
-                ->sortable(),
+            Column::make('Stock', 'IvtBal.qty_oh')->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)->sortable(),
 
-            Column::make('Code', 'code')
-                ->sortable(),
+            Column::make('Code', 'code')->sortable(),
 
-            Column::make('Barcode', 'id')
-                ->format(fn($value, $row) => $row->MatlUom[0]->barcode ?? '')
-                ->sortable(),
+            Column::make('Barcode', 'id')->format(fn($value, $row) => $row->MatlUom[0]->barcode ?? '')->sortable(),
 
-            Column::make('Remarks', 'remarks')
-                ->sortable(),
+            Column::make('Remarks', 'remarks')->sortable(),
 
-            Column::make('Action', 'id')
-                ->format(function ($value, $row, $column) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions,
-                    ]);
-                }),
+            Column::make('Action', 'id')->format(function ($value, $row, $column) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                    'custom_actions' => [],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => true,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
 
@@ -118,18 +102,14 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $kategoriOptions = array_merge(
             ['' => 'Select Category'],
-            collect($this->materialCategories)->pluck('label', 'value')->toArray()
+            collect($this->materialCategories)
+                ->pluck('label', 'value')
+                ->toArray(),
         );
 
-        $brandOptions = array_merge(
-            ['' => 'Select Brand'],
-            Material::distinct('brand')->pluck('brand', 'brand')->toArray()
-        );
+        $brandOptions = array_merge(['' => 'Select Brand'], Material::distinct('brand')->pluck('brand', 'brand')->toArray());
 
-        $typeOptions = array_merge(
-            ['' => 'Select Type'],
-            Material::distinct('type_code')->pluck('type_code', 'type_code')->toArray()
-        );
+        $typeOptions = array_merge(['' => 'Select Type'], Material::distinct('type_code')->pluck('type_code', 'type_code')->toArray());
 
         return [
             // Category Filter
@@ -195,5 +175,77 @@ class IndexDataTable extends BaseDataTableComponent
             'downloadCreateTemplate' => 'Download Create Template',
             'downloadUpdateTemplate' => 'Download Update Template',
         ];
+    }
+    /**
+     * Generate and download an Excel template for creating materials.
+     */
+    public function downloadCreateTemplate()
+    {
+        // Define headers with required (*) and optional fields
+        $headers = [
+            'Kategori*', // Required field
+            'Merk*', // Required field
+            'Jenis*', // Required field
+            'No*', // Required field
+            'Kode Warna', // Optional field
+            'Nama Warna', // Optional field
+            'UOM*', // Required field
+            'Harga Jual*', // Required field
+            'Keterangan', // Optional field
+            'Kode Barcode', // Optional field
+        ];
+
+        // Ensure the headers are not empty
+        if (empty($headers)) {
+            throw new \InvalidArgumentException('Headers cannot be empty.');
+        }
+
+        // Prepare the sheet configuration
+        $sheets = [
+            [
+                'name' => 'Material_Create_Template',
+                'headers' => $headers,
+                'data' => [],
+                'protectedColumns' => [],
+                'allowInsert' => true,
+            ],
+        ];
+
+        // Generate Excel file
+        $filename = 'Material_Create_Template_' . now()->format('Y-m-d') . '.xlsx';
+
+        // Return the Excel file for download
+        return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
+    }
+
+    public function downloadUpdateTemplate()
+    {
+        $selectedIds = $this->getSelected();
+        $materials = Material::whereIn('id', $selectedIds)->get();
+
+        // Header for Excel file
+        $headers = ['No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif', 'Keterangan', 'Version'];
+
+        // Data for Excel file
+        $data = $materials
+            ->map(function ($material, $index) {
+                $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
+
+                return [$index + 1, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
+            })
+            ->toArray();
+
+        // Sheet Configuration
+        $sheets = [
+            [
+                'name' => 'Materials',
+                'headers' => $headers,
+                'data' => $data,
+                'protectedColumns' => ['G'],
+            ],
+        ];
+
+        // Generate Excel
+        return (new GenericExcelExport(sheets: $sheets, filename: 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx'))->download();
     }
 }
