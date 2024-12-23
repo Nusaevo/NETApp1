@@ -181,71 +181,30 @@ class IndexDataTable extends BaseDataTableComponent
      */
     public function downloadCreateTemplate()
     {
-        // Define headers with required (*) and optional fields
-        $headers = [
-            'Kategori*', // Required field
-            'Merk*', // Required field
-            'Jenis*', // Required field
-            'No*', // Required field
-            'Kode Warna', // Optional field
-            'Nama Warna', // Optional field
-            'UOM*', // Required field
-            'Harga Jual*', // Required field
-            'Keterangan', // Optional field
-            'Kode Barcode', // Optional field
-        ];
-
-        // Ensure the headers are not empty
-        if (empty($headers)) {
-            throw new \InvalidArgumentException('Headers cannot be empty.');
-        }
-
-        // Prepare the sheet configuration
-        $sheets = [
-            [
-                'name' => 'Material_Create_Template',
-                'headers' => $headers,
-                'data' => [],
-                'protectedColumns' => [],
-                'allowInsert' => true,
-            ],
-        ];
-
-        // Generate Excel file
+        $sheets = [Material::getCreateTemplateConfig()];
         $filename = 'Material_Create_Template_' . now()->format('Y-m-d') . '.xlsx';
 
-        // Return the Excel file for download
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
 
+    /**
+     * Generate and download an Excel template for updating materials.
+     */
     public function downloadUpdateTemplate()
     {
         $selectedIds = $this->getSelected();
         $materials = Material::whereIn('id', $selectedIds)->get();
-
-        // Header for Excel file
-        $headers = ['No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif', 'Keterangan', 'Version'];
-
-        // Data for Excel file
         $data = $materials
-            ->map(function ($material, $index) {
-                $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
+        ->map(function ($material, $index) {
+            $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
 
-                return [$index + 1, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
-            })
-            ->toArray();
+            return [$index + 1, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
+        })
+        ->toArray();
 
-        // Sheet Configuration
-        $sheets = [
-            [
-                'name' => 'Materials',
-                'headers' => $headers,
-                'data' => $data,
-                'protectedColumns' => ['G'],
-            ],
-        ];
+        $sheets = [Material::getUpdateTemplateConfig($data)];
+        $filename = 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
 
-        // Generate Excel
-        return (new GenericExcelExport(sheets: $sheets, filename: 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx'))->download();
+        return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
 }

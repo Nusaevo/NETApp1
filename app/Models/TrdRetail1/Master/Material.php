@@ -26,21 +26,58 @@ class Material extends TrdRetail1BaseModel
 
     protected $fillable = ['code', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'supplier_id', 'supplier_code', 'supplier_id1', 'supplier_id2', 'supplier_id3', 'matl_price', 'sellprc_calc_method', 'price_markup_id', 'price_markup_code', 'buying_price', 'selling_price', 'cogs', 'partner_id', 'partner_code', 'taxable', 'info', 'status_code', 'created_by', 'updated_by', 'remarks'];
 
+    /**
+     * Get configuration for Create Template.
+     */
+    public static function getCreateTemplateConfig(array $data = []): array
+    {
+        return [
+            'name' => 'Material_Create_Template',
+            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Status', 'Message'],
+            'data' => $data,
+            'protectedColumns' => [],
+            'allowInsert' => true,
+        ];
+    }
+
+    /**
+     * Get configuration for Update Template.
+     * Data is optional and can be passed dynamically.
+     */
+    public static function getUpdateTemplateConfig(array $data = []): array
+    {
+        return [
+            'name' => 'Material_Update_Template',
+            'headers' => ['No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif', 'Keterangan', 'Version', 'Status', 'Message'],
+            'data' => $data,
+            'protectedColumns' => ['G'],
+            'allowInsert' => false,
+        ];
+    }
+
+    /**
+     * Validate uploaded Excel data based on template rules.
+     *
+     * @param array $dataTable Data from uploaded Excel, including headers.
+     * @param ConfigAudit $audit Audit object for logging.
+     * @param string $param 'Create' or 'Update' to identify the template type.
+     * @return array Validation result and updated data table.
+     */
     public static function validateExcelUpload($dataTable, $audit, $param)
     {
         $errors = [];
-        $validHeaderCounts = ($param === "Create") ? [10, 12] : [12, 14]; // Sesuaikan jumlah kolom
-        $sheetName = self::FILENAME_PREFIX . ($param === 'Create' ? '_Create_Template' : '_Update_Template');
+        $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
 
+        $sheetName = $templateConfig['name'];
+        $expectedHeaders = $templateConfig['headers'];
         $filename = self::FILENAME_PREFIX . ($param === 'Create' ? 'Create' : 'Update') . '_Validation_Result_' . now()->format('Y-m-d_His') . '.xlsx';
 
-        $masterService = new MasterService();
+        // Validate Headers
         $actualHeaders = $dataTable[0] ?? [];
-
-        // Validasi jumlah header
-        if (!in_array(count($actualHeaders), $validHeaderCounts)) {
-            $audit->updateAuditTrail(100, 'Template salah: Header tidak sesuai dengan jumlah kolom yang diharapkan.', Status::ERROR);
-            Attachment::uploadExcelAttachment($dataTable, $filename, $audit->id, 'ConfigAudit', $sheetName);
+        if ($expectedHeaders !== $actualHeaders) {
+            $audit->updateAuditTrail(100, 'Template salah: Header tidak sesuai dengan template.', Status::ERROR);
+            $templateConfig['data'] = array_slice($dataTable, 1);
+            Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
             return [
                 'success' => false,
@@ -48,20 +85,18 @@ class Material extends TrdRetail1BaseModel
             ];
         }
 
-        // Tambahkan kolom Status dan Message jika tidak ada
-        $headerHasStatusAndMessage = in_array('Status', $actualHeaders) && in_array('Message', $actualHeaders);
-        if (!$headerHasStatusAndMessage) {
-            $dataTable[0][] = 'Status';
-            $dataTable[0][] = 'Message';
-        }
-
+        // Ensure Status and Message columns exist
         $statusIndex = array_search('Status', $dataTable[0]);
         $messageIndex = array_search('Message', $dataTable[0]);
 
         foreach ($dataTable as $index => $row) {
             if ($index === 0) {
+                // Skip header row
                 if (count($dataTable) === 1 || empty(array_filter($dataTable[1] ?? []))) {
                     $audit->updateAuditTrail(100, 'Error: Data tidak ditemukan.', Status::ERROR);
+                    $templateConfig['data'] = array_slice($dataTable, 1);
+                    Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
+
                     return [
                         'success' => false,
                         'dataTable' => $dataTable,
@@ -70,10 +105,10 @@ class Material extends TrdRetail1BaseModel
                 continue;
             }
 
-            $status = '';
+            $status = 'Success';
             $message = '';
 
-            // Validasi umum untuk kolom `No*`
+            // Common validation for `No*`
             $no = $row[0] ?? null;
             if (empty($no)) {
                 $status = 'Error';
@@ -81,7 +116,7 @@ class Material extends TrdRetail1BaseModel
             }
 
             if ($param === 'Create') {
-                // Validasi Create
+                // Validation for Create template
                 $category = $row[1] ?? null;
                 $brand = $row[2] ?? null;
                 $type = $row[3] ?? null;
@@ -89,55 +124,51 @@ class Material extends TrdRetail1BaseModel
                 $sellingPrice = $row[7] ?? null;
 
                 if (empty($category)) {
-                    $status = 'Error';
                     $message .= 'Kategori tidak boleh kosong. ';
                 }
-
                 if (empty($brand)) {
-                    $status = 'Error';
                     $message .= 'Merk tidak boleh kosong. ';
                 }
-
                 if (empty($type)) {
-                    $status = 'Error';
                     $message .= 'Jenis tidak boleh kosong. ';
                 }
-
                 if (empty($uom)) {
-                    $status = 'Error';
                     $message .= 'UOM tidak boleh kosong. ';
                 }
-
                 if (!isValidNumeric($sellingPrice)) {
-                    $status = 'Error';
                     $message .= 'Harga jual harus berupa angka positif. ';
                 }
             } elseif ($param === 'Update') {
-                // Validasi Update
+                // Validation for Update template
                 $materialCode = $row[6] ?? null;
                 $version = $row[11] ?? null;
 
                 if (empty($materialCode)) {
-                    $status = 'Error';
                     $message .= 'Kode Barang tidak boleh kosong. ';
                 }
-
                 if (empty($version)) {
-                    $status = 'Error';
                     $message .= 'Version tidak boleh kosong. ';
                 }
             }
 
-            // Tambahkan status dan pesan ke baris
-            $dataTable[$index][$statusIndex] = $status;
-            $dataTable[$index][$messageIndex] = $message;
-
-            if ($status === 'Error') {
+            if (!empty($message)) {
+                $status = 'Error';
                 $errors[] = "Row $index: $message";
             }
+
+            // Update Status and Message columns
+            $dataTable[$index][$statusIndex] = $status;
+            $dataTable[$index][$messageIndex] = $message;
         }
 
-        Attachment::uploadExcelAttachment($dataTable, $filename, $audit->id, 'ConfigAudit', $sheetName);
+        // Jika terdapat error, unggah hasil validasi
+        if (!empty($errors)) {
+            $templateConfig['data'] = array_slice($dataTable, 1);
+            Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
+        }
+
+        // Update Audit Trail
+        $audit->updateAuditTrail(100, empty($errors) ? 'Validasi selesai tanpa kesalahan.' : 'Validasi selesai dengan kesalahan.', empty($errors) ? Status::SUCCESS : Status::ERROR);
 
         return [
             'success' => empty($errors),
@@ -145,11 +176,10 @@ class Material extends TrdRetail1BaseModel
         ];
     }
 
-
     public static function generateMaterialCode($category)
     {
         if (isNullOrEmptyString($category)) {
-            throw new \InvalidArgumentException("Mohon pilih kategori untuk mendapatkan material code.");
+            throw new \InvalidArgumentException('Mohon pilih kategori untuk mendapatkan material code.');
         }
 
         $configSnum = ConfigSnum::where('code', '=', 'MMATL_' . $category . '_LASTID')->first();
@@ -171,14 +201,23 @@ class Material extends TrdRetail1BaseModel
             return $materialCode;
         }
 
-        throw new \RuntimeException("Tidak ada kode ditemukan untuk kategori produk ini.");
+        throw new \RuntimeException('Tidak ada kode ditemukan untuk kategori produk ini.');
     }
-
+    /**
+     * Process uploaded Excel data based on template rules.
+     *
+     * @param array $dataTable Data from uploaded Excel, including headers.
+     * @param ConfigAudit $audit Audit object for logging.
+     * @param string $param 'Create' or 'Update' to identify the template type.
+     */
     public static function processExcelUpload($dataTable, $audit, $param)
     {
         $masterService = new MasterService();
+        $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
+
         $statusIndex = array_search('Status', $dataTable[0]);
         $messageIndex = array_search('Message', $dataTable[0]);
+
         DB::beginTransaction();
 
         try {
@@ -194,19 +233,18 @@ class Material extends TrdRetail1BaseModel
                 if ($param === 'Create') {
                     // Proses untuk template Create
                     $category = $row[0] ?? ''; // Kategori*
-                    $brand = $row[1] ?? '';    // Merk*
-                    $type = $row[2] ?? '';     // Jenis*
-                    $no = $row[3] ?? '';       // No*
+                    $brand = $row[1] ?? ''; // Merk*
+                    $type = $row[2] ?? ''; // Jenis*
+                    $no = $row[3] ?? ''; // No*
                     $colorCode = $row[4] ?? ''; // Kode Warna (Optional)
                     $colorName = $row[5] ?? ''; // Nama Warna (Optional)
-                    $uom = $row[6] ?? '';       // UOM*
+                    $uom = $row[6] ?? ''; // UOM*
                     $sellingPrice = convertFormattedNumber($row[7]); // Harga Jual*
-                    $remarks = $row[8] ?? '';   // Keterangan (Optional)
-                    $barcode = $row[9] ?? '';   // Kode Barcode (Optional)
-
+                    $remarks = $row[8] ?? ''; // Keterangan (Optional)
+                    $barcode = $row[9] ?? ''; // Kode Barcode (Optional)
 
                     // Generate kode material
-                    $materialCode =  Material::generateMaterialCode($category);
+                    $materialCode = Material::generateMaterialCode($category);
 
                     // Buat material baru
                     $material = Material::create([
@@ -228,18 +266,19 @@ class Material extends TrdRetail1BaseModel
                     }
                 } elseif ($param === 'Update') {
                     // Proses untuk template Update
-                    $no = $row[0] ?? "";
-                    $colorCode = $row[1] ?? "";
-                    $colorName = $row[2] ?? "";
-                    $uom = $row[3] ?? "";
+                    $no = $row[0] ?? '';
+                    $colorCode = $row[1] ?? '';
+                    $colorName = $row[2] ?? '';
+                    $uom = $row[3] ?? '';
                     $sellingPrice = convertFormattedNumber($row[4]);
                     $stock = convertFormattedNumber($row[5] ?? null);
-                    $materialCode = $row[6] ?? "";
-                    $barcode = $row[7] ?? "";
-                    $materialName = $row[8] ?? "";
-                    $nonActive = ($row[9] === 'Yes') ? now() : null;
-                    $remarks = $row[10] ?? "";
-                    $version = $row[11] ?? "";
+                    $materialCode = $row[6] ?? '';
+                    $barcode = $row[7] ?? '';
+                    $materialName = $row[8] ?? '';
+                    $nonActive = $row[9] === 'Yes' ? now() : null;
+                    $remarks = $row[10] ?? '';
+                    $version = $row[11] ?? '';
+
                     // Cari material berdasarkan kode
                     $material = Material::where('code', $materialCode)->first();
 
@@ -282,18 +321,29 @@ class Material extends TrdRetail1BaseModel
                 $dataTable[$rowIndex][$messageIndex] = $message;
 
                 // Perbarui progress audit
-                $audit->updateAuditTrail(
-                    intval(50 + ($rowIndex / count($dataTable)) * 50),
-                    "Processed row $rowIndex.",
-                    Status::IN_PROGRESS
-                );
+                $audit->updateAuditTrail(intval(50 + ($rowIndex / count($dataTable)) * 50), "Processed row $rowIndex.", Status::IN_PROGRESS);
             }
 
             DB::commit();
+
+            // Perbarui data pada konfigurasi template
+            $templateConfig['data'] = array_slice($dataTable, 1);
+
+            // Unggah hasil proses ke attachment
+            Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
+
+            // Audit selesai
             $audit->updateAuditTrail(100, 'Upload and processing completed successfully.', Status::SUCCESS);
         } catch (\Exception $e) {
             DB::rollback();
             $audit->updateAuditTrail(100, 'Processing failed: ' . $e->getMessage(), Status::ERROR);
+
+            // Perbarui data pada konfigurasi template
+            $templateConfig['data'] = array_slice($dataTable, 1);
+
+            // Unggah hasil proses ke attachment
+            Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
+
             throw $e;
         }
     }
