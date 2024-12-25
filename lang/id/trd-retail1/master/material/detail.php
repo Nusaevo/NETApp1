@@ -5,6 +5,7 @@ return [
     'category' => 'Kategori',
     'code' => 'Kode Barang',
     'get' => 'Dapatkan',
+    'seq' => 'No',
     'barcode' => 'Kode Barcode',
     'brand' => 'Merk',
     'type_code' => 'Jenis',

@@ -54,6 +54,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make('No', 'seq')->sortable(),
+
             Column::make('Color Code', 'specs->color_code')->format(fn($value, $row) => $row['specs->color_code'] ?? '')->sortable(),
 
             Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
@@ -198,7 +200,7 @@ class IndexDataTable extends BaseDataTableComponent
         ->map(function ($material, $index) {
             $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
 
-            return [$index + 1, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
+            return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
         })
         ->toArray();
 

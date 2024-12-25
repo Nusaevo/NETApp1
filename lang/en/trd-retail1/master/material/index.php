@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'no' => 'No',
+    'seq' => 'No',
     'color_code' => 'Color Code',
     'color_name' => 'Color Name',
     'photo' => 'Photo',

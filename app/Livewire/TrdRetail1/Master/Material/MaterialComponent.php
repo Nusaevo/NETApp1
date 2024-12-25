@@ -6,7 +6,7 @@ use App\Livewire\Component\BaseComponent;
 use App\Models\TrdRetail1\Master\Material;
 use App\Models\TrdRetail1\Master\MatlUom;
 use App\Models\SysConfig1\ConfigSnum;
-use App\Models\TrdRetail1\Base\Attachment;
+use App\Models\Base\Attachment;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
@@ -38,6 +38,7 @@ class MaterialComponent extends BaseComponent
 
     public $rules = [
         'materials.code' => 'required|string|max:255',
+        'materials.seq' => 'required|string|max:255',
         'materials.name' => 'required|string|max:255',
         'materials.remark' => 'nullable|string|max:500',
         'materials.brand' => 'required|string|max:255',
@@ -78,6 +79,7 @@ class MaterialComponent extends BaseComponent
 
         $this->customValidationAttributes = [
             'materials.code' => $this->trans('code'),
+            'materials.seq' => $this->trans('seq'),
             'materials.name' => $this->trans('name'),
             'materials.remark' => $this->trans('remark'),
             'materials.brand' => $this->trans('brand'),

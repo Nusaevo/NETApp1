@@ -3,7 +3,7 @@
 namespace App\Models\SrvInsur1\Base;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\SrvInsur1\Base\Attachment;
+use App\Models\Base\Attachment;
 use App\Enums\Constant;
 use App\Models\Base\BaseModel;
 use Illuminate\Support\Facades\Session;

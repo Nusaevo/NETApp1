@@ -4,6 +4,7 @@ return [
     'photo' => 'Photo',
     'category' => 'Category',
     'code' => 'Item Code',
+    'seq' => 'No',
     'get' => 'Get',
     'barcode' => 'Barcode',
     'brand' => 'Brand',

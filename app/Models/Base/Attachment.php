@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Models\TrdRetail2\Base;
+namespace App\Models\Base;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Session;
-use App\Enums\Constant;
 
 class Attachment extends Model
 {
@@ -18,7 +17,7 @@ class Attachment extends Model
     {
         parent::__construct($attributes);
         $sessionAppCode = Session::get('app_code');
-        $this->connection = $sessionAppCode ?: Session::get('app_code');
+        $this->connection = $sessionAppCode;
     }
 
     protected $fillable = [
@@ -39,17 +38,14 @@ class Attachment extends Model
 
     public function getAllColumnValues($attribute)
     {
-        if (array_key_exists($attribute, $this->attributes)) {
-            return $this->attributes[$attribute];
-        }
-        return null;
+        return $this->attributes[$attribute] ?? null;
     }
 
     public static function saveAttachmentByFileName($imageDataUrl, $objectId = null, $objectType, $filename)
     {
-        // Get the upload path from .env
-        $uploadPath = config('app.storage_path'). "/TrdRetail2";
-        // Create attachment data
+        $appCode = Session::get('app_code');
+        $uploadPath = config('app.storage_path') . "/$appCode";
+
         $attachmentData = [
             'name' => $filename,
             'content_type' => 'image/jpeg',
@@ -58,40 +54,37 @@ class Attachment extends Model
             'attached_objecttype' => $objectType,
         ];
 
-        // Create attachment directory if it doesn't exist
-        $attachmentsPath = $uploadPath . "/" . $objectType . "/" . $objectId;
+        $attachmentsPath = "$uploadPath/$objectType/$objectId";
+
         if (!File::isDirectory($attachmentsPath)) {
             File::makeDirectory($attachmentsPath, 0777, true, true);
         }
 
-        // Decode image data
         $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
         $imageData = base64_decode($imageData);
 
-        // Check if attachment with the same filename already exists
         $existingAttachment = self::where('attached_objectid', $objectId)
-                                    ->where('attached_objecttype', $objectType)
-                                    ->where('name', $filename)
-                                    ->first();
-        if($objectType == 'NetStorage') {
-            $filePath = $objectType . "/" . $filename;
-        }else{
-             $filePath = $objectType . "/" . $objectId . "/" . $filename;
+            ->where('attached_objecttype', $objectType)
+            ->where('name', $filename)
+            ->first();
+
+        if ($objectType == 'NetStorage') {
+            $filePath = "$objectType/$filename";
+        } else {
+            $filePath = "$objectType/$objectId/$filename";
         }
-        $fullPath = $attachmentsPath . "/" . $filename;
+
+        $fullPath = "$attachmentsPath/$filename";
 
         if ($existingAttachment) {
-            // Update existing attachment
             $existingAttachment->path = $filePath;
             $existingAttachment->save();
             return $existingAttachment->path;
         } else {
-            // Save new file and attachment record
             if (file_put_contents($fullPath, $imageData)) {
                 $attachmentData['path'] = $filePath;
                 $newAttachment = self::create($attachmentData);
 
-                // Update attached_objectid if it was null
                 if (is_null($objectId)) {
                     $newAttachment->attached_objectid = $newAttachment->id;
                     $newAttachment->save();
@@ -111,8 +104,9 @@ class Attachment extends Model
             ->first();
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path'). "/TrdRetail2";
-            $path = $uploadPath . "/" . $attachment->path;
+            $appCode = Session::get('app_code');
+            $uploadPath = config('app.storage_path') . "/$appCode";
+            $path = "$uploadPath/{$attachment->path}";
 
             if (File::exists($path)) {
                 File::delete($path);
@@ -130,8 +124,10 @@ class Attachment extends Model
         $attachment = self::find($imageId);
 
         if ($attachment) {
-            $uploadPath = config('app.storage_path') . "/TrdRetail2";
-            $path = $uploadPath . "/" . $attachment->path;
+            $appCode = Session::get('app_code');
+            $uploadPath = config('app.storage_path') . "/$appCode";
+            $path = "$uploadPath/{$attachment->path}";
+
             if (File::exists($path)) {
                 File::delete($path);
             }
@@ -143,19 +139,19 @@ class Attachment extends Model
         return false;
     }
 
-
     public function getUrl()
     {
-        $uploadPath = config('app.storage_url'). "/TrdRetail2";
-        $fullPath = $uploadPath . "/" . $this->path;
-        $urlPath = str_replace("/", '/', $fullPath);
-        return $urlPath;
+        $appCode = Session::get('app_code');
+        $uploadPath = config('app.storage_url') . "/$appCode";
+        $fullPath = "$uploadPath/{$this->path}";
+        return str_replace("/", '/', $fullPath);
     }
 
     public function getUrlAttribute()
     {
-        $uploadPath = config('app.storage_url'). "/TrdRetail2";
-        $fullPath = $uploadPath . "/" . $this->path;
+        $appCode = Session::get('app_code');
+        $uploadPath = config('app.storage_url') . "/$appCode";
+        $fullPath = "$uploadPath/{$this->path}";
         return str_replace("/", '/', $fullPath);
     }
 

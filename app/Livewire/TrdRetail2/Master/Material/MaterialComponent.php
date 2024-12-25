@@ -8,7 +8,7 @@ use App\Models\TrdRetail2\Master\MatlUom;
 use App\Models\TrdRetail2\Master\MatlBom;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
-use App\Models\TrdRetail2\Base\Attachment;
+use App\Models\Base\Attachment;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;

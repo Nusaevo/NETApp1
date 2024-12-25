@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdJewel1\Master\Gallery;
+namespace App\Livewire\Base\Master\Gallery;
 
 use App\Livewire\Component\BaseComponent;
 class Index extends BaseComponent

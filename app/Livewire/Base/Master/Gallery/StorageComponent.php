@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Livewire\TrdJewel1\Master\Gallery;
+namespace App\Livewire\Base\Master\Gallery;
 
 use App\Livewire\Component\BaseComponent;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
-use App\Models\TrdJewel1\Base\Attachment;
+use App\Models\Base\Attachment;
+use Illuminate\Support\Facades\Session;
 
 class StorageComponent extends BaseComponent
 {
@@ -52,17 +53,24 @@ class StorageComponent extends BaseComponent
         $this->dispatch('success', 'Images submitted successfully.');
     }
 
-    public function captureImages($imageData)
+    public function captureImages($imageData, $originalFilename = null)
     {
         if ($this->isDialogBoxComponent) {
             return;
         }
+        $appCode = Session::get('app_code');
 
-        $filename = uniqid() . '_' . time() . '.jpg';
+        if ($appCode === 'TrdRetail1' && $originalFilename) {
+            $filename = $originalFilename;
+        } else {
+            $filename = uniqid() . '_' . time() . '.jpg';
+        }
         $filePath = Attachment::saveAttachmentByFileName($imageData, null, 'NetStorage', $filename);
+
         $message = $filePath ? 'Image uploaded successfully.' : 'Image upload failed.';
         $this->dispatch($filePath ? 'success' : 'error', $message);
     }
+
 
     public function selectImage($imageId)
     {

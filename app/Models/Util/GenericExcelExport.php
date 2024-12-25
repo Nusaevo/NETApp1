@@ -145,7 +145,6 @@ class GenericExcelExport
             }
         }
     }
-
     /**
      * Protect specific columns while allowing or restricting certain actions.
      *
@@ -164,16 +163,27 @@ class GenericExcelExport
             ->getProtection()
             ->setLocked(StyleProtection::PROTECTION_UNPROTECTED);
 
-        // Protect header columns
+        // Define gray fill style for protected columns
+        $protectedStyle = [
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'D9D9D9'], // Warna abu-abu
+            ],
+            'protection' => [
+                'locked' => StyleProtection::PROTECTION_PROTECTED,
+            ],
+        ];
+
+        // Protect header columns and apply gray fill
         foreach ($protectedColumns as $column) {
             $headerCell = "{$column}1";
-            $sheet->getStyle($headerCell)->getProtection()->setLocked(StyleProtection::PROTECTION_PROTECTED);
+            $sheet->getStyle($headerCell)->applyFromArray($protectedStyle);
         }
 
-        // Protect specific columns in data rows
+        // Protect specific columns in data rows and apply gray fill
         foreach ($protectedColumns as $column) {
             $range = "{$column}2:{$column}{$highestRow}";
-            $sheet->getStyle($range)->getProtection()->setLocked(StyleProtection::PROTECTION_PROTECTED);
+            $sheet->getStyle($range)->applyFromArray($protectedStyle);
         }
 
         // Allow row insertion if enabled
@@ -181,12 +191,16 @@ class GenericExcelExport
             $nextRow = $highestRow + 1;
             $endUnlockedRow = $nextRow + 100;
             $range = "A{$nextRow}:{$lastColumn}{$endUnlockedRow}";
-            $sheet->getStyle($range)->getProtection()->setLocked(StyleProtection::PROTECTION_UNPROTECTED);
+            $sheet
+                ->getStyle($range)
+                ->getProtection()
+                ->setLocked(StyleProtection::PROTECTION_UNPROTECTED);
         }
 
+        // Enable sheet protection with password
         $protection = $sheet->getProtection();
         $protection->setSheet(true);
-        $protection->setPassword('securepassword');
+        $protection->setPassword('NusaevoTeknologi');
     }
 
     /**

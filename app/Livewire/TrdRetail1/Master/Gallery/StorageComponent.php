@@ -5,7 +5,7 @@ namespace App\Livewire\TrdRetail1\Master\Gallery;
 use App\Livewire\Component\BaseComponent;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
-use App\Models\TrdRetail1\Base\Attachment;
+use App\Models\Base\Attachment;
 
 class StorageComponent extends BaseComponent
 {

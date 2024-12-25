@@ -57,6 +57,8 @@
                                     type="text" :action="$actionValue" enabled="true" />
                         </div>
                         <div class="row">
+                            <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="number"
+                                :action="$actionValue" required="true" enabled="true" />
                             <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
                                 :action="$actionValue" required="true" enabled="true" />
                             <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"

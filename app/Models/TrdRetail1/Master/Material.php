@@ -4,7 +4,7 @@ namespace App\Models\TrdRetail1\Master;
 
 use App\Helpers\SequenceUtility;
 use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
-use App\Models\TrdRetail1\Base\Attachment;
+use App\Models\Base\Attachment;
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Transaction\OrderDtl;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +24,7 @@ class Material extends TrdRetail1BaseModel
         parent::boot();
     }
 
-    protected $fillable = ['code', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'supplier_id', 'supplier_code', 'supplier_id1', 'supplier_id2', 'supplier_id3', 'matl_price', 'sellprc_calc_method', 'price_markup_id', 'price_markup_code', 'buying_price', 'selling_price', 'cogs', 'partner_id', 'partner_code', 'taxable', 'info', 'status_code', 'created_by', 'updated_by', 'remarks'];
+    protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'supplier_id', 'supplier_code', 'supplier_id1', 'supplier_id2', 'supplier_id3', 'matl_price', 'sellprc_calc_method', 'price_markup_id', 'price_markup_code', 'buying_price', 'selling_price', 'cogs', 'partner_id', 'partner_code', 'taxable', 'info', 'status_code', 'created_by', 'updated_by', 'remarks'];
 
     /**
      * Get configuration for Create Template.
@@ -33,7 +33,7 @@ class Material extends TrdRetail1BaseModel
     {
         return [
             'name' => 'Material_Create_Template',
-            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Status', 'Message'],
+            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Status', 'Message'],
             'data' => $data,
             'protectedColumns' => [],
             'allowInsert' => true,
@@ -48,9 +48,9 @@ class Material extends TrdRetail1BaseModel
     {
         return [
             'name' => 'Material_Update_Template',
-            'headers' => ['No*', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif', 'Keterangan', 'Version', 'Status', 'Message'],
+            'headers' => ['No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif', 'Keterangan', 'Version', 'Status', 'Message'],
             'data' => $data,
-            'protectedColumns' => ['G'],
+            'protectedColumns' => ['A','G'],
             'allowInsert' => false,
         ];
     }
@@ -117,11 +117,12 @@ class Material extends TrdRetail1BaseModel
 
             if ($param === 'Create') {
                 // Validation for Create template
-                $category = $row[1] ?? null;
-                $brand = $row[2] ?? null;
-                $type = $row[3] ?? null;
-                $uom = $row[6] ?? null;
-                $sellingPrice = $row[7] ?? null;
+                $category = $row[0] ?? null; // Kategori*
+                $brand = $row[1] ?? null; // Merk*
+                $type = $row[2] ?? null; // Jenis*
+                $no = $row[3] ?? null; // No*
+                $uom = $row[6] ?? null; // UOM*
+                $sellingPrice = $row[7] ?? null; // Harga Jual*
 
                 if (empty($category)) {
                     $message .= 'Kategori tidak boleh kosong. ';
@@ -132,6 +133,9 @@ class Material extends TrdRetail1BaseModel
                 if (empty($type)) {
                     $message .= 'Jenis tidak boleh kosong. ';
                 }
+                if (empty($no)) {
+                    $message .= 'Kolom No* tidak boleh kosong. ';
+                }
                 if (empty($uom)) {
                     $message .= 'UOM tidak boleh kosong. ';
                 }
@@ -139,10 +143,14 @@ class Material extends TrdRetail1BaseModel
                     $message .= 'Harga jual harus berupa angka positif. ';
                 }
             } elseif ($param === 'Update') {
-                // Validation for Update template
-                $materialCode = $row[6] ?? null;
-                $version = $row[11] ?? null;
+                 // Validasi Template Update
+                $no = $row[0] ?? null; // No*
+                $materialCode = $row[6] ?? null; // Kode Barang
+                $version = $row[11] ?? null; // Version
 
+                if (empty($no)) {
+                    $message .= 'Kolom No* tidak boleh kosong. ';
+                }
                 if (empty($materialCode)) {
                     $message .= 'Kode Barang tidak boleh kosong. ';
                 }
@@ -251,6 +259,7 @@ class Material extends TrdRetail1BaseModel
                         'code' => $materialCode,
                         'category' => $category,
                         'brand' => $brand,
+                        'seq' => $no,
                         'type_code' => $type,
                         'specs' => json_encode(['color_code' => $colorCode, 'color_name' => $colorName]),
                         'selling_price' => $sellingPrice,
@@ -287,6 +296,7 @@ class Material extends TrdRetail1BaseModel
                         $material->update([
                             'specs' => json_encode(['color_code' => $colorCode, 'color_name' => $colorName]),
                             'selling_price' => $sellingPrice,
+                            'seq' => $no,
                             'name' => $materialName,
                             'deleted_at' => $nonActive,
                             'remarks' => $remarks,
