@@ -38,7 +38,8 @@ class MaterialComponent extends BaseComponent
 
     public $rules = [
         'materials.code' => 'required|string|max:255',
-        'materials.seq' => 'required|string|max:255',
+        'materials.category' => 'required',
+        'materials.seq' => 'required',
         'materials.name' => 'required|string|max:255',
         'materials.remark' => 'nullable|string|max:500',
         'materials.brand' => 'required|string|max:255',
@@ -80,6 +81,7 @@ class MaterialComponent extends BaseComponent
         $this->customValidationAttributes = [
             'materials.code' => $this->trans('code'),
             'materials.seq' => $this->trans('seq'),
+            'materials.category' => $this->trans('category'),
             'materials.name' => $this->trans('name'),
             'materials.remark' => $this->trans('remark'),
             'materials.brand' => $this->trans('brand'),
@@ -215,15 +217,45 @@ class MaterialComponent extends BaseComponent
         $this->object_uoms->save();
     }
 
-    private function saveAttachment()
+    public function saveAttachment()
     {
-        foreach ($this->deleteImages as $filename) {
-            Attachment::deleteAttachmentByFilename($this->object->id, class_basename($this->object), $filename);
-        }
-        foreach ($this->capturedImages as $image) {
-            if (!isset($image['storage_id'])) {
-                Attachment::saveAttachmentByFileName($image['url'], $this->object->id, class_basename($this->object), $image['filename']);
+        $errorMessages = [];
+        // Delete attachments based on deleteImages array
+        if (!empty($this->deleteImages)) {
+            foreach ($this->deleteImages as $filename) {
+                Attachment::deleteAttachmentByFilename($this->object->id, class_basename($this->object), $filename);
             }
+            $this->deleteImages = [];
+        }
+
+        foreach ($this->capturedImages as $image) {
+            if (isset($image['storage_id'])) {
+                try {
+                    Attachment::deleteAttachmentById($image['storage_id']);
+                } catch (Exception $e) {
+                }
+            }
+        }
+
+        // Save new attachments
+        if (!empty($this->capturedImages)) {
+            foreach ($this->capturedImages as $image) {
+                try {
+                    $filePath = Attachment::saveAttachmentByFileName($image['url'], $this->object->id, class_basename($this->object), $image['filename']);
+                    if ($filePath !== false) {
+                    } else {
+                        $errorMessages[] = __($this->langBasePath . '.message.attachment_failed', ['filename' => $image['filename']]);
+                    }
+                } catch (Exception $e) {
+                    $errorMessages[] = __($this->langBasePath . '.message.attachment_failed', ['filename' => $image['filename']]);
+                }
+            }
+        }
+
+        Attachment::reSortSequences($this->object->id, class_basename($this->object));
+        if (!empty($errorMessages)) {
+            $errorMessage = implode(', ', $errorMessages);
+            throw new Exception($errorMessage);
         }
     }
     #endregion

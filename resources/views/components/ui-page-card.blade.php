@@ -1,36 +1,44 @@
 <div>
     <div id="page-card" class="container-xxl mb-5">
-
-        <div class="card shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            {{-- Title --}}
             @if(!empty($title))
-            <h3 class="p-5">{{ $title }}</h3>
+                <h3 class="p-3 m-0">{{ $title }}</h3>
             @endif
-            <div class="card-body">
-                @isset($status)
+
+            {{-- Status --}}
+            @isset($status)
                 @if (!empty($status))
-                <div class="d-flex justify-content-end">
-                    <div>
-                        <strong>
-                            <h3>Status : {{ $status }}</h3>
-                        </strong>
+                    <div class="p-3">
+                        <strong>Status: {{ $status }}</strong>
                     </div>
-                </div>
                 @endif
-                @endisset
-                @isset($slot)
+            @endisset
+        </div>
+
+        {{-- Slot --}}
+        <div>
+            @isset($slot)
                 {{ $slot }}
-                @endisset
-            </div>
+            @endisset
         </div>
 
+        {{-- Metadata --}}
         @isset($this->object->id)
-        <div class="p-3">
-            <p>Created At: {{ optional($this->object->created_at)->format('Y-m-d H:i:s') }}@if($this->object->created_at) by {{ $this->object->created_by ?? 'N/A' }}@endif</p>
-            <p>Updated At: {{ optional($this->object->updated_at)->format('Y-m-d H:i:s') }}@if($this->object->updated_at) by {{ $this->object->updated_by ?? 'N/A' }}@endif</p>
-        </div>
+            <div class="p-3 mt-3">
+                <p>
+                    Created At: {{ optional($this->object->created_at)->format('Y-m-d H:i:s') }}
+                    @if($this->object->created_at)
+                        by {{ $this->object->created_by ?? 'N/A' }}
+                    @endif
+                </p>
+                <p>
+                    Updated At: {{ optional($this->object->updated_at)->format('Y-m-d H:i:s') }}
+                    @if($this->object->updated_at)
+                        by {{ $this->object->updated_by ?? 'N/A' }}
+                    @endif
+                </p>
+            </div>
         @endisset
-
     </div>
-
 </div>
-

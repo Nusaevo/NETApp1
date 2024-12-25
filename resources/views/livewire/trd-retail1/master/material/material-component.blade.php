@@ -3,16 +3,110 @@
         use App\Models\TrdRetail1\Master\Material;
     @endphp
 
-    <x-ui-page-card title="{{ $actionValue }} {!! $menuName !!}" status="{{ $status }}">
+    <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}" status="{{ $this->trans($status) }}">
 
-        @if ($actionValue === 'Create')
-            <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
-        @elseif(!$searchMode && $actionValue !== 'Create')
-            <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
+        {{-- Tabs --}}
+        @if ($actionValue === 'Create' || (!$searchMode && $actionValue !== 'Create'))
+            <x-ui-tab-view id="myTab" tabs="general"></x-ui-tab-view>
         @endif
+
         <x-ui-tab-view-content id="tabMaterial" class="tab-content">
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
-                <x-ui-card>
+                <div class="row mt-4">
+
+                    <!-- Main Form Section -->
+                    <div class="col-md-8">
+                        <x-ui-card title="Main Information">
+                            <div class="row">
+                                <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
+                                    type="text" :action="$actionValue" required="true" enabled="true" />
+                                <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
+                                    type="code" :action="$actionValue" required="true" :enabled="$panelEnabled"
+                                    clickEvent="getMatlCode" buttonName="Get Code" />
+                            </div>
+
+                            <div class="row">
+                                <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
+                                    type="text" :action="$actionValue" enabled="true" />
+                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
+                                    type="text" :action="$actionValue" required="true" enabled="false" />
+                            </div>
+                        </x-ui-card>
+
+                        <x-ui-card title="Images">
+                            <x-ui-padding>
+                                <div class="material-info-container">
+                                    <div class="photo-and-button-container">
+                                        <!-- Photo Container -->
+                                        <div class="multiple-photo-container">
+                                            @forelse($capturedImages as $key => $image)
+                                                <div class="photo-box">
+                                                    <img src="{{ $image['url'] }}" alt="Captured Image"
+                                                        class="photo-box-image">
+                                                    <div class="image-close-button">
+                                                        <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'"
+                                                            class="btn btn-link" name="x" />
+                                                    </div>
+                                                </div>
+                                            @empty
+                                                <div class="photo-box empty">
+                                                    <p>No Images Captured</p>
+                                                </div>
+                                            @endforelse
+                                        </div>
+                                        <div class="button-container">
+                                            <x-ui-image-button :action="$customActionValue"
+                                                hideStorageButton="false"></x-ui-image-button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </x-ui-padding>
+                        </x-ui-card>
+
+                        <x-ui-card title="Additional Information">
+                            <div class="row">
+                                <x-ui-text-field label="{{ $this->trans('color_code') }}" model="materials.color_code"
+                                    type="text" :action="$actionValue" required="false" enabled="true" />
+                                <x-ui-text-field label="{{ $this->trans('color_name') }}" model="materials.color_name"
+                                    type="text" :action="$actionValue" required="false" enabled="true" />
+                            </div>
+                            <x-ui-text-field label="{{ $this->trans('remarks') }}" model="materials.remarks"
+                                type="textarea" :action="$customActionValue" />
+                        </x-ui-card>
+                    </div>
+
+                    <!-- Sidebar Section -->
+                    <div class="col-md-4">
+                        <x-ui-card title="Associations">
+                            <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="materials.category"
+                                :options="$materialCategories" :enabled="$panelEnabled" required="true" onChanged="onCategoryChanged" />
+                            <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
+                                :action="$actionValue" required="true" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
+                                type="text" :action="$actionValue" required="true" enabled="true" />
+                        </x-ui-card>
+
+                        <x-ui-card title="Pricing">
+                            <x-ui-text-field label="{{ $this->trans('selling_price') }}"
+                                model="materials.selling_price" type="number" :action="$actionValue" required="false"
+                                enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.buying_price"
+                                type="number" :action="$actionValue" required="false" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs" type="number"
+                                :action="$actionValue" required="true" enabled="true" />
+                        </x-ui-card>
+
+                        <x-ui-card title="Tagging">
+                            <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag" type="text"
+                                :action="$actionValue" required="false" enabled="false" />
+                        </x-ui-card>
+                    </div>
+                </div>
+            </div>
+        </x-ui-tab-view-content>
+
+
+        {{-- <x-ui-card>
                     <x-ui-padding>
                         <div class="material-info-container">
                             <div class="photo-and-button-container">
@@ -34,11 +128,11 @@
                                 </div>
 
                                 <div class="button-container">
-                                    <x-ui-image-button :action="$customActionValue" :hideStorageButton="true"></x-ui-image-button>
+                                    <x-ui-image-button :action="$customActionValue" hideStorageButton="false"></x-ui-image-button>
 
                                     <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                         <x-slot name="body">
-                                            @livewire($appCode.'.master.gallery.storage-component', ['isDialogBoxComponent' => true])
+                                            @livewire('base.master.gallery.storage-component', [ 'isDialogBoxComponent' => true])
                                         </x-slot>
                                     </x-ui-dialog-box>
                                 </div>
@@ -99,48 +193,32 @@
                                 :action="$actionValue" required="false" enabled="false"/>
                         </div>
                     </x-ui-padding>
-                </x-ui-card>
-            </div>
-            {{-- @if (!$searchMode && $actionValue !== 'Create')
-        <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">
-            <x-ui-card>
-                <div wire:ignore>
-                @livewire('trd-jewel1.master.material.transaction-data-table', ['materialID' => $objectIdValue])
-                </div>
-            </x-ui-card>
-        </div>
-        @endif --}}
-        </x-ui-tab-view-content>
+                </x-ui-card> --}}
 
         <x-ui-footer>
-
             @if (!$searchMode && $actionValue == 'Edit')
                 @include('layout.customs.buttons.disable')
             @endif
-
-            {{-- <x-ui-button clickEvent="printBarcode" cssClass="btn btn-primary" button-name="Print Label"
-                :action="$customActionValue" /> --}}
             <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$customActionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
-
             @if ($searchMode)
                 <x-ui-button clickEvent="addPurchaseOrder" button-name="Add Item" loading="true" :action="$actionValue"
                     cssClass="btn-primary" iconPath="add.svg" />
             @endif
-
         </x-ui-footer>
     </x-ui-page-card>
-</div>
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            window.addEventListener('openStorageDialog', function() {
-                $('#storageDialogBox').modal('show');
-            });
 
-            window.addEventListener('closeStorageDialog', function() {
-                $('#storageDialogBox').modal('hide');
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                window.addEventListener('openStorageDialog', function() {
+                    $('#storageDialogBox').modal('show');
+                });
+
+                window.addEventListener('closeStorageDialog', function() {
+                    $('#storageDialogBox').modal('hide');
+                });
             });
-        });
-    </script>
-@endpush
+        </script>
+    @endpush
+</div>
