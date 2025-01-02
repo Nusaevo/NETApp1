@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Builder;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
+use Illuminate\Support\Facades\File;
+use Exception;
+use App\Models\Base\Attachment;
+use Illuminate\Support\Facades\Http;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -176,6 +180,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'downloadCreateTemplate' => 'Download Create Template',
             'downloadUpdateTemplate' => 'Download Update Template',
+            'syncImages' => 'Sync Photos from NetStorage',
         ];
     }
     /**
@@ -197,16 +202,124 @@ class IndexDataTable extends BaseDataTableComponent
         $selectedIds = $this->getSelected();
         $materials = Material::whereIn('id', $selectedIds)->get();
         $data = $materials
-        ->map(function ($material, $index) {
-            $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
+            ->map(function ($material, $index) {
+                $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
 
-            return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
-        })
-        ->toArray();
+                return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
+            })
+            ->toArray();
 
         $sheets = [Material::getUpdateTemplateConfig($data)];
         $filename = 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
 
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
+    public $syncProgress = 0;
+    public $syncedImages = [];
+    public $failedImages = [];
+
+    private function fetchUrlContent($url)
+    {
+        $response = Http::get($url);
+
+        if ($response->failed()) {
+            throw new Exception("Failed to fetch content from URL: {$url}, Status Code: {$response->status()}");
+        }
+
+        return $response->body();
+    }
+
+    public function syncImages()
+    {
+        $this->dispatch('openSyncModal');
+        $this->syncProgress = 0;
+        $this->syncedImages = [];
+        $this->failedImages = [];
+
+        // Ambil semua attachment dari NetStorage
+        $attachments = Attachment::where('path', 'like', '%NetStorage%')->get();
+
+        if ($attachments->isEmpty()) {
+            $this->dispatch('error', 'No attachments found in NetStorage.');
+            $this->dispatch('syncComplete');
+            return;
+        }
+
+        $totalAttachments = $attachments->count();
+        $processed = 0;
+
+        foreach ($attachments as $attachment) {
+            try {
+                $attachmentFilename = pathinfo($attachment->name, PATHINFO_FILENAME);
+                $material = Material::where('code', 'like', "%{$attachmentFilename}%")->first();
+                if ($material) {
+                    $url = $attachment->getUrl();
+                    $response = Http::get($url);
+                    if ($response->failed()) {
+                        throw new Exception("Failed to fetch image from URL: {$url}");
+                    }
+
+                    $imageData = $response->body();
+                    $mimeType = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpeg';
+                    $dataUri = "data:image/{$mimeType};base64," . base64_encode($imageData);
+
+                    $filename = uniqid() . '.jpg';
+
+                    $filePath = Attachment::saveAttachmentByFileName(
+                        $dataUri,
+                        $material->id,
+                        class_basename($material),
+                        $filename
+                    );
+
+                    if ($filePath !== false) {
+                        $this->syncedImages[] = [
+                            'material_id' => $material->id,
+                            'file_name' => $filename,
+                            'path' => $filePath,
+                        ];
+
+                        $this->dispatch('pushSyncedImage', [
+                            'material_id' => $material->id,
+                            'file_name' => $filename,
+                            'path' => $filePath,
+                        ]);
+
+                        // Hapus attachment yang berhasil disimpan
+                        try {
+                            Attachment::deleteAttachmentById($attachment->id);
+                        } catch (Exception $e) {
+                            // Log jika gagal menghapus attachment
+                        }
+                    } else {
+                        throw new Exception("Failed to save attachment: {$filename}");
+                    }
+                } else {
+                    throw new Exception("No material found matching attachment filename: {$attachmentFilename}");
+                }
+            } catch (Exception $e) {
+                $this->failedImages[] = [
+                    'file_name' => $attachmentFilename,
+                    'error' => $e->getMessage(),
+                ];
+
+                $this->dispatch('pushFailedImage', [
+                    'file_name' => $attachmentFilename,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $processed++;
+            $this->syncProgress = intval(($processed / $totalAttachments) * 100);
+            $this->dispatch('updateSyncProgress', $this->syncProgress);
+        }
+        if (!empty($this->failedImages)) {
+            $this->dispatch('error', 'Some images failed to sync. Please check the list.');
+        } else {
+            $this->dispatch('success', 'All images synchronized successfully.');
+        }
+
+        $this->dispatch('syncComplete');
+    }
+
 }
