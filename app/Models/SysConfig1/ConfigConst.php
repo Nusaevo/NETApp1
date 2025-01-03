@@ -7,9 +7,8 @@ use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Session;
 use App\Enums\Constant;
-use App\Models\SysConfig1\Base\SysConfig1BaseModel;
 
-class ConfigConst extends SysConfig1BaseModel
+class ConfigConst extends BaseModel
 {
     protected $table = 'config_consts';
 
@@ -17,12 +16,6 @@ class ConfigConst extends SysConfig1BaseModel
 
     const CURRENCY_DOLLAR_ID = '125';
     const CURRENCY_RUPIAH_ID = '124';
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $sessionAppCode = Session::get('app_code');
-        $this->connection = $sessionAppCode;
-    }
 
     protected $fillable = [
         'const_group',
