@@ -2,10 +2,10 @@
 
 namespace App\Models\TrdRetail2\Inventories;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TrdRetail2\Base\TrdRetail2BaseModel;
+use App\Models\Base\BaseModel;
 use App\Enums\Constant;
 
-class IvtBal extends TrdRetail2BaseModel
+class IvtBal extends BaseModel
 {
     protected $table = 'ivt_bals';
     public $timestamps = false;

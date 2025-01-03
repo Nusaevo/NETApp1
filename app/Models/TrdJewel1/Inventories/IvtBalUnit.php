@@ -3,11 +3,11 @@
 namespace App\Models\TrdJewel1\Inventories;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
+use App\Models\Base\BaseModel;
 use Illuminate\Support\Str;
 use App\Enums\Constant;
 
-class IvtBalUnit extends TrdJewel1BaseModel
+class IvtBalUnit extends BaseModel
 {
     protected $table = 'ivt_bal_units';
     public $timestamps = false;

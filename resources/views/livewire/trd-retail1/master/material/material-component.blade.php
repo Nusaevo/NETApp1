@@ -14,6 +14,33 @@
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
 
+
+                    <!-- Sidebar Section -->
+                    <div class="col-md-4">
+                        <x-ui-card title="Associations">
+                            <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="materials.category"
+                                :options="$materialCategories" :enabled="$panelEnabled" required="true" onChanged="onCategoryChanged" />
+                            <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
+                                :action="$actionValue" required="true" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
+                                type="text" :action="$actionValue" required="true" enabled="true" />
+                        </x-ui-card>
+
+                        <x-ui-card title="Pricing">
+                            <x-ui-text-field label="{{ $this->trans('selling_price') }}"
+                                model="materials.selling_price" type="number" :action="$actionValue" required="false"
+                                enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.buying_price"
+                                type="number" :action="$actionValue" required="false" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs" type="number"
+                                :action="$actionValue" required="true" enabled="true" />
+                        </x-ui-card>
+
+                        <x-ui-card title="Tagging">
+                            <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag" type="text"
+                                :action="$actionValue" required="false" enabled="false" />
+                        </x-ui-card>
+                    </div>
                     <!-- Main Form Section -->
                     <div class="col-md-8">
                         <x-ui-card title="Main Information">
@@ -72,33 +99,6 @@
                             </div>
                             <x-ui-text-field label="{{ $this->trans('remarks') }}" model="materials.remarks"
                                 type="textarea" :action="$customActionValue" />
-                        </x-ui-card>
-                    </div>
-
-                    <!-- Sidebar Section -->
-                    <div class="col-md-4">
-                        <x-ui-card title="Associations">
-                            <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="materials.category"
-                                :options="$materialCategories" :enabled="$panelEnabled" required="true" onChanged="onCategoryChanged" />
-                            <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
-                                :action="$actionValue" required="true" enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
-                                type="text" :action="$actionValue" required="true" enabled="true" />
-                        </x-ui-card>
-
-                        <x-ui-card title="Pricing">
-                            <x-ui-text-field label="{{ $this->trans('selling_price') }}"
-                                model="materials.selling_price" type="number" :action="$actionValue" required="false"
-                                enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.buying_price"
-                                type="number" :action="$actionValue" required="false" enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs" type="number"
-                                :action="$actionValue" required="true" enabled="true" />
-                        </x-ui-card>
-
-                        <x-ui-card title="Tagging">
-                            <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag" type="text"
-                                :action="$actionValue" required="false" enabled="false" />
                         </x-ui-card>
                     </div>
                 </div>

@@ -7,9 +7,11 @@ use App\Traits\BaseTrait;
 use App\Models\Base\BaseModel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use App\Models\SysConfig1\Base\SysConfig1BaseModel;
 
 
-class ConfigRight extends BaseModel
+
+class ConfigRight extends SysConfig1BaseModel
 {
     protected $table = 'config_rights';
 

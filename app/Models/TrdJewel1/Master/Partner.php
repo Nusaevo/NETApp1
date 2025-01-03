@@ -4,12 +4,12 @@ namespace App\Models\TrdJewel1\Master;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Helpers\SequenceUtility;
-use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class Partner extends TrdJewel1BaseModel
+class Partner extends BaseModel
 {
     protected $table = 'partners';
     const CUSTOMER = 'C';

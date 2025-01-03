@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Models\TrdRetail2\Master;
-use App\Models\TrdRetail2\Base\TrdRetail2BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class MatlBom extends TrdRetail2BaseModel
+class MatlBom extends BaseModel
 {
     protected $table = 'matl_boms';
     use SoftDeletes;

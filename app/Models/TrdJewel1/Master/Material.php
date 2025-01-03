@@ -2,7 +2,7 @@
 
 namespace App\Models\TrdJewel1\Master;
 use App\Helpers\SequenceUtility;
-use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\Base\BaseModel\Attachment;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Transaction\OrderDtl;
@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Constant;
 
-class Material extends TrdJewel1BaseModel
+class Material extends BaseModel
 {
     protected $table = 'materials';
     const JEWELRY = 'JEWELRY';

@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use Illuminate\Support\Facades\Session;
 use App\Enums\Constant;
-class ConfigSnum extends BaseModel
+use App\Models\SysConfig1\Base\SysConfig1BaseModel;
+
+class ConfigSnum extends SysConfig1BaseModel
 {
     protected $table = 'config_snums';
 

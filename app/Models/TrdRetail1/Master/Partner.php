@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Models\SrvInsur1\Master;
+namespace App\Models\TrdRetail1\Master;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
-use App\Models\SrvInsur1\Transaction\OrderHdr;
+use App\Models\TrdRetail1\Transaction\OrderHdr;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class Partner extends SrvInsur1BaseModel
+class Partner extends BaseModel
 {
     protected $table = 'partners';
     const CUSTOMER = 'C';

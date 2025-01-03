@@ -9,7 +9,6 @@ use App\Models\TrdRetail1\Master\Partner;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdRetail1\Master\Material;
 use App\Enums\Status;
-use App\Models\TrdRetail1\Master\GoldPriceLog;
 use App\Services\TrdRetail1\Master\MasterService;
 use Exception;
 
@@ -60,11 +59,6 @@ class Detail extends BaseComponent
     #region Populate Data methods
     protected function onPreRender()
     {
-        $this->currencyRate = GoldPriceLog::GetTodayCurrencyRate();
-
-        if ($this->currencyRate == 0) {
-            abort(422, __('generic.string.currency_needed'));
-        }
         $this->customValidationAttributes  = [
             'inputs.tr_date'      => $this->trans('tr_date'),
             'inputs.partner_id'      => $this->trans('supplier'),
@@ -121,7 +115,6 @@ class Detail extends BaseComponent
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
-        $this->inputs['curr_rate'] = GoldPriceLog::GetTodayCurrencyRate();
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = 0;
     }
@@ -260,10 +253,6 @@ class Detail extends BaseComponent
     }
 
     public function OpenDialogBox(){
-        if ($this->inputs['curr_rate'] == 0) {
-            $this->dispatch('warning',__('generic.string.currency_needed'));
-            return;
-        }
         if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $this->dispatch('warning', __('generic.error.field_required', ['field' => "Supplier"]));
             $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Supplier"]));

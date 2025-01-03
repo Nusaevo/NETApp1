@@ -2,7 +2,7 @@
 
 namespace App\Models\SrvInsur1\Transaction;
 
-use App\Models\SrvInsur1\Base\SrvInsur1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\SrvInsur1\Master\Partner;
 use App\Models\SrvInsur1\Master\Material;
 use App\Enums\Status;

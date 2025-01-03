@@ -4,8 +4,9 @@ namespace App\Models\SysConfig1;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\SysConfig1\Base\SysConfig1BaseModel;
 
-class ConfigAppl extends BaseModel
+class ConfigAppl extends SysConfig1BaseModel
 {
     protected $table = 'config_appls';
 

@@ -3,10 +3,10 @@
 namespace App\Models\TrdRetail1\Transaction;
 
 use App\Models\TrdRetail1\Master\Material;
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
-class CartDtl extends TrdRetail1BaseModel
+class CartDtl extends BaseModel
 {
     use SoftDeletes;
 

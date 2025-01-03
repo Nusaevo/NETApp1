@@ -2,11 +2,11 @@
 
 namespace App\Models\TrdRetail1\Transaction;
 
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\TrdRetail1\Master\Partner;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
-class BillingHdr extends TrdRetail1BaseModel
+class BillingHdr extends BaseModel
 {
     use SoftDeletes;
 

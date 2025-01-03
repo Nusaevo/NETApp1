@@ -2,14 +2,14 @@
 
 namespace App\Models\TrdRetail1\Master;
 use App\Helpers\SequenceUtility;
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Inventories\IvtBalUnit;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class MatlUom extends TrdRetail1BaseModel
+class MatlUom extends BaseModel
 {
     protected $table = 'matl_uoms';
     use SoftDeletes;

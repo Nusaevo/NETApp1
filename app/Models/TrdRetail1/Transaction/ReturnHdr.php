@@ -2,14 +2,14 @@
 
 namespace App\Models\TrdRetail1\Transaction;
 
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\TrdRetail1\Master\Partner;
 use App\Models\TrdRetail1\Transaction\ReturnDtl;
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Enums\Constant;
-class ReturnHdr extends TrdRetail1BaseModel
+class ReturnHdr extends BaseModel
 {
     use SoftDeletes;
 

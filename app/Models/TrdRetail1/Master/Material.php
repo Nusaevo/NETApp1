@@ -3,7 +3,7 @@
 namespace App\Models\TrdRetail1\Master;
 
 use App\Helpers\SequenceUtility;
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\Base\Attachment;
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Transaction\OrderDtl;
@@ -14,7 +14,7 @@ use App\Enums\Status;
 use App\Services\TrdRetail1\Master\MasterService;
 use App\Models\SysConfig1\ConfigSnum;
 
-class Material extends TrdRetail1BaseModel
+class Material extends BaseModel
 {
     protected $table = 'materials';
     use SoftDeletes;

@@ -4,7 +4,6 @@ namespace App\Models\Base;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Base\Attachment;
 use App\Traits\BaseTrait;
 use Illuminate\Support\Facades\Schema;
@@ -19,6 +18,15 @@ class BaseModel extends Model
     use BaseTrait;
 
     protected $fillable = [];
+
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $sessionAppCode = Session::get('app_code');
+        $this->connection = $sessionAppCode;
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -41,7 +49,6 @@ class BaseModel extends Model
 
         self::bootUpdatesCreatedByAndUpdatedAt();
     }
-
 
     public function getAllColumns()
     {

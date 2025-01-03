@@ -3,10 +3,10 @@
 namespace App\Models\TrdJewel1\Transaction;
 
 use App\Models\TrdJewel1\Master\Partner;
-use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
+use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
-class DelivHdr extends TrdJewel1BaseModel
+class DelivHdr extends BaseModel
 {
     use SoftDeletes;
 

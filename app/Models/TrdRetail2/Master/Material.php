@@ -3,7 +3,7 @@
 namespace App\Models\TrdRetail2\Master;
 
 use App\Helpers\SequenceUtility;
-use App\Models\TrdRetail2\Base\TrdRetail2BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\Base\BaseModel\Attachment;
 use App\Models\TrdRetail2\Inventories\IvtBal;
 use App\Models\TrdRetail2\Transaction\OrderDtl;
@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Constant;
 
-class Material extends TrdRetail2BaseModel
+class Material extends BaseModel
 {
     protected $table = 'materials';
     const JEWELRY = 'JEWELRY';
