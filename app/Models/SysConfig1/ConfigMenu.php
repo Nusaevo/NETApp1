@@ -2,11 +2,11 @@
 
 namespace App\Models\SysConfig1;
 use App\Helpers\SequenceUtility;
-use App\Models\Base\BaseModel;
+use App\Models\SysConfig1\Base\SysConfig1BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 
-class ConfigMenu extends BaseModel
+class ConfigMenu extends SysConfig1BaseModel
 {
     protected $table = 'config_menus';
     use SoftDeletes;
