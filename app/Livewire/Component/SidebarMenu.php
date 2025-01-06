@@ -64,11 +64,9 @@ class SidebarMenu extends Component
                 ->distinct()
                 ->orderBy('config_rights.menu_seq')
                 ->get();
-
             if ($configMenus->isEmpty()) {
                 return $mainMenu;
             }
-
             foreach ($configMenus as $configMenu) {
                 $route = str_replace('/', '.', $configMenu->menu_link);
                 if (!Route::has($route)) {

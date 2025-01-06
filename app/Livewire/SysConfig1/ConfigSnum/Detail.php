@@ -76,9 +76,9 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-        if (!$this->application) {
-            throw new \Exception("Application not selected. Please select an application.");
-        }
+        // if (!$this->application) {
+        //     throw new \Exception("Application not selected. Please select an application.");
+        // }
 
         $this->object->fillAndSanitize($this->inputs);
         if ($this->isEditOrView()) {
