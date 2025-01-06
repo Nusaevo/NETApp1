@@ -71,7 +71,7 @@ class Detail extends BaseComponent
 
         $this->masterService = new MasterService();
         $this->suppliers = $this->masterService->getSuppliers();
-        $this->warehouses = $this->masterService->getWarehouses();
+        $this->warehouses = $this->masterService->getWarehouse();
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -168,53 +168,6 @@ class Detail extends BaseComponent
         $this->retrieveMaterials();
     }
 
-    public function materialSaved($material_id)
-    {
-        try {
-            if (isset($this->input_details)) {
-                $matl_ids = array_column($this->input_details, 'matl_id');
-                if ($this->object->isItemHasBuyBack($material_id)) {
-                    $this->dispatch('error', 'Item ini sudah ada di PO lain.');
-                    return;
-                }
-                if (in_array($material_id, $matl_ids)) {
-                    $this->dispatch('error',__($this->langBasePath.'.message.product_duplicated'));
-                    return;
-                }
-
-            }
-
-            if(!$this->addDetails($material_id)){
-                return;
-            }
-            $this->SaveWithoutNotification();
-            $this->dispatch('success', __($this->langBasePath.'.message.product_added'));
-            $this->dispatch('closeMaterialDialog');
-        } catch (Exception $e) {
-            $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
-        }
-    }
-
-
-    public function deleteDetails($index)
-    {
-        if ($this->object->isItemHasSalesOrder($this->input_details[$index]['matl_id'])) {
-            $this->dispatch('warning', 'Item ini tidak bisa dihapus, karena item sudah terjual.');
-            return;
-        }
-        if (isset($this->input_details[$index]['id'])) {
-            $deletedItemId = $this->input_details[$index]['id'];
-            $orderDtl = OrderDtl::withTrashed()->find($deletedItemId);
-            if ($orderDtl) {
-                $orderDtl->forceDelete();
-            }
-        }
-        unset($this->input_details[$index]);
-        $this->input_details = array_values($this->input_details);
-        $this->countTotalAmount();
-    }
-
-
     public function delete()
     {
         try {
@@ -246,121 +199,5 @@ class Detail extends BaseComponent
 
     #region Component Events
 
-    public function saveCheck()
-    {
-        if (!$this->object->isNew())
-            $this->SaveWithoutNotification();
-    }
-
-    public function OpenDialogBox(){
-        if (isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $this->dispatch('warning', __('generic.error.field_required', ['field' => "Supplier"]));
-            $this->addError('inputs.partner_id', __('generic.error.field_required', ['field' => "Supplier"]));
-            return;
-        }
-        $this->dispatch('openMaterialDialog');
-    }
-
-
-    public function changePrice($id, $value)
-    {
-        if (isset($this->input_details[$id]['qty'])) {
-            $total = toNumberFormatter($this->input_details[$id]['qty']) * toNumberFormatter($value);
-            $this->input_details[$id]['amt'] = numberFormat($total) ;
-            $this->input_details[$id]['price'] = $total;
-            $this->countTotalAmount();
-            $this->SaveWithoutNotification();
-        }
-    }
-
-    public function addDetails($material_id = null)
-    {
-        $detail = [
-            'tr_type' => $this->trType,
-        ];
-        $material = Material::find($material_id);
-
-        if (!$material) {
-            $this->dispatch('error', 'Material tidak ditemukan.');
-            return false;
-        }
-
-        if (!$this->object->isNew()) {
-            if ($this->object->isItemHasOrderedMaterial()) {
-
-                $hasOrderedMaterialInNota = $this->object->OrderDtl->contains(function ($orderDtl) {
-                    return $orderDtl->Material && $orderDtl->Material->isOrderedMaterial();
-                });
-
-                if ($hasOrderedMaterialInNota && !$material->isOrderedMaterial()) {
-                    $this->dispatch('error','Material yang bukan pesanan tidak boleh digabungkan dengan material pesanan dalam satu nota.');
-                    return false;
-                }
-
-                if (!$hasOrderedMaterialInNota && $material->isOrderedMaterial()) {
-                    $this->dispatch('error','Material pesanan tidak boleh digabungkan dengan material yang bukan material pesanan dalam satu nota.');
-                    return false;
-                }
-            }
-        }
-
-        $detail['matl_id'] = $material->id;
-        $detail['matl_code'] = $material->code;
-        $detail['matl_descr'] = $material->descr ?? "";
-        $detail['name'] = $material->name ?? "";
-        $detail['matl_uom'] = $material->MatlUom[0]->id;
-        $detail['image_path'] = $material->Attachment->first() ? $material->Attachment->first()->getUrl() : null;
-        $detail['barcode'] = $material->MatlUom[0]->barcode;
-        $detail['isOrderedMaterial'] = $material->isOrderedMaterial();
-        if($material->isOrderedMaterial()){
-            $detail['price'] = $material->jwl_buying_price_idr ?? 0;
-            $detail['selling_price'] = $material->jwl_selling_price_idr ?? 0;
-        }else{
-            $detail['price'] = $material->jwl_buying_price_usd ?? 0;
-            $detail['selling_price'] = $material->jwl_selling_price_usd ?? 0;
-        }
-        $detail['qty'] = 1;
-        $maxTrSeq = $this->object->OrderDtl()->max('tr_seq') ?? 0;
-        $maxTrSeq++;
-        $detail['tr_seq'] = $maxTrSeq;
-
-        array_push($this->input_details, $detail);
-        $newDetail = end($this->input_details);
-        $this->newItems[] = $newDetail;
-        $this->countTotalAmount();
-
-        return true;
-    }
-
-
-    public function Add()
-    {
-        // $this->dispatch('materialSaved', 2);
-        // $this->dispatch('materialSaved', 3);
-        // $this->dispatch('materialSaved', 4);
-    }
-
-    public function countTotalAmount()
-    {
-        $this->total_amount = 0;
-
-        foreach ($this->input_details as $input_detail) {
-            if (isset($input_detail['price'])) {
-                $this->total_amount += $input_detail['price'];
-            }
-        }
-
-        $this->inputs['amt'] = $this->total_amount;
-
-        if (isset($this->input_details[0]['isOrderedMaterial']) && $this->input_details[0]['isOrderedMaterial'] === true) {
-            $this->total_amount = rupiah($this->total_amount);
-        } else {
-            $this->total_amount = dollar($this->total_amount);
-        }
-    }
-
     #endregion
-
-
-
 }

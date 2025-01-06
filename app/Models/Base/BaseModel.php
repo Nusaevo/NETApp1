@@ -111,15 +111,19 @@ class BaseModel extends Model
         foreach ($attributes as $key => $value) {
             if (isDateAttribute($value)) {
                 $sanitizedAttributes[$key] = sanitizeDate($value);
-            } elseif ((isFormattedNumeric($value) !== false) ){
+            } elseif (isFormattedNumeric($value) !== false) {
                 $sanitizedAttributes[$key] = str_replace('.', '', $value);
                 $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
+            } elseif (is_string($value)) {
+                $sanitizedAttributes[$key] = trim($value);
             } else {
                 $sanitizedAttributes[$key] = $value;
             }
         }
+
         $this->fill($sanitizedAttributes);
     }
+
 
     public function isDuplicateCode()
     {

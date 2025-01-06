@@ -5,6 +5,7 @@ namespace App\Services\TrdRetail1\Master;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
 use App\Services\Base\BaseService;
+use App\Models\TrdRetail1\Master\Partner;
 
 class MasterService extends BaseService
 {
@@ -45,7 +46,7 @@ class MasterService extends BaseService
         return $result ? $result->str1 : null;
     }
 
-    public function getPartnerTypes($appCode)
+    public function getPartnerTypes()
     {
         $data = $this->getConfigData('PARTNERS_TYPE');
 
@@ -90,29 +91,29 @@ class MasterService extends BaseService
     }
 
 
-    // public function getSuppliers()
-    // {
-    //     $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
-    //     return $suppliersData->map(function ($data) {
-    //         return [
-    //             'label' => $data->code . " - " . $data->name,
-    //             'value' => $data->id,
-    //         ];
-    //     })->toArray();
-    // }
+    public function getSuppliers()
+    {
+        $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
+        return $suppliersData->map(function ($data) {
+            return [
+                'label' => $data->code . " - " . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
 
 
 
-    // public function getCustomers()
-    // {
-    //     $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
-    //     return $suppliersData->map(function ($data) {
-    //         return [
-    //             'label' => $data->code . " - " . $data->name,
-    //             'value' => $data->id,
-    //         ];
-    //     })->toArray();
-    // }
+    public function getCustomers()
+    {
+        $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
+        return $suppliersData->map(function ($data) {
+            return [
+                'label' => $data->code . " - " . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
 
 
 }
