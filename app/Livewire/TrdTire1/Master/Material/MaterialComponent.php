@@ -5,6 +5,7 @@ namespace App\Livewire\TrdTire1\Master\Material;
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Master\Material;
 use App\Models\SysConfig1\ConfigSnum;
+use App\Models\TrdTire1\Master\MatlUom;
 use Exception;
 use Livewire\WithFileUploads;
 use App\Enums\Status;
@@ -18,6 +19,8 @@ class MaterialComponent extends BaseComponent
     public $materialType = [];
     public $materialJenis = [];
     public $materialMerk = [];
+    public $object_uoms;
+    public $matl_uoms = [];
 
     public $materials = [];
     public $product_code = "";
@@ -30,6 +33,8 @@ class MaterialComponent extends BaseComponent
         'materials.type_code' => 'required|string|max:255',
         'materials.category' => 'required|string|max:255',
         'materials.name' => 'required|string|max:255',
+        'materials.reserved' => 'required|string|max:255',
+        'materials.tag' => 'required|string|max:255',
     ];
 
 
@@ -44,6 +49,11 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region Populate Data methods
+    public function MatlUom()
+    {
+        return $this->hasMany(MatlUom::class, 'matl_id');
+    }
+
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
     {
         $this->resetAfterCreate = !$searchMode;
@@ -62,6 +72,8 @@ class MaterialComponent extends BaseComponent
             'materials.type_code'      => $this->trans('jenis'),
             'materials.name'      => $this->trans('name'),
             'materials.brand'      => $this->trans('brand'),
+            'materials.reserved'      => $this->trans('reserved'),
+            'materials.tag'      => $this->trans('tag'),
             'materials.category'      => $this->trans('category'),
             'materials.remark'      => $this->trans('remark'),
             'materials.jwl_cost' => $this->trans('jwl_cost'),
@@ -89,21 +101,35 @@ class MaterialComponent extends BaseComponent
         $this->reset('materials');
         $this->materials['brand'] = "";
         $this->materials['type_code'] = "";
+        $this->matl_uoms['matl_uom'] = 'PCS';
         $this->materials['code'] = '';
         $this->materials['class_code'] = '';
         $this->materials['markup'] = 0;
+        $this->reset('matl_uoms');
         $this->object = new Material();
+        $this->object_uoms = new MatlUom();
     }
     protected function loadMaterial($objectId)
     {
         $this->object = Material::find($objectId);
+
         if ($this->object) {
             $this->materials = $this->object->toArray(); // Atau sesuaikan dengan cara Anda mengisi data
+            $this->object_uoms = $this->object->MatlUom[0] ?? new MatlUom();
+            $this->materials = populateArrayFromModel($this->object);
+            $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+
+            // Decode the JSON from 'specs' and assign to $this->materials
+            $decodedData = json_decode($this->object->specs, true);
+            $this->materials['size'] = $decodedData['size'] ?? null;
+            $this->materials['pattern'] = $decodedData['pattern'] ?? null;
+            $this->materials['point'] = $decodedData['point'] ?? null;
         } else {
             // Tangani jika material tidak ditemukan
             $this->dispatch('error', 'Material tidak ditemukan.');
         }
     }
+
 
     public function render()
     {
@@ -162,11 +188,15 @@ class MaterialComponent extends BaseComponent
 
         $dataToSave['size'] = $this->materials['size'] ?? null;
         $dataToSave['pattern'] = $this->materials['pattern'] ?? null;
+        $dataToSave['point'] = $this->materials['point'] ?? null;
+
 
         $this->materials['specs'] = $dataToSave;
 
         $this->object->fillAndSanitize($this->materials);
         $this->object->save();
+        $this->saveUOMs();
+
     }
 
     private function validateMaterialCode()
@@ -199,6 +229,13 @@ class MaterialComponent extends BaseComponent
                 $configSnum->save();
             }
         }
+    }
+    private function saveUOMs()
+    {
+        $this->matl_uoms['matl_id'] = $this->object->id;
+        $this->matl_uoms['matl_code'] = $this->object->code;
+        $this->object_uoms->fillAndSanitize($this->matl_uoms);
+        $this->object_uoms->save();
     }
 
 
@@ -242,11 +279,6 @@ class MaterialComponent extends BaseComponent
         }
     }
 
-
-    private function saveUOMs()
-    {
-        $this->save();
-    }
 
     private function prepareBOMData($bomData, $index)
     {
@@ -385,6 +417,56 @@ class MaterialComponent extends BaseComponent
             return;
         }
         $this->materials['markup'] = Material::calculateMarkup($this->materials['buying_price'], $this->materials['jwl_selling_price_usd']);
+    }
+    public function tagScanned($tags)
+    {
+        if (!isset($this->object->id)) {
+            $this->dispatch('error', "Harap save barang terlebih dahulu!");
+            return;
+        }
+
+        if (isset($tags)) {
+            $tagCount = count($tags);
+            if ($tagCount > 1) {
+                // Show error message with the number of tags
+                $this->dispatch('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
+            } else {
+                // Process a single tag
+                if (!$this->isUniqueBarcode($tags)) {
+                    $this->dispatch('error', 'RFID telah digunakan sebelumnya');
+                } else {
+                    $this->matl_uoms['barcode'] = $tags[0];
+                    $this->saveUOMs();
+                    $this->dispatch('success', 'RFID berhasil discan');
+                }
+            }
+        }
+    }
+
+    protected function isUniqueBarcode($barcode)
+    {
+        $query = MatlUom::where('barcode', $barcode);
+        if (isset($this->object_id)) {
+            $query->where('matl_id', '!=', $this->object_id);
+        }
+
+        return !$query->exists();
+    }
+
+    public function printBarcode()
+    {
+        if (!isset($this->object->id)) {
+            $this->dispatch('error', "Harap save barang terlebih dahulu!");
+            return;
+        }
+
+        $url = route($this->appCode.'.Master.Material.PrintPdf', [
+            "action" => encryptWithSessionKey('Edit'),
+            "objectId" => encryptWithSessionKey($this->object->id)
+        ]);
+        $this->dispatch('open-print-tab', [
+            'url' => $url
+        ]);
     }
     #endregion
 
