@@ -54,12 +54,10 @@ class IndexDataTable extends BaseDataTableComponent
                 }),
             Column::make($this->trans('name'), 'name')->searchable()->sortable(),
             Column::make($this->trans('address'), 'address')->searchable()->sortable(),
-            Column::make($this->trans('status'), 'status_code')
-                ->searchable()
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
-                }),
+
+            BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
+                return $value === null;
+            }),
             Column::make($this->trans('created_date'), 'created_at')->sortable(),
             Column::make($this->trans('actions'), 'id')->format(function ($value, $row, Column $column) {
                 return view('layout.customs.data-table-action', [
@@ -94,16 +92,35 @@ class IndexDataTable extends BaseDataTableComponent
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where('grp', $value);
                 }),
-            SelectFilter::make('Status', 'Status')
+            SelectFilter::make('Stock', 'stock_filter')
                 ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active',
+                    'all' => 'All',
+                    'above_0' => 'Available',
+                    'below_0' => 'Out of Stock',
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') {
-                        $builder->withoutTrashed();
-                    } elseif ($value === '1') {
-                        $builder->onlyTrashed();
+                    if ($value === 'above_0') {
+                        $builder->whereHas('IvtBal', function ($query) {
+                            $query->where('qty_oh', '>', 0);
+                        });
+                    } elseif ($value === 'below_0') {
+                        $builder->where(function ($query) {
+                            $query->whereDoesntHave('IvtBal')->orWhereHas('IvtBal', function ($query) {
+                                $query->where('qty_oh', '<=', 0);
+                            });
+                        });
+                    }
+                }),
+            SelectFilter::make('Status', 'status_filter')
+                ->options([
+                    'active' => 'Active',
+                    'deleted' => 'Non Active',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === 'active') {
+                        $builder->whereNull('deleted_at');
+                    } elseif ($value === 'deleted') {
+                        $builder->whereNotNull('deleted_at');
                     }
                 }),
         ];

@@ -84,7 +84,10 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Barcode', 'id')->format(fn($value, $row) => $row->MatlUom[0]->barcode ?? '')->sortable(),
 
             Column::make('Remarks', 'remarks')->sortable(),
-
+            BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
+                return $value === null;
+            }),
+            Column::make($this->trans('created_date'), 'created_at')->sortable(),
             Column::make('Action', 'id')->format(function ($value, $row, $column) {
                 return view('layout.customs.data-table-action', [
                     'row' => $row,
@@ -157,6 +160,26 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->setWireLive(true),
+
+            SelectFilter::make('Stock', 'stock_filter')
+                ->options([
+                    'all' => 'All',
+                    'above_0' => 'Available',
+                    'below_0' => 'Out of Stock',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === 'above_0') {
+                        $builder->whereHas('IvtBal', function ($query) {
+                            $query->where('qty_oh', '>', 0);
+                        });
+                    } elseif ($value === 'below_0') {
+                        $builder->where(function ($query) {
+                            $query->whereDoesntHave('IvtBal')->orWhereHas('IvtBal', function ($query) {
+                                $query->where('qty_oh', '<=', 0);
+                            });
+                        });
+                    }
+                }),
         ];
     }
 

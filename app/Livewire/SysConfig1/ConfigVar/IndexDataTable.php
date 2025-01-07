@@ -3,6 +3,7 @@ namespace App\Livewire\SysConfig1\ConfigVar;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use App\Models\SysConfig1\ConfigVar;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
@@ -56,6 +57,10 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Default Value"), "default_value")
                 ->searchable()
                 ->sortable(),
+                BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
+                }),
             Column::make($this->trans('Created Date'), 'created_at')
                 ->sortable(),
             Column::make($this->trans('Actions'), 'id')
@@ -100,14 +105,17 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Var Group', 'var_group', 'Cari Var Group', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(var_group)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            SelectFilter::make('Status', 'Status')
-                ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
-                }),
+            SelectFilter::make('Status', 'status_filter')
+            ->options([
+                'active' => 'Active',
+                'deleted' => 'Non Active',
+            ])->filter(function (Builder $builder, string $value) {
+                if ($value === 'active') {
+                    $builder->whereNull('deleted_at');
+                } elseif ($value === 'deleted') {
+                    $builder->whereNotNull('deleted_at');
+                }
+            }),
         ];
     }
 }

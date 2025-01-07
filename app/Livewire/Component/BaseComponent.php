@@ -134,7 +134,7 @@ class BaseComponent extends Component
     private function handleEditViewAction()
     {
         if ($this->object) {
-            if ($this->object->is_deleted === null) {
+            if ($this->object->deleted_at === null) {
                 $this->status = 'Active';
             } else {
                 $this->status = Status::getStatusString($this->object->status_code);
@@ -147,7 +147,7 @@ class BaseComponent extends Component
     private function handleCreateAction()
     {
         if ($this->objectIdValue !== null && $this->object) {
-            if ($this->object->is_deleted === null) {
+            if ($this->object->deleted_at === null) {
                 $this->status = 'Active';
             } else {
                 $this->status = Status::getStatusString($this->object->status_code);

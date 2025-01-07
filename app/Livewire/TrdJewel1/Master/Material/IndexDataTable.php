@@ -66,9 +66,10 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
 
-            BooleanColumn::make($this->trans('Status'), 'status_code')->setCallback(function ($value) {
-                return $value === Status::ACTIVE;
-            }),
+            BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
+                }),
             Column::make($this->trans('created_date'), 'created_at')->sortable(),
             Column::make($this->trans('action'), 'id')->format(function ($value, $row, Column $column) {
                 return view('layout.customs.data-table-action', [
@@ -92,17 +93,16 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->where(DB::raw('UPPER(code)'), '=', strtoupper($value));
             }),
             SelectFilter::make('Status', 'status_filter')
-                ->options([
-                    'active' => 'Active',
-                    'non_active' => 'Non Active',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value === 'active') {
-                        $builder->withoutTrashed()->where('status_code', Status::ACTIVE);
-                    } elseif ($value === 'non_active') {
-                        $builder->onlyTrashed()->where('status_code', '!=', Status::ACTIVE);
-                    }
-                }),
+            ->options([
+                'active' => 'Active',
+                'deleted' => 'Non Active',
+            ])->filter(function (Builder $builder, string $value) {
+                if ($value === 'active') {
+                    $builder->whereNull('deleted_at');
+                } elseif ($value === 'deleted') {
+                    $builder->whereNotNull('deleted_at');
+                }
+            }),
             SelectFilter::make('Stock', 'stock_filter')
                 ->options([
                     'all' => 'All',
