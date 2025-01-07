@@ -124,9 +124,9 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
 
-            BooleanColumn::make($this->trans('Status'), 'status_code')->setCallback(function ($value) {
-                return $value === Status::ACTIVE;
-            }),
+                BooleanColumn::make($this->trans('Status'), 'status_code')->setCallback(function ($value) {
+                    return $value === Status::COMPLETED;
+                }),
             // Column::make($this->trans("created_date"), "created_at")
             //     ->searchable()
             //     ->sortable(),

@@ -190,6 +190,7 @@ class MaterialComponent extends BaseComponent
         $this->reset('matl_boms');
         $this->object = new Material();
         $this->object_uoms = new MatlUom();
+        $this->object_uoms =
         $this->object_boms = [];
         $this->deletedItems = [];
         $this->capturedImages = [];

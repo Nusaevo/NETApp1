@@ -134,7 +134,12 @@ class BaseComponent extends Component
     private function handleEditViewAction()
     {
         if ($this->object) {
-            $this->status = Status::getStatusString($this->object->status_code);
+            if ($this->object->is_deleted === null) {
+                $this->status = 'Active';
+            } else {
+                $this->status = Status::getStatusString($this->object->status_code);
+            }
+
             $this->VersionNumber = $this->object->version_number;
         }
     }
@@ -142,11 +147,15 @@ class BaseComponent extends Component
     private function handleCreateAction()
     {
         if ($this->objectIdValue !== null && $this->object) {
-            $this->status = Status::getStatusString($this->object->status_code);
+            if ($this->object->is_deleted === null) {
+                $this->status = 'Active';
+            } else {
+                $this->status = Status::getStatusString($this->object->status_code);
+            }
+
             $this->VersionNumber = $this->object->version_number;
         }
     }
-
 
     // Translate method
     public function getRoute()

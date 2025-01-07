@@ -102,7 +102,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
             BooleanColumn::make($this->trans('Status'), 'status_code')->setCallback(function ($value) {
-                return $value === Status::ACTIVE;
+                return $value === Status::COMPLETED;
             }),
             Column::make('Actions', 'id')->format(function ($value, $row, Column $column) {
                 return view('layout.customs.data-table-action', [
