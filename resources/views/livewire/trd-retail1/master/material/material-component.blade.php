@@ -17,7 +17,6 @@
 
                     <!-- Main Form Section -->
                     <div class="col-md-8">
-
                         <x-ui-card title="Images">
                             <x-ui-padding>
                                 <div class="material-info-container">
@@ -51,6 +50,10 @@
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
                                     type="text" :action="$actionValue" required="true" enabled="true" />
+                            </div>
+                            <div class="row">
+                                <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="materials.category"
+                                    :options="$materialCategories" :enabled="$panelEnabled" required="true" onChanged="onCategoryChanged" />
                                 <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
                                     type="code" :action="$actionValue" required="true" :enabled="$panelEnabled"
                                     clickEvent="getMatlCode" buttonName="Get Code" />
@@ -72,8 +75,7 @@
                     <!-- Sidebar Section -->
                     <div class="col-md-4">
                         <x-ui-card title="Associations">
-                            <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="materials.category"
-                                :options="$materialCategories" :enabled="$panelEnabled" required="true" onChanged="onCategoryChanged" />
+
                             <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
                                 :action="$actionValue" required="true" enabled="true" />
                             <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
