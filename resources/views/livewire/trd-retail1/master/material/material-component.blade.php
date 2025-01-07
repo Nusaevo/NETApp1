@@ -15,50 +15,8 @@
                 <div class="row mt-4">
 
 
-                    <!-- Sidebar Section -->
-                    <div class="col-md-4">
-                        <x-ui-card title="Associations">
-                            <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="materials.category"
-                                :options="$materialCategories" :enabled="$panelEnabled" required="true" onChanged="onCategoryChanged" />
-                            <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
-                                :action="$actionValue" required="true" enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
-                                type="text" :action="$actionValue" required="true" enabled="true" />
-                        </x-ui-card>
-
-                        <x-ui-card title="Pricing">
-                            <x-ui-text-field label="{{ $this->trans('selling_price') }}"
-                                model="materials.selling_price" type="number" :action="$actionValue" required="false"
-                                enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.buying_price"
-                                type="number" :action="$actionValue" required="false" enabled="true" />
-                            <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs" type="number"
-                                :action="$actionValue" required="true" enabled="true" />
-                        </x-ui-card>
-
-                        <x-ui-card title="Tagging">
-                            <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag" type="text"
-                                :action="$actionValue" required="false" enabled="false" />
-                        </x-ui-card>
-                    </div>
                     <!-- Main Form Section -->
                     <div class="col-md-8">
-                        <x-ui-card title="Main Information">
-                            <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                    type="text" :action="$actionValue" required="true" enabled="true" />
-                                <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
-                                    type="code" :action="$actionValue" required="true" :enabled="$panelEnabled"
-                                    clickEvent="getMatlCode" buttonName="Get Code" />
-                            </div>
-
-                            <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
-                                    type="text" :action="$actionValue" enabled="true" />
-                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
-                                    type="text" :action="$actionValue" required="true" enabled="false" />
-                            </div>
-                        </x-ui-card>
 
                         <x-ui-card title="Images">
                             <x-ui-padding>
@@ -89,16 +47,56 @@
                                 </div>
                             </x-ui-padding>
                         </x-ui-card>
-
-                        <x-ui-card title="Additional Information">
+                        <x-ui-card title="Main Information">
+                            <div class="row">
+                                <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
+                                    type="text" :action="$actionValue" required="true" enabled="true" />
+                                <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
+                                    type="code" :action="$actionValue" required="true" :enabled="$panelEnabled"
+                                    clickEvent="getMatlCode" buttonName="Get Code" />
+                            </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('color_code') }}" model="materials.color_code"
                                     type="text" :action="$actionValue" required="false" enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('color_name') }}" model="materials.color_name"
                                     type="text" :action="$actionValue" required="false" enabled="true" />
                             </div>
+                        </x-ui-card>
+
+                        <x-ui-card title="Additional Information">
                             <x-ui-text-field label="{{ $this->trans('remarks') }}" model="materials.remarks"
                                 type="textarea" :action="$customActionValue" />
+                        </x-ui-card>
+                    </div>
+
+                    <!-- Sidebar Section -->
+                    <div class="col-md-4">
+                        <x-ui-card title="Associations">
+                            <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="materials.category"
+                                :options="$materialCategories" :enabled="$panelEnabled" required="true" onChanged="onCategoryChanged" />
+                            <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand" type="text"
+                                :action="$actionValue" required="true" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('type_code') }}" model="materials.type_code"
+                                type="text" :action="$actionValue" required="true" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
+                                type="text" :action="$actionValue" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock" type="text"
+                                :action="$actionValue" required="false" enabled="false" />
+                        </x-ui-card>
+
+                        <x-ui-card title="Pricing">
+                            <x-ui-text-field label="{{ $this->trans('selling_price') }}"
+                                model="materials.selling_price" type="number" :action="$actionValue" required="false"
+                                enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('buying_price') }}" model="materials.buying_price"
+                                type="number" :action="$actionValue" required="false" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs" type="number"
+                                :action="$actionValue" required="true" enabled="true" />
+                        </x-ui-card>
+
+                        <x-ui-card title="Tagging">
+                            <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag" type="text"
+                                :action="$actionValue" required="false" enabled="false" />
                         </x-ui-card>
                     </div>
                 </div>

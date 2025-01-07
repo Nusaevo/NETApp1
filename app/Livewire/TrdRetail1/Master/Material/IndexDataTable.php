@@ -4,6 +4,7 @@ namespace App\Livewire\TrdRetail1\Master\Material;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use App\Models\TrdRetail1\Master\Material;
 use App\Models\Util\GenericExport;
 use App\Models\Util\GenericExcelExport;
@@ -265,12 +266,7 @@ class IndexDataTable extends BaseDataTableComponent
 
                     $filename = uniqid() . '.jpg';
 
-                    $filePath = Attachment::saveAttachmentByFileName(
-                        $dataUri,
-                        $material->id,
-                        class_basename($material),
-                        $filename
-                    );
+                    $filePath = Attachment::saveAttachmentByFileName($dataUri, $material->id, class_basename($material), $filename);
 
                     if ($filePath !== false) {
                         $this->syncedImages[] = [
@@ -321,5 +317,4 @@ class IndexDataTable extends BaseDataTableComponent
 
         $this->dispatch('syncComplete');
     }
-
 }

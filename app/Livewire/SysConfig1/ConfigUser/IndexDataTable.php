@@ -3,6 +3,7 @@ namespace App\Livewire\SysConfig1\ConfigUser;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\SysConfig1\ConfigUser;
@@ -16,7 +17,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
+        $this->customRoute = '';
         $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
@@ -26,36 +27,25 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("LoginID"), "code")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Name"), "name")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Email"), "email")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Status"), "status_code")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value) {
-                    return Status::getStatusString($value);
-                }),
-            Column::make($this->trans('Created Date'), 'created_at')
-                ->sortable(),
-            Column::make($this->trans('Actions'), 'id')
-                ->format(function ($value, $row) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
-                    ]);
-                }),
+            Column::make($this->trans('LoginID'), 'code')->searchable()->sortable(),
+            Column::make($this->trans('Name'), 'name')->searchable()->sortable(),
+            Column::make($this->trans('Email'), 'email')->searchable()->sortable(),
+            BooleanColumn::make($this->trans('Status'), 'status_code')->setCallback(function ($value) {
+                return $value === Status::ACTIVE;
+            }),
+            Column::make($this->trans('Created Date'), 'created_at')->sortable(),
+            Column::make($this->trans('Actions'), 'id')->format(function ($value, $row) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                    'custom_actions' => [],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => true,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
 
@@ -71,13 +61,17 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nama', 'name', 'Cari Nama User', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            SelectFilter::make('Status', 'Status')
+            SelectFilter::make('Status', 'status_filter')
                 ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
+                    'active' => 'Active',
+                    'non_active' => 'Non Active',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === 'active') {
+                        $builder->withoutTrashed()->where('status_code', Status::ACTIVE);
+                    } elseif ($value === 'non_active') {
+                        $builder->onlyTrashed()->where('status_code', '!=', Status::ACTIVE);
+                    }
                 }),
         ];
     }

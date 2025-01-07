@@ -183,6 +183,7 @@ use App\Models\TrdJewel1\Master\Material;
     <x-ui-footer>
         <div class="row">
             <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode" type="text" :action="$actionValue" required="false" placeHolder="Enter Barcode" enabled="false" />
+
         </div>
         {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
 

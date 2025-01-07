@@ -4,6 +4,7 @@ namespace App\Livewire\SysConfig1\ConfigApplication;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use App\Models\SysConfig1\ConfigAppl;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
@@ -46,11 +47,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Latest Version"), "latest_version")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Status"), "status_code")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value) {
-                    return Status::getStatusString($value);
+            BooleanColumn::make($this->trans("Status"), "status_code")
+                ->setCallback(function ($value) {
+                    return $value === Status::ACTIVE;
                 }),
             Column::make($this->trans('Created Date'), 'created_at')
                 ->sortable(),
@@ -79,14 +78,19 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nama', 'name', 'Cari Nama Aplikasi', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            SelectFilter::make('Status', 'Status')
-                ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
-                }),
+            SelectFilter::make('Status', 'status_filter')
+            ->options([
+                'active' => 'Active',
+                'non_active' => 'Non Active',
+            ])->filter(function (Builder $builder, string $value) {
+                if ($value === 'active') {
+                    $builder->withoutTrashed()
+                            ->where('status_code', Status::ACTIVE);
+                } elseif ($value === 'non_active') {
+                    $builder->onlyTrashed()
+                            ->where('status_code', '!=', Status::ACTIVE);
+                }
+            }),
         ];
     }
 }

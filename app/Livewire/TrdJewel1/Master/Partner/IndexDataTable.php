@@ -4,6 +4,7 @@ namespace App\Livewire\TrdJewel1\Master\Partner;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use App\Models\TrdJewel1\Master\Partner;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
@@ -18,11 +19,10 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
+        $this->customRoute = '';
         $this->getPermission($this->customRoute);
         $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
-
     }
 
     public function builder(): Builder
@@ -33,51 +33,45 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("code"), "code")
-            ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode.'.Master.Partner.Detail', [
-                        'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->id)
-                    ]) . '">' . $row->code . '</a>';
-            })
-            ->html(),
-            Column::make($this->trans('group'), "grp")
+            Column::make($this->trans('code'), 'code')
+                ->format(function ($value, $row) {
+                    return '<a href="' .
+                        route($this->appCode . '.Master.Partner.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->id),
+                        ]) .
+                        '">' .
+                        $row->code .
+                        '</a>';
+                })
+                ->html(),
+            Column::make($this->trans('group'), 'grp')
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
                     $configService = new ConfigService();
-                    return  $configService->getConstValueByStr1('PARTNERS_TYPE', $value) ?? '';
+                    return $configService->getConstValueByStr1('PARTNERS_TYPE', $value) ?? '';
                 }),
-            Column::make($this->trans('name'), "name")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans('address'), "address")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans('status'), "status_code")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
-                }),
-            Column::make($this->trans('created_date'), 'created_at')
-                ->sortable(),
-            Column::make($this->trans('actions'), 'id')
-                ->format(function ($value, $row, Column $column) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
-                    ]);
-                }),
+            Column::make($this->trans('name'), 'name')->searchable()->sortable(),
+            Column::make($this->trans('address'), 'address')->searchable()->sortable(),
+            BooleanColumn::make($this->trans('Status'), 'status_code')->setCallback(function ($value) {
+                return $value === Status::ACTIVE;
+            }),
+            Column::make($this->trans('created_date'), 'created_at')->sortable(),
+            Column::make($this->trans('actions'), 'id')->format(function ($value, $row, Column $column) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                    'custom_actions' => [],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => true,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
-
 
     public function filters(): array
     {
@@ -92,19 +86,21 @@ class IndexDataTable extends BaseDataTableComponent
                 ->options([
                     '' => 'All', // Opsi untuk semua grup
                     'V' => 'Supplier',
-                    'C' => 'Customer'
-                ])->filter(function (Builder $builder, string $value) {
+                    'C' => 'Customer',
+                ])
+                ->filter(function (Builder $builder, string $value) {
                     $builder->where('grp', $value);
                 }),
-            SelectFilter::make('Status', 'Status')
+            SelectFilter::make('Status', 'status_filter')
                 ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') {
-                        $builder->withoutTrashed();
-                    } else if ($value === '1') {
-                        $builder->onlyTrashed();
+                    'active' => 'Active',
+                    'non_active' => 'Non Active',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === 'active') {
+                        $builder->withoutTrashed()->where('status_code', Status::ACTIVE);
+                    } elseif ($value === 'non_active') {
+                        $builder->onlyTrashed()->where('status_code', '!=', Status::ACTIVE);
                     }
                 }),
         ];

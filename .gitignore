@@ -1,3 +1,4 @@
+# Laravel Specific
 /node_modules
 /public/build
 /public/hot
@@ -21,15 +22,11 @@ _ide_helper_models.php
 .phpstorm.meta.php
 composer.lock
 package-lock.json
-### macOS ###
-# General
+
+# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+
 # Livewire and Laravel Mix
-/public/mix-manifest.json
-/public/vendor/livewire/livewire.esm.js
-/public/vendor/livewire/livewire.js
-/public/vendor/livewire/livewire.min.js
-/public/vendor/livewire/livewire.min.js.map
-/public/vendor/livewire/manifest.json
+/public/vendor/livewire/*
