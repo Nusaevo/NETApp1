@@ -109,8 +109,9 @@
                         <!-- Right Section -->
                         <div class="col-md-4">
                             <x-ui-card title="Point">
-                                <x-ui-checklist label="Multiple Options Checklist" model="inputs.partner_chars"
-                                    :options="['IRC' => 'Poin IRC', 'GT' => 'Poin GT', 'ZN' => 'Poin ZN']" required="false" layout="horizontal" enabled="true"
+                                <x-ui-option label="Multiple Options Checklist" model="inputs.partner_chars"
+                                    :options="['IRC' => 'Poin IRC', 'GT' => 'Poin GT', 'ZN' => 'Poin ZN']"
+                                    required="false" layout="horizontal" enabled="true" type="checkbox"
                                     visible="true" />
                             </x-ui-card>
                             <x-ui-card title="Description">
