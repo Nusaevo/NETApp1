@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use App\Services\TrdTire1\Master\MasterService;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class Detail extends BaseComponent
 {
@@ -16,6 +17,11 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $PartnerType = [];
     protected $masterService;
+    protected $defaultPartnerChars = [
+        'IRC' => false,
+        'GT' => false,
+        'ZN' => false,
+    ];
 
     public $rules  = [
         'inputs.grp' => 'required|string|min:1|max:50',
@@ -24,8 +30,6 @@ class Detail extends BaseComponent
         'inputs.country' => 'required|string|min:1|max:50',
         'inputs.province' => 'required|string|min:1|max:50',
         'inputs.city' => 'required|string|min:1|max:50',
-        'inputs.phone' => 'required|string|min:1|max:50',
-        'inputs.email' => 'required|string|min:1|max:50',
         // 'inputs.code' => [
         //     'required',
         //     'string',
@@ -61,26 +65,22 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
 
         $this->PartnerType = $this->masterService->getPartnerTypeData();
-        if($this->isEditOrView())
-        {
+        if ($this->isEditOrView()) {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $decodedData = json_decode($this->object->partner_chars, true);
-            switch ($this->object->grp) {
-                case Partner::CUSTOMER:
-                    $this->inputs['ring_size'] = $decodedData['ring_size'] ?? null;
-                    $this->inputs['partner_ring_size'] = $decodedData['partner_ring_size'] ?? null;
-                    break;
-            }
+            $this->inputs['partner_chars'] = array_replace(
+                $this->defaultPartnerChars,
+                $this->object->partner_chars ?? []
+            );
         }
     }
 
     public function onReset()
     {
         $this->reset('inputs');
-        $this->inputs['grp'] = null;
-        $this->inputs['code'] = "";
         $this->object = new Partner();
+        $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['partner_chars'] = $this->defaultPartnerChars;
     }
 
     public function render()
@@ -120,12 +120,6 @@ class Detail extends BaseComponent
         if (isNullOrEmptyString($this->inputs['code'])) {
             $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
         }
-        $dataToSave = [];
-        if (in_array($this->inputs['grp'], [Partner::CUSTOMER])) {
-            $dataToSave['ring_size'] = $this->inputs['ring_size'] ?? null;
-            $dataToSave['partner_ring_size'] = $this->inputs['partner_ring_size'] ?? null;
-        }
-        $this->inputs['specs'] = json_encode($dataToSave);
         $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }

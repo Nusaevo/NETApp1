@@ -18,6 +18,10 @@ class Partner extends BaseModel
     const BANK = 'B';
     use SoftDeletes;
 
+    public function details()
+    {
+        return $this->hasMany(PartnerDetail::class, 'partner_id');
+    }
 
 
     public static function boot()
@@ -40,7 +44,7 @@ class Partner extends BaseModel
         'point_irc',
         'point_gt',
         'point_zn',
-        'desc',
+        'note',
         'grp',
         'code',
         'name',
@@ -55,7 +59,6 @@ class Partner extends BaseModel
         'tax_npwp',
         'tax_nppkp',
         'tax_address',
-        'pic_id',
         'pic_grp',
         'pic_code',
         'info',
@@ -71,6 +74,23 @@ class Partner extends BaseModel
         return $this->belongsTo(OrderHdr::class, 'partner_id', 'id');
     }
     #endregion
+
+      // Mutator for partner_chars
+      public function setPartnerCharsAttribute($value)
+      {
+          // Convert the array to JSON before saving to the database
+          $this->attributes['partner_chars'] = json_encode($value);
+      }
+
+      // Accessor for partner_chars
+      public function getPartnerCharsAttribute($value)
+      {
+          // Convert the JSON back to an array when retrieving from the database
+          return json_decode($value, true);
+      } 
+    protected $casts = [
+        'partner_chars' => 'array', // Mengonversi JSON ke array
+    ];
 
     public function scopeGetActiveData()
     {
@@ -96,5 +116,12 @@ class Partner extends BaseModel
         } else {
             return $initialCode . '1';
         }
+    }
+
+    // Fungsi untuk menghasilkan nama material, bisa dipanggil di dalam model ini
+    protected function generateName($brand, $size, $pattern)
+    {
+        // Logika untuk menghasilkan nama berdasarkan nama, ukuran, dan pola
+        return $brand . ' ' . $size . ' ' . $pattern;
     }
 }

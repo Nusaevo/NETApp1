@@ -9,6 +9,7 @@ use App\Models\TrdTire1\Master\MatlUom;
 use Exception;
 use Livewire\WithFileUploads;
 use App\Enums\Status;
+use App\Models\TrdTire1\Master\Partner;
 use App\Services\TrdTire1\Master\MasterService;
 
 class MaterialComponent extends BaseComponent
@@ -32,7 +33,6 @@ class MaterialComponent extends BaseComponent
         'materials.code' => 'required|string|max:255',
         'materials.type_code' => 'required|string|max:255',
         'materials.category' => 'required|string|max:255',
-        'materials.name' => 'required|string|max:255',
         'materials.reserved' => 'required|string|max:255',
         'materials.tag' => 'required|string|max:255',
     ];
@@ -44,7 +44,8 @@ class MaterialComponent extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'tagScanned' => 'tagScanned',
         'resetMaterial' => 'onReset',
-        'onPartnerChanged' => 'onPartnerChanged'
+        'onPartnerChanged' => 'onPartnerChanged',
+        'onNameChanged' => 'onNameChanged'  // Listen to onNameChanged
     ];
     #endregion
 
@@ -130,7 +131,6 @@ class MaterialComponent extends BaseComponent
         }
     }
 
-
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
@@ -178,7 +178,7 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
-
+        $this->generateName();
         if ($this->object->isNew()) {
             $this->validateMaterialCode();
         }
@@ -332,6 +332,11 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region Component Events
+
+    public function generateName()
+    {
+        $this->materials['name'] = Partner::generateName($this->materials['brand'], $this->materials['size'], $this->materials['pattern']);
+    }
 
     public function onBrandChanged()
     {

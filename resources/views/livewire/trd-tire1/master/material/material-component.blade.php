@@ -20,37 +20,32 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
-                                        :options="$materialMerk" required="false" :action="$customActionValue" />
-                                    <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
-                                        type="code" :action="$actionValue" required="true" enabled="true"
-                                        clickEvent="getMatlCode" buttonName="Kode Baru" />
-                                </div>
-                                <div class="row">
+                                        :options="$materialMerk" required="false" :action="$customActionValue" onChanged="generateName"/>
                                     <x-ui-dropdown-select label="{{ $this->trans('category') }}"
                                         model="materials.category" :options="$materialType" required="true" :action="$actionValue"
                                         onChanged="onBrandChanged" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
+                                        type="code" :action="$actionValue" required="true" enabled="true"
+                                        clickEvent="getMatlCode" buttonName="Kode Baru" />
                                     <x-ui-dropdown-select label="{{ $this->trans('type_code') }}"
                                         model="materials.type_code" :options="$materialJenis" required="false"
                                         :action="$customActionValue" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                        type="text" :action="$customActionValue" required="true" enabled="true" />
+                                        type="text" :action="$customActionValue" onChanged="generateName" enabled="true"/>
                                 </div>
-                                <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
-                                        type="number" :action="$customActionValue" required="false" enabled="true" />
-                                </div>
-                            </x-ui-padding>
-                        </x-ui-card>
-
-                        <x-ui-card title="Additional Information">
-                            <x-ui-padding>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
-                                        type="text" :action="$customActionValue" required="false" enabled="true" />
+                                        type="text" :action="$customActionValue" required="true" enabled="true" onChanged="generateName"/>
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('piece') }}" model="matl_uoms.barcode"
+                                        type="number" :action="$customActionValue" required="false" enabled="true"/>
                                     <x-ui-text-field label="{{ $this->trans('pattern') }}" model="materials.pattern"
-                                        type="text" :action="$customActionValue" required="false" enabled="true" />
+                                        type="text" :action="$customActionValue" required="false" enabled="true" onChanged="generateName"/>
                                     <x-ui-text-field label="{{ $this->trans('point') }}" model="materials.point"
                                         type="number" :action="$customActionValue" required="false" enabled="true" />
                                 </div>
@@ -72,8 +67,8 @@
                         <x-ui-card title="Pricing">
                             <x-ui-padding>
                                 <x-ui-text-field label="{{ $this->trans('selling_price') }}"
-                                    model="materials.selling_price" type="number" :action="$customActionValue"
-                                    required="true" enabled="true" />
+                                    model="materials.selling_price" type="number" :action="$customActionValue" required="true"
+                                    enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('buying_price') }}"
                                     model="materials.buying_price" type="number" :action="$customActionValue" required="true"
                                     enabled="true" />

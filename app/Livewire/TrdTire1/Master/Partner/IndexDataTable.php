@@ -92,7 +92,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->options([
                     '' => 'All', // Opsi untuk semua grup
                     'V' => 'Supplier',
-                    'C' => 'Customer'
+                    'C' => 'Customer',
+                    'I' => 'Asuransi',
+                    'B' => 'Bank',
+                    'A' => 'Agen'
                 ])->filter(function (Builder $builder, string $value) {
                     $builder->where('grp', $value);
                 }),
