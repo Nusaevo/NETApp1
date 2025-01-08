@@ -261,7 +261,7 @@ class Material extends BaseModel
                         'brand' => $brand,
                         'seq' => $no,
                         'type_code' => $type,
-                        'specs' => json_encode(['color_code' => $colorCode, 'color_name' => $colorName]),
+                        'specs' => ['color_code' => $colorCode, 'color_name' => $colorName],
                         'selling_price' => $sellingPrice,
                         'remarks' => $remarks,
                     ]);
@@ -294,7 +294,7 @@ class Material extends BaseModel
                     if ($material) {
                         // Perbarui data material
                         $material->update([
-                            'specs' => json_encode(['color_code' => $colorCode, 'color_name' => $colorName]),
+                            'specs' => ['color_code' => $colorCode, 'color_name' => $colorName],
                             'selling_price' => $sellingPrice,
                             'seq' => $no,
                             'name' => $materialName,
@@ -406,7 +406,7 @@ class Material extends BaseModel
     public function getTagAttribute()
     {
         // Extract color_code and color_name from specs
-        $specs = json_decode($this->specs, true) ?? [];
+        $specs = $this->specs ?? [];
         $colorCode = $specs['color_code'] ?? '';
         $colorName = $specs['color_name'] ?? '';
 

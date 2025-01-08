@@ -179,18 +179,20 @@ class MaterialComponent extends BaseComponent
     {
         $this->product_code = "";
         $this->reset('materials');
-        $this->materials['partner_id'] = 0;
-        $this->materials['jwl_category1'] = "";
-        $this->materials['jwl_category2'] = "";
-        $this->materials['jwl_carat'] = "";
-        $this->materials['code'] = '';
-        $this->matl_uoms['matl_uom'] = 'PCS';
-        $this->materials['markup'] = 0;
+        // $this->materials['partner_id'] = 0;
+        // $this->materials['jwl_category1'] = "";
+        // $this->materials['jwl_category2'] = "";
+        // $this->materials['jwl_carat'] = "";
+        // $this->materials['code'] = '';
+
         $this->reset('matl_uoms');
         $this->reset('matl_boms');
         $this->object = new Material();
         $this->object_uoms = new MatlUom();
-        $this->object_uoms =
+        $this->materials = populateArrayFromModel($this->object);
+        $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+        $this->matl_uoms['matl_uom'] = 'PCS';
+        $this->materials['markup'] = 0;
         $this->object_boms = [];
         $this->deletedItems = [];
         $this->capturedImages = [];
@@ -215,8 +217,7 @@ class MaterialComponent extends BaseComponent
 
                 $this->matl_boms[$key]['base_matl_id_value'] =  $baseMaterial->id;
                 $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
-
-                $decodedData = json_decode($detail->jwl_sides_spec, true);
+                $decodedData = $detail->jwl_sides_spec;
                 switch ($this->matl_boms[$key]['base_matl_id_note']) {
                     case Material::JEWELRY:
                         $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
@@ -494,7 +495,6 @@ class MaterialComponent extends BaseComponent
         $bomData['seq'] = $index + 1;
         $bomData['base_matl_id'] = $bomData['base_matl_id_value'];
         $bomData['jwl_sides_spec'] = $this->generateJWLSidesSpec($bomData);
-
         return $bomData;
     }
 
@@ -525,7 +525,7 @@ class MaterialComponent extends BaseComponent
             ];
         }
 
-        return json_encode($dataToSave);
+        return $dataToSave;
     }
 
     private function deleteRemovedItems()

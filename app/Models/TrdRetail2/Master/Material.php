@@ -249,7 +249,7 @@ class Material extends BaseModel
         $formattedDetail['base_matl_id_value'] = $baseMaterial->id;
         $formattedDetail['base_matl_id_note'] = $baseMaterial->note1;
 
-        $decodedData = json_decode($detail->jwl_sides_spec, true);
+        $decodedData = $detail->jwl_sides_spec;
 
         switch ($formattedDetail['base_matl_id_note']) {
             case self::JEWELRY:

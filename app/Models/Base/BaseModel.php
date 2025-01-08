@@ -43,6 +43,10 @@ class BaseModel extends Model
                     }
                 }
 
+                if (is_string($value) && isJsonFormat($value)) {
+                    $value = json_decode($value, true);
+                }
+
                 $model->{$attribute} = $value;
             }
         });
@@ -128,7 +132,7 @@ class BaseModel extends Model
                 $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
             } elseif (is_array($value)) {
                 // Encode Arrays as JSON
-                $sanitizedAttributes[$key] = json_encode($value);
+                $sanitizedAttributes[$key] = $value;
             } elseif (is_string($value)) {
                 // Trim Strings
                 $sanitizedAttributes[$key] = trim($value);

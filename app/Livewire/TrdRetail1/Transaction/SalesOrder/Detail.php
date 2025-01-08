@@ -99,7 +99,7 @@ class Detail extends BaseComponent
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             if ($this->object->print_settings) {
-                $savedSettings = json_decode($this->object->print_settings, true);
+                $savedSettings = $this->object->print_settings;
                 foreach ($this->printSettings as &$settings) {
                     foreach ($savedSettings as $savedSetting) {
                         if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
@@ -111,7 +111,7 @@ class Detail extends BaseComponent
             }
 
             if ($this->object->print_remarks) {
-                $savedSettings = json_decode($this->object->print_remarks, true);
+                $savedSettings = $this->object->print_remarks;
                 foreach ($this->printRemarks as &$settings) {
                     foreach ($savedSettings as $savedSetting) {
                         if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
@@ -256,8 +256,8 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->inputs['print_settings'] = json_encode($this->filterprintRemarks($this->printSettings));
-        $this->inputs['print_remarks'] = json_encode($this->filterprintRemarks($this->printRemarks));
+        $this->inputs['print_settings'] = $this->filterprintRemarks($this->printSettings);
+        $this->inputs['print_remarks'] = $this->filterprintRemarks($this->printRemarks);
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {

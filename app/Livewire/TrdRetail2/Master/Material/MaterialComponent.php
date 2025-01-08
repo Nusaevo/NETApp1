@@ -215,7 +215,7 @@ class MaterialComponent extends BaseComponent
                 $this->matl_boms[$key]['base_matl_id_value'] =  $baseMaterial->id;
                 $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
 
-                $decodedData = json_decode($detail->jwl_sides_spec, true);
+                $decodedData = $detail->jwl_sides_spec;
                 switch ($this->matl_boms[$key]['base_matl_id_note']) {
                     case Material::JEWELRY:
                         $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
@@ -525,7 +525,7 @@ class MaterialComponent extends BaseComponent
             ];
         }
 
-        return json_encode($dataToSave);
+        return $dataToSave;
     }
 
     private function deleteRemovedItems()

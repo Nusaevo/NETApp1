@@ -227,7 +227,7 @@ class IndexDataTable extends BaseDataTableComponent
         $materials = Material::whereIn('id', $selectedIds)->get();
         $data = $materials
             ->map(function ($material, $index) {
-                $specs = is_array($material->specs) ? $material->specs : json_decode($material->specs, true);
+                $specs = is_array($material->specs) ? $material->specs : $material->specs;
 
                 return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
             })

@@ -45,7 +45,7 @@ class MatlBom extends BaseModel
      */
     public function getDetailsAttribute()
     {
-        return $this->attributes['specs'] ? json_decode($this->attributes['details'], true) : null;
+        return $this->attributes['specs'] ? $this->attributes['details'] : null;
     }
 
     /**
@@ -56,7 +56,7 @@ class MatlBom extends BaseModel
      */
     public function setDetailsAttribute($value)
     {
-        $this->attributes['specs'] = $value ? json_encode($value) : null;
+        $this->attributes['specs'] = $value ? $value : null;
     }
     #endregion
 

@@ -59,7 +59,7 @@ class Detail extends BaseComponent
         {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $decodedData = json_decode($this->object->partner_chars, true);
+            $decodedData = $this->object->partner_chars;
             switch ($this->object->grp) {
                 case Partner::CUSTOMER:
                     $this->inputs['ring_size'] = $decodedData['ring_size'] ?? null;
@@ -88,6 +88,7 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
+        dd($this->inputs['grp']);
         // if (isset($this->inputs['code'])) {
         //     $existingPartner = Partner::where('code', $this->inputs['code'])
         //                               ->where('id', '!=', $this->object->id ?? null)
@@ -119,7 +120,7 @@ class Detail extends BaseComponent
             $dataToSave['ring_size'] = $this->inputs['ring_size'] ?? null;
             $dataToSave['partner_ring_size'] = $this->inputs['partner_ring_size'] ?? null;
         }
-        $this->inputs['specs'] = json_encode($dataToSave);
+        $this->inputs['specs'] = $dataToSave;
         $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }

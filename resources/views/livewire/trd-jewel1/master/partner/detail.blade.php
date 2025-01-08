@@ -20,7 +20,7 @@ use App\Models\TrdJewel1\Master\Partner;
                 <x-ui-card>
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code" type="code" :action="$actionValue" required="true" enabled="false" />
-                        <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" clickEvent="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" />
+                        <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" clickEvent="" model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue"/>
                     </div>
                     <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text" :action="$actionValue" required="true" placeHolder="Enter Name" />
                     <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea" :action="$actionValue" />

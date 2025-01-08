@@ -75,7 +75,7 @@ class MaterialComponent extends BaseComponent
         $this->materialType = $this->masterService->getMatlTypeData();
         $this->materialJenis = $this->masterService->getMatlJenisData();
         $this->materialMerk = $this->masterService->getMatlMerkData();
-        $decodedData = json_decode($this->object->specs, true);
+        $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
 
@@ -163,7 +163,7 @@ class MaterialComponent extends BaseComponent
         $dataToSave['size'] = $this->materials['size'] ?? null;
         $dataToSave['pattern'] = $this->materials['pattern'] ?? null;
 
-        $this->materials['specs'] = json_encode($dataToSave);
+        $this->materials['specs'] = $dataToSave;
 
         $this->object->fillAndSanitize($this->materials);
         $this->object->save();
@@ -287,7 +287,7 @@ class MaterialComponent extends BaseComponent
             ];
         }
 
-        return json_encode($dataToSave);
+        return $dataToSave;
     }
 
     // private function deleteRemovedItems()

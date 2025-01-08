@@ -56,7 +56,7 @@ class MatlBom extends BaseModel
      */
     public function setDetailsAttribute($value)
     {
-        $this->attributes['specs'] = $value ? json_encode($value) : null;
+        $this->attributes['specs'] = $value ? $value : null;
     }
     #endregion
 

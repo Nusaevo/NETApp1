@@ -11,7 +11,6 @@ use App\Enums\Constant;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
-
 /**
  * Manage table schema operations for a model.
  *
@@ -41,7 +40,7 @@ function schemaHelper($model, $column = null, $operation = 'columns')
             return Schema::connection($connection)->getColumnType($table, $column);
         }
     } catch (\Exception $e) {
-        logger()->error("Schema Helper Error: " . $e->getMessage());
+        logger()->error('Schema Helper Error: ' . $e->getMessage());
     }
 
     return null;
@@ -63,10 +62,11 @@ function populateArrayFromModel($model)
             $type = schemaHelper($model, $column, 'type') ?? 'string';
             $value = $model->{$column} ?? getDefaultValueForType($type);
 
-            if (is_string($value) && isJsonFormat($value)) {
-                $value = json_decode($value, true);
+            if ($column === 'id') {
+                $value = $model->{$column};
+            } else {
+                $value = $model->{$column} ?? getDefaultValueForType($type);
             }
-
             $data[$column] = $value;
         }
     }
@@ -85,36 +85,32 @@ function getDefaultValueForType($type)
     return match ($type) {
         // Tipe String
         'string', 'text', 'char', 'varchar' => '',
-
         // Tipe Numerik
-        'integer', 'bigint', 'smallint', 'tinyint', 'numeric' => 0,
+        'integer', 'bigint', 'smallint', 'tinyint', 'numeric', 'int', 'int2', 'int4', 'int8' => 0,
         'decimal', 'float', 'double' => 0.0,
-
         // Tipe Boolean
         'boolean' => false,
-
         // Tipe JSON
         'json', 'jsonb' => [],
-
         // Tipe Waktu dan Tanggal
         'datetime', 'date', 'time', 'timestamp' => now(),
-
         // Default
         default => null,
     };
 }
 
-
-/**
- * Check if a string is in JSON format.
- *
- * @param string $string
- * @return bool
- */
-function isJsonFormat($string)
-{
-    json_decode($string);
-    return json_last_error() === JSON_ERROR_NONE;
+if (!function_exists('isJsonFormat')) {
+    /**
+     * Check if a string is in JSON format.
+     *
+     * @param string $string
+     * @return bool
+     */
+    function isJsonFormat($string)
+    {
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
+    }
 }
 
 if (!function_exists('imagePath')) {

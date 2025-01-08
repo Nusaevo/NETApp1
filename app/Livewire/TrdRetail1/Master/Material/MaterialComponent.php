@@ -125,7 +125,7 @@ class MaterialComponent extends BaseComponent
             $this->materials = populateArrayFromModel($this->object);
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             $attachments = $this->object->Attachment;
-            $specs = json_decode($this->object->specs, true) ?? [];
+            $specs = $this->object->specs ?? [];
             $this->materials['color_code'] = $specs['color_code'] ?? '';
             $this->materials['color_name'] = $specs['color_name'] ?? '';
             $this->materials['stock'] = $this->object->Stock;
@@ -150,10 +150,10 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $this->materials['specs'] = json_encode([
+        $this->materials['specs'] = [
             'color_code' => $this->materials['color_code'] ?? '',
             'color_name' => $this->materials['color_name'] ?? '',
-        ]);
+        ];
         $this->masterService = new MasterService();
         $this->materials['name'] = $this->masterService->getMatlCategoryString($this->materials['category']). ' '
         . $this->materials['brand'] . ' '
