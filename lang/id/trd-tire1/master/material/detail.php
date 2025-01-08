@@ -11,9 +11,10 @@ return [
     'jual' => 'Harga Jual',
     'cost' => 'Hpp',
     'wgt' => 'Pattern',
+    'piece' => 'Satuan',
     'selling_price' => 'Harga Jual (IDR)',
     'buying_price' => 'Harga Beli (IDR)',
-
+    'point' => 'Point',
     'dimension' => 'Ukuran',
     'side_materials' => 'Bahan',
     'product' => 'Produk',

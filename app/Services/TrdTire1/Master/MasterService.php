@@ -98,6 +98,11 @@ class MasterService extends BaseService
         $data = $this->getConfigData('MMATL_MERK');
         return $this->mapData($data);
     }
+    public function getPartnerTypeData()
+    {
+        $data = $this->getConfigData('MPARTNER_TYPE');
+        return $this->mapData($data);
+    }
 
     public function getMatlCategory2String( $str1)
     {
@@ -113,38 +118,6 @@ class MasterService extends BaseService
         return $data ? $data->str2 : null;
     }
 
-    public function getMatlJewelPurityData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GOLDPURITY');
-        return $this->mapData($data);
-    }
-
-    public function getMatlJewelPurityString( $str1)
-    {
-        $data = $this->mainConnection
-            ->table('config_consts')
-            ->select('str1', 'str2')
-            ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
-
-            ->where('str1', $str1)
-            ->whereNull('deleted_at')
-            ->first();
-
-        return $data ? $data->str1 . " - " . $data->str2 : null;
-    }
-
-
-    public function getMatlBaseMaterialData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_COMPONENTS');
-        return $data->map(function ($item) {
-            return [
-                'label' => $item->str1 . " - " . $item->str2,
-                'value' => $item->id . (isset($item->note1) ? '-' . $item->note1 : ''),
-            ];
-        })->toArray();
-    }
-
     public function getMatlSideMaterialOriginData()
     {
         $data = $this->getConfigData('MMATL_ORIGINS');
@@ -155,49 +128,6 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
-
-    public function getMatlSideMaterialShapeData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GEMSHAPES');
-        return $this->mapData($data);
-    }
-
-    public function getMatlSideMaterialClarityData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GIACLARITY');
-        return $this->mapData($data);
-    }
-
-    public function getMatlSideMaterialGemColorData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GEMCOLORS');
-        return $this->mapData($data);
-    }
-
-    public function getMatlSideMaterialGiaColorData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GIACOLORS');
-        return $this->mapData($data);
-    }
-
-    public function getMatlSideMaterialGemstoneData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GEMSTONES');
-        return $this->mapData($data);
-    }
-
-    public function getMatlSideMaterialCutData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GIACUT');
-        return $this->mapData($data);
-    }
-
-    public function getMatlSideMaterialPurityData()
-    {
-        $data = $this->getConfigData('MMATL_JEWEL_GOLDPURITY');
-        return $this->mapData($data);
-    }
-
 
     public function getPaymentTerm()
     {
