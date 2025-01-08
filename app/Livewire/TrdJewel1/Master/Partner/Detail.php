@@ -134,6 +134,9 @@ class Detail extends BaseComponent
 
     #region Component Events
 
+    public function onPartnerChanged()
+    {
+    }
     #endregion
 
 }
