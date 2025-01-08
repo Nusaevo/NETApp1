@@ -82,6 +82,8 @@
                                 type="text" :action="$actionValue" required="true" enabled="true" />
                             <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
                                 type="text" :action="$actionValue" enabled="true" />
+                            <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="text"
+                                    :action="$actionValue" required="true" enabled="true" />
                             <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock" type="text"
                                 :action="$actionValue" required="false" enabled="false" />
                         </x-ui-card>

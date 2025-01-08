@@ -34,7 +34,9 @@ use App\Models\TrdJewel1\Master\Partner;
                         @if(in_array($inputs['grp'], [Partner::CUSTOMER]))
                         <x-ui-text-field label="{{ $this->trans('ring_size') }}" model="inputs.ring_size" type="text" :action="$actionValue" />
                         <x-ui-text-field label="{{ $this->trans('partner_ring_size') }}" model="inputs.partner_ring_size" type="text" :action="$actionValue" />
-                        @endif </div>
+                        @endif
+                    </div>
+
                 </x-ui-card>
             </div>
             <div class="tab-pane fade show" id="transactions" role="tabpanel" aria-labelledby="transactions-tab">

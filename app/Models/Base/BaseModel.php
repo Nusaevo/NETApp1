@@ -104,26 +104,42 @@ class BaseModel extends Model
         }
     }
 
+    /**
+     * Fill the model with sanitized attributes.
+     *
+     * - Dates: Sanitized via `sanitizeDate`
+     * - Numeric strings: Properly formatted (`.` and `,` swapped)
+     * - Strings: Trimmed whitespace
+     * - Arrays: JSON-encoded
+     *
+     * @param array $attributes
+     */
     public function fillAndSanitize(array $attributes)
     {
         $sanitizedAttributes = [];
 
         foreach ($attributes as $key => $value) {
             if (isDateAttribute($value)) {
+                // Sanitize Date
                 $sanitizedAttributes[$key] = sanitizeDate($value);
             } elseif (isFormattedNumeric($value) !== false) {
+                // Format Numeric Strings (e.g., "1.000,50" => "1000.50")
                 $sanitizedAttributes[$key] = str_replace('.', '', $value);
                 $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
+            } elseif (is_array($value)) {
+                // Encode Arrays as JSON
+                $sanitizedAttributes[$key] = json_encode($value);
             } elseif (is_string($value)) {
+                // Trim Strings
                 $sanitizedAttributes[$key] = trim($value);
             } else {
+                // Default Assignment
                 $sanitizedAttributes[$key] = $value;
             }
         }
 
         $this->fill($sanitizedAttributes);
     }
-
 
     public function isDuplicateCode()
     {

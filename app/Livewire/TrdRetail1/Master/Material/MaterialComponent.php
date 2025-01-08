@@ -122,7 +122,6 @@ class MaterialComponent extends BaseComponent
         $this->object = Material::find($objectId);
         if ($this->object) {
             $this->object_uoms = $this->object->MatlUom[0];
-            $this->object_boms = $this->object->MatlBom;
             $this->materials = populateArrayFromModel($this->object);
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             $attachments = $this->object->Attachment;
@@ -159,7 +158,6 @@ class MaterialComponent extends BaseComponent
         $this->materials['name'] = $this->masterService->getMatlCategoryString($this->materials['category']). ' '
         . $this->materials['brand'] . ' '
         . $this->materials['type_code'];
-
 
         $this->object->fillAndSanitize($this->materials);
         if ($this->object->isNew()) {

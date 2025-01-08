@@ -7,7 +7,8 @@ class UiChecklist extends UiBaseComponent
     public $options;
     public $selectedValue;
     public $span;
-    public $modelType;
+    public $type;
+    public $layout;
 
     public function __construct(
         $options,
@@ -20,14 +21,27 @@ class UiChecklist extends UiBaseComponent
         $action = '',
         $onChanged = '',
         $span = 'Full',
-        $modelType = ''
+        $layout = 'horizontal' // Default to horizontal
     ) {
-        parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, null, str_replace(['.', '[', ']'], '_', $model));
+        parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, null, str_replace(['.', '[', ']'], '_', $layout));
 
         $this->options = $options;
-        $this->selectedValue = $selectedValue;
+        $this->selectedValue = $selectedValue ?? $this->initializeSelectedValue($options);
         $this->span = $span;
-        $this->modelType = $modelType;
+        $this->type = $layout;
+        $this->layout = $layout;
+    }
+
+    /**
+     * Mengatur nilai default untuk setiap opsi.
+     */
+    protected function initializeSelectedValue($options)
+    {
+        $defaultValues = [];
+        foreach ($options as $key => $value) {
+            $defaultValues[$key] = false;
+        }
+        return $defaultValues;
     }
 
     public function render()

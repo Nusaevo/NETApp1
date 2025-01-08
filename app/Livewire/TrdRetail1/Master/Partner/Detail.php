@@ -53,7 +53,6 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
-
         $this->partnerTypes = $this->masterService->getPartnerTypes();
         if($this->isEditOrView())
         {
@@ -72,9 +71,8 @@ class Detail extends BaseComponent
     public function onReset()
     {
         $this->reset('inputs');
-        $this->inputs['grp'] = null;
-        $this->inputs['code'] = "";
         $this->object = new Partner();
+        $this->inputs = populateArrayFromModel($this->object);
     }
 
     public function render()

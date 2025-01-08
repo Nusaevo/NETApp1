@@ -11,24 +11,110 @@ use App\Enums\Constant;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
-if (!function_exists('populateArrayFromModel')) {
-    /**
-     * Populate an array with all column values from a model.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @return array
-     */
-    function populateArrayFromModel($model)
-    {
-        $data = [];
-        $attributes = $model->getAllColumns();
 
-        foreach ($attributes as $attribute) {
-            $value = $model->getAllColumnValues($attribute);
-            $data[$attribute] = $value;
+/**
+ * Manage table schema operations for a model.
+ *
+ * @param \Illuminate\Database\Eloquent\Model $model
+ * @param string|null $column
+ * @param string|null $operation ('columns', 'hasColumn', 'type')
+ * @return mixed
+ */
+function schemaHelper($model, $column = null, $operation = 'columns')
+{
+    $connection = $model->getConnectionName();
+    $table = $model->getTable();
+
+    try {
+        // Operasi: Ambil semua kolom
+        if ($operation === 'columns') {
+            return Schema::connection($connection)->getColumnListing($table);
         }
-        return $data;
+
+        // Operasi: Periksa keberadaan kolom
+        if ($operation === 'hasColumn' && $column) {
+            return Schema::connection($connection)->hasColumn($table, $column);
+        }
+
+        // Operasi: Ambil tipe kolom
+        if ($operation === 'type' && $column) {
+            return Schema::connection($connection)->getColumnType($table, $column);
+        }
+    } catch (\Exception $e) {
+        logger()->error("Schema Helper Error: " . $e->getMessage());
     }
+
+    return null;
+}
+
+/**
+ * Populate model attributes with default values based on column type.
+ *
+ * @param \Illuminate\Database\Eloquent\Model $model
+ * @return array
+ */
+function populateArrayFromModel($model)
+{
+    $data = [];
+    $columns = schemaHelper($model); // Ambil semua kolom
+
+    foreach ($columns as $column) {
+        if (schemaHelper($model, $column, 'hasColumn')) {
+            $type = schemaHelper($model, $column, 'type') ?? 'string';
+            $value = $model->{$column} ?? getDefaultValueForType($type);
+
+            if (is_string($value) && isJsonFormat($value)) {
+                $value = json_decode($value, true);
+            }
+
+            $data[$column] = $value;
+        }
+    }
+
+    return $data;
+}
+
+/**
+ * Get default value based on column type.
+ *
+ * @param string $type
+ * @return mixed
+ */
+function getDefaultValueForType($type)
+{
+    return match ($type) {
+        // Tipe String
+        'string', 'text', 'char', 'varchar' => '',
+
+        // Tipe Numerik
+        'integer', 'bigint', 'smallint', 'tinyint', 'numeric' => 0,
+        'decimal', 'float', 'double' => 0.0,
+
+        // Tipe Boolean
+        'boolean' => false,
+
+        // Tipe JSON
+        'json', 'jsonb' => [],
+
+        // Tipe Waktu dan Tanggal
+        'datetime', 'date', 'time', 'timestamp' => now(),
+
+        // Default
+        default => null,
+    };
+}
+
+
+/**
+ * Check if a string is in JSON format.
+ *
+ * @param string $string
+ * @return bool
+ */
+function isJsonFormat($string)
+{
+    json_decode($string);
+    return json_last_error() === JSON_ERROR_NONE;
 }
 
 if (!function_exists('imagePath')) {
