@@ -136,7 +136,6 @@ class Detail extends BaseComponent
                 ->get();
         }
         if ($existingConfigGroups->isNotEmpty()) {
-            dd($existingConfigGroups);
             $existingUserIds = $existingConfigGroups->flatMap(function ($configGroup) {
                 if ($configGroup->ConfigUser) {
                     return $configGroup->ConfigUser->pluck('id');

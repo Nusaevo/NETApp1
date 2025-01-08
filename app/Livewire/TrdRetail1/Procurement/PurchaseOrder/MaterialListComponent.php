@@ -8,7 +8,7 @@ use App\Models\TrdRetail1\Transaction\OrderDtl;
 use App\Models\TrdRetail1\Master\Material;
 use Exception;
 
-class MaterialList extends Component
+class MaterialListComponent extends Component
 {
     public $input_details = [];
     public $total_amount = 0;

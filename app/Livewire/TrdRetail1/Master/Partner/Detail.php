@@ -59,6 +59,8 @@ class Detail extends BaseComponent
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
         }
+
+        $this->inputs['option'] = "";
     }
 
     public function onReset()

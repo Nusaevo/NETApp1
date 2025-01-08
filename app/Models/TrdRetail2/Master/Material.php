@@ -235,7 +235,6 @@ class Material extends BaseModel
         if ($relatedOrderDtl) {
             return true;
         }
-
         return false;
     }
 

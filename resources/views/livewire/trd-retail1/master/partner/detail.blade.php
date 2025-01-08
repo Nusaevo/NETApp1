@@ -51,6 +51,10 @@ use App\Models\TrdJewel1\Master\Partner;
             </div>
         </x-ui-tab-view-content>
         @include('layout.customs.form-footer')
+
+
     </x-ui-page-card>
 </div>
 </div>
+
+
