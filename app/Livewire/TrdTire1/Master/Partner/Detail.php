@@ -111,12 +111,11 @@ class Detail extends BaseComponent
         if(!$this->object->isNew())
         {
             if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
-                $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode produk.';
+                $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode partner.';
                 $this->addError('inputs.name', $errorMessage);
                 throw new Exception($errorMessage);
             }
         }
-
         if (isNullOrEmptyString($this->inputs['code'])) {
             $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
         }

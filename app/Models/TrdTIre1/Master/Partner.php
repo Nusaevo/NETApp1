@@ -75,23 +75,6 @@ class Partner extends BaseModel
     }
     #endregion
 
-      // Mutator for partner_chars
-      public function setPartnerCharsAttribute($value)
-      {
-          // Convert the array to JSON before saving to the database
-          $this->attributes['partner_chars'] = json_encode($value);
-      }
-
-      // Accessor for partner_chars
-      public function getPartnerCharsAttribute($value)
-      {
-          // Convert the JSON back to an array when retrieving from the database
-          return json_decode($value, true);
-      }
-    protected $casts = [
-        'partner_chars' => 'array', // Mengonversi JSON ke array
-    ];
-
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();
@@ -109,7 +92,6 @@ class Partner extends BaseModel
                       ->orderByRaw("CAST(SUBSTRING(code, LENGTH(?) + 1) AS INTEGER) DESC", [$initialCode])
                       ->pluck('code')
                       ->first();
-
         if ($latestCode) {
             $numericPart = intval(substr($latestCode, 1)) + 1;
             return $initialCode . $numericPart;
