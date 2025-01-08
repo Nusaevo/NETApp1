@@ -29,8 +29,8 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
                 $value = $model->getAllColumnValues($attribute);
                 if (is_numeric($value) && strpos($value, '.') !== false) {
                     $decimalPart = explode('.', $value)[1];
-                    if ((int)$decimalPart === 0) {
-                        $value = (int)$value;
+                    if ((int) $decimalPart === 0) {
+                        $value = (int) $value;
                     }
                 }
 
@@ -45,26 +45,14 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
      *
      * @var array
      */
-    protected $fillable = [
-        'code',
-        'password',
-        'name',
-        'dept',
-        'phone',
-        'email',
-        'status_code'
-    ];
+    protected $fillable = ['code', 'password', 'name', 'dept', 'phone', 'email', 'status_code'];
 
     /**
      * The attributes that should be hidden for arrays.
      *
      * @var array
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
+    protected $hidden = ['password', 'remember_token'];
 
     public function getAllColumns()
     {
@@ -104,8 +92,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
             $upperCode = strtoupper($this->code);
 
             // Perform a query to check for duplicates with case-insensitive comparison
-            $query = $this->newQuery()
-                ->whereRaw('UPPER(code) = ?', [$upperCode]);
+            $query = $this->newQuery()->whereRaw('UPPER(code) = ?', [$upperCode]);
 
             // Exclude the current model instance from the check if it is not new
             if (!$this->isNew()) {
@@ -126,8 +113,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
             $upperName = strtoupper($this->name);
 
             // Perform a query to check for duplicates with case-insensitive comparison
-            $query = $this->newQuery()
-                ->whereRaw('UPPER(name) = ?', [$upperName]);
+            $query = $this->newQuery()->whereRaw('UPPER(name) = ?', [$upperName]);
 
             // Exclude the current model instance from the check if it is not new
             if (!$this->isNew()) {
@@ -148,7 +134,6 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
 
     #region Attributes
     #endregion
-
 
     /**
      * The attributes that should be cast to native types.
@@ -176,7 +161,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     public function isNew()
     {
         $isNew = empty($this->id);
-        return  $isNew;
+        return $isNew;
     }
 
     public function setStatus($value)
@@ -188,4 +173,26 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         }
     }
 
+    /**
+     * Get list of group codes for the current session app code.
+     *
+     * @return array
+     */
+    public function getGroupCodesBySessionAppCode()
+    {
+        // Periksa apakah kode aplikasi ada di session
+        $appCode = session('app_code');
+
+        if (!$appCode) {
+            return []; // Jika app_code tidak ada di session, kembalikan array kosong
+        }
+
+        // Ambil grup yang terkait dengan pengguna ini
+        $groupCodes = $this->ConfigGroup()
+            ->where('app_code', $appCode)
+            ->pluck('code') // Ambil hanya kolom 'code'
+            ->toArray();
+
+        return $groupCodes;
+    }
 }
