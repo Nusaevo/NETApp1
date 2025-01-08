@@ -9,6 +9,7 @@ use App\Models\TrdTire1\Master\MatlUom;
 use Exception;
 use Livewire\WithFileUploads;
 use App\Enums\Status;
+use App\Models\Base\Attachment;
 use App\Models\TrdTire1\Master\Partner;
 use App\Services\TrdTire1\Master\MasterService;
 
@@ -25,22 +26,26 @@ class MaterialComponent extends BaseComponent
 
     public $materials = [];
     public $product_code = "";
+    public $capturedImages = [];
+    public $deleteImages = [];
+    public $deletedItems = [];
+
 
 
     protected $masterService;
     public $rules = [
-        'materials.brand' => 'required|string|max:255',
-        'materials.code' => 'required|string|max:255',
-        'materials.type_code' => 'required|string|max:255',
-        'materials.category' => 'required|string|max:255',
-        'materials.reserved' => 'required|string|max:255',
-        'materials.tag' => 'required|string|max:255',
+        'materials.brand' => 'required|string',
+        'materials.code' => 'required|string',
+        'materials.type_code' => 'required|string',
+        'materials.category' => 'required|string',
     ];
 
 
     protected $listeners = [
         'runExe'  => 'runExe',
+        'captureImages'  => 'captureImages',
         'submitImages'  => 'submitImages',
+        'submitAttachmentsFromStorage'  => 'submitAttachmentsFromStorage',
         'changeStatus'  => 'changeStatus',
         'tagScanned' => 'tagScanned',
         'resetMaterial' => 'onReset',
@@ -50,10 +55,6 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region Populate Data methods
-    public function MatlUom()
-    {
-        return $this->hasMany(MatlUom::class, 'matl_id');
-    }
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
     {
@@ -109,6 +110,8 @@ class MaterialComponent extends BaseComponent
         $this->reset('matl_uoms');
         $this->object = new Material();
         $this->object_uoms = new MatlUom();
+        $this->deletedItems = [];
+        $this->capturedImages = [];
     }
     protected function loadMaterial($objectId)
     {
@@ -121,7 +124,7 @@ class MaterialComponent extends BaseComponent
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
 
             // Decode the JSON from 'specs' and assign to $this->materials
-            $decodedData = json_decode($this->object->specs, true);
+            $decodedData = $this->object->specs;
             $this->materials['size'] = $decodedData['size'] ?? null;
             $this->materials['pattern'] = $decodedData['pattern'] ?? null;
             $this->materials['point'] = $decodedData['point'] ?? null;
@@ -129,6 +132,11 @@ class MaterialComponent extends BaseComponent
             // Tangani jika material tidak ditemukan
             $this->dispatch('error', 'Material tidak ditemukan.');
         }
+        $attachments = $this->object->Attachment;
+            foreach ($attachments as $attachment) {
+                $url = $attachment->getUrl();
+                $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
+            }
     }
 
     public function render()
@@ -139,6 +147,47 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region CRUD Methods
+    public function saveAttachment()
+    {
+        $errorMessages = [];
+        // Delete attachments based on deleteImages array
+        if (!empty($this->deleteImages)) {
+            foreach ($this->deleteImages as $filename) {
+                Attachment::deleteAttachmentByFilename($this->object->id, class_basename($this->object), $filename);
+            }
+            $this->deleteImages = [];
+        }
+
+        foreach ($this->capturedImages as $image) {
+            if (isset($image['storage_id'])) {
+                try {
+                    Attachment::deleteAttachmentById($image['storage_id']);
+                } catch (Exception $e) {
+                }
+            }
+        }
+
+        // Save new attachments
+        if (!empty($this->capturedImages)) {
+            foreach ($this->capturedImages as $image) {
+                try {
+                    $filePath = Attachment::saveAttachmentByFileName($image['url'], $this->object->id, class_basename($this->object), $image['filename']);
+                    if ($filePath !== false) {
+                    } else {
+                        $errorMessages[] = __($this->langBasePath . '.message.attachment_failed', ['filename' => $image['filename']]);
+                    }
+                } catch (Exception $e) {
+                    $errorMessages[] = __($this->langBasePath . '.message.attachment_failed', ['filename' => $image['filename']]);
+                }
+            }
+        }
+
+        Attachment::reSortSequences($this->object->id, class_basename($this->object));
+        if (!empty($errorMessages)) {
+            $errorMessage = implode(', ', $errorMessages);
+            throw new Exception($errorMessage);
+        }
+    }
     public function changeStatus()
     {
         $this->changeMaterial();
@@ -196,6 +245,7 @@ class MaterialComponent extends BaseComponent
         $this->object->fillAndSanitize($this->materials);
         $this->object->save();
         $this->saveUOMs();
+        $this->saveAttachment();
 
     }
 
@@ -237,97 +287,6 @@ class MaterialComponent extends BaseComponent
         $this->object_uoms->fillAndSanitize($this->matl_uoms);
         $this->object_uoms->save();
     }
-
-
-    public function addPurchaseOrder()
-    {
-        if (!isset($this->object->id)) {
-            $this->dispatch('error', "Harap save barang terlebih dahulu!");
-            return;
-        }
-        $this->dispatch('materialSaved', $this->object->id);
-    }
-
-    private function validatePrices()
-    {
-        $this->validateIDRPrices();
-        $this->validateUSDPrices();
-    }
-
-    private function validateIDRPrices()
-    {
-        if ($this->materials['selling_price'] <= 0) {
-            $this->addError('materials.selling_price', ' IDR harga penjualan harus lebih besar dari 0.');
-            throw new \Exception('IDR harga penjualan harus lebih besar dari 0.');
-        }
-        if ($this->materials['buying_price'] <= 0) {
-            $this->addError('materials.buying_price', ' IDR harga pembelian harus lebih besar dari 0.');
-            throw new \Exception('IDR harga pembelian harus lebih besar dari 0.');
-        }
-    }
-
-    private function validateUSDPrices()
-    {
-        if ($this->materials['buying_price'] <= 0) {
-            $this->addError('materials.buying_price', ' USD harga pembelian harus lebih besar dari 0.');
-            throw new \Exception('USD harga pembelian harus lebih besar dari 0.');
-        }
-
-        if ($this->materials['selling_price'] <= 0) {
-            $this->addError('materials.selling_price', ' USD harga penjualan harus lebih besar dari 0.');
-            throw new \Exception('USD harga penjualan harus lebih besar dari 0.');
-        }
-    }
-
-
-    private function prepareBOMData($bomData, $index)
-    {
-        $bomData['matl_id'] = $this->object->id;
-        $bomData['matl_code'] = $this->object->id;
-        $bomData['jwl_sides_price'] = $bomData['jwl_sides_price'] === null || $bomData['jwl_sides_price'] === "" ? 0 : $bomData['jwl_sides_price'];
-        $bomData['seq'] = $index + 1;
-        $bomData['base_matl_id'] = $bomData['base_matl_id_value'];
-        $bomData['jwl_sides_spec'] = $this->generateJWLSidesSpec($bomData);
-
-        return $bomData;
-    }
-
-    private function generateJWLSidesSpec($bomData)
-    {
-        $dataToSave = [];
-        $baseMaterialId = $bomData['base_matl_id_note'];
-
-        if (in_array($baseMaterialId, [Material::JEWELRY])) {
-            $dataToSave['purity'] = $bomData['purity'] ?? null;
-        } elseif (in_array($baseMaterialId, [Material::DIAMOND])) {
-            $dataToSave = [
-                'shapes' => $bomData['shapes'] ?? null,
-                'clarity' => $bomData['clarity'] ?? null,
-                'color' => $bomData['color'] ?? null,
-                'cut' => $bomData['cut'] ?? null,
-                'gia_number' => $bomData['gia_number'] ?? 0,
-            ];
-        } elseif (in_array($baseMaterialId, [Material::GEMSTONE])) {
-            $dataToSave = [
-                'gemstone' => $bomData['gemstone'] ?? null,
-                'gemcolor' => $bomData['gemcolor'] ?? null,
-            ];
-        } elseif (in_array($baseMaterialId, [Material::GOLD])) {
-            $dataToSave = [
-                'production_year' => $bomData['production_year'] ?? 0,
-                'ref_mark' => $bomData['ref_mark'] ?? null,
-            ];
-        }
-
-        return $dataToSave;
-    }
-
-    // private function deleteRemovedItems()
-    // {
-    //     foreach ($this->deletedItems as $deletedItemId) {
-    //         MatlBom::find($deletedItemId)->forceDelete();
-    //     }
-    // }
 
     #endregion
 
@@ -371,6 +330,50 @@ class MaterialComponent extends BaseComponent
             }
         }
     }
+    public function submitImages($imageByteArrays)
+    {
+        foreach ($imageByteArrays as $byteArray) {
+            $dataUrl = 'data:image/jpeg;base64,' . base64_encode(implode('', array_map('chr', $byteArray)));
+            $filename = uniqid() . '.jpg';
+            $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename];
+        }
+    }
+
+    public function submitAttachmentsFromStorage($attachmentIds)
+    {
+        foreach ($attachmentIds as $attachmentId) {
+            $attachment = Attachment::find($attachmentId);
+            if ($attachment) {
+                $url = $attachment->getUrl();
+                $imageData = file_get_contents($url);
+                $imageBase64 = base64_encode($imageData);
+                $dataUrl = 'data:image/jpeg;base64,' . $imageBase64;
+
+                $filename = uniqid() . '.jpg';
+
+                $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename, 'storage_id' => $attachment->id];
+                $this->dispatch('success', 'Images submitted successfully.');
+                $this->dispatch('closeStorageDialog');
+
+            } else {
+                $this->dispatch('error', 'Attachment with ID ' . $attachmentId . ' not found.');
+            }
+        }
+    }
+
+    public function captureImages($imageData)
+    {
+        $filename = uniqid() . '.jpg';
+        $this->capturedImages[] = ['url' => $imageData, 'filename' => $filename];
+    }
+
+    public function deleteImage($index)
+    {
+        if (isset($this->capturedImages[$index])) {
+            $this->deleteImages[] = $this->capturedImages[$index]['filename'];
+            unset($this->capturedImages[$index]);
+        }
+    }
 
     public function getMatlCode()
     {
@@ -403,76 +406,7 @@ class MaterialComponent extends BaseComponent
     }
 
 
-    public function generateMaterialDescriptions()
-    {
-        $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
-    }
 
-    public function markupPriceChanged()
-    {
-        if (empty($this->materials['buying_price'])) {
-            return;
-        }
-        $this->materials['selling_price'] = Material::calculateSellingPrice($this->materials['buying_price'], $this->materials['markup']);
-    }
-
-    public function sellingPriceChanged()
-    {
-        if (empty($this->materials['buying_price'])) {
-            return;
-        }
-        $this->materials['markup'] = Material::calculateMarkup($this->materials['buying_price'], $this->materials['jwl_selling_price_usd']);
-    }
-    public function tagScanned($tags)
-    {
-        if (!isset($this->object->id)) {
-            $this->dispatch('error', "Harap save barang terlebih dahulu!");
-            return;
-        }
-
-        if (isset($tags)) {
-            $tagCount = count($tags);
-            if ($tagCount > 1) {
-                // Show error message with the number of tags
-                $this->dispatch('error', "Terdapat {$tagCount} tag, mohon scan kembali!");
-            } else {
-                // Process a single tag
-                if (!$this->isUniqueBarcode($tags)) {
-                    $this->dispatch('error', 'RFID telah digunakan sebelumnya');
-                } else {
-                    $this->matl_uoms['barcode'] = $tags[0];
-                    $this->saveUOMs();
-                    $this->dispatch('success', 'RFID berhasil discan');
-                }
-            }
-        }
-    }
-
-    protected function isUniqueBarcode($barcode)
-    {
-        $query = MatlUom::where('barcode', $barcode);
-        if (isset($this->object_id)) {
-            $query->where('matl_id', '!=', $this->object_id);
-        }
-
-        return !$query->exists();
-    }
-
-    public function printBarcode()
-    {
-        if (!isset($this->object->id)) {
-            $this->dispatch('error', "Harap save barang terlebih dahulu!");
-            return;
-        }
-
-        $url = route($this->appCode.'.Master.Material.PrintPdf', [
-            "action" => encryptWithSessionKey('Edit'),
-            "objectId" => encryptWithSessionKey($this->object->id)
-        ]);
-        $this->dispatch('open-print-tab', [
-            'url' => $url
-        ]);
-    }
     #endregion
 
 }
