@@ -132,7 +132,7 @@ class BaseModel extends Model
                 $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
             } elseif (is_array($value)) {
                 // Encode Arrays as JSON
-                $sanitizedAttributes[$key] = $value;
+                $sanitizedAttributes[$key] = json_encode($value);
             } elseif (is_string($value)) {
                 // Trim Strings
                 $sanitizedAttributes[$key] = trim($value);

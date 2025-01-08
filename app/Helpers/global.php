@@ -55,7 +55,7 @@ function schemaHelper($model, $column = null, $operation = 'columns')
 function populateArrayFromModel($model)
 {
     $data = [];
-    $columns = schemaHelper($model); // Ambil semua kolom
+    $columns = $model->getFillable();
 
     foreach ($columns as $column) {
         if (schemaHelper($model, $column, 'hasColumn')) {
