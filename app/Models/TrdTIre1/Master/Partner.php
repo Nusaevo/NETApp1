@@ -87,7 +87,7 @@ class Partner extends BaseModel
       {
           // Convert the JSON back to an array when retrieving from the database
           return json_decode($value, true);
-      } 
+      }
     protected $casts = [
         'partner_chars' => 'array', // Mengonversi JSON ke array
     ];

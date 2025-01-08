@@ -39,8 +39,14 @@ class Material extends BaseModel
         'selling_price',
         'cost',
         'specs',
+        'tag',
+        'reserved'
     ];
 
+    public function MatlUom()
+    {
+        return $this->hasMany(MatlUom::class, 'matl_id');
+    }
     #region Attributes
     public function getSellingPriceTextAttribute()
     {
