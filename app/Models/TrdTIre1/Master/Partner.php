@@ -85,15 +85,18 @@ class Partner extends BaseModel
         return $query->where('grp', $grp)->get();
     }
 
-    public static function generateNewCode($name)
+    public static function generateNewCode($name, $category)
     {
-        $initialCode = strtoupper(substr($name, 0, 1));
+        $nameInitial = strtoupper(substr($name, 0, 1));
+        $categoryInitial = strtoupper(substr($category, 0, 1));
+        $initialCode = $nameInitial . $categoryInitial;
+
         $latestCode = self::where('code', 'LIKE', $initialCode . '%')
                       ->orderByRaw("CAST(SUBSTRING(code, LENGTH(?) + 1) AS INTEGER) DESC", [$initialCode])
                       ->pluck('code')
                       ->first();
         if ($latestCode) {
-            $numericPart = intval(substr($latestCode, 1)) + 1;
+            $numericPart = intval(substr($latestCode, 2)) + 1;
             return $initialCode . $numericPart;
         } else {
             return $initialCode . '1';
