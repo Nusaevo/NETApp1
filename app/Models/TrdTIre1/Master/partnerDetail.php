@@ -7,7 +7,7 @@ use App\Models\Base\BaseModel;
 
 class PartnerDetail extends BaseModel
 {
-    protected $table = 'partners_details';
+    protected $table = 'partner_details';
 
 
     protected $fillable = [
@@ -16,8 +16,7 @@ class PartnerDetail extends BaseModel
         'banks',
     ];
 
-    // Relasi balik ke tabel partners
-    public function partner()
+    public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id');
     }

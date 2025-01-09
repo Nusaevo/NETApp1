@@ -18,11 +18,10 @@ class Partner extends BaseModel
     const BANK = 'B';
     use SoftDeletes;
 
-    public function details()
+    public function PartnerDetail()
     {
-        return $this->hasMany(PartnerDetail::class, 'partner_id');
+        return $this->hasOne(PartnerDetail::class, 'partner_id');
     }
-
 
     public static function boot()
     {
@@ -63,9 +62,8 @@ class Partner extends BaseModel
         'pic_code',
         'info',
         'amt_limit',
-        'amt_bal',
         'partner_chars',
-        'status_code'
+        'status_code',
     ];
 
     #region Relations

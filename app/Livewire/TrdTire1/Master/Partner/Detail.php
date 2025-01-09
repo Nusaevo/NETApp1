@@ -17,6 +17,8 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $PartnerType = [];
     protected $masterService;
+    public $generalFilled = false;
+
     protected $defaultPartnerChars = [
         'IRC' => false,
         'GT' => false,
@@ -30,17 +32,10 @@ class Detail extends BaseComponent
         'inputs.country' => 'required|string|min:1|max:50',
         'inputs.province' => 'required|string|min:1|max:50',
         'inputs.city' => 'required|string|min:1|max:50',
-        // 'inputs.code' => [
-        //     'required',
-        //     'string',
-        //     'min:1',
-        //     'max:50'
-        // ],
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
     ];
-
 
     #endregion
 
@@ -94,33 +89,33 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-        // if (isset($this->inputs['code'])) {
-        //     $existingPartner = Partner::where('code', $this->inputs['code'])
-        //                               ->where('id', '!=', $this->object->id ?? null)
-        //                               ->exists();
-
-        //     if ($existingPartner) {
-        //         $this->addError('inputs.code', $this->trans('message.code_already_exists'));
-        //         throw new Exception($this->trans('message.code_already_exists'));
-        //     }
-        // } else {
-        //     $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
-        // }
-
-        $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));
-        if(!$this->object->isNew())
-        {
-            if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
-                $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode partner.';
-                $this->addError('inputs.name', $errorMessage);
-                throw new Exception($errorMessage);
+            $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));
+            if (!$this->object->isNew()) {
+                if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
+                    $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode partner.';
+                    $this->addError('inputs.name', $errorMessage);
+                    throw new Exception($errorMessage);
+                }
             }
-        }
-        if (isNullOrEmptyString($this->inputs['code'])) {
-            $this->inputs['code'] = Partner::generateNewCode($this->inputs['name'], $this->inputs['grp']);
-        }
-        $this->object->fillAndSanitize($this->inputs);
-        $this->object->save();
+            if (isNullOrEmptyString($this->inputs['code'])) {
+                $this->inputs['code'] = Partner::generateNewCode($this->inputs['name'], $this->inputs['grp']);
+            }
+            $this->object->fillAndSanitize($this->inputs);
+            $this->object->save();
+
+            if ($this->object->PartnerDetail == null) {
+                $this->object->PartnerDetail()->create([
+                    'partner_id' => $this->object->id
+                ]);
+            }
+
+            if($this->actionValue == 'Create')
+            {
+                return redirect()->route($this->appCode.'.Master.Partner.Detail', [
+                    'action' => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id)
+                ]);
+            }
     }
 
     public function changeStatus()
