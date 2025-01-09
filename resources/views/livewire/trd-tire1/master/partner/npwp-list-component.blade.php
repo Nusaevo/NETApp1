@@ -12,17 +12,17 @@
                                     </x-slot> --}}
                                 <x-slot name="rows">
                                     <div class="row">
-                                        <x-ui-text-field label="{{ $this->trans('NPWP/NIK') }}" model="input_details.{{ $key }}.npwp"
-                                            type="text" :action="$actionValue" required="false" />
+                                        <x-ui-text-field label="{{ $this->trans('npwp') }}"
+                                            model="input_details.{{ $key }}.npwp" type="text"
+                                            :action="$actionValue" required="true" />
+                                        <x-ui-text-field label="{{ $this->trans('wp_name') }}"
+                                            model="input_details.{{ $key }}.wp_name" type="text"
+                                            :action="$actionValue" required="true" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-text-field label="{{ $this->trans('Nama WP') }}" model="input_details.{{ $key }}.wp_name"
-                                            type="text" :action="$actionValue" required="false" />
-                                    </div>
-                                    <div class="row">
-                                        <x-ui-text-field label="{{ $this->trans('Alamat WP') }}"
-                                            model="input_details.{{ $key }}.wp_location" type="text" :action="$actionValue"
-                                            required="false" />
+                                        <x-ui-text-field label="{{ $this->trans('wp_location') }}"
+                                            model="input_details.{{ $key }}.wp_location" type="textarea"
+                                            :action="$actionValue" required="false" />
                                     </div>
                                 </x-slot>
                                 <x-slot name="button">
@@ -45,7 +45,7 @@
 
     <x-ui-footer>
         <div>
-            <x-ui-button clickEvent="Save" button-name="Save NPWP" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="SaveNPWP" button-name="Save NPWP" loading="true" :action="$actionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
         </div>
     </x-ui-footer>

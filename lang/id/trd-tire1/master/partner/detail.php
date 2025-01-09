@@ -1,6 +1,20 @@
 <?php
 
 return [
+    'contact_name' => 'Nama Kontak',
+    'position' => 'Jabatan',
+    'date_of_birth' => 'Tanggal Lahir',
+    'phone1' => 'Phone 1',
+    'phone2' => 'Phone 2',
+    'email' => 'Email',
+    'contact_address' => 'Alamat Kontak',
+    'contact_note' => 'Catatan Kontak',
+    'bank_acct' => 'Bank Account',
+    'bank_name' => 'Nama Bank',
+    'bank_location' => 'Lokasi Bank',
+    'npwp' => 'NPWP/NIK',
+    'wp_name' => 'Nama WP',
+    'wp_location' => 'Alamat WP',
     'partner' => 'Partner',
     'partner_code' => 'Kode Mitra',
     'partner_type' => 'Tipe Mitra',
@@ -12,7 +26,6 @@ return [
     'postal_code' => 'Kode Pos',
     'nib' => 'Nomor Induk Berusaha (NIB)',
     'phone' => 'Telepon',
-    'email' => 'Email',
     'point_irc' => 'Poin IRC',
     'point_gt' => 'Poin GT',
     'point_zn' => 'Poin ZN',

@@ -35,7 +35,6 @@ class Material extends BaseModel
         'category',
         'dimension',
         'wgt',
-        'buying_price',
         'selling_price',
         'cost',
         'specs',
