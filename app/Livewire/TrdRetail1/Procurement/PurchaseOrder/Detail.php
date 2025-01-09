@@ -16,10 +16,7 @@ use Exception;
 class Detail extends BaseComponent
 {
     #region Constant Variables
-    public $object_detail;
     public $inputs = [];
-    public $input_details = [];
-
     public $suppliers;
     public $warehouses;
     public $payments;
@@ -40,19 +37,11 @@ class Detail extends BaseComponent
     public $isPanelEnabled = "true";
 
     public $rules  = [
-        // 'inputs.partner_id' =>  'required',
-        // 'inputs.wh_code' =>  'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.price' => ['required', 'not_in:0'],
-        // 'input_details.*.price' => 'required',
-        // 'input_details.*.qty' => 'required',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
-        'changeItem'  => 'changeItem',
-        'materialSaved' => 'materialSaved',
         'delete' => 'delete',
-        'saveCheck' => 'saveCheck',
     ];
     #endregion
 
@@ -63,10 +52,6 @@ class Detail extends BaseComponent
             'inputs.tr_date'      => $this->trans('tr_date'),
             'inputs.partner_id'      => $this->trans('supplier'),
             'inputs.wh_code'      => $this->trans('warehouse'),
-            'input_details.*'              => $this->trans('product'),
-            'input_details.*.matl_id' => $this->trans('product'),
-            'input_details.*.qty' => $this->trans('qty'),
-            'input_details.*.price' => $this->trans('price'),
         ];
 
         $this->masterService = new MasterService();
@@ -76,41 +61,18 @@ class Detail extends BaseComponent
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $this->retrieveMaterials();
+            $this->inputs['status_code_text'] = $this->object->status_Code_text;
         }
         if(!empty($this->input_details)) {
             $this->isPanelEnabled = "false";
         }
     }
-    protected function retrieveMaterials()
-    {
-        if ($this->object) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->trType)->orderBy('tr_seq')->get();
-            if (is_null($this->object_detail) || $this->object_detail->isEmpty()) {
-                return;
-            }
-            foreach ($this->object_detail as $key => $detail) {
-                $this->input_details[$key] =  populateArrayFromModel($detail);
-                $this->input_details[$key]['name'] = $detail->Material?->name;
-                $this->input_details[$key]['id'] = $detail->id;
-                $this->input_details[$key]['selling_price'] = $detail->Material->jwl_selling_price;
-                $this->input_details[$key]['sub_total'] = $detail->amt;
-                $this->input_details[$key]['isOrderedMaterial'] = $detail->Material->isOrderedMaterial();
-                $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
-                $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
-            }
-            $this->countTotalAmount();
-        }
-    }
-
 
     public function onReset()
     {
         $this->reset('inputs');
-        $this->reset('input_details');
         $this->object = new OrderHdr();
-        $this->object_detail = [];
-        $this->total_amount = 0;
+        $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
@@ -140,24 +102,11 @@ class Detail extends BaseComponent
 
         }
 
-        // foreach ($this->input_details as $index => $detail) {
-        //     $material = Material::find($detail['matl_id']);
-        //     if ($material && !$material->isOrderedMaterial()) {
-        //         // Check if the price is set for ordered material
-        //         if (empty($detail['price']) || $detail['price'] <= 0) {
-        //             $this->dispatch('error', 'Harga wajib diisi untuk barang yang bukan pesanan.');
-        //             $this->addError("input_details.$index.price", 'Harga wajib diisi untuk barang yang bukan pesanan.');
-        //             return;
-        //         }
-        //     }
-        // }
-
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->inputs['wh_code'] = 18;
-        $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
+        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'PURCHORDER_LASTID');
         if($this->actionValue == 'Create')
         {
             return redirect()->route($this->appCode.'.Procurement.PurchaseOrder.Detail', [
@@ -165,7 +114,6 @@ class Detail extends BaseComponent
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
         }
-        $this->retrieveMaterials();
     }
 
     public function delete()

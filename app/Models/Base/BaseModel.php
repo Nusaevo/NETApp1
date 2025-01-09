@@ -67,6 +67,22 @@ class BaseModel extends Model
         return null;
     }
 
+    public function getStatusCodeTextAttribute()
+    {
+        // Check if the `status_code` column exists in the current table
+        if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'status_code')) {
+            $statusCode = $this->attributes['status_code'] ?? null;
+
+            if ($statusCode) {
+                // Return the full status string from the Status enum
+                return Status::getStatusString($statusCode);
+
+            }
+        }
+        return null;
+    }
+
+
     public function isNew()
     {
         $isNew = !isset($this->id);

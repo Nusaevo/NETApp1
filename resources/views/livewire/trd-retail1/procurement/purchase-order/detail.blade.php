@@ -16,11 +16,13 @@
                 <div class="row mt-4">
                     <div class="col-md-3">
                         <x-ui-card title="Order Info">
-                            <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date"
-                                :action="$actionValue" required="true" onChanged="saveCheck" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}" clickEvent=""
+                            <x-ui-text-field label="Date" model="inputs.tr_date" type="date"
+                                :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                            <x-ui-text-field-search type="int" label="Supplier" clickEvent=""
                                 model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers" required="true"
-                                :action="$actionValue" onChanged="saveCheck" :enabled="$isPanelEnabled" />
+                                :action="$actionValue"  :enabled="$isPanelEnabled" />
+                            <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
+                                    :action="$actionValue" required="false" enabled="false" />
                         </x-ui-card>
 
                         <x-ui-footer>
@@ -35,13 +37,14 @@
                             <div>
                                 <x-ui-button clickEvent="Save" button-name="Save Header" loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
                             </div>
+
                         </x-ui-footer>
 
                     </div>
                     <div class="col-md-9">
                         <x-ui-card title="Order Items">
                             @livewire($currentRoute.'.material-list-component', ['action' => $action,
-                            'objectId' => $objectId, 'additionalParam' => $input_details])
+                            'objectId' => $objectId])
                         </x-ui-card>
                     </div>
                 </div>
