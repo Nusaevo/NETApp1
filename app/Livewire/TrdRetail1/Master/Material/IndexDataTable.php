@@ -69,7 +69,21 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row) {
                     $firstAttachment = $row->Attachment->first();
                     $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-                    return $imageUrl ? '<img src="' . $imageUrl . '" alt="Photo" style="width: 100px; height: 100px; object-fit: cover;">' : '<span>No Image</span>';
+
+                    return $imageUrl
+                        ? '<div style="display: flex; align-items: center; gap: 5px;">
+                            <img src="' .
+                                $imageUrl .
+                                '" alt="Photo" style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" onclick="showImagePreview(\'' .
+                                $imageUrl .
+                                '\')">
+                            <button type="button" onclick="showImagePreview(\'' .
+                                $imageUrl .
+                                '\')" style="border: none; background: none; cursor: pointer;">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>'
+                        : '<span>No Image</span>';
                 })
                 ->html(),
 

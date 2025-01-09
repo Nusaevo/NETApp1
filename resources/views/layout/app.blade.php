@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" {!! printHtmlAttributes('html') !!}>
 <!--begin::Head-->
+
 <head>
     <base href="" />
     <title>{{ config('app.name', 'Laravel') }}</title>
@@ -37,7 +38,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/inputmask.min.js"></script>
     <script>
         var myJQuery = jQuery;
-
     </script>
     {!! includeFavicon() !!}
 
@@ -46,23 +46,32 @@
     <!--end::Fonts-->
 
     <!--begin::Global Stylesheets Bundle(used by all pages)-->
-    @foreach(getGlobalAssets('css') as $path)
-    {!! sprintf('
-    <link rel="stylesheet" href="%s">', asset($path)) !!}
+    @foreach (getGlobalAssets('css') as $path)
+        {!! sprintf(
+            '
+            <link rel="stylesheet" href="%s">',
+            asset($path),
+        ) !!}
     @endforeach
     <!--end::Global Stylesheets Bundle-->
 
     <!--begin::Vendor Stylesheets(used by this page)-->
-    @foreach(getVendors('css') as $path)
-    {!! sprintf('
-    <link rel="stylesheet" href="%s">', asset($path)) !!}
+    @foreach (getVendors('css') as $path)
+        {!! sprintf(
+            '
+            <link rel="stylesheet" href="%s">',
+            asset($path),
+        ) !!}
     @endforeach
     <!--end::Vendor Stylesheets-->
 
     <!--begin::Custom Stylesheets(optional)-->
-    @foreach(getCustomCss() as $path)
-    {!! sprintf('
-    <link rel="stylesheet" href="%s">', asset($path)) !!}
+    @foreach (getCustomCss() as $path)
+        {!! sprintf(
+            '
+            <link rel="stylesheet" href="%s">',
+            asset($path),
+        ) !!}
     @endforeach
     <!--end::Custom Stylesheets-->
 
@@ -71,6 +80,7 @@
 <!--end::Head-->
 
 <!--begin::Body-->
+
 <body {!! printHtmlClasses('body') !!} {!! printHtmlAttributes('body') !!}>
 
     @include('partials/theme-mode/_init')
@@ -78,10 +88,10 @@
     <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
         <!--begin::Page-->
         <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
-            @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_header')
+            @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_header')
             <!--begin::Wrapper-->
             <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
-                @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_sidebar')
+                @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_sidebar')
                 <!--begin::Main-->
                 <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
                     <!--begin::Content wrapper-->
@@ -98,7 +108,7 @@
                         <!--end::Content-->
                     </div>
                     <!--end::Content wrapper-->
-                    @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_footer')
+                    @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_footer')
                 </div>
                 <!--end:::Main-->
             </div>
@@ -122,22 +132,40 @@
         </div>
     </div>
 
+    <!-- Modal Preview Image -->
+    <div id="imagePreviewModal" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Image Preview</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="previewImage" src="" alt="Preview Image" style="max-width: 100%; height: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!--begin::Javascript-->
     <!--begin::Global Javascript Bundle(mandatory for all pages)-->
-    @foreach(getGlobalAssets() as $path)
-    {!! sprintf('<script src="%s"></script>', asset($path)) !!}
+    @foreach (getGlobalAssets() as $path)
+        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
     @endforeach
     <!--end::Global Javascript Bundle-->
 
     <!--begin::Vendors Javascript(used by this page)-->
-    @foreach(getVendors('js') as $path)
-    {!! sprintf('<script src="%s"></script>', asset($path)) !!}
+    @foreach (getVendors('js') as $path)
+        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
     @endforeach
     <!--end::Vendors Javascript-->
 
     <!--begin::Custom Javascript(optional)-->
-    @foreach(getCustomJs() as $path)
-    {!! sprintf('<script src="%s"></script>', asset($path)) !!}
+    @foreach (getCustomJs() as $path)
+        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
     @endforeach
     <!--end::Custom Javascript-->
     @stack('scripts')
@@ -163,11 +191,11 @@
                 let confirmButtonText = 'Ok';
 
                 Swal.fire({
-                    html: message
-                    , icon: icon
-                    , buttonsStyling: false
-                    , confirmButtonText: confirmButtonText
-                    , customClass: {
+                    html: message,
+                    icon: icon,
+                    buttonsStyling: false,
+                    confirmButtonText: confirmButtonText,
+                    customClass: {
                         confirmButton: 'btn btn-primary'
                     }
                 });
@@ -182,7 +210,6 @@
                 }
             });
         });
-
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -198,6 +225,13 @@
             });
         });
     </script>
+    <script>
+        function showImagePreview(imageUrl) {
+            const previewImage = document.getElementById('previewImage');
+            previewImage.src = imageUrl;
+            $('#imagePreviewModal').modal('show');
+        }
+    </script>
     <script type="text/javascript">
         function printReport() {
             window.print();
@@ -208,4 +242,3 @@
 <!--end::Body-->
 
 </html>
-

@@ -10,15 +10,15 @@
     @endif
 </div>
 
-<div class="table-responsive mt-5" >
-    <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" >
+<div class="table-responsive mt-5">
+    <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover">
         <tbody>
             {{ $body }}
         </tbody>
     </table>
-    @isset($footer)
-        <div class="d-flex justify-content-end mt-4">
-            {{ $footer }}
+    @isset($footerButton)
+        <div class="d-flex justify-content-center mt-4">
+            {{ $footerButton }}
         </div>
     @endisset
 </div>
