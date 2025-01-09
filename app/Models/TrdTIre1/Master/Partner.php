@@ -95,8 +95,6 @@ class Partner extends BaseModel
                       ->orderByRaw("CAST(SUBSTRING(code, LENGTH(?) + 1) AS INTEGER) DESC", [$initialCode])
                       ->pluck('code')
                       ->first();
-
-        // Menghasilkan kode baru berdasarkan kode terbaru
         if ($latestCode) {
             $numericPart = intval(substr($latestCode, 2)) + 1;
             return $initialCode . $numericPart;
