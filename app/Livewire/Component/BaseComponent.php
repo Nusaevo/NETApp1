@@ -266,6 +266,33 @@ class BaseComponent extends Component
         }
     }
 
+    protected function SaveComponent()
+    {
+        $this->validateForm();
+        DB::beginTransaction();
+
+        try {
+
+            // Validate and save the component-specific details
+            $this->onValidateAndSave();
+
+            // Commit the transaction
+            DB::commit();
+
+            // Reset the component if not in edit or view mode and reset is enabled
+            if (!$this->isEditOrView() && $this->resetAfterCreate) {
+                $this->onReset();
+            }
+
+            // Notify success
+            $this->dispatch('success', __('generic.string.save'));
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::Error("Method Save :". $e->getMessage());
+            $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
+        }
+    }
+
     // Save without notification
     public function SaveWithoutNotification()
     {
