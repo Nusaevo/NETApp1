@@ -102,7 +102,7 @@ class BankListComponent extends BaseComponent
         if (!empty($this->objectIdValue)) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
             if ($partnerDetail) {
-                $this->input_details = $partnerDetail->banks;
+                $this->input_details = $partnerDetail->banks ?? [];
             }
         }
     }

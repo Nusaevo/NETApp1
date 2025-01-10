@@ -3,127 +3,138 @@
 namespace App\Livewire\TrdTire1\Master\Partner;
 
 use App\Livewire\Component\BaseComponent;
+use App\Models\TrdTire1\Master\Partner;
 use App\Models\TrdTire1\Master\PartnerDetail;
 use Exception;
 
 class ContactListComponent extends BaseComponent
 {
-    public $bank = [];
-    public $npwp = [];
-    public $kontak = [];
-
-    public $rules  = [
-        'inputs.name_contact' => 'required|min:1|max:50',
-        'inputs.position' => 'nullable|string|max:50',
-        'inputs.date_of_birth' => 'nullable|date',
-        'inputs.phone1' => 'nullable|string|max:20',
-        'inputs.phone2' => 'nullable|string|max:20',
-        'inputs.email' => 'nullable|email|max:100',
-        'inputs.address_contact' => 'nullable|string|max:255',
-        'inputs.note' => 'nullable|string|max:255',
+    public $object_detail;
+    public $input_details = [];
+    public $rules = [
+        'input_details.*.contact_name' => 'required|min:1|max:50',
+        'input_details.*.position' => 'required|min:1|max:50',
+        'input_details.*.phone1' => 'required|max:13',
+        'input_details.*.phone2' => 'max:13',
+        'input_details.*.email' => 'max:50',
+        'input_details.*.contact_address' => 'max:50',
+        'input_details.*.contact_note' => 'max:50',
+        'input_details.*.date_of_birth' => 'max:50',
     ];
 
-    protected function onPreRender() {}
+
+    protected function onPreRender()
+    {
+        if (!empty($this->objectIdValue)) {
+            $this->object = Partner::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $this->loadDetails();
+            //load detail bank
+        }
+    }
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
+    public function addItem()
+    {
+        if (!empty($this->objectIdValue)) {
+            try {
+                // isi default field sesuai field banks
+                $this->input_details[] = [
+                    'contact_name' => '',
+                    'position' => '',
+                    'date_of_birth' => '',
+                    'phone1' => '',
+                    'phone2' => '',
+                    'email' => '',
+                    'contact_address' => '',
+                    'contact_note' => '',
+                ];
+                $this->dispatch('success', __('generic.string.add_item'));
+            } catch (Exception $e) {
+                $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
+            }
+        } else {
+            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
+        }
+    }
+
+    public function deleteItem($index)
+    {
+        try {
+            if (!isset($this->input_details[$index])) {
+                throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
+            }
+
+            unset($this->input_details[$index]);
+            $this->input_details = array_values($this->input_details);
+            $this->dispatch('success', __('generic.string.delete_item'));
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function validateItems()
+    {
+        //contoh validasi di sini
+        // if (empty($this->input_details)) {
+        //     $this->dispatch('error', __('generic.error.empty_item'));
+        //     return false;
+        // }
+
+        // foreach ($this->input_details as $index => $item) {
+        //     if (empty($item['matl_id']) || $item['qty'] <= 0 || $item['price'] <= 0) {
+        //         $this->dispatch('error', __('generic.error.field_required', ['field' => "Item #$index"]));
+        //         return false;
+        //     }
+        // }
+
+        return true;
+    }
+
+    protected function loadDetails()
+    {
+        //find partner detail where partner_id = this->objecti->id
+        if (!empty($this->objectIdValue)) {
+            $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+            if ($partnerDetail) {
+                $this->input_details = $partnerDetail->contacts ?? [];
+            }
+        }
+    }
+
+    public function SaveContact()
+    {
+        $this->SaveComponent();
+    }
+
+    protected function onValidateAndSave()
+    {
+        $banksArray = [];
+        foreach ($this->input_details as $detail) {
+            $banksArray[] = [
+                'contact_name' => $detail['contact_name'],
+                'position' => $detail['position'],
+                'date_of_birth' => $detail['date_of_birth'],
+                'phone1' => $detail['phone1'],
+                'phone2' => $detail['phone2'],
+                'email' => $detail['email'],
+                'contact_address' => $detail['contact_address'],
+                'contact_note' => $detail['contact_note'],
+            ];
+        }
+        $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+        if ($partnerDetail) {
+            $partnerDetail->update(['contacts' => json_encode($banksArray)]);
+        }
+    }
+
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
-    }
-
-    public function addBank()
-    {
-        try {
-            $this->bank[] = [];
-            $this->dispatch('success', 'Item kosong berhasil ditambahkan.');
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menambahkan item kosong: ' . $e->getMessage());
-        }
-    }
-
-    public function deleteBank($index)
-    {
-        try {
-            unset($this->bank[$index]);
-            $this->bank = array_values($this->bank); // Re-index array
-            $this->dispatch('success', 'Item berhasil dihapus.');
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
-        }
-    }
-
-    public function addNPWP()
-    {
-        try {
-            $this->npwp[] = [];
-            $this->dispatch('success', 'Item kosong berhasil ditambahkan.');
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menambahkan item kosong: ' . $e->getMessage());
-        }
-    }
-
-    public function deleteNpwp($index)
-    {
-        try {
-            unset($this->npwp[$index]);
-            $this->npwp = array_values($this->npwp); // Re-index array
-            $this->dispatch('success', 'Item berhasil dihapus.');
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
-        }
-    }
-
-    public function addKontak()
-    {
-        try {
-            $this->kontak[] = [];
-            $this->dispatch('success', 'Item kosong berhasil ditambahkan.');
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menambahkan item kosong: ' . $e->getMessage());
-        }
-    }
-
-    public function deleteKontak($index)
-    {
-        try {
-            unset($this->kontak[$index]);
-            $this->kontak = array_values($this->kontak); // Re-index array
-            $this->dispatch('success', 'Item berhasil dihapus.');
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
-        }
-    }
-
-    public function onValidateAndSave()
-    {
-        try {
-            if (!isset($this->inputs) || !is_array($this->inputs)) {
-                throw new Exception('Inputs are not properly set or not an array.');
-            }
-
-            $wpDetails = [
-                'name_contact' => $this->inputs['name_contact'] ?? null
-            ];
-
-            dd($wpDetails);
-
-            if (is_array($wpDetails)) {
-                $partnerDetail = new PartnerDetail();
-                $partnerDetail->wp_details = $wpDetails;
-                $partnerDetail->save();
-
-
-                $this->dispatch('success', 'Data berhasil disimpan.');
-            } else {
-                throw new Exception('wp_details is not an array.');
-            }
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
-        }
     }
 }

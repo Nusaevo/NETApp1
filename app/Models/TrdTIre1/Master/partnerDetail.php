@@ -12,7 +12,7 @@ class PartnerDetail extends BaseModel
 
     protected $fillable = [
         'wp_details',
-        'positions',
+        'contacts',
         'banks',
     ];
 

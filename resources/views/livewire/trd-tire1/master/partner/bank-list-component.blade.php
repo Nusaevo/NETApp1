@@ -12,16 +12,15 @@
                                     </x-slot> --}}
                                 <x-slot name="rows">
                                     <div class="row">
-                                        <x-ui-text-field label="Bank Account" model="input_details.{{ $key }}.bank_acct"
-                                            type="text" :action="$actionValue" required="true" />
-                                    </div>
-                                    <div class="row">
-                                        <x-ui-text-field label="Nama Bank"
-                                            model="input_details.{{ $key }}.bank_name" type="text" :action="$actionValue" required="true" />
-                                    </div>
-                                    <div class="row">
-                                        <x-ui-text-field label="Lokasi" model="input_details.{{ $key }}.bank_location"
-                                            type="text" :action="$actionValue" />
+                                        <x-ui-text-field label="{{ $this->trans('bank_acct') }}"
+                                            model="input_details.{{ $key }}.bank_acct" type="text"
+                                            :action="$actionValue" required="true" />
+                                        <x-ui-text-field label="{{ $this->trans('bank_name') }}"
+                                            model="input_details.{{ $key }}.bank_name" type="text"
+                                            :action="$actionValue" required="true" />
+                                        <x-ui-text-field label="{{ $this->trans('bank_location') }}"
+                                            model="input_details.{{ $key }}.bank_location" type="text"
+                                            :action="$actionValue" />
                                     </div>
                                 </x-slot>
                                 <x-slot name="button">

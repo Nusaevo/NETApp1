@@ -39,7 +39,7 @@ class NpwpListComponent extends BaseComponent
     {
         if (!empty($this->objectIdValue)) {
             try {
-                // isi default field sesuai field banks
+                // isi default field sesuai field wp_details
                 $this->input_details[] = [
                     'npwp' => '',
                     'wp_name' => '',
@@ -92,42 +92,31 @@ class NpwpListComponent extends BaseComponent
         if (!empty($this->objectIdValue)) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
             if ($partnerDetail) {
-                $this->input_details = $partnerDetail->banks;
+                $this->input_details = $partnerDetail->wp_details ?? [];
             }
         }
     }
 
-    public function SaveBank()
+    public function SaveNPWP()
     {
-        $this->validateForm();
-        DB::beginTransaction();
-        try {
-
-            try {
-                // Convert all bank fields into an array
-                $banksArray = [];
-                foreach ($this->input_details as $detail) {
-                    $banksArray[] = [
-                        'bank_acct' => $detail['bank_acct'],
-                        'bank_name' => $detail['bank_name'],
-                        'bank_location' => $detail['bank_location'],
-                    ];
-                }
-                $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
-                if ($partnerDetail) {
-                    $partnerDetail->update(['banks' => json_encode($banksArray)]);
-                }
-
-                $this->dispatch('success', __('generic.string.save_item'));
-            } catch (Exception $e) {
-                $this->dispatch('error', __('generic.error.save_item', ['message' => $e->getMessage()]));
-            }
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
-        }
+        $this->SaveComponent();
     }
 
+    protected function onValidateAndSave()
+    {
+        $wp_detailsArray = [];
+        foreach ($this->input_details as $detail) {
+            $wp_detailsArray[] = [
+                'npwp' => $detail['npwp'],
+                'wp_name' => $detail['wp_name'],
+                'wp_location' => $detail['wp_location'],
+            ];
+        }
+        $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+        if ($partnerDetail) {
+            $partnerDetail->update(['wp_details' => json_encode($wp_detailsArray)]);
+        }
+    }
 
     public function render()
     {

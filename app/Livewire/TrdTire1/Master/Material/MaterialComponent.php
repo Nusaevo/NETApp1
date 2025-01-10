@@ -21,9 +21,9 @@ class MaterialComponent extends BaseComponent
     public $materialType = [];
     public $materialJenis = [];
     public $materialMerk = [];
+    public $materialSize = [];
     public $object_uoms;
     public $matl_uoms = [];
-
     public $materials = [];
     public $product_code = "";
     public $capturedImages = [];
@@ -89,6 +89,7 @@ class MaterialComponent extends BaseComponent
         $this->materialType = $this->masterService->getMatlTypeData();
         $this->materialJenis = $this->masterService->getMatlJenisData();
         $this->materialMerk = $this->masterService->getMatlMerkData();
+        $this->materialSize = $this->masterService->getMatlSizeData();
         $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
