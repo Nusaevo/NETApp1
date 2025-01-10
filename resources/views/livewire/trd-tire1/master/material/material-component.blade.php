@@ -73,9 +73,8 @@
                                         onChanged="generateName" />
                                     <x-ui-text-field label="{{ $this->trans('pattern') }}" model="materials.pattern"
                                         type="text" :action="$customActionValue" required="false" enabled="true"
-                                        onChanged="generateName" oninput="this.value = this.value.toUpperCase();" />
+                                        onChanged="generateName" />
                                 </div>
-
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
                                         type="text" :action="$customActionValue" onChanged="generateName" enabled="true" />
