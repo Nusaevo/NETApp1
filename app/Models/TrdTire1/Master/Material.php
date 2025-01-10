@@ -39,7 +39,9 @@ class Material extends BaseModel
         'cost',
         'specs',
         'tag',
-        'reserved'
+        'reserved',
+        'stock',
+        'point'
     ];
 
     public function MatlUom()

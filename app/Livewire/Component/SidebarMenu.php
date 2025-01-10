@@ -69,9 +69,7 @@ class SidebarMenu extends Component
             }
             foreach ($configMenus as $configMenu) {
                 $route = str_replace('/', '.', $configMenu->menu_link);
-                if (!Route::has($route)) {
-                    continue;
-                }
+              
                 $menuHeader = $configMenu->menu_header;
                 $menuItem = [
                     'title' => $configMenu->menu_caption,

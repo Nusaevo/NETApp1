@@ -25,6 +25,16 @@ class ContactListComponent extends BaseComponent
 
     protected function onPreRender()
     {
+        $this->customValidationAttributes = [
+            'input_details.*.contact_name'    => 'Nama Kontak',
+            'input_details.*.position'        => 'Jabatan',
+            'input_details.*.phone1'          => 'Nomor Telepon Utama',
+            'input_details.*.phone2'          => 'Nomor Telepon Sekunder',
+            'input_details.*.email'           => 'Email',
+            'input_details.*.contact_address' => 'Alamat Kontak',
+            'input_details.*.contact_note'    => 'Catatan Kontak',
+            'input_details.*.date_of_birth'   => 'Tanggal Lahir',
+        ];
         if (!empty($this->objectIdValue)) {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);

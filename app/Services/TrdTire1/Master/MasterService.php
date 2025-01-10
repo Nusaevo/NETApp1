@@ -98,14 +98,19 @@ class MasterService extends BaseService
         $data = $this->getConfigData('MMATL_MERK');
         return $this->mapData($data);
     }
-    public function getMatlSizeData()
+    public function getMatlUOMData()
     {
-        $data = $this->getConfigData('MMATL_SIZE');
+        $data = $this->getConfigData('MMATL_UOM');
         return $this->mapData($data);
     }
     public function getPartnerTypeData()
     {
         $data = $this->getConfigData('MPARTNER_TYPE');
+        return $this->mapData($data);
+    }
+    public function getSOTaxData()
+    {
+        $data = $this->getConfigData('SO_TAX');
         return $this->mapData($data);
     }
 
