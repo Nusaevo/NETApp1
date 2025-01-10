@@ -66,7 +66,7 @@
                                     @livewire($appCode.'.master.material.material-component', [
                                     'actionValue' => $matl_action,
                                     'objectIdValue' => $matl_objectId,
-                                    'searchMode' => true
+                                    'isComponent' => true
                                     ])
                                 </x-slot>
                             </x-ui-dialog-box>

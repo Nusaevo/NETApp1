@@ -56,10 +56,10 @@ class MaterialComponent extends BaseComponent
 
     #region Populate Data methods
 
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isComponent = false)
     {
-        $this->resetAfterCreate = !$searchMode;
-        $this->bypassPermissions = $searchMode;
+        $this->isComponent = $isComponent;
+        $this->resetAfterCreate = !$isComponent;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
@@ -397,15 +397,17 @@ class MaterialComponent extends BaseComponent
             }
             $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
 
+            // Format the proposed ID to 4 digits with leading zeros
+            $formattedTrId = str_pad($proposedTrId, 4, '0', STR_PAD_LEFT);
+
             // Set kode material dan update configSnum
-            $this->materials['code'] = $code . $proposedTrId;
+            $this->materials['code'] = $code . $formattedTrId;
             $configSnum->last_cnt = $proposedTrId;
             $configSnum->save();
         } else {
             $this->dispatch('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
         }
     }
-
 
 
     #endregion

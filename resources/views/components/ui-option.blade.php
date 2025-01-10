@@ -26,6 +26,7 @@
             <input
                 type="checkbox"
                 wire:model="{{ $model }}"
+                wire:change="{{ $onChanged ?? '' }}"
                 id="checkbox_{{ $id }}_{{ $key }}"
                 class="form-check-input"
                 value=false
@@ -58,6 +59,7 @@
                     <input
                         type="checkbox"
                         wire:model="{{ $model . '.' . $key }}"
+                        wire:change="{{ $onChanged ?? '' }}"
                         id="checkbox_{{ $id }}_{{ $key }}"
                         class="form-check-input"
                         @if (!$isEnabled) disabled @endif
@@ -91,6 +93,7 @@
                     <input
                         type="radio"
                         wire:model="{{ $model }}"
+                        wire:change="{{ $onChanged ?? '' }}"
                         id="radio_{{ $id }}_{{ $key }}"
                         class="form-check-input"
                         value="{{ $key }}"

@@ -2,12 +2,12 @@
 
 namespace App\Livewire\TrdTire1\Master\Partner;
 
-use App\Livewire\Component\BaseComponent;
+use App\Livewire\Component\DetailComponent;
 use App\Models\TrdTire1\Master\Partner;
 use App\Models\TrdTire1\Master\PartnerDetail;
 use Exception;
 
-class ContactListComponent extends BaseComponent
+class ContactListComponent extends DetailComponent
 {
     public $object_detail;
     public $input_details = [];
@@ -108,7 +108,7 @@ class ContactListComponent extends BaseComponent
 
     public function SaveContact()
     {
-        $this->SaveComponent();
+        $this->Save();
     }
 
     protected function onValidateAndSave()
