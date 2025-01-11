@@ -7,6 +7,7 @@ use App\Models\SysConfig1\ConfigUser;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SidebarMenu extends Component
 {
@@ -16,7 +17,7 @@ class SidebarMenu extends Component
     public function mount()
     {
         $this->baseRoute = $this->getBaseRoute();
-        $this->menus = $this->generateMenu(Auth::id());
+        $this->menus = $this->generateMenu(Auth::user()->code);
     }
 
     private function getBaseRoute()
@@ -32,6 +33,7 @@ class SidebarMenu extends Component
 
     private function generateMenu($userId)
     {
+        $app_id = Session::get('app_id');
         $app_code = Session::get('app_code');
         $mainMenu = [];
         if (empty($app_code)) {
@@ -46,35 +48,42 @@ class SidebarMenu extends Component
         ];
 
         if (!empty($userId)) {
-            $configMenus = ConfigMenu::query()
-                ->join('config_rights', 'config_menus.id', '=', 'config_rights.menu_id')
-                ->joinSub(
-                    ConfigUser::find($userId)
-                        ->configGroup()
-                        ->where('app_code', $app_code)
-                        ->select('config_groups.id'),
-                    'user_groups',
-                    'config_rights.group_id',
-                    '=',
-                    'user_groups.id'
-                )
-                ->where('config_menus.app_code', $app_code)
-                ->where('config_rights.trustee', 'like', '%R%')
-                ->select('config_menus.*', 'config_rights.menu_seq')
-                ->distinct()
-                ->orderBy('config_rights.menu_seq')
-                ->get();
-            if ($configMenus->isEmpty()) {
+            // $configMenus = ConfigMenu::query()
+            // ->join('config_rights', 'config_menus.id', '=', 'config_rights.menu_id')
+            // ->joinSub(
+            //     ConfigUser::find($userId)
+            //         ->configGroup()
+            //         ->where('app_code', $app_code)
+            //         ->select('config_groups.id'),
+            //     'user_groups',
+            //     'config_rights.group_id',
+            //     '=',
+            //     'user_groups.id'
+            // )
+            // ->where('config_menus.app_code', $app_code)
+            // ->where('config_rights.trustee', 'like', '%R%')
+            // ->select('config_menus.*', 'config_rights.menu_seq')
+            // ->distinct()
+            // ->orderBy('config_rights.menu_seq')
+            // ->get();
+            $trusteeData = DB::connection('SysConfig1')->select("
+                SELECT * FROM trusteebyuser(?, ?)
+            ", [$userId, $app_id]);
+
+
+            if (empty($trusteeData)) {
                 return $mainMenu;
             }
-            foreach ($configMenus as $configMenu) {
-                $route = str_replace('/', '.', $configMenu->menu_link);
+
+            foreach ($trusteeData as $configMenu) {
+                $route = str_replace('/', '.', $configMenu->menulink);
                 if (!Route::has($route)) {
                     continue;
                 }
-                $menuHeader = $configMenu->menu_header;
+
+                $menuHeader = $configMenu->menuhdr;
                 $menuItem = [
-                    'title' => $configMenu->menu_caption,
+                    'title' => $configMenu->menucaption,
                     'path' => $route,
                     'bullet' => '<span class="bullet bullet-dot"></span>',
                     'icon' => '<span class="bullet bullet-dot"></span>',
@@ -101,12 +110,12 @@ class SidebarMenu extends Component
                 } else {
                     $mainMenu[] = $menuItem;
                 }
-
             }
         }
 
         return $mainMenu;
     }
+
 
     public function render()
     {
