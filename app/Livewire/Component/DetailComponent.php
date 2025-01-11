@@ -26,7 +26,6 @@ class DetailComponent extends Component
     public $customActionValue = '';
     public $inputs = [];
     public $status = '';
-    public $permissions;
     public $appCode;
     public $baseRoute;
     public $langBasePath;
@@ -38,7 +37,7 @@ class DetailComponent extends Component
     public $customValidationAttributes;
     public $customRules;
     public $menuName = "";
-    protected $versionSessionKey = 'shared_version_number';
+    protected $versionSessionKey = 'session_version_number';
 
     protected function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
@@ -116,28 +115,6 @@ class DetailComponent extends Component
         $fullKey = $this->langBasePath . "." . $key;
         $translation = __($fullKey);
         return $translation === $fullKey ? $key : $translation;
-    }
-
-    protected function hasValidPermissions()
-    {
-        if ($this->bypassPermissions) {
-            return true;
-        }
-
-        if ($this->actionValue === 'Edit' && !$this->permissions['update']) {
-            $this->customActionValue = "View";
-            $this->actionValue = 'View';
-        }
-
-        if (
-            ($this->actionValue === 'View' && !$this->permissions['read']) ||
-            ($this->actionValue === 'Create' && !$this->permissions['create']) ||
-            (is_null($this->actionValue) && !$this->permissions['read'])
-        ) {
-            return false;
-        }
-
-        return true;
     }
 
     protected function validateForm()

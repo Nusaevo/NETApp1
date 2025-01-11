@@ -42,13 +42,16 @@ class BaseComponent extends Component
     public $menuName = "";
     public $isComponent = false;
 
-    protected $versionSessionKey = 'shared_version_number';
+    protected $versionSessionKey = 'session_version_number';
+    protected $permissionSessionKey = 'session_permissions';
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
         session(['previous_url' => url()->previous()]);
-
+        if (!$this->isComponent) {
+            Session::forget($this->permissionSessionKey);
+        }
         try {
             $this->additionalParam = $additionalParam;
             $this->appCode = Session::get('app_code', '');
@@ -139,7 +142,10 @@ class BaseComponent extends Component
             return;
         }
 
-        if (!$this->hasValidPermissions()) {
+        // Retrieve permissions from the session
+        $permissions = Session::get($this->permissionSessionKey , []);
+
+        if (!$this->hasValidPermissions($permissions)) {
             abort(403, "You don't have access to this page.");
         }
     }
@@ -194,8 +200,11 @@ class BaseComponent extends Component
             return;
         }
 
+        // Retrieve permissions and store them in the session
         $this->permissions = ConfigRight::getPermissionsByMenu($menu_link);
+        Session::put($this->permissionSessionKey , $this->permissions); // Store permissions in the session
     }
+
 
     public function trans($key)
     {

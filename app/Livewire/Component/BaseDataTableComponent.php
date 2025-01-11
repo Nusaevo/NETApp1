@@ -27,7 +27,8 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $baseRenderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
     public $menu_link;
-
+    protected $versionSessionKey = 'session_version_number';
+    protected $permissionSessionKey = 'session_permissions';
 
     abstract public function columns(): array;
 
@@ -61,7 +62,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
         } else {
             $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute)."/index";
         }
-        //$this->permissions = ConfigRight::getPermissionsByMenu($this->menu_link);
+        $this->permissions = Session::get($this->permissionSessionKey , []);
 
         $this->setPrimaryKey('id');
         $this->setTableAttributes([

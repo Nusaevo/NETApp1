@@ -19,8 +19,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
         $this->configService = new ConfigService();
