@@ -20,7 +20,7 @@ class UserDataTable extends BaseDataTableComponent
     public function mount($groupId = null, $selectedUserIds = null): void
     {
         $this->customRoute = "SysConfig1.ConfigUser";
-        $this->getPermission($this->customRoute);
+        $this->isComponent = true;
         $this->groupId = $groupId;
         $this->selectedRows = $selectedUserIds;
     }

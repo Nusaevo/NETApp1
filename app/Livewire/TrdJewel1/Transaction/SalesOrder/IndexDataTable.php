@@ -21,8 +21,6 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->customRoute = '';
-        $this->getPermission($this->customRoute);
         $this->setDefaultSort('tr_date', 'desc');
         $this->setDefaultSort('tr_id', 'desc');
     }

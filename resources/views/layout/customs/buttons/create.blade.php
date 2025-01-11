@@ -1,8 +1,10 @@
 @props([
     'permissions' => [],
-    'route' => ''
+    'route' => '',
+    'isComponent' => false
 ])
-@if(isset($permissions['create']) && $permissions['create'])
+
+@if(isset($permissions['create']) && $permissions['create'] && !$isComponent)
 <div style="padding: 5px;">
     <x-ui-button
         :visible="true"

@@ -23,6 +23,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $customRoute;
     public $langBasePath;
     public $appCode;
+    public $isComponent = false;
 
     public $baseRenderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
@@ -34,11 +35,11 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     protected $listeners = [
         'refreshData' => 'render',
-        'viewData'  => 'View',
-        'editData'  => 'Edit',
-        'deleteData'  => 'Delete',
-        'disableData'  => 'Disable',
-        'selectData'  => 'SelectObject',
+        'viewData' => 'View',
+        'editData' => 'Edit',
+        'deleteData' => 'Delete',
+        'disableData' => 'Disable',
+        'selectData' => 'SelectObject',
     ];
 
     public function configure(): void
@@ -55,14 +56,14 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
         $fullUrl = str_replace('.', '/', $this->baseRoute);
         $this->menu_link = ConfigMenu::getFullPathLink($fullUrl);
-        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
+        $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute);
 
         if (!empty($this->customRoute)) {
-            $this->langBasePath = str_replace('.', '/', $this->customRoute) . "/index";
+            $this->langBasePath = str_replace('.', '/', $this->customRoute) . '/index';
         } else {
-            $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute)."/index";
+            $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute) . '/index';
         }
-        $this->permissions = Session::get($this->permissionSessionKey , []);
+        $this->permissions = Session::get($this->permissionSessionKey, []);
 
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
@@ -76,20 +77,24 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->setTbodyAttributes([
             'class' => 'data-table-body',
         ]);
-        $this->setTdAttributes(function(Column $column, $row, $columnIndex, $rowIndex) {
+        $this->setTdAttributes(function (Column $column, $row, $columnIndex, $rowIndex) {
             if ($column->isField('deleted_at')) {
-              return [
-                'class' => 'text-center',
-              ];
+                return [
+                    'class' => 'text-center',
+                ];
             }
             return [];
         });
         $this->setConfigurableAreas([
-            'toolbar-left-start' =>  ['layout.customs.buttons.create', [
-                'route' => $this->baseRoute, 'permissions' => $this->permissions
-            ],]
+            'toolbar-left-start' => [
+                'layout.customs.buttons.create',
+                [
+                    'route' => $this->cleanBaseRoute($this->baseRoute) . '.Detail',
+                    'permissions' => $this->permissions,
+                    'permissions' => $this->isComponent,
+                ],
+            ],
         ]);
-
         $this->setFilterPillsDisabled();
         $this->setSortingPillsDisabled();
         $this->setFilterLayout('slide-down');
@@ -97,15 +102,21 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->setSingleSortingDisabled();
     }
 
+    private function cleanBaseRoute($route)
+    {
+        return Str::endsWith($route, '.Detail') ? Str::replaceLast('.Detail', '', $route) : $route;
+    }
+
+
     public function viewData($id)
     {
-        $route =  $this->baseRoute;
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
         return $this->redirectDetail($id, 'View', $route);
     }
 
     public function editData($id)
     {
-        $route = $this->baseRoute;
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
         return $this->redirectDetail($id, 'Edit', $route);
     }
 
@@ -130,18 +141,18 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->object->updateObject($this->object->version_number);
             $this->object->delete();
 
-            $this->dispatch('success', __('generic.string.disable', ['object' => "object"]));
+            $this->dispatch('success', __('generic.string.disable', ['object' => 'object']));
         } catch (Exception $e) {
             // Handle the exception
 
-            $this->dispatch('error', __('generic.string.disable', ['object' => "object", 'message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.string.disable', ['object' => 'object', 'message' => $e->getMessage()]));
         }
         $this->dispatch('refreshData');
     }
 
     public function trans($key)
     {
-        $fullKey = $this->langBasePath . "." . $key;
+        $fullKey = $this->langBasePath . '.' . $key;
         $translation = __($fullKey);
         if ($translation === $fullKey) {
             return $key;
@@ -154,7 +165,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
     {
         $this->permissions = ConfigRight::getPermissionsByMenu($customRoute ? $customRoute : $this->menu_link);
     }
-
 
     public function createTextFilter($name, $field, $placeholder, $filterCallback)
     {
@@ -206,5 +216,4 @@ abstract class BaseDataTableComponent extends DataTableComponent
     //     // Return the Excel download response
     //     return Excel::download(new GenericExport($data), $filename);
     // }
-
 }
