@@ -52,7 +52,7 @@ class MaterialComponent extends BaseComponent
     public $partners = [];
     public $sideMaterialGemStone = [];
     public $sideMaterialJewelOrigins = [];
-    public $searchMode = false;
+    public $isComponent = false;
     public $panelEnabled = "true";
     public $btnAction = "true";
     public $orderedMaterial = false;
@@ -109,11 +109,10 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region Populate Data methods
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isComponent = false)
     {
-        $this->searchMode = $searchMode;
-        $this->resetAfterCreate = !$searchMode;
-        $this->bypassPermissions = $searchMode;
+        $this->isComponent = $isComponent;
+        $this->resetAfterCreate = !$isComponent;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
@@ -363,7 +362,7 @@ class MaterialComponent extends BaseComponent
             $this->deleteRemovedItems();
         }
 
-        if(!$this->searchMode && $this->actionValue == "Create"){
+        if(!$this->isComponent && $this->actionValue == "Create"){
             return redirect()->route($this->appCode.'.Master.Material.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)

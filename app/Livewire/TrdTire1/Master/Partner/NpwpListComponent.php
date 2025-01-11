@@ -2,13 +2,13 @@
 
 namespace App\Livewire\TrdTire1\Master\Partner;
 
-use App\Livewire\Component\BaseComponent;
+use App\Livewire\Component\DetailComponent;
 use App\Models\TrdTire1\Master\Partner;
 use App\Models\TrdTire1\Master\PartnerDetail;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
-class NpwpListComponent extends BaseComponent
+class NpwpListComponent extends DetailComponent
 {
     public $object_detail;
     public $input_details = [];
@@ -105,7 +105,7 @@ class NpwpListComponent extends BaseComponent
 
     public function SaveNPWP()
     {
-        $this->SaveComponent();
+        $this->Save();
     }
 
     protected function onValidateAndSave()

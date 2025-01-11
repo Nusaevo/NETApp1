@@ -7,6 +7,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use App\Models\TrdTire1\Master\Partner;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Services\SysConfig1\ConfigService;
 use App\Enums\Status;
@@ -52,11 +53,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('city'), "city")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans('status'), "status_code")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
+            BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
                 }),
             Column::make($this->trans('created_date'), 'created_at')
                 ->sortable(),
@@ -97,15 +96,15 @@ class IndexDataTable extends BaseDataTableComponent
                 ])->filter(function (Builder $builder, string $value) {
                     $builder->where('grp', $value);
                 }),
-            SelectFilter::make('Status', 'Status')
+            SelectFilter::make('Status', 'status_filter')
                 ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
+                    'active' => 'Active',
+                    'deleted' => 'Non Active',
                 ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') {
-                        $builder->withoutTrashed();
-                    } else if ($value === '1') {
-                        $builder->onlyTrashed();
+                    if ($value === 'active') {
+                        $builder->whereNull('deleted_at');
+                    } elseif ($value === 'deleted') {
+                        $builder->whereNotNull('deleted_at');
                     }
                 }),
         ];

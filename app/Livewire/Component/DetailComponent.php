@@ -3,7 +3,6 @@
 namespace App\Livewire\Component;
 
 use Livewire\Component;
-use App\Models\SysConfig1\ConfigRight;
 use App\Models\SysConfig1\ConfigMenu;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
 use PDOException;
 
-class BaseComponent extends Component
+class DetailComponent extends Component
 {
     public $object;
     public $action;
@@ -39,17 +38,11 @@ class BaseComponent extends Component
     public $additionalParam;
     public $customValidationAttributes;
     public $customRules;
-    public $bypassPermissions = false;
     public $menuName = "";
-    public $isComponent = false;
-
     protected $versionSessionKey = 'shared_version_number';
 
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    protected function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        app(config('settings.KT_THEME_BOOTSTRAP.default'))->init();
-        session(['previous_url' => url()->previous()]);
-
         try {
             $this->additionalParam = $additionalParam;
             $this->appCode = Session::get('app_code', '');
@@ -60,29 +53,12 @@ class BaseComponent extends Component
 
             $this->onReset();
             $this->getRoute();
+
             $this->handleRouteChange();
-            $this->checkPermissions();
-            $this->handleActionSpecificLogic();
         } catch (Exception $e) {
-            Log::error("Method Mount : " . $e->getMessage());
-            $this->dispatch('error', "Failed to load page, error: " . $e->getMessage());
+            Log::error("Method Mount :" . $e->getMessage());
+            $this->dispatch('error', "Failed to load page, error :" . $e->getMessage());
             throw $e;
-        }
-
-        if (!$this->isComponent) {
-            Session::forget($this->versionSessionKey);
-            $this->initializeVersionNumber();
-        }
-    }
-
-    protected function initializeVersionNumber()
-    {
-        if (in_array($this->actionValue, ['Edit', 'View'])) {
-            $currentVersion = Session::get($this->versionSessionKey);
-
-            if (is_null($currentVersion) && isset($this->object->version_number)) {
-                Session::put($this->versionSessionKey, $this->object->version_number);
-            }
         }
     }
 
@@ -126,75 +102,20 @@ class BaseComponent extends Component
         }
     }
 
-    private function checkPermissions()
-    {
-        if ($this->isComponent) {
-            return;
-        }
-
-        if (!$this->hasValidPermissions()) {
-            abort(403, "You don't have access to this page.");
-        }
-    }
-
-    private function handleActionSpecificLogic()
-    {
-        $this->currentRoute = $this->baseRenderRoute;
-
-        if (in_array($this->actionValue, ['Edit', 'View'])) {
-            $this->handleEditViewAction();
-        } elseif ($this->actionValue === 'Create') {
-            $this->handleCreateAction();
-        } else {
-            $this->route .= $this->baseRoute . '.Detail';
-            return;
-        }
-
-        $segments = explode('.', $this->currentRoute);
-        array_pop($segments);
-        $this->currentRoute = implode('.', $segments);
-    }
-
-    private function handleEditViewAction()
-    {
-        if ($this->object) {
-            $this->status = $this->object->deleted_at === null ? 'Active' : Status::getStatusString($this->object->status_code);
-        }
-    }
-
-    private function handleCreateAction()
-    {
-        if ($this->objectIdValue !== null && $this->object) {
-            $this->status = $this->object->deleted_at === null ? 'Active' : Status::getStatusString($this->object->status_code);
-        }
-    }
-
-    public function getRoute()
+    protected function getRoute()
     {
         if (isNullOrEmptyString($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
-
         $route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($route);
-
-        $fullUrl = str_replace('.', '/', $this->baseRoute);
-        $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);
-        $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
         $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute);
-
-        if ($this->isComponent) {
-            return;
-        }
-
-        $this->permissions = ConfigRight::getPermissionsByMenu($menu_link);
     }
 
-    public function trans($key)
+    protected function trans($key)
     {
         $fullKey = $this->langBasePath . "." . $key;
         $translation = __($fullKey);
-
         return $translation === $fullKey ? $key : $translation;
     }
 
@@ -205,7 +126,7 @@ class BaseComponent extends Component
         }
 
         if ($this->actionValue === 'Edit' && !$this->permissions['update']) {
-            $this->customActionValue = 'View';
+            $this->customActionValue = "View";
             $this->actionValue = 'View';
         }
 
@@ -225,32 +146,24 @@ class BaseComponent extends Component
         try {
             $this->validate($this->rules, [], $this->customValidationAttributes);
         } catch (Exception $e) {
-            Log::error("Method ValidateForm : " . $e->getMessage());
+            Log::error("Method ValidateForm :" . $e->getMessage());
             $this->dispatch('error', __('generic.error.create', ['message' => $e->getMessage()]));
             throw $e;
         }
     }
 
-    protected function notify($type, $message)
-    {
-        $this->dispatch('notify-swal', [
-            'type' => $type,
-            'message' => $message,
-        ]);
-    }
-
-    public function isEditOrView()
+    protected function isEditOrView()
     {
         return in_array($this->actionValue, ['Edit', 'View']);
     }
 
-    public function Save()
+    protected function Save()
     {
         $this->validateForm();
         DB::beginTransaction();
-
         try {
             $this->updateVersionNumber();
+            $this->object->save();
             $this->onValidateAndSave();
             DB::commit();
 
@@ -261,19 +174,18 @@ class BaseComponent extends Component
             $this->dispatch('success', __('generic.string.save'));
         } catch (Exception $e) {
             DB::rollBack();
-            $this->updateSharedVersionNumber(false);
-            Log::error("Method Save : " . $e->getMessage());
+            Log::error("Method Save :" . $e->getMessage());
             $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
     }
 
-    public function SaveWithoutNotification()
+    protected function SaveWithoutNotification()
     {
         $this->validateForm();
         DB::beginTransaction();
-
         try {
             $this->updateVersionNumber();
+            $this->object->save();
             $this->onValidateAndSave();
             DB::commit();
 
@@ -281,13 +193,8 @@ class BaseComponent extends Component
                 $this->onReset();
             }
         } catch (QueryException | PDOException | Exception $e) {
-            Log::error("Method SaveWithoutNotification : " . $e->getMessage());
+            Log::error("Method SaveWithoutNotification :" . $e->getMessage());
             DB::rollBack();
-
-            if ($this->isEditOrView()) {
-                $this->updateSharedVersionNumber(false);
-            }
-
             dd($e->getMessage());
         }
     }
@@ -315,7 +222,7 @@ class BaseComponent extends Component
             $this->object->save();
             $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
-            Log::error("Method Change : " . $e->getMessage());
+            Log::error("Method Change :" . $e->getMessage());
             $this->updateSharedVersionNumber(false);
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
@@ -325,9 +232,6 @@ class BaseComponent extends Component
 
     protected function updateVersionNumber()
     {
-        if ($this->isComponent) {
-            return;
-        }
         if ($this->actionValue === 'Edit' && isset($this->object->id)) {
             $sessionVersion = Session::get($this->versionSessionKey);
 
@@ -337,11 +241,6 @@ class BaseComponent extends Component
 
             $this->updateSharedVersionNumber(true);
         }
-    }
-
-    public function goBack()
-    {
-        return redirect()->to(session('previous_url', url()->previous()));
     }
 
     protected function onReset() {}

@@ -30,7 +30,7 @@ class MaterialComponent extends BaseComponent
     public $capturedImages = [];
     public $deleteImages = [];
 
-    public $searchMode = false;
+    public $isComponent = false;
     public $panelEnabled = 'true';
     public $btnAction = 'true';
 
@@ -64,11 +64,10 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region Populate Data methods
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isComponent = false)
     {
-        $this->searchMode = $searchMode;
-        $this->resetAfterCreate = !$searchMode;
-        $this->bypassPermissions = $searchMode;
+        $this->isComponent = $isComponent;
+        $this->resetAfterCreate = !$isComponent;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 

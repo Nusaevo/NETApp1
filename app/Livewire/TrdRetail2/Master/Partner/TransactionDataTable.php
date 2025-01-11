@@ -2,7 +2,7 @@
 
 namespace App\Livewire\TrdRetail2\Master\Partner;
 
-use Livewire\Component;
+use App\Livewire\Component\DetailComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,15 +12,14 @@ use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
 
-class TransactionDataTable extends Component
+class TransactionDataTable extends DetailComponent
 {
     public int $perPage = 50;
     public $partnerID;
 
-    public function mount($partnerID = null): void
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->bypassPermissions = true;
-        $this->partnerID = $partnerID;
+        $this->partnerID = $objectIdValue;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 

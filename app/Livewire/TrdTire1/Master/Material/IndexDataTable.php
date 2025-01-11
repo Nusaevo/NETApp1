@@ -9,6 +9,7 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -61,12 +62,10 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("point"), "point")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("status"), "status_code")
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
-                })
-                ->searchable()
-                ->sortable(),
+            BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
+                }),
             Column::make($this->trans('created_date'), 'created_at')
                 ->sortable(),
             Column::make($this->trans('action'), 'id')
@@ -91,17 +90,17 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Barang', 'name', 'Cari Kode Barang', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), '=', strtoupper($value));
             }),
-            SelectFilter::make('Status', 'Status')
-                ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') {
-                        $builder->withoutTrashed();
-                    } else if ($value === '1') {
-                        $builder->onlyTrashed();
-                    }
-                })->setWireLive(),
+            SelectFilter::make('Status', 'status_filter')
+            ->options([
+                'active' => 'Active',
+                'deleted' => 'Non Active',
+            ])->filter(function (Builder $builder, string $value) {
+                if ($value === 'active') {
+                    $builder->whereNull('deleted_at');
+                } elseif ($value === 'deleted') {
+                    $builder->whereNotNull('deleted_at');
+                }
+            }),
         ];
     }
 }

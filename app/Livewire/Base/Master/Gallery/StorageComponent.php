@@ -13,12 +13,11 @@ class StorageComponent extends BaseComponent
     use WithPagination, WithFileUploads;
 
     public $images = [];
-    public $isDialogBoxComponent;
+    public $isComponent;
 
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isDialogBoxComponent = true)
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isComponent = true)
     {
-        $this->isDialogBoxComponent = $isDialogBoxComponent;
-        $this->bypassPermissions = $isDialogBoxComponent;
+        $this->isComponent = $isComponent;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
@@ -27,7 +26,7 @@ class StorageComponent extends BaseComponent
         $query = Attachment::where('attached_objecttype', 'NetStorage')
             ->orderBy('created_at', 'desc');
 
-        $attachments = $this->isDialogBoxComponent ? $query->get() : $query->paginate(15);
+        $attachments = $this->isComponent ? $query->get() : $query->paginate(15);
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute, ['attachments' => $attachments]);
     }
@@ -45,7 +44,7 @@ class StorageComponent extends BaseComponent
 
     public function submitImages($imageByteArrays)
     {
-        if ($this->isDialogBoxComponent) {
+        if ($this->isComponent) {
             return;
         }
 
@@ -55,7 +54,7 @@ class StorageComponent extends BaseComponent
 
     public function captureImages($imageData, $originalFilename = null)
     {
-        if ($this->isDialogBoxComponent) {
+        if ($this->isComponent) {
             return;
         }
         $appCode = Session::get('app_code');
@@ -79,7 +78,7 @@ class StorageComponent extends BaseComponent
 
     public function deleteImage($imageId)
     {
-        if ($this->isDialogBoxComponent) {
+        if ($this->isComponent) {
             return;
         }
 
@@ -95,7 +94,7 @@ class StorageComponent extends BaseComponent
 
     public function deleteSelectedImages($imageIds)
     {
-        if ($this->isDialogBoxComponent) {
+        if ($this->isComponent) {
             return;
         }
 

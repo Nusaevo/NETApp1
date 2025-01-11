@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Livewire\TrdRetail1\Master\Partner;
-use App\Livewire\Component\BaseComponent;
+use App\Livewire\Component\DetailComponent;
 
 use Livewire\Component;
 use Rappasoft\LaravelLivewireTables\Views\Column;
@@ -14,15 +14,14 @@ use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
 use Illuminate\Support\Facades\Session;
 
-class TransactionDataTable extends BaseComponent
+class TransactionDataTable extends DetailComponent
 {
     public int $perPage = 50;
     public $partnerID;
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->bypassPermissions = true;
-        $this->materialID = $objectIdValue;
+        $this->partnerID = $objectIdValue;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 

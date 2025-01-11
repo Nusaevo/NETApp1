@@ -26,6 +26,7 @@ class UiOption extends UiBaseComponent
     ) {
         parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, null, str_replace(['.', '[', ']'], '_', $layout));
 
+        $this->onChanged = $onChanged;
         $this->options = $options;
         $this->selectedValue = $selectedValue ?? $this->initializeSelectedValue($options, $type);
         $this->span = $span;

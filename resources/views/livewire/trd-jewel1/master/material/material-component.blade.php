@@ -7,7 +7,7 @@
 
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
-        @elseif(!$searchMode && $actionValue !== 'Create')
+        @elseif(!$isComponent && $actionValue !== 'Create')
             <x-ui-tab-view id="myTab" tabs="general,transactions"> </x-ui-tab-view>
         @endif
         <x-ui-tab-view-content id="tabMaterial" class="tab-content">
@@ -43,7 +43,7 @@
 
                                             <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                                 <x-slot name="body">
-                                                    @livewire('base.master.gallery.storage-component', ['isDialogBoxComponent' => true])
+                                                    @livewire('base.master.gallery.storage-component', ['isComponent' => true])
                                                 </x-slot>
                                             </x-ui-dialog-box>
                                         </div>
@@ -51,7 +51,7 @@
                                 </div>
                             </x-ui-padding>
                             <x-ui-padding>
-                                @if ($searchMode)
+                                @if ($isComponent)
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <x-ui-text-field label="{{ $this->trans('search_product') }}"
@@ -251,7 +251,7 @@
                     </x-ui-card>
                 </div>
             </div>
-            @if (!$searchMode && $actionValue !== 'Create')
+            @if (!$isComponent && $actionValue !== 'Create')
                 <div class="tab-pane fade show" id="transactions" role="tabpanel"
                     aria-labelledby="transactions-tab">
                     <x-ui-card>
@@ -274,11 +274,11 @@
             </div>
             {{-- <x-ui-button clickEvent="runExe" cssClass="btn btn-secondary" button-name="Scan Label" :action="$actionValue" /> --}}
 
-            {{-- @if (!$searchMode) --}}
+            {{-- @if (!$isComponent) --}}
             @livewire('component.rfid-scanner', ['duration' => 1000, 'action' => "$customActionValue"])
             {{-- @endif --}}
 
-            @if (!$searchMode && $actionValue == 'Edit')
+            @if (!$isComponent && $actionValue == 'Edit')
                 @include('layout.customs.buttons.disable')
             @endif
 
@@ -287,7 +287,7 @@
             <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$customActionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
 
-            @if ($searchMode)
+            @if ($isComponent)
                 <x-ui-button clickEvent="addPurchaseOrder" button-name="Add Item" loading="true" :action="$actionValue"
                     cssClass="btn-primary" iconPath="add.svg" />
             @endif

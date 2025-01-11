@@ -1,5 +1,5 @@
 <div>
-    @if (!$isDialogBoxComponent)
+    @if (!$isComponent)
         <div class="gallery-header">
             <div class="button-group">
                 @if (isset($permissions['create']) && $permissions['create'])
@@ -19,7 +19,7 @@
         </div>
     @endif
 
-    <div class="main-content gallery-main-content {{ $isDialogBoxComponent ? 'dialog-box-body' : '' }}">
+    <div class="main-content gallery-main-content {{ $isComponent ? 'dialog-box-body' : '' }}">
         @foreach ($attachments as $key => $attachment)
             <div class="list-gallery-item gallery-list-item">
                 <div class="image-container gallery-image-container">
@@ -32,7 +32,7 @@
                         <small>{{ $attachment->name }}</small>
                     </div>
 
-                    @if (!$isDialogBoxComponent)
+                    @if (!$isComponent)
                         @if (isset($permissions['delete']) && $permissions['delete'])
                             <button class="gallery-btn-delete-image" onclick="deleteImage('{{ $attachment->id }}')"
                                 data-image-id="{{ $attachment->id }}">X</button>
@@ -43,13 +43,13 @@
         @endforeach
     </div>
 
-    @if (!$isDialogBoxComponent)
+    @if (!$isComponent)
         <div class="pagination-container gallery-pagination-container">
             @include('components.ui-pagination', ['paginator' => $attachments])
         </div>
     @endif
 
-    @if ($isDialogBoxComponent)
+    @if ($isComponent)
         <x-ui-footer>
             <x-ui-button jsClick="submitSelectedImages()" clickEvent="" button-name="Submit" loading="true"
                 action="Edit" cssClass="btn-primary" iconPath="save.svg" />

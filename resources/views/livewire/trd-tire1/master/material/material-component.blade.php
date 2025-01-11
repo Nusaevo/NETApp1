@@ -44,7 +44,7 @@
 
                                             <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                                 <x-slot name="body">
-                                                    @livewire('base.master.gallery.storage-component', ['isDialogBoxComponent' => true])
+                                                    @livewire('base.master.gallery.storage-component', ['isComponent' => true])
                                                 </x-slot>
                                             </x-ui-dialog-box>
                                         </div>

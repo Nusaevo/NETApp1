@@ -6,7 +6,7 @@
     <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}" status="{{ $this->trans($status) }}">
 
         {{-- Tabs --}}
-        @if ($actionValue === 'Create' || (!$searchMode && $actionValue !== 'Create'))
+        @if ($actionValue === 'Create' || (!$isComponent && $actionValue !== 'Create'))
             <x-ui-tab-view id="myTab" tabs="general"></x-ui-tab-view>
         @endif
 
@@ -134,7 +134,7 @@
 
                                     <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
                                         <x-slot name="body">
-                                            @livewire('base.master.gallery.storage-component', [ 'isDialogBoxComponent' => true])
+                                            @livewire('base.master.gallery.storage-component', [ 'isComponent' => true])
                                         </x-slot>
                                     </x-ui-dialog-box>
                                 </div>
@@ -198,12 +198,12 @@
                 </x-ui-card> --}}
 
         <x-ui-footer>
-            @if (!$searchMode && $actionValue == 'Edit')
+            @if (!$isComponent && $actionValue == 'Edit')
                 @include('layout.customs.buttons.disable')
             @endif
             <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$customActionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
-            @if ($searchMode)
+            @if ($isComponent)
                 <x-ui-button clickEvent="addPurchaseOrder" button-name="Add Item" loading="true" :action="$actionValue"
                     cssClass="btn-primary" iconPath="add.svg" />
             @endif
