@@ -15,6 +15,6 @@ class SysConfig1BaseModel extends BaseModel
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->connection = Constant::ConfigConn();
+        $this->connection = Constant::configConn();
     }
 }

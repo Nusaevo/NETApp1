@@ -61,12 +61,6 @@ class Detail extends BaseComponent
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $decodedData = $this->object->partner_chars;
-            switch ($this->object->grp) {
-                case Partner::CUSTOMER:
-                    $this->inputs['ring_size'] = $decodedData['ring_size'] ?? null;
-                    $this->inputs['partner_ring_size'] = $decodedData['partner_ring_size'] ?? null;
-                    break;
-            }
         }
     }
 
@@ -115,12 +109,6 @@ class Detail extends BaseComponent
         if (isNullOrEmptyString($this->inputs['code'])) {
             $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
         }
-        $dataToSave = [];
-        if (in_array($this->inputs['grp'], [Partner::CUSTOMER])) {
-            $dataToSave['ring_size'] = $this->inputs['ring_size'] ?? null;
-            $dataToSave['partner_ring_size'] = $this->inputs['partner_ring_size'] ?? null;
-        }
-        $this->inputs['partner_chars'] = $dataToSave;
         $this->object->fillAndSanitize($this->inputs);
         $this->object->save();
     }

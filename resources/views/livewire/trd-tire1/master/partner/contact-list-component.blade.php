@@ -7,7 +7,7 @@
                         <tr wire:key="list{{ $key }}">
                             <x-ui-list-body>
                                 {{-- <x-slot name="image">
-                                        <img src="{{ $item['image_path'] ?? 'https://via.placeholder.com/300' }}" alt="Material Photo" style="width: 200px; height: 200px;">
+                                        <img src="{{ $item['image_path'] ?? 'https://via.placeholder.com/300' }}" alt="Material" style="width: 200px; height: 200px;">
                                     </x-slot> --}}
                                 <x-slot name="rows">
                                     <div class="row">

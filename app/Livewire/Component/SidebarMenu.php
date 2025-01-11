@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Livewire\Component;
 
 use Livewire\Component;
@@ -35,87 +36,90 @@ class SidebarMenu extends Component
     {
         $app_id = Session::get('app_id');
         $app_code = Session::get('app_code');
-        $mainMenu = [];
-        if (empty($app_code)) {
+        $mainMenu = $this->initializeMainMenu($app_code);
+
+        if (empty($app_code) || empty($userId)) {
             return $mainMenu;
         }
-        $mainMenu = [
-            [
-                'title' => 'Home',
-                'path' => $app_code ? str_replace('/', '.', $app_code.'/Home') : '',
-                'icon' => '<i class="bi bi-house"></i>',
-            ],
-        ];
 
-        if (!empty($userId)) {
-            // $configMenus = ConfigMenu::query()
-            // ->join('config_rights', 'config_menus.id', '=', 'config_rights.menu_id')
-            // ->joinSub(
-            //     ConfigUser::find($userId)
-            //         ->configGroup()
-            //         ->where('app_code', $app_code)
-            //         ->select('config_groups.id'),
-            //     'user_groups',
-            //     'config_rights.group_id',
-            //     '=',
-            //     'user_groups.id'
-            // )
-            // ->where('config_menus.app_code', $app_code)
-            // ->where('config_rights.trustee', 'like', '%R%')
-            // ->select('config_menus.*', 'config_rights.menu_seq')
-            // ->distinct()
-            // ->orderBy('config_rights.menu_seq')
-            // ->get();
-            $trusteeData = DB::connection('SysConfig1')->select("
-                SELECT * FROM trusteebyuser(?, ?)
-            ", [$userId, $app_id]);
+        $trusteeData = $this->getTrusteeData($userId, $app_id);
 
+        if (empty($trusteeData)) {
+            return $mainMenu;
+        }
 
-            if (empty($trusteeData)) {
-                return $mainMenu;
-            }
-
-            foreach ($trusteeData as $configMenu) {
-                $route = str_replace('/', '.', $configMenu->menulink);
-                if (!Route::has($route)) {
-                    continue;
-                }
-
-                $menuHeader = $configMenu->menuhdr;
-                $menuItem = [
-                    'title' => $configMenu->menucaption,
-                    'path' => $route,
-                    'bullet' => '<span class="bullet bullet-dot"></span>',
-                    'icon' => '<span class="bullet bullet-dot"></span>',
-                ];
-
-                if (trim($menuHeader) !== '') {
-                    $menuHeaderKey = strtolower(trim($menuHeader));
-
-                    if (!isset($mainMenu[$menuHeaderKey])) {
-                        $mainMenu[$menuHeaderKey] = [
-                            'title' => $menuHeader,
-                            'icon' => '<span class="bullet bullet-dot"></span>',
-                            'classes' => ['item' => 'menu-accordion'],
-                            'attributes' => [
-                                'data-kt-menu-trigger' => 'click',
-                            ],
-                            'sub' => [
-                                'class' => 'menu-sub-accordion menu-active-bg',
-                                'items' => [],
-                            ],
-                        ];
-                    }
-                    $mainMenu[$menuHeaderKey]['sub']['items'][] = $menuItem;
-                } else {
-                    $mainMenu[] = $menuItem;
-                }
-            }
+        foreach ($trusteeData as $configMenu) {
+            $this->addMenuItem($mainMenu, $configMenu);
         }
 
         return $mainMenu;
     }
 
+    private function initializeMainMenu($app_code)
+    {
+        return [
+            [
+                'title' => 'Home',
+                'path' => $app_code ? str_replace('/', '.', $app_code . '/Home') : '',
+                'icon' => '<i class="bi bi-house"></i>',
+            ],
+        ];
+    }
+
+    private function getTrusteeData($userId, $app_id)
+    {
+        return DB::connection('SysConfig1')->select("
+            SELECT * FROM trusteebyuser(?, ?)
+        ", [$userId, $app_id]);
+    }
+
+    private function addMenuItem(&$mainMenu, $configMenu)
+    {
+        $route = str_replace('/', '.', $configMenu->menulink);
+
+        if (!Route::has($route)) {
+            return;
+        }
+
+        $menuItem = $this->createMenuItem($configMenu);
+
+        if (trim($configMenu->menuhdr) !== '') {
+            $menuHeaderKey = strtolower(trim($configMenu->menuhdr));
+            $this->addMenuToHeader($mainMenu, $menuHeaderKey, $menuItem, $configMenu->menuhdr);
+        } else {
+            $mainMenu[] = $menuItem;
+        }
+    }
+
+    private function createMenuItem($configMenu)
+    {
+        return [
+            'title' => $configMenu->menucaption,
+            'path' => str_replace('/', '.', $configMenu->menulink),
+            'bullet' => '<span class="bullet bullet-dot"></span>',
+            'icon' => '<span class="bullet bullet-dot"></span>',
+        ];
+    }
+
+    private function addMenuToHeader(&$mainMenu, $menuHeaderKey, $menuItem, $menuHeader)
+    {
+        if (!isset($mainMenu[$menuHeaderKey])) {
+            $mainMenu[$menuHeaderKey] = [
+                'title' => $menuHeader,
+                'icon' => '<span class="bullet bullet-dot"></span>',
+                'classes' => ['item' => 'menu-accordion'],
+                'attributes' => [
+                    'data-kt-menu-trigger' => 'click',
+                ],
+                'sub' => [
+                    'class' => 'menu-sub-accordion menu-active-bg',
+                    'items' => [],
+                ],
+            ];
+        }
+
+        $mainMenu[$menuHeaderKey]['sub']['items'][] = $menuItem;
+    }
 
     public function render()
     {

@@ -23,27 +23,38 @@ function schemaHelper($model, $column = null, $operation = 'columns')
 {
     $connection = $model->getConnectionName();
     $table = $model->getTable();
+    $result = null;
 
     try {
-        // Operasi: Ambil semua kolom
-        if ($operation === 'columns') {
-            return Schema::connection($connection)->getColumnListing($table);
-        }
+        switch ($operation) {
+            case 'columns':
+                // Operasi: Ambil semua kolom
+                $result = Schema::connection($connection)->getColumnListing($table);
+                break;
 
-        // Operasi: Periksa keberadaan kolom
-        if ($operation === 'hasColumn' && $column) {
-            return Schema::connection($connection)->hasColumn($table, $column);
-        }
+            case 'hasColumn':
+                // Operasi: Periksa keberadaan kolom
+                if ($column) {
+                    $result = Schema::connection($connection)->hasColumn($table, $column);
+                }
+                break;
 
-        // Operasi: Ambil tipe kolom
-        if ($operation === 'type' && $column) {
-            return Schema::connection($connection)->getColumnType($table, $column);
+            case 'type':
+                // Operasi: Ambil tipe kolom
+                if ($column) {
+                    $result = Schema::connection($connection)->getColumnType($table, $column);
+                }
+                break;
+
+            default:
+                // Jika operasi tidak dikenal, kembalikan null (opsional)
+                $result = null;
         }
     } catch (\Exception $e) {
         logger()->error('Schema Helper Error: ' . $e->getMessage());
     }
 
-    return null;
+    return $result;
 }
 
 /**
@@ -60,7 +71,6 @@ function populateArrayFromModel($model)
     foreach ($columns as $column) {
         if (schemaHelper($model, $column, 'hasColumn')) {
             $type = schemaHelper($model, $column, 'type') ?? 'string';
-            $value = $model->{$column} ?? getDefaultValueForType($type);
 
             if ($column === 'id') {
                 $value = $model->{$column};
@@ -228,7 +238,7 @@ if (!function_exists('registerDynamicConnections')) {
 
         // Set base connection credentials globally
         Config::set('database.connections.pgsql', $baseConnection);
-        $configConnectionName = Constant::ConfigConn();
+        $configConnectionName = Constant::configConn();
 
         try {
             // Fetch dynamic database configurations

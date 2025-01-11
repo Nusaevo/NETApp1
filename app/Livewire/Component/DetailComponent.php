@@ -26,7 +26,6 @@ class DetailComponent extends Component
     public $customActionValue = '';
     public $inputs = [];
     public $status = '';
-    public $VersionNumber;
     public $permissions;
     public $appCode;
     public $baseRoute;
@@ -243,5 +242,10 @@ class DetailComponent extends Component
         }
     }
 
-    protected function onReset() {}
+    protected function onReset()
+    {
+        // This method is intentionally left empty.
+        // Override this method in child classes to implement specific reset logic.
+    }
+
 }

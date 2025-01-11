@@ -29,10 +29,10 @@
                 wire:change="{{ $onChanged ?? '' }}"
                 id="checkbox_{{ $id }}_{{ $key }}"
                 class="form-check-input"
-                value=false
+                value="false"
                 @if (!$isEnabled) disabled @endif
             />
-            <label class="form-check-label fw-bold">
+            <label for="checkbox_{{ $id }}_{{ $key }}" class="form-check-label fw-bold">
                 {{ $optionLabel }}
             </label>
         </div>

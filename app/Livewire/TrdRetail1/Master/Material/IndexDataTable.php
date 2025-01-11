@@ -240,12 +240,26 @@ class IndexDataTable extends BaseDataTableComponent
         $selectedIds = $this->getSelected();
         $materials = Material::whereIn('id', $selectedIds)->get();
         $data = $materials
-            ->map(function ($material, $index) {
-                $specs = is_array($material->specs) ? $material->specs : $material->specs;
+        ->map(function ($material, $index) {
+            $specs = $material->specs;
 
-                return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
-            })
-            ->toArray();
+            return [
+                $material->seq,
+                $specs['color_code'] ?? '',
+                $specs['color_name'] ?? '',
+                $material->MatlUom[0]->matl_uom ?? '',
+                $material->selling_price ?? '',
+                $material->stock ?? '',
+                $material->code ?? '',
+                $material->MatlUom[0]->barcode ?? '',
+                $material->name ?? '',
+                $material->deleted_at ? 'Yes' : 'No',
+                $material->remarks ?? '',
+                $material->version_number ?? '',
+            ];
+        })
+        ->toArray();
+
 
         $sheets = [Material::getUpdateTemplateConfig($data)];
         $filename = 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx';

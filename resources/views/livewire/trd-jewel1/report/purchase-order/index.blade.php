@@ -45,7 +45,7 @@
                                         : 'https://via.placeholder.com/200';
 
                                 @endphp
-                                <img src="{{ $imageUrl }}" alt="Material Photo" style="width: 100px; height: 105px;">
+                                <img src="{{ $imageUrl }}" alt="Material" style="width: 100px; height: 105px;">
                             </td>
 
 

@@ -5,12 +5,12 @@ use Illuminate\Support\Str;
 
 class Constant
 {
-    public static function ConfigConn(): string
+    public static function configConn(): string
     {
         return "pgsql";
     }
 
-    public static function AppConn(): string
+    public static function appConn(): string
     {
         return "main";
     }

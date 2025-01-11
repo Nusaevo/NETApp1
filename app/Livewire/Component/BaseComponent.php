@@ -27,7 +27,6 @@ class BaseComponent extends Component
     public $customActionValue = '';
     public $inputs = [];
     public $status = '';
-    public $VersionNumber;
     public $permissions;
     public $appCode;
     public $baseRoute;
@@ -104,16 +103,24 @@ class BaseComponent extends Component
 
     private function setActionValue($action, $actionValue)
     {
-        $this->actionValue = $actionValue !== null
-            ? $actionValue
-            : ($action ? decryptWithSessionKey($action) : null);
+        if ($actionValue !== null) {
+            $this->actionValue = $actionValue;
+        } elseif ($action) {
+            $this->actionValue = decryptWithSessionKey($action);
+        } else {
+            $this->actionValue = null;
+        }
     }
 
     private function setObjectIdValue($objectId, $objectIdValue)
     {
-        $this->objectIdValue = $objectIdValue !== null
-            ? $objectIdValue
-            : ($objectId ? decryptWithSessionKey($objectId) : null);
+        if ($objectIdValue !== null) {
+            $this->objectIdValue = $objectIdValue;
+        } elseif ($objectId) {
+            $this->objectIdValue = decryptWithSessionKey($objectId);
+        } else {
+            $this->objectIdValue = null;
+        }
     }
 
     private function handleRouteChange()
@@ -344,5 +351,10 @@ class BaseComponent extends Component
         return redirect()->to(session('previous_url', url()->previous()));
     }
 
-    protected function onReset() {}
+    protected function onReset()
+    {
+        // This method is intentionally left empty.
+        // Override this method in child classes to implement specific reset logic.
+    }
+
 }
