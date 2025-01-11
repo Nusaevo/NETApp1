@@ -70,7 +70,6 @@ class BaseComponent extends Component
             $this->dispatch('error', "Failed to load page, error: " . $e->getMessage());
             throw $e;
         }
-
         if (!$this->isComponent) {
             Session::forget($this->versionSessionKey);
             $this->initializeVersionNumber();

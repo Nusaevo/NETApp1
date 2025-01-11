@@ -86,7 +86,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
         });
         $this->setConfigurableAreas([
             'toolbar-left-start' =>  ['layout.customs.buttons.create', [
-                'route' => $this->baseRoute.".Detail", 'permissions' => $this->permissions
+                'route' => $this->baseRoute, 'permissions' => $this->permissions
             ],]
         ]);
 
@@ -99,13 +99,13 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public function viewData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->baseRoute . ".Detail";
+        $route =  $this->baseRoute;
         return $this->redirectDetail($id, 'View', $route);
     }
 
     public function editData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->baseRoute . ".Detail";
+        $route = $this->baseRoute;
         return $this->redirectDetail($id, 'Edit', $route);
     }
 
