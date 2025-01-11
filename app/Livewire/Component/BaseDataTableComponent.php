@@ -91,7 +91,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
                 [
                     'route' => $this->cleanBaseRoute($this->baseRoute) . '.Detail',
                     'permissions' => $this->permissions,
-                    'permissions' => $this->isComponent,
+                    'isComponent' => $this->isComponent,
                 ],
             ],
         ]);

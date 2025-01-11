@@ -38,6 +38,7 @@ class DetailComponent extends Component
     public $customRules;
     public $menuName = "";
     protected $versionSessionKey = 'session_version_number';
+    protected $permissionSessionKey = 'session_permissions';
 
     protected function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
@@ -51,6 +52,7 @@ class DetailComponent extends Component
 
             $this->onReset();
             $this->getRoute();
+            $this->checkPermissions();
 
             $this->handleRouteChange();
         } catch (Exception $e) {
@@ -59,6 +61,35 @@ class DetailComponent extends Component
             throw $e;
         }
     }
+
+    private function checkPermissions()
+    {
+        // Retrieve permissions from the session
+        $this->permissions = Session::get($this->permissionSessionKey , []);
+
+        if (!$this->hasValidPermissions()) {
+            abort(403, "You don't have access to this page.");
+        }
+    }
+
+    protected function hasValidPermissions()
+    {
+        if ($this->actionValue === 'Edit' && !$this->permissions['update']) {
+            $this->customActionValue = 'View';
+            $this->actionValue = 'View';
+        }
+
+        if (
+            ($this->actionValue === 'View' && !$this->permissions['read']) ||
+            ($this->actionValue === 'Create' && !$this->permissions['create']) ||
+            (is_null($this->actionValue) && !$this->permissions['read'])
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
 
     protected function updateSharedVersionNumber($increment = true)
     {
@@ -78,16 +109,24 @@ class DetailComponent extends Component
 
     private function setActionValue($action, $actionValue)
     {
-        $this->actionValue = $actionValue !== null
-            ? $actionValue
-            : ($action ? decryptWithSessionKey($action) : null);
+        if ($actionValue !== null) {
+            $this->actionValue = $actionValue;
+        } elseif ($action) {
+            $this->actionValue = decryptWithSessionKey($action);
+        } else {
+            $this->actionValue = null;
+        }
     }
 
     private function setObjectIdValue($objectId, $objectIdValue)
     {
-        $this->objectIdValue = $objectIdValue !== null
-            ? $objectIdValue
-            : ($objectId ? decryptWithSessionKey($objectId) : null);
+        if ($objectIdValue !== null) {
+            $this->objectIdValue = $objectIdValue;
+        } elseif ($objectId) {
+            $this->objectIdValue = decryptWithSessionKey($objectId);
+        } else {
+            $this->objectIdValue = null;
+        }
     }
 
     private function handleRouteChange()

@@ -2,8 +2,10 @@
     $id = str_replace(['.', '[', ']'], '_', $model);
     $isVertical = isset($layout) && $layout === 'vertical';
     $isVisible = !isset($visible) || $visible === 'true';
-    $isEnabled = !isset($enabled) || $enabled === 'true';
-    $isRequired = isset($required) && $required === 'true';
+    $isEnabled = (isset($action) && $action === 'View')
+        ? 'false'
+        : ((!isset($enabled) || $enabled === 'true') ? 'true' : 'false');
+    $isRequired = isset($required) && $required === 'true' ? 'true' : 'false';
     $isSingleCheckbox = $type === 'checkbox' && count($options) === 1;
 @endphp
 
@@ -11,7 +13,7 @@
 <div
     class="mb-3 responsive-field"
     @if (isset($span)) span="{{ $span }}" @endif
-    @if (!$isVisible) style="display: none;" @endif
+    @if ($isVisible === 'false') style="display: none;" @endif
 >
     <!-- Single Checkbox (Yes/No) dengan Field Label di Kiri -->
     @if ($isSingleCheckbox)
@@ -30,7 +32,7 @@
                 id="checkbox_{{ $id }}_{{ $key }}"
                 class="form-check-input"
                 value="false"
-                @if (!$isEnabled) disabled @endif
+                @if ($isEnabled === 'false') disabled @endif
             />
             <label for="checkbox_{{ $id }}_{{ $key }}" class="form-check-label fw-bold">
                 {{ $optionLabel }}
@@ -41,7 +43,7 @@
     @elseif ($type === 'checkbox')
         @if (!empty($label))
             <div class="responsive-label mb-2">
-                <label class="{{ $isRequired ? 'required' : '' }}">
+                <label class="{{ $isRequired === 'true' ? 'required' : '' }}">
                     {{ $label }} :
                 </label>
             </div>
@@ -62,7 +64,7 @@
                         wire:change="{{ $onChanged ?? '' }}"
                         id="checkbox_{{ $id }}_{{ $key }}"
                         class="form-check-input"
-                        @if (!$isEnabled) disabled @endif
+                        @if ($isEnabled === 'false') disabled @endif
                     />
                     <label for="checkbox_{{ $id }}_{{ $key }}" class="form-check-label">
                         {{ $optionLabel }}
@@ -75,7 +77,7 @@
     @elseif ($type === 'radio')
         @if (!empty($label))
             <div class="responsive-label mb-2">
-                <label class="{{ $isRequired ? 'required' : '' }}">
+                <label class="{{ $isRequired === 'true' ? 'required' : '' }}">
                     {{ $label }} :
                 </label>
             </div>
@@ -97,7 +99,7 @@
                         id="radio_{{ $id }}_{{ $key }}"
                         class="form-check-input"
                         value="{{ $key }}"
-                        @if (!$isEnabled) disabled @endif
+                        @if ($isEnabled === 'false') disabled @endif
                     />
                     <label for="radio_{{ $id }}_{{ $key }}" class="form-check-label">
                         {{ $optionLabel }}

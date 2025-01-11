@@ -142,9 +142,9 @@ class BaseComponent extends Component
         }
 
         // Retrieve permissions from the session
-        $permissions = Session::get($this->permissionSessionKey , []);
+        $this->permissions = Session::get($this->permissionSessionKey , []);
 
-        if (!$this->hasValidPermissions($permissions)) {
+        if (!$this->hasValidPermissions()) {
             abort(403, "You don't have access to this page.");
         }
     }
