@@ -61,7 +61,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
         } else {
             $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute)."/index";
         }
-        $this->permissions = ConfigRight::getPermissionsByMenu($this->menu_link);
+        //$this->permissions = ConfigRight::getPermissionsByMenu($this->menu_link);
 
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
