@@ -22,6 +22,12 @@ class NpwpListComponent extends DetailComponent
 
     protected function onPreRender()
     {
+        $this->customValidationAttributes = [
+            'input_details.*.npwp'        => $this->trans('npwp'),
+            'input_details.*.wp_name'     => $this->trans('wp_name'),
+            'input_details.*.wp_location' => $this->trans('wp_location'),
+        ];
+
         if (!empty($this->objectIdValue)) {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);

@@ -68,7 +68,7 @@
                                         :action="$customActionValue" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('size') }}" model="materials.size" :options="$materialSize"
+                                    <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
                                         type="text" :action="$customActionValue" required="true" enabled="true"
                                         onChanged="generateName" />
                                     <x-ui-text-field label="{{ $this->trans('pattern') }}" model="materials.pattern"
@@ -80,7 +80,7 @@
                                         type="text" :action="$customActionValue" onChanged="generateName" enabled="true" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('piece') }}" model="matl_uoms.barcode"
+                                    <x-ui-dropdown-select  label="{{ $this->trans('piece') }}" model="matl_uoms.barcode" :options="$materialUOM"
                                         type="number" :action="$customActionValue" required="false" enabled="true" />
                                     <x-ui-text-field label="{{ $this->trans('point') }}" model="materials.point"
                                         type="number" :action="$customActionValue" required="false" enabled="true" />
@@ -97,12 +97,12 @@
                                     model="materials.selling_price" type="number" :action="$customActionValue" required="true"
                                     enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('cost') }}" model="materials.cost"
-                                    type="number" :action="$customActionValue" required="true" enabled="true" />
+                                    type="number" :action="$customActionValue" required="false" enabled="false" />
                             </x-ui-padding>
                         </x-ui-card>
                         <x-ui-card title="Associations">
                             <x-ui-padding>
-                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stok"
+                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
                                     type="number" :action="$customActionValue" required="false" enabled="false" />
                                 <x-ui-text-field label="{{ $this->trans('reserved') }}" model="materials.reserved"
                                     type="text" :action="$customActionValue" required="false" enabled="true" />

@@ -6,6 +6,7 @@ return [
     'brand' => 'Merk',
     'search_product' => 'Cari Produk',
     'size' => 'Size',
+    'stock' => 'Stok',
     'pattern' => 'Pattern',
     'name' => 'Nama Barang',
     'jual' => 'Harga Jual',

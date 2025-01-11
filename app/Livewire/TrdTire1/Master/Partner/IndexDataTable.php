@@ -23,7 +23,6 @@ class IndexDataTable extends BaseDataTableComponent
         $this->getPermission($this->customRoute);
         $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
-
     }
 
     public function builder(): Builder
@@ -34,25 +33,24 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make($this->trans('grp'), "grp")
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("code"), "code")
-            ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode.'.Master.Partner.Detail', [
+                ->format(function ($value, $row) {
+                    return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey($row->id)
                     ]) . '">' . $row->code . '</a>';
-            })
-            ->html(),
-            Column::make($this->trans('group'), "grp")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    $configService = new ConfigService();
-                    return  $configService->getConstValueByStr1('PARTNERS_TYPE', $value) ?? '';
-                }),
+                })
+                ->html(),
             Column::make($this->trans('name'), "name")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans('address'), "address")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans('city'), "city")
                 ->searchable()
                 ->sortable(),
             BooleanColumn::make($this->trans("Status"), "deleted_at")

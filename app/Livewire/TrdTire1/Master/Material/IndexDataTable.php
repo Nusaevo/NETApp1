@@ -29,37 +29,38 @@ class IndexDataTable extends BaseDataTableComponent
     }
 
     public function builder(): Builder
-{
-    return Material::select('materials.*');
-}
+    {
+        return Material::select('materials.*');
+    }
 
 
     public function columns(): array
     {
         return [
+            Column::make($this->trans("category"), "category")
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("code"), "code")
-            ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
+                ->format(function ($value, $row) {
+                    return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey($row->id)
                     ]) . '">' . $row->code . '</a>';
-            })
-            ->html(),
+                })
+                ->html(),
             Column::make($this->trans("description_material"), "name")
                 ->searchable()
-                ->sortable(),
-            Column::make($this->trans("description_bom"), "descr")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("buying_price"), "buying_price")
-                ->label(function ($row) {
-                    return $row->buying_price_text;
-                })
                 ->sortable(),
             Column::make($this->trans("selling_price"), "selling_price")
                 ->label(function ($row) {
                     return $row->selling_price_text;
                 })
+                ->sortable(),
+            Column::make($this->trans("stock"), "stock")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("point"), "point")
+                ->searchable()
                 ->sortable(),
             BooleanColumn::make($this->trans("Status"), "deleted_at")
                 ->setCallback(function ($value) {

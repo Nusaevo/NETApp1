@@ -43,19 +43,16 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
-        $this->customValidationAttributes  = [
-            'inputs'                => 'Input',
-            'inputs.grp'           => $this->trans('partner_type'),
-            'inputs.code'           => $this->trans('partner_code'),
-            'inputs.name'      => $this->trans('name'),
-            'inputs.address'      => $this->trans('address'),
-            'inputs.city'      => $this->trans('city'),
-            'inputs.country'      => $this->trans('country'),
-            'inputs.postal_code'      => $this->trans('postal_code'),
-            'inputs.contact_person'      => $this->trans('contact_person'),
-            'inputs.ring_size'      => $this->trans('ring_size'),
-            'inputs.partner_ring_size'      => $this->trans('partner_ring_size'),
+        $this->customValidationAttributes = [
+            'inputs'             => 'Input',
+            'inputs.grp'         => $this->trans('kategori'),
+            'inputs.name'        => $this->trans('name'),
+            'inputs.address'     => $this->trans('address'),
+            'inputs.country'     => $this->trans('country'),
+            'inputs.province'    => $this->trans('province'),
+            'inputs.city'        => $this->trans('city'),
         ];
+
 
         $this->masterService = new MasterService();
 

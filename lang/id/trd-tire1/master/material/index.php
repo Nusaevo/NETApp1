@@ -9,4 +9,7 @@ return [
     'action' => 'Aksi',
     'selling_price' => 'Harga Jual',
     'buying_price' => 'Modal',
+    'stock' => 'Stok',
+    'category' => 'Kategori',
+    'point' => 'Point',
 ];

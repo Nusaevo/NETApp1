@@ -18,7 +18,7 @@
                                             type="text" :action="$actionValue" required="true" />
                                         <x-ui-text-field label="{{ $this->trans('date_of_birth') }}"
                                             model="input_details.{{ $key }}.date_of_birth" type="text" :action="$actionValue"
-                                            required="true" />
+                                            required="false" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('phone1') }}" model="input_details.{{ $key }}.phone1"

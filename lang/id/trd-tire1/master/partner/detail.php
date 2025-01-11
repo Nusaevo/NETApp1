@@ -1,14 +1,14 @@
 <?php
 
 return [
-    'contact_name' => 'Nama Kontak',
-    'position' => 'Jabatan',
-    'date_of_birth' => 'Tanggal Lahir',
-    'phone1' => 'Phone 1',
-    'phone2' => 'Phone 2',
-    'email' => 'Email',
+    'contact_name'    => 'Nama Kontak',
+    'position'        => 'Jabatan',
+    'phone1'          => 'Nomor Telepon Utama',
+    'phone2'          => 'Nomor Telepon Sekunder',
+    'email'           => 'Email',
     'contact_address' => 'Alamat Kontak',
-    'contact_note' => 'Catatan Kontak',
+    'contact_note'    => 'Catatan Kontak',
+    'date_of_birth'   => 'Tanggal Lahir',
     'bank_acct' => 'Bank Account',
     'bank_name' => 'Nama Bank',
     'bank_location' => 'Lokasi Bank',

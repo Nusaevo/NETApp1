@@ -21,15 +21,11 @@ class BankListComponent extends DetailComponent
 
     protected function onPreRender()
     {
-        // $this->customValidationAttributes  = [
-        //     'input_details.*.tr_date'      => $this->trans('tr_date'),
-        //     'input_details.*.payment_term_id'      => $this->trans('payment'),
-        //     'input_details.*.partner_id'      => $this->trans('partner'),
-        //     'input_details.*'              => $this->trans('product'),
-        //     'input_details.*.matl_id' => $this->trans('product'),
-        //     'input_details.*.qty' => $this->trans('qty'),
-        //     'input_details.*.price' => $this->trans('selling_price'),
-        // ];
+        $this->customValidationAttributes  = [
+            'input_details.*.bank_acct'      => $this->trans('Bank Account'),
+            'input_details.*.bank_name'      => $this->trans('Nama Bank'),
+            'input_details.*.bank_location'      => $this->trans('Lokasi Bank'),
+        ];
 
         if (!empty($this->objectIdValue)) {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
