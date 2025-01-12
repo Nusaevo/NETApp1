@@ -43,7 +43,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
             Column::make($this->trans('description_material'), 'name')->searchable()->sortable(),
-            Column::make($this->trans('description_bom'), 'descr')->searchable()->sortable(),
+            Column::make($this->trans('description_bom'), 'descr')->searchable()->sortable()->collapseOnTablet(),
             Column::make('Qty Onhand', 'IvtBal.qty_oh')
                 ->format(function ($value, $row, Column $column) {
                     return $row->IvtBal?->qty_oh ?? 0; // Ensure null values are shown as 0
@@ -54,18 +54,18 @@ class IndexDataTable extends BaseDataTableComponent
                 ->label(function ($row) {
                     return $row->jwl_buying_price_text;
                 })
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
             Column::make($this->trans('selling_price'), 'jwl_selling_price_text')
                 ->label(function ($row) {
                     return $row->jwl_selling_price_text;
                 })
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
 
             BooleanColumn::make($this->trans("Status"), "deleted_at")
                 ->setCallback(function ($value) {
                     return $value === null;
                 }),
-            Column::make($this->trans('created_date'), 'created_at')->sortable(),
+            Column::make($this->trans('created_date'), 'created_at')->sortable()->collapseOnTablet(),
             Column::make($this->trans('action'), 'id')->format(function ($value, $row, Column $column) {
                 return view('layout.customs.data-table-action', [
                     'row' => $row,

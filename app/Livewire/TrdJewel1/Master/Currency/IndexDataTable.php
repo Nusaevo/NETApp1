@@ -43,7 +43,7 @@ class IndexDataTable extends BaseDataTableComponent
                     return dollar($value);
                 }),
             Column::make($this->trans('created_date'), 'created_at')
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

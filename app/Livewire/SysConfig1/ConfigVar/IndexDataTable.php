@@ -50,16 +50,16 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("Seq"), "seq")
                 ->searchable()
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
             Column::make($this->trans("Default Value"), "default_value")
                 ->searchable()
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
                 BooleanColumn::make($this->trans("Status"), "deleted_at")
                 ->setCallback(function ($value) {
                     return $value === null;
                 }),
             Column::make($this->trans('Created Date'), 'created_at')
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
             Column::make($this->trans('Actions'), 'id')
                 ->format(function ($value, $row) {
                     return view('layout.customs.data-table-action', [

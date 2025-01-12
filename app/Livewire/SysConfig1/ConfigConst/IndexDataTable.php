@@ -53,13 +53,13 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Seq', 'seq')->searchable()->sortable(),
             Column::make('Str1', 'str1')->searchable()->sortable(),
             Column::make('Str2', 'str2')->searchable()->sortable(),
-            Column::make('Num1', 'num1')->searchable()->sortable(),
-            Column::make('Num2', 'num2')->searchable()->sortable(),
-            Column::make('Note1', 'note1')->searchable()->sortable(),
+            Column::make('Num1', 'num1')->searchable()->sortable()->collapseOnTablet(),
+            Column::make('Num2', 'num2')->searchable()->sortable()->collapseOnTablet(),
+            Column::make('Note1', 'note1')->searchable()->sortable()->collapseOnTablet(),
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
             }),
-            Column::make('Created Date', 'created_at')->sortable(),
+            Column::make('Created Date', 'created_at')->sortable()->collapseOnTablet(),
             Column::make('Actions', 'id')->format(function ($value, $row, Column $column) {
                 return view('layout.customs.data-table-action', [
                     'row' => $row,

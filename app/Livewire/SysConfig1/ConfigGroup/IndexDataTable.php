@@ -47,7 +47,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->setCallback(function ($value) {
                     return $value === null;
                 }),
-            Column::make($this->trans('Created Date'), 'created_at')
+            Column::make($this->trans('Created Date'), 'created_at')->collapseOnTablet()
                 ->sortable(),
             Column::make($this->trans('Actions'), 'id')
                 ->format(function ($value, $row) {

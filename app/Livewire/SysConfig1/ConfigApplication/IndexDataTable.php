@@ -48,12 +48,12 @@ class IndexDataTable extends BaseDataTableComponent
                 //     ]);
                 // })
                 ->html(),
-            Column::make('Seq', 'seq')->searchable()->sortable(),
-            Column::make($this->trans('Latest Version'), 'latest_version')->searchable()->sortable(),
+            Column::make('Seq', 'seq')->searchable()->sortable()->collapseOnTablet(),
+            Column::make($this->trans('Latest Version'), 'latest_version')->searchable()->sortable()->collapseOnTablet(),
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
             }),
-            Column::make($this->trans('Created Date'), 'created_at')->sortable(),
+            Column::make($this->trans('Created Date'), 'created_at')->sortable()->collapseOnTablet(),
             Column::make($this->trans('Actions'), 'id')->format(function ($value, $row) {
                 return view('layout.customs.data-table-action', [
                     'row' => $row,

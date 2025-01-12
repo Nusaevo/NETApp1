@@ -63,7 +63,6 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row) {
                     $firstAttachment = $row->Attachment->first();
                     $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-
                     return $imageUrl
                         ? '<div style="display: flex; align-items: center; gap: 5px;">
                             <img src="' .
@@ -71,31 +70,40 @@ class IndexDataTable extends BaseDataTableComponent
                                 '" alt="Photo" style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" onclick="showImagePreview(\'' .
                                 $imageUrl .
                                 '\')">
-                            <button type="button" onclick="showImagePreview(\'' .
-                                $imageUrl .
-                                '\')" style="border: none; background: none; cursor: pointer;">
-                                <i class="fas fa-eye"></i>
-                            </button>
                         </div>'
                         : '<span>No Image</span>';
+                    // return $imageUrl
+                    //     ? '<div style="display: flex; align-items: center; gap: 5px;">
+                    //         <img src="' .
+                    //             $imageUrl .
+                    //             '" alt="Photo" style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" onclick="showImagePreview(\'' .
+                    //             $imageUrl .
+                    //             '\')">
+                    //         <button type="button" onclick="showImagePreview(\'' .
+                    //             $imageUrl .
+                    //             '\')" style="border: none; background: none; cursor: pointer;">
+                    //             <i class="fas fa-eye"></i>
+                    //         </button>
+                    //     </div>'
+                    //     : '<span>No Image</span>';
                 })
                 ->html(),
 
-            Column::make('UOM', 'id')->format(fn($value, $row) => $row->MatlUom[0]->matl_uom ?? '')->sortable(),
+            Column::make('UOM', 'id')->format(fn($value, $row) => $row->MatlUom[0]->matl_uom ?? '')->sortable()->collapseOnTablet(),
 
-            Column::make('Selling Price', 'selling_price_text')->label(fn($row) => $row->selling_price_text)->sortable(),
+            Column::make('Selling Price', 'selling_price_text')->label(fn($row) => $row->selling_price_text)->sortable()->collapseOnTablet(),
 
-            Column::make('Stock', 'IvtBal.qty_oh')->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)->sortable(),
+            Column::make('Stock', 'IvtBal.qty_oh')->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)->sortable()->collapseOnTablet(),
 
-            Column::make('Code', 'code')->sortable(),
+            Column::make('Code', 'code')->sortable()->collapseOnTablet(),
 
-            Column::make('Barcode', 'id')->format(fn($value, $row) => $row->MatlUom[0]->barcode ?? '')->sortable(),
+            Column::make('Barcode', 'id')->format(fn($value, $row) => $row->MatlUom[0]->barcode ?? '')->sortable()->collapseOnTablet(),
 
-            Column::make('Remarks', 'remarks')->sortable(),
+            Column::make('Remarks', 'remarks')->sortable()->collapseOnTablet(),
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
             }),
-            Column::make($this->trans('created_date'), 'created_at')->sortable(),
+            Column::make($this->trans('created_date'), 'created_at')->sortable()->collapseOnTablet(),
             Column::make('Action', 'id')->format(function ($value, $row, $column) {
                 return view('layout.customs.data-table-action', [
                     'row' => $row,
