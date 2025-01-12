@@ -3,8 +3,7 @@
 namespace App\Livewire\SysConfig1\ConfigSnum;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\SysConfig1\ConfigSnum;
-use App\Models\SysConfig1\ConfigAppl;
+use App\Models\SysConfig1\{ConfigSnum, ConfigAppl};
 use App\Services\SysConfig1\ConfigService;
 use Illuminate\Support\Facades\Session;
 

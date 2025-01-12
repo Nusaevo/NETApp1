@@ -4,10 +4,7 @@ namespace App\Livewire\TrdJewel1\Master\Currency;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
-use App\Models\SysConfig1\ConfigConst;
 use App\Services\TrdJewel1\Master\MasterService;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
 use Exception;
 
 class Detail extends BaseComponent

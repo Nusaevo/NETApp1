@@ -3,11 +3,9 @@
 namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\OrderHdr;
-use App\Models\TrdTire1\Transaction\OrderDtl;
-use App\Models\TrdTire1\Master\Partner;
+use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\SysConfig1\ConfigConst;
-use App\Models\TrdTire1\Master\Material;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
 use Exception;

@@ -3,15 +3,10 @@
 namespace App\Livewire\SysConfig1\ConfigConst;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigAppl;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter};
+use App\Models\SysConfig1\{ConfigConst, ConfigAppl};
 use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{Config, Session, DB};
 
 class IndexDataTable extends BaseDataTableComponent
 {

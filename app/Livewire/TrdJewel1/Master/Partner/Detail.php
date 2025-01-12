@@ -4,11 +4,11 @@ namespace App\Livewire\TrdJewel1\Master\Partner;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\Partner;
-use App\Services\TrdJewel1\Master\MasterService as MasterMasterService;
+use Illuminate\Support\Facades\{DB};
+use App\Services\TrdJewel1\Master\{MasterService as MasterMasterService, MasterService};
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
-use App\Services\TrdJewel1\Master\MasterService;
 use Exception;
+
 
 class Detail extends BaseComponent
 {

@@ -3,14 +3,11 @@
 namespace App\Livewire\SrvInsur1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
-use App\Models\SrvInsur1\Transaction\OrderHdr;
-use App\Models\SrvInsur1\Transaction\OrderDtl;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\TextFilter};
+use App\Models\SrvInsur1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent

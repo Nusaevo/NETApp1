@@ -3,19 +3,14 @@
 namespace App\Livewire\TrdJewel1\Procurement\PurchaseOrder;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
-use App\Models\TrdJewel1\Transaction\OrderDtl;
-use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
-use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
-use Illuminate\Database\Eloquent\Builder;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
+use App\Models\TrdJewel1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
-use App\Enums\Status;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
+use App\Enums\Status;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+
 
 class IndexDataTable extends BaseDataTableComponent
 {

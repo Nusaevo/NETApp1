@@ -3,9 +3,6 @@ namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
-use Illuminate\Support\Facades\Session;
-use App\Enums\Constant;
 
 class ConfigSnum extends BaseModel
 {

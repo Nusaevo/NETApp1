@@ -3,8 +3,7 @@
 namespace App\Livewire\TrdTire1\Master\Partner;
 
 use App\Livewire\Component\DetailComponent;
-use App\Models\TrdTire1\Master\Partner;
-use App\Models\TrdTire1\Master\PartnerDetail;
+use App\Models\TrdTire1\Master\{PartnerDetail, Partner};
 use Exception;
 
 class ContactListComponent extends DetailComponent

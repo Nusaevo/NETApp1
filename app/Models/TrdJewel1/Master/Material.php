@@ -1,15 +1,15 @@
 <?php
 
 namespace App\Models\TrdJewel1\Master;
-use App\Helpers\SequenceUtility;
-use App\Models\Base\BaseModel;
-use App\Models\Base\BaseModel\Attachment;
-use App\Models\TrdJewel1\Inventories\IvtBal;
-use App\Models\TrdJewel1\Transaction\OrderDtl;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Base\{BaseModel, BaseModel\Attachment};
+use App\Models\TrdJewel1\Inventories\IvtBal;
+use App\Models\TrdJewel1\Transaction\OrderDtl;
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Constant;
+use App\Helpers\SequenceUtility;
 
 class Material extends BaseModel
 {

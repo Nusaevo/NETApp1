@@ -4,9 +4,6 @@ namespace App\Livewire\SrvInsur1\Master\Partner;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\SrvInsur1\Master\Partner;
-use App\Services\SrvInsur1\Master\MasterService as MasterMasterService;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
 use App\Services\SrvInsur1\Master\MasterService;
 use Exception;
 
@@ -60,7 +57,6 @@ class Detail extends BaseComponent
         {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $decodedData = $this->object->partner_chars;
         }
     }
 

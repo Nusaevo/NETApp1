@@ -4,13 +4,9 @@ namespace App\Livewire\TrdJewel1\Master\Catalogue;
 
 use App\Livewire\Component\BaseComponent;
 use Livewire\WithPagination;
-use App\Models\TrdJewel1\Master\Material;
-use App\Models\TrdJewel1\Transaction\CartHdr;
-use App\Models\TrdJewel1\Transaction\CartDtl;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Models\TrdJewel1\Master\GoldPriceLog;
+use Illuminate\Support\Facades\{Crypt, Auth, DB};
+use App\Models\TrdJewel1\Master\{Material, GoldPriceLog};
+use App\Models\TrdJewel1\Transaction\{CartHdr, CartDtl};
 use Illuminate\Support\Carbon;
 use Exception;
 

@@ -2,14 +2,13 @@
 
 namespace App\Models\SysConfig1;
 
-// use App\Core\Traits\SpatieLogsActivity;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\{Factories\HasFactory, SoftDeletes};
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
 use Illuminate\Support\Facades\Schema;
+use App\Traits\BaseTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+
 class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;

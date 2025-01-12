@@ -4,9 +4,8 @@ namespace App\Livewire\SysConfig1\ConfigUser;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigUser;
+use Illuminate\Support\Facades\{DB, Log};
 use Exception;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class Detail extends BaseComponent
 {

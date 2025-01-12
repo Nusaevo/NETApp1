@@ -3,10 +3,10 @@
 namespace App\Livewire\TrdJewel1\Report\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Session};
 use App\Services\TrdJewel1\Master\MasterService;
 use App\Enums\Constant;
-use Illuminate\Support\Facades\Session;
+
 
 class Index extends BaseComponent
 {

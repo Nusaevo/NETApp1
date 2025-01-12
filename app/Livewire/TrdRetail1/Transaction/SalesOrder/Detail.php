@@ -3,25 +3,16 @@
 namespace App\Livewire\TrdRetail1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdRetail1\Transaction\OrderHdr;
-use App\Models\TrdRetail1\Transaction\OrderDtl;
-use App\Models\TrdRetail1\Master\Partner;
+use Illuminate\Support\Facades\{Crypt, DB, Auth};
+use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl, BillingDtl, BillingHdr, DelivDtl, DelivHdr};
+use App\Models\TrdRetail1\Master\{Partner, Material, MatlUom, GoldPriceLog};
 use App\Models\SysConfig1\ConfigConst;
-use Illuminate\Support\Facades\Crypt;
-use App\Models\TrdRetail1\Master\Material;
-use App\Models\TrdRetail1\Master\MatlUom;
 use App\Enums\Status;
-use App\Models\TrdRetail1\Transaction\BillingDtl;
-use App\Models\TrdRetail1\Transaction\BillingHdr;
-use App\Models\TrdRetail1\Transaction\DelivDtl;
-use App\Models\TrdRetail1\Transaction\DelivHdr;
-use Exception;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Models\TrdRetail1\Master\GoldPriceLog;
-use Illuminate\Support\Facades\Auth;
+use Exception;
 use App\Services\TrdRetail1\Master\MasterService;
 use function PHPUnit\Framework\throwException;
+
 
 class Detail extends BaseComponent
 {

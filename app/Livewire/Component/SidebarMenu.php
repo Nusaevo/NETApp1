@@ -3,12 +3,8 @@
 namespace App\Livewire\Component;
 
 use Livewire\Component;
-use App\Models\SysConfig1\ConfigMenu;
-use App\Models\SysConfig1\ConfigUser;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{Session, Route, Auth, DB};
+
 
 class SidebarMenu extends Component
 {

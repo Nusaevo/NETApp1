@@ -2,14 +2,13 @@
 
 namespace App\Models\Base;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\Base\Attachment;
-use App\Traits\BaseTrait;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Session;
-use App\Enums\Status;
+use Illuminate\Database\Eloquent\{Model, Factories\HasFactory};
+use Illuminate\Support\Facades\{Schema, Session};
 use App\Models\SysConfig1\ConfigSnum;
+use App\Models\Base\{Attachment};
+use App\Traits\BaseTrait;
+use App\Enums\Status;
+
 
 
 class BaseModel extends Model

@@ -1,7 +1,5 @@
 <?php
 namespace App\Models\SysConfig1;
-use App\Helpers\SequenceUtility;
-use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\Base\SysConfig1BaseModel;
 

@@ -1,14 +1,12 @@
 <?php
+
 namespace App\Livewire\SysConfig1\ConfigMenu;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\SysConfig1\ConfigMenu;
-use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Enums\Status;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent

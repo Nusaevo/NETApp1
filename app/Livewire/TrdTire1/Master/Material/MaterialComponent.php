@@ -3,15 +3,15 @@
 namespace App\Livewire\TrdTire1\Master\Material;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Master\Material;
-use App\Models\SysConfig1\ConfigSnum;
-use App\Models\TrdTire1\Master\MatlUom;
-use Exception;
+use Illuminate\Support\Facades\{DB};
 use Livewire\WithFileUploads;
-use App\Enums\Status;
+use App\Models\TrdTire1\Master\{Material, MatlUom, Partner};
+use App\Models\SysConfig1\ConfigSnum;
 use App\Models\Base\Attachment;
-use App\Models\TrdTire1\Master\Partner;
+use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
+use Exception;
+
 
 class MaterialComponent extends BaseComponent
 {

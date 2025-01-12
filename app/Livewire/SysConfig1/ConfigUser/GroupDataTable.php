@@ -1,16 +1,14 @@
 <?php
+
 namespace App\Livewire\SysConfig1\ConfigUser;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\SysConfig1\ConfigGroup;
-use Illuminate\Database\Eloquent\Builder;
-
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Enums\Status;
-use Exception;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Exception;
 
 class GroupDataTable extends BaseDataTableComponent
 {

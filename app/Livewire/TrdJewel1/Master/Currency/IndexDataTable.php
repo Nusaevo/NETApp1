@@ -3,10 +3,9 @@
 namespace App\Livewire\TrdJewel1\Master\Currency;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\DateFilter};
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 
 class IndexDataTable extends BaseDataTableComponent
 {

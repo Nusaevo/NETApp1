@@ -3,19 +3,16 @@
 namespace App\Livewire\TrdJewel1\Master\Material;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdJewel1\Master\Material;
-use App\Models\TrdJewel1\Master\MatlUom;
-use App\Models\TrdJewel1\Master\MatlBom;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigSnum;
-use App\Models\Base\Attachment;
-use Exception;
-use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
-use Ratchet\Client\Connector;
-use React\EventLoop\Factory;
+use Illuminate\Support\Facades\{DB};
+use App\Models\TrdJewel1\Master\{Material, MatlUom, MatlBom};
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
+use App\Models\Base\Attachment;
 use App\Enums\Status;
 use App\Services\TrdJewel1\Master\MasterService;
+use Exception;
+use Ratchet\Client\Connector;
+use React\EventLoop\Factory;
 
 class MaterialComponent extends BaseComponent
 {

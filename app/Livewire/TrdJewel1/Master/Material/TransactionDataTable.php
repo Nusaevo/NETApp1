@@ -1,12 +1,12 @@
 <?php
-namespace App\Livewire\TrdJewel1\Master\Material;
-use App\Livewire\Component\DetailComponent;
 
+namespace App\Livewire\TrdJewel1\Master\Material;
+
+use App\Livewire\Component\DetailComponent;
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;
-use App\Enums\Status;
-use App\Enums\Constant;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\{DB, Session};
+use App\Enums\{Status, Constant};
+
 class TransactionDataTable extends DetailComponent
 {
     public int $perPage = 50;

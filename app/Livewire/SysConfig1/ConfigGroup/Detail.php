@@ -3,16 +3,12 @@
 namespace App\Livewire\SysConfig1\ConfigGroup;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\SysConfig1\ConfigGroup;
-use App\Models\SysConfig1\ConfigAppl;
-use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigRight;
+use App\Models\SysConfig1\{ConfigGroup, ConfigAppl, ConfigUser, ConfigRight};
 use App\Services\SysConfig1\ConfigService;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Crypt;
-use Exception;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{Crypt, DB};
 use App\Enums\Status;
+use Exception;
 
 
 class Detail extends BaseComponent

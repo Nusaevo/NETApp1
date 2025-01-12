@@ -3,14 +3,12 @@
 namespace App\Livewire\TrdJewel1\Procurement\PurchaseOrder;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\DateFilter};
 use App\Models\TrdJewel1\Transaction\ReturnHdr;
-use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
-use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
+use Illuminate\Database\Eloquent\Builder;
 use Exception;
+
 
 class PurchaseReturnDataTable extends BaseDataTableComponent
 {

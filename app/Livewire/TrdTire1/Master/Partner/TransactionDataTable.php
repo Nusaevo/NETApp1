@@ -1,18 +1,13 @@
 <?php
 
 namespace App\Livewire\TrdTire1\Master\Partner;
-use App\Livewire\Component\DetailComponent;
 
+use App\Livewire\Component\DetailComponent;
 use Livewire\Component;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Illuminate\Database\Eloquent\Builder;
-use App\Models\TrdTire1\Transaction\OrderHdr;
-use App\Models\SysConfig1\ConfigRight;
-use App\Enums\Status;
-use Illuminate\Support\Facades\DB;
-use App\Enums\Constant;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\{DB, Session};
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\TextFilter};
+use App\Enums\{Status, Constant};
+
 
 class TransactionDataTable extends DetailComponent
 {

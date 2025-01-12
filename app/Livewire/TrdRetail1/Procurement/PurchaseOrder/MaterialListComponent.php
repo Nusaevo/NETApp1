@@ -3,9 +3,9 @@
 namespace App\Livewire\TrdRetail1\Procurement\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdRetail1\Transaction\OrderHdr;
-use App\Models\TrdRetail1\Transaction\OrderDtl;
+use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
 use Exception;
+
 
 class MaterialListComponent extends BaseComponent
 {

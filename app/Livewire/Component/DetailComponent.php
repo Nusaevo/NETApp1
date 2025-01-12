@@ -4,15 +4,10 @@ namespace App\Livewire\Component;
 
 use Livewire\Component;
 use App\Models\SysConfig1\ConfigMenu;
-use Exception;
-use Illuminate\Support\Facades\DB;
 use App\Enums\Status;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\{DB, Auth, Request, Session, Route, Log};
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
+use Exception;
 use Illuminate\Database\QueryException;
 use PDOException;
 
@@ -34,6 +29,7 @@ class DetailComponent extends Component
     public $route;
     public $resetAfterCreate = true;
     public $additionalParam;
+    public $permissions;
     public $customValidationAttributes;
     public $customRules;
     public $menuName = "";

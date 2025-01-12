@@ -3,19 +3,17 @@
 namespace App\Livewire\TrdRetail2\Master\Material;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdRetail2\Master\Material;
-use App\Models\TrdRetail2\Master\MatlUom;
-use App\Models\TrdRetail2\Master\MatlBom;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigSnum;
-use App\Models\Base\Attachment;
-use Exception;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB};
 use Livewire\WithFileUploads;
 use Ratchet\Client\Connector;
 use React\EventLoop\Factory;
+use App\Models\TrdRetail2\Master\{Material, MatlUom, MatlBom};
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
+use App\Models\Base\Attachment;
 use App\Enums\Status;
 use App\Services\TrdRetail2\Master\MasterService;
+use Exception;
+
 
 class MaterialComponent extends BaseComponent
 {

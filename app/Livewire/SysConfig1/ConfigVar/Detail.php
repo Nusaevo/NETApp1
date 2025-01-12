@@ -3,9 +3,7 @@
 namespace App\Livewire\SysConfig1\ConfigVar;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\SysConfig1\ConfigVar;
-use App\Models\SysConfig1\ConfigAppl;
-
+use App\Models\SysConfig1\{ConfigVar, ConfigAppl};
 use App\Services\SysConfig1\ConfigService;
 
 class Detail extends BaseComponent

@@ -2,11 +2,10 @@
 
 namespace App\Models\TrdJewel1\Master;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\{Factories\HasFactory, SoftDeletes};
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Transaction\OrderHdr;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
 class Partner extends BaseModel

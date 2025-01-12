@@ -3,12 +3,12 @@
 namespace App\Livewire\TrdRetail2\Master\Partner;
 
 use App\Livewire\Component\BaseComponent;
+use Illuminate\Support\Facades\{DB};
 use App\Models\TrdRetail2\Master\Partner;
-use App\Services\TrdRetail2\Master\MasterService as MasterMasterService;
+use App\Services\TrdRetail2\Master\{MasterService as MasterMasterService, MasterService};
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
-use App\Services\TrdRetail2\Master\MasterService;
 use Exception;
+
 
 class Detail extends BaseComponent
 {

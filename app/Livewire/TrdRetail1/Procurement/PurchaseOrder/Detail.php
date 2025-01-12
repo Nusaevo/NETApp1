@@ -3,15 +3,12 @@
 namespace App\Livewire\TrdRetail1\Procurement\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdRetail1\Transaction\OrderHdr;
-use App\Models\TrdRetail1\Transaction\OrderDtl;
-use App\Models\TrdRetail1\Master\Partner;
+use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdRetail1\Master\{Partner, Material};
 use App\Models\SysConfig1\ConfigConst;
-use App\Models\TrdRetail1\Master\Material;
 use App\Enums\Status;
 use App\Services\TrdRetail1\Master\MasterService;
 use Exception;
-
 
 class Detail extends BaseComponent
 {

@@ -2,11 +2,8 @@
 
 namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
-use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Session;
-use App\Enums\Constant;
 
 class ConfigConst extends BaseModel
 {

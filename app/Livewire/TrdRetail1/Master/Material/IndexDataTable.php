@@ -3,21 +3,15 @@
 namespace App\Livewire\TrdRetail1\Master\Material;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter};
 use App\Models\TrdRetail1\Master\Material;
-use App\Models\Util\GenericExport;
-use App\Models\Util\GenericExcelExport;
+use App\Models\Util\{GenericExport, GenericExcelExport};
 use App\Services\TrdRetail1\Master\MasterService;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Protection;
-use Illuminate\Support\Facades\File;
-use Exception;
+use PhpOffice\PhpSpreadsheet\{Spreadsheet, Writer\Xlsx, Style\Protection};
+use Illuminate\Support\Facades\{File, Http};
 use App\Models\Base\Attachment;
-use Illuminate\Support\Facades\Http;
+use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -137,6 +131,20 @@ class IndexDataTable extends BaseDataTableComponent
 
         return [
             // Category Filter
+            // MultiSelectFilter::make('Tags')
+            // ->options(
+            //     Tag::query()
+            //         ->orderBy('name')
+            //         ->get()
+            //         ->keyBy('id')
+            //         ->map(fn($tag) => $tag->name)
+            //         ->toArray()
+            // )->filter(function(Builder $builder, array $values) {
+            //     $builder->whereHas('tags', fn($query) => $query->whereIn('tags.id', $values));
+            // })
+            // ->setFilterPillValues([
+            //     '3' => 'Tag 1',
+            // ]),
             SelectFilter::make('Category', 'category')
                 ->options($kategoriOptions)
                 ->filter(function (Builder $query, string $value) {

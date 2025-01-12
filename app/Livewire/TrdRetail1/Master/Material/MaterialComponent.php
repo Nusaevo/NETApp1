@@ -3,14 +3,14 @@
 namespace App\Livewire\TrdRetail1\Master\Material;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdRetail1\Master\Material;
-use App\Models\TrdRetail1\Master\MatlUom;
+use Illuminate\Support\Facades\{DB};
+use App\Models\TrdRetail1\Master\{Material, MatlUom};
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\Base\Attachment;
-use Exception;
-use Illuminate\Support\Facades\DB;
-use Livewire\WithFileUploads;
 use App\Services\TrdRetail1\Master\MasterService;
+use Livewire\WithFileUploads;
+use Exception;
+
 
 class MaterialComponent extends BaseComponent
 {

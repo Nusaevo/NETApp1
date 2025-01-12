@@ -1,15 +1,8 @@
 <?php
 
-use App\Models\SysConfig1\ConfigMenu;
-use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigRight;
-use Illuminate\Support\Facades\Config;
-use App\Models\SysConfig1\ConfigAppl;
-use Illuminate\Support\Facades\Session;
+use App\Models\SysConfig1\{ConfigMenu, ConfigUser, ConfigConst, ConfigRight, ConfigAppl};
 use App\Enums\Constant;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{Config, Session, Crypt, DB};
 
 /**
  * Manage table schema operations for a model.

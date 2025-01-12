@@ -3,14 +3,13 @@
 namespace App\Livewire\Component;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use App\Models\SysConfig1\{ConfigRight,ConfigMenu};
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Exception;
 use App\Enums\Status;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\SysConfig1\ConfigRight;
-use App\Models\SysConfig1\ConfigMenu;
 use App\Models\Util\GenericExport;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Support\Facades\Session;

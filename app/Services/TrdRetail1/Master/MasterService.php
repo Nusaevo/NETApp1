@@ -2,8 +2,6 @@
 
 namespace App\Services\TrdRetail1\Master;
 
-use Illuminate\Support\Facades\DB;
-use App\Enums\Constant;
 use App\Services\Base\BaseService;
 use App\Models\TrdRetail1\Master\Partner;
 

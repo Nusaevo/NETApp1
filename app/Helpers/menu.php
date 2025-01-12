@@ -1,11 +1,9 @@
 <?php
 
-use App\Models\SysConfig1\ConfigMenu;
-use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigGroup;
-use App\Models\SysConfig1\ConfigRight;
+use App\Models\SysConfig1\{ConfigMenu, ConfigUser, ConfigGroup, ConfigRight};
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Route;
+
 if (!function_exists('generateMenu')) {
     function generateMenu($userId)
     {
@@ -64,7 +62,7 @@ if (!function_exists('generateMenu')) {
 
     function buildMenuItems($mainMenu, $configMenus)
     {
-        
+
         foreach ($configMenus as $configMenu) {
             if (!Route::has(str_replace('/', '.', $configMenu->menu_link))) {
                 continue;

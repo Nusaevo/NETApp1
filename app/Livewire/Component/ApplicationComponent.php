@@ -2,12 +2,11 @@
 
 namespace App\Livewire\Component;
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{Auth, Session};
 use Livewire\Component;
-use App\Models\SysConfig1\ConfigAppl;
-use App\Models\SysConfig1\ConfigUser;
-use Illuminate\Support\Facades\Session;
+use App\Models\SysConfig1\{ConfigAppl, ConfigUser};
 use App\Services\SysConfig1\ConfigService;
+
 
 class ApplicationComponent extends Component
 {

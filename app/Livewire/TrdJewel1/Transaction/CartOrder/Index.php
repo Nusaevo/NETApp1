@@ -3,15 +3,11 @@
 namespace App\Livewire\TrdJewel1\Transaction\CartOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdJewel1\Transaction\CartHdr;
-use App\Models\TrdJewel1\Transaction\CartDtl;
-use App\Models\TrdJewel1\Master\Material;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{Auth, DB};
+use App\Models\TrdJewel1\Transaction\{CartHdr, CartDtl, OrderHdr};
+use App\Models\TrdJewel1\Master\{Material, GoldPriceLog};
 use App\Enums\Status;
-use App\Models\TrdJewel1\Master\GoldPriceLog;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Exception;
 
 class Index extends BaseComponent

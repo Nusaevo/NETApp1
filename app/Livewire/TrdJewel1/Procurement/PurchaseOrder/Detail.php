@@ -3,13 +3,10 @@
 namespace App\Livewire\TrdJewel1\Procurement\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
-use App\Models\TrdJewel1\Transaction\OrderDtl;
-use App\Models\TrdJewel1\Master\Partner;
+use App\Models\TrdJewel1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdJewel1\Master\{Partner, Material, GoldPriceLog};
 use App\Models\SysConfig1\ConfigConst;
-use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
-use App\Models\TrdJewel1\Master\GoldPriceLog;
 use App\Services\TrdJewel1\Master\MasterService;
 use Exception;
 

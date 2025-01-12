@@ -2,9 +2,7 @@
 
 namespace App\Services\TrdTire1\Master;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\TrdTire1\Master\Partner;
-use App\Enums\Constant;
 use App\Services\Base\BaseService;
 
 class MasterService extends BaseService

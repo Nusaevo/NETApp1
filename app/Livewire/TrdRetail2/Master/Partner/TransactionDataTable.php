@@ -3,14 +3,13 @@
 namespace App\Livewire\TrdRetail2\Master\Partner;
 
 use App\Livewire\Component\DetailComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Illuminate\Database\Eloquent\Builder;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\TextFilter};
 use App\Models\TrdRetail2\Transaction\OrderHdr;
 use App\Models\SysConfig1\ConfigRight;
-use App\Enums\Status;
+use App\Enums\{Status, Constant};
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Enums\Constant;
+
 
 class TransactionDataTable extends DetailComponent
 {

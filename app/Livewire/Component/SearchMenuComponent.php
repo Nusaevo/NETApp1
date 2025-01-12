@@ -2,11 +2,10 @@
 
 namespace App\Livewire\Component;
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use App\Models\SysConfig1\ConfigMenu;
-use App\Models\SysConfig1\ConfigUser;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\{Auth, Session};
+use App\Models\SysConfig1\{ConfigMenu, ConfigUser};
+
 
 class SearchMenuComponent extends Component
 {

@@ -1,15 +1,14 @@
 <?php
+
 namespace App\Livewire\TrdJewel1\Transaction\Buyback;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\TrdJewel1\Transaction\ReturnHdr;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
-use Illuminate\Database\Eloquent\Builder;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\TextFilter};
+use App\Models\TrdJewel1\Transaction\{ReturnHdr, ReturnDtl};
 use App\Enums\Status;
-use App\Models\TrdJewel1\Transaction\ReturnDtl;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+
 
 class IndexDataTable extends BaseDataTableComponent
 {
