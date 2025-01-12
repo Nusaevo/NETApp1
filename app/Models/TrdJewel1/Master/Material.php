@@ -101,7 +101,7 @@ class Material extends BaseModel
         return $this->hasMany(MatlBom::class, 'matl_id')->orderBy('seq');
     }
 
-    public function ivtBal()
+    public function IvtBal()
     {
         return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
             'qty_oh' => '$0.00'

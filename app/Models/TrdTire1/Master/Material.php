@@ -5,6 +5,7 @@ use App\Models\Base\BaseModel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\ConfigConst;
+use App\Models\TrdRetail1\Inventories\IvtBal;
 
 class Material extends BaseModel
 {
@@ -48,6 +49,14 @@ class Material extends BaseModel
     {
         return $this->hasMany(MatlUom::class, 'matl_id');
     }
+
+    public function IvtBal()
+    {
+        return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
+            'qty_oh' => '$0.00'
+        ]);
+    }
+
     #region Attributes
     public function getSellingPriceTextAttribute()
     {

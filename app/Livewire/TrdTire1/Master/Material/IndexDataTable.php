@@ -52,10 +52,10 @@ class IndexDataTable extends BaseDataTableComponent
                     return $row->selling_price_text;
                 })
                 ->sortable(),
-            Column::make($this->trans("stock"), "stock")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("point"), "point")
+            Column::make('Stock', 'IvtBal.qty_oh')
+                ->format(function ($value, $row, Column $column) {
+                    return $row->IvtBal?->qty_oh ?? 0; // Ensure null values are shown as 0
+                })
                 ->searchable()
                 ->sortable(),
             BooleanColumn::make($this->trans("Status"), "deleted_at")
