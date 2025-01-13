@@ -80,7 +80,7 @@
                                         type="text" :action="$customActionValue" onChanged="generateName" enabled="true" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-select  label="{{ $this->trans('piece') }}" model="matl_uoms.barcode" :options="$materialUOM"
+                                    <x-ui-dropdown-select  label="{{ $this->trans('uom') }}" model="matl_uoms.matl_uom" :options="$materialUOM"
                                         type="number" :action="$customActionValue" required="false" enabled="true" />
                                     <x-ui-text-field label="{{ $this->trans('point') }}" model="materials.point"
                                         type="number" :action="$customActionValue" required="false" enabled="true" />

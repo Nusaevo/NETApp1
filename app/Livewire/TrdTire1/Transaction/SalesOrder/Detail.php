@@ -16,16 +16,18 @@ class Detail extends BaseComponent
     #region Constant Variables
     public $inputs = [];
     public $SOTax = [];
+    public $SOSend = [];
     public $suppliers;
     public $warehouses;
     public $partners;
-
+    public $vehicle_type;
+    public $transaction_id;
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
 
     public $total_amount = 0;
-    public $trType = "PO";
+    public $trType = "SO";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -35,7 +37,8 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
 
     protected $masterService;
-    public $isPanelEnabled = "true";
+    public $isPanelEnabled = "false";
+
 
     public $rules  = [
         'inputs.tr_date' => 'nullable',
@@ -53,6 +56,47 @@ class Detail extends BaseComponent
     #endregion
 
     #region Populate Data methods
+
+    public function getTransactionCode(){
+        if (!isset($this->inputs['vehicle_type'])) {
+            $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
+        }
+        $vehicle_type = $this->inputs['vehicle_type'];
+        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type);
+    }
+    // public function generateBasicTransactionId()
+    // {
+    //     $appCode = $this->getAppCode($this->vehicle_type);
+    //     $this->transaction_id = $this->generateTransactionId($appCode, 'some_code');
+    // }
+
+
+    // public function generateTransactionIdWithTax()
+    // {
+    //     // Logika untuk menghasilkan nomor transaksi dengan faktur pajak
+    //     $appCode = $this->getAppCode($this->vehicle_type);
+    //     $this->transaction_id = $this->generateTransactionId($appCode, 'some_code_with_tax');
+    // }
+
+    // private function getAppCode($vehicleType)
+    // {
+    //     switch ($vehicleType) {
+    //         case '0':
+    //             return 'Motor';
+    //         case '1':
+    //             return 'Mobil';
+    //         case '2':
+    //             return 'Lain-lain';
+    //         default:
+    //             return 'Lain-lain';
+    //     }
+    // }
+
+    // public function generateTransactionId($appCode, $codeType)
+    // {
+    //     // Logic to generate transaction ID based on appCode and codeType
+    //     return $appCode . '-' . $codeType . '-' . uniqid();
+    // }
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -62,16 +106,17 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers();
         $this->SOTax = $this->masterService->getSOTaxData();
+        $this->SOSend = $this->masterService->getSOSendData();
         $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
-        if($this->isEditOrView())
-        {
+        if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
         }
-        if(!empty($this->input_details)) {
-            $this->isPanelEnabled = "false";
+        if (!$this->isEditOrView()) {
+
+            $this->isPanelEnabled = "true";
         }
     }
 
@@ -84,6 +129,7 @@ class Detail extends BaseComponent
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
+        $this->inputs['send_to'] = "Pelanggan";
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = 0;
     }
@@ -99,14 +145,11 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if($this->actionValue == 'Edit')
-        {
-            if($this->object->isOrderCompleted())
-            {
+        if ($this->actionValue == 'Edit') {
+            if ($this->object->isOrderCompleted()) {
                 $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
-
         }
 
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
@@ -114,9 +157,8 @@ class Detail extends BaseComponent
             $this->inputs['partner_code'] = $partner->code;
         }
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'PURCHORDER_LASTID');
-        if($this->actionValue == 'Create')
-        {
-            return redirect()->route($this->appCode.'.Transaction.SalesOrder.Detail', [
+        if ($this->actionValue == 'Create') {
+            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

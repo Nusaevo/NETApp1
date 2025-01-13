@@ -15,19 +15,25 @@
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
                     <div class="col-md-8">
-                        <x-ui-card title="Main Information">
+                        <x-ui-card title="Main Information"><br>
                             <div class="row">
-                                <x-ui-text-field label="Nomor Transaksi" model="materials.code"
-                                    type="code" :action="$actionValue" required="false" enabled="true"
-                                    clickEvent="getMatlCode" buttonName="Nomor" />
+                                <x-ui-option model="inputs.vehicle_type"
+                                :options="['0' => 'MOTOR', '1' => 'MOBIL', '2' => 'LAIN-LAIN']" type="radio"
+                                    layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
+                            </div>
+                            <div class="row">
+                                <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_id" type="code"
+                                    :action="$actionValue" required="false" clickEvent="getTransactionCode"
+                                    buttonName="Nomor" />
                                 <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                     :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                             </div>
                             <div class="row">
-                                <x-ui-text-field-search type="int" label='custommer' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" onChanged="onPartnerChanged"
-                                    :enabled="$isPanelEnabled"/>
-                                <x-ui-text-field label="Kirim ke" model="inputs.send_to" type="text"
-                                    :action="$actionValue" required="false" />
+                                <x-ui-text-field-search type="int" label='custommer' clickEvent=""
+                                    model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true"
+                                    :action="$actionValue" onChanged="onPartnerChanged" :enabled="$isPanelEnabled" />
+                                <x-ui-dropdown-select label="Kirim ke" model="inputs.send_to" :options="$SOSend"
+                                    type="text" :action="$actionValue" required="false" />
                                 <x-ui-text-field label="Wajib Pajak" model="inputs.tax_payer" type="text"
                                     :action="$actionValue" required="false" />
                             </div>
@@ -42,21 +48,13 @@
                         </x-ui-card>
                     </div>
                     <div class="col-md-4">
-                        <x-ui-card title="Vehicle Type">
-                            <x-ui-option model="inputs.type" :options="['MOTOR' => 'MOTOR', 'MOBIL' => 'MOBIL', 'LAIN-LAIN' => 'LAIN-LAIN']" type="radio" layout="horizontal" />
-                        </x-ui-card>
                         <x-ui-card title="Detail Information">
                             <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
                                 :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field label="Cust Reff" model="inputs.cust_reff" type="text" :action="$actionValue"
-                                required="false" />
+                            <x-ui-text-field label="Cust Reff" model="inputs.cust_reff" type="text"
+                                :action="$actionValue" required="false" />
                         </x-ui-card>
                     </div>
-                    <div class="col-md-12">
-                        <x-ui-card title="Notes">
-                            <x-ui-text-field label="Kode Barang" model="inputs.cust_reff" type="text" :action="$actionValue"
-                                required="false" />
-                        </x-ui-card>
                     <x-ui-footer>
                         <div>
                             <x-ui-button clickEvent="Save" button-name="Save Header" loading="true" :action="$actionValue"

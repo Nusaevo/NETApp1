@@ -2,6 +2,7 @@
 
 namespace App\Models\TrdTire1\Master;
 use App\Models\Base\BaseModel;
+use App\Models\TrdTire1\Transaction\OrderHdr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\ConfigConst;
@@ -27,6 +28,10 @@ class Material extends BaseModel
             }
         });
     }
+    public static function GetByGrp($group)
+    {
+        return self::where('group', $group)->get();
+    }
 
     protected $fillable = [
         'code',
@@ -44,7 +49,6 @@ class Material extends BaseModel
         'stock',
         'point'
     ];
-
     public function MatlUom()
     {
         return $this->hasMany(MatlUom::class, 'matl_id');
