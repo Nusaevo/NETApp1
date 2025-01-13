@@ -13,10 +13,46 @@
         <x-ui-tab-view-content id="tabMaterial" class="tab-content">
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
-
                     <!-- Main Form Section -->
                     <div class="col-md-8">
+                        <x-ui-card title="Product Type">
+                            <x-ui-dropdown-select label="{{ $this->trans('type_code') }}" model="materials.type_code"
+                                :options="$materialType" required="true" :action="$actionValue" onChanged="onBrandChanged" />
+                        </x-ui-card>
                         <x-ui-card title="Main Information">
+                            <x-ui-padding>
+                                <div class="row">
+                                    <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
+                                        :options="$materialMerk" required="false" :action="$customActionValue" onChanged="generateName" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
+                                        type="code" :action="$actionValue" required="true" enabled="true"
+                                        clickEvent="getMatlCode" buttonName="Kode Baru" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('category') }}"
+                                        model="materials.category" :options="$materialJenis" required="false"
+                                        :action="$customActionValue" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
+                                        type="text" :action="$customActionValue" required="true" enabled="true"
+                                        onChanged="generateName" />
+                                    <x-ui-text-field label="{{ $this->trans('pattern') }}" model="materials.pattern"
+                                        type="text" :action="$customActionValue" required="false" enabled="true"
+                                        onChanged="generateName" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
+                                        type="text" :action="$customActionValue" onChanged="generateName" enabled="true" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="matl_uoms.matl_uom"
+                                        :options="$materialUOM" type="number" :action="$customActionValue" required="false"
+                                        enabled="true" />
+                                    <x-ui-text-field label="{{ $this->trans('point') }}" model="materials.point"
+                                        type="number" :action="$customActionValue" required="false" enabled="true" />
+                                </div>
+                            </x-ui-padding>
                             <x-ui-padding>
                                 <div class="material-info-container">
                                     <div class="photo-and-button-container">
@@ -42,48 +78,14 @@
                                             <x-ui-image-button :action="$customActionValue"
                                                 hideStorageButton="false"></x-ui-image-button>
 
-                                            <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'">
+                                            <x-ui-dialog-box id="storageDialogBox" :width="'2000px'"
+                                                :height="'2000px'">
                                                 <x-slot name="body">
                                                     @livewire('base.master.gallery.storage-component', ['isComponent' => true])
                                                 </x-slot>
                                             </x-ui-dialog-box>
                                         </div>
                                     </div>
-                                </div>
-                            </x-ui-padding>
-                            <x-ui-padding>
-                                <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
-                                        :options="$materialMerk" required="false" :action="$customActionValue" onChanged="generateName" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('category') }}"
-                                        model="materials.category" :options="$materialType" required="true" :action="$actionValue"
-                                        onChanged="onBrandChanged" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
-                                        type="code" :action="$actionValue" required="true" enabled="true"
-                                        clickEvent="getMatlCode" buttonName="Kode Baru" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('type_code') }}"
-                                        model="materials.type_code" :options="$materialJenis" required="false"
-                                        :action="$customActionValue" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
-                                        type="text" :action="$customActionValue" required="true" enabled="true"
-                                        onChanged="generateName" />
-                                    <x-ui-text-field label="{{ $this->trans('pattern') }}" model="materials.pattern"
-                                        type="text" :action="$customActionValue" required="false" enabled="true"
-                                        onChanged="generateName" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                        type="text" :action="$customActionValue" onChanged="generateName" enabled="true" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-dropdown-select  label="{{ $this->trans('piece') }}" model="matl_uoms.barcode" :options="$materialUOM"
-                                        type="number" :action="$customActionValue" required="false" enabled="true" />
-                                    <x-ui-text-field label="{{ $this->trans('point') }}" model="materials.point"
-                                        type="number" :action="$customActionValue" required="false" enabled="true" />
                                 </div>
                             </x-ui-padding>
                         </x-ui-card>
@@ -105,7 +107,7 @@
                                 <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
                                     type="number" :action="$customActionValue" required="false" enabled="false" />
                                 <x-ui-text-field label="{{ $this->trans('reserved') }}" model="materials.reserved"
-                                    type="text" :action="$customActionValue" required="false" enabled="true" />
+                                    type="text" :action="$customActionValue" required="false" enabled="false" />
                             </x-ui-padding>
                         </x-ui-card>
                         <x-ui-card title="Tagging">

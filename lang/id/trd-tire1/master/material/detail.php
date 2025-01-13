@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'type_code' => 'Jenis',
+    'type_code' => 'Tipe Produk',
     'category' => 'Kategori',
     'brand' => 'Merk',
     'search_product' => 'Cari Produk',

@@ -15,8 +15,18 @@ class OrderHdr extends BaseModel
     use SoftDeletes;
 
     protected $fillable = [
+        'tr_id',
+        'tr_type',
         'tax',
-        'partner_id'
+        'partner_id',
+        'payment_terms',
+        'tr_date',
+        'due_date',
+        'cust_reff',
+        'tax_payer',
+        'type',
+        'send_to',
+        'vehicle_type',
     ];
 
     protected static function boot()
@@ -35,6 +45,10 @@ class OrderHdr extends BaseModel
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
+    // public function Material()
+    // {
+    //     return $this->belongsTo(Material::class, 'material_id', 'id');
+    // }
 
     public function OrderDtl()
     {
@@ -51,14 +65,19 @@ class OrderHdr extends BaseModel
         return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $this->getBillingTrType());
     }
     #endregion
-
-    #region Metode Utama
     public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
+    #region Metode Utama public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     {
         $this->fillAndSanitize($inputs);
+        $this->tr_type = $trType; // Ensure tr_type is set
+
+        // Tentukan vehicle_type berdasarkan trType
+        //$vehicleType = $this->vehicle_type;
 
         // Generate Transaction ID jika belum ada
-        $this->generateTransactionId($appCode, $configCode);
+        // if (empty($this->tr_Id)) {
+        //     $this->tr_Id = $this->generateTransactionId($vehicleType);
+        // }
 
         // Set default status
         if ($this->isNew()) {
@@ -68,6 +87,62 @@ class OrderHdr extends BaseModel
         // Simpan header
         $this->save();
     }
+
+
+    public  static function generateTransactionId($vehicle_type)
+    {
+        // Mendapatkan tahun dan bulan saat ini
+        $year = date('y'); // Dua digit terakhir tahun
+        $monthNumber = date('n'); // Bulan dalam angka
+        $monthLetter = chr(64 + $monthNumber); // Bulan dalam huruf (A, B, C, dst)
+        $sequenceNumber = self::getSequenceNumber($vehicle_type); // Mendapatkan nomor urut
+
+        // Menentukan format berdasarkan vehicle_type
+        switch ($vehicle_type) {
+            case 0: // MOTOR
+                return sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber);
+            case 1: // MOBIL
+                return sprintf('%s%s%02d8%04d', $monthLetter, $monthLetter, $year, $sequenceNumber);
+            case 2: // LAIN-LAIN
+                return sprintf('%02d%02d%04d', $year, $monthNumber, $sequenceNumber);
+            default:
+                throw new \InvalidArgumentException('Invalid vehicle type');
+        }
+    }
+    private static function getSequenceNumber($vehicle_type)
+    {
+        // Mendapatkan bulan dan tahun saat ini
+        $currentYear = date('y'); // Dua digit terakhir tahun
+        $currentMonth = date('n'); // Bulan dalam angka
+
+        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO' dan vehicle_type
+        $lastOrder = OrderHdr::where('tr_type', 'SO')
+            ->where('vehicle_type', $vehicle_type) // Filter berdasarkan vehicle_type
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // Jika ada entri sebelumnya, periksa bulan dan tahun
+        if ($lastOrder) {
+            // Ambil bulan dan tahun dari tr_id
+            preg_match('/([A-Z])(\d{2})/', $lastOrder->tr_id, $matches); // Ambil bulan dan tahun
+            if (isset($matches[1]) && isset($matches[2])) {
+                $lastMonthLetter = $matches[1];
+                $lastYear = (int)$matches[2];
+
+                // Cek apakah bulan dan tahun sama dengan yang sekarang
+                if ($lastYear == $currentYear && $lastMonthLetter == chr(64 + $currentMonth)) {
+                    // Ambil nomor urut dari tr_id
+                    preg_match('/\d{4}$/', $lastOrder->tr_id, $matches); // Ambil 4 digit terakhir
+                    $lastSequenceNumber = isset($matches[0]) ? (int)$matches[0] : 0;
+                    return $lastSequenceNumber + 1; // Tambahkan 1 ke nomor urut
+                }
+            }
+        }
+
+        // Jika tidak ada entri sebelumnya atau bulan/tahun berbeda, mulai dari 1
+        return 1;
+    }
+
 
     public function saveOrderDetails($inputDetails, $trType, $inputs, $createBillingDelivery = false)
     {
@@ -103,6 +178,13 @@ class OrderHdr extends BaseModel
 
         $billingHdr->save();
     }
+    // Di dalam model OrderHdr
+    public function isOrderCompleted()
+    {
+        // Logika untuk mengecek apakah order selesai
+        return $this->status == 'completed'; // Misalnya, status 'completed' menandakan order selesai
+    }
+
 
     public function createOrUpdateDelivery()
     {
@@ -193,24 +275,6 @@ class OrderHdr extends BaseModel
         return $this->tr_type == "PO" ? "APB" : "ARB";
     }
 
-    private function generateTransactionId($appCode, $code)
-    {
-        if ($this->tr_id === null || $this->tr_id == 0) {
-            $configSnum = ConfigSnum::where('code', $code)->first();
-
-            if ($configSnum) {
-                $proposedId = $configSnum->last_cnt + $configSnum->step_cnt;
-
-                if ($proposedId > $configSnum->wrap_high) {
-                    $proposedId = $configSnum->wrap_low;
-                }
-
-                $this->tr_id = $proposedId;
-                $configSnum->last_cnt = $proposedId;
-                $configSnum->save();
-            }
-        }
-    }
 
     private function deleteOrderDetails()
     {

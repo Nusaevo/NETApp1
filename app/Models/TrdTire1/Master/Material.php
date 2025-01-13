@@ -2,10 +2,12 @@
 
 namespace App\Models\TrdTire1\Master;
 use App\Models\Base\BaseModel;
+use App\Models\TrdTire1\Transaction\OrderHdr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdRetail1\Inventories\IvtBal;
+use App\Models\TrdTire1\Transaction\OrderDtl;
 
 class Material extends BaseModel
 {
@@ -27,6 +29,10 @@ class Material extends BaseModel
             }
         });
     }
+    public static function GetByGrp($group)
+    {
+        return self::where('group', $group)->get();
+    }
 
     protected $fillable = [
         'code',
@@ -44,7 +50,6 @@ class Material extends BaseModel
         'stock',
         'point'
     ];
-
     public function MatlUom()
     {
         return $this->hasMany(MatlUom::class, 'matl_id');
@@ -56,6 +61,10 @@ class Material extends BaseModel
             'qty_oh' => '$0.00'
         ]);
     }
+    public function OrderDtl()
+    {
+        return $this->hasMany(OrderDtl::class, 'matl_id', 'id');
+    }  
 
     #region Attributes
     public function getSellingPriceTextAttribute()
@@ -71,7 +80,10 @@ class Material extends BaseModel
     }
 
     #endregion
-
+    public function OrderHdr()
+    {
+        return $this->belongsTo(OrderHdr::class, 'material_id', 'id');
+    }
 
     public static function getAvailableMaterials()
     {
@@ -96,7 +108,7 @@ class Material extends BaseModel
 
     public function isOrderedMaterial()
     {
-        return  !isNullOrEmptyNumber($this->partner_id);
+        return  !isNullOrEmptyNumber($this->partner_id) && !isNullOrEmptyNumber($this->material_id);
     }
 
     public function getStockAttribute()

@@ -8,10 +8,27 @@ use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\TrdTire1\Inventories\IvtBalUnit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Enums\Constant;
+
 class OrderDtl extends BaseModel
 {
     use SoftDeletes;
+
+    protected $table = 'order_dtls';
+
+    protected $fillable = [
+        'tr_id',
+        'trhdr_id',
+        'tr_type',
+        'tr_seq',
+        'matl_id',
+        'matl_code',
+        'matl_descr',
+        'matl_uom',
+        'qty',
+        'qty_reff',
+        'price',
+        'amt'
+    ];
 
     protected static function boot()
     {
@@ -33,7 +50,7 @@ class OrderDtl extends BaseModel
                         ->where('wh_id', $delivDtl->wh_code)
                         ->first();
                     $qtyChange = (float)$delivDtl->qty;
-                    if ($delivDtl->tr_type === 'PD') {
+                    if ($delivDtl->tr_type === 'SO') {
                         $qtyChange = -$qtyChange;
                     }
                     if ($existingBal) {
@@ -66,26 +83,10 @@ class OrderDtl extends BaseModel
         });
     }
 
-    protected $fillable = [
-        'tr_id',
-        'trhdr_id',
-        'tr_type',
-        'tr_seq',
-        'matl_id',
-        'matl_code',
-        'matl_descr',
-        'matl_uom',
-        'qty',
-        'qty_reff',
-        'price',
-        'amt'
-    ];
-
-
     #region Relations
-    public function Material()
+    public function material()
     {
-        return $this->belongsTo(Material::class, 'matl_id');
+        return $this->belongsTo(Material::class, 'matl_id', 'id');
     }
 
     public function OrderHdr()
@@ -94,12 +95,9 @@ class OrderDtl extends BaseModel
     }
     #endregion
 
-
-
     public function scopeGetByOrderHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)
                      ->where('tr_type', $trType);
     }
-
 }

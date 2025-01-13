@@ -1,51 +1,58 @@
 <div>
-    <x-ui-list-table id="Table">
-        <x-slot name="body">
-            @foreach ($input_details as $key => $input_details)
-                <tr wire:key="list{{ $key }}">   <x-ui-text-field model="input_details.{{ $key }}.matl_code"
-                    label='{{ $this->trans('code') }}' enabled="false" />
-                    <x-ui-list-body>
-                        <x-slot name="image">
-                            <img src="{{ $item['image_path'] ?? 'https://via.placeholder.com/300' }}" alt="Material" style="width: 200px; height: 200px;">
-                        </x-slot>
-                        <x-slot name="rows">
-                            <div class="row">
-                                <x-ui-text-field model="input_details.{{ $key }}.matl_code"
-                                    label='{{ $this->trans('code') }}' enabled="false" />
-                                <x-ui-text-field model="input_details.{{ $key }}.barcode"
-                                    label='{{ $this->trans('barcode') }}' enabled="false" />
-                                <x-ui-text-field model="input_details.{{ $key }}.barcode"
-                                    label='{{ $this->trans('barcode') }}' enabled="false" />
-                            </div>
-                            <div class="row">
-                                <x-ui-text-field model="input_details.{{ $key }}.name"
-                                    label='{{ $this->trans('name') }}' enabled="false" />
-                                <x-ui-text-field model="input_details.{{ $key }}.matl_descr"
-                                    label='{{ $this->trans('description') }}' enabled="false" />
-                            </div>
-                            <div class="row">
-                                <x-ui-text-field model="input_details.{{ $key }}.selling_price"
-                                    label='{{ $this->trans('selling_price') }}' enabled="false" />
-                                <x-ui-text-field model="input_details.{{ $key }}.qty"
-                                    label='{{ $this->trans('qty') }}' :onChanged="'changeQuantity(' . $key . ', $event.target.value)'" />
-                                <x-ui-text-field model="input_details.{{ $key }}.price"
-                                    label='{{ $this->trans('price') }}' :onChanged="'updateItem(' . $key . ', \'price\', $event.target.value)'" />
-                            </div>
-                        </x-slot>
-                        <x-slot name="button">
-                            <x-ui-link-text type="close" :clickEvent="'deleteItem(' . $key . ')'" class="btn btn-link" name="x" />
-                        </x-slot>
-                    </x-ui-list-body>
-                </tr>
-            @endforeach
-        </x-slot>
-        <x-slot name="footerButton">
-            <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                button-name="Add" />
-        </x-slot>
-
-
-    </x-ui-list-table>
+    <x-ui-card>
+        <div>
+            <x-ui-list-table id="Table" title="Material List">
+                <x-slot name="body">
+                    @foreach ($input_details as $key => $input_detail)
+                        <tr wire:key="list{{ $key }}">
+                            <x-ui-list-body>
+                                {{-- <x-slot name="image">
+                                    <img src="{{ $input_detail['image_path'] ?? 'https://via.placeholder.com/300' }}"
+                                        alt="Material Photo" style="width: 200px; height: 200px;">
+                                </x-slot> --}}
+                                <x-slot name="rows">
+                                    <div class="row">
+                                        {{-- <x-ui-text-field-search type="int" label='custommer' clickEvent=""
+                                            model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true"
+                                            :action="$actionValue" onChanged="onPartnerChanged" :enabled="$isPanelEnabled" /> --}}
+                                        <x-ui-dropdown-select type="int" label='kode' clickEvent=""
+                                            model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
+                                            :options="$materials" required="true" :action="$actionValue"
+                                            onChanged="baseMaterialChanged({{ $key }}, $event.target.value)"
+                                            :enabled="true" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
+                                            enabled="true" class="form-control" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.matl_uom"
+                                            label="UOM" enabled="false" />
+                                    </div>
+                                    <div class="row">
+                                        <x-ui-text-field model="input_details.{{ $key }}.price_uom"
+                                            label="Harga Satuan" enabled="false" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.disc"
+                                            label="{{ $this->trans('disc') }}" enabled="true" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.price_base"
+                                            label="Amount" enabled="true" class="form-control" type="numeric"/>
+                                    </div>
+                                    <div class="row">
+                                        <x-ui-text-field label="Deskripsi Barang"
+                                            model="input_details.{{ $key }}.matl_desc" required="false"
+                                            enabled="false" />
+                                    </div>
+                                </x-slot>
+                                <x-slot name="button">
+                                    <x-ui-link-text type="close" :clickEvent="'deleteItem(' . $key . ')'" class="btn btn-link"
+                                        name="x" />
+                                </x-slot>
+                            </x-ui-list-body>
+                        </tr>
+                    @endforeach
+                </x-slot>
+                <x-slot name="footerButton">
+                    <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
+                </x-slot>
+            </x-ui-list-table>
+        </div>
+    </x-ui-card>
     <x-ui-footer>
         <div>
             <x-ui-button clickEvent="Save" button-name="Save Item" loading="true" :action="$actionValue"
