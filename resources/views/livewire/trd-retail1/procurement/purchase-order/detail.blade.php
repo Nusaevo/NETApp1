@@ -21,6 +21,7 @@
                             <x-ui-text-field-search type="int" label="Supplier" clickEvent=""
                                 model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers" required="true"
                                 :action="$actionValue"  :enabled="$isPanelEnabled" />
+
                             <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
                                     :action="$actionValue" required="false" enabled="false" />
                         </x-ui-card>

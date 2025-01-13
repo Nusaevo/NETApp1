@@ -11,7 +11,7 @@
 
 <!-- Container -->
 <div
-    class="mb-3 responsive-field"
+   class="col-sm mb-2"
     @if (isset($span)) span="{{ $span }}" @endif
     @if ($isVisible === 'false') style="display: none;" @endif
 >
@@ -42,7 +42,7 @@
     <!-- Multiple Checkbox -->
     @elseif ($type === 'checkbox')
         @if (!empty($label))
-            <div class="responsive-label mb-2">
+            <div class="responsive-label">
                 <label class="{{ $isRequired === 'true' ? 'required' : '' }}">
                     {{ $label }} :
                 </label>
@@ -76,7 +76,7 @@
     <!-- Radio Button -->
     @elseif ($type === 'radio')
         @if (!empty($label))
-            <div class="responsive-label mb-2">
+            <div class="responsive-label">
                 <label class="{{ $isRequired === 'true' ? 'required' : '' }}">
                     {{ $label }} :
                 </label>

@@ -1241,3 +1241,39 @@ div[wire\:loading].loading-overlay {
         padding: 6px 10px;
     }
 }
+/* Dropdown Container */
+.relative {
+    position: relative;
+}
+
+.absolute {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+/* Dropdown Option */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.hover\:bg-indigo-500:hover {
+    background-color: #6366f1;
+    color: #ffffff;
+}
+
+.hover\:text-white:hover {
+    color: #ffffff;
+}
+
+/* Highlighted Option */
+.bg-indigo-500 {
+    background-color: #6366f1;
+    color: #ffffff;
+}
