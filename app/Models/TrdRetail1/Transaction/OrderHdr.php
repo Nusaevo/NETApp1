@@ -211,21 +211,47 @@ class OrderHdr extends BaseModel
     private function generateTransactionId($appCode, $code)
     {
         if ($this->tr_id === null || $this->tr_id == 0) {
-            $configSnum = ConfigSnum::where('code', $code)->first();
+            // Dapatkan tahun dan bulan saat ini
+            $year = date('y');
+            $monthNumber = date('n');
+            $monthLetter = chr(64 + $monthNumber); // Mengubah angka bulan ke huruf
 
-            if ($configSnum) {
-                $proposedId = $configSnum->last_cnt + $configSnum->step_cnt;
+            // Dapatkan nomor urut dari database atau session
+            $sequenceNumber = $this->getSequenceNumber($code);
 
-                if ($proposedId > $configSnum->wrap_high) {
-                    $proposedId = $configSnum->wrap_low;
-                }
-
-                $this->tr_id = $proposedId;
-                $configSnum->last_cnt = $proposedId;
-                $configSnum->save();
+            // Tentukan format berdasarkan kode aplikasi atau jenis transaksi
+            switch ($appCode) {
+                case 'Lain-lain':
+                    $this->tr_id = sprintf('%02d%02d%04d', $year, $monthNumber, $sequenceNumber);
+                    break;
+                case 'Motor':
+                    $this->tr_id = sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber);
+                    break;
+                case 'Mobil':
+                    $this->tr_id = sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber);
+                    break;
+                    // Tambahkan logika untuk jenis lainnya jika diperlukan
             }
+
+            // Simpan nomor urut terbaru
+            $this->saveSequenceNumber($code, $sequenceNumber);
         }
     }
+
+    private function getSequenceNumber($code)
+    {
+        // Implementasikan logika untuk mendapatkan nomor urut
+        // Misalnya, simpan di database dan reset setiap bulan
+        // Contoh: ambil dari database atau session
+        return 1; // Ganti dengan logika yang sesuai
+    }
+
+    private function saveSequenceNumber($code, $sequenceNumber)
+    {
+        // Implementasikan logika untuk menyimpan nomor urut terbaru
+        // Misalnya, simpan di database atau session
+    }
+
 
     private function deleteOrderDetails()
     {

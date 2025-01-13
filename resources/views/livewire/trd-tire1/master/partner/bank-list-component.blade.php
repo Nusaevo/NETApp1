@@ -1,5 +1,4 @@
 <div>
-
     <x-ui-card>
         <div>
             <x-ui-list-table id="Table" title="Bank List">
@@ -38,10 +37,7 @@
 
             </x-ui-list-table>
         </div>
-
     </x-ui-card>
-
-
     <x-ui-footer>
         <div>
             <x-ui-button clickEvent="SaveBank" button-name="Save Bank" loading="true" :action="$actionValue"

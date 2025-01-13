@@ -102,15 +102,15 @@ class MaterialComponent extends BaseComponent
     }
     public function onReset()
     {
-        $this->product_code = "";
         $this->reset('materials');
+        $this->reset('matl_uoms');
+        $this->product_code = "";
         $this->materials['brand'] = "";
         $this->materials['type_code'] = "";
         $this->matl_uoms['matl_uom'] = 'PCS';
         $this->materials['code'] = '';
         $this->materials['class_code'] = '';
         $this->materials['markup'] = 0;
-        $this->reset('matl_uoms');
         $this->object = new Material();
         $this->object_uoms = new MatlUom();
         $this->deletedItems = [];

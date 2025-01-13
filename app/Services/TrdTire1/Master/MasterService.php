@@ -2,6 +2,7 @@
 
 namespace App\Services\TrdTire1\Master;
 
+use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Master\Partner;
 use App\Services\Base\BaseService;
 
@@ -111,6 +112,11 @@ class MasterService extends BaseService
         $data = $this->getConfigData('SO_TAX');
         return $this->mapData($data);
     }
+    public function getSOSendData()
+    {
+        $data = $this->getConfigData('SO_SEND');
+        return $this->mapData($data);
+    }
 
     public function getMatlCategory2String( $str1)
     {
@@ -172,7 +178,6 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
-
     public function getWarehouses()
     {
         return $this->mainConnection
