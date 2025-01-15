@@ -112,10 +112,16 @@ class MasterService extends BaseService
         $data = $this->getConfigData('SO_TAX');
         return $this->mapData($data);
     }
+
     public function getSOSendData()
     {
         $data = $this->getConfigData('SO_SEND');
-        return $this->mapData($data);
+        return $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
     }
 
     public function getMatlCategory2String($str1)
@@ -178,7 +184,7 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
-  
+
     public function getMaterials()
     {
         $materialsData = Material::whereNull('deleted_at')->get(); // Pastikan untuk hanya mengambil yang tidak dihapus

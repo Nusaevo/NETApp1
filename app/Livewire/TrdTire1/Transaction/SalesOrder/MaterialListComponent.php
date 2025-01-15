@@ -28,7 +28,6 @@ class MaterialListComponent extends BaseComponent
         'input_details.*.matl_uom' => 'nullable', // Ensure UOM is required and a string
     ];
 
-
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
@@ -85,7 +84,7 @@ class MaterialListComponent extends BaseComponent
         }
     }
 
-    public function baseMaterialChanged($key, $matl_id)
+    public function onMaterialChanged($key, $matl_id)
     {
         if ($matl_id) {
             $material = Material::find($matl_id);

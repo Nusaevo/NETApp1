@@ -136,10 +136,13 @@
         @if (isset($clickEvent) && $clickEvent !== '')
             <div class="d-flex align-items-center ms-2">
                 <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
-                    <button type="button" class="btn btn-secondary" wire:click="{{ $clickEvent }}"
-                            @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
-                        {{ $buttonName }}
-                    </button>
+                    <x-ui-button
+                    :clickEvent="$clickEvent"
+                    cssClass="btn btn-secondary"
+                    :buttonName="$buttonName"
+                    :action="$action"
+                    :enabled="$enabled"
+                />
                 </span>
                 <span wire:loading wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
                     <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>

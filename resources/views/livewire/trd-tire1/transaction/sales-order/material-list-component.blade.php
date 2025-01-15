@@ -15,10 +15,10 @@
                                         {{-- <x-ui-text-field-search type="int" label='custommer' clickEvent=""
                                             model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true"
                                             :action="$actionValue" onChanged="onPartnerChanged" :enabled="$isPanelEnabled" /> --}}
-                                        <x-ui-dropdown-select type="int" label='kode' clickEvent=""
+                                        <x-ui-text-field-search type="int" label='kode' clickEvent=""
                                             model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                             :options="$materials" required="true" :action="$actionValue"
-                                            onChanged="baseMaterialChanged({{ $key }}, $event.target.value)"
+                                            onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                             :enabled="true" />
                                         <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
                                             enabled="true" class="form-control" />

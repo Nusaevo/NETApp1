@@ -24,14 +24,14 @@
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id" type="code"
                                     :action="$actionValue" required="false" clickEvent="getTransactionCode"
-                                    buttonName="Nomor" />
+                                    buttonName="Nomor" enabled="true" />
                                 <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                     :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                             </div>
                             <div class="row">
                                 <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}" clickEvent=""
                                     model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true"
-                                    :action="$actionValue" onChanged="onPartnerChanged" :enabled="$isPanelEnabled" />
+                                    :action="$actionValue"  :enabled="$isPanelEnabled"/>
                                 <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to" :options="$SOSend"
                                     type="text" :action="$actionValue" required="false" />
                                 <x-ui-text-field label="Wajib Pajak" model="inputs.tax_payer" type="text"

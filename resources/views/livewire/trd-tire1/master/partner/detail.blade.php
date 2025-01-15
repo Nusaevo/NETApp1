@@ -106,12 +106,12 @@
                     <div class="tab-pane fade show" id="transactions" role="tabpanel"
                         aria-labelledby="transactions-tab">
                         <x-ui-card>
-                            <div wire:ignore>
+                            {{-- <div wire:ignore>
                                 @livewire($currentRoute . '.transaction-data-table', [
                                     'actionValue' => $actionValue,
                                     'objectIdValue' => $objectIdValue,
                                 ])
-                            </div>
+                            </div> --}}
                         </x-ui-card>
                     </div>
                 @endif

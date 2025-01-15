@@ -68,6 +68,10 @@ class UiTextField extends UiBaseComponent
 
         // Name or label for an associated button
         $this->buttonName = $buttonName;
+
+        if ($type === 'code' && $action === 'Edit') {
+            $this->enabled = 'false';
+        }
     }
 
     /**
