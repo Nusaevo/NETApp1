@@ -18,7 +18,7 @@
                         <x-ui-card title="Main Information"><br>
                             <div class="row">
                                 <x-ui-option model="inputs.vehicle_type"
-                                :options="['0' => 'MOTOR', '1' => 'MOBIL', '2' => 'LAIN-LAIN']" type="radio"
+                                :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
                                     layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
                             </div>
                             <div class="row">

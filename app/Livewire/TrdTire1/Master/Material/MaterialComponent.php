@@ -6,7 +6,7 @@ use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB};
 use Livewire\WithFileUploads;
 use App\Models\TrdTire1\Master\{Material, MatlUom, Partner};
-use App\Models\SysConfig1\{ConfigConst,ConfigSnum};
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
 use App\Models\Base\Attachment;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
@@ -19,8 +19,10 @@ class MaterialComponent extends BaseComponent
     #region Constant Variables
 
     public $materialType = [];
+    public $materialCategory = [];
     public $materialJenis = [];
     public $materialMerk = [];
+    public $materialPattern = [];
     public $materialUOM = [];
     public $object_uoms;
     public $matl_uoms = [];
@@ -33,6 +35,11 @@ class MaterialComponent extends BaseComponent
     public $inputs_brand = [];
     public $object_brand;
     public $selectedBrand = "";
+    public $inputs_pattern = [];
+    public $object_pattern;
+    public $selectedPattern = "";
+
+
     protected $masterService;
     public $rules = [
         'materials.brand' => 'required|string',
@@ -89,8 +96,10 @@ class MaterialComponent extends BaseComponent
         ];
         $this->masterService = new MasterService();
         $this->materialType = $this->masterService->getMatlTypeData();
+        $this->materialCategory = $this->masterService->getMatlCategoryData();
         $this->materialJenis = $this->masterService->getMatlJenisData();
         $this->materialMerk = $this->masterService->getMatlMerkData();
+        $this->materialPattern = $this->masterService->getMatlPatternData();
         $this->materialUOM = $this->masterService->getMatlUOMData();
         $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
@@ -99,7 +108,6 @@ class MaterialComponent extends BaseComponent
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
         }
-
     }
     public function onReset()
     {
@@ -137,10 +145,10 @@ class MaterialComponent extends BaseComponent
             $this->dispatch('error', 'Material tidak ditemukan.');
         }
         $attachments = $this->object->Attachment;
-            foreach ($attachments as $attachment) {
-                $url = $attachment->getUrl();
-                $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
-            }
+        foreach ($attachments as $attachment) {
+            $url = $attachment->getUrl();
+            $this->capturedImages[] = ['url' => $url, 'filename' => $attachment->name];
+        }
     }
 
     public function render()
@@ -250,7 +258,6 @@ class MaterialComponent extends BaseComponent
         $this->object->save();
         $this->saveUOMs();
         $this->saveAttachment();
-
     }
 
     private function validateMaterialCode()
@@ -358,7 +365,6 @@ class MaterialComponent extends BaseComponent
                 $this->capturedImages[] = ['url' => $dataUrl, 'filename' => $filename, 'storage_id' => $attachment->id];
                 $this->dispatch('success', 'Images submitted successfully.');
                 $this->dispatch('closeStorageDialog');
-
             } else {
                 $this->dispatch('error', 'Attachment with ID ' . $attachmentId . ' not found.');
             }
@@ -469,9 +475,53 @@ class MaterialComponent extends BaseComponent
         // Tampilkan pesan sukses dan tutup dialog
         $this->dispatch('success', 'Brand berhasil disimpan.');
         $this->dispatch('closeBrandDialogBox');
+    }
+    #region Brand Dialog Box
 
+    #region Pattern Dialog Box
+    protected $PatternRules = [
+        'inputs_pattern.str1' => 'required|string',
+    ];
+
+    protected $patternCustomValidationAttributes = [
+        'inputs_pattern.str1' => 'Code',
+    ];
+
+    public function openPatternDialogBox()
+    {
+        $this->reset('inputs_pattern');
+        $this->object_pattern = new ConfigConst();
+        $this->dispatch('openPatternDialogBox');
     }
 
+    public function savePattern()
+    {
+        // Validasi input tanpa memeriksa keunikan
+        $this->validate($this->PatternRules, [], $this->patternCustomValidationAttributes);
 
+
+        // Isi dan sanitasi data
+        $this->object_pattern->fillAndSanitize($this->inputs_pattern);
+        $this->object_pattern->const_group = "MMATL_PATTERN";
+
+        // Hitung sequence berikutnya
+        $highestSeq = ConfigConst::where('const_group', 'MMATL_PATTERN')->max('seq') ?? 0;
+        $nextSeq = $highestSeq + 1;
+        $this->object_pattern->seq = $nextSeq;
+
+        // Simpan data
+        $this->object_pattern->save();
+
+        // Refresh list merk dan update pilihan di form
+        $this->masterService = new MasterService();
+        $this->materialPattern = $this->masterService->getMatlPatternData();
+        $this->materials['pattern'] = $this->object_pattern->str1;
+        $this->selectedPattern = $this->object_pattern->str1;
+        $this->generateName();
+
+        // Tampilkan pesan sukses dan tutup dialog
+        $this->dispatch('success', 'Pattern berhasil disimpan.');
+        $this->dispatch('closePatternDialogBox');
+    }
     #region Brand Dialog Box
 }

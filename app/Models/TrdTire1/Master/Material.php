@@ -58,13 +58,13 @@ class Material extends BaseModel
     public function IvtBal()
     {
         return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
-            'qty_oh' => '$0.00'
+            'qty_oh' => '0'
         ]);
     }
     public function OrderDtl()
     {
         return $this->hasMany(OrderDtl::class, 'matl_id', 'id');
-    }  
+    }
 
     #region Attributes
     public function getSellingPriceTextAttribute()

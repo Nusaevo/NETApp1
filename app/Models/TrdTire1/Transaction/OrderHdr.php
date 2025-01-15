@@ -106,8 +106,6 @@ class OrderHdr extends BaseModel
                 return sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber);
             case 1: // MOBIL
                 return sprintf('%s%s%02d8%04d', $monthLetter, $monthLetter, $year, $sequenceNumber);
-            case 2: // LAIN-LAIN
-                return sprintf('%02d%02d%04d', $year, $monthNumber, $sequenceNumber);
             default:
                 throw new \InvalidArgumentException('Invalid vehicle type');
         }
