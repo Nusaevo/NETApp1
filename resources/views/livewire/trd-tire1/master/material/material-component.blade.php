@@ -23,7 +23,25 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
+                                        :selectedValue="$selectedBrand"
                                         :options="$materialMerk" required="false" :action="$actionValue" onChanged="generateName"
+                                        clickEvent="openBrandDialogBox" buttonName="+" />
+                                    <x-ui-dialog-box id="brandDialogBox"  title="Form Merk"
+                                    width="600px"
+                                    height="400px">
+                                        <x-slot name="body">
+                                            <x-ui-text-field label="Code"
+                                                model="inputs_brand.str1" type="text" :action="$actionValue"
+                                                required="true" enabled="true" />
+                                            <x-ui-text-field label="Merk" model="inputs_brand.str2"
+                                                type="text" :action="$actionValue" required="true" enabled="true" />
+                                        </x-slot>
+                                        <x-slot name="footer">
+                                            <x-ui-button clickEvent="saveBrand" button-name="Save" loading="true" :action="$actionValue"
+                                                cssClass="btn-primary" iconPath="save.svg" />
+                                        </x-slot>
+                                    </x-ui-dialog-box>
+
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
@@ -138,6 +156,15 @@
 
             window.addEventListener('closeStorageDialog', function() {
                 $('#storageDialogBox').modal('hide');
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.addEventListener('openBrandDialogBox', function() {
+                $('#brandDialogBox').modal('show');
+            });
+            window.addEventListener('closeBrandDialogBox', function() {
+                $('#brandDialogBox').modal('hide');
             });
         });
     </script>

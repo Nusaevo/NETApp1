@@ -6,7 +6,7 @@ use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB};
 use Livewire\WithFileUploads;
 use App\Models\TrdTire1\Master\{Material, MatlUom, Partner};
-use App\Models\SysConfig1\ConfigSnum;
+use App\Models\SysConfig1\{ConfigConst,ConfigSnum};
 use App\Models\Base\Attachment;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
@@ -30,8 +30,9 @@ class MaterialComponent extends BaseComponent
     public $deleteImages = [];
     public $deletedItems = [];
 
-
-
+    public $inputs_brand = [];
+    public $object_brand;
+    public $selectedBrand = "";
     protected $masterService;
     public $rules = [
         'materials.brand' => 'required|string',
@@ -40,7 +41,6 @@ class MaterialComponent extends BaseComponent
         'materials.category' => 'required|string',
         'materials.selling_price' => 'required|numeric',
     ];
-
 
     protected $listeners = [
         'runExe'  => 'runExe',
@@ -99,6 +99,7 @@ class MaterialComponent extends BaseComponent
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
         }
+
     }
     public function onReset()
     {
@@ -410,8 +411,67 @@ class MaterialComponent extends BaseComponent
             $this->dispatch('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
         }
     }
-
-
     #endregion
 
+    #region Brand Dialog Box
+    protected $brandRules = [
+        'inputs_brand.str1' => 'required|string',
+        'inputs_brand.str2' => 'required|string',
+    ];
+
+    protected $brandCustomValidationAttributes = [
+        'inputs_brand.str1' => 'Code',
+        'inputs_brand.str2' => 'Merk',
+    ];
+
+    public function openBrandDialogBox()
+    {
+        $this->reset('inputs_brand');
+        $this->object_brand = new ConfigConst();
+        $this->dispatch('openBrandDialogBox');
+    }
+
+    public function saveBrand()
+    {
+        // Validasi input tanpa memeriksa keunikan
+        $this->validate($this->brandRules, [], $this->brandCustomValidationAttributes);
+
+        // Cek keunikan str1 secara manual
+        $existingBrand = ConfigConst::where('const_group', 'MMATL_MERK')
+            ->where('str1', $this->inputs_brand['str1'])
+            ->exists();
+
+        if ($existingBrand) {
+            // Jika sudah ada, tampilkan pesan error
+            $this->dispatch('error', 'Brand dengan Code yang sama sudah ada.');
+            return;
+        }
+
+        // Isi dan sanitasi data
+        $this->object_brand->fillAndSanitize($this->inputs_brand);
+        $this->object_brand->const_group = "MMATL_MERK";
+
+        // Hitung sequence berikutnya
+        $highestSeq = ConfigConst::where('const_group', 'MMATL_MERK')->max('seq') ?? 0;
+        $nextSeq = $highestSeq + 1;
+        $this->object_brand->seq = $nextSeq;
+
+        // Simpan data
+        $this->object_brand->save();
+
+        // Refresh list merk dan update pilihan di form
+        $this->masterService = new MasterService();
+        $this->materialMerk = $this->masterService->getMatlMerkData();
+        $this->materials['brand'] = $this->object_brand->str1;
+        $this->selectedBrand = $this->object_brand->str1;
+        $this->generateName();
+
+        // Tampilkan pesan sukses dan tutup dialog
+        $this->dispatch('success', 'Brand berhasil disimpan.');
+        $this->dispatch('closeBrandDialogBox');
+
+    }
+
+
+    #region Brand Dialog Box
 }
