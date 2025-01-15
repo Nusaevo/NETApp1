@@ -11,14 +11,14 @@
                     rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                     placeholder="{{ isset($label) ? $label : '' }}"
-                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
+                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
                     autocomplete="off"></textarea>
             @elseif(isset($type) && $type === 'document')
                 <input wire:model="{{ $model }}" id="{{ $id }}" type="file"
                     class="form-control @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif accept=".pdf, .doc, .docx"
-                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
+                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'barcode')
                 <input x-data="{
                     initBarcode() {
@@ -43,7 +43,7 @@
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif placeholder="{{ isset($label) ? $label : '' }}"
                     autocomplete="off"
-                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
+                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
                     x-ref="inputField">
             @elseif(isset($type) && $type === 'code')
                 <input wire:model="{{ $model }}" type="text"
@@ -51,7 +51,7 @@
                     @if ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif placeholder="{{ isset($label) ? $label : '' }}"
                     autocomplete="off"
-                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
+                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'date')
                 <input x-data="{
                     initDatepicker() {
@@ -72,7 +72,7 @@
                     id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif readonly="readonly" x-ref="inputField"
-                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
+                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'number')
                 <input x-data="{
                     initInputMask() {
@@ -112,14 +112,14 @@ is-invalid
             placeholder="{{ isset($label) ? $label : '' }}"
             autocomplete="off"
             @if (isset($onChanged) && $onChanged !== '')
-                wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}"
+                wire:change="{{ $onChanged }}"
             @endif
             x-ref="inputField">
         @elseif(isset($type) && $type === 'image')
             <input wire:model="{{ $model }}" id="{{ $id }}" type="file"
                 class="form-control @error($model) is-invalid @enderror" accept="image/*"
                 @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
-                @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
+                @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
         @else
             <input x-data="{
                 applyCapsLock() {
@@ -138,7 +138,7 @@ is-invalid
                 class="form-control @if (isset($capslockMode) && $capslockMode === 'true') text-uppercase @endif @error($model) is-invalid @enderror"
                 @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                 placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
-                @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
+                @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
                 x-ref="inputField" />
             @endif
 
