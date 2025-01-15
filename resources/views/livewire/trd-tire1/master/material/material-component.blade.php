@@ -23,7 +23,7 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
-                                        :selectedValue="$selectedBrand" :options="$materialMerk" required="false" :action="$actionValue"
+                                        :selectedValue="$materials['brand']" :options="$materialMerk" required="false" :action="$actionValue"
                                         onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" />
                                     <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px"
                                         height="400px">
@@ -56,7 +56,7 @@
                                         type="text" :action="$actionValue" required="true" enabled="true"
                                         onChanged="generateName" />
                                     <x-ui-text-field-search label="{{ $this->trans('pattern') }}" model="materials.pattern" type="string"
-                                        :selectedValue="$selectedPattern" :options="$materialPattern" required="false" :action="$actionValue"
+                                        :selectedValue="$materials['pattern']"  :options="$materialPattern" required="false" :action="$actionValue"
                                         onChanged="generateName" clickEvent="openPatternDialogBox" buttonName="+" />
                                     <x-ui-dialog-box id="patternDialogBox" title="Form Pattern" width="600px"
                                         height="400px">

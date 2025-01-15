@@ -34,10 +34,8 @@ class MaterialComponent extends BaseComponent
 
     public $inputs_brand = [];
     public $object_brand;
-    public $selectedBrand = "";
     public $inputs_pattern = [];
     public $object_pattern;
-    public $selectedPattern = "";
 
 
     protected $masterService;
@@ -469,7 +467,6 @@ class MaterialComponent extends BaseComponent
         $this->masterService = new MasterService();
         $this->materialMerk = $this->masterService->getMatlMerkData();
         $this->materials['brand'] = $this->object_brand->str1;
-        $this->selectedBrand = $this->object_brand->str1;
         $this->generateName();
 
         // Tampilkan pesan sukses dan tutup dialog
@@ -516,7 +513,6 @@ class MaterialComponent extends BaseComponent
         $this->masterService = new MasterService();
         $this->materialPattern = $this->masterService->getMatlPatternData();
         $this->materials['pattern'] = $this->object_pattern->str1;
-        $this->selectedPattern = $this->object_pattern->str1;
         $this->generateName();
 
         // Tampilkan pesan sukses dan tutup dialog
