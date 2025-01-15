@@ -224,6 +224,7 @@
                 //console.log('Loading container hidden');
             });
         });
+
     </script>
     <script>
         function showImagePreview(imageUrl) {

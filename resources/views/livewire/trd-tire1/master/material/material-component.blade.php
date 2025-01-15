@@ -54,14 +54,14 @@
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
                                         type="text" :action="$actionValue" required="true" enabled="true"
-                                        onChanged="generateName" />
+                                        onChanged="generateName" capslockMode="true"/>
                                     <x-ui-text-field label="{{ $this->trans('pattern') }}" model="materials.pattern"
                                         type="text" :action="$actionValue" required="false" enabled="true"
-                                        onChanged="generateName" />
+                                        onChanged="generateName" capslockMode="true" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                        type="text" :action="$actionValue" onChanged="generateName" enabled="true" />
+                                        type="text" :action="$actionValue" onChanged="generateName" enabled="true" capslockMode="true" />
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="matl_uoms.matl_uom"
