@@ -115,15 +115,14 @@ class MaterialComponent extends BaseComponent
     {
         $this->reset('materials');
         $this->reset('matl_uoms');
-        $this->product_code = "";
-        $this->materials['brand'] = "";
-        $this->materials['type_code'] = "";
-        $this->matl_uoms['matl_uom'] = 'PCS';
-        $this->materials['code'] = '';
-        $this->materials['class_code'] = '';
-        $this->materials['markup'] = 0;
         $this->object = new Material();
+        $this->materials = populateArrayFromModel($this->object);
         $this->object_uoms = new MatlUom();
+        $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+        $this->product_code = "";
+        $this->matl_uoms['matl_uom'] = 'PCS';
+        $this->materials['markup'] = 0;
+        $this->materials['pattern'] = '';
         $this->deletedItems = [];
         $this->capturedImages = [];
     }
@@ -409,7 +408,7 @@ class MaterialComponent extends BaseComponent
             $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
 
             // Format the proposed ID to 4 digits with leading zeros
-            $formattedTrId = str_pad($proposedTrId, 4, '0', STR_PAD_LEFT);
+            $formattedTrId = str_pad($proposedTrId, 3, '0', STR_PAD_LEFT);
 
             // Set kode material dan update configSnum
             $this->materials['code'] = $code . $formattedTrId;

@@ -31,7 +31,7 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.disc"
                                             label="{{ $this->trans('disc') }}" enabled="true" />
                                         <x-ui-text-field model="input_details.{{ $key }}.price_base"
-                                            label="Amount" enabled="true" class="form-control" type="numeric"/>
+                                            label="Amount" enabled="true" class="form-control" type="numeric" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="Deskripsi Barang"

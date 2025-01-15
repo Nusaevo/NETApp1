@@ -15,44 +15,46 @@
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
                     <div class="col-md-8">
-                        <x-ui-card title="Main Information"><br>
-                            <div class="row">
-                                <x-ui-option model="inputs.vehicle_type"
-                                :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
-                                    layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
-                            </div>
-                            <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id" type="code"
-                                    :action="$actionValue" required="false" clickEvent="getTransactionCode"
-                                    buttonName="Nomor" enabled="true" />
-                                <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
-                                    :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            </div>
-                            <div class="row">
-                                <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}" clickEvent=""
-                                    model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true"
-                                    :action="$actionValue"  :enabled="$isPanelEnabled"/>
-                                <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to" :options="$SOSend"
-                                    type="text" :action="$actionValue" required="false" />
-                                <x-ui-text-field label="Wajib Pajak" model="inputs.tax_payer" type="text"
-                                    :action="$actionValue" required="false" />
-                            </div>
-                            <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('payment_terms') }}" model="inputs.payment_terms" type="text"
-                                    :action="$actionValue" required="false" />
-                                {{-- <x-ui-text-field label="PPN" model="inputs.country" type="text" :action="$actionValue"
+                        <x-ui-card title="Main Information">
+                            <x-ui-padding>
+                                <div class="row">
+                                    <x-ui-option model="inputs.vehicle_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
+                                        layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
+                                        type="code" :action="$actionValue" required="false"
+                                        clickEvent="getTransactionCode" buttonName="Nomor" enabled="true" />
+                                    <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
+                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
+                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
+                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to"
+                                        :options="$SOSend" type="text" :action="$actionValue" required="false" />
+                                    <x-ui-text-field label="Wajib Pajak" model="inputs.tax_payer" type="text"
+                                        :action="$actionValue" required="false" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('payment_terms') }}"
+                                        model="inputs.payment_terms" type="text" :action="$actionValue"
+                                        required="false" />
+                                    {{-- <x-ui-text-field label="PPN" model="inputs.country" type="text" :action="$actionValue"
                                     required="true" /> --}}
-                                <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax" :options="$SOTax"
-                                    required="true" :action="$actionValue" />
-                            </div>
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
+                                        :options="$SOTax" required="true" :action="$actionValue" />
+                                </div>
+                            </x-ui-padding>
                         </x-ui-card>
                     </div>
                     <div class="col-md-4">
                         <x-ui-card title="Detail Information">
-                            <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date" type="date"
-                                :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff" type="text"
-                                :action="$actionValue" required="false" />
+                            <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
+                                type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                            <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
+                                type="text" :action="$actionValue" required="false" />
                         </x-ui-card>
                     </div>
                     <x-ui-footer>

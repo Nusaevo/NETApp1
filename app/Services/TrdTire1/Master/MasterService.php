@@ -103,7 +103,7 @@ class MasterService extends BaseService
         return $data->map(function ($data) {
             return [
                 'label' => $data->str1,
-                'value' => $data->id,
+                'value' => $data->str1,
             ];
         })->toArray();
     }
@@ -129,7 +129,7 @@ class MasterService extends BaseService
         return $data->map(function ($data) {
             return [
                 'label' => $data->str1,
-                'value' => $data->id,
+                'value' => $data->str1,
             ];
         })->toArray();
     }
@@ -150,7 +150,7 @@ class MasterService extends BaseService
         return $data->map(function ($data) {
             return [
                 'label' => $data->str1,
-                'value' => $data->id,
+                'value' => $data->str1,
             ];
         })->toArray();
     }
