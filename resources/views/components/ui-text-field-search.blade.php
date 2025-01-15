@@ -19,6 +19,7 @@
                         // Sync value with Livewire on change
                         $(selectElement).on('change', function() {
                             const value = $(this).val();
+                            @this.set('{{ $model }}', value);
                             let onChanged = '{{ isset($onChanged) ? $onChanged : '' }}';
 
                             console.log(`Value changed for ${selectId}:`, value);
