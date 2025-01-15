@@ -25,9 +25,8 @@
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
                                         :selectedValue="$materials['brand']" :options="$materialMerk" required="false" :action="$actionValue"
                                         onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" />
-                                    <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px"
-                                        height="400px" onOpened="openBrandDialogBox"
-                                        onClosed="closeBrandDialogBox">
+                                    <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px" height="400px"
+                                        onOpened="openBrandDialogBox" onClosed="closeBrandDialogBox">
                                         <x-slot name="body">
                                             <x-ui-text-field label="Code" model="inputs_brand.str1" type="text"
                                                 :action="$actionValue" required="true" enabled="true" />
@@ -48,23 +47,43 @@
                                     <x-ui-dropdown-select label="{{ $this->trans('category') }}"
                                         model="materials.category" :options="$materialCategory" required="false"
                                         :action="$actionValue" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('class_code') }}"
+                                    {{-- <x-ui-dropdown-select label="{{ $this->trans('class_code') }}"
                                         model="materials.class_code" :options="$materialJenis" required="false"
-                                        :action="$actionValue" />
+                                        :action="$actionValue" /> --}}
+
+                                    <x-ui-text-field-search label="{{ $this->trans('class_code') }}"
+                                        model="materials.class_code" type="string" :selectedValue="$materials['class_code']"
+                                        :options="$materialJenis" required="false" :action="$actionValue"
+                                        clickEvent="openJenisDialogBox" buttonName="+" />
+                                    <x-ui-dialog-box id="JenisDialogBox" title="Form Jenis" width="600px"
+                                        height="400px" onOpened="openJenisDialogBox" onClosed="closeJenisDialogBox">
+                                        <x-slot name="body">
+                                            <x-ui-text-field label="Code" model="inputs_jenis.str1" type="text"
+                                                :action="$actionValue" required="true" enabled="true" capslockMode="true" />
+                                        </x-slot>
+                                        <x-slot name="footer">
+                                            <x-ui-button clickEvent="saveJenis" button-name="Save" loading="true"
+                                                :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+                                        </x-slot>
+                                    </x-ui-dialog-box>
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
                                         type="text" :action="$actionValue" required="true" enabled="true"
-                                        onChanged="generateName" capslockMode="true"/>
-                                    <x-ui-text-field-search label="{{ $this->trans('pattern') }}" model="materials.pattern" type="string"
-                                        :selectedValue="$materials['pattern']"  :options="$materialPattern" required="false" :action="$actionValue"
-                                        onChanged="generateName" clickEvent="openPatternDialogBox" buttonName="+" />
+                                        onChanged="generateName" capslockMode="true" />
+
+                                    <x-ui-text-field-search label="{{ $this->trans('pattern') }}"
+                                        model="materials.pattern" type="string" :selectedValue="$materials['pattern']" :options="$materialPattern"
+                                        required="false" :action="$actionValue" onChanged="generateName"
+                                        clickEvent="openPatternDialogBox" buttonName="+" />
+
                                     <x-ui-dialog-box id="patternDialogBox" title="Form Pattern" width="600px"
                                         height="400px" onOpened="openPatternDialogBox"
                                         onClosed="closePatternDialogBox">
                                         <x-slot name="body">
-                                            <x-ui-text-field label="Code" model="inputs_pattern.str1" type="text"
-                                                :action="$actionValue" required="true" enabled="true" />
+                                            <x-ui-text-field label="Code" model="inputs_pattern.str1"
+                                                type="text" :action="$actionValue" required="true" enabled="true"
+                                                capslockMode="true" />
                                         </x-slot>
                                         <x-slot name="footer">
                                             <x-ui-button clickEvent="savePattern" button-name="Save" loading="true"
@@ -74,7 +93,8 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                        type="text" :action="$actionValue" onChanged="generateName" enabled="true" />
+                                        type="text" :action="$actionValue" onChanged="generateName" enabled="true"
+                                        capslockMode="true" />
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('uom') }}"

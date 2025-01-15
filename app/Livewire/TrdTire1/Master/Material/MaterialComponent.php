@@ -36,6 +36,9 @@ class MaterialComponent extends BaseComponent
     public $object_brand;
     public $inputs_pattern = [];
     public $object_pattern;
+    public $inputs_jenis = [];
+    public $object_jenis;
+
 
 
     protected $masterService;
@@ -56,7 +59,8 @@ class MaterialComponent extends BaseComponent
         'tagScanned' => 'tagScanned',
         'resetMaterial' => 'onReset',
         'onPartnerChanged' => 'onPartnerChanged',
-        'onNameChanged' => 'onNameChanged'  // Listen to onNameChanged
+        'onNameChanged' => 'onNameChanged',  // Listen to onNameChanged
+        'generateName' => 'generateName'
     ];
     #endregion
 
@@ -518,6 +522,52 @@ class MaterialComponent extends BaseComponent
         // Tampilkan pesan sukses dan tutup dialog
         $this->dispatch('success', 'Pattern berhasil disimpan.');
         $this->dispatch('closePatternDialogBox');
+    }
+    #region Brand Dialog Box
+
+    #region Jenis Dialog Box
+    protected $JenisRules = [
+        'inputs_jenis.str1' => 'required|string',
+    ];
+
+    protected $jenisCustomValidationAttributes = [
+        'inputs_jenis.str1' => 'Code',
+    ];
+
+    public function openJenisDialogBox()
+    {
+        $this->reset('inputs_jenis');
+        $this->object_jenis = new ConfigConst();
+        $this->dispatch('openJenisDialogBox');
+    }
+
+    public function saveJenis()
+    {
+        // Validasi input tanpa memeriksa keunikan
+        $this->validate($this->JenisRules, [], $this->jenisCustomValidationAttributes);
+
+
+        // Isi dan sanitasi data
+        $this->object_jenis->fillAndSanitize($this->inputs_jenis);
+        $this->object_jenis->const_group = "MMATL_JENIS";
+
+        // Hitung sequence berikutnya
+        $highestSeq = ConfigConst::where('const_group', 'MMATL_JENIS')->max('seq') ?? 0;
+        $nextSeq = $highestSeq + 1;
+        $this->object_jenis->seq = $nextSeq;
+
+        // Simpan data
+        $this->object_jenis->save();
+
+        // Refresh list merk dan update pilihan di form
+        $this->masterService = new MasterService();
+        $this->materialJenis = $this->masterService->getMatlJenisData();
+        $this->materials['class_code'] = $this->object_jenis->str1;
+        // $this->generateName();
+
+        // Tampilkan pesan sukses dan tutup dialog
+        $this->dispatch('success', 'Jenis berhasil disimpan.');
+        $this->dispatch('closeJenisDialogBox');
     }
     #region Brand Dialog Box
 }
