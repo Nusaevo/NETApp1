@@ -58,6 +58,9 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("point"), "point")
+                ->searchable()
+                ->sortable(),
             BooleanColumn::make($this->trans("Status"), "deleted_at")
                 ->setCallback(function ($value) {
                     return $value === null;
@@ -87,16 +90,16 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->where(DB::raw('UPPER(code)'), '=', strtoupper($value));
             }),
             SelectFilter::make('Status', 'status_filter')
-            ->options([
-                'active' => 'Active',
-                'deleted' => 'Non Active',
-            ])->filter(function (Builder $builder, string $value) {
-                if ($value === 'active') {
-                    $builder->whereNull('deleted_at');
-                } elseif ($value === 'deleted') {
-                    $builder->whereNotNull('deleted_at');
-                }
-            }),
+                ->options([
+                    'active' => 'Active',
+                    'deleted' => 'Non Active',
+                ])->filter(function (Builder $builder, string $value) {
+                    if ($value === 'active') {
+                        $builder->whereNull('deleted_at');
+                    } elseif ($value === 'deleted') {
+                        $builder->whereNotNull('deleted_at');
+                    }
+                }),
         ];
     }
 }

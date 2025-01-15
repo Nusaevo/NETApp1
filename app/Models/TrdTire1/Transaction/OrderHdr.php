@@ -69,6 +69,10 @@ class OrderHdr extends BaseModel
     #region Metode Utama public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     {
         $this->fillAndSanitize($inputs);
+        $this->tr_type = $trType; // Ensure tr_type is set
+
+        // Tentukan vehicle_type berdasarkan trType
+        //$vehicleType = $this->vehicle_type;
 
         // Tentukan vehicle_type berdasarkan trType
         //$vehicleType = $this->vehicle_type;

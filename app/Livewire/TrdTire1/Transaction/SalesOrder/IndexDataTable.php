@@ -24,7 +24,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->where('order_hdrs.tr_type', 'PO')
+            ->where('order_hdrs.tr_type', 'SO')
             ->where('order_hdrs.status_code', Status::OPEN);
     }
     public function columns(): array
@@ -42,7 +42,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode.'.Transaction.SalesOrder.Detail', [
+                        return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
                         ]) . '">' . $row->tr_id . '</a>';
@@ -53,10 +53,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
-                        return '<a href="' . route($this->appCode.'.Master.Partner.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->partner_id)
-                        ]) . '">' . $row->Partner->name . '</a>';
+                    return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->partner_id)
+                    ]) . '">' . $row->Partner->name . '</a>';
                 })
                 ->html(),
             Column::make($this->trans("matl_code"), 'id')
@@ -70,7 +70,7 @@ class IndexDataTable extends BaseDataTableComponent
                     // Generate links if data is available
                     $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
                     $links = $matlCodes->map(function ($code, $id) {
-                        return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
+                        return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($id)
                         ]) . '">' . $code . '</a>';
@@ -79,11 +79,6 @@ class IndexDataTable extends BaseDataTableComponent
                     return $links->implode(', ');
                 })
                 ->html(),
-            Column::make($this->trans("qty"), "total_qty")
-                ->label(function ($row) {
-                    return $row->total_qty;
-                })
-                ->sortable(),
             Column::make($this->trans("amt"), "total_amt_in_idr")
                 ->label(function ($row) {
                     $totalAmt = 0;
@@ -96,11 +91,11 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
 
-            Column::make($this->trans('status'), "status_code")
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
-                }),
+            // Column::make($this->trans('status'), "status_code")
+            //     ->sortable()
+            //     ->format(function ($value, $row, Column $column) {
+            //         return Status::getStatusString($value);
+            //     }),
             // Column::make($this->trans("created_date"), "created_at")
             //     ->searchable()
             //     ->sortable(),

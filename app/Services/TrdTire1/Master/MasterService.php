@@ -68,7 +68,7 @@ class MasterService extends BaseService
         return $this->mapData($data);
     }
 
-    public function getMatlCategory1String( $str1)
+    public function getMatlCategory1String($str1)
     {
         $data = $this->mainConnection
             ->table('config_consts')
@@ -118,7 +118,7 @@ class MasterService extends BaseService
         return $this->mapData($data);
     }
 
-    public function getMatlCategory2String( $str1)
+    public function getMatlCategory2String($str1)
     {
         $data = $this->mainConnection
             ->table('config_consts')
@@ -178,6 +178,19 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+  
+    public function getMaterials()
+    {
+        $materialsData = Material::whereNull('deleted_at')->get(); // Pastikan untuk hanya mengambil yang tidak dihapus
+        return $materialsData->map(function ($data) {
+            return [
+                'label' => $data->id . " - " . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
+
+
     public function getWarehouses()
     {
         return $this->mainConnection
@@ -252,6 +265,4 @@ class MasterService extends BaseService
             return $formattedPrice;
         }
     }
-
-
 }
