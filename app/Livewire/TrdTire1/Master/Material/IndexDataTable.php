@@ -58,9 +58,9 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("point"), "point")
-                ->searchable()
-                ->sortable(),
+            // Column::make($this->trans("point"), "point")
+            //     ->searchable()
+            //     ->sortable(),
             BooleanColumn::make($this->trans("Status"), "deleted_at")
                 ->setCallback(function ($value) {
                     return $value === null;
