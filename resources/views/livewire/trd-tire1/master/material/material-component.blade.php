@@ -23,50 +23,61 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
-                                        :selectedValue="$selectedBrand"
-                                        :options="$materialMerk" required="false" :action="$actionValue" onChanged="generateName"
-                                        clickEvent="openBrandDialogBox" buttonName="+" />
-                                    <x-ui-dialog-box id="brandDialogBox"  title="Form Merk"
-                                    width="600px"
-                                    height="400px">
+                                        :selectedValue="$selectedBrand" :options="$materialMerk" required="false" :action="$actionValue"
+                                        onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" />
+                                    <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px"
+                                        height="400px">
                                         <x-slot name="body">
-                                            <x-ui-text-field label="Code"
-                                                model="inputs_brand.str1" type="text" :action="$actionValue"
-                                                required="true" enabled="true" />
-                                            <x-ui-text-field label="Merk" model="inputs_brand.str2"
-                                                type="text" :action="$actionValue" required="true" enabled="true" />
+                                            <x-ui-text-field label="Code" model="inputs_brand.str1" type="text"
+                                                :action="$actionValue" required="true" enabled="true" />
+                                            <x-ui-text-field label="Merk" model="inputs_brand.str2" type="text"
+                                                :action="$actionValue" required="true" enabled="true" />
                                         </x-slot>
                                         <x-slot name="footer">
-                                            <x-ui-button clickEvent="saveBrand" button-name="Save" loading="true" :action="$actionValue"
-                                                cssClass="btn-primary" iconPath="save.svg" />
+                                            <x-ui-button clickEvent="saveBrand" button-name="Save" loading="true"
+                                                :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
                                         </x-slot>
                                     </x-ui-dialog-box>
 
-                                </div>
-                                <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
                                         type="code" :action="$actionValue" required="true" enabled="true"
                                         clickEvent="getMatlCode" buttonName="Kode Baru" />
+                                </div>
+                                <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('category') }}"
-                                        model="materials.category" :options="$materialJenis" required="false"
+                                        model="materials.category" :options="$materialCategory" required="false"
+                                        :action="$actionValue" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('class_code') }}"
+                                        model="materials.class_code" :options="$materialJenis" required="false"
                                         :action="$actionValue" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
                                         type="text" :action="$actionValue" required="true" enabled="true"
                                         onChanged="generateName" />
-                                    <x-ui-text-field label="{{ $this->trans('pattern') }}" model="materials.pattern"
-                                        type="text" :action="$actionValue" required="false" enabled="true"
-                                        onChanged="generateName" />
+                                    <x-ui-text-field-search label="{{ $this->trans('pattern') }}" model="materials.pattern" type="string"
+                                        :selectedValue="$selectedPattern" :options="$materialPattern" required="false" :action="$actionValue"
+                                        onChanged="generateName" clickEvent="openPatternDialogBox" buttonName="+" />
+                                    <x-ui-dialog-box id="patternDialogBox" title="Form Pattern" width="600px"
+                                        height="400px">
+                                        <x-slot name="body">
+                                            <x-ui-text-field label="Code" model="inputs_pattern.str1" type="text"
+                                                :action="$actionValue" required="true" enabled="true" />
+                                        </x-slot>
+                                        <x-slot name="footer">
+                                            <x-ui-button clickEvent="savePattern" button-name="Save" loading="true"
+                                                :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+                                        </x-slot>
+                                    </x-ui-dialog-box>
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
                                         type="text" :action="$actionValue" onChanged="generateName" enabled="true" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="matl_uoms.matl_uom"
-                                        :options="$materialUOM" type="number" :action="$actionValue" required="false"
-                                        enabled="true" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('uom') }}"
+                                        model="matl_uoms.matl_uom" :options="$materialUOM" type="number"
+                                        :action="$actionValue" required="false" enabled="true" />
                                     <x-ui-text-field label="{{ $this->trans('point') }}" model="materials.point"
                                         type="number" :action="$actionValue" required="false" enabled="true" />
                                 </div>
@@ -165,6 +176,14 @@
             });
             window.addEventListener('closeBrandDialogBox', function() {
                 $('#brandDialogBox').modal('hide');
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            window.addEventListener('openPatternDialogBox', function() {
+                $('#patternDialogBox').modal('show');
+            });
+            window.addEventListener('closePatternDialogBox', function() {
+                $('#patternDialogBox').modal('hide');
             });
         });
     </script>

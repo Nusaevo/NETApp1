@@ -90,17 +90,48 @@ class MasterService extends BaseService
     public function getMatlJenisData()
     {
         $data = $this->getConfigData('MMATL_JENIS');
-        return $this->mapData($data);
+        return $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
+    public function getMatlCategoryData()
+    {
+        $data = $this->getConfigData('MMATL_CATEGORY');
+        return $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
     }
     public function getMatlMerkData()
     {
         $data = $this->getConfigData('MMATL_MERK');
         return $this->mapData($data);
     }
+    public function getMatlPatternData()
+    {
+        $data = $this->getConfigData('MMATL_PATTERN');
+        return $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->str1,
+            ];
+        })->toArray();;
+    }
+
     public function getMatlUOMData()
     {
         $data = $this->getConfigData('MMATL_UOM');
-        return $this->mapData($data);
+        return $data->map(function ($data) {
+            return [
+                'label' => $data->str1,
+                'value' => $data->id,
+            ];
+        })->toArray();
     }
     public function getPartnerTypeData()
     {
