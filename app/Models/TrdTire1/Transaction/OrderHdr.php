@@ -74,6 +74,9 @@ class OrderHdr extends BaseModel
         // Tentukan vehicle_type berdasarkan trType
         //$vehicleType = $this->vehicle_type;
 
+        // Tentukan vehicle_type berdasarkan trType
+        //$vehicleType = $this->vehicle_type;
+
         // Generate Transaction ID jika belum ada
         // if (empty($this->tr_Id)) {
         //     $this->tr_Id = $this->generateTransactionId($vehicleType);

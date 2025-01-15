@@ -178,6 +178,7 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+  
     public function getMaterials()
     {
         $materialsData = Material::whereNull('deleted_at')->get(); // Pastikan untuk hanya mengambil yang tidak dihapus
