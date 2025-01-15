@@ -11,7 +11,7 @@
 
 <!-- Container -->
 <div
-   class="col-sm mb-2"
+   class="col-sm m-2"
     @if (isset($span)) span="{{ $span }}" @endif
     @if ($isVisible === 'false') style="display: none;" @endif
 >

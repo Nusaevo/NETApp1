@@ -15,7 +15,7 @@
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
                     <div class="col-md-8">
-                        <x-ui-card title="Main Information"><br>
+                        <x-ui-card title="Main Information">
                             <div class="row">
                                 <x-ui-option model="inputs.vehicle_type"
                                 :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
@@ -91,7 +91,6 @@
 
                     </div> --}}
                 </div>
-                <br>
                 <div class="col-md-12">
                     <x-ui-card title="Order Items">
                         @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
