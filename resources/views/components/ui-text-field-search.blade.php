@@ -108,6 +108,6 @@
                             aria-hidden="true"></span>
                     </span>
                 </div>
-                @endif
+            @endif
         </div>
     </div>

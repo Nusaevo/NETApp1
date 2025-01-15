@@ -36,6 +36,9 @@ class MaterialComponent extends BaseComponent
     public $object_brand;
     public $inputs_pattern = [];
     public $object_pattern;
+    public $inputs_jenis = [];
+    public $object_jenis;
+
 
 
     protected $masterService;
@@ -56,7 +59,8 @@ class MaterialComponent extends BaseComponent
         'tagScanned' => 'tagScanned',
         'resetMaterial' => 'onReset',
         'onPartnerChanged' => 'onPartnerChanged',
-        'onNameChanged' => 'onNameChanged'  // Listen to onNameChanged
+        'onNameChanged' => 'onNameChanged',  // Listen to onNameChanged
+        'generateName' => 'generateName'
     ];
     #endregion
 
@@ -111,15 +115,14 @@ class MaterialComponent extends BaseComponent
     {
         $this->reset('materials');
         $this->reset('matl_uoms');
-        $this->product_code = "";
-        $this->materials['brand'] = "";
-        $this->materials['type_code'] = "";
-        $this->matl_uoms['matl_uom'] = 'PCS';
-        $this->materials['code'] = '';
-        $this->materials['class_code'] = '';
-        $this->materials['markup'] = 0;
         $this->object = new Material();
+        $this->materials = populateArrayFromModel($this->object);
         $this->object_uoms = new MatlUom();
+        $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+        $this->product_code = "";
+        $this->matl_uoms['matl_uom'] = 'PCS';
+        $this->materials['markup'] = 0;
+        $this->materials['pattern'] = '';
         $this->deletedItems = [];
         $this->capturedImages = [];
     }
@@ -405,7 +408,7 @@ class MaterialComponent extends BaseComponent
             $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
 
             // Format the proposed ID to 4 digits with leading zeros
-            $formattedTrId = str_pad($proposedTrId, 4, '0', STR_PAD_LEFT);
+            $formattedTrId = str_pad($proposedTrId, 3, '0', STR_PAD_LEFT);
 
             // Set kode material dan update configSnum
             $this->materials['code'] = $code . $formattedTrId;
@@ -518,6 +521,52 @@ class MaterialComponent extends BaseComponent
         // Tampilkan pesan sukses dan tutup dialog
         $this->dispatch('success', 'Pattern berhasil disimpan.');
         $this->dispatch('closePatternDialogBox');
+    }
+    #region Brand Dialog Box
+
+    #region Jenis Dialog Box
+    protected $JenisRules = [
+        'inputs_jenis.str1' => 'required|string',
+    ];
+
+    protected $jenisCustomValidationAttributes = [
+        'inputs_jenis.str1' => 'Code',
+    ];
+
+    public function openJenisDialogBox()
+    {
+        $this->reset('inputs_jenis');
+        $this->object_jenis = new ConfigConst();
+        $this->dispatch('openJenisDialogBox');
+    }
+
+    public function saveJenis()
+    {
+        // Validasi input tanpa memeriksa keunikan
+        $this->validate($this->JenisRules, [], $this->jenisCustomValidationAttributes);
+
+
+        // Isi dan sanitasi data
+        $this->object_jenis->fillAndSanitize($this->inputs_jenis);
+        $this->object_jenis->const_group = "MMATL_JENIS";
+
+        // Hitung sequence berikutnya
+        $highestSeq = ConfigConst::where('const_group', 'MMATL_JENIS')->max('seq') ?? 0;
+        $nextSeq = $highestSeq + 1;
+        $this->object_jenis->seq = $nextSeq;
+
+        // Simpan data
+        $this->object_jenis->save();
+
+        // Refresh list merk dan update pilihan di form
+        $this->masterService = new MasterService();
+        $this->materialJenis = $this->masterService->getMatlJenisData();
+        $this->materials['class_code'] = $this->object_jenis->str1;
+        // $this->generateName();
+
+        // Tampilkan pesan sukses dan tutup dialog
+        $this->dispatch('success', 'Jenis berhasil disimpan.');
+        $this->dispatch('closeJenisDialogBox');
     }
     #region Brand Dialog Box
 }

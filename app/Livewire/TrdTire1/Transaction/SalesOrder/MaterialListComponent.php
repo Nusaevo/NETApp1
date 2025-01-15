@@ -199,7 +199,6 @@ class MaterialListComponent extends BaseComponent
     public function onValidateAndSave()
     {
         $this->validate();
-        // dd(vars: $this->input_details);
         try {
             foreach ($this->input_details as $key => $detail) {
                 if (is_array($detail) && isset($detail['matl_id'])) {
