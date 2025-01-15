@@ -1,5 +1,5 @@
 <div
-    class="card p-4 mb-4"
+    class="card p-4 mb-4 mt-2"
     @if($id) id="{{ $id }}" @endif
     style="
         width: {{ $width }};

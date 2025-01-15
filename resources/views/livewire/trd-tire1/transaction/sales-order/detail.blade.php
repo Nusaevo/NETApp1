@@ -20,6 +20,8 @@
                                 <div class="row">
                                     <x-ui-option model="inputs.vehicle_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                    <x-ui-option model="inputs.isTaxInvoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']" type="checkbox"
+                                      layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
