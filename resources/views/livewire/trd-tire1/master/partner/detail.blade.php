@@ -28,7 +28,7 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name"
-                                            type="text" :action="$actionValue" required="true" />
+                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address"
@@ -36,13 +36,13 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country"
-                                            type="text" :action="$actionValue" required="true" />
+                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
                                         <x-ui-text-field label="{{ $this->trans('province') }}" model="inputs.province"
-                                            type="text" :action="$actionValue" required="true" />
+                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('city') }}" model="inputs.city"
-                                            type="text" :action="$actionValue" required="true" />
+                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
                                         <x-ui-text-field label="{{ $this->trans('postal_code') }}"
                                             model="inputs.postal_code" type="text" :action="$actionValue" />
                                     </div>
@@ -64,6 +64,14 @@
                                 <x-ui-option label="Multiple Options Checklist" model="inputs.partner_chars"
                                     :options="['IRC' => 'Poin IRC', 'GT' => 'Poin GT', 'ZN' => 'Poin ZN']" required="false" layout="horizontal" enabled="true"
                                     type="checkbox" visible="true" />
+                            </x-ui-card>
+                            <x-ui-card title="Credit">
+                                <x-ui-padding>
+                                    <div class="row">
+                                        <x-ui-text-field label="{{ $this->trans('credit_limit') }}" model="inputs.credit_limit"
+                                            type="number" :action="$actionValue" />
+                                    </div>
+                                </x-ui-padding>
                             </x-ui-card>
                             <x-ui-card title="Description">
                                 <x-ui-padding>

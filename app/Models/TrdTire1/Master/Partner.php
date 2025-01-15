@@ -61,6 +61,7 @@ class Partner extends BaseModel
         'amt_limit',
         'partner_chars',
         'status_code',
+        'credit_limit',
     ];
 
     #region Relations
@@ -92,9 +93,9 @@ class Partner extends BaseModel
                       ->first();
         if ($latestCode) {
             $numericPart = intval(substr($latestCode, 2)) + 1;
-            return $initialCode . $numericPart;
+            return $initialCode . str_pad($numericPart, 3, '0', STR_PAD_LEFT);
         } else {
-            return $initialCode . '1';
+            return $initialCode . '001';
         }
     }
 

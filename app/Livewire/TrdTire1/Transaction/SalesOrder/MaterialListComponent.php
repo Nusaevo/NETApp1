@@ -71,14 +71,15 @@ class MaterialListComponent extends BaseComponent
                     'matl_id' => null,
                     'qty' => null,
                     'price' => 0.0,
-                    'trhdr_id' => 0,
+                    'trhdr_id' => $this->objectIdValue,
                     'tr_seq' => 0,
+                    'tr_id' => $this->tr_id ?? $this->inputs['tr_id'],
+                    'tr_type' => $this->trType,
                 ];
                 $this->dispatch('success', __('generic.string.add_item'));
             } catch (Exception $e) {
                 $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
             }
-            // dd($this->input_details);
         } else {
             $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
         }
@@ -128,8 +129,13 @@ class MaterialListComponent extends BaseComponent
     public function updated($propertyName)
     {
         if (str_contains($propertyName, 'input_details.')) {
-            $key = explode('.', $propertyName)[1]; // Ambil index
-            $this->updateAmount($key);
+            $parts = explode('.', $propertyName);
+            $key = $parts[1];
+            $field = $parts[2];
+
+            if ($field === 'qty') {
+                $this->calculateAmount($key);
+            }
         }
     }
 
@@ -151,6 +157,26 @@ class MaterialListComponent extends BaseComponent
 
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
+
+            $orderDtl = OrderDtl::where('trhdr_id', $this->objectIdValue)->where('tr_type', $this->trType)->first();
+            if ($orderDtl) {
+                if (empty($this->input_details)) {
+                    $orderDtl->forceDelete();
+                } else {
+                    $orderDtl->matl_items = array_map(function($detail) {
+                        return [
+                            'matl_id' => $detail['matl_id'] ?? null,
+                            'qty' => $detail['qty'] ?? null,
+                            'price_uom' => $detail['price_uom'] ?? null,
+                            'disc' => $detail['disc'] ?? null,
+                            'matl_desc' => $detail['matl_desc'] ?? null,
+                            'amount' => $detail['price_base'] ?? null // Ensure amount is saved correctly
+                        ];
+                    }, $this->input_details);
+                    $orderDtl->save();
+                }
+            }
+
             $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
@@ -179,20 +205,18 @@ class MaterialListComponent extends BaseComponent
     {
         if (!empty($this->object)) {
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->trType)->orderBy('tr_seq')->get();
-            // if ($this->object_detail->isEmpty()) {
-            //     return;
-            // }
-
-            // foreach ($this->object_detail as $key => $detail) {
-            //     $this->input_details[$key] = populateArrayFromModel($detail);
-            //     $this->input_details[$key]['name'] = $detail->Material?->name;
-            //     $this->input_details[$key]['id'] = $detail->id;
-            //     $this->input_details[$key]['selling_price'] = $detail->Material->jwl_selling_price;
-            //     $this->input_details[$key]['sub_total'] = $detail->amt;
-            //     $this->input_details[$key]['isOrderedMaterial'] = $detail->Material->isOrderedMaterial();
-            //     // $this->input_details[$key]['barcode'] = $detail->Material?->MatlUom[0]->barcode;
-            //     // $this->input_details[$key]['image_path'] = $detail->Material?->Attachment->first()?->getUrl() ?? null;
-            // }
+            $this->input_details = $this->object_detail->flatMap(function ($detail) {
+                return collect($detail->matl_items)->map(function ($item) {
+                    return [
+                        'matl_id' => $item['matl_id'],
+                        'qty' => $item['qty'],
+                        'price_uom' => $item['price_uom'],
+                        'disc' => $item['disc'],
+                        'matl_desc' => $item['matl_desc'],
+                        'price_base' => $item['amount'] // Ensure amount is loaded correctly
+                    ];
+                });
+            })->toArray();
         }
     }
 
@@ -200,21 +224,22 @@ class MaterialListComponent extends BaseComponent
     {
         $this->validate();
         try {
-            foreach ($this->input_details as $key => $detail) {
-                if (is_array($detail) && isset($detail['matl_id'])) {
-                    // Set 'tr_seq' secara unik
-                    if (!isset($detail['tr_seq']) || $this->isDuplicateTrSeq($detail['trhdr_id'], $detail['tr_seq'])) {
-                        $detail['tr_seq'] = $this->getUniqueTrSeq($detail['trhdr_id']);
-                    }
+            $orderDtl = OrderDtl::firstOrNew(['trhdr_id' => $this->objectIdValue, 'tr_type' => $this->trType]);
+            $orderDtl->tr_id = $this->tr_id ?? $this->inputs['tr_id'];
+            $orderDtl->trhdr_id = $this->objectIdValue;
+            $orderDtl->tr_type = $this->trType;
+            $orderDtl->matl_items = array_map(function($detail) {
+                return [
+                    'matl_id' => $detail['matl_id'] ?? null,
+                    'qty' => $detail['qty'] ?? null,
+                    'price_uom' => $detail['price_uom'] ?? null,
+                    'disc' => $detail['disc'] ?? null,
+                    'matl_desc' => $detail['matl_desc'] ?? null,
+                    'amount' => $detail['price_base'] ?? null // Ensure amount is saved correctly
+                ];
+            }, $this->input_details);
+            $orderDtl->save();
 
-                    OrderDtl::updateOrCreate(
-                        ['id' => $detail['id'] ?? null],
-                        $detail
-                    );
-                } else {
-                    $this->dispatch('error', __('generic.error.matl_id_required'));
-                }
-            }
             $this->dispatch('success', __('generic.string.save_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.save_item', ['message' => $e->getMessage()]));

@@ -21,6 +21,7 @@ class Detail extends BaseComponent
     public $warehouses;
     public $partners;
     public $vehicle_type;
+    public $tax_invoice;
     public $transaction_id;
     public $payments;
     public $deletedItems = [];
@@ -35,6 +36,7 @@ class Detail extends BaseComponent
 
     public $returnIds = [];
     public $currencyRate = 0;
+    public $npwpOptions = [];
 
     protected $masterService;
     public $isPanelEnabled = "false";
@@ -57,26 +59,70 @@ class Detail extends BaseComponent
 
     #region Populate Data methods
 
-    public function getTransactionCode(){
+    public function getTransactionCode()
+    {
         if (!isset($this->inputs['vehicle_type'])) {
             $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
+            return;
         }
+
         $vehicle_type = $this->inputs['vehicle_type'];
-        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type);
+        $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
+        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, $tax_invoice);
     }
+
+    public function onTaxInvoiceChanged()
+    {
+        $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
+    }
+    public function updatedInputsPartnerId($partnerId)
+    {
+        // Ambil partner berdasarkan partner_id yang dipilih
+        $partner = \App\Models\TrdTire1\Master\Partner::find($partnerId);
+
+        if ($partner) {
+            // Ambil PartnerDetail berdasarkan partner_id yang sama
+            $partnerDetail = $partner->partnerDetail;
+
+            if ($partnerDetail && $partnerDetail->wp_details) {
+                $wpDetails = $partnerDetail->wp_details; // Bisa array atau string
+
+                // Jika wp_details berupa string JSON, decode
+                if (is_string($wpDetails)) {
+                    $wpDetails = json_decode($wpDetails, true);
+                }
+
+                if (is_array($wpDetails)) {
+                    // Ambil NPWP pertama jika ada
+                    $npwp = array_column($wpDetails, 'npwp');
+
+                    if (count($npwp) > 0) {
+                        // Jika ada NPWP, set tax_payer ke NPWP pertama
+                        $this->inputs['tax_payer'] = $npwp[0];
+                    } else {
+                        // Jika tidak ada NPWP, kosongkan tax_payer
+                        $this->inputs['tax_payer'] = null;
+                    }
+                } else {
+                    // Jika wp_details bukan array atau gagal decode, kosongkan tax_payer
+                    $this->inputs['tax_payer'] = null;
+                }
+            } else {
+                // Jika tidak ada wp_details, kosongkan tax_payer
+                $this->inputs['tax_payer'] = null;
+            }
+        } else {
+            // Jika tidak ada partner, kosongkan tax_payer
+            $this->inputs['tax_payer'] = null;
+        }
+    }
+
     // public function generateBasicTransactionId()
     // {
     //     $appCode = $this->getAppCode($this->vehicle_type);
     //     $this->transaction_id = $this->generateTransactionId($appCode, 'some_code');
     // }
 
-
-    // public function generateTransactionIdWithTax()
-    // {
-    //     // Logika untuk menghasilkan nomor transaksi dengan faktur pajak
-    //     $appCode = $this->getAppCode($this->vehicle_type);
-    //     $this->transaction_id = $this->generateTransactionId($appCode, 'some_code_with_tax');
-    // }
 
     // private function getAppCode($vehicleType)
     // {
@@ -113,6 +159,7 @@ class Detail extends BaseComponent
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
+            $this->inputs['tax_invoice'] = $this->object->tax_invoice; // Ensure tax_invoice is populated
         }
         if (!$this->isEditOrView()) {
 

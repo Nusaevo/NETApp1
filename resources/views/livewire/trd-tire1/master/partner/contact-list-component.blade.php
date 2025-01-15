@@ -13,12 +13,12 @@
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('contact_name') }}"
                                             model="input_details.{{ $key }}.contact_name" type="text" :action="$actionValue"
-                                            required="true" />
+                                            required="true" capslockMode="true"/>
                                         <x-ui-text-field label="{{ $this->trans('position') }}" model="input_details.{{ $key }}.position"
-                                            type="text" :action="$actionValue" required="true" />
+                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
                                         <x-ui-text-field label="{{ $this->trans('date_of_birth') }}"
                                             model="input_details.{{ $key }}.date_of_birth" type="text" :action="$actionValue"
-                                            required="false" />
+                                            required="false"/>
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('phone1') }}" model="input_details.{{ $key }}.phone1"

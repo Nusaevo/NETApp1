@@ -140,13 +140,13 @@ class MasterService extends BaseService
     }
     public function getSOTaxData()
     {
-        $data = $this->getConfigData('SO_TAX');
+        $data = $this->getConfigData('TRX_SO_TAX');
         return $this->mapData($data);
     }
 
     public function getSOSendData()
     {
-        $data = $this->getConfigData('SO_SEND');
+        $data = $this->getConfigData('TRX_SO_SEND');
         return $data->map(function ($data) {
             return [
                 'label' => $data->str1,

@@ -4,7 +4,7 @@
             <x-ui-list-table id="Table" title="Material List">
                 <x-slot name="body">
                     @foreach ($input_details as $key => $input_detail)
-                        <tr wire:key="list{{ $key }}">
+                        <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                             <x-ui-list-body>
                                 {{-- <x-slot name="image">
                                     <img src="{{ $input_detail['image_path'] ?? 'https://via.placeholder.com/300' }}"
@@ -21,7 +21,7 @@
                                             onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                             :enabled="true" />
                                         <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
-                                            enabled="true" class="form-control" />
+                                            enabled="true" class="form-control" wire:model="input_details.{{ $key }}.qty" />
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_uom"
                                             label="UOM" enabled="false" />
                                     </div>

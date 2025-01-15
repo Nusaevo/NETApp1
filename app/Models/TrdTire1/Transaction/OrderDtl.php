@@ -27,7 +27,12 @@ class OrderDtl extends BaseModel
         'qty',
         'qty_reff',
         'price',
-        'amt'
+        'amt',
+        'matl_items' // Add this line
+    ];
+
+    protected $casts = [
+        'matl_items' => 'array', // Ensure matl_items is cast to an array
     ];
 
     protected static function boot()
@@ -37,6 +42,19 @@ class OrderDtl extends BaseModel
             $qty = $orderDtl->qty;
             $price = $orderDtl->price;
             $orderDtl->amt = $qty * $price;
+            // Ensure input_details is set before converting to JSON
+            if (isset($orderDtl->input_details)) {
+                $orderDtl->matl_items = array_map(function ($detail) {
+                    return [
+                        'matl_id' => $detail['matl_id'],
+                        'qty' => $detail['qty'],
+                        'price_uom' => $detail['price_uom'],
+                        'disc' => $detail['disc'],
+                        'matl_desc' => $detail['matl_desc'],
+                        'amount' => $detail['price_base'] // Ensure amount is saved correctly
+                    ];
+                }, $orderDtl->input_details);
+            }
         });
         static::deleting(function ($orderDtl) {
             DB::beginTransaction();
@@ -98,6 +116,6 @@ class OrderDtl extends BaseModel
     public function scopeGetByOrderHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)
-                     ->where('tr_type', $trType);
+            ->where('tr_type', $trType);
     }
 }

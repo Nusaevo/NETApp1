@@ -20,8 +20,9 @@
                                 <div class="row">
                                     <x-ui-option model="inputs.vehicle_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
-                                    <x-ui-option model="inputs.isTaxInvoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']" type="checkbox"
-                                      layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                    <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
+                                        type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        onChange="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
@@ -36,15 +37,14 @@
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to"
                                         :options="$SOSend" type="text" :action="$actionValue" required="false" />
-                                    <x-ui-text-field label="Wajib Pajak" model="inputs.tax_payer" type="text"
-                                        :action="$actionValue" required="false" />
+                                    <x-ui-text-field type="text" label="{{ $this->trans('tax_payer') }}"
+                                        model="inputs.tax_payer" :value="$inputs['tax_payer']" required="true"
+                                        :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('payment_terms') }}"
                                         model="inputs.payment_terms" type="text" :action="$actionValue"
                                         required="false" />
-                                    {{-- <x-ui-text-field label="PPN" model="inputs.country" type="text" :action="$actionValue"
-                                    required="true" /> --}}
                                     <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
                                         :options="$SOTax" required="true" :action="$actionValue" />
                                 </div>

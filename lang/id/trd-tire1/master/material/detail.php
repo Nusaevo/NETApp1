@@ -2,6 +2,7 @@
 
 return [
     'type_code' => 'Tipe Produk',
+    'class_code' => 'Jenis Produk',
     'category' => 'Kategori',
     'brand' => 'Merk',
     'search_product' => 'Cari Produk',
