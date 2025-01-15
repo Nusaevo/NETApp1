@@ -26,7 +26,8 @@
                                         :selectedValue="$materials['brand']" :options="$materialMerk" required="false" :action="$actionValue"
                                         onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" />
                                     <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px"
-                                        height="400px">
+                                        height="400px" onOpened="openBrandDialogBox"
+                                        onClosed="closeBrandDialogBox">
                                         <x-slot name="body">
                                             <x-ui-text-field label="Code" model="inputs_brand.str1" type="text"
                                                 :action="$actionValue" required="true" enabled="true" />
@@ -54,12 +55,13 @@
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
                                         type="text" :action="$actionValue" required="true" enabled="true"
-                                        onChanged="generateName" />
+                                        onChanged="generateName" capslockMode="true"/>
                                     <x-ui-text-field-search label="{{ $this->trans('pattern') }}" model="materials.pattern" type="string"
                                         :selectedValue="$materials['pattern']"  :options="$materialPattern" required="false" :action="$actionValue"
                                         onChanged="generateName" clickEvent="openPatternDialogBox" buttonName="+" />
                                     <x-ui-dialog-box id="patternDialogBox" title="Form Pattern" width="600px"
-                                        height="400px">
+                                        height="400px" onOpened="openPatternDialogBox"
+                                        onClosed="closePatternDialogBox">
                                         <x-slot name="body">
                                             <x-ui-text-field label="Code" model="inputs_pattern.str1" type="text"
                                                 :action="$actionValue" required="true" enabled="true" />
@@ -108,7 +110,8 @@
                                                 hideStorageButton="false"></x-ui-image-button>
 
                                             <x-ui-dialog-box id="storageDialogBox" :width="'2000px'"
-                                                :height="'2000px'">
+                                                :height="'2000px'" onOpened="openStorageDialog"
+                                                onClosed="closeStorageDialog">
                                                 <x-slot name="body">
                                                     @livewire('base.master.gallery.storage-component', ['isComponent' => true])
                                                 </x-slot>
@@ -157,34 +160,3 @@
         </x-ui-footer>
     </x-ui-page-card>
 </div>
-
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            window.addEventListener('openStorageDialog', function() {
-                $('#storageDialogBox').modal('show');
-            });
-
-            window.addEventListener('closeStorageDialog', function() {
-                $('#storageDialogBox').modal('hide');
-            });
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            window.addEventListener('openBrandDialogBox', function() {
-                $('#brandDialogBox').modal('show');
-            });
-            window.addEventListener('closeBrandDialogBox', function() {
-                $('#brandDialogBox').modal('hide');
-            });
-        });
-        document.addEventListener('DOMContentLoaded', function() {
-            window.addEventListener('openPatternDialogBox', function() {
-                $('#patternDialogBox').modal('show');
-            });
-            window.addEventListener('closePatternDialogBox', function() {
-                $('#patternDialogBox').modal('hide');
-            });
-        });
-    </script>
-@endpush

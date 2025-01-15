@@ -8,32 +8,35 @@ class UiDialogBox extends Component
 {
     public $id;
     public $title;
-    public $visible;
     public $width;
     public $height;
+    public $onOpened;
+    public $onClosed;
 
     /**
-     * Constructor for the UiDialogBox component.
+     * Create a new component instance.
      *
-     * @param string|null $id       Dialog box ID.
-     * @param string $title         Title of the dialog box.
-     * @param string $visible       Determines if the dialog box is visible ('true' or 'false').
-     * @param string $width         Width of the dialog box (e.g., '500px', '50%').
-     * @param string $height        Height of the dialog box (e.g., '500px', 'auto').
+     * @param string $id
+     * @param string $title
+     * @param string $width
+     * @param string $height
+     * @param string|null $onOpen
+     * @param string|null $onClose
      */
-    public function __construct($id = null, $title = '', $visible = 'false', $width = 'auto', $height = 'auto')
+    public function __construct($id, $title='', $width = '600px', $height = '400px', $onOpened = null, $onClosed = null)
     {
-        $this->id = $id ?? 'default-dialog';
+        $this->id = $id;
         $this->title = $title;
-        $this->visible = $visible;
         $this->width = $width;
         $this->height = $height;
+        $this->onOpened = $onOpened;
+        $this->onClosed = $onClosed;
     }
 
     /**
-     * Render the view for the component.
+     * Get the view / contents that represent the component.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\View\View|string
      */
     public function render()
     {
