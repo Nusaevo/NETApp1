@@ -1,7 +1,7 @@
 <div>
     <x-ui-card>
         <div>
-            <x-ui-list-table id="Table">
+            <x-ui-list-table id="Table" title="Material List">
                 <x-slot name="body">
                     @foreach ($input_details as $key => $input_detail)
                         <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
@@ -20,24 +20,22 @@
                                             :options="$materials" required="true" :action="$actionValue"
                                             onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                             :enabled="true" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
-                                            enabled="true" class="form-control"
-                                            model="input_details.{{ $key }}.qty"
-                                            onChanged="updateAmount({{ $key }})" />
+                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
+                                            enabled="true" class="form-control" wire:model.lazy="input_details.{{ $key }}.qty" type="number"/>
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_uom"
                                             label="UOM" enabled="false" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-text-field model="input_details.{{ $key }}.price"
+                                        <x-ui-text-field model="input_details.{{ $key }}.price_uom"
                                             label="Harga Satuan" enabled="false" />
                                         <x-ui-text-field model="input_details.{{ $key }}.disc"
                                             label="{{ $this->trans('disc') }}" enabled="true" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label="Amount"
-                                            class="form-control" type="number" enabled="false" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.price_base"
+                                            label="Amount" enabled="true" class="form-control" type="numeric" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="Deskripsi Barang"
-                                            model="input_details.{{ $key }}.matl_descr" required="false"
+                                            model="input_details.{{ $key }}.matl_desc" required="false"
                                             enabled="false" />
                                     </div>
                                 </x-slot>
@@ -57,7 +55,7 @@
     </x-ui-card>
     <x-ui-footer>
         <div>
-            <x-ui-button clickEvent="SaveItem" button-name="Save Item" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="Save" button-name="Save Item" loading="true" :action="$actionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
         </div>
     </x-ui-footer>

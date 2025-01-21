@@ -32,6 +32,7 @@ class Detail extends BaseComponent
         'inputs.country' => 'required|string|min:1|max:50',
         'inputs.province' => 'required|string|min:1|max:50',
         'inputs.city' => 'required|string|min:1|max:50',
+        'inputs.credit_limit' => 'nullable|numeric|min:0',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -86,33 +87,34 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-            $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));
-            if (!$this->object->isNew()) {
-                if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
-                    $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode partner.';
-                    $this->addError('inputs.name', $errorMessage);
-                    throw new Exception($errorMessage);
-                }
+        $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));
+        if (!$this->object->isNew()) {
+            if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
+                $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode partner.';
+                $this->addError('inputs.name', $errorMessage);
+                throw new Exception($errorMessage);
             }
-            if (isNullOrEmptyString($this->inputs['code'])) {
-                $this->inputs['code'] = Partner::generateNewCode($this->inputs['name'], $this->inputs['grp']);
-            }
-            $this->object->fillAndSanitize($this->inputs);
-            $this->object->save();
+        }
+        if (isNullOrEmptyString($this->inputs['code'])) {
+            $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
+            // dd($this->inputs['code']);
+        }
+        $this->object->fillAndSanitize($this->inputs);
+        $this->object->save();
 
-            if ($this->object->PartnerDetail == null) {
-                $this->object->PartnerDetail()->create([
-                    'partner_id' => $this->object->id
-                ]);
-            }
+        if ($this->object->PartnerDetail == null) {
+            $this->object->PartnerDetail()->create([
+                'partner_id' => $this->object->id
+            ]);
+        }
 
-            if($this->actionValue == 'Create')
-            {
-                return redirect()->route($this->appCode.'.Master.Partner.Detail', [
-                    'action' => encryptWithSessionKey('Edit'),
-                    'objectId' => encryptWithSessionKey($this->object->id)
-                ]);
-            }
+        if($this->actionValue == 'Create')
+        {
+            return redirect()->route($this->appCode.'.Master.Partner.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);
+        }
     }
 
     public function changeStatus()

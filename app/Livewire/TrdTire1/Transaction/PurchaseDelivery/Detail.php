@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
+namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl};
 use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
@@ -28,7 +28,7 @@ class Detail extends BaseComponent
     public $newItems = [];
 
     public $total_amount = 0;
-    public $trType = "SO";
+    public $trType = "PD";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -68,7 +68,7 @@ class Detail extends BaseComponent
 
         $vehicle_type = $this->inputs['vehicle_type'];
         $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
-        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, $tax_invoice);
+        $this->inputs['tr_id'] = DelivHdr::generateTransactionId($vehicle_type, $tax_invoice);
     }
 
     public function onTaxInvoiceChanged()
@@ -156,7 +156,7 @@ class Detail extends BaseComponent
         $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         if ($this->isEditOrView()) {
-            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
+            $this->object = DelivHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice; // Ensure tax_invoice is populated
@@ -170,7 +170,7 @@ class Detail extends BaseComponent
     public function onReset()
     {
         $this->reset('inputs');
-        $this->object = new OrderHdr();
+        $this->object = new DelivHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
@@ -192,6 +192,11 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        $this->validate();
+        $delivHdr = new DelivHdr($this->inputs);
+        $delivHdr->save();
+
+        session()->flash('message', 'Delivery header saved successfully.');
         if ($this->actionValue == 'Edit') {
             if ($this->object->isOrderCompleted()) {
                 $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
@@ -203,9 +208,9 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+        $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'PURCHORDER_LASTID');
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
+            return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

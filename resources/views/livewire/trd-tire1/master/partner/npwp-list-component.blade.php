@@ -14,7 +14,7 @@
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('npwp') }}"
                                             model="input_details.{{ $key }}.npwp" type="text"
-                                            :action="$actionValue" required="true" />
+                                            :action="$actionValue" required="true" capslockMode="true"/>
                                         <x-ui-text-field label="{{ $this->trans('wp_name') }}"
                                             model="input_details.{{ $key }}.wp_name" type="text"
                                             :action="$actionValue" required="true" />

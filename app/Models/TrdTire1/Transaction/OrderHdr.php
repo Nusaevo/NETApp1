@@ -25,8 +25,14 @@ class OrderHdr extends BaseModel
         'cust_reff',
         'tax_payer',
         'type',
+        'note',
         'send_to',
         'vehicle_type',
+        'tax_invoice',
+    ];
+
+    protected $casts = [
+        'tax_invoice' => 'boolean',
     ];
 
     protected static function boot()
@@ -92,24 +98,36 @@ class OrderHdr extends BaseModel
     }
 
 
-    public  static function generateTransactionId($vehicle_type)
+    public static function generateTransactionId($vehicle_type, $tax_invoice = false)
     {
-        // Mendapatkan tahun dan bulan saat ini
-        $year = date('y'); // Dua digit terakhir tahun
-        $monthNumber = date('n'); // Bulan dalam angka
-        $monthLetter = chr(64 + $monthNumber); // Bulan dalam huruf (A, B, C, dst)
-        $sequenceNumber = self::getSequenceNumber($vehicle_type); // Mendapatkan nomor urut
+        $year = date('y'); // Two-digit year
+        $monthNumber = date('n'); // Month in number
+        $monthLetter = chr(64 + $monthNumber); // Month in letter (A, B, C, etc.)
+        $sequenceNumber = self::getSequenceNumber($vehicle_type); // Get sequence number
 
-        // Menentukan format berdasarkan vehicle_type
-        switch ($vehicle_type) {
-            case 0: // MOTOR
-                return sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber);
-            case 1: // MOBIL
-                return sprintf('%s%s%02d8%04d', $monthLetter, $monthLetter, $year, $sequenceNumber);
-            default:
-                throw new \InvalidArgumentException('Invalid vehicle type');
+        // Determine format based on vehicle_type and tax invoice
+        if ($tax_invoice) {
+            switch ($vehicle_type) {
+                case 0: // MOTOR with tax invoice
+                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber); // Example: A25XXXXx
+                case 1: // MOBIL with tax invoice
+                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA25XXXxx
+                default:
+                    throw new \InvalidArgumentException('Invalid vehicle type');
+            }
+        } else {
+            switch ($vehicle_type) {
+                case 0: // MOTOR without tax invoice
+                    return sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXx
+                case 1: // MOBIL without tax invoice
+                    return sprintf('%s%s%02d8%04d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXx
+                default:
+                    throw new \InvalidArgumentException('Invalid vehicle type');
+            }
         }
     }
+
+
     private static function getSequenceNumber($vehicle_type)
     {
         // Mendapatkan bulan dan tahun saat ini
@@ -133,7 +151,7 @@ class OrderHdr extends BaseModel
                 // Cek apakah bulan dan tahun sama dengan yang sekarang
                 if ($lastYear == $currentYear && $lastMonthLetter == chr(64 + $currentMonth)) {
                     // Ambil nomor urut dari tr_id
-                    preg_match('/\d{4}$/', $lastOrder->tr_id, $matches); // Ambil 4 digit terakhir
+                    preg_match('/\d{3,4}$/', $lastOrder->tr_id, $matches); // Ambil 3-4 digit terakhir
                     $lastSequenceNumber = isset($matches[0]) ? (int)$matches[0] : 0;
                     return $lastSequenceNumber + 1; // Tambahkan 1 ke nomor urut
                 }
@@ -143,6 +161,7 @@ class OrderHdr extends BaseModel
         // Jika tidak ada entri sebelumnya atau bulan/tahun berbeda, mulai dari 1
         return 1;
     }
+
 
 
     public function saveOrderDetails($inputDetails, $trType, $inputs, $createBillingDelivery = false)

@@ -13,10 +13,10 @@
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('bank_acct') }}"
                                             model="input_details.{{ $key }}.bank_acct" type="text"
-                                            :action="$actionValue" required="true" />
+                                            :action="$actionValue" required="true" capslockMode="true"/>
                                         <x-ui-text-field label="{{ $this->trans('bank_name') }}"
                                             model="input_details.{{ $key }}.bank_name" type="text"
-                                            :action="$actionValue" required="true" />
+                                            :action="$actionValue" required="true" capslockMode="true"/>
                                         <x-ui-text-field label="{{ $this->trans('bank_location') }}"
                                             model="input_details.{{ $key }}.bank_location" type="text"
                                             :action="$actionValue" />

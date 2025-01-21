@@ -61,6 +61,7 @@ class Partner extends BaseModel
         'amt_limit',
         'partner_chars',
         'status_code',
+        'credit_limit',
     ];
 
     #region Relations
@@ -80,23 +81,27 @@ class Partner extends BaseModel
         return $query->where('grp', $grp)->get();
     }
 
-    public static function generateNewCode($name, $category)
+    public static function generateNewCode($name)
     {
         $nameInitial = strtoupper(substr($name, 0, 1));
-        $categoryInitial = strtoupper(substr($category, 0, 1));
-        $initialCode = $nameInitial . $categoryInitial;
+        $initialCode = $nameInitial;
 
         $latestCode = self::where('code', 'LIKE', $initialCode . '%')
-                      ->orderByRaw("CAST(SUBSTRING(code, LENGTH(?) + 1) AS INTEGER) DESC", [$initialCode])
-                      ->pluck('code')
-                      ->first();
+                          ->orderByRaw("LENGTH(code) DESC")
+                          ->pluck('code')
+                          ->first();
+
         if ($latestCode) {
-            $numericPart = intval(substr($latestCode, 2)) + 1;
-            return $initialCode . $numericPart;
+            // Ekstrak bagian numerik dari kode
+            preg_match('/\d+$/', $latestCode, $matches);
+            $numericPart = isset($matches[0]) ? intval($matches[0]) + 1 : 1;
+
+            return $initialCode . str_pad($numericPart, 3, '0', STR_PAD_LEFT);
         } else {
-            return $initialCode . '1';
+            return $initialCode . '001';
         }
     }
+
 
     // Fungsi untuk menghasilkan nama material, bisa dipanggil di dalam model ini
     protected function generateName($brand, $size, $pattern)

@@ -27,7 +27,8 @@ class OrderDtl extends BaseModel
         'qty',
         'qty_reff',
         'price',
-        'amt'
+        'amt',
+        'disc'
     ];
 
     protected static function boot()
@@ -84,7 +85,7 @@ class OrderDtl extends BaseModel
     }
 
     #region Relations
-    public function material()
+    public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id', 'id');
     }
@@ -98,6 +99,6 @@ class OrderDtl extends BaseModel
     public function scopeGetByOrderHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)
-                     ->where('tr_type', $trType);
+            ->where('tr_type', $trType);
     }
 }
