@@ -96,7 +96,8 @@ class Detail extends BaseComponent
             }
         }
         if (isNullOrEmptyString($this->inputs['code'])) {
-            $this->inputs['code'] = Partner::generateNewCode($this->inputs['name'], $this->inputs['grp']);
+            $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
+            // dd($this->inputs['code']);
         }
         $this->object->fillAndSanitize($this->inputs);
         $this->object->save();

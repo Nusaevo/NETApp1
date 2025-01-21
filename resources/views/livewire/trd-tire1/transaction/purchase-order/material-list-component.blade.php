@@ -22,7 +22,7 @@
                                             :enabled="true" />
                                         <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
                                             enabled="true" class="form-control"
-                                            model="input_details.{{ $key }}.qty"
+                                            model="input_details.{{ $key }}.qty" type="number"
                                             onChanged="updateAmount({{ $key }})" />
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_uom"
                                             label="UOM" enabled="false" />
@@ -33,7 +33,7 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.disc"
                                             label="{{ $this->trans('disc') }}" enabled="true" />
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label="Amount"
-                                            class="form-control" type="number" enabled="false" />
+                                            enabled="false" class="form-control" type="number" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="Deskripsi Barang"

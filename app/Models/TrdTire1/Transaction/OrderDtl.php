@@ -28,11 +28,7 @@ class OrderDtl extends BaseModel
         'qty_reff',
         'price',
         'amt',
-        'matl_items' // Add this line
-    ];
-
-    protected $casts = [
-        'matl_items' => 'array', // Ensure matl_items is cast to an array
+        'disc'
     ];
 
     protected static function boot()
@@ -42,19 +38,6 @@ class OrderDtl extends BaseModel
             $qty = $orderDtl->qty;
             $price = $orderDtl->price;
             $orderDtl->amt = $qty * $price;
-            // Ensure input_details is set before converting to JSON
-            if (isset($orderDtl->input_details)) {
-                $orderDtl->matl_items = array_map(function ($detail) {
-                    return [
-                        'matl_id' => $detail['matl_id'],
-                        'qty' => $detail['qty'],
-                        'price_uom' => $detail['price_uom'],
-                        'disc' => $detail['disc'],
-                        'matl_desc' => $detail['matl_desc'],
-                        'amount' => $detail['price_base'] // Ensure amount is saved correctly
-                    ];
-                }, $orderDtl->input_details);
-            }
         });
         static::deleting(function ($orderDtl) {
             DB::beginTransaction();
@@ -102,7 +85,7 @@ class OrderDtl extends BaseModel
     }
 
     #region Relations
-    public function material()
+    public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id', 'id');
     }

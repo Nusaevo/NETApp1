@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
+namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\DetailComponent;
 use App\Models\TrdTire1\Master\Material;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 use Exception;
+
 
 class MaterialListComponent extends DetailComponent
 {
@@ -21,7 +22,7 @@ class MaterialListComponent extends DetailComponent
     protected $rules = [
         'input_details.*.qty' => 'nullable', // Ensure quantity is required, numeric, and at least 1
         'input_details.*.price' => 'nullable', // Ensure unit price is required and numeric
-        'input_details.*.price_base' => 'nullable', // Ensure unit price is required and numeric
+        'input_details.*.amt' => 'nullable', // Ensure unit price is required and numeric
         'input_details.*.matl_desc' => 'nullable', // Description is optional but must be a string with a max length
         'input_details.*.matl_uom' => 'nullable', // Ensure UOM is required and a string
     ];
@@ -42,6 +43,7 @@ class MaterialListComponent extends DetailComponent
 
     protected function onPreRender()
     {
+
         $this->customValidationAttributes = [
             'input_details.*' => $this->trans('product'),
             'input_details.*.matl_id' => $this->trans('matl_id'),
@@ -57,6 +59,7 @@ class MaterialListComponent extends DetailComponent
             $this->loadDetails();
         }
     }
+
 
     public function addItem()
     {
@@ -85,7 +88,7 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['price'] = $material->selling_price;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
-                $this->input_details[$key]['matl_desc'] = $material->name;
+                $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->updateAmount($key);
 
                 // Remove automatic calculation of amount
@@ -95,19 +98,27 @@ class MaterialListComponent extends DetailComponent
             }
         }
     }
-
+    // Fungsi untuk menghitung amount berdasarkan qty dan price_uom
     public function calculateAmount($key)
     {
+        // Ambil nilai qty dan price_uom dari input_details
         $qty = $this->input_details[$key]['qty'] ?? 0;
         $price = $this->input_details[$key]['price'] ?? 0;
         $amount = $qty * $price;
+
+        // Simpan amount ke price_base
         $this->input_details[$key]['price_base'] = $amount;
     }
 
+    // Fungsi untuk menangani perubahan qty
     public function updatedInputDetails($value, $field)
     {
+        // Memastikan perubahan terjadi pada qty
         if (str_contains($field, 'qty')) {
+            // Menemukan key berdasarkan nama field
             $key = str_replace(['input_details.', '.qty'], '', $field);
+
+            // Hitung ulang amount
             $this->calculateAmount($key);
         }
     }
@@ -133,6 +144,7 @@ class MaterialListComponent extends DetailComponent
         }
     }
 
+
     public function deleteItem($index)
     {
         try {
@@ -157,6 +169,7 @@ class MaterialListComponent extends DetailComponent
         }
 
         foreach ($this->input_details as $key => $item) {
+            // Pastikan matl_id diisi
             if (empty($item['matl_id']) || $item['qty'] <= 0 || $item['price'] <= 0) {
                 $this->dispatch('error', __('generic.error.field_required', ['field' => "Item #$key"]));
                 return false;
@@ -179,7 +192,6 @@ class MaterialListComponent extends DetailComponent
             }
         }
     }
-
     public function SaveItem()
     {
         $this->Save();
@@ -221,12 +233,10 @@ class MaterialListComponent extends DetailComponent
                 $orderDtl->fillAndSanitize($detail);
                 $orderDtl->save();
             }
-
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.save_item', ['message' => $e->getMessage()]));
         }
     }
-
 
     private function isDuplicateTrSeq($trhdr_id, $tr_seq)
     {

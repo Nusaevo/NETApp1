@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
+namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
@@ -28,7 +28,7 @@ class Detail extends BaseComponent
     public $newItems = [];
 
     public $total_amount = 0;
-    public $trType = "SO";
+    public $trType = "PO";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -203,9 +203,9 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'PURCHORDER_LASTID');
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
+            return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

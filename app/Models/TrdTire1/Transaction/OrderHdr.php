@@ -25,6 +25,7 @@ class OrderHdr extends BaseModel
         'cust_reff',
         'tax_payer',
         'type',
+        'note',
         'send_to',
         'vehicle_type',
         'tax_invoice',
