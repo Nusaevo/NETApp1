@@ -98,7 +98,9 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->setSortingPillsDisabled();
         $this->setFilterLayout('slide-down');
         $this->setFilterSlideDownDefaultStatusEnabled();
+        $this->setQueryStringStatusForSort(true);
         $this->setSingleSortingDisabled();
+        $this->setQueryStringStatus(true);
     }
 
     private function cleanBaseRoute($route)

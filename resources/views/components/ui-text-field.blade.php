@@ -12,7 +12,40 @@
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                     placeholder="{{ isset($label) ? $label : '' }}"
                     @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
-                    autocomplete="off"></textarea>
+                    autocomplete="off"
+                    x-data="{
+                        applyCapsLock() {
+                            if ({{ isset($capslockMode) && $capslockMode === 'true' ? 'true' : 'false' }}) {
+                                let textarea = this.$refs.inputField;
+                                if (textarea) {
+                                    textarea.addEventListener('input', function() {
+                                        textarea.value = textarea.value.toUpperCase();
+                                        $wire.set('{{ $model }}', textarea.value);
+                                    });
+                                }
+                            }
+                        }
+                    }" x-init="applyCapsLock()" x-ref="inputField"></textarea>
+            @elseif(isset($type) && $type === 'code')
+                <input wire:model="{{ $model }}" type="text"
+                    class="form-control @error($model) is-invalid @enderror"
+                    @if ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false')) disabled @endif
+                    @if (isset($required) && $required === 'true') required @endif placeholder="{{ isset($label) ? $label : '' }}"
+                    autocomplete="off"
+                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
+                    x-data="{
+                        applyCapsLock() {
+                            if ({{ isset($capslockMode) && $capslockMode === 'true' ? 'true' : 'false' }}) {
+                                let input = this.$refs.inputField;
+                                if (input) {
+                                    input.addEventListener('input', function() {
+                                        input.value = input.value.toUpperCase();
+                                        $wire.set('{{ $model }}', input.value);
+                                    });
+                                }
+                            }
+                        }
+                    }" x-init="applyCapsLock()" x-ref="inputField" />
             @elseif(isset($type) && $type === 'document')
                 <input wire:model="{{ $model }}" id="{{ $id }}" type="file"
                     class="form-control @error($model) is-invalid @enderror"
@@ -45,13 +78,6 @@
                     autocomplete="off"
                     @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
                     x-ref="inputField">
-            @elseif(isset($type) && $type === 'code')
-                <input wire:model="{{ $model }}" type="text"
-                    class="form-control @error($model) is-invalid @enderror"
-                    @if ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false')) disabled @endif
-                    @if (isset($required) && $required === 'true') required @endif placeholder="{{ isset($label) ? $label : '' }}"
-                    autocomplete="off"
-                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'date')
                 <input x-data="{
                     initDatepicker() {
