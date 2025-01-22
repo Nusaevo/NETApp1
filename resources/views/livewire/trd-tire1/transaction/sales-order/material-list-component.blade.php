@@ -32,8 +32,8 @@
                                             label="Harga Satuan" enabled="false" />
                                         <x-ui-text-field model="input_details.{{ $key }}.disc"
                                             label="{{ $this->trans('disc') }}" enabled="true" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label="Amount"
-                                            class="form-control" type="number" enabled="false" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label="Amount"
+                                            class="form-control" type="text" enabled="false" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="Deskripsi Barang"

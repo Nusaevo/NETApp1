@@ -17,6 +17,7 @@ class MaterialListComponent extends DetailComponent
     public $tr_seq;
     public $tr_id;
     public $input_details = [];
+    public $total_amount = 0;
 
     protected $rules = [
         'input_details.*.qty' => 'nullable', // Ensure quantity is required, numeric, and at least 1
@@ -96,42 +97,29 @@ class MaterialListComponent extends DetailComponent
         }
     }
 
-    public function calculateAmount($key)
-    {
-        $qty = $this->input_details[$key]['qty'] ?? 0;
-        $price = $this->input_details[$key]['price'] ?? 0;
-        $amount = $qty * $price;
-        $this->input_details[$key]['price_base'] = $amount;
-    }
-
-    public function updatedInputDetails($value, $field)
-    {
-        if (str_contains($field, 'qty')) {
-            $key = str_replace(['input_details.', '.qty'], '', $field);
-            $this->calculateAmount($key);
-        }
-    }
-
-    public function updated($propertyName)
-    {
-        if (str_contains($propertyName, 'input_details.')) {
-            $parts = explode('.', $propertyName);
-            $key = $parts[1];
-            $field = $parts[2];
-
-            if ($field === 'qty') {
-                $this->calculateAmount($key);
-            }
-        }
-    }
-
     public function updateAmount($key)
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            $this->input_details[$key]['amt'] =
-                $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+            $this->input_details[$key]['amt'] = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+        } else {
+            $this->input_details[$key]['amt'] = 0;
         }
+        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
+        $this->calculateTotalAmount();
     }
+
+    public function calculateTotalAmount()
+    {
+        // Calculate the total amount by summing all item amounts
+        $this->total_amount = array_sum(array_map(function ($detail) {
+            $qty = $detail['qty'] ?? 0;
+            $price = $detail['price'] ?? 0;
+            return $qty * $price;
+        }, $this->input_details));
+        // Dispatch the updated total amount to the frontend
+        $this->dispatch('updateAmount', $this->total_amount);
+    }
+
 
     public function deleteItem($index)
     {
@@ -173,10 +161,12 @@ class MaterialListComponent extends DetailComponent
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] =  populateArrayFromModel($detail);
+                $this->updateAmount($key);
                 // $this->input_details[$key]['matl_descr'] = $detail->Material->name;
                 // $this->input_details[$key]['price'] = $detail->Material->selling_price;
 
             }
+            $this->calculateTotalAmount();
         }
     }
 
@@ -191,7 +181,7 @@ class MaterialListComponent extends DetailComponent
         try {
             // Fetch existing details from the database
             $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)
-                ->where('tr_type', $this->object->trType)
+                ->where('tr_type', $this->object->tr_type)
                 ->get()
                 ->keyBy('tr_seq')
                 ->toArray();

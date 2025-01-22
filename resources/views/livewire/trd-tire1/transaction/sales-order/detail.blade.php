@@ -111,13 +111,13 @@
                                     :action="$actionValue" required="false" />
                                 <x-ui-text-field label="{{ $this->trans('dpp') }}" model="inputs.dpp" type="text"
                                     :action="$actionValue" required="false" />
-                                <x-ui-text-field label="{{ $this->trans('grand_total') }}" model="inputs.grand_total"
-                                    type="text" :action="$actionValue" required="false" />
+                                <x-ui-text-field label="{{ $this->trans('total_amount') }}" model="total_amount"
+                                    type="text" :action="$actionValue" required="false" enabled="false" />
                             </div>
                             <div class="row">
                                 <div class="col-md-2">
-                                    <x-ui-text-field label="{{ $this->trans('version') }}" model="inputs.version"
-                                        type="text" :action="$actionValue" required="false" />
+                                    <x-ui-text-field label="{{ $this->trans('version') }}" model="versionNumber"
+                                        type="text" :action="$actionValue" required="false" enabled="false" />
                                 </div>
                                 <div class="col-md-10">
                                     <x-ui-button clickEvent="createDelivery" button-name="Buat Surat Jalan"

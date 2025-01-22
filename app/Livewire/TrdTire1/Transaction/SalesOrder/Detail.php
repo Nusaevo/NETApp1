@@ -8,6 +8,7 @@ use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
+use Illuminate\Support\Facades\{Session};
 use Exception;
 
 
@@ -27,8 +28,9 @@ class Detail extends BaseComponent
     public $deletedItems = [];
     public $newItems = [];
 
-    public $total_amount = 0;
+    public $total_amount;
     public $trType = "SO";
+    public $versionNumber = 1;
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -40,7 +42,6 @@ class Detail extends BaseComponent
 
     protected $masterService;
     public $isPanelEnabled = "false";
-
 
     public $rules  = [
         'inputs.tr_date' => 'nullable',
@@ -54,6 +55,7 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
+        'updateAmount' => 'updateAmount',
     ];
     #endregion
 
@@ -148,6 +150,7 @@ class Detail extends BaseComponent
         $this->customValidationAttributes  = [
             'inputs.tax'      => $this->trans('tax'),
         ];
+        $this->versionNumber = Session::get($this->versionSessionKey);
 
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers();
@@ -189,7 +192,7 @@ class Detail extends BaseComponent
     #endregion
 
     #region CRUD Methods
-    
+
     public function onValidateAndSave()
     {
         if ($this->actionValue == 'Edit') {
@@ -242,6 +245,9 @@ class Detail extends BaseComponent
     #endregion
 
     #region Component Events
-
+    public function updateAmount($amount)
+    {
+        $this->total_amount = rupiah($amount);
+    }
     #endregion
 }
