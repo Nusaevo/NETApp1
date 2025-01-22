@@ -34,12 +34,12 @@
                                 <div class="row">
                                     <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
                                         clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
-                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" onChange="updatedInputsPartnerId" />
                                     <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to"
                                         :options="$SOSend" type="text" :action="$actionValue" required="false" />
-                                    <x-ui-text-field type="text" label="{{ $this->trans('tax_payer') }}"
-                                        model="inputs.tax_payer" :value="$inputs['tax_payer']" required="true"
-                                        :enabled="$isPanelEnabled" />
+                                    <x-ui-text-field-search type="text" label="{{ $this->trans('tax_payer') }}"
+                                        clickEvent="" model="inputs.tax_payer" :selectedValue="$inputs['tax_payer']" :options="$npwpOptions"
+                                        required="false" :action="$actionValue"/>
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('payment_terms') }}"

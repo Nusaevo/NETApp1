@@ -17,12 +17,6 @@ class Partner extends BaseModel
     const SALESMAN = 'S';
     const BANK = 'B';
     use SoftDeletes;
-
-    public function PartnerDetail()
-    {
-        return $this->hasOne(PartnerDetail::class, 'partner_id');
-    }
-
     public static function boot()
     {
         parent::boot();
@@ -65,6 +59,13 @@ class Partner extends BaseModel
     ];
 
     #region Relations
+
+    public function PartnerDetail()
+    {
+        return $this->hasOne(PartnerDetail::class, 'partner_id');
+    }
+
+
     public function OrderHdr()
     {
         return $this->belongsTo(OrderHdr::class, 'partner_id', 'id');
