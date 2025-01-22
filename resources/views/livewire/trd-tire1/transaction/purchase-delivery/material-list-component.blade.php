@@ -20,8 +20,10 @@
                                             :options="$materials" required="true" :action="$actionValue"
                                             onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                             :enabled="true" />
-                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
-                                            enabled="true" class="form-control" wire:model.lazy="input_details.{{ $key }}.qty" type="number"/>
+                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
+                                            enabled="true" class="form-control"
+                                            model="input_details.{{ $key }}.qty" type="number"
+                                            onChanged="updateAmount({{ $key }})" />
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_uom"
                                             label="UOM" enabled="false" />
                                     </div>
@@ -30,7 +32,7 @@
                                             label="Harga Satuan" enabled="false" />
                                         <x-ui-text-field model="input_details.{{ $key }}.disc"
                                             label="{{ $this->trans('disc') }}" enabled="true" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.price_base"
+                                        <x-ui-text-field model="input_details.{{ $key }}.amt"
                                             label="Amount" enabled="true" class="form-control" type="numeric" />
                                     </div>
                                     <div class="row">
@@ -55,7 +57,7 @@
     </x-ui-card>
     <x-ui-footer>
         <div>
-            <x-ui-button clickEvent="Save" button-name="Save Item" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="SaveItem" button-name="Save Item" loading="true" :action="$actionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
         </div>
     </x-ui-footer>

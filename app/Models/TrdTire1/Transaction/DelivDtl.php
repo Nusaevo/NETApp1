@@ -7,90 +7,14 @@ use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\TrdTire1\Inventories\IvtBalUnit;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
 use App\Traits\BaseTrait;
 class DelivDtl extends BaseModel
 {
     use SoftDeletes;
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        // Handle when creating a new delivery detail
-        static::creating(function ($delivDtl) {
-            $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                ->where('wh_id', $delivDtl->wh_code)
-                ->first();
-            $qtyChange = (float)$delivDtl->qty;
-            if ($delivDtl->tr_type === 'SD') {
-                $qtyChange = -$qtyChange;
-            }
-
-            if ($existingBal) {
-                $existingBalQty = $existingBal->qty_oh;
-                $newQty = $existingBalQty + $qtyChange;
-                $existingBal->qty_oh = $newQty;
-                $existingBal->save();
-
-                // Update corresponding record in IvtBalUnit
-                $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                    ->where('wh_id', $delivDtl->wh_code)
-                    ->first();
-                if ($existingBalUnit) {
-                    $existingBalUnitQty = $existingBalUnit->qty_oh;
-                    $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
-                    $existingBalUnit->save();
-                }
-            } else {
-                $inventoryBalData = [
-                    'matl_id' => $delivDtl->matl_id,
-                    'matl_code' => $delivDtl->matl_code,
-                    'matl_uom' => $delivDtl->matl_uom,
-                    'matl_descr' => $delivDtl->matl_descr,
-                    'wh_id' => $delivDtl->wh_code,
-                    'wh_code' => $delivDtl->wh_code,
-                    'qty_oh' => $qtyChange,
-                ];
-                $newIvtBal = IvtBal::create($inventoryBalData);
-                $inventoryBalUnitsData = [
-                    'ivt_id' => $newIvtBal->id,
-                    'matl_id' => $delivDtl->matl_id,
-                    'wh_id' => $delivDtl->wh_code,
-                    'matl_uom' => $delivDtl->matl_uom,
-                    'unit_code' => $delivDtl->matl_uom,
-                    'qty_oh' => $qtyChange,
-                ];
-                IvtBalUnit::create($inventoryBalUnitsData);
-            }
-        });
-
-        // static::deleting(function ($delivDtl) {
-        //     $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-        //         ->where('wh_id', $delivDtl->wh_code)
-        //         ->first();
-        //     $qtyChange = (float)$delivDtl->qty;
-        //     if ($delivDtl->tr_type === 'SD') {
-        //         $qtyChange = -$qtyChange;
-        //     }
-        //     if ($existingBal) {
-        //         $existingBalQty = $existingBal->qty_oh;
-        //         $newQty = $existingBalQty - $qtyChange;
-        //         $existingBal->qty_oh = $newQty;
-        //         $existingBal->save();
-
-        //         // Update corresponding record in IvtBalUnit
-        //         $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-        //             ->where('wh_id', $delivDtl->wh_code)
-        //             ->first();
-        //         if ($existingBalUnit) {
-        //             $existingBalUnitQty = $existingBalUnit->qty_oh;
-        //             $existingBalUnit->qty_oh = $existingBalUnitQty - $qtyChange;
-        //             $existingBalUnit->save();
-        //         }
-        //     }
-        // });
-    }
+    protected $table = 'deliv_dtls';
     protected $fillable = [
         'trhdr_id',
         'tr_type',
@@ -109,12 +33,67 @@ class DelivDtl extends BaseModel
         'qty_reff',
         'status_code'
     ];
-    public function scopeGetByOrderHdr($query, $id, $trType)
+
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::saving(function ($delivDtl) {
+            // Disable amt calculation
+            // $qty = $delivDtl->qty;
+            // $price = $delivDtl->price;
+            // $delivDtl->amt = $qty * $price;
+        });
+        static::deleting(function ($delivDtl) {
+            DB::beginTransaction();
+            try {
+                $delivDtls = DelivDtl::where('trhdr_id', $delivDtl->trhdr_id)
+                    ->where('tr_seq', $delivDtl->tr_seq)
+                    ->get();
+
+                foreach ($delivDtls as $delivDtl) {
+                    $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
+                        ->where('wh_id', $delivDtl->wh_code)
+                        ->first();
+                    $qtyChange = (float)$delivDtl->qty;
+                    if ($delivDtl->tr_type === 'SO') {
+                        $qtyChange = -$qtyChange;
+                    }
+                    if ($existingBal) {
+                        $existingBalQty = $existingBal->qty_oh;
+                        $newQty = $existingBalQty + $qtyChange;
+                        $existingBal->qty_oh = $newQty;
+                        $existingBal->save();
+                        // Update corresponding record in IvtBalUnit
+                        $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                            ->where('wh_id', $delivDtl->wh_code)
+                            ->first();
+                        if ($existingBalUnit) {
+                            $existingBalUnitQty = $existingBalUnit->qty_oh;
+                            $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
+                            $existingBalUnit->save();
+                        }
+                    }
+                    $delivDtl->forceDelete();
+                }
+
+                BillingDtl::where('trhdr_id', $delivDtl->trhdr_id)
+                    ->where('tr_seq', $delivDtl->tr_seq)
+                    ->forceDelete();
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+        });
+    }
+
+    public function scopeGetByDelivHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)
                      ->where('tr_type', $trType);
     }
-
 
     #region Relations
 
@@ -127,5 +106,6 @@ class DelivDtl extends BaseModel
     {
         return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+
     #endregion
 }

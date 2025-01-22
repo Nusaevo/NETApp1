@@ -189,7 +189,7 @@ class Detail extends BaseComponent
     #endregion
 
     #region CRUD Methods
-
+    
     public function onValidateAndSave()
     {
         if ($this->actionValue == 'Edit') {

@@ -20,11 +20,6 @@ class DelivHdr extends BaseModel
         'tr_id',
         'tr_date',
         'partner_id',
-        'tax',
-        'payment_terms',
-        'due_date',
-        'note',
-        'status',
     ];
 
     #region Relations
@@ -40,10 +35,31 @@ class DelivHdr extends BaseModel
     #endregion
 
     #region Metode Utama
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Hook untuk menghapus relasi saat header dihapus
+        static::deleting(function ($orderHdr) {
+            $orderHdr->deleteDeliveryAndBilling();
+            $orderHdr->deleteOrderDetails();
+        });
+    }
     public function savePurchaseHeader($appCode, $trType, $inputs, $configCode)
     {
         $this->fillAndSanitize($inputs);
         $this->tr_type = $trType; // Ensure tr_type is set
+
+        // Tentukan vehicle_type berdasarkan trType
+        //$vehicleType = $this->vehicle_type;
+
+        // Tentukan vehicle_type berdasarkan trType
+        //$vehicleType = $this->vehicle_type;
+
+        // Generate Transaction ID jika belum ada
+        // if (empty($this->tr_Id)) {
+        //     $this->tr_Id = $this->generateTransactionId($vehicleType);
+        // }
 
         // Set default status
         if ($this->isNew()) {

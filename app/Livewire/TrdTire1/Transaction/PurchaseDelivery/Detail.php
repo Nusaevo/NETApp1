@@ -192,11 +192,6 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $this->validate();
-        $delivHdr = new DelivHdr($this->inputs);
-        $delivHdr->save();
-
-        session()->flash('message', 'Delivery header saved successfully.');
         if ($this->actionValue == 'Edit') {
             if ($this->object->isOrderCompleted()) {
                 $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
@@ -208,7 +203,7 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'PURCHORDER_LASTID');
+        $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
