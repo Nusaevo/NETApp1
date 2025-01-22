@@ -26,8 +26,8 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('Nomor Surat Jalan') }}"
-                                        model="inputs.payment_terms" type="text" :action="$actionValue" required="false"
-                                        enabled="false" />
+                                        model="inputs.delivery_number" type="text" :action="$actionValue" required="false"
+                                        enabled="true" />
                                     <x-ui-text-field label="{{ $this->trans('Nomor Transaksi') }}"
                                         model="inputs.payment_terms" type="text" :action="$actionValue"
                                         required="false" />
@@ -37,7 +37,7 @@
                                         clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="{{ $this->trans('Nota Pembelian') }}"
-                                        model="inputs.payment_terms" type="text" :action="$actionValue"
+                                        model="inputs.purchase_invoice" type="text" :action="$actionValue"
                                         required="false" />
                                 </div>
                                 <div class="row">

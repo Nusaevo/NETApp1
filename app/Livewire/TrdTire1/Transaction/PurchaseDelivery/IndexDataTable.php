@@ -36,9 +36,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make('currency', "curr_rate")
-                ->hideIf(true)
-                ->sortable(),
+            // Column::make('currency', "curr_rate")
+            //     ->hideIf(true)
+            //     ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
