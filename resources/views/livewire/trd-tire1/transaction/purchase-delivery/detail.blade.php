@@ -22,7 +22,7 @@
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     {{-- <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                     type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                    onChange="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" /> --}}
+                                    onChanged="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" /> --}}
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('Nomor Surat Jalan') }}"

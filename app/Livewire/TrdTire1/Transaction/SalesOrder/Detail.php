@@ -29,6 +29,8 @@ class Detail extends BaseComponent
     public $newItems = [];
 
     public $total_amount;
+    public $total_tax;
+    public $total_discount;
     public $trType = "SO";
     public $versionNumber = 1;
 
@@ -56,6 +58,8 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
         'updateAmount' => 'updateAmount',
+        'updateDiscount' => 'updateDiscount',
+        'updateDiscount' => 'updateDiscount',
     ];
     #endregion
 
@@ -76,6 +80,27 @@ class Detail extends BaseComponent
     public function onTaxInvoiceChanged()
     {
         $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
+    }
+
+    public function onSOTaxChange()
+    {
+        try {
+            $configData = ConfigConst::select('num1')
+                ->where('const_group', 'TRX_SO_TAX')
+                ->where('str1', $this->inputs['tax'])
+                ->first();
+
+            if (!$configData) {
+                throw new Exception('Data tidak ditemukan untuk grup SO_TAX dan nilai tax yang dipilih.');
+            }
+
+            $this->inputs['tax_value'] = $configData->num1 ?? 0;
+            // dd($this->inputs['tax_value']);
+
+        } catch (Exception $e) {
+            // Tangani error
+            $this->dispatch('error', $e->getMessage());
+        }
     }
 
     public function updatedInputsPartnerId()
@@ -239,6 +264,10 @@ class Detail extends BaseComponent
     public function updateAmount($amount)
     {
         $this->total_amount = rupiah($amount);
+    }
+    public function updateDiscount($discount)
+    {
+        $this->total_discount = $discount . "%";
     }
     #endregion
 }

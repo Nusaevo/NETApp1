@@ -55,7 +55,7 @@ class Partner extends BaseModel
         'amt_limit',
         'partner_chars',
         'status_code',
-        'credit_limit',
+        'amt_limit',
     ];
 
     #region Relations
@@ -97,9 +97,9 @@ class Partner extends BaseModel
             preg_match('/\d+$/', $latestCode, $matches);
             $numericPart = isset($matches[0]) ? intval($matches[0]) + 1 : 1;
 
-            return $initialCode . str_pad($numericPart, 3, '0', STR_PAD_LEFT);
+            return $initialCode . str_pad($numericPart, 4, '0', STR_PAD_LEFT);
         } else {
-            return $initialCode . '001';
+            return $initialCode . '0001';
         }
     }
 

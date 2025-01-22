@@ -22,7 +22,7 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('phone1') }}" model="input_details.{{ $key }}.phone1"
-                                            type="text" :action="$actionValue" required="true" />
+                                            type="text" :action="$actionValue" required="false" />
                                         <x-ui-text-field label="{{ $this->trans('phone2') }}" model="input_details.{{ $key }}.phone2"
                                             type="text" :action="$actionValue" required="false" />
                                         <x-ui-text-field label="{{ $this->trans('email') }}" model="input_details.{{ $key }}.email"

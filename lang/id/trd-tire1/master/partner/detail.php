@@ -19,7 +19,7 @@ return [
     'partner_code' => 'Kode Mitra',
     'partner_type' => 'Tipe Mitra',
     'name' => 'Nama',
-    'credit_limit' => 'Limit',
+    'amt_limit' => 'Limit',
     'address' => 'Alamat',
     'city' => 'Kota',
     'province' => 'Provinsi',

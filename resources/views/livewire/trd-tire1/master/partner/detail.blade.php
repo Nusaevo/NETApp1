@@ -32,7 +32,7 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address"
-                                            type="textarea" required="true" :action="$actionValue" />
+                                            type="textarea" required="true" :action="$actionValue" capslockMode="true"/>
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country"
@@ -68,7 +68,7 @@
                             <x-ui-card title="Credit">
                                 <x-ui-padding>
                                     <div class="row">
-                                        <x-ui-text-field label="{{ $this->trans('credit_limit') }}" model="inputs.credit_limit"
+                                        <x-ui-text-field label="{{ $this->trans('amt_limit') }}" model="inputs.amt_limit"
                                             type="number" :action="$actionValue" />
                                     </div>
                                 </x-ui-padding>
