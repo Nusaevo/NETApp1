@@ -22,7 +22,7 @@ class MaterialListComponent extends DetailComponent
     protected $rules = [
         'input_details.*.qty' => 'required|numeric|min:1', // Ensure quantity is required, numeric, and at least 1
         'input_details.*.price' => 'nullable', // Ensure unit price is required and numeric
-        'input_details.*.matl_desc' => 'nullable', // Description is optional but must be a string with a max length
+        'input_details.*.matl_descr' => 'nullable', // Description is optional but must be a string with a max length
         'input_details.*.matl_uom' => 'nullable', // Ensure UOM is required and a string
     ];
 
@@ -88,7 +88,7 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['price_uom'] = $material->selling_price;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
-                $this->input_details[$key]['matl_desc'] = $material->name;
+                $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->updateAmount($key);
 
                 // Remove automatic calculation of amount

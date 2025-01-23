@@ -34,7 +34,8 @@
                                 <div class="row">
                                     <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
                                         clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
-                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" onChanged="updatedInputsPartnerId" />
+                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        onChanged="updatedInputsPartnerId" />
                                     <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to"
                                         :options="$SOSend" type="text" :action="$actionValue" required="false" />
                                     <x-ui-text-field-search type="text" label="{{ $this->trans('tax_payer') }}"
@@ -46,8 +47,10 @@
                                         model="inputs.payment_terms" type="text" :action="$actionValue"
                                         required="false" />
                                     <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
-                                        :options="$SOTax" required="true" :action="$actionValue" onChanged="onSOTaxChange" />
+                                        :options="$SOTax" required="true" :action="$actionValue"
+                                        onChanged="onSOTaxChange" />
                                 </div>
+
                             </x-ui-padding>
                         </x-ui-card>
                     </div>
@@ -77,12 +80,12 @@
                     <x-ui-card>
                         <x-ui-padding>
                             <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('total_discount') }}" model="total_discount" type="text"
-                                    :action="$actionValue" required="false" enabled="false" />
-                                <x-ui-text-field label="{{ $this->trans('total_tax') }}" model="total_tax" type="text"
+                                <x-ui-text-field label="{{ $this->trans('total_discount') }}" model="total_discount"
+                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                <x-ui-text-field label="{{ $this->trans('PPN') }}" model="total_tax"
+                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                <x-ui-text-field label="{{ $this->trans('DPP') }}" model="total_dpp" type="text"
                                     :action="$actionValue" required="false" enabled="false"/>
-                                <x-ui-text-field label="{{ $this->trans('DPP') }}" model="inputs.dpp" type="text"
-                                    :action="$actionValue" required="false" />
                                 <x-ui-text-field label="{{ $this->trans('total_amount') }}" model="total_amount"
                                     type="text" :action="$actionValue" required="false" enabled="false" />
                             </div>

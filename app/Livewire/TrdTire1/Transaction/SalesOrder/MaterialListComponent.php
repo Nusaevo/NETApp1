@@ -105,6 +105,7 @@ class MaterialListComponent extends DetailComponent
 
         $this->calculateTotalAmount();
         $this->calculateTotalTax(); // Recalculate total tax when amount changes
+        $this->calculateTotalDPP(); // Recalculate total tax when amount changes
     }
 
     public function updateDiscount($key)
@@ -123,6 +124,7 @@ class MaterialListComponent extends DetailComponent
 
     public function calculateTotalAmount()
     {
+        // Menghitung total amount dengan pembulatan
         $this->total_amount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
@@ -132,20 +134,49 @@ class MaterialListComponent extends DetailComponent
             return $amount - $discountAmount;
         }, $this->input_details));
 
+        // Pembulatan ke dua angka desimal
+        $this->total_amount = round($this->total_amount, 2);
+        
+
+        // Perbarui tampilan
         $this->dispatch('updateAmount', $this->total_amount);
-        $this->calculateTotalTax(); // Recalculate total tax when amount changes
+
+        // Hitung ulang PPN dan DPP setelah total amount diperbarui
+        $this->calculateTotalTax(); // Panggil fungsi perhitungan PPN
+        $this->calculateTotalDPP(); // Panggil fungsi perhitungan DPP
     }
+
+
 
     public function calculateTotalTax()
     {
         // Ensure tax and total amount are numeric
         $taxRate = (float)($this->inputs['tax'] ?? 0);
-        $totalAmount = (float)$this->total_amount;
+        $totalAmount = (float)$this->total_amount;  // Total amount yang sudah dihitung
 
-        // Calculate total tax
+        // Hitung total PPN dengan rumus PPN = total_amount * (tax_value / 100)
         $this->total_tax = $totalAmount * ($taxRate / 100);
+
+        // Kirim informasi PPN untuk pembaruan tampilan
         $this->dispatch('updateTax', $this->total_tax);
     }
+
+
+    public function calculateTotalDPP()
+    {
+        $taxValue = (float)($this->inputs['tax_value'] ?? 0);
+        $totalAmount = $this->total_amount;
+
+        if ($taxValue > 0) {
+            $dpp = $totalAmount / (1 + $taxValue / 100);
+            $this->inputs['dpp'] = round($dpp, 2); // Pembulatan DPP ke 2 angka desimal
+        } else {
+            $this->inputs['dpp'] = $totalAmount; // Jika tidak ada pajak, DPP sama dengan total_amount
+        }
+
+        $this->dispatch('updateDPP', $this->inputs['dpp']);
+    }
+
 
     public function deleteItem($index)
     {
@@ -177,6 +208,7 @@ class MaterialListComponent extends DetailComponent
             $this->calculateTotalAmount();
             $this->calculateTotalDiscount();
             $this->calculateTotalTax(); // Calculate total tax when details are loaded
+            $this->calculateTotalDPP(); // Calculate total tax when details are loaded
         }
     }
 
