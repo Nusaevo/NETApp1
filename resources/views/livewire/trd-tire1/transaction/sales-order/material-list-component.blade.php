@@ -6,15 +6,8 @@
                     @foreach ($input_details as $key => $input_detail)
                         <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                             <x-ui-list-body>
-                                {{-- <x-slot name="image">
-                                    <img src="{{ $input_detail['image_path'] ?? 'https://via.placeholder.com/300' }}"
-                                        alt="Material Photo" style="width: 200px; height: 200px;">
-                                </x-slot> --}}
                                 <x-slot name="rows">
                                     <div class="row">
-                                        {{-- <x-ui-text-field-search type="int" label='custommer' clickEvent=""
-                                            model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true"
-                                            :action="$actionValue" onChanged="onPartnerChanged" :enabled="$isPanelEnabled" /> --}}
                                         <x-ui-text-field-search type="int" label='kode' clickEvent=""
                                             model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                             :options="$materials" required="true" :action="$actionValue"
@@ -30,8 +23,7 @@
                                     <div class="row">
                                         <x-ui-text-field model="input_details.{{ $key }}.price"
                                             label="Harga Satuan" enabled="false" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.disc"
-                                            label="{{ $this->trans('disc') }}" enabled="true" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.disc" label="{{ $this->trans('disc') }}" enabled="true" onChanged="updateAmount({{ $key }})" />
                                         <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label="Amount"
                                             class="form-control" type="text" enabled="false" />
                                     </div>

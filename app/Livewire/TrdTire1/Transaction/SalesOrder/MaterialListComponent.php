@@ -18,13 +18,15 @@ class MaterialListComponent extends DetailComponent
     public $tr_id;
     public $input_details = [];
     public $total_amount = 0;
+    public $total_discount = 0;
+    public $total_tax = 0; // New property for total tax
 
     protected $rules = [
-        'input_details.*.qty' => 'nullable', // Ensure quantity is required, numeric, and at least 1
-        'input_details.*.price' => 'nullable', // Ensure unit price is required and numeric
-        'input_details.*.price_base' => 'nullable', // Ensure unit price is required and numeric
-        'input_details.*.matl_desc' => 'nullable', // Description is optional but must be a string with a max length
-        'input_details.*.matl_uom' => 'nullable', // Ensure UOM is required and a string
+        'input_details.*.qty' => 'nullable',
+        'input_details.*.price' => 'nullable',
+        'input_details.*.price_base' => 'nullable',
+        'input_details.*.matl_descr' => 'nullable',
+        'input_details.*.matl_uom' => 'nullable',
     ];
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
@@ -43,12 +45,6 @@ class MaterialListComponent extends DetailComponent
 
     protected function onPreRender()
     {
-        $this->customValidationAttributes = [
-            'input_details.*' => $this->trans('product'),
-            'input_details.*.matl_id' => $this->trans('matl_id'),
-            'input_details.*.qty' => $this->trans('qty'),
-            'input_details.*.price' => $this->trans('price'),
-        ];
         $this->masterService = new MasterService();
         $this->materials = $this->masterService->getMaterials();
 
@@ -67,6 +63,7 @@ class MaterialListComponent extends DetailComponent
                     'matl_id' => null,
                     'qty' => null,
                     'price' => 0.0,
+                    'disc' => 0.0,
                 ];
                 $this->dispatch('success', __('generic.string.add_item'));
             } catch (Exception $e) {
@@ -82,15 +79,12 @@ class MaterialListComponent extends DetailComponent
         if ($matl_id) {
             $material = Material::find($matl_id);
             if ($material) {
-                // Update harga satuan, deskripsi, dan UOM
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['price'] = $material->selling_price;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
-                $this->input_details[$key]['matl_desc'] = $material->name;
+                $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->updateAmount($key);
-
-                // Remove automatic calculation of amount
-                // $this->calculateAmount($key);
+                $this->updateDiscount($key);
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));
             }
@@ -100,24 +94,87 @@ class MaterialListComponent extends DetailComponent
     public function updateAmount($key)
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            $this->input_details[$key]['amt'] = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+            $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+            $discountPercent = $this->input_details[$key]['disc'] ?? 0;
+            $discountAmount = $amount * ($discountPercent / 100);
+            $this->input_details[$key]['amt'] = $amount - $discountAmount;
         } else {
             $this->input_details[$key]['amt'] = 0;
         }
         $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
+
         $this->calculateTotalAmount();
+        $this->calculateTotalTax(); // Recalculate total tax when amount changes
+        $this->calculateTotalDPP(); // Recalculate total tax when amount changes
+    }
+
+    public function updateDiscount($key)
+    {
+        $this->input_details[$key]['disc'] ?? 0;
+        $this->calculateTotalDiscount();
+        $this->calculateTotalAmount(); // Recalculate total amount when discount changes
+    }
+
+    public function calculateTotalDiscount()
+    {
+        // Calculate the total discount by summing all item discounts
+        $this->total_discount = array_sum(array_column($this->input_details, 'disc'));
+        $this->dispatch('updateDiscount', $this->total_discount);
     }
 
     public function calculateTotalAmount()
     {
-        // Calculate the total amount by summing all item amounts
+        // Menghitung total amount dengan pembulatan
         $this->total_amount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
-            return $qty * $price;
+            $discountPercent = $detail['disc'] ?? 0;
+            $amount = $qty * $price;
+            $discountAmount = $amount * ($discountPercent / 100);
+            return $amount - $discountAmount;
         }, $this->input_details));
-        // Dispatch the updated total amount to the frontend
+
+        // Pembulatan ke dua angka desimal
+        $this->total_amount = round($this->total_amount, 2);
+        
+
+        // Perbarui tampilan
         $this->dispatch('updateAmount', $this->total_amount);
+
+        // Hitung ulang PPN dan DPP setelah total amount diperbarui
+        $this->calculateTotalTax(); // Panggil fungsi perhitungan PPN
+        $this->calculateTotalDPP(); // Panggil fungsi perhitungan DPP
+    }
+
+
+
+    public function calculateTotalTax()
+    {
+        // Ensure tax and total amount are numeric
+        $taxRate = (float)($this->inputs['tax'] ?? 0);
+        $totalAmount = (float)$this->total_amount;  // Total amount yang sudah dihitung
+
+        // Hitung total PPN dengan rumus PPN = total_amount * (tax_value / 100)
+        $this->total_tax = $totalAmount * ($taxRate / 100);
+
+        // Kirim informasi PPN untuk pembaruan tampilan
+        $this->dispatch('updateTax', $this->total_tax);
+    }
+
+
+    public function calculateTotalDPP()
+    {
+        $taxValue = (float)($this->inputs['tax_value'] ?? 0);
+        $totalAmount = $this->total_amount;
+
+        if ($taxValue > 0) {
+            $dpp = $totalAmount / (1 + $taxValue / 100);
+            $this->inputs['dpp'] = round($dpp, 2); // Pembulatan DPP ke 2 angka desimal
+        } else {
+            $this->inputs['dpp'] = $totalAmount; // Jika tidak ada pajak, DPP sama dengan total_amount
+        }
+
+        $this->dispatch('updateDPP', $this->inputs['dpp']);
     }
 
 
@@ -132,26 +189,11 @@ class MaterialListComponent extends DetailComponent
             $this->input_details = array_values($this->input_details);
 
             $this->dispatch('success', __('generic.string.delete_item'));
+            $this->calculateTotalDiscount();
+            $this->calculateTotalAmount();
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
-    }
-
-    public function validateItems()
-    {
-        if (empty($this->input_details)) {
-            $this->dispatch('error', __('generic.error.empty_item'));
-            return false;
-        }
-
-        foreach ($this->input_details as $key => $item) {
-            if (empty($item['matl_id']) || $item['qty'] <= 0 || $item['price'] <= 0) {
-                $this->dispatch('error', __('generic.error.field_required', ['field' => "Item #$key"]));
-                return false;
-            }
-        }
-
-        return true;
     }
 
     protected function loadDetails()
@@ -160,13 +202,13 @@ class MaterialListComponent extends DetailComponent
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
 
             foreach ($this->object_detail as $key => $detail) {
-                $this->input_details[$key] =  populateArrayFromModel($detail);
+                $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->updateAmount($key);
-                // $this->input_details[$key]['matl_descr'] = $detail->Material->name;
-                // $this->input_details[$key]['price'] = $detail->Material->selling_price;
-
             }
             $this->calculateTotalAmount();
+            $this->calculateTotalDiscount();
+            $this->calculateTotalTax(); // Calculate total tax when details are loaded
+            $this->calculateTotalDPP(); // Calculate total tax when details are loaded
         }
     }
 
@@ -181,7 +223,7 @@ class MaterialListComponent extends DetailComponent
         try {
             // Fetch existing details from the database
             $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)
-                ->where('tr_type', $this->object->tr_type)
+                ->where('tr_type', $this->object->trType)
                 ->get()
                 ->keyBy('tr_seq')
                 ->toArray();
@@ -211,22 +253,9 @@ class MaterialListComponent extends DetailComponent
                 $orderDtl->fillAndSanitize($detail);
                 $orderDtl->save();
             }
-
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.save_item', ['message' => $e->getMessage()]));
         }
-    }
-
-
-    private function isDuplicateTrSeq($trhdr_id, $tr_seq)
-    {
-        return OrderDtl::where('trhdr_id', $trhdr_id)->where('tr_seq', $tr_seq)->exists();
-    }
-
-    private function getUniqueTrSeq($trhdr_id)
-    {
-        $maxTrSeq = OrderDtl::where('trhdr_id', $trhdr_id)->max('tr_seq');
-        return $maxTrSeq ? $maxTrSeq + 1 : 1;
     }
 
     public function render()

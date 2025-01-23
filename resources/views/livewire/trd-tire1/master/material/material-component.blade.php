@@ -29,9 +29,9 @@
                                         onOpened="openBrandDialogBox" onClosed="closeBrandDialogBox">
                                         <x-slot name="body">
                                             <x-ui-text-field label="Code" model="inputs_brand.str1" type="text"
-                                                :action="$actionValue" required="true" enabled="true" />
+                                                :action="$actionValue" required="true" enabled="true" capslockMode="true"/>
                                             <x-ui-text-field label="Merk" model="inputs_brand.str2" type="text"
-                                                :action="$actionValue" required="true" enabled="true" />
+                                                :action="$actionValue" required="true" enabled="true" capslockMode="true"/>
                                         </x-slot>
                                         <x-slot name="footer">
                                             <x-ui-button clickEvent="saveBrand" button-name="Save" loading="true"
@@ -59,7 +59,8 @@
                                         height="400px" onOpened="openJenisDialogBox" onClosed="closeJenisDialogBox">
                                         <x-slot name="body">
                                             <x-ui-text-field label="Code" model="inputs_jenis.str1" type="text"
-                                                :action="$actionValue" required="true" enabled="true" capslockMode="true" />
+                                                :action="$actionValue" required="false" enabled="true"
+                                                capslockMode="true" />
                                         </x-slot>
                                         <x-slot name="footer">
                                             <x-ui-button clickEvent="saveJenis" button-name="Save" loading="true"
@@ -93,15 +94,8 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                        type="text" :action="$actionValue" onChanged="generateName" enabled="true"
-                                        capslockMode="true" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('uom') }}"
-                                        model="matl_uoms.matl_uom" :options="$materialUOM" type="number"
-                                        :action="$actionValue" required="false" enabled="true" />
-                                    <x-ui-text-field label="{{ $this->trans('point') }}" model="materials.point"
-                                        type="number" :action="$actionValue" required="false" enabled="true" />
+                                        type="text" :action="$actionValue" onChanged="generateName" required="true"
+                                        enabled="true" capslockMode="true" />
                                 </div>
                             </x-ui-padding>
                             <x-ui-padding>
@@ -147,6 +141,9 @@
                     <div class="col-md-4">
                         <x-ui-card title="Pricing">
                             <x-ui-padding>
+                                <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="matl_uoms.matl_uom"
+                                    :options="$materialUOM" type="number" :action="$actionValue" required="false"
+                                    enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('selling_price') }}"
                                     model="materials.selling_price" type="number" :action="$actionValue" required="true"
                                     enabled="true" />

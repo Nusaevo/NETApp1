@@ -38,6 +38,7 @@ class Material extends BaseModel
         'code',
         'brand',
         'name',
+        'size',
         'type_code',
         'class_code',
         'category',

@@ -14,63 +14,31 @@
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-option model="inputs.vehicle_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
-                                        layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
-                                    {{-- <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
-                                    type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                    onChange="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" /> --}}
-                                </div>
-                                <div class="row">
+                                    <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
+                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="{{ $this->trans('Nomor Surat Jalan') }}"
                                         model="inputs.delivery_number" type="text" :action="$actionValue" required="false"
                                         enabled="true" />
-                                    <x-ui-text-field label="{{ $this->trans('Nomor Transaksi') }}"
-                                        model="inputs.payment_terms" type="text" :action="$actionValue"
-                                        required="false" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
-                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
-                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
-                                    <x-ui-text-field label="{{ $this->trans('Nota Pembelian') }}"
-                                        model="inputs.purchase_invoice" type="text" :action="$actionValue"
-                                        required="false" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
-                                        :options="$SOTax" required="true" :action="$actionValue" />
-                                    <x-ui-text-field label="{{ $this->trans('payment_terms') }}"
-                                        model="inputs.payment_terms" type="text" :action="$actionValue"
-                                        required="false" />
+                                    <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.tr_date" type="date"
+                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('Nota Pembelian') }}"
+                                        model="inputs.purchase_invoice" type="text" :action="$actionValue"
+                                        required="false" />
+                                    <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
+                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
+                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                </div>
                             </x-ui-padding>
-                        </x-ui-card>
-                    </div>
-                    <div class="col-md-4">
-                        <x-ui-card title="Date Information">
-                            <div class="row">
-                                <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
-                                    :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            </div>
-                            <div class="row">
-                                <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
-                                    :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                <div class="row">
-                                    <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.due_date" type="date"
-                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" enabled="false" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-text-field label="Tanggal Terima Barang" model="inputs.due_date"
-                                        type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                </div>
                         </x-ui-card>
                     </div>
                     <x-ui-footer>
@@ -78,8 +46,8 @@
                             <x-ui-button clickEvent="Save" button-name="Save Header" loading="true" :action="$actionValue"
                                 cssClass="btn-primary" iconPath="save.svg" />
                         </div>
-
                     </x-ui-footer>
+
                     {{-- <div class="col-md-12">
                         <x-ui-card title="Order Info">
                             <x-ui-text-field label="Date" model="inputs.tr_date" type="date" :action="$actionValue"

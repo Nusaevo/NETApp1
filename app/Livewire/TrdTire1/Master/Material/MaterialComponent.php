@@ -43,11 +43,13 @@ class MaterialComponent extends BaseComponent
 
     protected $masterService;
     public $rules = [
-        'materials.brand' => 'required|string',
-        'materials.code' => 'required|string',
-        'materials.type_code' => 'required|string',
-        'materials.category' => 'required|string',
-        'materials.selling_price' => 'required|numeric',
+        'materials.brand' => 'required',
+        'materials.code' => 'required',
+        'materials.type_code' => 'required',
+        'materials.category' => 'required',
+        'materials.selling_price' => 'required',
+        'materials.size' => 'required',
+        'materials.name' => 'required',
     ];
 
     protected $listeners = [
@@ -87,6 +89,7 @@ class MaterialComponent extends BaseComponent
             'materials.brand'      => $this->trans('brand'),
             'materials.reserved'      => $this->trans('reserved'),
             'materials.tag'      => $this->trans('tag'),
+            'materials.size'      => $this->trans('size'),
             'materials.stok'      => $this->trans('stock'),
             'materials.category'      => $this->trans('category'),
             'materials.remark'      => $this->trans('remark'),

@@ -29,6 +29,9 @@ class Detail extends BaseComponent
     public $newItems = [];
 
     public $total_amount;
+    public $total_tax;
+    public $total_dpp;
+    public $total_discount;
     public $trType = "SO";
     public $versionNumber = 1;
 
@@ -56,6 +59,8 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
         'updateAmount' => 'updateAmount',
+        'updateDiscount' => 'updateDiscount',
+        'updateDPP' => 'updateDPP',
     ];
     #endregion
 
@@ -77,6 +82,43 @@ class Detail extends BaseComponent
     {
         $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
     }
+
+    public function onSOTaxChange()
+    {
+        try {
+            $configData = ConfigConst::select('num1')
+                ->where('const_group', 'TRX_SO_TAX')
+                ->where('str1', $this->inputs['tax'])
+                ->first();
+
+            $this->inputs['tax_value'] = $configData->num1 ?? 0; // Set ke 0 jika tidak ditemukan
+
+            // Log nilai tax_value untuk debugging
+
+            // Hitung ulang DPP
+            $this->calculateTotalDPP();
+        } catch (Exception $e) {
+            $this->dispatch('error', $e->getMessage());
+        }
+    }
+    public function calculateTotalDPP()
+    {
+        // Pastikan tax_value dan total_amount bertipe float
+        $taxValue = (float)($this->inputs['tax_value'] ?? 0);
+        $totalAmount = (float)$this->total_amount;  // Pastikan ini bertipe float
+
+        if ($taxValue > 0) {
+            $dpp = $totalAmount / (1 + $taxValue / 100);
+            $this->inputs['dpp'] = round($dpp, 2); // Pembulatan DPP ke 2 angka desimal
+        } else {
+            // Jika tidak ada pajak, DPP sama dengan total_amount
+            $this->inputs['dpp'] = $totalAmount;
+        }
+        $this->dispatch('updateDPP', $this->inputs['dpp']);
+    }
+
+
+
 
     public function updatedInputsPartnerId()
     {
@@ -135,6 +177,26 @@ class Detail extends BaseComponent
     //     // Logic to generate transaction ID based on appCode and codeType
     //     return $appCode . '-' . $codeType . '-' . uniqid();
     // }
+    // public function calculateTotalDPP()
+    // {
+    //     // Mengambil nilai pajak yang sudah dibulatkan
+    //     $taxValue = (float)($this->inputs['tax_value'] ?? 0);
+    //     $totalAmount = (float)$this->total_amount;
+
+    //     // Jika tax_value > 0, hitung DPP sesuai dengan rumus
+    //     if ($taxValue > 0) {
+    //         $this->inputs['dpp'] = round($totalAmount / (1 + $taxValue / 100), 2); // Pembulatan ke 2 angka desimal
+    //     } else {
+    //         // Jika tax_value 0, dpp sama dengan totalAmount
+    //         $this->inputs['dpp'] = round($totalAmount, 2); // Pembulatan ke 2 angka desimal
+    //     }
+
+    //     $this->dispatch('updateDPP', $this->inputs['dpp']);
+    // }
+
+
+
+
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -236,9 +298,45 @@ class Detail extends BaseComponent
     #endregion
 
     #region Component Events
+    // Update total amount based on changes
     public function updateAmount($amount)
     {
         $this->total_amount = rupiah($amount);
+        $this->calculateTotalTax(); // Recalculate the tax when amount is updated
+    }
+
+    // Update discount percentage
+    public function updateDiscount($discount)
+    {
+        $this->total_discount = $discount . "%";
+        $this->calculateTotalTax(); // Recalculate tax when discount is updated
+    }
+
+    // Update DPP
+    public function updateDPP($dpp)
+    {
+        $this->total_dpp = $dpp;
+        $this->calculateTotalTax(); // Recalculate tax when DPP is updated
+    }
+
+    // New method for calculating the total tax
+    public function calculateTotalTax()
+    {
+        try {
+            $taxValue = (float)($this->inputs['tax_value'] ?? 0);
+            $totalAmount = (float)$this->total_amount;
+
+            // Calculate total tax based on the tax value
+            if ($taxValue > 0) {
+                $this->total_tax = round($totalAmount * $taxValue / 100, 2); // Tax calculation
+            } else {
+                $this->total_tax = 0; // No tax if tax value is 0
+            }
+
+            $this->dispatch('updateTotalTax', $this->total_tax); // Dispatch the event with updated tax
+        } catch (Exception $e) {
+            $this->dispatch('error', $e->getMessage());
+        }
     }
     #endregion
 }

@@ -13,7 +13,7 @@ class ContactListComponent extends DetailComponent
     public $rules = [
         'input_details.*.contact_name' => 'required|min:1|max:50',
         'input_details.*.position' => 'required|min:1|max:50',
-        'input_details.*.phone1' => 'required|max:13',
+        'input_details.*.phone1' => 'max:13',
         'input_details.*.phone2' => 'max:13',
         'input_details.*.email' => 'max:50',
         'input_details.*.contact_address' => 'max:50',
