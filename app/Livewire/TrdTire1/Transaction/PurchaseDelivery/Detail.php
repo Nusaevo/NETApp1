@@ -75,7 +75,7 @@ class Detail extends BaseComponent
     {
         $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
     }
-    public function updatedInputsPartnerId($partnerId)
+    public function onPartnerChanged($partnerId)
     {
         // Ambil partner berdasarkan partner_id yang dipilih
         $partner = \App\Models\TrdTire1\Master\Partner::find($partnerId);

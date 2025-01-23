@@ -117,10 +117,7 @@ class Detail extends BaseComponent
         $this->dispatch('updateDPP', $this->inputs['dpp']);
     }
 
-
-
-
-    public function updatedInputsPartnerId()
+    public function onPartnerChanged()
     {
         $partner = Partner::find($this->inputs['partner_id']);
 
@@ -215,7 +212,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
-            $this->updatedInputsPartnerId();
+            $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
 
@@ -299,10 +296,9 @@ class Detail extends BaseComponent
 
     #region Component Events
     // Update total amount based on changes
-    public function updateAmount($amount)
+    public function updateAmount($data)
     {
-        $this->total_amount = rupiah($amount);
-        $this->calculateTotalTax(); // Recalculate the tax when amount is updated
+       // dd($data['total_amount'], $data["total_discount"], $data['total_tax']);
     }
 
     // Update discount percentage

@@ -35,7 +35,7 @@
                                     <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
                                         clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        onChanged="updatedInputsPartnerId" />
+                                        onChanged="onPartnerChanged" />
                                     <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to"
                                         :options="$SOSend" type="text" :action="$actionValue" required="false" />
                                     <x-ui-text-field-search type="text" label="{{ $this->trans('tax_payer') }}"

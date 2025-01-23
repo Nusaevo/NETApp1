@@ -3,7 +3,7 @@
     $blankValue = (isset($type) && $type === 'int') ? '0' : '';
 @endphp
 
-<div wire:ignore.self class="col-sm mb-5"
+<div class="col-sm mb-5"
      @if(isset($span)) span="{{ $span }}" @endif
      @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
     <div class="d-flex align-items-center">
