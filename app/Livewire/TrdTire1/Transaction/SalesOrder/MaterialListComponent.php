@@ -108,7 +108,6 @@ class MaterialListComponent extends DetailComponent
     {
         $this->calculateTotalAmount();
         $this->calculateTotalDiscount();
-        $this->calculateTotalTax();
 
         $this->dispatch('updateAmount', [
             'total_amount' => $this->total_amount,
@@ -133,14 +132,18 @@ class MaterialListComponent extends DetailComponent
 
     private function calculateTotalDiscount()
     {
-        $this->total_discount = array_sum(array_column($this->input_details, 'disc'));
+        $this->total_discount = array_sum(array_map(function ($detail) {
+            $qty = $detail['qty'] ?? 0;
+            $price = $detail['price'] ?? 0;
+            $discountPercent = $detail['disc'] ?? 0;
+            $amount = $qty * $price;
+            $discountAmount = $amount * ($discountPercent / 100);
+            return $discountAmount;
+        }, $this->input_details));
+
+        $this->total_discount = round($this->total_discount, 2);
     }
 
-    private function calculateTotalTax()
-    {
-        $taxRate = (float)($this->inputs['tax'] ?? 0);
-        $this->total_tax = $this->total_amount * ($taxRate / 100);
-    }
 
     public function deleteItem($index)
     {
@@ -168,6 +171,51 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->updateItemAmount($key); // Ensure each input item is initialized and updated
             }
+        }
+    }
+    public function SaveItem()
+    {
+        $this->Save();
+    }
+
+    public function onValidateAndSave()
+    {
+        $this->validate();
+        try {
+            // Fetch existing details from the database
+            $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)
+                ->where('tr_type', $this->object->trType)
+                ->get()
+                ->keyBy('tr_seq')
+                ->toArray();
+
+            // Determine which items to delete
+            $itemsToDelete = array_diff_key($existingDetails, $this->input_details);
+            foreach ($itemsToDelete as $tr_seq => $detail) {
+                $orderDtl = OrderDtl::find($detail['id']);
+                if ($orderDtl) {
+                    $orderDtl->forceDelete();
+                }
+            }
+
+            // Save or update new items
+            foreach ($this->input_details as $key => $detail) {
+                $tr_seq = $key + 1;
+                $orderDtl = OrderDtl::firstOrNew([
+                    'tr_id' => $this->object->tr_id,
+                    'tr_seq' => $tr_seq,
+                ]);
+
+                $detail['tr_id'] = $this->object->tr_id;
+                $detail['trhdr_id'] = $this->objectIdValue;
+                $detail['qty_reff'] = $detail['qty'];
+                $detail['tr_type'] = $this->object->tr_type;
+
+                $orderDtl->fillAndSanitize($detail);
+                $orderDtl->save();
+            }
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.save_item', ['message' => $e->getMessage()]));
         }
     }
 

@@ -23,7 +23,7 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
                                             enabled="true" class="form-control"
                                             model="input_details.{{ $key }}.qty" type="number"
-                                            onChanged="updateAmount({{ $key }})" />
+                                            onChanged="updateItemAmount({{ $key }})" />
                                         <x-ui-text-field model="input_details.{{ $key }}.matl_uom"
                                             label="UOM" enabled="false" />
                                     </div>
