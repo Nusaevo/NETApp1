@@ -20,6 +20,7 @@ class MaterialListComponent extends DetailComponent
     public $total_amount = 0;
     public $total_discount = 0;
     public $total_tax = 0; // New property for total tax
+    public $total_dpp = 0; // New property for total tax
 
     protected $rules = [
         'input_details.*.qty' => 'nullable',
@@ -113,6 +114,7 @@ class MaterialListComponent extends DetailComponent
             'total_amount' => $this->total_amount,
             'total_discount' => $this->total_discount,
             'total_tax' => $this->total_tax,
+            'total_dpp' => $this->total_dpp,
         ]);
     }
 

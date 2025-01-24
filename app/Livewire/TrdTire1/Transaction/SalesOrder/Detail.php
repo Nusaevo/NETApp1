@@ -32,7 +32,7 @@ class Detail extends BaseComponent
     public $total_dpp;
     public $total_discount;
     public $trType = "SO";
-    public $versionNumber = 1;
+    public $versionNumber = "0.0";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -41,9 +41,11 @@ class Detail extends BaseComponent
     public $returnIds = [];
     public $currencyRate = 0;
     public $npwpOptions = [];
-
     protected $masterService;
     public $isPanelEnabled = "false";
+    public $notaCount = 0; // x: jumlah nota jual dicetak
+    public $suratJalanCount = 0; // y: jumlah surat jalan dicetak
+
 
     public $rules  = [
         'inputs.tr_date' => 'nullable',
@@ -60,6 +62,7 @@ class Detail extends BaseComponent
         'updateAmount' => 'updateAmount',
         'updateDiscount' => 'updateDiscount',
         'updateDPP' => 'updateDPP',
+        'updateTotalTax' => 'updateTotalTax',
     ];
     #endregion
 
@@ -107,28 +110,25 @@ class Detail extends BaseComponent
             $taxValue = (float)($this->inputs['tax_value'] ?? 0); // Nilai pajak (persentase)
             $totalAmount = (float)$this->total_amount; // Total amount dari input
 
-            // Perhitungan berdasarkan tipe pajak
             if ($taxType === 'I') {
-                // Rumus untuk TYPE_1
                 $dpp = $totalAmount / (1 + $taxValue / 100); // Rumus DPP
                 $ppn = $totalAmount - $dpp; // Rumus PPN
             } elseif ($taxType === 'E') {
-                // Rumus untuk TYPE_2
                 $dpp = $totalAmount; // DPP sama dengan total amount
                 $ppn = ($taxValue / 100) * $totalAmount; // Rumus PPN
             } else {
-                // Rumus untuk DEFAULT/TYPE_3
                 $dpp = $totalAmount; // DPP sama dengan total amount
                 $ppn = 0; // PPN nol
             }
 
             // Simpan hasil perhitungan
-            $this->total_dpp = round($dpp, 2);
-            $this->total_tax = round($ppn, 2);
+            $this->total_dpp = rupiah(round($dpp, 2));
+            $this->total_tax = rupiah(round($ppn, 2));
+
 
             // Dispatch event untuk memperbarui UI
             $this->dispatch('updateDPP', $this->total_dpp);
-            $this->dispatch('updateTotalTax', $this->total_tax);
+            // $this->dispatch('updateTotalTax', $this->total_tax);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
@@ -170,7 +170,6 @@ class Detail extends BaseComponent
         $this->customValidationAttributes  = [
             'inputs.tax'      => $this->trans('tax'),
         ];
-        $this->versionNumber = Session::get($this->versionSessionKey);
 
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers();
@@ -187,6 +186,10 @@ class Detail extends BaseComponent
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
+        }
+        // Panggil perhitungan DPP dan PPN saat halaman dimuat
+        if (!empty($this->inputs['tax'])) {
+            $this->onSOTaxChange();
         }
     }
 
@@ -261,6 +264,37 @@ class Detail extends BaseComponent
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
+
+    private function updateVersionNumber2()
+    {
+        $this->versionNumber = "{$this->notaCount}.{$this->suratJalanCount}";
+    }
+
+    public function printInvoice()
+    {
+        try {
+            $this->notaCount++;
+            $this->updateVersionNumber2();
+            // Logika cetak nota jual
+            $this->dispatch('success', 'Nota jual berhasil dicetak!');
+        } catch (Exception $e) {
+            $this->dispatch('error', $e->getMessage());
+        }
+    }
+    public function printDelivery()
+    {
+        try {
+            $this->suratJalanCount++;
+            $this->updateVersionNumber2();
+            // Logika cetak surat jalan
+            $this->dispatch('success', 'Surat Jalan berhasil dicetak!');
+        } catch (Exception $e) {
+            $this->dispatch('error', $e->getMessage());
+        }
+    }
+
+
+
     #endregion
 
     #region Component Events
@@ -268,20 +302,23 @@ class Detail extends BaseComponent
     public function updateAmount($data)
     {
         $this->total_amount = $data['total_amount'];
-        $this->total_discount = $data['total_discount'];
-        $this->total_tax = $data['total_tax'];
+        $this->total_discount = ($data['total_discount']);
+
+        // Recalculate DPP and PPN when amount or discount changes
+        $this->calculateDPPandPPN($this->inputs['tax'] ?? '');
     }
 
     // Update discount percentage
-    public function updateDiscount($discount)
-    {
-        $this->total_discount = $discount . "%";
-    }
+    // public function updateDiscount($discount)
+    // {
+    //     $this->total_discount = $discount;
+    //     $this->calculateDPPandPPN($this->inputs['tax'] ?? '');
+    // }
 
     // Update DPP
-    public function updateDPP($dpp)
-    {
-        $this->total_dpp = $dpp;
-    }
+    // public function updateDPP($dpp)
+    // {
+    //     $this->total_dpp = $dpp;
+    // }
     #endregion
 }

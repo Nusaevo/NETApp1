@@ -14,7 +14,7 @@
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
@@ -26,35 +26,31 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
-                                        type="code" :action="$actionValue" required="false" enabled="true" capslockMode="true"/>
+                                        type="code" :action="$actionValue" required="false"
+                                        clickEvent="getTransactionCode" buttonName="Nomor" enabled="true" />
+                                    <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
+                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                </div>
+                                <div class="row">
                                     <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
                                         clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
+                                        :options="$SOTax" required="true" :action="$actionValue"
+                                        onChanged="onSOTaxChange" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
-                                        :options="$SOTax" required="true" :action="$actionValue" />
                                     <x-ui-text-field label="{{ $this->trans('payment_terms') }}"
                                         model="inputs.payment_terms" type="text" :action="$actionValue"
                                         required="false" />
+                                    <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
+                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
                             </x-ui-padding>
-                        </x-ui-card>
-                    </div>
-                    <div class="col-md-4">
-                        <x-ui-card title="Date Information">
-                            <div class="row">
-                                <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
-                                    :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            </div>
-                            <div class="row">
-                                <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
-                                    :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            </div>
                         </x-ui-card>
                     </div>
                     <x-ui-footer>
@@ -103,14 +99,14 @@
                     <x-ui-card>
                         <x-ui-padding>
                             <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('disc') }}" model="inputs.disc" type="text"
-                                    :action="$actionValue" required="false" />
-                                <x-ui-text-field label="{{ $this->trans('ppn') }}" model="inputs.ppn" type="text"
-                                    :action="$actionValue" required="false" />
-                                <x-ui-text-field label="{{ $this->trans('dpp') }}" model="inputs.dpp" type="text"
-                                    :action="$actionValue" required="false" />
-                                <x-ui-text-field label="{{ $this->trans('grand_total') }}" model="inputs.grand_total"
-                                    type="text" :action="$actionValue" required="false" />
+                                <x-ui-text-field label="{{ $this->trans('total_discount') }}" model="total_discount"
+                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                <x-ui-text-field label="{{ $this->trans('PPN') }}" model="total_tax" type="text"
+                                    :action="$actionValue" required="false" enabled="false" />
+                                <x-ui-text-field label="{{ $this->trans('DPP') }}" model="total_dpp" type="text"
+                                    :action="$actionValue" required="false" enabled="false" />
+                                <x-ui-text-field label="{{ $this->trans('total_amount') }}" model="total_amount"
+                                    type="text" :action="$actionValue" required="false" enabled="false" />
                             </div>
                         </x-ui-padding>
                     </x-ui-card>
