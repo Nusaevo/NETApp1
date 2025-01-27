@@ -98,12 +98,16 @@ class OrderHdr extends BaseModel
     }
 
 
-    public static function generateTransactionId($vehicle_type, $tax_invoice = false)
+    public static function generateTransactionId($vehicle_type, $tr_type, $tax_invoice = false)
     {
+        if ($tr_type == 'PO') {
+            return self::generatePurchaseOrderId();
+        }
+
         $year = date('y'); // Two-digit year
         $monthNumber = date('n'); // Month in number
         $monthLetter = chr(64 + $monthNumber); // Month in letter (A, B, C, etc.)
-        $sequenceNumber = self::getSequenceNumber($vehicle_type); // Get sequence number
+        $sequenceNumber = self::getSequenceNumber($vehicle_type, $tax_invoice); // Get sequence number
 
         // Determine format based on vehicle_type and tax invoice
         if ($tax_invoice) {
@@ -118,25 +122,39 @@ class OrderHdr extends BaseModel
         } else {
             switch ($vehicle_type) {
                 case 0: // MOTOR without tax invoice
-                    return sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXx
+                    return sprintf('%s%02d%04d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXx
                 case 1: // MOBIL without tax invoice
-                    return sprintf('%s%s%02d8%04d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXx
+                    return sprintf('%s%s%02d%04d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXx
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
         }
     }
 
+    private static function generatePurchaseOrderId()
+    {
+        $lastId = ConfigSnum::where('code', 'PURCHORDER_LASTID')->first();
+        $newId = (int)$lastId->last_cnt + 1;
+        $lastId->last_cnt = $newId;
+        $lastId->save();
 
-    private static function getSequenceNumber($vehicle_type)
+        return sprintf('PO%04d', $newId); // Example: PO0001
+    }
+
+    private static function getSequenceNumber($vehicle_type, $tax_invoice)
     {
         // Mendapatkan bulan dan tahun saat ini
         $currentYear = date('y'); // Dua digit terakhir tahun
         $currentMonth = date('n'); // Bulan dalam angka
+        $currentMonthLetter = chr(64 + $currentMonth); // Bulan dalam huruf
 
-        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO' dan vehicle_type
+        // Filter tambahan untuk tax_invoice
+        $taxInvoiceFlag = $tax_invoice ? 1 : 0;
+
+        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO', vehicle_type, dan tax_invoice
         $lastOrder = OrderHdr::where('tr_type', 'SO')
             ->where('vehicle_type', $vehicle_type) // Filter berdasarkan vehicle_type
+            ->where('tax_invoice', $taxInvoiceFlag) // Filter berdasarkan tax_invoice
             ->orderBy('id', 'desc')
             ->first();
 
@@ -149,9 +167,9 @@ class OrderHdr extends BaseModel
                 $lastYear = (int)$matches[2];
 
                 // Cek apakah bulan dan tahun sama dengan yang sekarang
-                if ($lastYear == $currentYear && $lastMonthLetter == chr(64 + $currentMonth)) {
+                if ($lastYear == $currentYear && $lastMonthLetter == $currentMonthLetter) {
                     // Ambil nomor urut dari tr_id
-                    preg_match('/\d{3,4}$/', $lastOrder->tr_id, $matches); // Ambil 3-4 digit terakhir
+                    preg_match('/\d{3,5}$/', $lastOrder->tr_id, $matches); // Ambil 3-5 digit terakhir
                     $lastSequenceNumber = isset($matches[0]) ? (int)$matches[0] : 0;
                     return $lastSequenceNumber + 1; // Tambahkan 1 ke nomor urut
                 }
@@ -161,6 +179,7 @@ class OrderHdr extends BaseModel
         // Jika tidak ada entri sebelumnya atau bulan/tahun berbeda, mulai dari 1
         return 1;
     }
+
 
 
 

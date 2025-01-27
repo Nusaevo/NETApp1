@@ -75,46 +75,11 @@ class Detail extends BaseComponent
     {
         $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
     }
-    public function onPartnerChanged($partnerId)
+    public function onPartnerChanged()
     {
-        // Ambil partner berdasarkan partner_id yang dipilih
-        $partner = \App\Models\TrdTire1\Master\Partner::find($partnerId);
+        $partner = Partner::find($this->inputs['partner_id']);
 
-        if ($partner) {
-            // Ambil PartnerDetail berdasarkan partner_id yang sama
-            $partnerDetail = $partner->partnerDetail;
-
-            if ($partnerDetail && $partnerDetail->wp_details) {
-                $wpDetails = $partnerDetail->wp_details; // Bisa array atau string
-
-                // Jika wp_details berupa string JSON, decode
-                if (is_string($wpDetails)) {
-                    $wpDetails = json_decode($wpDetails, true);
-                }
-
-                if (is_array($wpDetails)) {
-                    // Ambil NPWP pertama jika ada
-                    $npwp = array_column($wpDetails, 'npwp');
-
-                    if (count($npwp) > 0) {
-                        // Jika ada NPWP, set tax_payer ke NPWP pertama
-                        $this->inputs['tax_payer'] = $npwp[0];
-                    } else {
-                        // Jika tidak ada NPWP, kosongkan tax_payer
-                        $this->inputs['tax_payer'] = null;
-                    }
-                } else {
-                    // Jika wp_details bukan array atau gagal decode, kosongkan tax_payer
-                    $this->inputs['tax_payer'] = null;
-                }
-            } else {
-                // Jika tidak ada wp_details, kosongkan tax_payer
-                $this->inputs['tax_payer'] = null;
-            }
-        } else {
-            // Jika tidak ada partner, kosongkan tax_payer
-            $this->inputs['tax_payer'] = null;
-        }
+        $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
     }
 
     // public function generateBasicTransactionId()

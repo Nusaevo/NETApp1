@@ -210,7 +210,7 @@ class MasterService extends BaseService
         $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
         return $suppliersData->map(function ($data) {
             return [
-                'label' => $data->code . " - " . $data->name,
+                'label' => $data->name,
                 'value' => $data->id,
             ];
         })->toArray();
@@ -221,7 +221,7 @@ class MasterService extends BaseService
         $materialsData = Material::whereNull('deleted_at')->get(); // Pastikan untuk hanya mengambil yang tidak dihapus
         return $materialsData->map(function ($data) {
             return [
-                'label' => $data->id . " - " . $data->name,
+                'label' => $data->code,
                 'value' => $data->id,
             ];
         })->toArray();

@@ -53,10 +53,14 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
-                        'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->partner_id)
-                    ]) . '">' . $row->Partner->name . '</a>';
+                    if ($row->Partner && $row->Partner->name) {
+                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->partner_id)
+                        ]) . '">' . $row->Partner->name . '</a>';
+                    } else {
+                        return '';
+                    }
                 })
                 ->html(),
             Column::make($this->trans("matl_code"), 'id')
@@ -129,16 +133,28 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
-                $builder->whereExists(function ($query) use ($value) {
-                    $query->select(DB::raw(1))
-                        ->from('order_dtls')
-                        ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
-                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('order_dtls.tr_type', 'PO');
-                });
+            // $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
+            //     $builder->whereExists(function ($query) use ($value) {
+            //         $query->select(DB::raw(1))
+            //             ->from('order_dtls')
+            //             ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
+            //             ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
+            //             ->where('order_dtls.tr_type', 'PO');
+            //     });
+            // }),
+            // $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
+            //     $builder->whereHas('Partner', function ($query) use ($value) {
+            //         $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+            //     });
+            // }),
+            // New filters
+            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
+                $builder->where('order_hdrs.tr_date', '=', $value);
             }),
-            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
+            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(order_hdrs.tr_id)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            TextFilter::make('Custommer')->filter(function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
