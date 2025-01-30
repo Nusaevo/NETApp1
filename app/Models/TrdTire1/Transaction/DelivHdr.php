@@ -47,7 +47,7 @@ class DelivHdr extends BaseModel
     }
     public function savePurchaseHeader($appCode, $trType, $inputs, $configCode)
     {
-        $this->fillAndSanitize($inputs);
+        $this->fill($inputs);
         $this->tr_type = $trType; // Ensure tr_type is set
 
         // Tentukan vehicle_type berdasarkan trType

@@ -116,10 +116,10 @@ class MaterialListComponent extends BaseComponent
             $this->input_details['npwp'] = $this->npwp;
             $this->input_details['position'] = $this->position;
             $this->input_details['partner_id'] = $this->object->partner_id;
-            $this->object_detail->fillAndSanitize($this->input_details);
+            $this->object_detail->fill($this->input_details);
             $this->object_detail->save();
             // foreach ($this->input_details as $detail) {
-            //     $this->object_detail->fillAndSanitize($this->input_details[$key]);
+            //     $this->object_detail->fill($this->input_details[$key]);
             //     $this->object->save();
             //     OrderDtl::updateOrCreate(
             //         ['id' => $detail['id'] ?? null],

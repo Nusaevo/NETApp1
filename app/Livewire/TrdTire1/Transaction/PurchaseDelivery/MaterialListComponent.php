@@ -222,7 +222,7 @@ class MaterialListComponent extends DetailComponent
                 $detail['qty_reff'] = $detail['qty'];
                 $detail['tr_type'] = $this->object->tr_type;
 
-                $delivDtl->fillAndSanitize($detail);
+                $delivDtl->fill($detail);
                 $delivDtl->save();
             }
         } catch (Exception $e) {

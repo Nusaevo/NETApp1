@@ -259,7 +259,7 @@ class MaterialComponent extends BaseComponent
 
         $this->materials['specs'] = $dataToSave;
 
-        $this->object->fillAndSanitize($this->materials);
+        $this->object->fill($this->materials);
         $this->object->save();
         $this->saveUOMs();
         $this->saveAttachment();
@@ -300,7 +300,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
-        $this->object_uoms->fillAndSanitize($this->matl_uoms);
+        $this->object_uoms->fill($this->matl_uoms);
         $this->object_uoms->save();
     }
 
@@ -459,7 +459,7 @@ class MaterialComponent extends BaseComponent
         }
 
         // Isi dan sanitasi data
-        $this->object_brand->fillAndSanitize($this->inputs_brand);
+        $this->object_brand->fill($this->inputs_brand);
         $this->object_brand->const_group = "MMATL_MERK";
 
         // Hitung sequence berikutnya
@@ -505,7 +505,7 @@ class MaterialComponent extends BaseComponent
 
 
         // Isi dan sanitasi data
-        $this->object_pattern->fillAndSanitize($this->inputs_pattern);
+        $this->object_pattern->fill($this->inputs_pattern);
         $this->object_pattern->const_group = "MMATL_PATTERN";
 
         // Hitung sequence berikutnya
@@ -551,7 +551,7 @@ class MaterialComponent extends BaseComponent
 
 
         // Isi dan sanitasi data
-        $this->object_jenis->fillAndSanitize($this->inputs_jenis);
+        $this->object_jenis->fill($this->inputs_jenis);
         $this->object_jenis->const_group = "MMATL_JENIS";
 
         // Hitung sequence berikutnya

@@ -84,7 +84,7 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         if ($this->isEditOrView()) {
             $this->object->setConnection($this->application->code);
         }

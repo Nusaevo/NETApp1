@@ -20,7 +20,9 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     protected static function boot()
     {
         parent::boot();
-
+        static::saving(function ($model) {
+            $model->sanitizeAttributes();
+        });
         static::retrieved(function ($model) {
             $attributes = $model->getAllColumns();
 
@@ -66,22 +68,39 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         return null;
     }
 
-    public function fillAndSanitize(array $attributes)
+    /**
+     * Fill the model with sanitized attributes.
+     *
+     * - Dates: Sanitized via `sanitizeDate`
+     * - Numeric strings: Properly formatted (`.` and `,` swapped)
+     * - Strings: Trimmed whitespace
+     * - Arrays: JSON-encoded
+     *
+     * @param array $attributes
+     */
+        /**
+     * Sanitize model attributes before saving.
+     */
+    protected function sanitizeAttributes()
     {
-        $sanitizedAttributes = [];
-
-        foreach ($attributes as $key => $value) {
-            if (isDateAttribute($value)) {
-                $sanitizedAttributes[$key] = sanitizeDate($value);
-            } elseif (isFormattedNumeric($value) !== false) {
-                $sanitizedAttributes[$key] = str_replace('.', '', $value);
-                $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
-            } else {
-                $sanitizedAttributes[$key] = $value;
+        foreach ($this->attributes as $key => $value) {
+            if (isDateAttribute($key, $value)) {
+                // Sanitize Date
+                $this->attributes[$key] = $this->sanitizeDate($value);
+            } elseif (isFormattedNumeric($value)) {
+                // Format Numeric Strings (e.g., "1.000,50" => "1000.50")
+                $this->attributes[$key] = str_replace('.', '', $value);
+                $this->attributes[$key] = str_replace(',', '.', $this->attributes[$key]);
+            } elseif (is_array($value)) {
+                // Encode Arrays as JSON
+                $this->attributes[$key] = json_encode($value);
+            } elseif (is_string($value)) {
+                // Trim Strings
+                $this->attributes[$key] = trim($value);
             }
         }
-        $this->fill($sanitizedAttributes);
     }
+
 
     public function isDuplicateCode()
     {

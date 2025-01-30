@@ -107,13 +107,13 @@ class Index extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         $this->object->save();
         foreach ($this->input_details as $index => $data) {
             if (!isset($this->object_detail[$index])) {
                 $this->object_detail[$index] = new CartDtl();
             }
-            $this->object_detail[$index]->fillAndSanitize($data);
+            $this->object_detail[$index]->fill($data);
             $this->object_detail[$index]->save();
         }
     }

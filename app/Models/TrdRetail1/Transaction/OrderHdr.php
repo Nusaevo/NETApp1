@@ -70,7 +70,7 @@ class OrderHdr extends BaseModel
     #region Metode Utama
     public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     {
-        $this->fillAndSanitize($inputs);
+        $this->fill($inputs);
 
         // Generate Transaction ID jika belum ada
         $this->generateTransactionId($appCode, $configCode);
@@ -105,7 +105,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getBillingTrType(),
         ]);
 
-        $billingHdr->fillAndSanitize([
+        $billingHdr->fill([
             'tr_date' => $this->tr_date,
             'partner_id' => $this->partner_id,
             'partner_code' => $this->partner_code,
@@ -126,7 +126,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getDeliveryTrType(),
         ]);
 
-        $deliveryHdr->fillAndSanitize([
+        $deliveryHdr->fill([
             'tr_date' => $this->tr_date,
             'partner_id' => $this->partner_id,
             'partner_code' => $this->partner_code,
@@ -147,7 +147,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getDeliveryTrType(),
         ]);
 
-        $deliveryDtl->fillAndSanitize([
+        $deliveryDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_type' => $this->getDeliveryTrType(),
             'tr_id' => $this->tr_id,
@@ -167,7 +167,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getBillingTrType(),
         ]);
 
-        $billingDtl->fillAndSanitize([
+        $billingDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_type' => $this->getBillingTrType(),
             'tr_id' => $this->tr_id,

@@ -99,7 +99,7 @@ class Detail extends BaseComponent
             $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
             // dd($this->inputs['code']);
         }
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         $this->object->save();
 
         if ($this->object->PartnerDetail == null) {

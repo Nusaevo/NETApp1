@@ -79,7 +79,7 @@ class Detail extends BaseComponent
         //     throw new \Exception("Application not selected. Please select an application.");
         // }
 
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         if ($this->isEditOrView()) {
             $this->object->setConnection($this->application->code);
         }

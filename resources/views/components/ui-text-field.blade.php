@@ -4,7 +4,7 @@
 
 <div class="col-sm mb-5" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
-    <div class="d-flex align-items-center">
+    <div class="input-group">
         <div class="form-floating flex-grow-1">
             @if (isset($type) && $type === 'textarea')
                 <textarea style="min-height: 150px;" wire:model="{{ $model }}" id="{{ $id }}"
@@ -84,7 +84,7 @@
                         let input = this.$refs.inputField;
                         if (input) {
                             myJQuery(input).datepicker({
-                                dateFormat: 'dd-mm-yy',
+                                dateFormat: 'dd-mm-yyyy',
                                 changeMonth: true,
                                 changeYear: true,
                                 showButtonPanel: true
@@ -183,16 +183,8 @@ is-invalid
 
         <!-- Refresh Button -->
         @if (isset($clickEvent) && $clickEvent !== '')
-            <div class="d-flex align-items-center ms-2">
-                <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
-                    <x-ui-button :clickEvent="$clickEvent" cssClass="btn btn-secondary" :buttonName="$buttonName" :action="$action"
-                        :enabled="$enabled" />
-                </span>
-                <span wire:loading wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
-                    <span class="spinner-border spinner-border-sm align-middle" role="status"
-                        aria-hidden="true"></span>
-                </span>
-            </div>
+              <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary" :buttonName="$buttonName" :action="$action"
+                :enabled="$enabled" loading="true" />
         @endif
     </div>
 </div>

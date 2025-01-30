@@ -343,7 +343,7 @@ class MaterialComponent extends BaseComponent
         $this->validatePrices();
         $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
         $this->generateMaterialDescriptionsFromBOMs();
-        $this->object->fillAndSanitize($this->materials);
+        $this->object->fill($this->materials);
 
         if ($this->object->isNew()) {
             $this->validateMaterialCode();
@@ -467,7 +467,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
-        $this->object_uoms->fillAndSanitize($this->matl_uoms);
+        $this->object_uoms->fill($this->matl_uoms);
         $this->object_uoms->save();
     }
 
@@ -478,7 +478,7 @@ class MaterialComponent extends BaseComponent
                 $this->object_boms[$index] = new MatlBom();
             }
             $bomData = $this->prepareBOMData($bomData, $index);
-            $this->object_boms[$index]->fillAndSanitize($bomData);
+            $this->object_boms[$index]->fill($bomData);
             $this->object_boms[$index]->save();
         }
     }

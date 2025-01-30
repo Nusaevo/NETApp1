@@ -5,8 +5,7 @@
 
     <div wire:ignore.self class="col-sm mb-5" @if (isset($span)) span="{{ $span }}" @endif
         @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
-
-        <div class="d-flex align-items-center">
+        <div class="input-group">
             <div class="form-floating  flex-grow-1" x-data="{
                 initSelect2() {
                     let selectId = '{{ $id }}';
@@ -96,18 +95,8 @@
             </div>
 
             @if (isset($clickEvent) && $clickEvent !== '')
-                <div class="d-flex align-items-center ms-2">
-                    <!-- Button when not loading -->
-                    <span wire:loading.remove wire:target="{{ $clickEvent }}">
-                        <x-ui-button :clickEvent="$clickEvent" cssClass="btn btn-secondary" :buttonName="$buttonName ?? 'Search'" :action="$action ?? ''"
-                            :enabled="$enabled ?? true" />
-                    </span>
-                    <!-- Loading Spinner -->
-                    <span wire:loading wire:target="{{ $clickEvent }}">
-                        <span class="spinner-border spinner-border-sm align-middle" role="status"
-                            aria-hidden="true"></span>
-                    </span>
-                </div>
-            @endif
+                <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary" :buttonName="$buttonName" :action="$action"
+                    :enabled="$enabled" loading="true" />
+             @endif
         </div>
     </div>

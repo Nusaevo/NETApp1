@@ -67,7 +67,7 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
 
         if($this->object->isDuplicateCode())
         {

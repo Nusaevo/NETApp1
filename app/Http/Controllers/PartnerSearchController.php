@@ -2,63 +2,75 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TrdJewel1\Master\Partner;
 use Illuminate\Http\Request;
-use Debugbar;
 
-class PartnerSearchController extends Controller
+class DropdownSearchController extends Controller
 {
-    /**
-     * Fetch all partners or search by name for Select2.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index(Request $request)
     {
         try {
-            // Validate the input
             $request->validate([
-                'q' => 'nullable|string|max:255',
+                'q'            => 'nullable|string|max:255',
+                'page'         => 'nullable|integer|min:1',
+                'model'        => 'nullable|string',
+                'where'        => 'nullable|string',
+                'option_value' => 'nullable|string',
+                'option_label' => 'nullable|string',
             ]);
 
-            $search = $request->get('q', ''); // Default to an empty string
-            Debugbar::info('Search query received:', $search);
+            $search       = $request->input('q', '');
+            $page         = $request->input('page', 1);
+            $model        = $request->input('model', 'App\\Models\\TrdTire1\\Master\\Partner');
+            $where        = $request->input('where', '');  // contoh: "status=Active"
+            $optionValue  = $request->input('option_value', 'id');
+            $optionLabel  = $request->input('option_label', 'name');
+            $perPage      = 10;
 
-            // Fetch partners matching the search query
-            $partners = Partner::select('id', 'name')
-                ->when($search, function ($query, $search) {
-                    return $query->where('name', 'LIKE', "%$search%");
-                })
-                ->whereNull('deleted_at') // Exclude soft-deleted records
-                ->paginate(10); // Paginate results for better performance
+            // Pastikan class model valid
+            if (!class_exists($model)) {
+                $model = 'App\\Models\\TrdTire1\\Master\\Partner';
+            }
 
-            // Log the query results
-            Debugbar::info('Query results:', $partners->items());
+            // Mulai query
+            $query = (new $model)->newQuery();
 
-            // Format the results for Select2
-            $formattedResults = $partners->getCollection()->map(function ($partner) {
+            // SELECT field2, field2 -> di sini optionValue dan optionLabel
+            $query->select($optionValue, $optionLabel);
+
+            // Contoh default filter
+            $query->whereNull('deleted_at');
+
+            // Jika ada WHERE tambahan
+            if (!empty($where) && strpos($where, '=') !== false) {
+                [$col, $val] = explode('=', $where);
+                $query->where(trim($col), trim($val));
+            }
+
+            // Jika ada pencarian
+            if (!empty($search)) {
+                // Kita asumsikan option_label adalah field yang dicari
+                $query->where($optionLabel, 'like', "{$search}%");
+            }
+
+            // Paginate
+            $results = $query->paginate($perPage, ['*'], 'page', $page);
+
+            // Format data untuk Select2
+            $formattedResults = $results->map(function ($item) use ($optionValue, $optionLabel) {
                 return [
-                    'id' => $partner->id,
-                    'text' => $partner->name,
+                    'id'   => $item->{$optionValue},
+                    'text' => $item->{$optionLabel},
                 ];
             });
-
-            Debugbar::info('Formatted results for response:', $formattedResults);
 
             return response()->json([
                 'results' => $formattedResults,
                 'pagination' => [
-                    'more' => $partners->hasMorePages(),
-                ],
+                    'more' => $results->currentPage() < $results->lastPage()
+                ]
             ]);
         } catch (\Exception $e) {
-            // Log the error for debugging
-            Debugbar::error('Error occurred while fetching partners:', $e->getMessage());
-
-            return response()->json([
-                'error' => 'An error occurred while processing your request.',
-            ], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 }

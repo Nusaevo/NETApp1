@@ -29,7 +29,9 @@ class BaseModel extends Model
     protected static function boot()
     {
         parent::boot();
-
+        static::saving(function ($model) {
+            $model->sanitizeAttributes();
+        });
         static::retrieved(function ($model) {
             $attributes = $model->getAllColumns();
 
@@ -133,31 +135,27 @@ class BaseModel extends Model
      *
      * @param array $attributes
      */
-    public function fillAndSanitize(array $attributes)
+        /**
+     * Sanitize model attributes before saving.
+     */
+    protected function sanitizeAttributes()
     {
-        $sanitizedAttributes = [];
-
-        foreach ($attributes as $key => $value) {
-            if (isDateAttribute($value)) {
+        foreach ($this->attributes as $key => $value) {
+            if (isDateAttribute($key, $value)) {
                 // Sanitize Date
-                $sanitizedAttributes[$key] = sanitizeDate($value);
-            } elseif (isFormattedNumeric($value) !== false) {
+                $this->attributes[$key] = $this->sanitizeDate($value);
+            } elseif (isFormattedNumeric($value)) {
                 // Format Numeric Strings (e.g., "1.000,50" => "1000.50")
-                $sanitizedAttributes[$key] = str_replace('.', '', $value);
-                $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
+                $this->attributes[$key] = str_replace('.', '', $value);
+                $this->attributes[$key] = str_replace(',', '.', $this->attributes[$key]);
             } elseif (is_array($value)) {
                 // Encode Arrays as JSON
-                $sanitizedAttributes[$key] = json_encode($value);
+                $this->attributes[$key] = json_encode($value);
             } elseif (is_string($value)) {
                 // Trim Strings
-                $sanitizedAttributes[$key] = trim($value);
-            } else {
-                // Default Assignment
-                $sanitizedAttributes[$key] = $value;
+                $this->attributes[$key] = trim($value);
             }
         }
-
-        $this->fill($sanitizedAttributes);
     }
 
     public function isDuplicateCode()

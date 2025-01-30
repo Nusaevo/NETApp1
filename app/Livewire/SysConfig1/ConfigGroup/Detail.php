@@ -150,7 +150,7 @@ class Detail extends BaseComponent
         $this->validateApplicationUsers();
         $application = ConfigAppl::find($this->inputs['app_id']);
         $this->inputs['app_code'] = $application->code;
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         if($this->object->isDuplicateCode())
         {
             $this->addError('inputs.code', __('generic.error.duplicate_code'));

@@ -74,7 +74,7 @@ class OrderHdr extends BaseModel
     public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     #region Metode Utama public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     {
-        $this->fillAndSanitize($inputs);
+        $this->fill($inputs);
         $this->tr_type = $trType; // Ensure tr_type is set
 
         // Tentukan vehicle_type berdasarkan trType
@@ -204,7 +204,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getBillingTrType(),
         ]);
 
-        $billingHdr->fillAndSanitize([
+        $billingHdr->fill([
             'tr_date' => $this->tr_date,
             'partner_id' => $this->partner_id,
             'partner_code' => $this->partner_code,
@@ -232,7 +232,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getDeliveryTrType(),
         ]);
 
-        $deliveryHdr->fillAndSanitize([
+        $deliveryHdr->fill([
             'tr_date' => $this->tr_date,
             'partner_id' => $this->partner_id,
             'partner_code' => $this->partner_code,
@@ -253,7 +253,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getDeliveryTrType(),
         ]);
 
-        $deliveryDtl->fillAndSanitize([
+        $deliveryDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_type' => $this->getDeliveryTrType(),
             'tr_id' => $this->tr_id,
@@ -273,7 +273,7 @@ class OrderHdr extends BaseModel
             'tr_type' => $this->getBillingTrType(),
         ]);
 
-        $billingDtl->fillAndSanitize([
+        $billingDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_type' => $this->getBillingTrType(),
             'tr_id' => $this->tr_id,

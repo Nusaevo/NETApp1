@@ -80,7 +80,7 @@ class Detail extends BaseComponent
         }
         $this->currencyChanged();
 
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         $this->object->save();
     }
 

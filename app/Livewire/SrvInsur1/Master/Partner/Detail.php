@@ -105,7 +105,7 @@ class Detail extends BaseComponent
         if (isNullOrEmptyString($this->inputs['code'])) {
             $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
         }
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         $this->object->save();
     }
 

@@ -245,7 +245,7 @@ class OrderHdr extends SrvInsur1BaseModel
         try {
             list($delivTrType, $billingTrType, $code) = $this->initializeTransactionTypes($trType);
 
-            $this->fillAndSanitize($inputs);
+            $this->fill($inputs);
             $this->generateTransactionId($appCode, $code);
 
             if ($this->isNew()) {
@@ -304,7 +304,7 @@ class OrderHdr extends SrvInsur1BaseModel
     private function createDeliveryHeader($delivTrType, $inputs)
     {
         $delivHdr = DelivHdr::firstOrNew(['tr_id' => $this->tr_id, 'tr_type' => $delivTrType]);
-        $delivHdr->fillAndSanitize([
+        $delivHdr->fill([
             'tr_id' => $this->tr_id,
             'tr_type' => $delivTrType,
             'tr_date' => $this->tr_date,
@@ -321,7 +321,7 @@ class OrderHdr extends SrvInsur1BaseModel
     private function createBillingHeader($billingTrType)
     {
         $billingHdr = BillingHdr::firstOrNew(['tr_id' => $this->tr_id, 'tr_type' => $billingTrType]);
-        $billingHdr->fillAndSanitize([
+        $billingHdr->fill([
             'tr_id' => $this->tr_id,
             'tr_type' => $billingTrType,
             'tr_date' => $this->tr_date,
@@ -360,7 +360,7 @@ class OrderHdr extends SrvInsur1BaseModel
         $inputDetail['trhdr_id'] = $this->id;
         $inputDetail['qty_reff'] = $inputDetail['qty'];
         $inputDetail['tr_type'] = $trType;
-        $orderDtl->fillAndSanitize($inputDetail);
+        $orderDtl->fill($inputDetail);
         if ($orderDtl->isNew()) {
             $orderDtl->status_code = Status::OPEN;
         }
@@ -376,7 +376,7 @@ class OrderHdr extends SrvInsur1BaseModel
             'tr_seq' => $orderDtl->tr_seq,
             'tr_type' => $delivTrType,
         ]);
-        $delivDtl->fillAndSanitize([
+        $delivDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_type' => $delivTrType,
             'tr_id' => $this->tr_id,
@@ -406,7 +406,7 @@ class OrderHdr extends SrvInsur1BaseModel
             'tr_seq' => $delivDtl->tr_seq,
             'tr_type' => $billingTrType,
         ]);
-        $billingDtl->fillAndSanitize([
+        $billingDtl->fill([
             'trhdr_id' => $delivDtl->trhdr_id,
             'tr_type' => $billingTrType,
             'tr_id' => $delivDtl->tr_id,

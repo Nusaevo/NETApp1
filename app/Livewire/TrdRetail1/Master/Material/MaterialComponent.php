@@ -158,7 +158,7 @@ class MaterialComponent extends BaseComponent
         . $this->materials['brand'] . ' '
         . $this->materials['type_code'];
 
-        $this->object->fillAndSanitize($this->materials);
+        $this->object->fill($this->materials);
         if ($this->object->isNew()) {
             $this->validateMaterialCode();
         }
@@ -210,7 +210,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
-        $this->object_uoms->fillAndSanitize($this->matl_uoms);
+        $this->object_uoms->fill($this->matl_uoms);
         $this->object_uoms->save();
     }
 

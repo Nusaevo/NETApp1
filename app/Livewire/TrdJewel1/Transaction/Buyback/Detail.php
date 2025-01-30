@@ -152,7 +152,7 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         if ($this->object->tr_id === null || $this->object->tr_id == 0) {
             $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
                 ->where('code', '=',  "BUYBACK_LASTID")
@@ -177,7 +177,7 @@ class Detail extends BaseComponent
             if (!isset($this->object_detail[$index])) {
                 $this->object_detail[$index] = new ReturnDtl();
             }
-            $this->object_detail[$index]->fillAndSanitize($data);
+            $this->object_detail[$index]->fill($data);
             if ($this->object_detail[$index]->isNew()) {
                 $this->object->status_code = Status::OPEN;
                 $this->object_detail[$index]->tr_id =  $this->object->tr_id;
