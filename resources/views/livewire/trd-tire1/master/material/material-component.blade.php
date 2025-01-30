@@ -17,14 +17,14 @@
                     <div class="col-md-8">
                         <x-ui-card title="Product Type">
                             <x-ui-dropdown-select label="{{ $this->trans('type_code') }}" model="materials.type_code"
-                                :options="$materialType" required="true" :action="$actionValue" onChanged="onBrandChanged" />
+                                :options="$materialType" required="true" :action="$actionValue" onChanged="onBrandChanged" :enabled="$isPanelEnabled"/>
                         </x-ui-card>
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
                                         :selectedValue="$materials['brand']" :options="$materialMerk" required="false" :action="$actionValue"
-                                        onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" />
+                                        onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" :enabled="$isPanelEnabled"/>
                                     <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px" height="400px"
                                         onOpened="openBrandDialogBox" onClosed="closeBrandDialogBox">
                                         <x-slot name="body">
@@ -41,12 +41,12 @@
 
                                     <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
                                         type="code" :action="$actionValue" required="true" enabled="true"
-                                        clickEvent="getMatlCode" buttonName="Kode Baru" />
+                                        clickEvent="getMatlCode" buttonName="Kode Baru" :enabled="$isPanelEnabled"/>
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('category') }}"
                                         model="materials.category" :options="$materialCategory" required="false"
-                                        :action="$actionValue" />
+                                        :action="$actionValue" :enabled="$isPanelEnabled"/>
                                     {{-- <x-ui-dropdown-select label="{{ $this->trans('class_code') }}"
                                         model="materials.class_code" :options="$materialJenis" required="false"
                                         :action="$actionValue" /> --}}

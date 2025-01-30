@@ -25,7 +25,7 @@ return [
     'province' => 'Provinsi',
     'country' => 'Negara',
     'postal_code' => 'Kode Pos',
-    'nib' => 'Nomor Induk Berusaha (NIB)',
+    'nib' => 'NIB',
     'phone' => 'Telepon',
     'point_irc' => 'Poin IRC',
     'point_gt' => 'Poin GT',

@@ -97,6 +97,16 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+    // public function getPaymentTermsData()
+    // {
+    //     $data = $this->getConfigData('MPAYMENT_TERMS');
+    //     return $data->map(function ($data) {
+    //         return [
+    //             'label' => $data->str1,
+    //             'value' => $data->id,
+    //         ];
+    //     })->toArray();
+    // }
     public function getMatlCategoryData()
     {
         $data = $this->getConfigData('MMATL_CATEGORY');
@@ -197,7 +207,7 @@ class MasterService extends BaseService
         $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
         return $suppliersData->map(function ($data) {
             return [
-                'label' => $data->code . " - " . $data->name,
+                'label' => $data->code . " - " . $data->name. " - " . $data->address . " - " . $data->city,
                 'value' => $data->id,
             ];
         })->toArray();
@@ -210,7 +220,7 @@ class MasterService extends BaseService
         $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
         return $suppliersData->map(function ($data) {
             return [
-                'label' => $data->name,
+                'label' => $data->code . " - " . $data->name . " - " . $data->address . " - " . $data->city,
                 'value' => $data->id,
             ];
         })->toArray();
@@ -221,7 +231,7 @@ class MasterService extends BaseService
         $materialsData = Material::whereNull('deleted_at')->get(); // Pastikan untuk hanya mengambil yang tidak dihapus
         return $materialsData->map(function ($data) {
             return [
-                'label' => $data->code,
+                'label' => $data->code . " - " . $data->name,
                 'value' => $data->id,
             ];
         })->toArray();

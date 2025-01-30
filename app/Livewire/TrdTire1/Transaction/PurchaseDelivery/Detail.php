@@ -168,6 +168,19 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
+
+        // Ensure tr_id is unique by incrementing the numeric part if it already exists
+        $originalTrId = $this->inputs['tr_id'];
+        $numericPart = intval(preg_replace('/[^0-9]/', '', $originalTrId));
+        $prefix = preg_replace('/[0-9]/', '', $originalTrId);
+
+        while (DelivHdr::where('tr_type', $this->trType)
+            ->where('tr_id', $this->inputs['tr_id'])
+            ->exists()) {
+            $numericPart++;
+            $this->inputs['tr_id'] = $prefix . $numericPart;
+        }
+
         $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [

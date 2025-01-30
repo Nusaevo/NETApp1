@@ -122,9 +122,9 @@ class OrderHdr extends BaseModel
         } else {
             switch ($vehicle_type) {
                 case 0: // MOTOR without tax invoice
-                    return sprintf('%s%02d%04d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXx
+                    return sprintf('%s%s%05d', $monthLetter, $year, 80000 + $sequenceNumber); // Example: A258XXXx
                 case 1: // MOBIL without tax invoice
-                    return sprintf('%s%s%02d%04d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXx
+                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXx
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
@@ -161,16 +161,14 @@ class OrderHdr extends BaseModel
         // Jika ada entri sebelumnya, periksa bulan dan tahun
         if ($lastOrder) {
             // Ambil bulan dan tahun dari tr_id
-            preg_match('/([A-Z])(\d{2})/', $lastOrder->tr_id, $matches); // Ambil bulan dan tahun
-            if (isset($matches[1]) && isset($matches[2])) {
+            preg_match('/([A-Z])(\d{2})(\d{4,5})$/', $lastOrder->tr_id, $matches); // Ambil bulan, tahun, dan nomor urut
+            if (isset($matches[1]) && isset($matches[2]) && isset($matches[3])) {
                 $lastMonthLetter = $matches[1];
                 $lastYear = (int)$matches[2];
+                $lastSequenceNumber = (int)$matches[3];
 
                 // Cek apakah bulan dan tahun sama dengan yang sekarang
                 if ($lastYear == $currentYear && $lastMonthLetter == $currentMonthLetter) {
-                    // Ambil nomor urut dari tr_id
-                    preg_match('/\d{3,5}$/', $lastOrder->tr_id, $matches); // Ambil 3-5 digit terakhir
-                    $lastSequenceNumber = isset($matches[0]) ? (int)$matches[0] : 0;
                     return $lastSequenceNumber + 1; // Tambahkan 1 ke nomor urut
                 }
             }

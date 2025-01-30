@@ -17,6 +17,7 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $SOTax = [];
     public $SOSend = [];
+    public $paymentTerms = [];
     public $suppliers;
     public $warehouses;
     public $partners;
@@ -46,7 +47,6 @@ class Detail extends BaseComponent
     public $notaCount = 0; // x: jumlah nota jual dicetak
     public $suratJalanCount = 0; // y: jumlah surat jalan dicetak
 
-
     public $rules  = [
         'inputs.tr_date' => 'nullable',
         'inputs.send_to' => 'nullable',
@@ -70,14 +70,16 @@ class Detail extends BaseComponent
 
     public function getTransactionCode()
     {
-        if (!isset($this->inputs['vehicle_type'])) {
-            $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
+        if (!isset($this->inputs['vehicle_type']) || !isset($this->trType)) {
+            $this->dispatch('warning', 'Tipe Kendaraan dan Jenis Transaksi harus diisi');
             return;
         }
 
         $vehicle_type = $this->inputs['vehicle_type'];
-        $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
-        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, $tax_invoice);
+        $tax_invoice = !empty($this->inputs['tax_invoice']); // Konversi ke boolean
+        $tr_type = $this->trType;
+
+        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, $tr_type, $tax_invoice);
     }
 
     public function onTaxInvoiceChanged()
@@ -125,7 +127,6 @@ class Detail extends BaseComponent
             $this->total_dpp = rupiah(round($dpp, 2));
             $this->total_tax = rupiah(round($ppn, 2));
 
-
             // Dispatch event untuk memperbarui UI
             $this->dispatch('updateDPP', $this->total_dpp);
             // $this->dispatch('updateTotalTax', $this->total_tax);
@@ -137,32 +138,35 @@ class Detail extends BaseComponent
     public function onPartnerChanged()
     {
         $partner = Partner::find($this->inputs['partner_id']);
-
         $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
+
+        // Set the send_to field based on the selected partner
+        if ($partner) {
+            $this->inputs['send_to'] = $partner->name;
+        }
     }
 
     private function listNpwp($partner)
     {
-        $partnerDetail = $partner->PartnerDetail;
+        if (!$partner->PartnerDetail || empty($partner->PartnerDetail->wp_details)) {
+            return [];
+        }
+        $wpDetails = $partner->PartnerDetail->wp_details;
 
-        if ($partnerDetail && $partnerDetail->wp_details) {
-            $wpDetails = $partnerDetail->wp_details;
-
-            if (is_string($wpDetails)) {
-                $wpDetails = json_decode($wpDetails, true);
-            }
-
-            if (is_array($wpDetails)) {
-                return array_map(function ($item) {
-                    return [
-                        'label' => $item['npwp'],
-                        'value' => $item['npwp'],
-                    ];
-                }, $wpDetails);
-            }
+        if (is_string($wpDetails)) {
+            $wpDetails = json_decode($wpDetails, true);
+        }
+        // Jika gagal decode atau bukan array, return array kosong untuk mencegah error
+        if (!is_array($wpDetails)) {
+            return [];
         }
 
-        return null;
+        return array_map(function ($item) {
+            return [
+                'label' => ($item['npwp']) . ' - ' . ($item['wp_name']) . ' - ' . ($item['wp_location']),
+                'value' => $item['npwp'],
+            ];
+        }, $wpDetails);
     }
 
     protected function onPreRender()
@@ -175,6 +179,7 @@ class Detail extends BaseComponent
         $this->partners = $this->masterService->getCustomers();
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
+        $this->paymentTerms = $this->masterService->getPaymentTerm();
         $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         if ($this->isEditOrView()) {
@@ -292,8 +297,6 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
-
-
 
     #endregion
 

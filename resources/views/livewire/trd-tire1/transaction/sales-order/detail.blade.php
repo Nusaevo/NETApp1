@@ -36,8 +36,8 @@
                                         clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         onChanged="onPartnerChanged" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('send_to') }}" model="inputs.send_to"
-                                        :options="$SOSend" type="text" :action="$actionValue" required="false" />
+                                    <x-ui-text-field label="{{ $this->trans('send_to') }}" model="inputs.send_to"
+                                        type="text" :action="$actionValue" required="false" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field-search type="text" label="{{ $this->trans('tax_payer') }}"
                                         clickEvent="" model="inputs.tax_payer" :selectedValue="$inputs['tax_payer']" :options="$npwpOptions"
                                         required="false" :action="$actionValue" />
@@ -46,13 +46,13 @@
                                     <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
-                                    <x-ui-text-field label="{{ $this->trans('payment_terms') }}"
-                                        model="inputs.payment_terms" type="text" :action="$actionValue"
-                                        required="false" />
-                                        <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
-                                            type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
-                                            type="text" :action="$actionValue" required="false" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
+                                        model="inputs.payment_terms" :options="$paymentTerms" required="true"
+                                        :action="$actionValue" />
+                                    <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
+                                        type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                    <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
+                                        type="text" :action="$actionValue" required="false" />
                                 </div>
 
                             </x-ui-padding>
@@ -78,10 +78,10 @@
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('total_discount') }}" model="total_discount"
                                     type="text" :action="$actionValue" required="false" enabled="false" />
-                                <x-ui-text-field label="{{ $this->trans('PPN') }}" model="total_tax"
-                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                <x-ui-text-field label="{{ $this->trans('PPN') }}" model="total_tax" type="text"
+                                    :action="$actionValue" required="false" enabled="false" />
                                 <x-ui-text-field label="{{ $this->trans('DPP') }}" model="total_dpp" type="text"
-                                    :action="$actionValue" required="false" enabled="false"/>
+                                    :action="$actionValue" required="false" enabled="false" />
                                 <x-ui-text-field label="{{ $this->trans('total_amount') }}" model="total_amount"
                                     type="text" :action="$actionValue" required="false" enabled="false" />
                             </div>

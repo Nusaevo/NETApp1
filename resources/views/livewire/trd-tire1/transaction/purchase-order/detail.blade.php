@@ -32,17 +32,17 @@
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
-                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
+                                    <x-ui-text-field-search type="int" label="{{ $this->trans('suppliers') }}"
+                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers"
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('payment_terms') }}"
-                                        model="inputs.payment_terms" type="text" :action="$actionValue"
-                                        required="false" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
+                                        model="inputs.payment_terms" :options="$paymentTerms" required="true"
+                                        :action="$actionValue" />
                                     <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>

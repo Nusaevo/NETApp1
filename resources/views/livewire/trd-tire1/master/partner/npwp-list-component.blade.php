@@ -22,7 +22,7 @@
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('wp_location') }}"
                                             model="input_details.{{ $key }}.wp_location" type="textarea"
-                                            :action="$actionValue" required="false" capslockMode="true"/>
+                                            :action="$actionValue" required="true" capslockMode="true"/>
                                     </div>
                                 </x-slot>
                                 <x-slot name="button">

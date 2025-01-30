@@ -14,9 +14,9 @@ class NpwpListComponent extends DetailComponent
 
 
     public $rules  = [
-        'input_details.*.npwp' => 'required|min:1|max:50',
-        'input_details.*.wp_name' => 'required|min:1|max:50',
-        'input_details.*.wp_location' => 'max:50',
+        'input_details.*.npwp' => 'required',
+        'input_details.*.wp_name' => 'required',
+        'input_details.*.wp_location' => 'required',
     ];
 
     protected function onPreRender()

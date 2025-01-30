@@ -17,20 +17,17 @@
                                             :options="$materials" required="true" :action="$actionValue"
                                             onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                             :enabled="true" />
+                                    </div>
+                                    <div class="row">
+                                        <x-ui-text-field model="input_details.{{ $key }}.price"
+                                            label="Harga Satuan" enabled="false" />
                                         <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
                                             enabled="true" class="form-control"
                                             model="input_details.{{ $key }}.qty"
                                             onChanged="updateItemAmount({{ $key }})" type="number" />
-                                        <x-ui-text-field label="Deskripsi Barang"
-                                            model="input_details.{{ $key }}.matl_descr" required="false"
-                                            enabled="false" />
-                                    </div>
-                                    <div class="row">
                                         <x-ui-text-field model="input_details.{{ $key }}.disc"
                                             label="{{ $this->trans('disc') }}" enabled="true"
                                             onChanged="updateItemAmount({{ $key }})" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.price"
-                                            label="Harga Satuan" enabled="false" />
                                         <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
                                             label="Amount" class="form-control" type="text" enabled="false" />
                                     </div>
