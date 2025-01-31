@@ -7,6 +7,7 @@ use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 use App\Enums\Status;
+use Illuminate\Support\Facades\DB;
 
 class DelivHdr extends BaseModel
 {
@@ -21,6 +22,10 @@ class DelivHdr extends BaseModel
         'tr_date',
         'partner_id',
     ];
+    protected $casts = [
+        'tr_id' => 'string',
+    ];
+
 
     #region Relations
     public function Partner()
@@ -47,27 +52,26 @@ class DelivHdr extends BaseModel
     }
     public function savePurchaseHeader($appCode, $trType, $inputs, $configCode)
     {
-        $this->fill($inputs);
-        $this->tr_type = $trType; // Ensure tr_type is set
+        DB::transaction(function () use ($appCode, $trType, $inputs, $configCode) {
+            $this->fill($inputs);
+            $this->tr_type = $trType;
 
-        // Tentukan vehicle_type berdasarkan trType
-        //$vehicleType = $this->vehicle_type;
+            // Set status default
+            if ($this->isNew()) {
+                $this->status_code = Status::OPEN;
+            }
 
-        // Tentukan vehicle_type berdasarkan trType
-        //$vehicleType = $this->vehicle_type;
+            // Simpan data
+            $this->save();
 
-        // Generate Transaction ID jika belum ada
-        // if (empty($this->tr_Id)) {
-        //     $this->tr_Id = $this->generateTransactionId($vehicleType);
-        // }
-
-        // Set default status
-        if ($this->isNew()) {
-            $this->status_code = Status::OPEN;
-        }
-
-        // Simpan header
-        $this->save();
+            // Pastikan model di-refresh dari database
+            $this->refresh();
+        });
+    }
+    public function isOrderCompleted()
+    {
+        // Logika untuk mengecek apakah order selesai
+        return $this->status == 'completed'; // Misalnya, status 'completed' menandakan order selesai
     }
     #endregion
 }

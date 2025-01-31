@@ -41,24 +41,24 @@ class IndexDataTable extends BaseDataTableComponent
             //     ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
-                    if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->id)
-                        ]) . '">' . $row->tr_id . '</a>';
-                    } else {
-                        return '';
-                    }
-                })
-                ->html(),
-            Column::make($this->trans("supplier"), "partner_id")
-                ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                    return '<a href="' . route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->partner_id)
-                    ]) . '">' . $row->Partner->name . '</a>';
+                        'objectId' => encryptWithSessionKey((string)$row->id)  // Ensure it's a string
+                    ]) . '">' . $row->tr_id . '</a>';
                 })
                 ->html(),
+
+                Column::make($this->trans("supplier"), "partner_id")
+                ->format(function ($value, $row) {
+                    return $row->Partner ?
+                        '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->partner_id)
+                        ]) . '">' . $row->Partner->name . '</a>' :
+                        '<span class="text-muted">Nama tidak tersedia</span>';
+                })
+                ->html(),
+
             Column::make($this->trans("matl_code"), 'id')
                 ->format(function ($value, $row) {
                     // Manually load DelivDtl using a query

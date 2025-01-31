@@ -49,7 +49,9 @@ class Detail extends BaseComponent
 
     public $rules  = [
         'inputs.tr_date' => 'nullable',
-        'inputs.send_to' => 'nullable',
+        'inputs.tr_id' => 'required',
+        'inputs.partner_id' => 'required',
+        'inputs.send_to' => 'required',
         'inputs.tax_payer' => 'nullable',
         'inputs.payment_terms' => 'nullable',
         'inputs.tax' => 'nullable',
@@ -173,6 +175,9 @@ class Detail extends BaseComponent
     {
         $this->customValidationAttributes  = [
             'inputs.tax'      => $this->trans('tax'),
+            'inputs.tr_id'      => $this->trans('tr_id'),
+            'inputs.partner_id'      => $this->trans('partner_id'),
+            'inputs.send_to'      => $this->trans('send_to'),
         ];
 
         $this->masterService = new MasterService();

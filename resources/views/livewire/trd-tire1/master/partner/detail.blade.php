@@ -6,12 +6,13 @@
     <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
 
-        <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}"
+        <x-ui-page-card
+            title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->code ? ' (' . $this->object->code . ' - ' . $this->object->name . ')' : '' }}"
             status="{{ $this->trans($status) }}">
             @if ($actionValue === 'Create')
-                <x-ui-tab-view id="myTab" tabs="general,contact,bank,npwp"></x-ui-tab-view>
+                <x-ui-tab-view id="myTab" tabs="general,contact,bank,npwp,alamat_kirim"></x-ui-tab-view>
             @else
-                <x-ui-tab-view id="myTab" tabs="general,contact,bank,npwp,transactions"></x-ui-tab-view>
+                <x-ui-tab-view id="myTab" tabs="general,contact,bank,npwp,alamat_kirim,transactions"></x-ui-tab-view>
             @endif
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
@@ -109,6 +110,9 @@
                 </div>
                 <div class="tab-pane fade show" id="bank" role="tabpanel" aria-labelledby="bank-tab">
                     @livewire($currentRoute . '.bank-list-component', ['action' => $action, 'objectId' => $objectId])
+                </div>
+                <div class="tab-pane fade show" id="alamat_kirim" role="tabpanel" aria-labelledby="alamat_kirim-tab">
+                    @livewire($currentRoute . '.shipping-address-component', ['action' => $action, 'objectId' => $objectId])
                 </div>
                 @if ($actionValue !== 'Create')
                     <div class="tab-pane fade show" id="transactions" role="tabpanel"

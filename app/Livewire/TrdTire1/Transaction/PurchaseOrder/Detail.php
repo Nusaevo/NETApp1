@@ -50,7 +50,9 @@ class Detail extends BaseComponent
 
     public $rules  = [
         'inputs.tr_date' => 'nullable',
-        'inputs.send_to' => 'nullable',
+        'inputs.send_to' => 'required',
+        'inputs.tr_id' => 'required',
+        'inputs.partner_id' => 'required',
         'inputs.tax_payer' => 'nullable',
         'inputs.payment_terms' => 'nullable',
         'inputs.tax' => 'nullable',
@@ -184,6 +186,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
+            $this->inputs['tr_id'] = $this->object->tr_id;
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {

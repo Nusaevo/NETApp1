@@ -3,18 +3,18 @@
 namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderHdr};
 use App\Models\TrdTire1\Master\{Partner, Material};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
 use Exception;
 
-
 class Detail extends BaseComponent
 {
     #region Constant Variables
     public $inputs = [];
+    public $input_details = [];
     public $SOTax = [];
     public $SOSend = [];
     public $suppliers;
@@ -26,6 +26,11 @@ class Detail extends BaseComponent
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
+    public $materials;
+    public $object_detail;
+    public $trhdr_id;
+    public $tr_seq;
+    public $tr_id;
 
     public $total_amount = 0;
     public $trType = "PD";
@@ -40,80 +45,41 @@ class Detail extends BaseComponent
 
     protected $masterService;
     public $isPanelEnabled = "false";
-
     public $purchaseOrders = [];
 
-    public $rules  = [
+    protected $rules = [
         'inputs.tr_date' => 'nullable',
+        'inputs.tr_id' => 'required',
+        'inputs.partner_id' => 'required',
         'inputs.send_to' => 'nullable',
         'inputs.tax_payer' => 'nullable',
         'inputs.payment_terms' => 'nullable',
         'inputs.tax' => 'nullable',
         'inputs.due_date' => 'nullable',
         'inputs.cust_reff' => 'nullable',
+        'input_details.*.qty' => 'required',
+        'input_details.*.price' => 'nullable',
+        'input_details.*.matl_descr' => 'nullable',
+        'input_details.*.matl_uom' => 'nullable',
     ];
+
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
         'onPurchaseOrderSelected' => 'onPurchaseOrderChanged',
+        'load-purchase-order-details' => 'loadPurchaseOrderDetails'
     ];
     #endregion
 
-    #region Populate Data methods
-
-    public function getTransactionCode()
-    {
-        if (!isset($this->inputs['vehicle_type'])) {
-            $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
-            return;
-        }
-
-        $vehicle_type = $this->inputs['vehicle_type'];
-        $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
-        $this->inputs['tr_id'] = DelivHdr::generateTransactionId($vehicle_type, $tax_invoice);
-    }
-
-    public function onTaxInvoiceChanged()
-    {
-        $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
-    }
-    public function onPartnerChanged()
-    {
-        $partner = Partner::find($this->inputs['partner_id']);
-
-        $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
-    }
-
-    // public function generateBasicTransactionId()
-    // {
-    //     $appCode = $this->getAppCode($this->vehicle_type);
-    //     $this->transaction_id = $this->generateTransactionId($appCode, 'some_code');
-    // }
-
-
-    // private function getAppCode($vehicleType)
-    // {
-    //     switch ($vehicleType) {
-    //         case '0':
-    //             return 'Motor';
-    //         case '1':
-    //             return 'Mobil';
-    //         case '2':
-    //             return 'Lain-lain';
-    //         default:
-    //             return 'Lain-lain';
-    //     }
-    // }
-
-    // public function generateTransactionId($appCode, $codeType)
-    // {
-    //     // Logic to generate transaction ID based on appCode and codeType
-    //     return $appCode . '-' . $codeType . '-' . uniqid();
-    // }
+    #region Component Lifecycle Methods
     protected function onPreRender()
     {
-        $this->customValidationAttributes  = [
-            'inputs.tax'      => $this->trans('tax'),
+        $this->customValidationAttributes = [
+            'inputs.tax' => $this->trans('tax'),
+            'input_details.*' => $this->trans('product'),
+            'input_details.*.matl_id' => $this->trans('matl_id'),
+            'input_details.*.qty' => $this->trans('qty'),
+            'input_details.*.price' => $this->trans('price'),
         ];
 
         $this->masterService = new MasterService();
@@ -123,21 +89,26 @@ class Detail extends BaseComponent
         $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->purchaseOrders = $this->masterService->getPurchaseOrders();
+        $this->materials = $this->masterService->getMaterials();
+
         if ($this->isEditOrView()) {
             $this->object = DelivHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
-            $this->inputs['tax_invoice'] = $this->object->tax_invoice; // Ensure tax_invoice is populated
-        }
-        if (!$this->isEditOrView()) {
+            $this->inputs['tax_invoice'] = $this->object->tax_invoice;
+            $this->inputs['tr_id'] = $this->object->tr_id;
 
-            $this->isPanelEnabled = "true";
+            $partner = Partner::find($this->object->partner_id);
+            $this->inputs['partner_id'] = $this->object->partner_id;
+            $this->inputs['partner_name'] = $partner ? $partner->name : null;
+
+            $this->loadDetails();
         }
     }
 
     public function onReset()
     {
-        $this->reset('inputs');
+        $this->reset('inputs', 'input_details');
         $this->object = new DelivHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
@@ -146,51 +117,147 @@ class Detail extends BaseComponent
         $this->inputs['curr_code'] = "USD";
         $this->inputs['send_to'] = "Pelanggan";
         $this->inputs['wh_code'] = 18;
-        $this->inputs['partner_id'] = 0;
-    }
-
-    public function render()
-    {
-        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
-        return view($renderRoute);
     }
     #endregion
 
-    #region CRUD Methods
-
-    public function onValidateAndSave()
+    #region Material List Methods
+    protected function loadDetails()
     {
-        if ($this->actionValue == 'Edit') {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
+        if (!empty($this->object)) {
+            $this->object_detail = DelivDtl::GetByDelivHdr($this->object->id, $this->object->tr_type)
+                ->orderBy('tr_seq')
+                ->get();
+
+            foreach ($this->object_detail as $key => $detail) {
+                $this->input_details[$key] = populateArrayFromModel($detail);
             }
         }
+    }
 
-        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $partner = Partner::find($this->inputs['partner_id']);
-            $this->inputs['partner_code'] = $partner->code;
+    public function addItem()
+    {
+        if (!empty($this->objectIdValue)) {
+            $this->input_details[] = [
+                'matl_id' => null,
+                'qty' => null,
+                'price' => 0.0,
+            ];
+        } else {
+            $this->dispatch('error', 'Tolong simpan Header terlebih dahulu');
         }
+    }
 
-        // Ensure tr_id is unique by incrementing the numeric part if it already exists
-        $originalTrId = $this->inputs['tr_id'];
-        $numericPart = intval(preg_replace('/[^0-9]/', '', $originalTrId));
-        $prefix = preg_replace('/[0-9]/', '', $originalTrId);
-
-        while (DelivHdr::where('tr_type', $this->trType)
-            ->where('tr_id', $this->inputs['tr_id'])
-            ->exists()
-        ) {
-            $numericPart++;
-            $this->inputs['tr_id'] = $prefix . $numericPart;
+    public function deleteItem($index)
+    {
+        try {
+            unset($this->input_details[$index]);
+            $this->input_details = array_values($this->input_details);
+            $this->dispatch('success', 'Item berhasil dihapus');
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
         }
+    }
 
-        // $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
-        if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
-            ]);
+    public function onMaterialChanged($key, $matl_id)
+    {
+        if ($matl_id) {
+            $material = Material::find($matl_id);
+            if ($material) {
+                $this->input_details[$key]['matl_id'] = $material->id;
+                $this->input_details[$key]['price_uom'] = $material->selling_price;
+                $this->input_details[$key]['matl_uom'] = $material->uom;
+                $this->input_details[$key]['matl_descr'] = $material->name;
+            }
+        }
+    }
+
+    public function onPurchaseOrderChanged($value)
+    {
+        if ($value) {
+            $order = OrderHdr::where('tr_id', $value)->first();
+
+            if ($order) {
+                $partner = Partner::find($order->partner_id);
+                $this->inputs['partner_id'] = $partner->id;
+                $this->inputs['partner_name'] = $partner->name;
+            }
+
+            $this->inputs['tr_id'] = $value;
+            $this->loadPurchaseOrderDetails($value);
+        }
+    }
+
+    public function loadPurchaseOrderDetails($tr_id)
+    {
+        $this->input_details = [];
+        $orderDetails = OrderDtl::where('tr_id', $tr_id)->get();
+
+        foreach ($orderDetails as $detail) {
+            $this->input_details[] = [
+                'matl_id' => $detail->matl_id,
+                'qty' => $detail->qty,
+                'price' => $detail->price,
+                'matl_descr' => $detail->matl_descr,
+                'matl_uom' => $detail->matl_uom,
+            ];
+        }
+    }
+    #endregion
+
+    #region CRUD Operations
+    public function onValidateAndSave()
+    {
+        $this->validate();
+
+        try {
+            // Save header
+            if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
+                $partner = Partner::find($this->inputs['partner_id']);
+                $this->inputs['partner_code'] = $partner->code;
+            }
+
+            $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+
+            // Save details
+            $existingDetails = DelivDtl::where('trhdr_id', $this->objectIdValue)
+                ->where('tr_type', $this->object->trType)
+                ->get()
+                ->keyBy('tr_seq');
+
+            foreach ($this->input_details as $key => $detail) {
+                $tr_seq = $key + 1;
+                $delivDtl = DelivDtl::firstOrNew([
+                    'trhdr_id' => $this->objectIdValue,
+                    'tr_seq' => $tr_seq,
+                ]);
+
+                $detailData = [
+                    'tr_id' => $this->object->tr_id,
+                    'trhdr_id' => $this->objectIdValue,
+                    'qty_reff' => $detail['qty'],
+                    'tr_type' => $this->object->tr_type,
+                    'matl_id' => $detail['matl_id'],
+                    'qty' => $detail['qty'],
+                    'price' => $detail['price'],
+                    'matl_descr' => $detail['matl_descr'],
+                    'matl_uom' => $detail['matl_uom'],
+                ];
+
+                $delivDtl->fill($detailData);
+                $delivDtl->save();
+            }
+
+            // Delete removed items
+            $existingDetails->each(function ($item) use ($existingDetails) {
+                if (!isset($this->input_details[$item->tr_seq - 1])) {
+                    $item->delete();
+                }
+            });
+
+            $this->dispatch('success', 'Data berhasil disimpan');
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
     }
 
@@ -198,56 +265,26 @@ class Detail extends BaseComponent
     {
         try {
             if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                $this->dispatch('warning', 'Nota tidak bisa dihapus karena status Completed');
                 return;
             }
 
-            if (!$this->object->isOrderEnableToDelete()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
-                return;
-            }
-
-            //$this->updateVersionNumber();
-            if (isset($this->object->status_code)) {
-                $this->object->status_code =  Status::NONACTIVE;
-            }
+            $this->object->status_code = Status::NONACTIVE;
             $this->object->save();
             $this->object->delete();
-            $messageKey = 'generic.string.disable';
-            $this->dispatch('success', __($messageKey));
+
+            $this->dispatch('success', 'Data berhasil dihapus');
+            return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+
         } catch (Exception $e) {
-            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
-        }
-
-        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
-    }
-
-    public function onPurchaseOrderChanged($value)
-    {
-        if ($value) {
-            // Remove previously selected tr_id
-            $this->inputs['tr_id'] = null;
-
-            $order = OrderHdr::where('tr_id', $value)->first();
-            if ($order) {
-                $partner = Partner::find($order->partner_id);
-                if ($partner) {
-                    $this->inputs['custommer'] = $partner->name;
-                }
-                $this->inputs['tr_id'] = $value; // Save the selected tr_id
-                $this->dispatch('onPurchaseOrderSelected', ['tr_id' => $value]);
-            }
+            $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
+    #endregion
 
-    public function onPurchaseOrderSelected($tr_id)
+    public function render()
     {
-        $this->dispatch('populateMaterialList', ['tr_id' => $tr_id]);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
-
-    #endregion
-
-    #region Component Events
-
-    #endregion
 }
