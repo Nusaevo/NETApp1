@@ -5,9 +5,8 @@ namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
 use App\Livewire\Component\DetailComponent;
 use App\Models\TrdTire1\Master\Material;
 use App\Services\TrdTire1\Master\MasterService;
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl};
 use Exception;
-
 
 class MaterialListComponent extends DetailComponent
 {
@@ -24,6 +23,10 @@ class MaterialListComponent extends DetailComponent
         'input_details.*.price' => 'nullable', // Ensure unit price is required and numeric
         'input_details.*.matl_descr' => 'nullable', // Description is optional but must be a string with a max length
         'input_details.*.matl_uom' => 'nullable', // Ensure UOM is required and a string
+    ];
+
+    protected $listeners = [
+        'populateMaterialList' => 'onPurchaseOrderSelected',
     ];
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
@@ -239,6 +242,21 @@ class MaterialListComponent extends DetailComponent
     {
         $maxTrSeq = DelivDtl::where('trhdr_id', $trhdr_id)->max('tr_seq');
         return $maxTrSeq ? $maxTrSeq + 1 : 1;
+    }
+
+    public function onPurchaseOrderSelected($tr_id)
+    {
+        $orderDetails = OrderDtl::where('tr_id', $tr_id)->get();
+
+        foreach ($orderDetails as $detail) {
+            $this->input_details[] = [
+                'matl_id' => $detail->matl_id,
+                'qty' => $detail->qty,
+                'price' => $detail->price,
+                'matl_descr' => $detail->matl_descr,
+                'matl_uom' => $detail->matl_uom,
+            ];
+        }
     }
 
     public function render()

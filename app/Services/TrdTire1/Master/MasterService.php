@@ -5,6 +5,7 @@ namespace App\Services\TrdTire1\Master;
 use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Master\Partner;
 use App\Services\Base\BaseService;
+use App\Models\TrdTire1\Transaction\OrderHdr;
 
 class MasterService extends BaseService
 {
@@ -311,5 +312,16 @@ class MasterService extends BaseService
         } else {
             return $formattedPrice;
         }
+    }
+
+    public function getPurchaseOrders()
+    {
+        $purchaseOrders = OrderHdr::where('tr_type', 'PO')->get();
+        return $purchaseOrders->map(function ($order) {
+            return [
+                'label' => $order->tr_id,
+                'value' => $order->tr_id,
+            ];
+        })->toArray();
     }
 }

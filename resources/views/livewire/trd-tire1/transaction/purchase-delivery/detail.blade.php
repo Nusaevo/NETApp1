@@ -31,12 +31,14 @@
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('Nota Pembelian') }}"
-                                        model="inputs.purchase_invoice" type="text" :action="$actionValue"
-                                        required="false" />
-                                    <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
+                                    <x-ui-text-field-search label="{{ $this->trans('Nota Pembelian') }}"
+                                        model="inputs.tr_id" type="text" :action="$actionValue" :options="$purchaseOrders"
+                                        required="false" onChanged="onPurchaseOrderChanged"/>
+                                    <x-ui-text-field label="{{ $this->trans('custommer') }}" model="inputs.custommer"
+                                        type="text" :action="$actionValue" required="false" />
+                                    {{-- <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
                                         clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
-                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" /> --}}
                                 </div>
                             </x-ui-padding>
                         </x-ui-card>
