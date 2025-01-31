@@ -5,6 +5,7 @@ namespace App\Services\TrdTire1\Master;
 use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Master\Partner;
 use App\Services\Base\BaseService;
+use App\Models\TrdTire1\Transaction\OrderHdr;
 
 class MasterService extends BaseService
 {
@@ -97,6 +98,16 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+    // public function getPaymentTermsData()
+    // {
+    //     $data = $this->getConfigData('MPAYMENT_TERMS');
+    //     return $data->map(function ($data) {
+    //         return [
+    //             'label' => $data->str1,
+    //             'value' => $data->id,
+    //         ];
+    //     })->toArray();
+    // }
     public function getMatlCategoryData()
     {
         $data = $this->getConfigData('MMATL_CATEGORY');
@@ -197,7 +208,7 @@ class MasterService extends BaseService
         $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
         return $suppliersData->map(function ($data) {
             return [
-                'label' => $data->code . " - " . $data->name,
+                'label' => $data->code . " - " . $data->name. " - " . $data->address . " - " . $data->city,
                 'value' => $data->id,
             ];
         })->toArray();
@@ -210,7 +221,7 @@ class MasterService extends BaseService
         $suppliersData = Partner::GetByGrp(Partner::CUSTOMER);
         return $suppliersData->map(function ($data) {
             return [
-                'label' => $data->name,
+                'label' => $data->code . " - " . $data->name . " - " . $data->address . " - " . $data->city,
                 'value' => $data->id,
             ];
         })->toArray();
@@ -221,7 +232,7 @@ class MasterService extends BaseService
         $materialsData = Material::whereNull('deleted_at')->get(); // Pastikan untuk hanya mengambil yang tidak dihapus
         return $materialsData->map(function ($data) {
             return [
-                'label' => $data->code,
+                'label' => $data->code . " - " . $data->name,
                 'value' => $data->id,
             ];
         })->toArray();
@@ -301,5 +312,16 @@ class MasterService extends BaseService
         } else {
             return $formattedPrice;
         }
+    }
+
+    public function getPurchaseOrders()
+    {
+        $purchaseOrders = OrderHdr::where('tr_type', 'PO')->get();
+        return $purchaseOrders->map(function ($order) {
+            return [
+                'label' => $order->tr_id,
+                'value' => $order->tr_id,
+            ];
+        })->toArray();
     }
 }

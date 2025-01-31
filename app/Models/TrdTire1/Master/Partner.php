@@ -13,8 +13,8 @@ class Partner extends BaseModel
 {
     protected $table = 'partners';
     const CUSTOMER = 'C';
-    const SUPPLIER = 'V';
-    const SALESMAN = 'S';
+    const SUPPLIER = 'S';
+    const SALESMAN = 'A';
     const BANK = 'B';
     use SoftDeletes;
     public static function boot()

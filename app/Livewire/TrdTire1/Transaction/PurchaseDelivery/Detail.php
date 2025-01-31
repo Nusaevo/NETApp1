@@ -3,7 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderHdr};
 use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
@@ -41,6 +41,7 @@ class Detail extends BaseComponent
     protected $masterService;
     public $isPanelEnabled = "false";
 
+    public $purchaseOrders = [];
 
     public $rules  = [
         'inputs.tr_date' => 'nullable',
@@ -54,6 +55,7 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
+        'onPurchaseOrderSelected' => 'onPurchaseOrderChanged',
     ];
     #endregion
 
@@ -120,6 +122,7 @@ class Detail extends BaseComponent
         $this->SOSend = $this->masterService->getSOSendData();
         $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
+        $this->purchaseOrders = $this->masterService->getPurchaseOrders();
         if ($this->isEditOrView()) {
             $this->object = DelivHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
@@ -168,7 +171,21 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+
+        // Ensure tr_id is unique by incrementing the numeric part if it already exists
+        $originalTrId = $this->inputs['tr_id'];
+        $numericPart = intval(preg_replace('/[^0-9]/', '', $originalTrId));
+        $prefix = preg_replace('/[0-9]/', '', $originalTrId);
+
+        while (DelivHdr::where('tr_type', $this->trType)
+            ->where('tr_id', $this->inputs['tr_id'])
+            ->exists()
+        ) {
+            $numericPart++;
+            $this->inputs['tr_id'] = $prefix . $numericPart;
+        }
+
+        // $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
@@ -204,6 +221,30 @@ class Detail extends BaseComponent
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
+
+    public function onPurchaseOrderChanged($value)
+    {
+        if ($value) {
+            // Remove previously selected tr_id
+            $this->inputs['tr_id'] = null;
+
+            $order = OrderHdr::where('tr_id', $value)->first();
+            if ($order) {
+                $partner = Partner::find($order->partner_id);
+                if ($partner) {
+                    $this->inputs['custommer'] = $partner->name;
+                }
+                $this->inputs['tr_id'] = $value; // Save the selected tr_id
+                $this->dispatch('onPurchaseOrderSelected', ['tr_id' => $value]);
+            }
+        }
+    }
+
+    public function onPurchaseOrderSelected($tr_id)
+    {
+        $this->dispatch('populateMaterialList', ['tr_id' => $tr_id]);
+    }
+
     #endregion
 
     #region Component Events

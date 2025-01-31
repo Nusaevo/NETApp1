@@ -38,8 +38,7 @@ class MaterialComponent extends BaseComponent
     public $object_pattern;
     public $inputs_jenis = [];
     public $object_jenis;
-
-
+    public $isPanelEnabled = "true";
 
     protected $masterService;
     public $rules = [
@@ -113,6 +112,8 @@ class MaterialComponent extends BaseComponent
 
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
+            $this->isPanelEnabled = "false";
+
         }
     }
     public function onReset()

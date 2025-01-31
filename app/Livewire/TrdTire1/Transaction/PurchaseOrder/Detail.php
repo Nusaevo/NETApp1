@@ -17,6 +17,7 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $SOTax = [];
     public $SOSend = [];
+    public $paymentTerms = [];
     public $suppliers;
     public $warehouses;
     public $partners;
@@ -175,6 +176,7 @@ class Detail extends BaseComponent
         $this->partners = $this->masterService->getCustomers();
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
+        $this->paymentTerms = $this->masterService->getPaymentTerm();
         $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         if ($this->isEditOrView()) {
