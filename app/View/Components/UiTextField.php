@@ -22,6 +22,8 @@ class UiTextField extends UiBaseComponent
     // Determines if the input should be transformed to uppercase
     public $capslockMode;
 
+    public $buttonEnabled;
+
     /**
      * Constructor for the UiTextField component.
      *
@@ -54,7 +56,8 @@ class UiTextField extends UiBaseComponent
         $rows = 5,
         $clickEvent = '',
         $buttonName = "",
-        $capslockMode = 'false'
+        $capslockMode = 'false',
+        $buttonEnabled = 'true'
     ) {
         // Call parent constructor to initialize base component properties
         parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, $clickEvent, str_replace(['.', '[', ']'], '_', $model));
@@ -76,6 +79,8 @@ class UiTextField extends UiBaseComponent
 
         // Enable automatic uppercase transformation
         $this->capslockMode = $capslockMode;
+
+        $this->buttonEnabled = $buttonEnabled;
 
         if ($type === 'code' && $action === 'Edit') {
             $this->enabled = 'false';

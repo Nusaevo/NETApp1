@@ -16,7 +16,7 @@
                 let tableId = '{{ isset($id) ? $id : 'defaultTable' }}';
                 let tableElement = this.$refs.table;
 
-                console.log('Initializing DataTable for:', tableId); // Added console log
+                console.log('Initializing DataTable for:', tableId);
 
                 if (tableElement && myJQuery.fn.DataTable) {
                     if (myJQuery.fn.DataTable.isDataTable('#' + tableId)) {
@@ -26,35 +26,24 @@
                     myJQuery('#' + tableId).DataTable({
                         dom: 'Bfrtip',
                         buttons: [
-                            {
-                                extend: 'copy',
-                                title: tableId
-                            },
-                            {
-                                extend: 'csv',
-                                title: tableId
-                            },
-                            {
-                                extend: 'excel',
-                                title: tableId
-                            },
-                            {
-                                extend: 'pdf',
-                                title: tableId
-                            },
+                            { extend: 'copy', title: tableId },
+                            { extend: 'csv', title: tableId },
+                            { extend: 'excel', title: tableId },
+                            { extend: 'pdf', title: tableId },
                         ],
                         pagingType: 'full_numbers',
                         stateSave: true,
                     });
 
-                    console.log('DataTable initialized:', myJQuery('#' + tableId).DataTable().data().toArray()); // Added console log to display table data
+                    console.log('DataTable initialized:', myJQuery('#' + tableId).DataTable().data().toArray());
                 } else {
                     console.log('DataTable initialization failed. myJQuery.fn.DataTable is not defined.');
                 }
             }
         }"
         x-init="initDataTable()"
-        class="table-container" style="margin: 20px; padding: 10px;">
+        class="table-container"
+        style="margin: {{ $margin }}; padding: {{ $padding }};">
         <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" x-ref="table" style="width: 100%; border-collapse: collapse;">
             <thead>
                 <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200" style="border-bottom: 2px solid #dee2e6; background-color: #f8f9fa;">
@@ -72,7 +61,8 @@
         @endisset
     </div>
 @else
-<div style="margin: 20px; padding: 10px;" class='ui-table-container'>
+<div class="ui-table-container"
+    style="margin: {{ $margin }}; padding: {{ $padding }};">
     <table {{ isset($id) ? 'id='.$id : 'id=customTableId' }} class="ui-table">
         <thead>
             <tr class="fw-bold fs-6 text-gray-800">

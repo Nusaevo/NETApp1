@@ -49,8 +49,8 @@
 
         <!-- Button for Click Event -->
         @if (isset($clickEvent) && $clickEvent !== '')
-            <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary" :buttonName="$buttonName" :action="$action"
-            :enabled="$enabled" loading="true" />
+                <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary" :buttonName="$buttonName" :action="$action"
+                :enabled="$buttonEnabled " loading="true" />
         @endif
     </div>
 </div>

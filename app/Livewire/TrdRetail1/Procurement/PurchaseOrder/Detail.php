@@ -14,6 +14,7 @@ class Detail extends BaseComponent
 {
     #region Constant Variables
     public $inputs = [];
+    public $partnerSearchText = '';
     public $suppliers;
     public $warehouses;
     public $payments;
@@ -75,7 +76,6 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['wh_code'] = 18;
-        $this->inputs['partner_id'] = 0;
     }
 
     public function render()
@@ -143,6 +143,13 @@ class Detail extends BaseComponent
     #endregion
 
     #region Component Events
+    public function openPartnerDialogBox()
+    {
+        $this->dispatch('openPartnerDialogBox');
+    }
+    public function searchPartners()
+    {
 
+    }
     #endregion
 }

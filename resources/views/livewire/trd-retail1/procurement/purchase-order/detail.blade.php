@@ -18,10 +18,41 @@
                         <x-ui-card title="Order Info">
                             <x-ui-text-field label="Date" model="inputs.tr_date" type="date"
                                 :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field-search type="int" label="Supplier" clickEvent=""
-                                model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers" required="true"
-                                :action="$actionValue"  :enabled="$isPanelEnabled" />
+                            <x-ui-text-field type="text" label="Supplier"
+                                model="inputs.partner_id" required="true" :action="$actionValue"  enabled="false"
+                                clickEvent="openPartnerDialogBox" buttonName="Search"/>
 
+                            <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
+                                height="400px" onOpened="openPartnerDialogBox"
+                                onClosed="closePartnerDialogBox">
+                                <x-slot name="body">
+                                <x-ui-text-field type="text" label="Search Nama/Alamat Supplier"
+                                    model="partnerSearchText" required="true" :action="$actionValue"  enabled="true"
+                                    clickEvent="searchPartners" buttonName="Search"/>
+                                <!-- Table -->
+                                <x-ui-table id="partnersTable" padding="0px" margin="0px">
+                                    <x-slot name="headers">
+                                        <th class="min-w-50px">Select</th>
+                                        <th class="min-w-100px">Name</th>
+                                        <th class="min-w-100px">Address</th>
+                                    </x-slot>
+                                    <x-slot name="rows">
+                                        @foreach($suppliers as $suppliers)
+                                        <tr>
+                                            {{-- <td>
+                                                <input type="checkbox" wire:model="selectedMaterials" value="{{ $material->id }}">
+                                            </td> --}}
+
+                                        </tr>
+                                        @endforeach
+                                    </x-slot>
+                                    <x-slot name="footer">
+                                        <x-ui-button clickEvent="saveJenis" button-name="Save" loading="true"
+                                            :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+                                    </x-slot>
+                                </x-ui-table>
+                            </x-slot>
+                            </x-ui-dialog-box>
                             <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
                                     :action="$actionValue" required="false" enabled="false" />
                         </x-ui-card>
@@ -61,21 +92,5 @@
     {{-- @php
     dump($input_details);
     @endphp --}}
-
-
-    @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                window.addEventListener('openMaterialDialog', function() {
-                    Livewire.dispatch('resetMaterial');
-                    $('#materialDialogBox').modal('show');
-                });
-
-                window.addEventListener('closeMaterialDialog', function() {
-                    $('#materialDialogBox').modal('hide');
-                });
-            });
-        </script>
-    @endpush
 
 </div>

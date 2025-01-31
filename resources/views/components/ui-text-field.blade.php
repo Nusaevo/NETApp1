@@ -16,16 +16,27 @@
                     x-data="{
                         applyCapsLock() {
                             if ({{ isset($capslockMode) && $capslockMode === 'true' ? 'true' : 'false' }}) {
-                                let textarea = this.$refs.inputField;
-                                if (textarea) {
-                                    textarea.addEventListener('input', function() {
-                                        textarea.value = textarea.value.toUpperCase();
-                                        $wire.set('{{ $model }}', textarea.value);
+                                let input = this.$refs.inputField;
+                                if (input) {
+                                    // Saat kehilangan fokus (blur)
+                                    input.addEventListener('blur', function() {
+                                        input.value = input.value.toUpperCase();
+                                        $wire.set('{{ $model }}', input.value);
+                                    });
+
+                                    // Saat tekan Enter
+                                    input.addEventListener('keydown', function(event) {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            input.value = input.value.toUpperCase();
+                                            $wire.set('{{ $model }}', input.value);
+                                        }
                                     });
                                 }
                             }
                         }
-                    }" x-init="applyCapsLock()" x-ref="inputField"></textarea>
+                    }"
+                    x-init="applyCapsLock()" x-ref="inputField"></textarea>
             @elseif(isset($type) && $type === 'code')
                 <input wire:model="{{ $model }}" type="text"
                     class="form-control @error($model) is-invalid @enderror"
@@ -38,14 +49,25 @@
                             if ({{ isset($capslockMode) && $capslockMode === 'true' ? 'true' : 'false' }}) {
                                 let input = this.$refs.inputField;
                                 if (input) {
-                                    input.addEventListener('input', function() {
+                                    // Saat kehilangan fokus (blur)
+                                    input.addEventListener('blur', function() {
                                         input.value = input.value.toUpperCase();
                                         $wire.set('{{ $model }}', input.value);
+                                    });
+
+                                    // Saat tekan Enter
+                                    input.addEventListener('keydown', function(event) {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            input.value = input.value.toUpperCase();
+                                            $wire.set('{{ $model }}', input.value);
+                                        }
                                     });
                                 }
                             }
                         }
-                    }" x-init="applyCapsLock()" x-ref="inputField" />
+                    }"
+                    x-init="applyCapsLock()" x-ref="inputField" />
             @elseif(isset($type) && $type === 'document')
                 <input wire:model="{{ $model }}" id="{{ $id }}" type="file"
                     class="form-control @error($model) is-invalid @enderror"
@@ -147,14 +169,24 @@ is-invalid
                 @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                 @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
         @else
-            <input x-data="{
-                applyCapsLock() {
+            <input  x-data="{
+            applyCapsLock() {
                     if ({{ isset($capslockMode) && $capslockMode === 'true' ? 'true' : 'false' }}) {
                         let input = this.$refs.inputField;
                         if (input) {
-                            input.addEventListener('input', function() {
+                            // Saat kehilangan fokus (blur)
+                            input.addEventListener('blur', function() {
                                 input.value = input.value.toUpperCase();
                                 $wire.set('{{ $model }}', input.value);
+                            });
+
+                            // Saat tekan Enter
+                            input.addEventListener('keydown', function(event) {
+                                if (event.key === 'Enter') {
+                                    event.preventDefault();
+                                    input.value = input.value.toUpperCase();
+                                    $wire.set('{{ $model }}', input.value);
+                                }
                             });
                         }
                     }
@@ -184,7 +216,7 @@ is-invalid
         <!-- Refresh Button -->
         @if (isset($clickEvent) && $clickEvent !== '')
               <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary" :buttonName="$buttonName" :action="$action"
-                :enabled="$enabled" loading="true" />
+                :enabled="$buttonEnabled " loading="true" />
         @endif
     </div>
 </div>
