@@ -19,10 +19,11 @@ class OrderHdr extends BaseModel
         'tr_type',
         'tax',
         'partner_id',
-        'payment_terms',
+        'payment_term',
         'tr_date',
         'due_date',
         'cust_reff',
+        'curr_rate',
         'tax_payer',
         'type',
         'note',
@@ -122,7 +123,7 @@ class OrderHdr extends BaseModel
         } else {
             switch ($vehicle_type) {
                 case 0: // MOTOR without tax invoice
-                    return sprintf('%s%s%05d', $monthLetter, $year, 80000 + $sequenceNumber); // Example: A258XXXx
+                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXx
                 case 1: // MOBIL without tax invoice
                     return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXx
                 default:

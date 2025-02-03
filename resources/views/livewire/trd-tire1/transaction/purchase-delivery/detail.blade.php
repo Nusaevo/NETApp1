@@ -100,30 +100,32 @@
                                                         </x-slot> --}}
                                                             <x-slot name="rows">
                                                                 <div class="row">
-                                                                    <x-ui-text-field-search type="int"
-                                                                        label='kode' clickEvent=""
-                                                                        model="input_details.{{ $key }}.matl_id"
-                                                                        :selectedValue="$input_details[$key]['matl_id']" :options="$materials"
-                                                                        required="true" :action="$actionValue"
-                                                                        onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                                        :enabled="true" />
-                                                                </div>
-                                                                <div class="row">
-                                                                    <x-ui-text-field
-                                                                        model="input_details.{{ $key }}.qty"
-                                                                        label="Quantity" enabled="true"
-                                                                        class="form-control"
-                                                                        model="input_details.{{ $key }}.qty"
-                                                                        onChanged="updateAmount({{ $key }})"
-                                                                        type="number" />
-                                                                    <x-ui-text-field label="Quantity Belum Dikirim"
-                                                                        model="input_details.{{ $key }}.qty2"
-                                                                        required="false" enabled="true" />
-                                                                    <x-ui-text-field
-                                                                        model="input_details.{{ $key }}.matl_uom"
-                                                                        label="UOM" enabled="false" />
+                                                                    <div class="col-md-6">
+                                                                        <x-ui-text-field-search type="int"
+                                                                            label='kode' clickEvent=""
+                                                                            model="input_details.{{ $key }}.matl_id"
+                                                                            :selectedValue="$input_details[$key]['matl_id']" :options="$materials"
+                                                                            required="true" :action="$actionValue"
+                                                                            onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
+                                                                            :enabled="true" />
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <x-ui-text-field
+                                                                            model="input_details.{{ $key }}.qty"
+                                                                            label="Quantity" enabled="true"
+                                                                            class="form-control"
+                                                                            model="input_details.{{ $key }}.qty"
+                                                                            onChanged="updateAmount({{ $key }})"
+                                                                            type="number" />
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <x-ui-text-field label="Quantity Belum Dikirim"
+                                                                            model="input_details.{{ $key }}.qty2"
+                                                                            required="false" enabled="true" />
+                                                                    </div>
                                                                 </div>
                                                             </x-slot>
+
                                                             <x-slot name="button">
                                                                 <x-ui-link-text type="close" :clickEvent="'deleteItem(' . $key . ')'"
                                                                     class="btn btn-link" name="x" />

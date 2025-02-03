@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
+namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
@@ -32,7 +32,7 @@ class Detail extends BaseComponent
     public $total_tax;
     public $total_dpp;
     public $total_discount;
-    public $trType = "SO";
+    public $trType = "PO";
     public $versionNumber = "0.0";
 
     public $matl_action = 'Create';
@@ -47,11 +47,12 @@ class Detail extends BaseComponent
     public $notaCount = 0; // x: jumlah nota jual dicetak
     public $suratJalanCount = 0; // y: jumlah surat jalan dicetak
 
+
     public $rules  = [
         'inputs.tr_date' => 'nullable',
+        'inputs.send_to' => 'required',
         'inputs.tr_id' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.send_to' => 'required',
         'inputs.tax_payer' => 'nullable',
         'inputs.payment_terms' => 'nullable',
         'inputs.tax' => 'nullable',
@@ -72,18 +73,21 @@ class Detail extends BaseComponent
 
     public function getTransactionCode()
     {
-        if (!isset($this->inputs['vehicle_type']) || !isset($this->trType)) {
-            $this->dispatch('warning', 'Tipe Kendaraan dan Jenis Transaksi harus diisi');
+        if (!isset($this->inputs['vehicle_type'])) {
+            $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
             return;
         }
 
         $vehicle_type = $this->inputs['vehicle_type'];
-        $tax_invoice = !empty($this->inputs['tax_invoice']); // Konversi ke boolean
-        $tr_type = $this->trType;
-
-        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, $tr_type, $tax_invoice);
+        $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
+        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, 'PO', $tax_invoice);
     }
-    
+
+    public function onTaxInvoiceChanged()
+    {
+        $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
+    }
+
     public function onSOTaxChange()
     {
         try {
@@ -124,6 +128,7 @@ class Detail extends BaseComponent
             $this->total_dpp = rupiah(round($dpp, 2));
             $this->total_tax = rupiah(round($ppn, 2));
 
+
             // Dispatch event untuk memperbarui UI
             $this->dispatch('updateDPP', $this->total_dpp);
             // $this->dispatch('updateTotalTax', $this->total_tax);
@@ -135,44 +140,38 @@ class Detail extends BaseComponent
     public function onPartnerChanged()
     {
         $partner = Partner::find($this->inputs['partner_id']);
-        $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
 
-        // Set the send_to field based on the selected partner
-        if ($partner) {
-            $this->inputs['send_to'] = $partner->name;
-        }
+        $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
     }
 
     private function listNpwp($partner)
     {
-        if (!$partner->PartnerDetail || empty($partner->PartnerDetail->wp_details)) {
-            return [];
-        }
-        $wpDetails = $partner->PartnerDetail->wp_details;
+        $partnerDetail = $partner->PartnerDetail;
 
-        if (is_string($wpDetails)) {
-            $wpDetails = json_decode($wpDetails, true);
-        }
-        // Jika gagal decode atau bukan array, return array kosong untuk mencegah error
-        if (!is_array($wpDetails)) {
-            return [];
+        if ($partnerDetail && $partnerDetail->wp_details) {
+            $wpDetails = $partnerDetail->wp_details;
+
+            if (is_string($wpDetails)) {
+                $wpDetails = json_decode($wpDetails, true);
+            }
+
+            if (is_array($wpDetails)) {
+                return array_map(function ($item) {
+                    return [
+                        'label' => $item['npwp'],
+                        'value' => $item['npwp'],
+                    ];
+                }, $wpDetails);
+            }
         }
 
-        return array_map(function ($item) {
-            return [
-                'label' => ($item['npwp']) . ' - ' . ($item['wp_name']) . ' - ' . ($item['wp_location']),
-                'value' => $item['npwp'],
-            ];
-        }, $wpDetails);
+        return null;
     }
 
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
             'inputs.tax'      => $this->trans('tax'),
-            'inputs.tr_id'      => $this->trans('tr_id'),
-            'inputs.partner_id'      => $this->trans('partner_id'),
-            'inputs.send_to'      => $this->trans('send_to'),
         ];
 
         $this->masterService = new MasterService();
@@ -187,6 +186,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
+            $this->inputs['tr_id'] = $this->object->tr_id;
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
@@ -207,6 +207,7 @@ class Detail extends BaseComponent
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
+        $this->inputs['send_to'] = "Pelanggan";
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = 0;
     }
@@ -234,9 +235,8 @@ class Detail extends BaseComponent
             $this->inputs['partner_code'] = $partner->code;
         }
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
-
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
+            return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -297,6 +297,8 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
+
+
 
     #endregion
 

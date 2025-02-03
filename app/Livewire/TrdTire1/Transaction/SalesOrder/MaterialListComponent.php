@@ -23,11 +23,8 @@ class MaterialListComponent extends DetailComponent
     public $total_dpp = 0; // New property for total tax
 
     protected $rules = [
-        'input_details.*.qty' => 'nullable',
-        'input_details.*.price' => 'nullable',
-        'input_details.*.price_base' => 'nullable',
-        'input_details.*.matl_descr' => 'nullable',
-        'input_details.*.matl_uom' => 'nullable',
+        'input_details.*.qty' => 'required',
+        'input_details.*.matl_id' => 'required',
     ];
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
@@ -61,8 +58,6 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[] = [
                     'matl_id' => null,
                     'qty' => null,
-                    'price' => 0.0,
-                    'disc' => 0.0,
                 ];
                 $this->dispatch('success', __('generic.string.add_item'));
             } catch (Exception $e) {
@@ -199,6 +194,7 @@ class MaterialListComponent extends DetailComponent
                     $orderDtl->forceDelete();
                 }
             }
+            // dd("erere");
 
             // Save or update new items
             foreach ($this->input_details as $key => $detail) {

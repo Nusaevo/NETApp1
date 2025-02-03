@@ -8,7 +8,7 @@
                             <x-ui-list-body>
                                 <x-slot name="rows">
                                     <div class="row">
-                                        <x-ui-text-field-search type="int" label="kode" clickEvent=""
+                                        <x-ui-text-field-search type="int" label="{{ $this->trans('code') }}" clickEvent=""
                                             model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                             :options="$materials" required="true" :action="$actionValue"
                                             onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
@@ -17,10 +17,10 @@
                                     <div class="row">
                                         <x-ui-text-field model="input_details.{{ $key }}.price"
                                             label="Harga Satuan" enabled="false" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
+                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label="{{ $this->trans('qty') }}"
                                             enabled="true" class="form-control"
                                             model="input_details.{{ $key }}.qty"
-                                            onChanged="updateItemAmount({{ $key }})" type="number" />
+                                            onChanged="updateItemAmount({{ $key }})" type="number" required="true"/>
                                         <x-ui-text-field model="input_details.{{ $key }}.disc"
                                             label="{{ $this->trans('disc') }}" enabled="true"
                                             onChanged="updateItemAmount({{ $key }})" />
