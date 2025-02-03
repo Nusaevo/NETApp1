@@ -24,6 +24,7 @@ class MaterialListComponent extends DetailComponent
 
     protected $rules = [
         'input_details.*.qty' => 'nullable',
+        'input_details.*.qty_reff' => 'nullable',
         'input_details.*.price' => 'nullable',
         'input_details.*.price_base' => 'nullable',
         'input_details.*.matl_descr' => 'nullable',
@@ -199,6 +200,7 @@ class MaterialListComponent extends DetailComponent
                     $orderDtl->forceDelete();
                 }
             }
+            // dd("erere");
 
             // Save or update new items
             foreach ($this->input_details as $key => $detail) {
