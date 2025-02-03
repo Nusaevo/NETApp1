@@ -6,35 +6,64 @@
         ? 'false'
         : ((!isset($enabled) || $enabled === 'true') ? 'true' : 'false');
     $isRequired = isset($required) && $required === 'true' ? 'true' : 'false';
-    $isSingleCheckbox = $type === 'checkbox' && count($options) === 1;
+
+    // Jika options kosong atau hanya memiliki satu opsi
+    $isSingleOption = empty($options) || count($options) === 1;
+
+    // Menentukan apakah harus menampilkan single checkbox atau radio
+    $isSingleCheckbox = $isSingleOption && $type === 'checkbox';
+    $isSingleRadio = $isSingleOption && $type === 'radio';
+
+    // Tentukan nilai key dan label untuk single option
+    $key = empty($options) ? 'true' : array_key_first($options);
+    $optionLabel = empty($options) ? 'Yes' : $options[$key];
 @endphp
 
-<!-- Container -->
 <div
    class="col-sm m-2"
     @if (isset($span)) span="{{ $span }}" @endif
     @if ($isVisible === 'false') style="display: none;" @endif
 >
-    <!-- Single Checkbox (Yes/No) dengan Field Label di Kiri -->
+    <!-- Single Checkbox -->
     @if ($isSingleCheckbox)
-        @php
-            $key = array_key_first($options);
-            $optionLabel = $options[$key];
-        @endphp
         <div class="d-flex align-items-center gap-2">
-            <label for="checkbox_{{ $id }}_{{ $key }}" class="form-check-label fw-bold">
-                {{ $label }} :
-            </label>
+            @if (!empty($label))
+                <label for="checkbox_{{ $id }}_{{ $key }}" class="form-check-label fw-bold">
+                    {{ $label }} :
+                </label>
+            @endif
             <input
                 type="checkbox"
                 wire:model="{{ $model }}"
                 wire:change="{{ $onChanged ?? '' }}"
                 id="checkbox_{{ $id }}_{{ $key }}"
                 class="form-check-input"
-                value="false"
+                value="1"
                 @if ($isEnabled === 'false') disabled @endif
             />
             <label for="checkbox_{{ $id }}_{{ $key }}" class="form-check-label fw-bold">
+                {{ $optionLabel }}
+            </label>
+        </div>
+
+    <!-- Single Radio -->
+    @elseif ($isSingleRadio)
+        <div class="d-flex align-items-center gap-2">
+            @if (!empty($label))
+                <label for="radio_{{ $id }}_{{ $key }}" class="form-check-label fw-bold">
+                    {{ $label }} :
+                </label>
+            @endif
+            <input
+                type="radio"
+                wire:model="{{ $model }}"
+                wire:change="{{ $onChanged ?? '' }}"
+                id="radio_{{ $id }}_{{ $key }}"
+                class="form-check-input"
+                value="1"
+                @if ($isEnabled === 'false') disabled @endif
+            />
+            <label for="radio_{{ $id }}_{{ $key }}" class="form-check-label fw-bold">
                 {{ $optionLabel }}
             </label>
         </div>
@@ -73,7 +102,7 @@
             @endforeach
         </div>
 
-    <!-- Radio Button -->
+    <!-- Multiple Radio -->
     @elseif ($type === 'radio')
         @if (!empty($label))
             <div class="responsive-label">

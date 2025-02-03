@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdRetail1\Procurement\PurchaseOrder;
+namespace App\Livewire\TrdRetail1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};

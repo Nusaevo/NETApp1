@@ -107,7 +107,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'custom_actions' => [
                             // [
                             //     'label' => 'Print',
-                            //     'route' => route('TrdTire1.Procurement.PurchaseDelivery.PrintPdf', [
+                            //     'route' => route('TrdTire1..PurchaseDelivery.PrintPdf', [
                             //         'action' => encryptWithSessionKey('Edit'),
                             //         'objectId' => encryptWithSessionKey($row->id)
                             //     ]),

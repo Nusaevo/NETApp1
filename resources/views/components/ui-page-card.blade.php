@@ -39,6 +39,9 @@
                         by {{ $this->object->updated_by ?? 'N/A' }}
                     @endif
                 </p>
+                <p>
+                    Version: {{ $this->object->version_number ?? 'N/A' }}
+                </p>
             </div>
         @endisset
     </div>

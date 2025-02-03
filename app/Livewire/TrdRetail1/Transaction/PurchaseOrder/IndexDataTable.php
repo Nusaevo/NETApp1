@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdRetail1\Procurement\PurchaseOrder;
+namespace App\Livewire\TrdRetail1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
@@ -42,7 +42,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode.'.Procurement.PurchaseOrder.Detail', [
+                        return '<a href="' . route($this->appCode.'.Transaction.PurchaseOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
                         ]) . '">' . $row->tr_id . '</a>';
@@ -126,7 +126,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'custom_actions' => [
                             // [
                             //     'label' => 'Print',
-                            //     'route' => route('TrdRetail1.Procurement.PurchaseOrder.PrintPdf', [
+                            //     'route' => route('TrdRetail1.Transaction.PurchaseOrder.PrintPdf', [
                             //         'action' => encryptWithSessionKey('Edit'),
                             //         'objectId' => encryptWithSessionKey($row->id)
                             //     ]),

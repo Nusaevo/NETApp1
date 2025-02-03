@@ -30,7 +30,7 @@
                                     ]) . '">' . $row->tr_id . '</a>';
                                     break;
                                 case 'PO': // Purchase Order
-                                    $trLink = '<a href="' . route('TrdRetail1.Procurement.PurchaseOrder.Detail', [
+                                    $trLink = '<a href="' . route('TrdRetail1.Transaction.PurchaseOrder.Detail', [
                                         'action' => encryptWithSessionKey('Edit'),
                                         'objectId' => encryptWithSessionKey($row->id)
                                     ]) . '">' . $row->tr_id . '</a>';

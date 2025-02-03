@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdRetail1\Procurement\PurchaseOrder;
+namespace App\Livewire\TrdRetail1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
@@ -14,8 +14,12 @@ class Detail extends BaseComponent
 {
     #region Constant Variables
     public $inputs = [];
+
+    public $suppliers = [];
     public $partnerSearchText = '';
-    public $suppliers;
+    public $selectedPartners = [];
+
+
     public $warehouses;
     public $payments;
     public $deletedItems = [];
@@ -53,13 +57,13 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
-        $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
+            $this->inputs['partner_name'] = $this->object->Partner->code." - ".$this->object->Partner->name;
         }
         if(!empty($this->input_details)) {
             $this->isPanelEnabled = "false";
@@ -106,7 +110,7 @@ class Detail extends BaseComponent
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'PURCHORDER_LASTID');
         if($this->actionValue == 'Create')
         {
-            return redirect()->route($this->appCode.'.Procurement.PurchaseOrder.Detail', [
+            return redirect()->route($this->appCode.'.Transaction.PurchaseOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -145,11 +149,51 @@ class Detail extends BaseComponent
     #region Component Events
     public function openPartnerDialogBox()
     {
+        $this->partnerSearchText = '';
+        $this->suppliers = [];
         $this->dispatch('openPartnerDialogBox');
     }
     public function searchPartners()
     {
-
+        if (!empty($this->partnerSearchText)) {
+            $searchTerm = strtoupper($this->partnerSearchText);
+            $this->suppliers = Partner::where('grp',Partner::SUPPLIER)
+            ->where(function ($query) use ($searchTerm) {
+                 $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
+                       ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
+            })
+            ->get();
+        }else{
+            $this->dispatch('error', "Mohon isi kode atau nama supplier");
+        }
     }
+
+    public function selectPartner($partnerId)
+    {
+        $this->selectedPartners[] = $partnerId;
+    }
+
+
+    public function confirmSelection()
+    {
+        if (empty($this->selectedPartners)) {
+            $this->dispatch('error', "Silakan pilih satu supplier terlebih dahulu.");
+            return;
+        }
+        if (count($this->selectedPartners) > 1) {
+            $this->dispatch('error', "Hanya boleh memilih satu supplier.");
+            return;
+        }
+        $partner = Partner::find($this->selectedPartners[0]);
+
+        if ($partner) {
+            $this->inputs['partner_id'] = $partner->id;
+            $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
+            $this->dispatch('success', "Supplier berhasil dipilih.");
+            $this->dispatch('closePartnerDialogBox');
+        }
+    }
+
+
     #endregion
 }
