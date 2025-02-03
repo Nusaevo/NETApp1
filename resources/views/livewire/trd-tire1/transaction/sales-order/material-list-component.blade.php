@@ -8,7 +8,7 @@
                             <x-ui-list-body>
                                 <x-slot name="rows">
                                     <div class="row">
-                                        <x-ui-text-field-search type="int" :label="['kode']" clickEvent=""
+                                        <x-ui-text-field-search type="int" label="kode" clickEvent=""
                                             model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                             :options="$materials" required="true" :action="$actionValue"
                                             onChanged="onMaterialChanged({{ $key }}, $event.target.value)"

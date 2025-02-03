@@ -9,11 +9,11 @@ class PartnerDetail extends BaseModel
 {
     protected $table = 'partner_details';
 
-
     protected $fillable = [
         'wp_details',
         'contacts',
         'banks',
+        'shipping_address',
     ];
 
     public function Partner()

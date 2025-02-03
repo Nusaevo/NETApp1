@@ -26,7 +26,7 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
-                                        type="code" :action="$actionValue" required="false"
+                                        type="code" :action="$actionValue" required="true"
                                         clickEvent="getTransactionCode" buttonName="Nomor" enabled="true" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
@@ -37,7 +37,7 @@
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         onChanged="onPartnerChanged" />
                                     <x-ui-text-field label="{{ $this->trans('send_to') }}" model="inputs.send_to"
-                                        type="text" :action="$actionValue" required="false" :enabled="$isPanelEnabled" />
+                                        type="text" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field-search type="text" label="{{ $this->trans('tax_payer') }}"
                                         clickEvent="" model="inputs.tax_payer" :selectedValue="$inputs['tax_payer']" :options="$npwpOptions"
                                         required="false" :action="$actionValue" />

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
+namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
@@ -48,7 +48,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
 
-                Column::make($this->trans("supplier"), "partner_id")
+            Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
                     return $row->Partner ?
                         '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
