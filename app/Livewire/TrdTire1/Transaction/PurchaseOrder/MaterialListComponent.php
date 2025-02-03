@@ -44,6 +44,10 @@ class MaterialListComponent extends DetailComponent
 
     protected function onPreRender()
     {
+        $this->customValidationAttributes = [
+            'input_details.*.matl_id'    => $this->trans('code'),
+            'input_details.*.qty'        => $this->trans('qty'),
+        ];
         $this->masterService = new MasterService();
         $this->materials = $this->masterService->getMaterials();
 

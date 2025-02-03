@@ -83,12 +83,7 @@ class Detail extends BaseComponent
 
         $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, $tr_type, $tax_invoice);
     }
-
-    public function onTaxInvoiceChanged()
-    {
-        $this->getTransactionCode(); // Regenerate transaction code when the checkbox changes
-    }
-
+    
     public function onSOTaxChange()
     {
         try {
@@ -212,7 +207,6 @@ class Detail extends BaseComponent
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
-        $this->inputs['send_to'] = "Pelanggan";
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = 0;
     }
@@ -240,7 +234,6 @@ class Detail extends BaseComponent
             $this->inputs['partner_code'] = $partner->code;
         }
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
-        
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),

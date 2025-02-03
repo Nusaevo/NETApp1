@@ -22,7 +22,7 @@
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                         type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        onChanged="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" />
+                                        :checked="$inputs['tax_invoice']" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
@@ -37,7 +37,7 @@
                                         required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         onChanged="onPartnerChanged" />
                                     <x-ui-text-field label="{{ $this->trans('send_to') }}" model="inputs.send_to"
-                                        type="text" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                        type="text" :action="$actionValue" required="false" enabled="false" />
                                     <x-ui-text-field-search type="text" label="{{ $this->trans('tax_payer') }}"
                                         clickEvent="" model="inputs.tax_payer" :selectedValue="$inputs['tax_payer']" :options="$npwpOptions"
                                         required="false" :action="$actionValue" />
@@ -46,8 +46,8 @@
                                     <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
-                                        model="inputs.payment_terms" :options="$paymentTerms" required="true"
+                                    <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
+                                        model="inputs.payment_term" :options="$paymentTerms" required="true"
                                         :action="$actionValue" />
                                     <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
                                         type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
