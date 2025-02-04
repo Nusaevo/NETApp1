@@ -42,7 +42,7 @@
 
     <x-ui-footer>
         <div>
-            <x-ui-button clickEvent="SaveShipingAddress" button-name="Save Alamat Kirim" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="SaveShippingAddress" button-name="Save Alamat Kirim" loading="true" :action="$actionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
         </div>
     </x-ui-footer>

@@ -26,6 +26,7 @@ class DelivHdr extends BaseModel
         'tr_id' => 'string',
     ];
 
+    protected $appends = ['total_qty', 'total_amt'];
 
     #region Relations
     public function Partner()
@@ -36,6 +37,11 @@ class DelivHdr extends BaseModel
     public function DelivDtl()
     {
         return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+    }
+
+    public function OrderDtl()
+    {
+        return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')->where('tr_type', $this->tr_type);
     }
     #endregion
 
@@ -72,6 +78,15 @@ class DelivHdr extends BaseModel
     {
         // Logika untuk mengecek apakah order selesai
         return $this->status == 'completed'; // Misalnya, status 'completed' menandakan order selesai
+    }
+    public function getTotalQtyAttribute()
+    {
+        return (int) $this->OrderDtl()->sum('qty');
+    }
+
+    public function getTotalAmtAttribute()
+    {
+        return (int) $this->OrderDtl()->sum(DB::raw('qty * price'));
     }
     #endregion
 }

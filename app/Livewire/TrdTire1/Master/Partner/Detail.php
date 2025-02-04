@@ -99,12 +99,17 @@ class Detail extends BaseComponent
             $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
             // dd($this->inputs['code']);
         }
+        $this->inputs['partner_chars'] = json_encode($this->inputs['partner_chars']);
         $this->object->fill($this->inputs);
         $this->object->save();
 
         if ($this->object->PartnerDetail == null) {
             $this->object->PartnerDetail()->create([
-                'partner_id' => $this->object->id
+                'partner_id' => $this->object->id,
+                'shipping_address' => json_encode([[
+                    'name' => $this->inputs['name'],
+                    'address' => $this->inputs['address'] . ' - ' . $this->inputs['city'],
+                ]]),
             ]);
         }
 

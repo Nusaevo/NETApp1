@@ -24,9 +24,9 @@
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
                                         :selectedValue="$materials['brand']" :options="$materialMerk" required="false" :action="$actionValue"
-                                        onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" :enabled="$isPanelEnabled"/>
+                                        onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" :enabled="$isPanelEnabled" :buttonEnabled="$isPanelEnabled"/>
                                     <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px" height="400px"
-                                        onOpened="openBrandDialogBox" onClosed="closeBrandDialogBox">
+                                        onOpened="openBrandDialogBox" onClosed="closeBrandDialogBox" :buttonEnabled="$isPanelEnabled">
                                         <x-slot name="body">
                                             <x-ui-text-field label="Code" model="inputs_brand.str1" type="text"
                                                 :action="$actionValue" required="true" enabled="true" capslockMode="true"/>
@@ -41,12 +41,12 @@
 
                                     <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
                                         type="code" :action="$actionValue" required="true" enabled="true"
-                                        clickEvent="getMatlCode" buttonName="Kode Baru" :enabled="$isPanelEnabled"/>
+                                        clickEvent="getMatlCode" buttonName="Kode Baru" :buttonEnabled="$isPanelEnabled"/>
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('category') }}"
                                         model="materials.category" :options="$materialCategory" required="false"
-                                        :action="$actionValue" :enabled="$isPanelEnabled"/>
+                                        :action="$actionValue" :buttonEnabled="$isPanelEnabled"/>
                                     {{-- <x-ui-dropdown-select label="{{ $this->trans('class_code') }}"
                                         model="materials.class_code" :options="$materialJenis" required="false"
                                         :action="$actionValue" /> --}}

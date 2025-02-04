@@ -122,9 +122,9 @@ class ContactListComponent extends DetailComponent
 
     protected function onValidateAndSave()
     {
-        $banksArray = [];
+        $contactsArray = [];
         foreach ($this->input_details as $detail) {
-            $banksArray[] = [
+            $contactsArray[] = [
                 'contact_name' => $detail['contact_name'],
                 'position' => $detail['position'],
                 'date_of_birth' => $detail['date_of_birth'],
@@ -137,7 +137,7 @@ class ContactListComponent extends DetailComponent
         }
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
-            $partnerDetail->update(['contacts' => json_encode($banksArray)]);
+            $partnerDetail->update(['contacts' => json_encode($contactsArray)]);
         }
     }
 

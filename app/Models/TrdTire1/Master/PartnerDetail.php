@@ -15,7 +15,6 @@ class PartnerDetail extends BaseModel
         'banks',
         'shipping_address',
     ];
-
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id');

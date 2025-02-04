@@ -18,10 +18,12 @@ class Detail extends BaseComponent
     public $SOTax = [];
     public $SOSend = [];
     public $paymentTerms = [];
-    public $suppliers;
+    public $suppliers = [];
+    public $partnerSearchText = '';
+    public $selectedPartners = [];
     public $warehouses;
     public $partners;
-    public $vehicle_type;
+    public $sales_type;
     public $tax_invoice;
     public $transaction_id;
     public $payments;
@@ -48,15 +50,9 @@ class Detail extends BaseComponent
     public $suratJalanCount = 0; // y: jumlah surat jalan dicetak
 
     public $rules  = [
-        'inputs.tr_date' => 'nullable',
-        'inputs.tr_id' => 'required',
+        'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.send_to' => 'required',
-        'inputs.tax_payer' => 'nullable',
-        'inputs.payment_terms' => 'nullable',
-        'inputs.tax' => 'nullable',
-        'inputs.due_date' => 'nullable',
-        'inputs.cust_reff' => 'nullable',
+        'inputs.send_to_name' => 'required',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -72,29 +68,32 @@ class Detail extends BaseComponent
 
     public function getTransactionCode()
     {
-        if (!isset($this->inputs['vehicle_type']) || !isset($this->trType)) {
+        if (!isset($this->inputs['sales_type']) || !isset($this->trType)) {
             $this->dispatch('warning', 'Tipe Kendaraan dan Jenis Transaksi harus diisi');
             return;
         }
 
-        $vehicle_type = $this->inputs['vehicle_type'];
+        $sales_type = $this->inputs['sales_type'];
         $tax_invoice = !empty($this->inputs['tax_invoice']); // Konversi ke boolean
         $tr_type = $this->trType;
 
-        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, $tr_type, $tax_invoice);
+        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_invoice);
     }
-    
+
     public function onSOTaxChange()
     {
         try {
             // Ambil data konfigurasi berdasarkan konstanta pajak
             $configData = ConfigConst::select('num1', 'str1')
                 ->where('const_group', 'TRX_SO_TAX')
-                ->where('str1', $this->inputs['tax'])
+                ->where('str1', $this->inputs['tax_flag'])
                 ->first();
 
             $this->inputs['tax_value'] = $configData->num1 ?? 0; // Nilai pajak default 0 jika tidak ditemukan
             $taxType = $configData->str1 ?? ''; // Tipe pajak (str1)
+
+            // Simpan tax_pct
+            $this->inputs['tax_pct'] = $this->inputs['tax_value'];
 
             // Hitung DPP dan PPN berdasarkan tipe pajak
             $this->calculateDPPandPPN($taxType);
@@ -137,9 +136,9 @@ class Detail extends BaseComponent
         $partner = Partner::find($this->inputs['partner_id']);
         $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
 
-        // Set the send_to field based on the selected partner
+        // Set the send_to_name field based on the selected partner
         if ($partner) {
-            $this->inputs['send_to'] = $partner->name;
+            $this->inputs['send_to_name'] = $partner->name;
         }
     }
 
@@ -170,9 +169,9 @@ class Detail extends BaseComponent
     {
         $this->customValidationAttributes  = [
             'inputs.tax'      => $this->trans('tax'),
-            'inputs.tr_id'      => $this->trans('tr_id'),
+            'inputs.tr_code'      => $this->trans('tr_code'),
             'inputs.partner_id'      => $this->trans('partner_id'),
-            'inputs.send_to'      => $this->trans('send_to'),
+            'inputs.send_to_name'      => $this->trans('send_to_name'),
         ];
 
         $this->masterService = new MasterService();
@@ -180,13 +179,14 @@ class Detail extends BaseComponent
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
-        $this->suppliers = $this->masterService->getSuppliers();
+        // $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
+            $this->inputs['partner_name'] = $this->object->partner->code . " - " . $this->object->partner->name; // Set partner_name
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
@@ -209,6 +209,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_code'] = "USD";
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = 0;
+
     }
 
     public function render()
@@ -233,6 +234,13 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
+
+        // Ensure payment_term is set
+        if (!empty($this->inputs['payment_term_id'])) {
+            $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
+            $this->inputs['payment_term'] = $paymentTerm->str1;
+        }
+
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
@@ -296,6 +304,72 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
+    public function openPartnerDialogBox()
+    {
+        $this->partnerSearchText = '';
+        $this->suppliers = [];
+        $this->dispatch('openPartnerDialogBox');
+    }
+    public function searchPartners()
+    {
+        if (!empty($this->partnerSearchText)) {
+            $searchTerm = strtoupper($this->partnerSearchText);
+            $this->suppliers = Partner::where('grp', Partner::CUSTOMER)
+                ->where(function ($query) use ($searchTerm) {
+                    $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
+                        ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
+                })
+                ->get();
+        } else {
+            $this->dispatch('error', "Mohon isi kode atau nama supplier");
+        }
+    }
+
+    public function selectPartner($partnerId)
+    {
+        $this->selectedPartners[] = $partnerId;
+    }
+
+
+    public function confirmSelection()
+    {
+        if (empty($this->selectedPartners)) {
+            $this->dispatch('error', "Silakan pilih satu supplier terlebih dahulu.");
+            return;
+        }
+        if (count($this->selectedPartners) > 1) {
+            $this->dispatch('error', "Hanya boleh memilih satu supplier.");
+            return;
+        }
+        $partner = Partner::find($this->selectedPartners[0]);
+
+        if ($partner) {
+            $this->inputs['partner_id'] = $partner->id;
+            $this->inputs['partner_code'] = $partner->code; // Set partner_code
+            $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
+            $this->inputs['send_to_name'] = $partner->name; // Set send_to_name with the selected customer's name
+
+            // Set tax_payer with data from JSON wp_details
+            if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+                $wpDetails = $partner->PartnerDetail->wp_details;
+                if (is_string($wpDetails)) {
+                    $wpDetails = json_decode($wpDetails, true);
+                }
+                if (is_array($wpDetails) && !empty($wpDetails)) {
+                    $this->npwpOptions = array_map(function ($item) {
+                        return [
+                            'label' => $item['npwp'] . ' - ' . $item['wp_name'],
+                            'value' => $item['npwp'],
+                        ];
+                    }, $wpDetails);
+                    $this->inputs['tax_payer'] = $wpDetails[0]['npwp'] ?? ''; // Example: taking the first wp_detail
+                }
+            }
+
+            $this->dispatch('success', "Custommer berhasil dipilih.");
+            $this->dispatch('closePartnerDialogBox');
+        }
+    }
 
     #endregion
 
@@ -307,7 +381,7 @@ class Detail extends BaseComponent
         $this->total_discount = ($data['total_discount']);
 
         // Recalculate DPP and PPN when amount or discount changes
-        $this->calculateDPPandPPN($this->inputs['tax'] ?? '');
+        $this->calculateDPPandPPN($this->inputs['tax_flag'] ?? '');
     }
 
     // Update discount percentage

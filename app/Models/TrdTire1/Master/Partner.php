@@ -93,15 +93,15 @@ class Partner extends BaseModel
                           ->first();
 
         if ($latestCode) {
-            // Ekstrak bagian numerik dari kode
             preg_match('/\d+$/', $latestCode, $matches);
             $numericPart = isset($matches[0]) ? intval($matches[0]) + 1 : 1;
-
             return $initialCode . str_pad($numericPart, 4, '0', STR_PAD_LEFT);
         } else {
             return $initialCode . '0001';
         }
     }
+
+
 
 
     // Fungsi untuk menghasilkan nama material, bisa dipanggil di dalam model ini

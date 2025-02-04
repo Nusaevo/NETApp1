@@ -203,16 +203,16 @@ class MasterService extends BaseService
         })->toArray();
         return $payments;
     }
-    public function getSuppliers()
-    {
-        $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
-        return $suppliersData->map(function ($data) {
-            return [
-                'label' => $data->code . " - " . $data->name. " - " . $data->address . " - " . $data->city,
-                'value' => $data->id,
-            ];
-        })->toArray();
-    }
+    // public function getSuppliers()
+    // {
+    //     $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
+    //     return $suppliersData->map(function ($data) {
+    //         return [
+    //             'label' => $data->code . " - " . $data->name. " - " . $data->address . " - " . $data->city,
+    //             'value' => $data->id,
+    //         ];
+    //     })->toArray();
+    // }
 
 
 

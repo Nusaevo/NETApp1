@@ -104,6 +104,7 @@ class NpwpListComponent extends DetailComponent
 
     public function SaveNPWP()
     {
+        // dd($this->input_details);
         $this->Save();
     }
 

@@ -15,7 +15,7 @@ class MaterialListComponent extends DetailComponent
     public $object_detail;
     public $trhdr_id;
     public $tr_seq;
-    public $tr_id;
+    public $tr_code;
     public $input_details = [];
     public $total_amount = 0;
     public $total_discount = 0;
@@ -200,11 +200,11 @@ class MaterialListComponent extends DetailComponent
             foreach ($this->input_details as $key => $detail) {
                 $tr_seq = $key + 1;
                 $orderDtl = OrderDtl::firstOrNew([
-                    'tr_id' => $this->object->tr_id,
+                    'tr_code' => $this->object->tr_code,
                     'tr_seq' => $tr_seq,
                 ]);
 
-                $detail['tr_id'] = $this->object->tr_id;
+                $detail['tr_code'] = $this->object->tr_code;
                 $detail['trhdr_id'] = $this->objectIdValue;
                 $detail['qty_reff'] = $detail['qty'];
                 $detail['tr_type'] = $this->object->tr_type;

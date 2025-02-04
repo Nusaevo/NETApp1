@@ -18,7 +18,9 @@ class Detail extends BaseComponent
     public $SOTax = [];
     public $SOSend = [];
     public $paymentTerms = [];
-    public $suppliers;
+    public $suppliers = [];
+    public $partnerSearchText = '';
+    public $selectedPartners = [];
     public $warehouses;
     public $partners;
     public $vehicle_type;
@@ -179,7 +181,7 @@ class Detail extends BaseComponent
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
-        $this->suppliers = $this->masterService->getSuppliers();
+        // $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -187,6 +189,7 @@ class Detail extends BaseComponent
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_id'] = $this->object->tr_id;
+            $this->inputs['partner_name'] = $this->object->partner->code . " - " . $this->object->partner->name; // Set partner_name
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
@@ -214,6 +217,7 @@ class Detail extends BaseComponent
 
     public function render()
     {
+        // dd($this->inputs);
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
@@ -233,6 +237,11 @@ class Detail extends BaseComponent
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
+        }
+        // Ensure payment_term is set
+        if (!empty($this->inputs['payment_term_id'])) {
+            $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
+            $this->inputs['payment_term'] = $paymentTerm->str1;
         }
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
@@ -297,6 +306,53 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
+    public function openPartnerDialogBox()
+    {
+        $this->partnerSearchText = '';
+        $this->suppliers = [];
+        $this->dispatch('openPartnerDialogBox');
+    }
+    public function searchPartners()
+    {
+        if (!empty($this->partnerSearchText)) {
+            $searchTerm = strtoupper($this->partnerSearchText);
+            $this->suppliers = Partner::where('grp', Partner::SUPPLIER)
+                ->where(function ($query) use ($searchTerm) {
+                    $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
+                        ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
+                })
+                ->get();
+        } else {
+            $this->dispatch('error', "Mohon isi kode atau nama supplier");
+        }
+    }
+
+    public function selectPartner($partnerId)
+    {
+        $this->selectedPartners[] = $partnerId;
+    }
+
+
+    public function confirmSelection()
+    {
+        if (empty($this->selectedPartners)) {
+            $this->dispatch('error', "Silakan pilih satu supplier terlebih dahulu.");
+            return;
+        }
+        if (count($this->selectedPartners) > 1) {
+            $this->dispatch('error', "Hanya boleh memilih satu supplier.");
+            return;
+        }
+        $partner = Partner::find($this->selectedPartners[0]);
+
+        if ($partner) {
+            $this->inputs['partner_id'] = $partner->id;
+            $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
+            $this->dispatch('success', "Supplier berhasil dipilih.");
+            $this->dispatch('closePartnerDialogBox');
+        }
+    }
+
 
 
 
