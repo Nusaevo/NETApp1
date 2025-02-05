@@ -99,8 +99,14 @@ class ShippingAddressComponent extends DetailComponent
         }
     }
 
-    public function SaveShipingAddress()
+    public function SaveShippingAddress()
     {
+        if ($this->actionValue === 'Create') {
+            $this->input_details[] = [
+                'name' => $this->inputs['name'],
+                'address' => $this->inputs['address'] . ' - ' . $this->inputs['city'],
+            ];
+        }
         $this->Save();
     }
 

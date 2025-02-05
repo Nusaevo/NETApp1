@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\Status;
@@ -27,18 +27,21 @@ class IndexDataTable extends BaseDataTableComponent
             ->where('deliv_hdrs.tr_type', 'PD')
             ->where('deliv_hdrs.status_code', Status::OPEN);
     }
+    // public function getTotalQtyAttribute()
+    // {
+    //     return (int) $this->OrderDtl()->sum('qty');
+    // }
+
+    // public function getTotalAmtAttribute()
+    // {
+    //     return (int) $this->OrderDtl()->sum('amt');
+    // }
     public function columns(): array
     {
         return [
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("date"), "tr_date")
-                ->searchable()
-                ->sortable(),
-            // Column::make('currency', "curr_rate")
-            //     ->hideIf(true)
-            //     ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
                     return '<a href="' . route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
@@ -47,6 +50,12 @@ class IndexDataTable extends BaseDataTableComponent
                     ]) . '">' . $row->tr_id . '</a>';
                 })
                 ->html(),
+            Column::make($this->trans("date"), "tr_date")
+                ->searchable()
+                ->sortable(),
+            // Column::make('currency', "curr_rate")
+            //     ->hideIf(true)
+            //     ->sortable(),
 
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
@@ -59,38 +68,47 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
 
-            Column::make($this->trans("matl_code"), 'id')
-                ->format(function ($value, $row) {
-                    // Manually load DelivDtl using a query
-                    $DelivDtl = DelivDtl::where('tr_id', $row->tr_id)
-                        ->where('tr_type', $row->tr_type)
-                        ->orderBy('id')
-                        ->get();
+            // Column::make($this->trans("matl_code"), 'id')
+            //     ->format(function ($value, $row) {
+            //         // Manually load DelivDtl using a query
+            //         $DelivDtl = DelivDtl::where('tr_id', $row->tr_id)
+            //             ->where('tr_type', $row->tr_type)
+            //             ->orderBy('id')
+            //             ->get();
 
-                    // Generate links if data is available
-                    $matlCodes = $DelivDtl->pluck('matl_code', 'matl_id');
-                    $links = $matlCodes->map(function ($code, $id) {
-                        return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($id)
-                        ]) . '">' . $code . '</a>';
-                    });
+            //         // Generate links if data is available
+            //         $matlCodes = $DelivDtl->pluck('matl_code', 'matl_id');
+            //         $links = $matlCodes->map(function ($code, $id) {
+            //             return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
+            //                 'action' => encryptWithSessionKey('Edit'),
+            //                 'objectId' => encryptWithSessionKey($id)
+            //             ]) . '">' . $code . '</a>';
+            //         });
 
-                    return $links->implode(', ');
-                })
-                ->html(),
-            Column::make($this->trans("amt"), "total_amt_in_idr")
+            //         return $links->implode(', ');
+            //     })
+            //     ->html(),
+            // Column::make($this->trans("amt"), "total_amt_in_idr")
+            //     ->label(function ($row) {
+            //         $totalAmt = 0;
+
+            //         $orderDetails = DelivDtl::where('trhdr_id', $row->id)->get();
+
+            //         if ($orderDetails->isEmpty()) {
+            //             return 'N/A';
+            //         }
+            //     })
+            //     ->sortable(),
+            Column::make($this->trans('qty'), 'total_qty')
                 ->label(function ($row) {
-                    $totalAmt = 0;
-
-                    $orderDetails = DelivDtl::where('trhdr_id', $row->id)->get();
-
-                    if ($orderDetails->isEmpty()) {
-                        return 'N/A';
-                    }
+                    return $row->total_qty;
                 })
                 ->sortable(),
-
+            Column::make($this->trans('amt'), 'total_amt')
+                ->label(function ($row) {
+                    return rupiah($row->total_amt);
+                })
+                ->sortable(),
             // Column::make($this->trans('status'), "status_code")
             //     ->sortable()
             //     ->format(function ($value, $row, Column $column) {

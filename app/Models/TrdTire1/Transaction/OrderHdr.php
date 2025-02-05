@@ -6,6 +6,7 @@ use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Master\Partner;
 use App\Models\TrdTire1\Master\Material;
 use App\Enums\Status;
+use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,11 +16,13 @@ class OrderHdr extends BaseModel
     use SoftDeletes;
 
     protected $fillable = [
-        'tr_id',
+        'tr_code',
         'tr_type',
-        'tax',
+        'tax_flag',
+        'tax_pct',
         'partner_id',
-        'payment_term',
+        'partner_code',
+        'payment_term_id',
         'tr_date',
         'due_date',
         'cust_reff',
@@ -27,9 +30,10 @@ class OrderHdr extends BaseModel
         'tax_payer',
         'type',
         'note',
-        'send_to',
-        'vehicle_type',
+        'send_to_name',
+        'sales_type',
         'tax_invoice',
+        'payment_term',
     ];
 
     protected $casts = [
@@ -59,17 +63,17 @@ class OrderHdr extends BaseModel
 
     public function OrderDtl()
     {
-        return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
     }
 
     public function DelivHdr()
     {
-        return $this->hasOne(DelivHdr::class, 'tr_id', 'tr_id')->where('tr_type', $this->getDeliveryTrType());
+        return $this->hasOne(DelivHdr::class, 'tr_code', 'tr_code')->where('tr_type', $this->getDeliveryTrType());
     }
 
     public function BillingHdr()
     {
-        return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $this->getBillingTrType());
+        return $this->hasOne(BillingHdr::class, 'tr_code', 'tr_code')->where('tr_type', $this->getBillingTrType());
     }
     #endregion
     public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
@@ -78,16 +82,20 @@ class OrderHdr extends BaseModel
         $this->fill($inputs);
         $this->tr_type = $trType; // Ensure tr_type is set
 
-        // Tentukan vehicle_type berdasarkan trType
-        //$vehicleType = $this->vehicle_type;
+        // Ensure partner_code is set
+        if (!empty($inputs['partner_id'])) {
+            $partner = Partner::find($inputs['partner_id']);
+            $this->partner_code = $partner->code;
+        }
 
-        // Tentukan vehicle_type berdasarkan trType
-        //$vehicleType = $this->vehicle_type;
-
-        // Generate Transaction ID jika belum ada
-        // if (empty($this->tr_Id)) {
-        //     $this->tr_Id = $this->generateTransactionId($vehicleType);
-        // }
+        // Set tax_pct based on tax_flag
+        if (!empty($inputs['tax_flag'])) {
+            $configData = ConfigConst::select('num1')
+                ->where('const_group', 'TRX_SO_TAX')
+                ->where('str1', $inputs['tax_flag'])
+                ->first();
+            $this->tax_pct = $configData->num1 ?? 0;
+        }
 
         // Set default status
         if ($this->isNew()) {
@@ -99,7 +107,7 @@ class OrderHdr extends BaseModel
     }
 
 
-    public static function generateTransactionId($vehicle_type, $tr_type, $tax_invoice = false)
+    public static function generateTransactionId($sales_type, $tr_type, $tax_invoice = false)
     {
         if ($tr_type == 'PO') {
             return self::generatePurchaseOrderId();
@@ -108,11 +116,11 @@ class OrderHdr extends BaseModel
         $year = date('y'); // Two-digit year
         $monthNumber = date('n'); // Month in number
         $monthLetter = chr(64 + $monthNumber); // Month in letter (A, B, C, etc.)
-        $sequenceNumber = self::getSequenceNumber($vehicle_type, $tax_invoice); // Get sequence number
+        $sequenceNumber = self::getSequenceNumber($sales_type, $tax_invoice); // Get sequence number
 
-        // Determine format based on vehicle_type and tax invoice
+        // Determine format based on sales_type and tax invoice
         if ($tax_invoice) {
-            switch ($vehicle_type) {
+            switch ($sales_type) {
                 case 0: // MOTOR with tax invoice
                     return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber); // Example: A25XXXXx
                 case 1: // MOBIL with tax invoice
@@ -121,7 +129,7 @@ class OrderHdr extends BaseModel
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
         } else {
-            switch ($vehicle_type) {
+            switch ($sales_type) {
                 case 0: // MOTOR without tax invoice
                     return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXx
                 case 1: // MOBIL without tax invoice
@@ -142,7 +150,7 @@ class OrderHdr extends BaseModel
         return sprintf('PO%04d', $newId); // Example: PO0001
     }
 
-    private static function getSequenceNumber($vehicle_type, $tax_invoice)
+    private static function getSequenceNumber($sales_type, $tax_invoice)
     {
         // Mendapatkan bulan dan tahun saat ini
         $currentYear = date('y'); // Dua digit terakhir tahun
@@ -152,17 +160,17 @@ class OrderHdr extends BaseModel
         // Filter tambahan untuk tax_invoice
         $taxInvoiceFlag = $tax_invoice ? 1 : 0;
 
-        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO', vehicle_type, dan tax_invoice
+        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO', sales_type, dan tax_invoice
         $lastOrder = OrderHdr::where('tr_type', 'SO')
-            ->where('vehicle_type', $vehicle_type) // Filter berdasarkan vehicle_type
+            ->where('sales_type', $sales_type) // Filter berdasarkan sales_type
             ->where('tax_invoice', $taxInvoiceFlag) // Filter berdasarkan tax_invoice
             ->orderBy('id', 'desc')
             ->first();
 
         // Jika ada entri sebelumnya, periksa bulan dan tahun
         if ($lastOrder) {
-            // Ambil bulan dan tahun dari tr_id
-            preg_match('/([A-Z])(\d{2})(\d{4,5})$/', $lastOrder->tr_id, $matches); // Ambil bulan, tahun, dan nomor urut
+            // Ambil bulan dan tahun dari tr_code
+            preg_match('/([A-Z])(\d{2})(\d{4,5})$/', $lastOrder->tr_code, $matches); // Ambil bulan, tahun, dan nomor urut
             if (isset($matches[1]) && isset($matches[2]) && isset($matches[3])) {
                 $lastMonthLetter = $matches[1];
                 $lastYear = (int)$matches[2];
@@ -199,7 +207,7 @@ class OrderHdr extends BaseModel
     public function createOrUpdateBilling()
     {
         $billingHdr = BillingHdr::firstOrNew([
-            'tr_id' => $this->tr_id,
+            'tr_code' => $this->tr_code,
             'tr_type' => $this->getBillingTrType(),
         ]);
 
@@ -227,7 +235,7 @@ class OrderHdr extends BaseModel
     public function createOrUpdateDelivery()
     {
         $deliveryHdr = DelivHdr::firstOrNew([
-            'tr_id' => $this->tr_id,
+            'tr_code' => $this->tr_code,
             'tr_type' => $this->getDeliveryTrType(),
         ]);
 
@@ -255,7 +263,7 @@ class OrderHdr extends BaseModel
         $deliveryDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_type' => $this->getDeliveryTrType(),
-            'tr_id' => $this->tr_id,
+            'tr_code' => $this->tr_code,
             'tr_seq' => $orderDtl->tr_seq,
             'matl_id' => $orderDtl->matl_id,
             'qty' => $orderDtl->qty,
@@ -275,7 +283,7 @@ class OrderHdr extends BaseModel
         $billingDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_type' => $this->getBillingTrType(),
-            'tr_id' => $this->tr_id,
+            'tr_code' => $this->tr_code,
             'tr_seq' => $orderDtl->tr_seq,
             'matl_id' => $orderDtl->matl_id,
             'qty' => $orderDtl->qty,
@@ -319,6 +327,24 @@ class OrderHdr extends BaseModel
         foreach ($this->OrderDtl as $detail) {
             $detail->delete();
         }
+    }
+    #endregion
+
+    #region Attributes
+    public function getTotalQtyAttribute()
+    {
+        return (int) $this->OrderDtl()->sum('qty');
+    }
+
+    public function getTotalAmtAttribute()
+    {
+        return (int) $this->OrderDtl()->sum('amt');
+    }
+
+    public function getMatlCodesAttribute()
+    {
+        $matlCodes = $this->OrderDtl()->pluck('matl_code')->toArray();
+        return implode(', ', $matlCodes);
     }
     #endregion
 }

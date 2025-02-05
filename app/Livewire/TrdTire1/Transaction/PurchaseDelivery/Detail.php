@@ -86,7 +86,7 @@ class Detail extends BaseComponent
         $this->partners = $this->masterService->getCustomers();
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
-        $this->suppliers = $this->masterService->getSuppliers();
+        // $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->purchaseOrders = $this->masterService->getPurchaseOrders();
         $this->materials = $this->masterService->getMaterials();

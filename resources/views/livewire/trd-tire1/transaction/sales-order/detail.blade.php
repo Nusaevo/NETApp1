@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card
-        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}"
+        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_code ? ' (Nota #' . $this->object->tr_code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
@@ -18,36 +18,80 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-option model="inputs.vehicle_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
+                                    <x-ui-option model="inputs.sales_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                         type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        :checked="$inputs['tax_invoice']" />
+                                        :checked="$inputs['tax_invoice']"/>
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
-                                        type="code" :action="$actionValue" required="true"
-                                        clickEvent="getTransactionCode" buttonName="Nomor" enabled="true" />
+                                    <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
+                                        type="code" :action="$actionValue" required="true" clickEvent="getTransactionCode"
+                                        buttonName="Nomor" enabled="true" :buttonEnabled="$isPanelEnabled"/>
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
-                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
-                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        onChanged="onPartnerChanged" />
-                                    <x-ui-text-field label="{{ $this->trans('send_to') }}" model="inputs.send_to"
+                                    <x-ui-text-field type="text" label="Custommer" model="inputs.partner_name"
+                                        required="true" :action="$actionValue" enabled="false"
+                                        clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
+                                    <x-ui-dialog-box id="partnerDialogBox" title="Search Custommer" width="600px"
+                                        height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
+                                        <x-slot name="body">
+                                            <x-ui-text-field type="text" label="Search Code/Nama Supplier"
+                                                model="partnerSearchText" required="true" :action="$actionValue"
+                                                enabled="true" clickEvent="searchPartners" buttonName="Search" />
+                                            <!-- Table -->
+                                            <x-ui-table id="partnersTable" padding="0px" margin="0px">
+                                                <x-slot name="headers">
+                                                    <th class="min-w-100px">Code</th>
+                                                    <th class="min-w-100px">Name</th>
+                                                    <th class="min-w-100px">Address</th>
+                                                </x-slot>
+                                                <x-slot name="rows">
+                                                    @if (empty($suppliers))
+                                                        <tr>
+                                                            <td colspan="4" class="text-center text-muted">No Data
+                                                                Found</td>
+                                                        </tr>
+                                                    @else
+                                                        @foreach ($suppliers as $key => $supplier)
+                                                            <tr wire:key="row-{{ $key }}-supplier">
+                                                                <td>
+                                                                    <x-ui-option label="" required="false"
+                                                                        layout="horizontal" enabled="true"
+                                                                        type="checkbox" visible="true"
+                                                                        :options="[
+                                                                            $supplier['id'] => $supplier['code'],
+                                                                        ]"
+                                                                        onChanged="selectPartner({{ $supplier['id'] }})" />
+                                                                </td>
+                                                                <td>{{ $supplier['name'] }}</td>
+                                                                <td>{{ $supplier['address'] }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endif
+                                                </x-slot>
+                                                <x-slot name="footer">
+                                                    <x-ui-button clickEvent="confirmSelection"
+                                                        button-name="Confirm Selection" loading="true"
+                                                        :action="$actionValue" cssClass="btn-primary" />
+                                                </x-slot>
+                                            </x-ui-table>
+                                        </x-slot>
+                                    </x-ui-dialog-box>
+                                    <x-ui-text-field label="{{ $this->trans('send_to_name') }}" model="inputs.send_to_name"
                                         type="text" :action="$actionValue" required="false" enabled="false" />
-                                    <x-ui-text-field-search type="text" label="{{ $this->trans('tax_payer') }}"
-                                        clickEvent="" model="inputs.tax_payer" :selectedValue="$inputs['tax_payer']" :options="$npwpOptions"
-                                        required="false" :action="$actionValue" />
+                                    <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}" clickEvent=""
+                                        model="inputs.tax_payer" :selectedValue="$inputs['tax_payer']" :options="$npwpOptions" required="false"
+                                        :action="$actionValue" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}" model="inputs.tax_flag"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
-                                        model="inputs.payment_term" :options="$paymentTerms" required="true"
+                                        model="inputs.payment_term_id" :options="$paymentTerms" required="true"
                                         :action="$actionValue" />
                                     <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
                                         type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
@@ -60,8 +104,8 @@
                     </div>
                     <x-ui-footer>
                         <div>
-                            <x-ui-button clickEvent="Save" button-name="Save Header" loading="true" :action="$actionValue"
-                                cssClass="btn-primary" iconPath="save.svg" />
+                            <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
+                                :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
                         </div>
 
                     </x-ui-footer>

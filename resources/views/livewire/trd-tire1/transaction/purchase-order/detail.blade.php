@@ -27,21 +27,66 @@
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
                                         type="code" :action="$actionValue" required="false"
-                                        clickEvent="getTransactionCode" buttonName="Nomor" enabled="true" />
+                                        clickEvent="getTransactionCode" buttonName="Nomor" enabled="true" :buttonEnabled="$isPanelEnabled"/>
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field-search type="int" label="{{ $this->trans('suppliers') }}"
-                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers"
-                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                    <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
+                                        required="true" :action="$actionValue" enabled="false"
+                                        clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
+
+                                    <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
+                                        height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
+                                        <x-slot name="body">
+                                            <x-ui-text-field type="text" label="Search Code/Nama Supplier"
+                                                model="partnerSearchText" required="true" :action="$actionValue"
+                                                enabled="true" clickEvent="searchPartners" buttonName="Search" />
+                                            <!-- Table -->
+                                            <x-ui-table id="partnersTable" padding="0px" margin="0px">
+                                                <x-slot name="headers">
+                                                    <th class="min-w-100px">Code</th>
+                                                    <th class="min-w-100px">Name</th>
+                                                    <th class="min-w-100px">Address</th>
+                                                </x-slot>
+                                                <x-slot name="rows">
+                                                    @if (empty($suppliers))
+                                                        <tr>
+                                                            <td colspan="4" class="text-center text-muted">No Data
+                                                                Found</td>
+                                                        </tr>
+                                                    @else
+                                                        @foreach ($suppliers as $key => $supplier)
+                                                            <tr wire:key="row-{{ $key }}-supplier">
+                                                                <td>
+                                                                    <x-ui-option label="" required="false"
+                                                                        layout="horizontal" enabled="true"
+                                                                        type="checkbox" visible="true" :options="[
+                                                                            $supplier['id'] => $supplier['code'],
+                                                                        ]"
+                                                                        onChanged="selectPartner({{ $supplier['id'] }})" />
+                                                                </td>
+                                                                <td>{{ $supplier['name'] }}</td>
+                                                                <td>{{ $supplier['address'] }}</td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endif
+                                                </x-slot>
+                                                <x-slot name="footer">
+                                                    <x-ui-button clickEvent="confirmSelection"
+                                                        button-name="Confirm Selection" loading="true"
+                                                        :action="$actionValue" cssClass="btn-primary" />
+                                                </x-slot>
+                                            </x-ui-table>
+                                        </x-slot>
+                                    </x-ui-dialog-box>
                                     <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
-                                        model="inputs.payment_terms" :options="$paymentTerms" required="true"
+                                        model="inputs.payment_terms_id" :options="$paymentTerms" required="true"
                                         :action="$actionValue" />
                                     <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
