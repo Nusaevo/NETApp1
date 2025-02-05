@@ -310,6 +310,7 @@ class Detail extends BaseComponent
     {
         $this->partnerSearchText = '';
         $this->suppliers = [];
+        $this->selectedPartners = [];
         $this->dispatch('openPartnerDialogBox');
     }
     public function searchPartners()
@@ -329,9 +330,15 @@ class Detail extends BaseComponent
 
     public function selectPartner($partnerId)
     {
-        $this->selectedPartners[] = $partnerId;
-    }
+        $key = array_search($partnerId, $this->selectedPartners);
 
+        if ($key !== false) {
+            unset($this->selectedPartners[$key]);
+            $this->selectedPartners = array_values($this->selectedPartners);
+        } else {
+            $this->selectedPartners[] = $partnerId;
+        }
+    }
 
     public function confirmSelection()
     {
