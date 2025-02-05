@@ -18,12 +18,12 @@ class DelivHdr extends BaseModel
     protected $primaryKey = 'id';
     public $timestamps = true;
     protected $fillable = [
-        'tr_id',
+        'tr_code',
         'tr_date',
         'partner_id',
     ];
     protected $casts = [
-        'tr_id' => 'string',
+        'tr_code' => 'string',
     ];
 
     protected $appends = ['total_qty', 'total_amt'];
@@ -41,7 +41,7 @@ class DelivHdr extends BaseModel
 
     public function OrderDtl()
     {
-        return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')->where('tr_type', $this->tr_type);
+        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')->where('tr_type', $this->tr_type);
     }
     #endregion
 

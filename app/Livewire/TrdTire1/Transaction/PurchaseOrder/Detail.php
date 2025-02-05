@@ -53,7 +53,7 @@ class Detail extends BaseComponent
     public $rules  = [
         'inputs.tr_date' => 'nullable',
         'inputs.send_to' => 'required',
-        'inputs.tr_id' => 'required',
+        'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
         'inputs.tax_payer' => 'nullable',
         'inputs.payment_terms' => 'nullable',
@@ -82,7 +82,7 @@ class Detail extends BaseComponent
 
         $vehicle_type = $this->inputs['vehicle_type'];
         $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
-        $this->inputs['tr_id'] = OrderHdr::generateTransactionId($vehicle_type, 'PO', $tax_invoice);
+        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($vehicle_type, 'PO', $tax_invoice);
     }
 
     public function onTaxInvoiceChanged()
@@ -188,7 +188,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
-            $this->inputs['tr_id'] = $this->object->tr_id;
+            $this->inputs['tr_code'] = $this->object->tr_code;
             $this->inputs['partner_name'] = $this->object->partner->code . " - " . $this->object->partner->name; // Set partner_name
             $this->onPartnerChanged();
         }

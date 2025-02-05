@@ -30,7 +30,7 @@ class Detail extends BaseComponent
     public $object_detail;
     public $trhdr_id;
     public $tr_seq;
-    public $tr_id;
+    public $tr_code;
 
     public $total_amount = 0;
     public $trType = "PD";
@@ -49,7 +49,7 @@ class Detail extends BaseComponent
 
     protected $rules = [
         'inputs.tr_date' => 'nullable',
-        'inputs.tr_id' => 'required',
+        'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
         'inputs.send_to' => 'nullable',
         'inputs.tax_payer' => 'nullable',
@@ -96,7 +96,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
-            $this->inputs['tr_id'] = $this->object->tr_id;
+            $this->inputs['tr_code'] = $this->object->tr_code;
 
             $partner = Partner::find($this->object->partner_id);
             $this->inputs['partner_id'] = $this->object->partner_id;
@@ -174,7 +174,7 @@ class Detail extends BaseComponent
     public function onPurchaseOrderChanged($value)
     {
         if ($value) {
-            $order = OrderHdr::where('tr_id', $value)->first();
+            $order = OrderHdr::where('tr_code', $value)->first();
 
             if ($order) {
                 $partner = Partner::find($order->partner_id);
@@ -182,15 +182,15 @@ class Detail extends BaseComponent
                 $this->inputs['partner_name'] = $partner->name;
             }
 
-            $this->inputs['tr_id'] = $value;
+            $this->inputs['tr_code'] = $value;
             $this->loadPurchaseOrderDetails($value);
         }
     }
 
-    public function loadPurchaseOrderDetails($tr_id)
+    public function loadPurchaseOrderDetails($tr_code)
     {
         $this->input_details = [];
-        $orderDetails = OrderDtl::where('tr_id', $tr_id)->get();
+        $orderDetails = OrderDtl::where('tr_code', $tr_code)->get();
 
         foreach ($orderDetails as $detail) {
             $this->input_details[] = [
@@ -232,7 +232,7 @@ class Detail extends BaseComponent
                 ]);
 
                 $detailData = [
-                    'tr_id' => $this->object->tr_id,
+                    'tr_code' => $this->object->tr_code,
                     'trhdr_id' => $this->objectIdValue,
                     'qty_reff' => $detail['qty'],
                     'tr_type' => $this->object->tr_type,

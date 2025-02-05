@@ -16,7 +16,7 @@ class OrderDtl extends BaseModel
     protected $table = 'order_dtls';
 
     protected $fillable = [
-        'tr_id',
+        'tr_code',
         'trhdr_id',
         'tr_type',
         'tr_seq',

@@ -18,7 +18,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->setSearchDisabled();
         $this->setDefaultSort('tr_date', 'desc');
-        $this->setDefaultSort('tr_id', 'desc');
+        $this->setDefaultSort('tr_code', 'desc');
     }
 
     public function builder(): Builder
@@ -39,13 +39,13 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('currency', "curr_rate")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("tr_id"), "tr_id")
+            Column::make($this->trans("tr_code"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
                         return '<a href="' . route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($row->id)
-                        ]) . '">' . $row->tr_id . '</a>';
+                        ]) . '">' . $row->tr_code . '</a>';
                     } else {
                         return '';
                     }
@@ -62,7 +62,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("matl_code"), 'id')
                 ->format(function ($value, $row) {
                     // Manually load OrderDtl using a query
-                    $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
+                    $orderDtl = OrderDtl::where('tr_code', $row->tr_code)
                         ->where('tr_type', $row->tr_type)
                         ->orderBy('id')
                         ->get();
@@ -133,7 +133,7 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
                         ->from('order_dtls')
-                        ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
+                        ->whereRaw('order_dtls.tr_code = order_hdrs.tr_code')
                         ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
                         ->where('order_dtls.tr_type', 'PO');
                 });

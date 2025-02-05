@@ -18,11 +18,11 @@ class DelivDtl extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
-        'tr_id',
+        'tr_code',
         'tr_seq',
         'reffdtl_id',
         'reffhdrtr_type',
-        'reffhdrtr_id',
+        'reffhdrtr_code',
         'reffdtltr_seq',
         'matl_id',
         'matl_code',
