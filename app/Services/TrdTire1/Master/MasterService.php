@@ -319,8 +319,8 @@ class MasterService extends BaseService
         $purchaseOrders = OrderHdr::where('tr_type', 'PO')->get();
         return $purchaseOrders->map(function ($order) {
             return [
-                'label' => $order->tr_id,
-                'value' => $order->tr_id,
+                'label' => $order->tr_code,
+                'value' => $order->tr_code,
             ];
         })->toArray();
     }

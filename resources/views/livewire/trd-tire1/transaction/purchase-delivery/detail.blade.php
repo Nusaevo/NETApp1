@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card
-        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}"
+        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_code ? ' (Nota #' . $this->object->tr_code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
@@ -32,9 +32,8 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field-search label="{{ $this->trans('Nota Pembelian') }}"
-                                        model="inputs.tr_id" type="text" :action="$actionValue" :options="$purchaseOrders"
-                                        required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['tr_id']" />
-
+                                        model="inputs.tr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
+                                        required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['tr_code']" />
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('custommer') }}" model="inputs.partner_name"
                                         type="text" :action="$actionValue" required="false" readonly="true" />
@@ -115,7 +114,6 @@
                                                                             label="Quantity" enabled="true"
                                                                             class="form-control"
                                                                             model="input_details.{{ $key }}.qty"
-                                                                            onChanged="updateAmount({{ $key }})"
                                                                             type="number" />
                                                                     </div>
                                                                     <div class="col-md-3">
@@ -153,12 +151,6 @@
                     </div>
                 </div>
         </x-ui-tab-view-content>
-        {{-- <x-ui-footer> --}}
-        {{-- @if ($actionValue === 'Edit')
-            <x-ui-button :action="$actionValue" clickEvent="createReturn"
-                cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
-            @endif --}}
-        {{-- </x-ui-footer> --}}
     </x-ui-page-card>
     {{-- @php
     dump($input_details);

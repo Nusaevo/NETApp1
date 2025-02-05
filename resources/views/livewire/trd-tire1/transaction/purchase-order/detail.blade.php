@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card
-        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}"
+        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_code ? ' (Nota #' . $this->object->tr_code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
@@ -25,7 +25,7 @@
                                     onChanged="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" /> --}}
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('tr_id') }}" model="inputs.tr_id"
+                                    <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                         type="code" :action="$actionValue" required="false"
                                         clickEvent="getTransactionCode" buttonName="Nomor" enabled="true" :buttonEnabled="$isPanelEnabled"/>
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
@@ -80,13 +80,13 @@
                                             </x-ui-table>
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax') }}" model="inputs.tax"
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}" model="inputs.tax_flag"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
-                                        model="inputs.payment_terms_id" :options="$paymentTerms" required="true"
+                                        model="inputs.payment_term_id" :options="$paymentTerms" required="true"
                                         :action="$actionValue" />
                                     <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />

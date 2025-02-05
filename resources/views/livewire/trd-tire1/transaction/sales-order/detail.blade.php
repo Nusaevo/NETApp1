@@ -20,14 +20,14 @@
                                 <div class="row">
                                     <x-ui-option model="inputs.sales_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
-                                    <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
+                                    <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                         type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        :checked="$inputs['tax_invoice']"/>
+                                        :checked="$inputs['tax_doc_flag']" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                         type="code" :action="$actionValue" required="true" clickEvent="getTransactionCode"
-                                        buttonName="Nomor" enabled="true" :buttonEnabled="$isPanelEnabled"/>
+                                        buttonName="Nomor" enabled="true" :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
@@ -80,15 +80,21 @@
                                             </x-ui-table>
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                    <x-ui-text-field label="{{ $this->trans('send_to_name') }}" model="inputs.send_to_name"
-                                        type="text" :action="$actionValue" required="false" enabled="false" />
                                     <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}" clickEvent=""
-                                        model="inputs.tax_payer" :selectedValue="$inputs['tax_payer']" :options="$npwpOptions" required="false"
-                                        :action="$actionValue" />
+                                        model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions" required="false"
+                                        :action="$actionValue"  onChanged="onTaxPayerChanged"/>
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}" model="inputs.tax_flag"
-                                        :options="$SOTax" required="true" :action="$actionValue"
+                                    <x-ui-text-field label="{{ $this->trans('ship_to') }}"
+                                        model="inputs.textareasend_to" type="textarea" :action="$actionValue" required="false"
+                                        enabled="false" />
+                                    <x-ui-text-field label="{{ $this->trans('Npwp') }}"
+                                        model="inputs.textarea_npwp" type="textarea" :action="$actionValue" required="false"
+                                        enabled="false" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}"
+                                        model="inputs.tax_flag" :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
                                         model="inputs.payment_term_id" :options="$paymentTerms" required="true"

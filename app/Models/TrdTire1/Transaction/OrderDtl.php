@@ -16,7 +16,7 @@ class OrderDtl extends BaseModel
     protected $table = 'order_dtls';
 
     protected $fillable = [
-        'tr_id',
+        'tr_code',
         'trhdr_id',
         'tr_type',
         'tr_seq',
@@ -28,7 +28,10 @@ class OrderDtl extends BaseModel
         'qty_reff',
         'price',
         'amt',
-        'disc'
+        'disc_pct',
+        'price_tax',
+        'amt_tax',
+
     ];
 
     protected static function boot()
@@ -37,7 +40,38 @@ class OrderDtl extends BaseModel
         static::saving(function ($orderDtl) {
             $qty = $orderDtl->qty;
             $price = $orderDtl->price;
-            $orderDtl->amt = $qty * $price;
+            $discPct = $orderDtl->disc_pct / 100;
+            $orderDtl->amt = $qty * $price * (1 - $discPct);
+
+            //include ppn
+            //$orderDtl->price_tax = $price * $orderDtl->OrderHdr->tax_pct / 100;
+            //$orderDtl->amt_tax = $orderDtl->amt * $orderDtl->OrderHdr->tax_pct / 100;
+
+            //exclude ppn
+            //$orderDtl->price_tax =
+            //$orderDtl->amt_tax =
+
+            //default value
+            //$orderDtl->price_tax = $orderDtl->price;
+            //$orderDtl->amt_tax = $orderDtl->amt;
+            
+            $taxPct = $orderDtl->OrderHdr->tax_pct / 100;
+
+            // Include PPN
+            if ($orderDtl->OrderHdr->tax_flag === 'I') {
+                $orderDtl->price_tax = $price * (1 + $taxPct);
+                $orderDtl->amt_tax = $orderDtl->amt * (1 + $taxPct);
+            }
+            // Exclude PPN
+            elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
+                $orderDtl->price_tax = $price;
+                $orderDtl->amt_tax = $orderDtl->amt * $taxPct;
+            }
+            // Default value
+            else {
+                $orderDtl->price_tax = $price;
+                $orderDtl->amt_tax = $orderDtl->amt;
+            }
         });
         static::deleting(function ($orderDtl) {
             DB::beginTransaction();

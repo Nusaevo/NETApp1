@@ -97,7 +97,7 @@ class BankListComponent extends DetailComponent
         if (!empty($this->objectIdValue)) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
             if ($partnerDetail) {
-                $this->input_details = $partnerDetail->banks ?? [];
+                $this->input_details = json_decode($partnerDetail->banks, true) ?? [];
             }
         }
     }
@@ -119,7 +119,7 @@ class BankListComponent extends DetailComponent
         }
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
-            $partnerDetail->update(['banks' => json_encode($banksArray)]);
+            $partnerDetail->update(['banks' => json_encode($banksArray, JSON_UNESCAPED_UNICODE)]);
         }
     }
 

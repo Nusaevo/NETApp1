@@ -83,23 +83,27 @@ class Partner extends BaseModel
     }
 
     public static function generateNewCode($name)
-    {
-        $nameInitial = strtoupper(substr($name, 0, 1));
-        $initialCode = $nameInitial;
+{
+    $initialCode = strtoupper(substr($name, 0, 1));
 
-        $latestCode = self::where('code', 'LIKE', $initialCode . '%')
-                          ->orderByRaw("LENGTH(code) DESC")
-                          ->pluck('code')
-                          ->first();
+    // Ambil kode terakhir dengan format yang sesuai:
+    // Pastikan kode dimulai dengan $initialCode dan diikuti oleh satu atau lebih angka.
+    $latestCode = self::where('code', 'LIKE', $initialCode . '%')
+        ->whereRaw("code ~ '^" . $initialCode . "[0-9]+$'")
+        ->orderByRaw("CAST(REGEXP_REPLACE(code, '^[A-Za-z]+', '') AS INTEGER) DESC")
+        ->pluck('code')
+        ->first();
 
-        if ($latestCode) {
-            preg_match('/\d+$/', $latestCode, $matches);
-            $numericPart = isset($matches[0]) ? intval($matches[0]) + 1 : 1;
-            return $initialCode . str_pad($numericPart, 4, '0', STR_PAD_LEFT);
-        } else {
-            return $initialCode . '0001';
-        }
+    if ($latestCode) {
+        // Ambil bagian numerik dari kode dan increment nilainya
+        preg_match('/\d+$/', $latestCode, $matches);
+        $numericPart = isset($matches[0]) ? intval($matches[0]) + 1 : 1;
+        return $initialCode . str_pad($numericPart, 4, '0', STR_PAD_LEFT);
+    } else {
+        // Jika tidak ada kode ditemukan, mulai dari 0001
+        return $initialCode . '0001';
     }
+}
 
 
 

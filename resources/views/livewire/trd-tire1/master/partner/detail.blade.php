@@ -96,7 +96,7 @@
                             @endif
                             <div>
                                 <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
-                                    :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+                                :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
                             </div>
                         </x-ui-footer>
 

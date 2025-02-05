@@ -30,7 +30,7 @@ class Detail extends BaseComponent
     public $object_detail;
     public $trhdr_id;
     public $tr_seq;
-    public $tr_id;
+    public $tr_code;
 
     public $total_amount = 0;
     public $trType = "PD";
@@ -48,19 +48,8 @@ class Detail extends BaseComponent
     public $purchaseOrders = [];
 
     protected $rules = [
-        'inputs.tr_date' => 'nullable',
-        'inputs.tr_id' => 'required',
+        'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.send_to' => 'nullable',
-        'inputs.tax_payer' => 'nullable',
-        'inputs.payment_terms' => 'nullable',
-        'inputs.tax' => 'nullable',
-        'inputs.due_date' => 'nullable',
-        'inputs.cust_reff' => 'nullable',
-        'input_details.*.qty' => 'required',
-        'input_details.*.price' => 'nullable',
-        'input_details.*.matl_descr' => 'nullable',
-        'input_details.*.matl_uom' => 'nullable',
     ];
 
     protected $listeners = [
@@ -79,7 +68,6 @@ class Detail extends BaseComponent
             'input_details.*' => $this->trans('product'),
             'input_details.*.matl_id' => $this->trans('matl_id'),
             'input_details.*.qty' => $this->trans('qty'),
-            'input_details.*.price' => $this->trans('price'),
         ];
 
         $this->masterService = new MasterService();
@@ -96,7 +84,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
-            $this->inputs['tr_id'] = $this->object->tr_id;
+            $this->inputs['tr_code'] = $this->object->tr_code;
 
             $partner = Partner::find($this->object->partner_id);
             $this->inputs['partner_id'] = $this->object->partner_id;
@@ -140,7 +128,6 @@ class Detail extends BaseComponent
             $this->input_details[] = [
                 'matl_id' => null,
                 'qty' => null,
-                'price' => 0.0,
             ];
         } else {
             $this->dispatch('error', 'Tolong simpan Header terlebih dahulu');
@@ -164,17 +151,15 @@ class Detail extends BaseComponent
             $material = Material::find($matl_id);
             if ($material) {
                 $this->input_details[$key]['matl_id'] = $material->id;
-                $this->input_details[$key]['price_uom'] = $material->selling_price;
-                $this->input_details[$key]['matl_uom'] = $material->uom;
-                $this->input_details[$key]['matl_descr'] = $material->name;
             }
         }
     }
 
     public function onPurchaseOrderChanged($value)
     {
+        // dd($value);
         if ($value) {
-            $order = OrderHdr::where('tr_id', $value)->first();
+            $order = OrderHdr::where('tr_code', $value)->first();
 
             if ($order) {
                 $partner = Partner::find($order->partner_id);
@@ -182,23 +167,20 @@ class Detail extends BaseComponent
                 $this->inputs['partner_name'] = $partner->name;
             }
 
-            $this->inputs['tr_id'] = $value;
+            $this->inputs['tr_code'] = $value;
             $this->loadPurchaseOrderDetails($value);
         }
     }
 
-    public function loadPurchaseOrderDetails($tr_id)
+    public function loadPurchaseOrderDetails($tr_code)
     {
         $this->input_details = [];
-        $orderDetails = OrderDtl::where('tr_id', $tr_id)->get();
+        $orderDetails = OrderDtl::where('tr_code', $tr_code)->get();
 
         foreach ($orderDetails as $detail) {
             $this->input_details[] = [
                 'matl_id' => $detail->matl_id,
                 'qty' => $detail->qty,
-                'price' => $detail->price,
-                'matl_descr' => $detail->matl_descr,
-                'matl_uom' => $detail->matl_uom,
             ];
         }
     }
@@ -216,31 +198,28 @@ class Detail extends BaseComponent
                 $this->inputs['partner_code'] = $partner->code;
             }
 
-            $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+            $this->object = $this->object->savePurchaseHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
 
             // Save details
-            $existingDetails = DelivDtl::where('trhdr_id', $this->objectIdValue)
-                ->where('tr_type', $this->object->trType)
+            $existingDetails = DelivDtl::where('trhdr_id', $this->object->id)
+                ->where('tr_type', $this->object->tr_type)
                 ->get()
                 ->keyBy('tr_seq');
 
             foreach ($this->input_details as $key => $detail) {
                 $tr_seq = $key + 1;
                 $delivDtl = DelivDtl::firstOrNew([
-                    'trhdr_id' => $this->objectIdValue,
+                    'trhdr_id' => $this->object->id,
                     'tr_seq' => $tr_seq,
                 ]);
 
                 $detailData = [
-                    'tr_id' => $this->object->tr_id,
-                    'trhdr_id' => $this->objectIdValue,
+                    'tr_code' => $this->object->tr_code,
+                    'trhdr_id' => $this->object->id,
                     'qty_reff' => $detail['qty'],
                     'tr_type' => $this->object->tr_type,
                     'matl_id' => $detail['matl_id'],
                     'qty' => $detail['qty'],
-                    'price' => $detail['price'],
-                    'matl_descr' => $detail['matl_descr'],
-                    'matl_uom' => $detail['matl_uom'],
                 ];
 
                 $delivDtl->fill($detailData);

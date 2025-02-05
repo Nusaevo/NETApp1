@@ -110,7 +110,7 @@ class ContactListComponent extends DetailComponent
         if (!empty($this->objectIdValue)) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
             if ($partnerDetail) {
-                $this->input_details = $partnerDetail->contacts ?? [];
+                $this->input_details = json_decode($partnerDetail->contacts, true) ?? [];
             }
         }
     }
@@ -137,7 +137,7 @@ class ContactListComponent extends DetailComponent
         }
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
-            $partnerDetail->update(['contacts' => json_encode($contactsArray)]);
+            $partnerDetail->update(['contacts' => json_encode($contactsArray, JSON_UNESCAPED_UNICODE)]);
         }
     }
 

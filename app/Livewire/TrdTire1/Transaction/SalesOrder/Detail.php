@@ -24,7 +24,7 @@ class Detail extends BaseComponent
     public $warehouses;
     public $partners;
     public $sales_type;
-    public $tax_invoice;
+    public $tax_doc_flag;
     public $transaction_id;
     public $payments;
     public $deletedItems = [];
@@ -52,7 +52,6 @@ class Detail extends BaseComponent
     public $rules  = [
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.send_to_name' => 'required',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -74,10 +73,10 @@ class Detail extends BaseComponent
         }
 
         $sales_type = $this->inputs['sales_type'];
-        $tax_invoice = !empty($this->inputs['tax_invoice']); // Konversi ke boolean
+        $tax_doc_flag = !empty($this->inputs['tax_doc_flag']); // Konversi ke boolean
         $tr_type = $this->trType;
 
-        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_invoice);
+        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_doc_flag);
     }
 
     public function onSOTaxChange()
@@ -159,7 +158,7 @@ class Detail extends BaseComponent
 
         return array_map(function ($item) {
             return [
-                'label' => ($item['npwp']) . ' - ' . ($item['wp_name']) . ' - ' . ($item['wp_location']),
+                'label' => ($item['npwp']),
                 'value' => $item['npwp'],
             ];
         }, $wpDetails);
@@ -185,8 +184,10 @@ class Detail extends BaseComponent
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
-            $this->inputs['tax_invoice'] = $this->object->tax_invoice;
+            $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
             $this->inputs['partner_name'] = $this->object->partner->code . " - " . $this->object->partner->name; // Set partner_name
+            $this->inputs['textareasend_to'] = $this->object->partner->name . "\n" . $this->object->partner->address;
+            $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr; // Populate textarea_npwp
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
@@ -355,9 +356,12 @@ class Detail extends BaseComponent
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_code'] = $partner->code; // Set partner_code
             $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
-            $this->inputs['send_to_name'] = $partner->name; // Set send_to_name with the selected customer's name
+            $this->inputs['textareasend_to'] = $partner->name . "\n" . $partner->address;
 
-            // Set tax_payer with data from JSON wp_details
+            $this->inputs['ship_to_name'] = $partner->name;
+            $this->inputs['ship_to_addr'] = $partner->address;
+
+            // Set npwp_code with data from JSON wp_details
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
                 $wpDetails = $partner->PartnerDetail->wp_details;
                 if (is_string($wpDetails)) {
@@ -366,16 +370,37 @@ class Detail extends BaseComponent
                 if (is_array($wpDetails) && !empty($wpDetails)) {
                     $this->npwpOptions = array_map(function ($item) {
                         return [
-                            'label' => $item['npwp'] . ' - ' . $item['wp_name'],
+                            'label' => $item['npwp'],
                             'value' => $item['npwp'],
                         ];
                     }, $wpDetails);
-                    $this->inputs['tax_payer'] = $wpDetails[0]['npwp'] ?? ''; // Example: taking the first wp_detail
                 }
             }
 
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
+        }
+    }
+
+    public function onTaxPayerChanged()
+    {
+        $partner = Partner::find($this->inputs['partner_id']);
+        if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+            $wpDetails = $partner->PartnerDetail->wp_details;
+            if (is_string($wpDetails)) {
+                $wpDetails = json_decode($wpDetails, true);
+            }
+            if (is_array($wpDetails)) {
+                foreach ($wpDetails as $detail) {
+                    if ($detail['npwp'] == $this->inputs['npwp_code']) {
+                        $this->inputs['textarea_npwp'] = $detail['wp_name'] . "\n" . $detail['wp_location'];
+                        $this->inputs['npwp_code'] = $detail['npwp'];
+                        $this->inputs['npwp_name'] = $detail['wp_name'];
+                        $this->inputs['npwp_addr'] = $detail['wp_location'];
+                        break;
+                    }
+                }
+            }
         }
     }
 

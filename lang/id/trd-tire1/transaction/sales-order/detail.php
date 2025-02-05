@@ -1,12 +1,12 @@
 <?php
 
 return [
-    'tr_id' => 'Kode Transaksi',
+    'tr_code' => 'Kode Transaksi',
     'custommer' => 'Pelanggan',
-    'send_to' => 'Kirim Ke',
+    'ship_to' => 'Kirim Ke',
     'tax_payer' => 'Wajib Pajak',
-    'payment_terms' => 'Termin Pembayaran',
-    'tax' => 'PPN',
+    'payment_term' => 'Termin Pembayaran',
+    'tax_flag' => 'PPN',
     'due_date' => 'Tanggal Jatuh Tempo',
     'cust_reff' => 'Referensi Pelanggan',
     'tanggal_transaksi' => 'Tanggal Transaksi',
