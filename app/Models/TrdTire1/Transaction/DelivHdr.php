@@ -21,6 +21,10 @@ class DelivHdr extends BaseModel
         'tr_code',
         'tr_date',
         'partner_id',
+        'partner_code',
+        'wh_code',
+        'wh_id',
+        'tr_type', // Ensure tr_type is fillable
     ];
     protected $casts = [
         'tr_code' => 'string',
@@ -41,8 +45,14 @@ class DelivHdr extends BaseModel
 
     public function OrderDtl()
     {
-        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')->where('tr_type', $this->tr_type);
+        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')->where('tr_type', 'PO');
     }
+    public function OrderHdr()
+    {
+        return $this->belongsTo(OrderHdr::class, 'tr_code', 'tr_code');
+    }
+
+
     #endregion
 
     #region Metode Utama
@@ -65,6 +75,11 @@ class DelivHdr extends BaseModel
             // Set status default
             if ($this->isNew()) {
                 $this->status_code = Status::OPEN;
+            }
+
+            // Ensure trhdr_id is filled
+            if (isset($inputs['trhdr_id'])) {
+                $this->id = $inputs['trhdr_id'];
             }
 
             // Simpan data

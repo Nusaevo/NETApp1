@@ -18,9 +18,8 @@ class MasterService extends BaseService
     {
         return $this->mainConnection
             ->table('config_consts')
-            ->select('id', 'str1', 'str2', 'note1')
+            ->select('id', 'str1', 'str2', 'note1', 'num1', 'num2')
             ->where('const_group', $constGroup)
-
             ->whereNull('deleted_at')
             ->orderBy('seq')
             ->get();
@@ -53,7 +52,7 @@ class MasterService extends BaseService
 
     public function getWarehouse()
     {
-        $data = $this->getConfigData('WAREHOUSE_LOC', null);
+        $data = $this->getConfigData('TRX_WAREHOUSE');
         return $this->mapData($data);
     }
 
@@ -75,7 +74,6 @@ class MasterService extends BaseService
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL1')
-
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -166,13 +164,13 @@ class MasterService extends BaseService
         })->toArray();
     }
 
+
     public function getMatlCategory2String($str1)
     {
         $data = $this->mainConnection
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL2')
-
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -199,6 +197,7 @@ class MasterService extends BaseService
             return [
                 'label' => $item->str1 . " - " . $item->str2,
                 'value' => $item->id,
+                'num1' => $item->num1,
             ];
         })->toArray();
         return $payments;
@@ -245,7 +244,6 @@ class MasterService extends BaseService
             ->table('config_consts')
             ->select('id', 'str1')
             ->where('const_group', 'WAREHOUSE_LOC')
-
             ->whereNull('deleted_at')
             ->orderBy('seq')
             ->get()
@@ -295,7 +293,6 @@ class MasterService extends BaseService
             ->table('config_consts')
             ->select('str1')
             ->where('const_group', 'MCURRENCY_CODE')
-
             ->whereNull('deleted_at')
             ->orderByDesc('num1')
             ->first();

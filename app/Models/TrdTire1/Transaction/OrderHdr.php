@@ -23,6 +23,7 @@ class OrderHdr extends BaseModel
         'partner_id',
         'partner_code',
         'payment_term_id',
+        'payment_due_days',
         'tr_date',
         'due_date',
         'cust_reff',
@@ -35,7 +36,9 @@ class OrderHdr extends BaseModel
         'ship_to_addr',
         'npwp_name',
         'npwp_addr',
-        'npwp_code'
+        'npwp_code',
+        'total_amt', // Add this line
+        'total_amt_tax' // Add this line
     ];
 
     protected $casts = [

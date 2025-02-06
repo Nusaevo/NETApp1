@@ -21,10 +21,12 @@
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="{{ $this->trans('Nomor Surat Jalan') }}"
-                                        model="inputs.delivery_number" type="text" :action="$actionValue" required="false"
-                                        enabled="true" />
+                                        model="inputs.tr_code" type="text" :action="$actionValue" required="false"
+                                        enabled="true" capslockMode="true"/>
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                        <x-ui-dropdown-select label="{{ $this->trans('wh_code') }}"
+                                            model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue"/>
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
@@ -32,8 +34,9 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field-search label="{{ $this->trans('Nota Pembelian') }}"
-                                        model="inputs.tr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
-                                        required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['tr_code']" />
+                                        model="inputs.reffhdrtr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
+                                        required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['reffhdrtr_code']" />
+
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('custommer') }}" model="inputs.partner_name"
                                         type="text" :action="$actionValue" required="false" readonly="true" />
@@ -110,15 +113,15 @@
                                                                     </div>
                                                                     <div class="col-md-3">
                                                                         <x-ui-text-field
-                                                                            model="input_details.{{ $key }}.qty"
-                                                                            label="Quantity" enabled="true"
+                                                                            model="input_details.{{ $key }}.qty_order"
+                                                                            label="Quantity from order" enabled="true"
                                                                             class="form-control"
-                                                                            model="input_details.{{ $key }}.qty"
-                                                                            type="number" />
+                                                                            onChanged="updateAmount({{ $key }})"
+                                                                            type="number" enabled="false"/>
                                                                     </div>
                                                                     <div class="col-md-3">
                                                                         <x-ui-text-field label="Quantity Belum Dikirim"
-                                                                            model="input_details.{{ $key }}.qty2"
+                                                                            model="input_details.{{ $key }}.qty"
                                                                             required="false" enabled="true" />
                                                                     </div>
                                                                 </div>
@@ -151,6 +154,12 @@
                     </div>
                 </div>
         </x-ui-tab-view-content>
+        {{-- <x-ui-footer> --}}
+        {{-- @if ($actionValue === 'Edit')
+            <x-ui-button :action="$actionValue" clickEvent="createReturn"
+                cssClass="btn-primary" loading="true" button-name="Create Purchase Return" iconPath="add.svg" />
+            @endif --}}
+        {{-- </x-ui-footer> --}}
     </x-ui-page-card>
     {{-- @php
     dump($input_details);

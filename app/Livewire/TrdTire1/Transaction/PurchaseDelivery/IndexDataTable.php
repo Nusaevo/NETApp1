@@ -25,7 +25,8 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return DelivHdr::with(['DelivDtl', 'Partner'])
             ->where('deliv_hdrs.tr_type', 'PD')
-            ->where('deliv_hdrs.status_code', Status::OPEN);
+            ->where('deliv_hdrs.status_code', Status::OPEN)
+            ->orWhere('deliv_hdrs.status_code', Status::ACTIVE); // Include non-active records
     }
     public function columns(): array
     {
@@ -139,6 +140,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+
             $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
@@ -152,6 +154,15 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
+            }),
+            $this->createTextFilter('Transaction Code', 'tr_code', 'Cari Kode Transaksi', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '>=', $value);
+            }),
+            DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '<=', $value);
             }),
             // SelectFilter::make('Status', 'status_code')
             //     ->options([

@@ -119,7 +119,7 @@ class BankListComponent extends DetailComponent
         }
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
-            $partnerDetail->update(['banks' => json_encode($banksArray, JSON_UNESCAPED_UNICODE)]);
+            $partnerDetail->update(['banks' => $banksArray]);
         }
     }
 

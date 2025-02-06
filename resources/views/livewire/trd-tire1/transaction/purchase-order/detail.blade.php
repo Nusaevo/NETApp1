@@ -18,7 +18,7 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-option model="inputs.vehicle_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
+                                    <x-ui-option model="inputs.sales_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     {{-- <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                     type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
@@ -155,15 +155,6 @@
                             </div>
                         </x-ui-padding>
                     </x-ui-card>
-                    <x-ui-footer>
-                        <div>
-                            <x-ui-button clickEvent="Save" button-name="Cetak PO" loading="true" :action="$actionValue"
-                                cssClass="btn-primary" />
-                            <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
-                                cssClass="btn-primary" iconPath="save.svg" />
-                        </div>
-
-                    </x-ui-footer>
                 </div>
         </x-ui-tab-view-content>
         {{-- <x-ui-footer> --}}

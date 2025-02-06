@@ -23,7 +23,7 @@ class Detail extends BaseComponent
     public $selectedPartners = [];
     public $warehouses;
     public $partners;
-    public $vehicle_type;
+    public $sales_type;
     public $tax_invoice;
     public $transaction_id;
     public $payments;
@@ -68,14 +68,14 @@ class Detail extends BaseComponent
 
     public function getTransactionCode()
     {
-        if (!isset($this->inputs['vehicle_type'])) {
+        if (!isset($this->inputs['sales_type'])) {
             $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
             return;
         }
 
-        $vehicle_type = $this->inputs['vehicle_type'];
+        $sales_type = $this->inputs['sales_type'];
         $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
-        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($vehicle_type, 'PO', $tax_invoice);
+        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, 'PO', $tax_invoice);
     }
 
     public function onTaxInvoiceChanged()
@@ -192,7 +192,7 @@ class Detail extends BaseComponent
             $this->isPanelEnabled = "true";
         }
         // Panggil perhitungan DPP dan PPN saat halaman dimuat
-        if (!empty($this->inputs['tax'])) {
+        if (!empty($this->inputs['tax_flag'])) {
             $this->onSOTaxChange();
         }
     }

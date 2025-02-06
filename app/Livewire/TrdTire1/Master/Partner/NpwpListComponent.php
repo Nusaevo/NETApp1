@@ -120,7 +120,7 @@ class NpwpListComponent extends DetailComponent
         }
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
-            $partnerDetail->update(['wp_details' => json_encode($wp_detailsArray, JSON_UNESCAPED_UNICODE)]);
+            $partnerDetail->update(['wp_details' => $wp_detailsArray]);
         }
     }
 
