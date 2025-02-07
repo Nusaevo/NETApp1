@@ -12,23 +12,31 @@
                                 </x-slot> --}}
                                 <x-slot name="rows">
                                     <div class="row">
-                                        <x-ui-text-field-search type="int" label='kode' clickEvent=""
+                                        <div class="col-md-4">
+                                            <x-ui-text-field-search type="int" label='kode' clickEvent=""
                                             model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                             :options="$materials" required="true" :action="$actionValue"
                                             onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                             :enabled="true" />
-                                    </div>
-                                    <div class="row">
-                                        <x-ui-text-field model="input_details.{{ $key }}.price"
-                                            label="Harga Satuan" enabled="false" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.qty" label="Quantity"
+                                        </div>
+                                        <div class="col-md-3">
+                                            <x-ui-text-field model="input_details.{{ $key }}.price"
+                                            label="Harga Satuan" enabled="true"
+                                            onChanged="updateItemAmount({{ $key }})" />
+                                        </div>
+                                        <div class="col-md-1">
+                                            <x-ui-text-field model="input_details.{{ $key }}.qty" label="Qty"
                                             enabled="true" class="form-control"
                                             model="input_details.{{ $key }}.qty"
                                             onChanged="updateItemAmount({{ $key }})" type="number" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.disc"
+                                        </div>
+                                        <div class="col-md-1">
+                                            <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                             label="{{ $this->trans('disc') }}" enabled="true"
                                             onChanged="updateItemAmount({{ $key }})" />
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
+                                        </div>
+                                        <div class="col-md-3">
+                                            <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
                                             label="Amount" class="form-control" type="text" enabled="false" />
                                     </div>
                                 </x-slot>

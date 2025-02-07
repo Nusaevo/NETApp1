@@ -63,37 +63,27 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans("matl_code"), 'id')
-                ->format(function ($value, $row) {
-                    // Manually load OrderDtl using a query
-                    $orderDtl = OrderDtl::where('tr_code', $row->tr_code)
-                        ->where('tr_type', $row->tr_type)
-                        ->orderBy('id')
-                        ->get();
-
-                    // Generate links if data is available
-                    $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
-                    $links = $matlCodes->map(function ($code, $id) {
-                        return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($id)
-                        ]) . '">' . $code . '</a>';
-                    });
-
-                    return $links->implode(', ');
-                })
-                ->html(),
-            Column::make($this->trans("amt"), "total_amt_in_idr")
+            Column::make($this->trans('qty'), 'total_qty')
                 ->label(function ($row) {
-                    $totalAmt = 0;
-
-                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-
-                    if ($orderDetails->isEmpty()) {
-                        return 'N/A';
-                    }
+                    return $row->total_qty;
                 })
                 ->sortable(),
+            Column::make($this->trans('amt'), 'total_amt')
+                ->label(function ($row) {
+                    return rupiah($row->total_amt);
+                })
+                ->sortable(),
+            // Column::make($this->trans("amt"), "total_amt_in_idr")
+            //     ->label(function ($row) {
+            //         $totalAmt = 0;
+
+            //         $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
+
+            //         if ($orderDetails->isEmpty()) {
+            //             return 'N/A';
+            //         }
+            //     })
+            //     ->sortable(),
 
             // Column::make($this->trans('status'), "status_code")
             //     ->sortable()

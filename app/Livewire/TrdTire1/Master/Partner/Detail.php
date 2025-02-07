@@ -97,9 +97,11 @@ class Detail extends BaseComponent
         }
         if (isNullOrEmptyString($this->inputs['code'])) {
             $this->inputs['code'] = Partner::generateNewCode($this->inputs['name']);
-            // dd($this->inputs['code']);
         }
-        $this->inputs['partner_chars'] = json_encode($this->inputs['partner_chars']);
+
+        $this->inputs['partner_chars'] = is_array($this->inputs['partner_chars'])
+            ? json_encode($this->inputs['partner_chars'])
+            : $this->inputs['partner_chars'];
         $this->object->fill($this->inputs);
         $this->object->save();
 
@@ -113,9 +115,8 @@ class Detail extends BaseComponent
             ]);
         }
 
-        if($this->actionValue == 'Create')
-        {
-            return redirect()->route($this->appCode.'.Master.Partner.Detail', [
+        if ($this->actionValue == 'Create') {
+            return redirect()->route($this->appCode . '.Master.Partner.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

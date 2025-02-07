@@ -147,20 +147,65 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
-                $builder->whereExists(function ($query) use ($value) {
-                    $query->select(DB::raw(1))
-                        ->from('order_dtls')
-                        ->whereRaw('order_dtls.tr_code = order_hdrs.tr_code')
-                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('order_dtls.tr_type', 'PO');
-                });
+            // Filter dropdown untuk sales_type
+            SelectFilter::make('Sales Type', 'sales_type')
+                ->options([
+                    ''          => 'Semua',
+                    '0'    => 'Motor',
+                    '1' => 'Mobil',
+                    // Tambahkan opsi lainnya sesuai kebutuhan
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->whereHas('OrderHdr', function ($query) use ($value) {
+                            $query->where('sales_type', $value);
+                        });
+                    }
+                }),
+            // Filter untuk Tanggal Awal
+            DateFilter::make('Tanggal Awal')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('tr_date', '>=', $value);
+                }),
+
+            // Filter untuk Tanggal Akhir
+            DateFilter::make('Tanggal Akhir')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('tr_date', '<=', $value);
+                }),
+
+            // Date filter untuk tanggal (misalnya berdasarkan field tr_date)
+            // DateRangeFilter::make('Tanggal Nota')
+            //     ->label('Tanggal Nota')
+            //     ->placeholder('Pilih Rentang Tanggal')
+            //     ->displayFormat('d-M-Y') // Format seperti gambar
+            //     ->filter(function (Builder $query, array $data) {
+            //         if ($data['from'] ?? null) {
+            //             $query->whereDate('tr_date', '>=', $data['from']);
+            //         }
+            //         if ($data['until'] ?? null) {
+            //             $query->whereDate('tr_date', '<=', $data['until']);
+            //         }
+            //     }),
+            // Text filter untuk tr_code (nomor)
+            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
+            // $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
+            //     $builder->whereExists(function ($query) use ($value) {
+            //         $query->select(DB::raw(1))
+            //             ->from('order_dtls')
+            //             ->whereRaw('order_dtls.tr_code = order_hdrs.tr_code')
+            //             ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
+            //             ->where('order_dtls.tr_type', 'PO');
+            //     });
+            // }),
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
+
             // SelectFilter::make('Status', 'status_code')
             //     ->options([
             //         Status::OPEN => 'Open',

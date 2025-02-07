@@ -23,21 +23,26 @@ class OrderHdr extends BaseModel
         'partner_id',
         'partner_code',
         'payment_term_id',
+        'payment_due_days',
         'tr_date',
         'due_date',
         'cust_reff',
         'curr_rate',
-        'tax_payer',
-        'type',
         'note',
-        'send_to_name',
         'sales_type',
-        'tax_invoice',
+        'tax_doc_flag',
         'payment_term',
+        'ship_to_name',
+        'ship_to_addr',
+        'npwp_name',
+        'npwp_addr',
+        'npwp_code',
+        'total_amt', // Add this line
+        'total_amt_tax' // Add this line
     ];
 
     protected $casts = [
-        'tax_invoice' => 'boolean',
+        'tax_doc_flag' => 'boolean',
     ];
 
     protected static function boot()
@@ -107,7 +112,7 @@ class OrderHdr extends BaseModel
     }
 
 
-    public static function generateTransactionId($sales_type, $tr_type, $tax_invoice = false)
+    public static function generateTransactionId($sales_type, $tr_type, $tax_doc_flag = false)
     {
         if ($tr_type == 'PO') {
             return self::generatePurchaseOrderId();
@@ -116,10 +121,10 @@ class OrderHdr extends BaseModel
         $year = date('y'); // Two-digit year
         $monthNumber = date('n'); // Month in number
         $monthLetter = chr(64 + $monthNumber); // Month in letter (A, B, C, etc.)
-        $sequenceNumber = self::getSequenceNumber($sales_type, $tax_invoice); // Get sequence number
+        $sequenceNumber = self::getSequenceNumber($sales_type, $tax_doc_flag); // Get sequence number
 
         // Determine format based on sales_type and tax invoice
-        if ($tax_invoice) {
+        if ($tax_doc_flag) {
             switch ($sales_type) {
                 case 0: // MOTOR with tax invoice
                     return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber); // Example: A25XXXXx
@@ -150,20 +155,20 @@ class OrderHdr extends BaseModel
         return sprintf('PO%04d', $newId); // Example: PO0001
     }
 
-    private static function getSequenceNumber($sales_type, $tax_invoice)
+    private static function getSequenceNumber($sales_type, $tax_doc_flag)
     {
         // Mendapatkan bulan dan tahun saat ini
         $currentYear = date('y'); // Dua digit terakhir tahun
         $currentMonth = date('n'); // Bulan dalam angka
         $currentMonthLetter = chr(64 + $currentMonth); // Bulan dalam huruf
 
-        // Filter tambahan untuk tax_invoice
-        $taxInvoiceFlag = $tax_invoice ? 1 : 0;
+        // Filter tambahan untuk tax_doc_flag
+        $taxInvoiceFlag = $tax_doc_flag ? 1 : 0;
 
-        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO', sales_type, dan tax_invoice
+        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO', sales_type, dan tax_doc_flag
         $lastOrder = OrderHdr::where('tr_type', 'SO')
             ->where('sales_type', $sales_type) // Filter berdasarkan sales_type
-            ->where('tax_invoice', $taxInvoiceFlag) // Filter berdasarkan tax_invoice
+            ->where('tax_doc_flag', $taxInvoiceFlag) // Filter berdasarkan tax_doc_flag
             ->orderBy('id', 'desc')
             ->first();
 

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'tr_id' => 'Nomor Nota',
+    'tr_code' => 'Nomor Nota',
     'date' => 'Tanggal',
     'supplier' => 'Custommer',
     'created_date' => 'Tgl dibuat',

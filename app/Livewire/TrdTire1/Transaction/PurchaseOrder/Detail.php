@@ -23,7 +23,7 @@ class Detail extends BaseComponent
     public $selectedPartners = [];
     public $warehouses;
     public $partners;
-    public $vehicle_type;
+    public $sales_type;
     public $tax_invoice;
     public $transaction_id;
     public $payments;
@@ -51,15 +51,8 @@ class Detail extends BaseComponent
 
 
     public $rules  = [
-        'inputs.tr_date' => 'nullable',
-        'inputs.send_to' => 'required',
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.tax_payer' => 'nullable',
-        'inputs.payment_terms' => 'nullable',
-        'inputs.tax' => 'nullable',
-        'inputs.due_date' => 'nullable',
-        'inputs.cust_reff' => 'nullable',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -75,14 +68,14 @@ class Detail extends BaseComponent
 
     public function getTransactionCode()
     {
-        if (!isset($this->inputs['vehicle_type'])) {
+        if (!isset($this->inputs['sales_type'])) {
             $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
             return;
         }
 
-        $vehicle_type = $this->inputs['vehicle_type'];
+        $sales_type = $this->inputs['sales_type'];
         $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
-        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($vehicle_type, 'PO', $tax_invoice);
+        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, 'PO', $tax_invoice);
     }
 
     public function onTaxInvoiceChanged()
@@ -96,11 +89,14 @@ class Detail extends BaseComponent
             // Ambil data konfigurasi berdasarkan konstanta pajak
             $configData = ConfigConst::select('num1', 'str1')
                 ->where('const_group', 'TRX_SO_TAX')
-                ->where('str1', $this->inputs['tax'])
+                ->where('str1', $this->inputs['tax_flag'])
                 ->first();
 
             $this->inputs['tax_value'] = $configData->num1 ?? 0; // Nilai pajak default 0 jika tidak ditemukan
             $taxType = $configData->str1 ?? ''; // Tipe pajak (str1)
+
+            // Simpan tax_pct
+            $this->inputs['tax_pct'] = $this->inputs['tax_value'];
 
             // Hitung DPP dan PPN berdasarkan tipe pajak
             $this->calculateDPPandPPN($taxType);
@@ -196,7 +192,7 @@ class Detail extends BaseComponent
             $this->isPanelEnabled = "true";
         }
         // Panggil perhitungan DPP dan PPN saat halaman dimuat
-        if (!empty($this->inputs['tax'])) {
+        if (!empty($this->inputs['tax_flag'])) {
             $this->onSOTaxChange();
         }
     }
@@ -373,7 +369,7 @@ class Detail extends BaseComponent
         $this->total_discount = ($data['total_discount']);
 
         // Recalculate DPP and PPN when amount or discount changes
-        $this->calculateDPPandPPN($this->inputs['tax'] ?? '');
+        $this->calculateDPPandPPN($this->inputs['tax_flag'] ?? '');
     }
 
     // Update discount percentage

@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card
-        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}"
+        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_code ? ' (Nota #' . $this->object->tr_code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
@@ -21,10 +21,12 @@
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="{{ $this->trans('Nomor Surat Jalan') }}"
-                                        model="inputs.delivery_number" type="text" :action="$actionValue" required="false"
-                                        enabled="true" />
+                                        model="inputs.tr_code" type="text" :action="$actionValue" required="false"
+                                        enabled="true" capslockMode="true"/>
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                        <x-ui-dropdown-select label="{{ $this->trans('wh_code') }}"
+                                            model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue"/>
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
@@ -32,8 +34,8 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field-search label="{{ $this->trans('Nota Pembelian') }}"
-                                        model="inputs.tr_id" type="text" :action="$actionValue" :options="$purchaseOrders"
-                                        required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['tr_id']" />
+                                        model="inputs.reffhdrtr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
+                                        required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['reffhdrtr_code']" />
 
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('custommer') }}" model="inputs.partner_name"
@@ -111,16 +113,15 @@
                                                                     </div>
                                                                     <div class="col-md-3">
                                                                         <x-ui-text-field
-                                                                            model="input_details.{{ $key }}.qty"
-                                                                            label="Quantity" enabled="true"
+                                                                            model="input_details.{{ $key }}.qty_order"
+                                                                            label="Quantity from order" enabled="true"
                                                                             class="form-control"
-                                                                            model="input_details.{{ $key }}.qty"
                                                                             onChanged="updateAmount({{ $key }})"
-                                                                            type="number" />
+                                                                            type="number" enabled="false"/>
                                                                     </div>
                                                                     <div class="col-md-3">
                                                                         <x-ui-text-field label="Quantity Belum Dikirim"
-                                                                            model="input_details.{{ $key }}.qty2"
+                                                                            model="input_details.{{ $key }}.qty"
                                                                             required="false" enabled="true" />
                                                                     </div>
                                                                 </div>

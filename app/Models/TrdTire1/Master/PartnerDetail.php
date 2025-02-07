@@ -15,6 +15,12 @@ class PartnerDetail extends BaseModel
         'banks',
         'shipping_address',
     ];
+    protected $casts = [
+        'shipping_address' => 'array',
+        'wp_details' => 'array',
+        'contacts' => 'array',
+        'banks' => 'array',
+    ];
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id');

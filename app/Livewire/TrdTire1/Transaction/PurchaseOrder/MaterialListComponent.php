@@ -56,6 +56,9 @@ class MaterialListComponent extends DetailComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->loadDetails();
         }
+
+        // Recalculate totals when the component is rendered
+        $this->recalculateTotals();
     }
 
     public function addItem()
@@ -97,7 +100,7 @@ class MaterialListComponent extends DetailComponent
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
-            $discountPercent = $this->input_details[$key]['disc'] ?? 0;
+            $discountPercent = $this->input_details[$key]['disc_pct'] ?? 0;
             $discountAmount = $amount * ($discountPercent / 100);
             $this->input_details[$key]['amt'] = $amount - $discountAmount;
         } else {
@@ -127,7 +130,7 @@ class MaterialListComponent extends DetailComponent
         $this->total_amount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc'] ?? 0;
+            $discountPercent = $detail['disc_pct'] ?? 0;
             $amount = $qty * $price;
             $discountAmount = $amount * ($discountPercent / 100);
             return $amount - $discountAmount;
@@ -141,7 +144,7 @@ class MaterialListComponent extends DetailComponent
         $this->total_discount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc'] ?? 0;
+            $discountPercent = $detail['disc_pct'] ?? 0;
             $amount = $qty * $price;
             $discountAmount = $amount * ($discountPercent / 100);
             return $discountAmount;
@@ -182,6 +185,22 @@ class MaterialListComponent extends DetailComponent
     public function SaveItem()
     {
         $this->Save();
+        $orderHdr = OrderHdr::find($this->objectIdValue);
+        if ($orderHdr) {
+            $orderHdr->total_amt = $this->total_amount;
+
+            // Calculate total_amt_tax
+            $taxPct = $orderHdr->tax_pct / 100;
+            if ($orderHdr->tax_flag === 'I') {
+                $orderHdr->total_amt_tax = $this->total_amount;
+            } elseif ($orderHdr->tax_flag === 'E') {
+                $orderHdr->total_amt_tax = $this->total_amount * (1 + $taxPct);
+            } else {
+                $orderHdr->total_amt_tax = $this->total_amount;
+            }
+
+            $orderHdr->save();
+        }
     }
 
     public function onValidateAndSave()
@@ -214,8 +233,14 @@ class MaterialListComponent extends DetailComponent
 
                 $detail['tr_code'] = $this->object->tr_code;
                 $detail['trhdr_id'] = $this->objectIdValue;
-                $detail['qty_reff'] = $detail['qty'];
+                $detail['qty_reff'] = '0';
                 $detail['tr_type'] = $this->object->tr_type;
+
+                // Fetch matl_code from matl_id
+                $material = Material::find($detail['matl_id']);
+                if ($material) {
+                    $detail['matl_code'] = $material->code;
+                }
 
                 $orderDtl->fill($detail);
                 $orderDtl->save();

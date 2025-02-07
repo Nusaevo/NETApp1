@@ -30,7 +30,7 @@ class DelivDtl extends BaseModel
         'matl_descr',
         'wh_code',
         'qty',
-        'qty_reff',
+        // 'qty_reff',
         'status_code'
     ];
 
@@ -104,7 +104,10 @@ class DelivDtl extends BaseModel
 
     public function DelivHdr()
     {
-        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+        if ($this->tr_type) {
+            return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+        }
+        return null;
     }
 
     #endregion

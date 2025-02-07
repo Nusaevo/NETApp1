@@ -24,7 +24,7 @@ class Detail extends BaseComponent
     public $warehouses;
     public $partners;
     public $sales_type;
-    public $tax_invoice;
+    public $tax_doc_flag;
     public $transaction_id;
     public $payments;
     public $deletedItems = [];
@@ -44,6 +44,7 @@ class Detail extends BaseComponent
     public $returnIds = [];
     public $currencyRate = 0;
     public $npwpOptions = [];
+    public $shipOptions = [];
     protected $masterService;
     public $isPanelEnabled = "false";
     public $notaCount = 0; // x: jumlah nota jual dicetak
@@ -52,7 +53,6 @@ class Detail extends BaseComponent
     public $rules  = [
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.send_to_name' => 'required',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -74,10 +74,10 @@ class Detail extends BaseComponent
         }
 
         $sales_type = $this->inputs['sales_type'];
-        $tax_invoice = !empty($this->inputs['tax_invoice']); // Konversi ke boolean
+        $tax_doc_flag = !empty($this->inputs['tax_doc_flag']); // Konversi ke boolean
         $tr_type = $this->trType;
 
-        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_invoice);
+        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_doc_flag);
     }
 
     public function onSOTaxChange()
@@ -135,11 +135,12 @@ class Detail extends BaseComponent
     {
         $partner = Partner::find($this->inputs['partner_id']);
         $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
+        $this->shipOptions = $partner ? $this->listShip($partner) : null;
 
         // Set the send_to_name field based on the selected partner
-        if ($partner) {
-            $this->inputs['send_to_name'] = $partner->name;
-        }
+        // if ($partner) {
+        //     $this->inputs['send_to_name'] = $partner->name;
+        // }
     }
 
     private function listNpwp($partner)
@@ -159,10 +160,32 @@ class Detail extends BaseComponent
 
         return array_map(function ($item) {
             return [
-                'label' => ($item['npwp']) . ' - ' . ($item['wp_name']) . ' - ' . ($item['wp_location']),
+                'label' => ($item['npwp']),
                 'value' => $item['npwp'],
             ];
         }, $wpDetails);
+    }
+    private function listShip($partner)
+    {
+        if (!$partner->PartnerDetail || empty($partner->PartnerDetail->shipping_address)) {
+            return [];
+        }
+        $shipDetail = $partner->PartnerDetail->shipping_address;
+
+        if (is_string($shipDetail)) {
+            $shipDetail = json_decode($shipDetail, true);
+        }
+        // Jika gagal decode atau bukan array, return array kosong untuk mencegah error
+        if (!is_array($shipDetail)) {
+            return [];
+        }
+
+        return array_map(function ($item) {
+            return [
+                'label' => ($item['name']),
+                'value' => $item['name'],
+            ];
+        }, $shipDetail);
     }
 
     protected function onPreRender()
@@ -185,8 +208,10 @@ class Detail extends BaseComponent
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
-            $this->inputs['tax_invoice'] = $this->object->tax_invoice;
+            $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
             $this->inputs['partner_name'] = $this->object->partner->code . " - " . $this->object->partner->name; // Set partner_name
+            $this->inputs['textareasend_to'] = $this->object->partner->name . "\n" . $this->object->partner->address;
+            $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr; // Populate textarea_npwp
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
@@ -239,6 +264,7 @@ class Detail extends BaseComponent
         if (!empty($this->inputs['payment_term_id'])) {
             $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
             $this->inputs['payment_term'] = $paymentTerm->str1;
+            $this->inputs['payment_due_days'] = $paymentTerm->num1; // Save payment_due_days from num1
         }
 
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
@@ -355,9 +381,8 @@ class Detail extends BaseComponent
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_code'] = $partner->code; // Set partner_code
             $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
-            $this->inputs['send_to_name'] = $partner->name; // Set send_to_name with the selected customer's name
 
-            // Set tax_payer with data from JSON wp_details
+            // Set npwp_code with data from JSON wp_details
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
                 $wpDetails = $partner->PartnerDetail->wp_details;
                 if (is_string($wpDetails)) {
@@ -366,16 +391,73 @@ class Detail extends BaseComponent
                 if (is_array($wpDetails) && !empty($wpDetails)) {
                     $this->npwpOptions = array_map(function ($item) {
                         return [
-                            'label' => $item['npwp'] . ' - ' . $item['wp_name'],
+                            'label' => $item['npwp'],
                             'value' => $item['npwp'],
                         ];
                     }, $wpDetails);
-                    $this->inputs['tax_payer'] = $wpDetails[0]['npwp'] ?? ''; // Example: taking the first wp_detail
+                }
+            }
+            // Set shipOptions with data from JSON shipping_address
+            if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
+                $shipDetail = $partner->PartnerDetail->shipping_address;
+                if (is_string($shipDetail)) {
+                    $shipDetail = json_decode($shipDetail, true);
+                }
+                if (is_array($shipDetail) && !empty($shipDetail)) {
+                    $this->shipOptions = array_map(function ($item) {
+                        return [
+                            'label' => $item['name'],
+                            'value' => $item['name'],
+                        ];
+                    }, $shipDetail);
                 }
             }
 
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
+        }
+    }
+
+    public function onTaxPayerChanged()
+    {
+        $partner = Partner::find($this->inputs['partner_id']);
+        if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+            $wpDetails = $partner->PartnerDetail->wp_details;
+            if (is_string($wpDetails)) {
+                $wpDetails = json_decode($wpDetails, true);
+            }
+            if (is_array($wpDetails)) {
+                foreach ($wpDetails as $detail) {
+                    if ($detail['npwp'] == $this->inputs['npwp_code']) {
+                        $this->inputs['textarea_npwp'] = $detail['wp_name'] . "\n" . $detail['wp_location'];
+                        $this->inputs['npwp_code'] = $detail['npwp'];
+                        $this->inputs['npwp_name'] = $detail['wp_name'];
+                        $this->inputs['npwp_addr'] = $detail['wp_location'];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public function onShipToChanged()
+    {
+        $partner = Partner::find($this->inputs['partner_id']);
+        if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
+            $shipDetails = $partner->PartnerDetail->shipping_address;
+            if (is_string($shipDetails)) {
+                $shipDetails = json_decode($shipDetails, true);
+            }
+            if (is_array($shipDetails)) {
+                foreach ($shipDetails as $detail) {
+                    if ($detail['name'] == $this->inputs['ship_to_name']) {
+                        $this->inputs['textareasend_to'] = $detail['address'];
+                        $this->inputs['ship_to_name'] = $detail['name'];
+                        $this->inputs['ship_to_addr'] = $detail['address'];
+                        break;
+                    }
+                }
+            }
         }
     }
 

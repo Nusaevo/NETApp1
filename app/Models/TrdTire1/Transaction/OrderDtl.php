@@ -28,7 +28,9 @@ class OrderDtl extends BaseModel
         'qty_reff',
         'price',
         'amt',
-        'disc'
+        'disc_pct',
+        'dpp',
+
     ];
 
     protected static function boot()
@@ -37,7 +39,24 @@ class OrderDtl extends BaseModel
         static::saving(function ($orderDtl) {
             $qty = $orderDtl->qty;
             $price = $orderDtl->price;
-            $orderDtl->amt = $qty * $price;
+            $discPct = $orderDtl->disc_pct / 100;
+            $taxPct = $orderDtl->OrderHdr->tax_pct / 100;
+            $priceDisc = $price * (1 - $discPct);
+
+            // Include PPN
+            if ($orderDtl->OrderHdr->tax_flag === 'I') {
+                $orderDtl->dpp =  $price * (1 - $discPct) / (1 + $taxPct);
+            }
+            // Exclude PPN
+            elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
+                $orderDtl->dpp =  $price * (1 - $discPct);
+            }
+            // Default value
+            else {
+                $orderDtl->dpp =  $price * (1 - $discPct);
+            }
+
+            $orderDtl->amt = $priceDisc * $qty;
         });
         static::deleting(function ($orderDtl) {
             DB::beginTransaction();

@@ -88,7 +88,7 @@ class MaterialListComponent extends DetailComponent
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
-            $discountPercent = $this->input_details[$key]['disc'] ?? 0;
+            $discountPercent = $this->input_details[$key]['disc_pct'] ?? 0;
             $discountAmount = $amount * ($discountPercent / 100);
             $this->input_details[$key]['amt'] = $amount - $discountAmount;
         } else {
@@ -118,7 +118,7 @@ class MaterialListComponent extends DetailComponent
         $this->total_amount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc'] ?? 0;
+            $discountPercent = $detail['disc_pct'] ?? 0;
             $amount = $qty * $price;
             $discountAmount = $amount * ($discountPercent / 100);
             return $amount - $discountAmount;
@@ -132,7 +132,7 @@ class MaterialListComponent extends DetailComponent
         $this->total_discount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc'] ?? 0;
+            $discountPercent = $detail['disc_pct'] ?? 0;
             $amount = $qty * $price;
             $discountAmount = $amount * ($discountPercent / 100);
             return $discountAmount;
@@ -208,6 +208,12 @@ class MaterialListComponent extends DetailComponent
                 $detail['trhdr_id'] = $this->objectIdValue;
                 $detail['qty_reff'] = $detail['qty'];
                 $detail['tr_type'] = $this->object->tr_type;
+
+                // Fetch matl_code from matl_id
+                $material = Material::find($detail['matl_id']);
+                if ($material) {
+                    $detail['matl_code'] = $material->code;
+                }
 
                 $orderDtl->fill($detail);
                 $orderDtl->save();

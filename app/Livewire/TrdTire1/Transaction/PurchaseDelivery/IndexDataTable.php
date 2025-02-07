@@ -25,7 +25,8 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return DelivHdr::with(['DelivDtl', 'Partner'])
             ->where('deliv_hdrs.tr_type', 'PD')
-            ->where('deliv_hdrs.status_code', Status::OPEN);
+            ->where('deliv_hdrs.status_code', Status::OPEN)
+            ->orWhere('deliv_hdrs.status_code', Status::ACTIVE); // Include non-active records
     }
     public function columns(): array
     {
@@ -48,7 +49,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
 
-                Column::make($this->trans("supplier"), "partner_id")
+            Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
                     return $row->Partner ?
                         '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
@@ -59,37 +60,47 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
 
-            Column::make($this->trans("matl_code"), 'id')
-                ->format(function ($value, $row) {
-                    // Manually load DelivDtl using a query
-                    $DelivDtl = DelivDtl::where('tr_code', $row->tr_code)
-                        ->where('tr_type', $row->tr_type)
-                        ->orderBy('id')
-                        ->get();
+            // Column::make($this->trans("matl_code"), 'id')
+            //     ->format(function ($value, $row) {
+            //         // Manually load DelivDtl using a query
+            //         $DelivDtl = DelivDtl::where('tr_code', $row->tr_code)
+            //             ->where('tr_type', $row->tr_type)
+            //             ->orderBy('id')
+            //             ->get();
 
-                    // Generate links if data is available
-                    $matlCodes = $DelivDtl->pluck('matl_code', 'matl_id');
-                    $links = $matlCodes->map(function ($code, $id) {
-                        return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($id)
-                        ]) . '">' . $code . '</a>';
-                    });
+            //         // Generate links if data is available
+            //         $matlCodes = $DelivDtl->pluck('matl_code', 'matl_id');
+            //         $links = $matlCodes->map(function ($code, $id) {
+            //             return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
+            //                 'action' => encryptWithSessionKey('Edit'),
+            //                 'objectId' => encryptWithSessionKey($id)
+            //             ]) . '">' . $code . '</a>';
+            //         });
 
-                    return $links->implode(', ');
-                })
-                ->html(),
-            Column::make($this->trans("amt"), "total_amt_in_idr")
+            //         return $links->implode(', ');
+            //     })
+            //     ->html(),
+            Column::make($this->trans('qty'), 'total_qty')
                 ->label(function ($row) {
-                    $totalAmt = 0;
-
-                    $orderDetails = DelivDtl::where('trhdr_id', $row->id)->get();
-
-                    if ($orderDetails->isEmpty()) {
-                        return 'N/A';
-                    }
+                    return $row->total_qty;
                 })
                 ->sortable(),
+            Column::make($this->trans('amt'), 'total_amt')
+                ->label(function ($row) {
+                    return rupiah($row->total_amt);
+                })
+                ->sortable(),
+            // Column::make($this->trans("amt"), "total_amt_in_idr")
+            //     ->label(function ($row) {
+            //         $totalAmt = 0;
+
+            //         $orderDetails = DelivDtl::where('trhdr_id', $row->id)->get();
+
+            //         if ($orderDetails->isEmpty()) {
+            //             return 'N/A';
+            //         }
+            //     })
+            //     ->sortable(),
 
             // Column::make($this->trans('status'), "status_code")
             //     ->sortable()
@@ -129,6 +140,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+
             $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
@@ -142,6 +154,15 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
+            }),
+            $this->createTextFilter('Transaction Code', 'tr_code', 'Cari Kode Transaksi', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '>=', $value);
+            }),
+            DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '<=', $value);
             }),
             // SelectFilter::make('Status', 'status_code')
             //     ->options([
