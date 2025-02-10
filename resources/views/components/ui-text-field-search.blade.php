@@ -7,7 +7,7 @@
 
 <div wire:ignore.self class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
-    
+
     <div class="input-group">
         <div class="{{ $containerClass }}" x-data="{
                 initSelect2() {

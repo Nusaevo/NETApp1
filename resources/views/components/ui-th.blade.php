@@ -1,3 +1,3 @@
-<th {{ $attributes->merge(['class' => 'border']) }} style="min-width: {{ $width }};">
+<th {{ $attributes->merge(['class' => 'border']) }} style="width: {{ $width }};">
     {{ $slot }}
 </th>

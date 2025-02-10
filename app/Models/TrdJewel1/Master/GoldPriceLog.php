@@ -32,7 +32,7 @@ class GoldPriceLog extends BaseModel
 
     public static function GetTodayCurrencyRate()
     {
-        $currentDate = Carbon::today();
+        $currentDate = Carbon::today()->format('Y-d-m');
         $currencyRatesData = self::whereDate('log_date', $currentDate)
             ->orderBy('log_date', 'asc')
             ->first(['log_date', 'curr_rate']);

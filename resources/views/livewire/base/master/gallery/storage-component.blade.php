@@ -25,8 +25,7 @@
                 <div class="image-container gallery-image-container">
                     <input type="checkbox" class="gallery-checkbox" data-image-id="{{ $attachment->id }}"
                         data-image-url="{{ $attachment->getUrl() }}" onchange="toggleDeleteButton()">
-                    <img src="{{ $attachment->getUrl() }}" alt="Gallery Image"
-                        class="photo-box-image gallery-photo-box-image">
+                    <x-ui-image src="{{ $attachment->getUrl() }}" alt="Captured Image" width="250px" height="200px" />
                     <!-- Photo File Name Below Image -->
                     <div class="gallery-file-name">
                         <small>{{ $attachment->name }}</small>

@@ -79,7 +79,7 @@
                                                 @php
                                                 $imagePath = isset($detail['image_path']) && !empty($detail['image_path']) ? $detail['image_path'] : 'https://via.placeholder.com/300';
                                                 @endphp
-                                                <img src="{{ $imagePath }}" alt="Material" style="width: 200px; height: 200px;">
+                                                <x-ui-image src="{{ $imagePath }}" alt="Material Image" width="200px" height="200px" />
                                             </div>
                                         </div>
                                     </x-slot>

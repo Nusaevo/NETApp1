@@ -7,17 +7,17 @@
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
 @endphp
 
-<div class="{{ $colClass }}" wire:ignore.self 
-    @if (isset($span)) span="{{ $span }}" @endif 
+<div class="{{ $colClass }}" wire:ignore.self
+    @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
-    
+
     <div class="input-group">
         <div class="{{ $containerClass }}">
             <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}" wire:key="{{ $id }}"
                 @if (isset($modelType) && $modelType === 'lazy') wire:model.lazy="{{ isset($model) ? $model : '' }}"
                 @else wire:model="{{ isset($model) ? $model : '' }}" @endif
                 @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif
-                class="form-select @error($model) is-invalid @enderror 
+                class="form-select @error($model) is-invalid @enderror
                 @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"
                 {{-- Disable dropdown when in "View" mode or when "enabled" is "false" --}}
                 @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif

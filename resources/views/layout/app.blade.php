@@ -49,7 +49,7 @@
     @foreach (getGlobalAssets('css') as $path)
         {!! sprintf(
             '
-            <link rel="stylesheet" href="%s">',
+                            <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -59,7 +59,7 @@
     @foreach (getVendors('css') as $path)
         {!! sprintf(
             '
-            <link rel="stylesheet" href="%s">',
+                            <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -69,7 +69,7 @@
     @foreach (getCustomCss() as $path)
         {!! sprintf(
             '
-            <link rel="stylesheet" href="%s">',
+                            <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -133,21 +133,14 @@
     </div>
 
     <!-- Modal Preview Image -->
-    <div id="imagePreviewModal" class="modal fade" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Image Preview</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body text-center">
-                    <img id="previewImage" src="" alt="Preview Image" style="max-width: 100%; height: auto;">
-                </div>
-            </div>
-        </div>
-    </div>
+    <x-ui-dialog-box id="imagePreviewModal" title="Image Preview" width="800px" height="800px">
+        <x-slot name="body">
+            <img id="previewImage" src="" alt="Image Preview" style="width: 100%; height: auto;">
+        </x-slot>
+        <x-slot name="footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </x-slot>
+    </x-ui-dialog-box>
 
 
     <!--begin::Javascript-->
@@ -224,7 +217,6 @@
                 //console.log('Loading container hidden');
             });
         });
-
     </script>
     <script>
         function showImagePreview(imageUrl) {

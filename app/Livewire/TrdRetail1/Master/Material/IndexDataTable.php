@@ -60,34 +60,19 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
 
             Column::make('Photo', 'id')
-                ->format(function ($value, $row) {
-                    $firstAttachment = $row->Attachment->first();
-                    $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-                    return $imageUrl
-                        ? '<div style="display: flex; align-items: center; gap: 5px;">
-                            <img src="' .
-                                $imageUrl .
-                                '" alt="Photo" style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" onclick="showImagePreview(\'' .
-                                $imageUrl .
-                                '\')">
-                        </div>'
-                        : '<span>No Image</span>';
-                    // return $imageUrl
-                    //     ? '<div style="display: flex; align-items: center; gap: 5px;">
-                    //         <img src="' .
-                    //             $imageUrl .
-                    //             '" alt="Photo" style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;" onclick="showImagePreview(\'' .
-                    //             $imageUrl .
-                    //             '\')">
-                    //         <button type="button" onclick="showImagePreview(\'' .
-                    //             $imageUrl .
-                    //             '\')" style="border: none; background: none; cursor: pointer;">
-                    //             <i class="fas fa-eye"></i>
-                    //         </button>
-                    //     </div>'
-                    //     : '<span>No Image</span>';
-                })
-                ->html(),
+            ->format(function ($value, $row) {
+                $firstAttachment = $row->Attachment->first();
+                $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
+                return $imageUrl
+                    ? view('components.ui-image', [
+                        'src' => $imageUrl,
+                        'alt' => 'Photo',
+                        'width' => '50px',
+                        'height' => '50px',
+                    ])
+                    : '<span>No Image</span>';
+            })
+            ->html(),
 
             Column::make('UOM', 'id')->format(fn($value, $row) => $row->MatlUom[0]->matl_uom ?? '')->sortable()->collapseOnTablet(),
 
