@@ -59,23 +59,24 @@ function schemaHelper($model, $column = null, $operation = 'columns')
 function populateArrayFromModel($model)
 {
     $data = [];
+
+    if (schemaHelper($model, 'id', 'hasColumn')) {
+        $data['id'] = $model->id;
+    }
+
     $columns = $model->getFillable();
 
     foreach ($columns as $column) {
         if (schemaHelper($model, $column, 'hasColumn')) {
             $type = schemaHelper($model, $column, 'type') ?? 'string';
-
-            if ($column === 'id') {
-                $value = $model->{$column};
-            } else {
-                $value = $model->{$column} ?? getDefaultValueForType($type);
-            }
+            $value = $model->{$column} ?? getDefaultValueForType($type);
             $data[$column] = $value;
         }
     }
 
     return $data;
 }
+
 
 /**
  * Get default value based on column type.
