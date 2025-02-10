@@ -1,3 +1,36 @@
+
+/* Input dan textarea */
+.form-floating input,
+.form-floating textarea {
+    font-family: 'Arial', sans-serif;
+    line-height: 1 !important; /* Kontrol tinggi teks */
+    border-radius: 4px; /* Sesuaikan dengan kebutuhan */
+}
+
+/* Floating label */
+.form-floating label {
+    font-family: 'Arial', sans-serif;
+    color: #666; /* Warna teks */
+    line-height: 1 !important;
+    top: 0.5rem; /* Posisi awal lebih kecil */
+    left: 8px; /* Jarak dari kiri */
+}
+
+/* Select dalam form-floating */
+.form-floating .form-select {
+    font-family: 'Arial', sans-serif;
+    border-radius: 4px; /* Border bulat kecil */
+}
+
+/* Hover dan focus effect */
+.form-floating input:focus,
+.form-floating textarea:focus,
+.form-floating .form-select:focus {
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5) !important; /* Highlight border */
+    border-color: #007bff !important;
+}
+
+
 /* DataTable Styles */
 .data-table {
     border-collapse: collapse;

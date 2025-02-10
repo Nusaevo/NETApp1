@@ -3,7 +3,7 @@
 namespace App\Services\TrdRetail1\Master;
 
 use App\Services\Base\BaseService;
-use App\Models\TrdRetail1\Master\Partner;
+use App\Models\TrdRetail1\Master\{Material, Partner};
 
 class MasterService extends BaseService
 {
@@ -112,6 +112,15 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
-
+    public function getMaterials()
+    {
+        $materialsData = Material::all();
+        return $materialsData->map(function ($data) {
+            return [
+                'label' => $data->code . " - " . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
 
 }
