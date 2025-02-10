@@ -80,34 +80,37 @@
                                             </x-ui-table>
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}" model="inputs.tax_flag"
-                                        :options="$SOTax" required="true" :action="$actionValue"
-                                        onChanged="onSOTaxChange" />
-                                </div>
-                                <div class="row">
-                                    {{-- <x-ui-text-field-search label="{{ $this->trans('ship_to') }}" clickEvent=""
-                                        model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions" required="false"
-                                        :action="$actionValue" onChanged="onShipToChanged" />--}}
-                                    {{-- <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}" clickEvent=""
+                                    <x-ui-text-field-search label="{{ $this->trans('ship_to') }}" clickEvent=""
+                                        model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
+                                        required="false" :action="$actionValue" onChanged="onShipToChanged" />
+                                    <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}" clickEvent=""
                                         model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions" required="false"
-                                        :action="$actionValue" onChanged="onTaxPayerChanged" /> --}}
-                                </div>
-                                <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('Detail kirim') }}"
-                                        model="inputs.textareasend_to" type="textarea" :action="$actionValue"
-                                        required="false" enabled="false" />
-                                    <x-ui-text-field label="{{ $this->trans('Detail pajak') }}" model="inputs.textarea_npwp"
-                                        type="textarea" :action="$actionValue" required="false" enabled="false" />
-                                </div>
-                                <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
-                                        model="inputs.payment_term_id" :options="$paymentTerms" required="true"
-                                        :action="$actionValue" />
-                                    <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
-                                        type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                    <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
-                                        type="text" :action="$actionValue" required="false" />
-                                </div>
+                                        :action="$actionValue" onChanged="onTaxPayerChanged" />
+                                    <div class="row">
+                                        <x-ui-text-field label="{{ $this->trans('Detail Custommer') }}"
+                                            model="inputs.textareacustommer" type="textarea" :action="$actionValue"
+                                            required="false" enabled="false" />
+                                        <x-ui-text-field label="{{ $this->trans('Detail kirim') }}"
+                                            model="inputs.textareasend_to" type="textarea" :action="$actionValue"
+                                            required="false" enabled="false" />
+                                        <x-ui-text-field label="{{ $this->trans('Detail pajak') }}"
+                                            model="inputs.textarea_npwp" type="textarea" :action="$actionValue"
+                                            required="false" enabled="false" />
+                                    </div>
+                                    <div class="row">
+                                        <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}"
+                                            model="inputs.tax_flag" :options="$SOTax" required="true"
+                                            :action="$actionValue" onChanged="onSOTaxChange" />
+                                        <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
+                                            model="inputs.payment_term_id" :options="$paymentTerms" required="true"
+                                            :action="$actionValue" />
+                                        <x-ui-text-field label="{{ $this->trans('due_date') }}"
+                                            model="inputs.due_date" type="date" :action="$actionValue" required="true"
+                                            :enabled="$isPanelEnabled" />
+                                        <x-ui-text-field label="{{ $this->trans('cust_reff') }}"
+                                            model="inputs.cust_reff" type="text" :action="$actionValue"
+                                            required="false" />
+                                    </div>
 
                             </x-ui-padding>
                         </x-ui-card>

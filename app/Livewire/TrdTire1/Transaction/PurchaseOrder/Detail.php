@@ -29,7 +29,6 @@ class Detail extends BaseComponent
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
-
     public $total_amount;
     public $total_tax;
     public $total_dpp;
@@ -185,7 +184,8 @@ class Detail extends BaseComponent
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
-            $this->inputs['partner_name'] = $this->object->partner->code . " - " . $this->object->partner->name; // Set partner_name
+            $this->inputs['partner_name'] = $this->object->partner->code;
+            $this->inputs['textareasupplier'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
@@ -238,6 +238,7 @@ class Detail extends BaseComponent
         if (!empty($this->inputs['payment_term_id'])) {
             $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
             $this->inputs['payment_term'] = $paymentTerm->str1;
+            $this->inputs['payment_due_days'] = $paymentTerm->num1; // Save payment_due_days from num1
         }
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
@@ -350,7 +351,8 @@ class Detail extends BaseComponent
 
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
-            $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
+            $this->inputs['partner_name'] = $partner->code;
+            $this->inputs['textareasupplier'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
             $this->dispatch('success', "Supplier berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
         }

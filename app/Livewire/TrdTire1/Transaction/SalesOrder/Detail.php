@@ -209,9 +209,10 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
-            $this->inputs['partner_name'] = $this->object->partner->code . " - " . $this->object->partner->name; // Set partner_name
-            $this->inputs['textareasend_to'] = $this->object->partner->name . "\n" . $this->object->partner->address;
+            $this->inputs['partner_name'] = $this->object->partner->code; // Set partner_name
+            $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
             $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr; // Populate textarea_npwp
+            $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
@@ -380,7 +381,8 @@ class Detail extends BaseComponent
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_code'] = $partner->code; // Set partner_code
-            $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
+            $this->inputs['partner_name'] = $partner->code;
+            $this->inputs['textareacustommer'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
 
             // Set npwp_code with data from JSON wp_details
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
