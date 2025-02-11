@@ -28,7 +28,6 @@ class IvtBalUnit extends BaseModel
         'matl_uom',
         'wh_id',
         'batch_code',
-        'unit_code',
         'qty_oh',
         'status_code',
     ];

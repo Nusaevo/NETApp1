@@ -87,8 +87,6 @@ class Detail extends BaseComponent
 
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers();
-        $this->SOTax = $this->masterService->getSOTaxData();
-        $this->SOSend = $this->masterService->getSOSendData();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->purchaseOrders = $this->masterService->getPurchaseOrders();
         $this->materials = $this->masterService->getMaterials();
@@ -107,6 +105,7 @@ class Detail extends BaseComponent
                 $delivDtl = DelivDtl::where('trhdr_id', $this->object->id)->first();
                 if ($delivDtl) {
                     $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
+                    $this->inputs['qty'] = $delivDtl->qty;
                 }
             }
 
@@ -119,9 +118,9 @@ class Detail extends BaseComponent
 
             // Load details and purchase order details
             $this->loadDetails();
-            if ($this->inputs['reffhdrtr_code']) {
-                $this->loadPurchaseOrderDetails($this->inputs['reffhdrtr_code']);
-            }
+            // if ($this->inputs['reffhdrtr_code']) {
+            //     $this->loadPurchaseOrderDetails($this->inputs['reffhdrtr_code']);
+            // }
         }
     }
 
@@ -151,21 +150,11 @@ class Detail extends BaseComponent
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
-                $this->input_details[$key]['qty'] = $detail->qty; // Ensure qty is loaded
-                $this->input_details[$key]['qty_available'] = $detail->qty; // Add qty_available
+                $this->input_details[$key]['order_id'] = $detail->OrderDtl->id;
+                $this->input_details[$key]['qty'] = $detail->qty;
+                $this->input_details[$key]['qty_order'] = $detail->OrderDtl->qty - $detail->OrderDtl->qty_reff;
+                // dd($this->input_details[$key]);
             }
-        }
-    }
-    public function addItem()
-    {
-        if (!empty($this->objectIdValue)) {
-            $this->input_details[] = [
-                'matl_id' => null,
-                'qty_order' => null,
-                'price' => 0.0,
-            ];
-        } else {
-            $this->dispatch('error', 'Tolong simpan Header terlebih dahulu');
         }
     }
 
@@ -177,19 +166,6 @@ class Detail extends BaseComponent
             $this->dispatch('success', 'Item berhasil dihapus');
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
-        }
-    }
-
-    public function onMaterialChanged($key, $matl_id)
-    {
-        if ($matl_id) {
-            $material = Material::find($matl_id);
-            if ($material) {
-                $this->input_details[$key]['matl_id'] = $material->id;
-                $this->input_details[$key]['price_uom'] = $material->selling_price;
-                $this->input_details[$key]['matl_uom'] = $material->uom;
-                $this->input_details[$key]['matl_descr'] = $material->name;
-            }
         }
     }
 
@@ -219,9 +195,9 @@ class Detail extends BaseComponent
             $this->input_details[] = [
                 'matl_id' => $detail->matl_id,
                 'qty_order' => $qty_remaining, // Set calculated quantity to qty_order
-                'price' => $detail->price,
                 'matl_descr' => $detail->matl_descr,
                 'matl_uom' => $detail->matl_uom,
+                'order_id' => $detail->id,
             ];
         }
     }
@@ -230,34 +206,47 @@ class Detail extends BaseComponent
     #region CRUD Operations
     public function onValidateAndSave()
     {
+        // Cek apakah field header wajib (tr_code, reffhdrtr_code, partner_id) kosong
+        if (empty($this->inputs['tr_code']) && empty($this->inputs['reffhdrtr_code']) && empty($this->inputs['partner_id'])) {
+            $this->dispatch('error', 'Semua field header wajib diisi');
+            return;
+        }
+
+        // Cek apakah detail transaksi kosong
+        if (empty($this->input_details) || count($this->input_details) == 0) {
+            $this->dispatch('error', 'Detail transaksi tidak boleh kosong');
+            return;
+        }
+
+        // Validasi field lain sesuai rules
         $this->validate();
 
         $errorItems = [];
 
         foreach ($this->input_details as $key => $detail) {
-            // Check if qty exceeds the calculated qty_order
+            // Cek jika qty melebihi qty_order yang dihitung
             if (isset($detail['qty']) && $detail['qty'] > $detail['qty_order']) {
                 $errorItems[] = $detail['matl_descr'];
             }
         }
-        // If there are error items, display the error message and stop the process
+        // Jika ada error pada detail, tampilkan pesan dan hentikan proses
         if (!empty($errorItems)) {
-            $this->dispatch('error', 'Stok untuk item: ' . implode(', ', $errorItems) . ' Sudah Dikirim');
+            $this->dispatch('error', 'Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
             return;
         }
+
         try {
-            // Save header
+            // Simpan data header
             if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
                 $partner = Partner::find($this->inputs['partner_id']);
-                $this->inputs['partner_code'] = $partner->code; // Save partner_code
+                $this->inputs['partner_code'] = $partner->code;
             }
-            // Ensure tr_type is set
             $this->inputs['tr_type'] = $this->trType;
 
-            // Save warehouse data
+            // Simpan data gudang
             $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
             if ($warehouse) {
-                $this->inputs['wh_id'] = $warehouse->id; // Save wh_id
+                $this->inputs['wh_id'] = $warehouse->id;
             }
 
             $this->object = DelivHdr::updateOrCreate(
@@ -265,7 +254,7 @@ class Detail extends BaseComponent
                 $this->inputs
             );
 
-            // Save details
+            // Simpan detail
             $existingDetails = DelivDtl::where('trhdr_id', $this->object->id)
                 ->where('tr_type', $this->object->tr_type)
                 ->get()
@@ -273,101 +262,52 @@ class Detail extends BaseComponent
 
             foreach ($this->input_details as $key => $detail) {
                 $tr_seq = $key + 1;
-                $orderDtl = OrderDtl::where('tr_code', $this->inputs['reffhdrtr_code'])
-                    ->where('matl_id', $detail['matl_id'])
-                    ->first();
-
+                $orderDtl = OrderDtl::find($detail['order_id']);
                 $material = Material::find($detail['matl_id']);
+
+                $newQty = $detail['qty'];
+                $oldQty = isset($existingDetails[$tr_seq]) ? $existingDetails[$tr_seq]->qty : 0;
+                $delta = $newQty - $oldQty; // jika edit: delta bisa negatif atau positif
 
                 DelivDtl::updateOrCreate([
                     'trhdr_id' => $this->object->id,
-                    'tr_seq' => $tr_seq,
+                    'tr_seq'   => $tr_seq,
                 ], [
-                    'tr_code' => $this->object->tr_code,  // Using tr_code from DelivHdr
-                    'trhdr_id' => $this->object->id,
-                    'qty' => isset($existingDetails[$tr_seq]) ? $existingDetails[$tr_seq]->qty + $detail['qty'] : $detail['qty'],  // Add new qty to existing qty
-                    'tr_type' => $this->trType,
-                    'matl_id' => $detail['matl_id'],
-                    'matl_code' => $material->code, // Save matl_code
-                    'price' => $detail['price'],
-                    'matl_descr' => $detail['matl_descr'],
-                    'matl_uom' => $detail['matl_uom'],
-                    'reffdtl_id' => $orderDtl->id ?? null,
-                    'reffhdrtr_type' => $orderDtl->OrderHdr->tr_type ?? null,
-                    'reffhdrtr_code' => $this->inputs['reffhdrtr_code'],  // Saving purchase order number
-                    'reffdtltr_seq' => $orderDtl->tr_seq ?? null,
-                    'wh_code' => $this->inputs['wh_code'],
-                    'wh_id' => $this->inputs['wh_id'],
+                    'tr_code'         => $this->object->tr_code,
+                    'trhdr_id'        => $this->object->id,
+                    'qty'             => $newQty, // gunakan newQty langsung
+                    'tr_type'         => $this->trType,
+                    'matl_id'         => $detail['matl_id'],
+                    'matl_code'       => $material->code,
+                    'matl_descr'      => $detail['matl_descr'],
+                    'matl_uom'        => $detail['matl_uom'],
+                    'reffdtl_id'      => $orderDtl->id ?? null,
+                    'reffhdrtr_type'  => $orderDtl ? $orderDtl->OrderHdr->tr_type : null,
+                    'reffhdrtr_code'  => $this->inputs['reffhdrtr_code'],
+                    'reffdtltr_seq'   => $orderDtl->tr_seq ?? null,
+                    'wh_code'         => $this->inputs['wh_code'],
+                    'wh_id'           => $this->inputs['wh_id'],
                 ]);
 
-                // Update OrderDtl qty_reff if not null
-                if ($orderDtl && isset($detail['qty'])) {
-                    $orderDtl->qty_reff += $detail['qty'];
+                // Perbarui OrderDtl:
+                // Jika record baru, delta = newQty (karena oldQty = 0).
+                // Jika edit, delta merupakan selisih antara newQty dan oldQty.
+                if ($orderDtl) {
+                    $orderDtl->qty_reff += $delta;
                     $orderDtl->save();
                 }
-
-                // Update ivtBal
-                // $existingBal = IvtBal::where('matl_id', $detail['matl_id'])
-                //     ->where('wh_id', $this->inputs['wh_id']) // Use wh_id instead of wh_code
-                //     ->where('batch_code', $detail['batch_code'] ?? date('y/m/d'))
-                //     ->first();
-
-                // $qtyChange = (float)$detail['qty'];
-                // if ($this->trType === 'PD') {
-                //     $qtyChange = -$qtyChange;
-                // }
-
-                // if ($existingBal) {
-                //     $existingBalQty = $existingBal->qty_oh;
-                //     $newQty = $existingBalQty + $qtyChange;
-                //     $existingBal->qty_oh = $newQty;
-                //     $existingBal->save();
-
-                //     // Update corresponding record in IvtBalUnit
-                //     $existingBalUnit = IvtBalUnit::where('matl_id', $detail['matl_id'])
-                //         ->where('wh_id', $this->inputs['wh_id']) // Use wh_id instead of wh_code
-                //         ->first();
-                //     if ($existingBalUnit) {
-                //         $existingBalUnitQty = $existingBalUnit->qty_oh;
-                //         $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
-                //         $existingBalUnit->save();
-                //     }
-                // } else {
-                //     $inventoryBalData = [
-                //         'matl_id' => $detail['matl_id'],
-                //         'matl_code' => $material->code,
-                //         'matl_uom' => $material->uom,
-                //         'matl_descr' => $material->name,
-                //         'wh_id' => $this->inputs['wh_id'], // Use wh_id instead of wh_code
-                //         'wh_code' => $this->inputs['wh_code'],
-                //         'batch_code' => $detail['batch_code'] ?? date('y/m/d'),
-                //         'qty_oh' => $qtyChange,
-                //     ];
-                //     $newIvtBal = IvtBal::create($inventoryBalData);
-                //     $inventoryBalUnitsData = [
-                //         'ivt_id' => $newIvtBal->id,
-                //         'matl_id' => $detail['matl_id'],
-                //         'wh_id' => $this->inputs['wh_id'], // Use wh_id instead of wh_code
-                //         'matl_uom' => $material->uom,
-                //         'unit_code' => $material->uom,
-                //         'qty_oh' => $qtyChange,
-                //     ];
-                //     IvtBalUnit::create($inventoryBalUnitsData);
-                // }
             }
-
-            // Delete removed items
             $existingDetails->each(function ($item) use ($existingDetails) {
                 if (!isset($this->input_details[$item->tr_seq - 1])) {
                     $item->delete();
                 }
             });
 
-            $this->dispatch('success', 'Data berhasil disimpan');
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
     }
+
 
     public function delete()
     {
