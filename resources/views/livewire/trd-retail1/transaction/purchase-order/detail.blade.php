@@ -14,7 +14,7 @@
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
-                    <div class="col-md-3">
+                    <div class="col-md-6">
                         <x-ui-card title="Order Info">
                             <x-ui-text-field label="Date" model="inputs.tr_date" type="date" :action="$actionValue"
                                 required="true" :enabled="$isPanelEnabled" />
@@ -92,7 +92,7 @@
                         </x-ui-footer>
 
                     </div>
-                    <div class="col-md-9">
+                    <div class="col-md-12">
                         <x-ui-card title="Order Items">
                             @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
                         </x-ui-card>

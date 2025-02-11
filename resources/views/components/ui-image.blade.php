@@ -13,7 +13,7 @@ $imageSrc = !empty($src) ? $src : 'https://via.placeholder.com/300';
     >
     @if($src)
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
-            <i class="fas fa-eye" style="font-size: 24px; color: black; cursor: pointer;" onclick="showImagePreview('{{ $src }}')"></i>
+            <i class="fas fa-eye" style="font-size: 16px; color: white; cursor: pointer;" onclick="showImagePreview('{{ $src }}')"></i>
         </div>
     @endif
 </div>

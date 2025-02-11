@@ -19,8 +19,9 @@ class MaterialListComponent extends DetailComponent
     public $input_details = [];
     public $total_amount = 0;
     public $total_discount = 0;
-    public $total_tax = 0; // New property for total tax
-    public $total_dpp = 0; // New property for total tax
+    public $materialList = [];
+    public $searchTerm = '';
+    public $selectedMaterials = [];
 
     protected $rules = [
         'input_details.*.qty' => 'nullable',
@@ -86,12 +87,18 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[$key]['price'] = $material->selling_price;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
                 $this->input_details[$key]['matl_descr'] = $material->name;
+
+                $attachment = optional($material->Attachment)->first();
+                $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
+
                 $this->updateItemAmount($key);
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));
             }
         }
     }
+
+
 
     public function updateItemAmount($key)
     {
@@ -114,12 +121,12 @@ class MaterialListComponent extends DetailComponent
         $this->calculateTotalAmount();
         $this->calculateTotalDiscount();
 
-        $this->dispatch('updateAmount', [
-            'total_amount' => $this->total_amount,
-            'total_discount' => $this->total_discount,
-            'total_tax' => $this->total_tax,
-            'total_dpp' => $this->total_dpp,
-        ]);
+        // $this->dispatch('updateAmount', [
+        //     'total_amount' => $this->total_amount,
+        //     'total_discount' => $this->total_discount,
+        //     'total_tax' => $this->total_tax,
+        //     'total_dpp' => $this->total_dpp,
+        // ]);
     }
 
     private function calculateTotalAmount()
@@ -149,6 +156,8 @@ class MaterialListComponent extends DetailComponent
 
         $this->total_discount = round($this->total_discount, 2);
     }
+
+
 
 
     public function deleteItem($index)
@@ -230,4 +239,60 @@ class MaterialListComponent extends DetailComponent
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
+
+    public function openItemDialogBox()
+    {
+        $this->searchTerm = '';
+        $this->materialList = [];
+        $this->selectedMaterials = [];
+        $this->dispatch('openItemDialogBox');
+    }
+    public function searchMaterials()
+    {
+        $query = Material::query();
+        if (!empty($this->searchTerm)) {
+            $searchTermUpper = strtoupper($this->searchTerm);
+            $query->where(function ($query) use ($searchTermUpper) {
+                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
+            });
+        }
+
+        $this->materialList = $query->get();
+    }
+    public function selectMaterial($materialID)
+    {
+        $key = array_search($materialID, $this->selectedMaterials);
+
+        if ($key !== false) {
+            unset($this->selectedMaterials[$key]);
+            $this->selectedMaterials = array_values($this->selectedMaterials);
+        } else {
+            $this->selectedMaterials[] = $materialID;
+        }
+    }
+
+    public function confirmSelection()
+    {
+        if (empty($this->selectedMaterials)) {
+            $this->dispatch('error', "Silakan pilih setidaknya satu material terlebih dahulu.");
+            return;
+        }
+
+        foreach ($this->selectedMaterials as $matl_id) {
+            $key = count($this->input_details);
+            $this->input_details[] = [
+                'matl_id' => $matl_id,
+                'qty' => null,
+                'price' => 0.0,
+                'disc' => 0.0,
+            ];
+            $this->onMaterialChanged($key, $matl_id);
+        }
+
+        $this->dispatch('success', "Item berhasil dipilih.");
+        $this->dispatch('closeItemDialogBox');
+    }
+
 }

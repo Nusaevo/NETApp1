@@ -49,7 +49,7 @@
     @foreach (getGlobalAssets('css') as $path)
         {!! sprintf(
             '
-                            <link rel="stylesheet" href="%s">',
+                                    <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -59,7 +59,7 @@
     @foreach (getVendors('css') as $path)
         {!! sprintf(
             '
-                            <link rel="stylesheet" href="%s">',
+                                    <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -69,7 +69,7 @@
     @foreach (getCustomCss() as $path)
         {!! sprintf(
             '
-                            <link rel="stylesheet" href="%s">',
+                                    <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -133,15 +133,23 @@
     </div>
 
     <!-- Modal Preview Image -->
-    <x-ui-dialog-box id="imagePreviewModal" title="Image Preview" width="800px" height="800px">
+    <x-ui-dialog-box id="imagePreviewModal" title="Image Preview" width="800px" height="800px"
+        onOpened="openImageFullScreenDialogBox" onClosed="closeImageFullScreenDialogBox">
         <x-slot name="body">
             <img id="previewImage" src="" alt="Image Preview" style="width: 100%; height: auto;">
         </x-slot>
         <x-slot name="footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" id="closeModalButton">Close</button>
         </x-slot>
     </x-ui-dialog-box>
-
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalId = '#imagePreviewModal';
+            document.getElementById('closeModalButton').addEventListener('click', function() {
+                window.dispatchEvent(new Event('closeImageFullScreenDialogBox'));
+            });
+        });
+    </script>
 
     <!--begin::Javascript-->
     <!--begin::Global Javascript Bundle(mandatory for all pages)-->
