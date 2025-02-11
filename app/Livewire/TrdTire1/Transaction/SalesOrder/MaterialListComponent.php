@@ -173,6 +173,22 @@ class MaterialListComponent extends DetailComponent
     public function SaveItem()
     {
         $this->Save();
+        $orderHdr = OrderHdr::find($this->objectIdValue);
+        if ($orderHdr) {
+            $orderHdr->total_amt = $this->total_amount;
+
+            // Calculate total_amt_tax
+            $taxPct = $orderHdr->tax_pct / 100;
+            if ($orderHdr->tax_flag === 'I') {
+                $orderHdr->total_amt_tax = $this->total_amount;
+            } elseif ($orderHdr->tax_flag === 'E') {
+                $orderHdr->total_amt_tax = $this->total_amount * (1 + $taxPct);
+            } else {
+                $orderHdr->total_amt_tax = $this->total_amount;
+            }
+
+            $orderHdr->save();
+        }
     }
 
     public function onValidateAndSave()
@@ -206,7 +222,6 @@ class MaterialListComponent extends DetailComponent
 
                 $detail['tr_code'] = $this->object->tr_code;
                 $detail['trhdr_id'] = $this->objectIdValue;
-                $detail['qty_reff'] = $detail['qty'];
                 $detail['tr_type'] = $this->object->tr_type;
 
                 // Fetch matl_code from matl_id

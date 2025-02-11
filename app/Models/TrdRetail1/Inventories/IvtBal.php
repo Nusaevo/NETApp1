@@ -4,6 +4,7 @@ namespace App\Models\TrdRetail1\Inventories;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Base\BaseModel;
 use App\Enums\Constant;
+use App\Models\TrdTire1\Master\Material;
 
 class IvtBal extends BaseModel
 {

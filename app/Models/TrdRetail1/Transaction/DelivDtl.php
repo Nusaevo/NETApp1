@@ -19,13 +19,25 @@ class DelivDtl extends BaseModel
 
         // Handle when creating a new delivery detail
         static::creating(function ($delivDtl) {
+
+            dd("test");
+            // Check if IvtBal record exists
             $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                ->where('wh_id', $delivDtl->wh_code)
-                ->first();
+            ->where('wh_id', $delivDtl->wh_code)
+            ->where('batch_code', $delivDtl->batch_code)
+            ->first();
+
+            // Generate batch_code if not provided
+            if (empty($delivDtl->batch_code)) {
+                $delivDtl->batch_code = date('y/m/d');
+            }
+            dd($delivDtl);
+
             $qtyChange = (float)$delivDtl->qty;
-            if ($delivDtl->tr_type === 'SD') {
+            if ($delivDtl->tr_type === 'PD') {
                 $qtyChange = -$qtyChange;
             }
+            dd("test");
 
             if ($existingBal) {
                 $existingBalQty = $existingBal->qty_oh;
@@ -50,6 +62,7 @@ class DelivDtl extends BaseModel
                     'matl_descr' => $delivDtl->matl_descr,
                     'wh_id' => $delivDtl->wh_code,
                     'wh_code' => $delivDtl->wh_code,
+                    'batch_code' => $delivDtl->batch_code,
                     'qty_oh' => $qtyChange,
                 ];
                 $newIvtBal = IvtBal::create($inventoryBalData);
@@ -63,33 +76,8 @@ class DelivDtl extends BaseModel
                 ];
                 IvtBalUnit::create($inventoryBalUnitsData);
             }
+            dd($delivDtl);
         });
-
-        // static::deleting(function ($delivDtl) {
-        //     $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-        //         ->where('wh_id', $delivDtl->wh_code)
-        //         ->first();
-        //     $qtyChange = (float)$delivDtl->qty;
-        //     if ($delivDtl->tr_type === 'SD') {
-        //         $qtyChange = -$qtyChange;
-        //     }
-        //     if ($existingBal) {
-        //         $existingBalQty = $existingBal->qty_oh;
-        //         $newQty = $existingBalQty - $qtyChange;
-        //         $existingBal->qty_oh = $newQty;
-        //         $existingBal->save();
-
-        //         // Update corresponding record in IvtBalUnit
-        //         $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-        //             ->where('wh_id', $delivDtl->wh_code)
-        //             ->first();
-        //         if ($existingBalUnit) {
-        //             $existingBalUnitQty = $existingBalUnit->qty_oh;
-        //             $existingBalUnit->qty_oh = $existingBalUnitQty - $qtyChange;
-        //             $existingBalUnit->save();
-        //         }
-        //     }
-        // });
     }
     protected $fillable = [
         'trhdr_id',
@@ -118,14 +106,21 @@ class DelivDtl extends BaseModel
 
     #region Relations
 
-    public function Material()
+    public function material()
     {
         return $this->belongsTo(Material::class, 'matl_id');
     }
 
-    public function DelivHdr()
+    public function delivHdr()
     {
         return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+    }
+
+    public function ivtBal()
+    {
+        return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')
+                    ->where('wh_id', $this->wh_code)
+                    ->where('batch_code', $this->batch_code);
     }
     #endregion
 }

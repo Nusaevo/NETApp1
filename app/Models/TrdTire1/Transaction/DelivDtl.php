@@ -30,7 +30,8 @@ class DelivDtl extends BaseModel
         'matl_descr',
         'wh_code',
         'qty',
-        // 'qty_reff',
+        'wh_id',
+        'wh_code',
         'status_code'
     ];
 

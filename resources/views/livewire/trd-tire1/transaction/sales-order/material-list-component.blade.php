@@ -57,10 +57,10 @@
                 <th style="width: 50px; text-align: center;">No</th>
                 <th style="width: 150px; text-align: center;">Code</th>
                 <th style="width: 150px; text-align: center;">Harga Satuan</th>
-                <th style="width: 50px; text-align: center;">Qty</th>
-                <th style="width: 80px; text-align: center;">Discount (%)</th>
+                <th style="width: 50px; text-align: center;">Quantity</th>
+                <th style="width: 90px; text-align: center;">Disc (%)</th>
                 <th style="width: 150px; text-align: center;">Amount</th>
-                <th style="width: 80px; text-align: center;">Actions</th>
+                <th style="width: 70px; text-align: center;">Actions</th>
             </x-slot>
 
             <!-- Define table rows -->

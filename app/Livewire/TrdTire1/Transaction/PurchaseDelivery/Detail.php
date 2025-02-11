@@ -9,14 +9,14 @@ use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
 use Exception;
+use App\Models\TrdRetail1\Inventories\IvtBal;
+use App\Models\TrdRetail1\Inventories\IvtBalUnit;
 
 class Detail extends BaseComponent
 {
     #region Constant Variables
     public $inputs = [];
     public $input_details = [];
-    public $SOTax = [];
-    public $SOSend = [];
     public $suppliers;
     public $warehouses;
     public $partners;
@@ -152,10 +152,10 @@ class Detail extends BaseComponent
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['qty'] = $detail->qty; // Ensure qty is loaded
+                $this->input_details[$key]['qty_available'] = $detail->qty; // Add qty_available
             }
         }
     }
-
     public function addItem()
     {
         if (!empty($this->objectIdValue)) {
@@ -240,20 +240,17 @@ class Detail extends BaseComponent
                 $errorItems[] = $detail['matl_descr'];
             }
         }
-
         // If there are error items, display the error message and stop the process
         if (!empty($errorItems)) {
-            $this->dispatch('error', 'Stok kosong untuk item: ' . implode(', ', $errorItems));
+            $this->dispatch('error', 'Stok untuk item: ' . implode(', ', $errorItems) . ' Sudah Dikirim');
             return;
         }
-
         try {
             // Save header
             if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
                 $partner = Partner::find($this->inputs['partner_id']);
                 $this->inputs['partner_code'] = $partner->code; // Save partner_code
             }
-
             // Ensure tr_type is set
             $this->inputs['tr_type'] = $this->trType;
 
@@ -282,13 +279,13 @@ class Detail extends BaseComponent
 
                 $material = Material::find($detail['matl_id']);
 
-                $delivDtl = DelivDtl::updateOrCreate([
+                DelivDtl::updateOrCreate([
                     'trhdr_id' => $this->object->id,
                     'tr_seq' => $tr_seq,
                 ], [
                     'tr_code' => $this->object->tr_code,  // Using tr_code from DelivHdr
                     'trhdr_id' => $this->object->id,
-                    'qty' => $detail['qty'],  // Save qty in DelivDtl
+                    'qty' => isset($existingDetails[$tr_seq]) ? $existingDetails[$tr_seq]->qty + $detail['qty'] : $detail['qty'],  // Add new qty to existing qty
                     'tr_type' => $this->trType,
                     'matl_id' => $detail['matl_id'],
                     'matl_code' => $material->code, // Save matl_code
@@ -299,6 +296,8 @@ class Detail extends BaseComponent
                     'reffhdrtr_type' => $orderDtl->OrderHdr->tr_type ?? null,
                     'reffhdrtr_code' => $this->inputs['reffhdrtr_code'],  // Saving purchase order number
                     'reffdtltr_seq' => $orderDtl->tr_seq ?? null,
+                    'wh_code' => $this->inputs['wh_code'],
+                    'wh_id' => $this->inputs['wh_id'],
                 ]);
 
                 // Update OrderDtl qty_reff if not null
@@ -306,6 +305,55 @@ class Detail extends BaseComponent
                     $orderDtl->qty_reff += $detail['qty'];
                     $orderDtl->save();
                 }
+
+                // Update ivtBal
+                // $existingBal = IvtBal::where('matl_id', $detail['matl_id'])
+                //     ->where('wh_id', $this->inputs['wh_id']) // Use wh_id instead of wh_code
+                //     ->where('batch_code', $detail['batch_code'] ?? date('y/m/d'))
+                //     ->first();
+
+                // $qtyChange = (float)$detail['qty'];
+                // if ($this->trType === 'PD') {
+                //     $qtyChange = -$qtyChange;
+                // }
+
+                // if ($existingBal) {
+                //     $existingBalQty = $existingBal->qty_oh;
+                //     $newQty = $existingBalQty + $qtyChange;
+                //     $existingBal->qty_oh = $newQty;
+                //     $existingBal->save();
+
+                //     // Update corresponding record in IvtBalUnit
+                //     $existingBalUnit = IvtBalUnit::where('matl_id', $detail['matl_id'])
+                //         ->where('wh_id', $this->inputs['wh_id']) // Use wh_id instead of wh_code
+                //         ->first();
+                //     if ($existingBalUnit) {
+                //         $existingBalUnitQty = $existingBalUnit->qty_oh;
+                //         $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
+                //         $existingBalUnit->save();
+                //     }
+                // } else {
+                //     $inventoryBalData = [
+                //         'matl_id' => $detail['matl_id'],
+                //         'matl_code' => $material->code,
+                //         'matl_uom' => $material->uom,
+                //         'matl_descr' => $material->name,
+                //         'wh_id' => $this->inputs['wh_id'], // Use wh_id instead of wh_code
+                //         'wh_code' => $this->inputs['wh_code'],
+                //         'batch_code' => $detail['batch_code'] ?? date('y/m/d'),
+                //         'qty_oh' => $qtyChange,
+                //     ];
+                //     $newIvtBal = IvtBal::create($inventoryBalData);
+                //     $inventoryBalUnitsData = [
+                //         'ivt_id' => $newIvtBal->id,
+                //         'matl_id' => $detail['matl_id'],
+                //         'wh_id' => $this->inputs['wh_id'], // Use wh_id instead of wh_code
+                //         'matl_uom' => $material->uom,
+                //         'unit_code' => $material->uom,
+                //         'qty_oh' => $qtyChange,
+                //     ];
+                //     IvtBalUnit::create($inventoryBalUnitsData);
+                // }
             }
 
             // Delete removed items

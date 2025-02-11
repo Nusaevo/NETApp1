@@ -20,11 +20,13 @@ class DelivHdr extends BaseModel
     protected $fillable = [
         'tr_code',
         'tr_date',
+        'reff_date',
         'partner_id',
         'partner_code',
         'wh_code',
         'wh_id',
-        'tr_type', // Ensure tr_type is fillable
+        'tr_type',
+        'note',
     ];
     protected $casts = [
         'tr_code' => 'string',
