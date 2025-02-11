@@ -77,7 +77,7 @@
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.price" label="" :action="$actionValue"
-                                enabled="false" />
+                                enabled="false" type="number"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true" :action="$actionValue"
@@ -89,7 +89,7 @@
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label="" :action="$actionValue"
-                                type="text" enabled="false" />
+                                type="text" enabled="false" type="number"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue" cssClass="btn-danger text-danger" iconPath="delete.svg" />

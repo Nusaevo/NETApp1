@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models\TrdTire1\Inventories;
+
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Base\BaseModel;
 use App\Enums\Constant;
@@ -14,9 +15,19 @@ class IvtBal extends BaseModel
     public static function boot()
     {
         parent::boot();
-        static::saving(function ($IvtBal) {
-            $qty_oh = $IvtBal->qty_oh;
-            $IvtBal->qty_oh = $qty_oh;
+        static::saving(function ($ivtBal) {
+            $ivtBalUnit = IvtBalUnit::firstOrNew([
+                'ivt_id'  => $ivtBal->id,
+                'matl_id' => $ivtBal->matl_id,
+                'wh_id'   => $ivtBal->wh_id,
+                'batch_code' => $ivtBal->batch_code,
+            ]);
+            if (!$ivtBalUnit->exists) {
+                $ivtBalUnit->qty_oh = 0;
+            }
+            $ivtBalUnit->qty_oh = $ivtBal->qty_oh;
+            $ivtBalUnit->save();
+
         });
     }
 
@@ -36,5 +47,4 @@ class IvtBal extends BaseModel
     {
         return $this->orderBy('code', 'asc')->get();
     }
-
 }

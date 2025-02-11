@@ -2,14 +2,13 @@
 
 namespace App\Models\TrdTire1\Inventories;
 
-use Illuminate\Database\Eloquent\Model;
-use App\Models\TrdTire1\Master\Material;
+use App\Models\TrdTire1\Transaction\DelivDtl;
 use App\Enums\Constant;
+use App\Models\Base\BaseModel;
 
-class IvtLog extends Model
+class IvtLog extends BaseModel
 {
-
-
+    protected $table = 'ivt_logs';
     protected static function boot()
     {
         parent::boot();
@@ -18,15 +17,13 @@ class IvtLog extends Model
     protected $fillable = [
         'trhdr_id',
         'tr_type',
-        'tr_id',
+        'tr_code',
         'tr_seq',
         'trdtl_id',
         'ivt_id',
         'matl_id',
-        'matl_code',
         'matl_uom',
         'wh_id',
-        'wh_code',
         'batch_code',
         'reff_id',
         'tr_date',
@@ -39,6 +36,14 @@ class IvtLog extends Model
         'qty_running',
         'amt_running',
         'process_flag',
-        'status_code'
     ];
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('code', 'asc')->get();
+    }
+
+    public function delivDtl()
+    {
+        return $this->belongsTo(DelivDtl::class, 'trdtl_id');
+    }
 }

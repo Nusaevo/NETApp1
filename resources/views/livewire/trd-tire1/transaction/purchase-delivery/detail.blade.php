@@ -169,7 +169,7 @@
                                                         :selectedValue="$input_details[$key]['matl_id']" :options="$materials" required="true"
                                                         :action="$actionValue"
                                                         onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                        :enabled="true" />
+                                                        enabled="false" />
                                                 </td>
                                                 <td style="text-align: center;">
                                                     <x-ui-text-field
@@ -191,10 +191,10 @@
                                         @endforeach
                                     </x-slot>
 
-                                    <x-slot name="button">
+                                    {{-- <x-slot name="button">
                                         <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                             button-name="Add" />
-                                    </x-slot>
+                                    </x-slot> --}}
                                 </x-ui-table>
                             </x-ui-card>
 

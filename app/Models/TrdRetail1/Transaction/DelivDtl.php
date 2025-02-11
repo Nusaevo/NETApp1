@@ -20,7 +20,6 @@ class DelivDtl extends BaseModel
         // Handle when creating a new delivery detail
         static::creating(function ($delivDtl) {
 
-            dd("test");
             // Check if IvtBal record exists
             $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
             ->where('wh_id', $delivDtl->wh_code)
@@ -31,13 +30,11 @@ class DelivDtl extends BaseModel
             if (empty($delivDtl->batch_code)) {
                 $delivDtl->batch_code = date('y/m/d');
             }
-            dd($delivDtl);
 
             $qtyChange = (float)$delivDtl->qty;
-            if ($delivDtl->tr_type === 'PD') {
+            if ($delivDtl->tr_type === 'SD') {
                 $qtyChange = -$qtyChange;
             }
-            dd("test");
 
             if ($existingBal) {
                 $existingBalQty = $existingBal->qty_oh;
@@ -76,7 +73,6 @@ class DelivDtl extends BaseModel
                 ];
                 IvtBalUnit::create($inventoryBalUnitsData);
             }
-            dd($delivDtl);
         });
     }
     protected $fillable = [
