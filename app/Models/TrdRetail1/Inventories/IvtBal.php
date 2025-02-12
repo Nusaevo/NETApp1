@@ -16,8 +16,6 @@ class IvtBal extends BaseModel
     {
         parent::boot();
         static::saving(function ($IvtBal) {
-            $qty_oh = $IvtBal->qty_oh;
-            $IvtBal->qty_oh = $qty_oh;
         });
     }
 

@@ -2,14 +2,10 @@
 
 namespace App\Models\TrdRetail1\Inventories;
 
-use Illuminate\Database\Eloquent\Model;
-use App\Models\TrdRetail1\Master\Material;
-use App\Enums\Constant;
+use App\Models\Base\BaseModel;
 
-class IvtLog extends Model
+class IvtLog extends BaseModel
 {
-
-
     protected static function boot()
     {
         parent::boot();

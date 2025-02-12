@@ -43,17 +43,23 @@
         }"
         x-init="initDataTable()"
         class="table-container"
-        style="margin: {{ $margin }}; padding: {{ $padding }};">
-        <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" x-ref="table" style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200" style="border-bottom: 2px solid #dee2e6; background-color: #f8f9fa;">
-                    {{ $headers }}
-                </tr>
-            </thead>
-            <tbody>
-                {{ $rows }}
-            </tbody>
-        </table>
+        style="margin: {{ $margin }}; padding: {{ $padding }}; width: {{ $width }}; height: {{ $height }}; overflow: hidden; display: flex; flex-direction: column;">
+
+        <!-- Scrollable Table Wrapper -->
+        <div class="table-scroll" style="width: 100%; height: 100%; overflow: auto;">
+            <table {{ isset($id) ? 'id='.$id : '' }} class="table table-striped table-hover" x-ref="table"
+                style="width: max-content; min-width: 100%; border-collapse: collapse;">
+                <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 10;">
+                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                        {{ $headers }}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ $rows }}
+                </tbody>
+            </table>
+        </div>
+
         @isset($footer)
         <div class="d-flex justify-content-end mt-4" style="border-top: 1px solid #dee2e6; padding-top: 10px;">
             {{ $footer }}
@@ -62,17 +68,23 @@
     </div>
 @else
 <div class="ui-table-container"
-    style="margin: {{ $margin }}; padding: {{ $padding }};">
-    <table {{ isset($id) ? 'id='.$id : 'id=customTableId' }} class="ui-table">
-        <thead>
-            <tr class="fw-bold fs-6 text-gray-800">
-                {{ $headers }}
-            </tr>
-        </thead>
-        <tbody>
-            {{ $rows }}
-        </tbody>
-    </table>
+    style="margin: {{ $margin }}; padding: {{ $padding }}; width: {{ $width }}; height: {{ $height }}; overflow: hidden; display: flex; flex-direction: column;">
+
+    <!-- Scrollable Table Wrapper -->
+    <div class="table-scroll" style="width: 100%; height: 100%; overflow: auto;">
+        <table {{ isset($id) ? 'id='.$id : 'id=customTableId' }} class="ui-table"
+            style="width: max-content; min-width: 100%; border-collapse: collapse;">
+            <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 10;">
+                <tr class="fw-bold fs-6 text-gray-800">
+                    {{ $headers }}
+                </tr>
+            </thead>
+            <tbody>
+                {{ $rows }}
+            </tbody>
+        </table>
+    </div>
+
     @isset($footer)
     <div class="d-flex justify-content-end mt-4" style="border-top: 1px solid #dee2e6; padding-top: 10px;">
         {{ $footer }}

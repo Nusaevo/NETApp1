@@ -14,38 +14,52 @@ class OrderHdr extends BaseModel
 {
     use SoftDeletes;
 
-    protected $fillable = [
-        'tr_id',
-        'tr_type',
-        'tr_date',
-        'reff_code',
-        'partner_id',
-        'partner_code',
-        'sales_id',
-        'sales_code',
-        'deliv_by',
-        'payment_term_id',
-        'payment_term',
-        'curr_id',
-        'curr_code',
-        'curr_rate',
-        'status_code',
-        'print_settings',
-        'print_remarks',
-    ];
+    protected $fillable = ['tr_id', 'tr_type', 'tr_date', 'reff_code', 'partner_id', 'partner_code', 'sales_id', 'sales_code', 'deliv_by', 'payment_term_id', 'payment_term', 'curr_id', 'curr_code', 'curr_rate', 'status_code', 'print_settings', 'print_remarks'];
 
+    /* ======================================================
+     *                     BOOT METHOD
+     * ====================================================== */
     protected static function boot()
     {
         parent::boot();
 
-        // Hook untuk menghapus relasi saat header dihapus
+        // Cascade deletes for related records
         static::deleting(function ($orderHdr) {
-            $orderHdr->deleteDeliveryAndBilling();
-            $orderHdr->deleteOrderDetails();
+            // Delete DelivHdr and DelivDtl
+            $delivHdr = $orderHdr->DelivHdr;
+            if ($delivHdr) {
+                foreach ($delivHdr->DelivDtl as $delivDtl) {
+                    $delivDtl->delete();
+                }
+                $delivHdr->delete();
+            }
+
+            // Delete BillingHdr and BillingDtl
+            $billingHdr = $orderHdr->BillingHdr;
+            if ($billingHdr) {
+                foreach ($billingHdr->BillingDtl as $billingDtl) {
+                    $billingDtl->delete();
+                }
+                $billingHdr->delete();
+            }
+
+            // Delete OrderDtl
+            foreach ($orderHdr->OrderDtl as $orderDtl) {
+                $orderDtl->delete();
+            }
+        });
+
+        // Example: format goldprice_curr on retrieval
+        static::retrieved(function ($model) {
+            if (array_key_exists('goldprice_curr', $model->attributes)) {
+                $model->goldprice_curr = numberFormat($model->attributes['goldprice_curr'], 2);
+            }
         });
     }
 
-    #region Relasi
+    /* ======================================================
+     *                   RELATIONSHIPS
+     * ====================================================== */
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
@@ -56,208 +70,331 @@ class OrderHdr extends BaseModel
         return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
     }
 
+    public function Materials()
+    {
+        return $this->hasManyThrough(
+            Material::class,
+            OrderDtl::class,
+            'tr_id', // FK on OrderDtl
+            'id', // FK on Material
+            'tr_id', // Local key on OrderHdr
+            'matl_id', // Local key on OrderDtl
+        )->where('order_dtls.tr_type', $this->tr_type);
+    }
+
     public function DelivHdr()
     {
-        return $this->hasOne(DelivHdr::class, 'tr_id', 'tr_id')->where('tr_type', $this->getDeliveryTrType());
+        // Decides the related DelivHdr type based on $this->tr_type
+        $values = $this->getTrTypeValues($this->tr_type);
+        return $this->hasOne(DelivHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['delivTrType']);
     }
 
     public function BillingHdr()
     {
-        return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $this->getBillingTrType());
+        // Decides the related BillingHdr type based on $this->tr_type
+        $values = $this->getTrTypeValues($this->tr_type);
+        return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['billingTrType']);
     }
-    #endregion
 
-    #region Metode Utama
-    public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
+    /* ======================================================
+     *                  ACCESSORS / SCOPES
+     * ====================================================== */
+    public function getTotalQtyAttribute()
     {
+        return (int) $this->OrderDtl()->sum('qty');
+    }
+
+    public function getTotalAmtAttribute()
+    {
+        return (int) $this->OrderDtl()->sum('amt');
+    }
+
+    public function getMatlCodesAttribute()
+    {
+        $matlCodes = $this->OrderDtl()->pluck('matl_code')->toArray();
+        return implode(', ', $matlCodes);
+    }
+
+    /* ======================================================
+     *         EXAMPLE HELPER / BUSINESS LOGIC CHECKS
+     * ====================================================== */
+    public function isOrderCompleted(): bool
+    {
+        return $this->status_code === Status::COMPLETED;
+    }
+
+
+    /* ======================================================
+     *             PRIVATE HELPER METHODS
+     * ====================================================== */
+
+    /**
+     * Decide Deliv & Billing tr_type based on $trType.
+     * E.g. if $trType='PO', we might say DelivHdr has 'PD' and BillingHdr has 'APB'.
+     *
+     * @param  string $trType
+     * @return array  [ 'delivTrType' => 'PD', 'billingTrType' => 'APB' ]
+     */
+    private function getTrTypeValues($trType)
+    {
+        if ($trType === 'PO') {
+            return [
+                'delivTrType' => 'PD',
+                'billingTrType' => 'APB',
+            ];
+        } else {
+            // For 'SO' or other
+            return [
+                'delivTrType' => 'SD',
+                'billingTrType' => 'ARB',
+            ];
+        }
+    }
+
+    /**
+     * Generate tr_id if this is a new record.
+     *
+     * @param string $trType
+     */
+    private function generateTransactionId($trType)
+    {
+        // Example: If 'PO', use 'PURCHORDER_LASTID'. If 'SO', use 'SALESORDER_LASTID'
+        $configCode = $trType === 'PO' ? 'PURCHORDER_LASTID' : 'SALESORDER_LASTID';
+
+        if ($this->tr_id === null || $this->tr_id == 0) {
+            $configSnum = ConfigSnum::where('code', '=', $configCode)->first();
+            if ($configSnum) {
+                $stepCnt = $configSnum->step_cnt;
+                $proposedTrId = $configSnum->last_cnt + $stepCnt;
+
+                // If we exceed wrap_high, wrap to wrap_low
+                if ($proposedTrId > $configSnum->wrap_high) {
+                    $proposedTrId = $configSnum->wrap_low;
+                }
+                $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+
+                $configSnum->last_cnt = $proposedTrId;
+                $configSnum->save();
+
+                $this->tr_id = $proposedTrId;
+            }
+        }
+    }
+    // You can add your checks like isOrderEnableToDelete() etc. if needed
+    // ...
+
+    /* ======================================================
+     *               MAIN SAVE METHODS (REFACTORED)
+     * ====================================================== */
+
+    /**
+     * Save or update the OrderHdr (header).
+     * Optionally create DelivHdr & BillingHdr if $createBillingDelivery = true.
+     *
+     * @param  string $trType
+     * @param  array  $inputs
+     * @param  bool   $createBillingDelivery
+     * @return $this
+     * @throws \Exception
+     */
+    public function saveOrderHeader($trType, array $inputs, bool $createBillingDelivery = false)
+    {
+        // 1. Fill the header data
         $this->fill($inputs);
 
-        // Generate Transaction ID jika belum ada
-        $this->generateTransactionId($appCode, $configCode);
+        // 2. Generate the transaction ID if this is new
+        $this->generateTransactionId($trType);
 
-        // Set default status
+        // 3. If new record, set status to OPEN
         if ($this->isNew()) {
             $this->status_code = Status::OPEN;
         }
 
-        // Simpan header
+        // 4. Save the OrderHdr
         $this->save();
+
+        // 5. If needed, create both Delivery & Billing headers in one step
+        if ($createBillingDelivery) {
+            $this->createDeliveryAndBillingHeader($trType, $inputs);
+        }
+
+        return $this;
     }
 
-    public function saveOrderDetails($inputDetails, $trType, $inputs, $createBillingDelivery = false)
+    /**
+     * Save or update order details (OrderDtl).
+     * Optionally create DelivDtl & BillingDtl if $createBillingDelivery = true.
+     *
+     * @param  string $trType
+     * @param  array  $inputDetails          Array of detail data from Livewire
+     * @param  bool   $createBillingDelivery If true, create DelivDtl & BillingDtl for each detail
+     * @return void
+     * @throws \Exception
+     */
+    public function saveOrderDetails($trType, array $inputDetails, bool $createBillingDelivery = false)
     {
-        foreach ($inputDetails as $detail) {
-            $orderDtl = $this->createOrUpdateOrderDetail($detail, $trType);
+        $values = $this->getTrTypeValues($trType);
 
+        foreach ($inputDetails as $detailData) {
+            // 1) Create/Update the OrderDtl record
+            // Identify the record by (tr_id, tr_seq)
+            $orderDtl = OrderDtl::firstOrNew([
+                'tr_id' => $detailData['tr_id'],
+                'tr_seq' => $detailData['tr_seq'],
+            ]);
+
+            // Force the relation fields
+            $detailData['trhdr_id'] = $this->id;
+            $detailData['tr_type'] = $trType;
+
+            // If your logic copies qty -> qty_reff
+            if (isset($detailData['qty'])) {
+                $detailData['qty_reff'] = $detailData['qty'];
+            }
+
+            // Fill & save
+            $orderDtl->fill($detailData);
+            if ($orderDtl->isNew()) {
+                $orderDtl->status_code = Status::OPEN;
+            }
+            $orderDtl->save();
+
+            // 2) If $createBillingDelivery is true, do Delivery & Billing in ONE method
             if ($createBillingDelivery) {
-                $this->createDeliveryDetail($orderDtl, $inputs);
-                $this->createBillingDetail($orderDtl);
+                $this->createDeliveryAndBillingDetail($orderDtl, $detailData, $values['delivTrType'], $values['billingTrType']);
             }
         }
     }
-    #endregion
-
-    #region Logika Billing dan Delivery
-    public function createOrUpdateBilling()
+    /**
+     * Create or update both DelivHdr and BillingHdr for this OrderHdr in one pass.
+     *
+     * @param  string $trType  e.g. 'PO', 'SO'
+     * @param  array  $inputs  e.g. from Livewire (includes deliv_by, partner_id, etc.)
+     * @return void
+     */
+    private function createDeliveryAndBillingHeader($trType, array $inputs)
     {
+        // 1) Decide the transaction types for Delivery & Billing
+        $values = $this->getTrTypeValues($trType);
+
+        // 2) Create or update DelivHdr
+        $delivHdr = DelivHdr::firstOrNew([
+            'tr_id' => $this->tr_id,
+            'tr_type' => $values['delivTrType'],
+        ]);
+
+        $delivHdr->fill([
+            'tr_id' => $this->tr_id,
+            'tr_type' => $values['delivTrType'],
+            'tr_date' => $this->tr_date,
+            'partner_id' => $this->partner_id,
+            'partner_code' => $this->partner_code,
+            'deliv_by' => $inputs['deliv_by'] ?? '',
+        ]);
+
+        if ($delivHdr->isNew()) {
+            $delivHdr->status_code = Status::OPEN;
+        }
+        $delivHdr->save();
+
+        // 3) Create or update BillingHdr
         $billingHdr = BillingHdr::firstOrNew([
             'tr_id' => $this->tr_id,
-            'tr_type' => $this->getBillingTrType(),
+            'tr_type' => $values['billingTrType'],
         ]);
 
         $billingHdr->fill([
+            'tr_id' => $this->tr_id,
+            'tr_type' => $values['billingTrType'],
             'tr_date' => $this->tr_date,
             'partner_id' => $this->partner_id,
             'partner_code' => $this->partner_code,
             'payment_term_id' => $this->payment_term_id,
+            'payment_term' => '',
+            'payment_due_days' => 0,
         ]);
 
         if ($billingHdr->isNew()) {
             $billingHdr->status_code = Status::OPEN;
         }
-
         $billingHdr->save();
     }
 
-    public function createOrUpdateDelivery()
+    /**
+     * Create or update both DelivDtl and BillingDtl for an OrderDtl in one pass.
+     *
+     * @param  OrderDtl $orderDtl       The OrderDtl we just saved or updated.
+     * @param  array    $detailData     Additional data (e.g., 'wh_id') from Livewire.
+     * @param  string   $delivTrType    Transaction type for Delivery (e.g., 'PD', 'SD').
+     * @param  string   $billingTrType  Transaction type for Billing (e.g., 'APB', 'ARB').
+     * @return void
+     */
+    private function createDeliveryAndBillingDetail($orderDtl, array $detailData, $delivTrType, $billingTrType)
     {
-        $deliveryHdr = DelivHdr::firstOrNew([
-            'tr_id' => $this->tr_id,
-            'tr_type' => $this->getDeliveryTrType(),
+        // 1) Create or update DelivDtl
+        $delivDtl = DelivDtl::firstOrNew([
+            'trhdr_id' => $orderDtl->trhdr_id,
+            'tr_seq' => $orderDtl->tr_seq,
+            'tr_type' => $delivTrType,
         ]);
 
-        $deliveryHdr->fill([
-            'tr_date' => $this->tr_date,
-            'partner_id' => $this->partner_id,
-            'partner_code' => $this->partner_code,
+        $delivDtl->fill([
+            'trhdr_id' => $orderDtl->trhdr_id,
+            'tr_type' => $delivTrType,
+            'tr_id' => $this->tr_id, // or $orderDtl->tr_id if your logic differs
+            'tr_seq' => $orderDtl->tr_seq,
+            'reffdtl_id' => $orderDtl->id,
+            'reffhdrtr_type' => $this->tr_type, // The original transaction type from OrderHdr
+            'reffhdrtr_id' => $this->tr_id, // or $orderDtl->tr_id
+            'reffdtltr_seq' => $orderDtl->tr_seq,
+            'matl_id' => $orderDtl->matl_id,
+            'matl_code' => $orderDtl->matl_code,
+            'matl_descr' => $orderDtl->matl_descr,
+            'matl_uom' => $orderDtl->matl_uom,
+            'wh_id' => $detailData['wh_id'] ?? '',
+            'qty' => $orderDtl->qty,
+            'qty_reff' => $orderDtl->qty_reff,
         ]);
 
-        if ($deliveryHdr->isNew()) {
-            $deliveryHdr->status_code = Status::OPEN;
+        if ($delivDtl->isNew()) {
+            $delivDtl->status_code = Status::OPEN; // or whatever status you want
         }
 
-        $deliveryHdr->save();
-    }
+        $delivDtl->save();
 
-    public function createDeliveryDetail($orderDtl, $inputs)
-    {
-        $deliveryDtl = DelivDtl::firstOrNew([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'tr_type' => $this->getDeliveryTrType(),
-        ]);
-
-        $deliveryDtl->fill([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type' => $this->getDeliveryTrType(),
-            'tr_id' => $this->tr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'matl_id' => $orderDtl->matl_id,
-            'qty' => $orderDtl->qty,
-        ]);
-
-        $deliveryDtl->save();
-    }
-
-    public function createBillingDetail($orderDtl)
-    {
+        // 2) Create or update BillingDtl,
+        //    referencing the newly created $delivDtl->id if needed
         $billingDtl = BillingDtl::firstOrNew([
             'trhdr_id' => $orderDtl->trhdr_id,
             'tr_seq' => $orderDtl->tr_seq,
-            'tr_type' => $this->getBillingTrType(),
+            'tr_type' => $billingTrType,
         ]);
 
         $billingDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type' => $this->getBillingTrType(),
-            'tr_id' => $this->tr_id,
+            'tr_type' => $billingTrType,
+            'tr_id' => $orderDtl->tr_id,
             'tr_seq' => $orderDtl->tr_seq,
+            'dlvdtl_id' => $delivDtl->id, // link to DelivDtl
+            'dlvhdrtr_type' => $delivDtl->tr_type, // or $this->tr_type
+            'dlvhdrtr_id' => $delivDtl->tr_id,
+            'dlvdtltr_seq' => $delivDtl->tr_seq,
             'matl_id' => $orderDtl->matl_id,
+            'matl_code' => $orderDtl->matl_code,
+            'matl_uom' => $orderDtl->matl_uom,
+            'descr' => '',
             'qty' => $orderDtl->qty,
+            'qty_base' => $orderDtl->qty,
+            'price' => $orderDtl->price ?? 0,
+            'price_base' => $orderDtl->price ?? 0,
+            'amt' => $orderDtl->amt ?? 0,
+            'amt_reff' => $orderDtl->amt ?? 0,
         ]);
+
+        if ($billingDtl->isNew()) {
+            $billingDtl->status_code = Status::OPEN;
+        }
 
         $billingDtl->save();
     }
-
-    private function deleteDeliveryAndBilling()
-    {
-        if ($this->DelivHdr) {
-            foreach ($this->DelivHdr->DelivDtl as $detail) {
-                $detail->delete();
-            }
-            $this->DelivHdr->delete();
-        }
-
-        if ($this->BillingHdr) {
-            foreach ($this->BillingHdr->BillingDtl as $detail) {
-                $detail->delete();
-            }
-            $this->BillingHdr->delete();
-        }
-    }
-    #endregion
-
-    #region Utility
-    private function getDeliveryTrType()
-    {
-        return $this->tr_type == "PO" ? "PD" : "SD";
-    }
-
-    private function getBillingTrType()
-    {
-        return $this->tr_type == "PO" ? "APB" : "ARB";
-    }
-
-    private function generateTransactionId($appCode, $code)
-    {
-        if ($this->tr_id === null || $this->tr_id == 0) {
-            // Dapatkan tahun dan bulan saat ini
-            $year = date('y');
-            $monthNumber = date('n');
-            $monthLetter = chr(64 + $monthNumber); // Mengubah angka bulan ke huruf
-
-            // Dapatkan nomor urut dari database atau session
-            $sequenceNumber = $this->getSequenceNumber($code);
-
-            // Tentukan format berdasarkan kode aplikasi atau jenis transaksi
-            switch ($appCode) {
-                case 'Lain-lain':
-                    $this->tr_id = sprintf('%02d%02d%04d', $year, $monthNumber, $sequenceNumber);
-                    break;
-                case 'Motor':
-                    $this->tr_id = sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber);
-                    break;
-                case 'Mobil':
-                    $this->tr_id = sprintf('%s%02d8%04d', $monthLetter, $year, $sequenceNumber);
-                    break;
-                    // Tambahkan logika untuk jenis lainnya jika diperlukan
-            }
-
-            // Simpan nomor urut terbaru
-            $this->saveSequenceNumber($code, $sequenceNumber);
-        }
-    }
-
-    private function getSequenceNumber($code)
-    {
-        // Implementasikan logika untuk mendapatkan nomor urut
-        // Misalnya, simpan di database dan reset setiap bulan
-        // Contoh: ambil dari database atau session
-        return 1; // Ganti dengan logika yang sesuai
-    }
-
-    private function saveSequenceNumber($code, $sequenceNumber)
-    {
-        // Implementasikan logika untuk menyimpan nomor urut terbaru
-        // Misalnya, simpan di database atau session
-    }
-
-
-    private function deleteOrderDetails()
-    {
-        foreach ($this->OrderDtl as $detail) {
-            $detail->delete();
-        }
-    }
-    #endregion
 }

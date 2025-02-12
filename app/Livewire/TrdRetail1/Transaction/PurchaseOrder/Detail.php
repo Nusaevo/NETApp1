@@ -80,6 +80,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['wh_code'] = 18;
+        $this->inputs['wh_id'] = 18;
     }
 
     public function render()
@@ -90,32 +91,34 @@ class Detail extends BaseComponent
     #endregion
 
     #region CRUD Methods
-
     public function onValidateAndSave()
     {
-        if($this->actionValue == 'Edit')
-        {
-            if($this->object->isOrderCompleted())
-            {
+        if ($this->actionValue === 'Edit') {
+            if ($this->object->isOrderCompleted()) {
                 $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
-
         }
 
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
-            $this->inputs['partner_code'] = $partner->code;
+            $this->inputs['partner_code'] = $partner ? $partner->code : null;
         }
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'PURCHORDER_LASTID');
-        if($this->actionValue == 'Create')
-        {
-            return redirect()->route($this->appCode.'.Transaction.PurchaseOrder.Detail', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
+
+        $this->object->saveOrderHeader(
+            $this->trType,
+            $this->inputs,
+            true
+        );
+
+        if ($this->actionValue === 'Create') {
+            return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
+                'action'   => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id),
             ]);
         }
     }
+
 
     public function delete()
     {

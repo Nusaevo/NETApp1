@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdRetail1\Transaction\PurchaseOrder;
+namespace App\Livewire\TrdRetail1\Transaction\SalesOrder;
 
 use App\Livewire\Component\DetailComponent;
 use App\Models\TrdRetail1\Master\Material;

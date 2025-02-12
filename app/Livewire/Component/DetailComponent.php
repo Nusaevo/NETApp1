@@ -183,7 +183,7 @@ class DetailComponent extends Component
             }
 
             $this->dispatch('success', __('generic.string.save'));
-        } catch (Exception $e) {
+        } catch (QueryException | PDOException | Exception $e) {
             DB::rollBack();
             Log::error("Method Save :" . $e->getMessage());
             $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));

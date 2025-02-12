@@ -94,19 +94,11 @@ class IndexDataTable extends BaseDataTableComponent
                         return 'N/A';
                     }
 
-                    $firstDetail = $orderDetails->first();
 
-                    if ($firstDetail->Material->isOrderedMaterial()) {
                         foreach ($orderDetails as $detail) {
                             $totalAmt += $detail->amt;
                         }
                         return rupiah($totalAmt);
-                    } else {
-                        foreach ($orderDetails as $detail) {
-                            $totalAmt += $detail->amt;
-                        }
-                        return dollar($totalAmt);
-                    }
                 })
                 ->sortable(),
 

@@ -1,6 +1,6 @@
 <div class="modal fade custom-modal" id="{{ $id }}" tabindex="-1" aria-labelledby="{{ $id }}-label" aria-hidden="true"
     wire:ignore.self>
-    <div class="modal-dialog" style="max-width: {{ $width }}; max-height: {{ $height }};">
+    <div class="modal-dialog" style="width: {{ $width }}; height: {{ $height }};">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="{{ $id }}-label">{{ $title }}</h5>

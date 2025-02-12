@@ -268,7 +268,7 @@ class BaseComponent extends Component
             }
 
             $this->dispatch('success', __('generic.string.save'));
-        } catch (Exception $e) {
+        } catch (QueryException | PDOException | Exception $e) {
             DB::rollBack();
             $this->updateSharedVersionNumber(false);
             Log::error("Method Save : " . $e->getMessage());
