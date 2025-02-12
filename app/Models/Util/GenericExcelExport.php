@@ -102,7 +102,10 @@ class GenericExcelExport
             $this->adjustColumnWidths($sheet, $sheetData['headers']);
 
             // Protect specific columns
-            // $this->protectColumns($sheet, $sheetData['protectedColumns'] ?? [], $sheetData['allowInsert'] ?? false);
+            if($sheetData['allowInsert'] == false)
+            {
+                $this->protectColumns($sheet, $sheetData['protectedColumns'] ?? []);
+            }
         }
 
         return $spreadsheet;
@@ -152,7 +155,7 @@ class GenericExcelExport
      * @param array $protectedColumns Array of columns to protect.
      * @param bool $allowInsert Whether to allow row insertion.
      */
-    private function protectColumns($sheet, array $protectedColumns, bool $allowInsert)
+    private function protectColumns($sheet, array $protectedColumns)
     {
         $highestRow = $sheet->getHighestRow();
         $lastColumn = chr(64 + count($sheet->getColumnDimensions()));
@@ -187,15 +190,15 @@ class GenericExcelExport
         }
 
         // Allow row insertion if enabled
-        if ($allowInsert) {
-            $nextRow = $highestRow + 1;
-            $endUnlockedRow = $nextRow + 100;
-            $range = "A{$nextRow}:{$lastColumn}{$endUnlockedRow}";
-            $sheet
-                ->getStyle($range)
-                ->getProtection()
-                ->setLocked(StyleProtection::PROTECTION_UNPROTECTED);
-        }
+        // if ($allowInsert) {
+        //     $nextRow = $highestRow + 1;
+        //     $endUnlockedRow = $nextRow + 100;
+        //     $range = "A{$nextRow}:{$lastColumn}{$endUnlockedRow}";
+        //     $sheet
+        //         ->getStyle($range)
+        //         ->getProtection()
+        //         ->setLocked(StyleProtection::PROTECTION_UNPROTECTED);
+        // }
 
         // Enable sheet protection with password
         $protection = $sheet->getProtection();

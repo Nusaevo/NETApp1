@@ -142,6 +142,26 @@ class Material extends BaseModel
                 if (!isValidNumeric($sellingPrice)) {
                     $message .= 'Harga jual harus berupa angka positif. ';
                 }
+
+                if (!empty($category) && !empty($brand) && !empty($type)) {
+                    // Buat key unik berdasarkan kombinasi
+                    $combinationKey = trim($category) . '_' . trim($brand) . '_' . trim($type);
+
+                    // 1. Cek duplikat dalam file Excel
+                    if (isset($combinationTracker[$combinationKey])) {
+                        $message .= 'Duplikat dalam file: kombinasi Kategori, Merk, dan Jenis sudah ada. ';
+                    } else {
+                        $combinationTracker[$combinationKey] = $index; // Tandai kombinasi sebagai sudah ada
+                        // 2. Cek duplikat di database
+                        $existingMaterial = Material::where('category', $category)
+                            ->where('brand', $brand)
+                            ->where('type_code', $type)
+                            ->first();
+                        if ($existingMaterial) {
+                            $message .= 'Material dengan kombinasi Kategori, Merk, dan Jenis sudah ada di database. ';
+                        }
+                    }
+                }
             } elseif ($param === 'Update') {
                  // Validasi Template Update
                 $no = $row[0] ?? null; // No*
