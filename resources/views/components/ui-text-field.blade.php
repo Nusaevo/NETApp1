@@ -5,20 +5,13 @@
     $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
 @endphp
-@php
-    $id = str_replace(['.', '[', ']'], '_', $model);
-    $blankValue = isset($type) && $type === 'int' ? '0' : '';
-
-    $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
-    $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
-@endphp
 
 <div wire:ignore.self class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
     <div class="input-group">
         <div class="{{ $containerClass }}">
             @if (isset($type) && $type === 'textarea')
-                <textarea style="min-height: 150px;" wire:model="{{ $model }}" id="{{ $id }}"
+                <textarea style="min-height: 150px;" wire:model.lazy="{{ $model }}" id="{{ $id }}"
                     rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                     placeholder="{{ isset($label) ? $label : '' }}"
@@ -33,7 +26,7 @@
                                         input.value = input.value.toUpperCase();
                                         $wire.set('{{ $model }}', input.value);
                                     });
-                    
+
                                     // Saat tekan Enter
                                     input.addEventListener('keydown', function(event) {
                                         if (event.key === 'Enter') {
@@ -47,7 +40,7 @@
                         }
                     }" x-init="applyCapsLock()" x-ref="inputField"></textarea>
             @elseif(isset($type) && $type === 'code')
-                <input wire:model="{{ $model }}" type="text"
+                <input wire:model.lazy="{{ $model }}" type="text"
                     class="form-control @error($model) is-invalid @enderror"
                     @if ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif placeholder="{{ isset($label) ? $label : '' }}"
@@ -62,7 +55,7 @@
                                         input.value = input.value.toUpperCase();
                                         $wire.set('{{ $model }}', input.value);
                                     });
-                    
+
                                     // Saat tekan Enter
                                     input.addEventListener('keydown', function(event) {
                                         if (event.key === 'Enter') {
@@ -76,7 +69,7 @@
                         }
                     }" x-init="applyCapsLock()" x-ref="inputField" />
             @elseif(isset($type) && $type === 'document')
-                <input wire:model="{{ $model }}" id="{{ $id }}" type="file"
+                <input wire:model.lazy="{{ $model }}" id="{{ $id }}" type="file"
                     class="form-control @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif accept=".pdf, .doc, .docx"
@@ -100,7 +93,7 @@
                             });
                         }
                     }
-                }" x-init="initBarcode()" wire:model="{{ $model }}"
+                }" x-init="initBarcode()" wire:model.lazy="{{ $model }}"
                     id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif placeholder="{{ isset($label) ? $label : '' }}"
@@ -122,7 +115,7 @@
                             });
                         }
                     }
-                }" x-init="initDatepicker()" wire:model="{{ $model }}"
+                }" x-init="initDatepicker()" wire:model.lazy="{{ $model }}"
                     id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                     @if (isset($required) && $required === 'true') required @endif readonly="readonly" x-ref="inputField"
@@ -143,7 +136,7 @@
                                 allowMinus: false,
                                 placeholder: '0'
                             }).mask(input);
-                
+
                             // Sinkronkan nilai dengan Livewire setelah format
                             input.addEventListener('blur', () => {
                                 if (input.value.trim() === '') {
@@ -153,7 +146,7 @@
                             });
                         }
                     }
-                }" x-init="initInputMask()" wire:model="{{ $model }}"
+                }" x-init="initInputMask()" wire:model.lazy="{{ $model }}"
                     id="{{ $id }}" type="text"
                     class="form-control number-mask @error($model)
 is-invalid
@@ -170,7 +163,7 @@ is-invalid
             @endif
             x-ref="inputField">
         @elseif(isset($type) && $type === 'image')
-            <input wire:model="{{ $model }}" id="{{ $id }}" type="file"
+            <input wire:model.lazy="{{ $model }}" id="{{ $id }}" type="file"
                 class="form-control @error($model) is-invalid @enderror" accept="image/*"
                 @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                 @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
@@ -185,7 +178,7 @@ is-invalid
                                 input.value = input.value.toUpperCase();
                                 $wire.set('{{ $model }}', input.value);
                             });
-            
+
                             // Saat tekan Enter
                             input.addEventListener('keydown', function(event) {
                                 if (event.key === 'Enter') {
@@ -197,7 +190,7 @@ is-invalid
                         }
                     }
                 }
-            }" x-init="applyCapsLock()" wire:model="{{ $model }}"
+            }" x-init="applyCapsLock()" wire:model.lazy="{{ $model }}"
                 type="{{ isset($type) ? $type : 'text' }}"
                 class="form-control @if (isset($capslockMode) && $capslockMode === 'true') text-uppercase @endif @error($model) is-invalid @enderror"
                 @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif

@@ -161,7 +161,7 @@ class Detail extends BaseComponent
     {
         if (!empty($this->partnerSearchText)) {
             $searchTerm = strtoupper($this->partnerSearchText);
-            $this->suppliers = Partner::where('grp',Partner::SUPPLIER)
+            $this->suppliers = Partner::where('grp',Partner::CUSTOMER)
             ->where(function ($query) use ($searchTerm) {
                  $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
                        ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
@@ -188,11 +188,11 @@ class Detail extends BaseComponent
     public function confirmSelection()
     {
         if (empty($this->selectedPartners)) {
-            $this->dispatch('error', "Silakan pilih satu supplier terlebih dahulu.");
+            $this->dispatch('error', "Silakan pilih satu Customer terlebih dahulu.");
             return;
         }
         if (count($this->selectedPartners) > 1) {
-            $this->dispatch('error', "Hanya boleh memilih satu supplier.");
+            $this->dispatch('error', "Hanya boleh memilih satu Customer.");
             return;
         }
         $partner = Partner::find($this->selectedPartners[0]);
@@ -200,7 +200,7 @@ class Detail extends BaseComponent
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_name'] = $partner->code . " - " . $partner->name;
-            $this->dispatch('success', "Supplier berhasil dipilih.");
+            $this->dispatch('success', "Customer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
         }
     }

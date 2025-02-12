@@ -108,7 +108,6 @@ class MaterialListComponent extends DetailComponent
         } else {
             $this->input_details[$key]['amt'] = 0;
         }
-
         $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
 
         // Update totals immediately
