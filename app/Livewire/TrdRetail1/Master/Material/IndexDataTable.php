@@ -55,6 +55,8 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make('No', 'seq')->sortable(),
 
+            Column::make('Code', 'code')->sortable()->collapseOnTablet(),
+
             Column::make('Color Code', 'specs->color_code')->format(fn($value, $row) => $row['specs->color_code'] ?? '')->sortable(),
 
             Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
@@ -80,15 +82,10 @@ class IndexDataTable extends BaseDataTableComponent
 
             Column::make('Stock', 'IvtBal.qty_oh')->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)->sortable()->collapseOnTablet(),
 
-            Column::make('Code', 'code')->sortable()->collapseOnTablet(),
-
-            Column::make('Barcode', 'id')->format(fn($value, $row) => $row->MatlUom[0]->barcode ?? '')->sortable()->collapseOnTablet(),
-
-            Column::make('Remarks', 'remarks')->sortable()->collapseOnTablet(),
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
             }),
-            Column::make($this->trans('created_date'), 'created_at')->sortable()->collapseOnTablet(),
+            // Column::make($this->trans('created_date'), 'created_at')->sortable()->collapseOnTablet(),
             Column::make('Action', 'id')->format(function ($value, $row, $column) {
                 return view('layout.customs.data-table-action', [
                     'row' => $row,
