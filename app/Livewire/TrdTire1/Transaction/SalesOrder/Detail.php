@@ -29,7 +29,6 @@ class Detail extends BaseComponent
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
-
     public $total_amount;
     public $total_tax;
     public $total_dpp;
@@ -78,6 +77,7 @@ class Detail extends BaseComponent
         $tr_type = $this->trType;
 
         $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_doc_flag);
+        // dd($this->inputs['tr_code']);
     }
 
     public function onSOTaxChange()

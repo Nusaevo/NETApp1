@@ -49,12 +49,11 @@ class DelivHdr extends BaseModel
     {
         return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')->where('tr_type', 'PO');
     }
+
     public function OrderHdr()
     {
         return $this->belongsTo(OrderHdr::class, 'tr_code', 'tr_code');
     }
-
-
     #endregion
 
     #region Metode Utama
@@ -83,6 +82,9 @@ class DelivHdr extends BaseModel
             if (isset($inputs['trhdr_id'])) {
                 $this->id = $inputs['trhdr_id'];
             }
+
+            // Save the delivery date
+            $this->tr_date = $inputs['tr_date'];
 
             // Simpan data
             $this->save();

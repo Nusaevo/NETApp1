@@ -24,7 +24,7 @@
                                         model="inputs.tr_code" type="text" :action="$actionValue" required="false"
                                         enabled="true" capslockMode="true" />
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.tr_date" type="date"
-                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                        :action="$actionValue" required="true" enabled="true" />
                                     <x-ui-dropdown-select label="{{ $this->trans('wh_code') }}" model="inputs.wh_code"
                                         :options="$warehouses" required="true" :action="$actionValue" />
                                 </div>

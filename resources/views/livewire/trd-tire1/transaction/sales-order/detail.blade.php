@@ -20,9 +20,9 @@
                                 <div class="row">
                                     <x-ui-option model="inputs.sales_type" :options="['0' => 'MOTOR', '1' => 'MOBIL']" type="radio"
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
-                                    {{-- <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
+                                    <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                         type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        :checked="$inputs['tax_doc_flag']" /> --}}
+                                        :checked="$inputs['tax_doc_flag']" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
@@ -120,7 +120,6 @@
                             <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
                                 :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
                         </div>
-
                     </x-ui-footer>
                 </div>
                 <br>

@@ -506,7 +506,7 @@ class MaterialComponent extends BaseComponent
 
 
         // Isi dan sanitasi data
-        $this->object_pattern->fill($this->inputs_pattern);
+        $this->object_pattern->fill(['str2' => $this->inputs_pattern['str1']]);
         $this->object_pattern->const_group = "MMATL_PATTERN";
 
         // Hitung sequence berikutnya
@@ -520,7 +520,7 @@ class MaterialComponent extends BaseComponent
         // Refresh list merk dan update pilihan di form
         $this->masterService = new MasterService();
         $this->materialPattern = $this->masterService->getMatlPatternData();
-        $this->materials['pattern'] = $this->object_pattern->str1;
+        $this->materials['pattern'] = $this->object_pattern->str2;
         $this->generateName();
 
         // Tampilkan pesan sukses dan tutup dialog
@@ -552,7 +552,7 @@ class MaterialComponent extends BaseComponent
 
 
         // Isi dan sanitasi data
-        $this->object_jenis->fill($this->inputs_jenis);
+        $this->object_jenis->fill(['str2' => $this->inputs_jenis['str1']]);
         $this->object_jenis->const_group = "MMATL_JENIS";
 
         // Hitung sequence berikutnya
@@ -566,7 +566,7 @@ class MaterialComponent extends BaseComponent
         // Refresh list merk dan update pilihan di form
         $this->masterService = new MasterService();
         $this->materialJenis = $this->masterService->getMatlJenisData();
-        $this->materials['class_code'] = $this->object_jenis->str1;
+        $this->materials['class_code'] = $this->object_jenis->str2;
         // $this->generateName();
 
         // Tampilkan pesan sukses dan tutup dialog
