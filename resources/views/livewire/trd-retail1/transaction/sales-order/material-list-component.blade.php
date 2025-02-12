@@ -7,7 +7,6 @@
                 <th style="width: 80px; text-align: center;">Image</th>
                 <th style="width: 150px; text-align: center;">Harga Satuan</th>
                 <th style="width: 80px; text-align: center;">Qty</th>
-                <th style="width: 90px; text-align: center;">Disc (%)</th>
                 <th style="width: 150px; text-align: center;">Amount</th>
                 <th style="width: 70px; text-align: center;">Actions</th>
             </x-slot>
@@ -42,11 +41,6 @@
                                 type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-text-field model="input_details.{{ $key }}.disc" label=""
-                                type="number" required="true" enabled="true"
-                                onChanged="updateItemAmount({{ $key }})" />
-                        </td>
-                        <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label=""
                                 type="text" enabled="false" />
                         </td>
@@ -60,7 +54,6 @@
                 <!-- Total Row -->
                 <tr style="font-weight: bold; background-color: #f8f9fa;">
                     <td colspan="5" style="text-align: right;">Total</td>
-                    <td style="text-align: center;">{{ $total_discount }} %</td>
                     <td style="text-align: center;">{{ rupiah($total_amount) }}</td>
                     <td></td>
                 </tr>

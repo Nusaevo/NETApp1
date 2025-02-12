@@ -18,7 +18,6 @@ class MaterialListComponent extends DetailComponent
     public $tr_code;
     public $input_details = [];
     public $total_amount = 0;
-    public $total_discount = 0;
     public $materialList = [];
     public $searchTerm = '';
     public $selectedMaterials = [];
@@ -63,8 +62,7 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[] = [
                     'matl_id' => null,
                     'qty' => null,
-                    'price' => 0.0,
-                    'disc' => 0.0,
+                    'price' => 0.0
                 ];
                 $this->dispatch('success', __('generic.string.add_item'));
             } catch (Exception $e) {
@@ -106,9 +104,7 @@ class MaterialListComponent extends DetailComponent
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
-            $discountPercent = $this->input_details[$key]['disc'] ?? 0;
-            $discountAmount = $amount * ($discountPercent / 100);
-            $this->input_details[$key]['amt'] = $amount - $discountAmount;
+            $this->input_details[$key]['amt'] = $amount;
         } else {
             $this->input_details[$key]['amt'] = 0;
         }
@@ -125,22 +121,12 @@ class MaterialListComponent extends DetailComponent
             array_map(function ($detail) {
                 $qty = $detail['qty'] ?? 0;
                 $price = $detail['price'] ?? 0;
-                $discountPercent = $detail['disc'] ?? 0;
                 $amount = $qty * $price;
-                $discountAmount = $amount * ($discountPercent / 100);
-                return $amount - $discountAmount;
-            }, $this->input_details),
-        );
-
-        $this->total_discount = array_sum(
-            array_map(function ($detail) {
-                $discountPercent = $detail['disc'] ?? 0;
-                return $discountPercent;
+                return $amount;
             }, $this->input_details),
         );
 
         $this->total_amount = round($this->total_amount, 2);
-        $this->total_discount = round($this->total_discount, 2);
     }
 
     public function deleteItem($index)
@@ -277,8 +263,7 @@ class MaterialListComponent extends DetailComponent
             $this->input_details[] = [
                 'matl_id' => $matl_id,
                 'qty' => null,
-                'price' => 0.0,
-                'disc' => 0.0,
+                'price' => 0.0
             ];
             $this->onMaterialChanged($key, $matl_id);
         }

@@ -6,7 +6,7 @@
                 <th style="width: 150px; text-align: center;">Code</th>
                 <th style="width: 80px; text-align: center;">Image</th>
                 <th style="width: 150px; text-align: center;">Harga Satuan</th>
-                <th style="width: 80px; text-align: center;">Qty</th>S
+                <th style="width: 80px; text-align: center;">Qty</th>
                 <th style="width: 150px; text-align: center;">Amount</th>
                 <th style="width: 70px; text-align: center;">Actions</th>
             </x-slot>

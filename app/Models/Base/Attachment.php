@@ -5,7 +5,7 @@ namespace App\Models\Base;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\{File, Session};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use App\Models\Util\GenericExcelExport;
 
 class Attachment extends Model
 {
@@ -94,6 +94,51 @@ class Attachment extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Upload Excel Attachment using a given template configuration.
+     *
+     * @param array $templateConfig Template configuration (e.g., from getCreateTemplateConfig)
+     * @param string $objectId Identifier for the object (e.g., audit ID)
+     * @param string $objectType Type of object (e.g., 'ConfigAudit')
+     */
+    public static function uploadExcelAttachment(array $templateConfig, string $objectId, string $objectType)
+    {
+        // ✅ 1. Tentukan Path Penyimpanan
+        $storageBasePath = rtrim(config('app.storage_path'), '/');
+        $appCode = Session::get('app_code');
+        $uploadPath = $storageBasePath . '/' . $appCode;
+        $attachmentsPath = "{$uploadPath}/{$objectType}/{$objectId}";
+        if (!File::isDirectory($attachmentsPath)) {
+            if (!File::makeDirectory($attachmentsPath, 0777, true)) {
+                throw new \Exception("Failed to create directory at $attachmentsPath");
+            }
+        }
+        // ✅ 2. Tentukan Nama File dan Path Lengkap
+        $filename = $templateConfig['name'] . '_' . now()->format('Y-m-d_His') . '.xlsx';
+        $filePath = "{$objectType}/{$objectId}/{$filename}";
+        $fullPath = "{$attachmentsPath}/{$filename}";
+        try {
+            // ✅ 3. Generate dan Simpan Menggunakan GenericExcelExport
+            $export = new GenericExcelExport([$templateConfig], $filename);
+            $export->upload($fullPath);
+            // ✅ 4. Simpan Metadata Attachment di Database
+            Attachment::updateOrCreate(
+                [
+                    'attached_objectid' => $objectId,
+                    'attached_objecttype' => $objectType,
+                    'name' => $filename,
+                ],
+                [
+                    'path' => $filePath,
+                    'content_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'extension' => 'xlsx',
+                ],
+            );
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to generate and save Excel file: ' . $e->getMessage());
+        }
     }
 
     public static function deleteAttachmentByFilename($objectId, $objectType, $filename)
