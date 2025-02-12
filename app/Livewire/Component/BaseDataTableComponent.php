@@ -217,4 +217,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
     //     // Return the Excel download response
     //     return Excel::download(new GenericExport($data), $filename);
     // }
+
 }
+

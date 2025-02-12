@@ -61,10 +61,6 @@ class OrderHdr extends BaseModel
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
-    // public function Material()
-    // {
-    //     return $this->belongsTo(Material::class, 'material_id', 'id');
-    // }
 
     public function OrderDtl()
     {
@@ -81,6 +77,7 @@ class OrderHdr extends BaseModel
         return $this->hasOne(BillingHdr::class, 'tr_code', 'tr_code')->where('tr_type', $this->getBillingTrType());
     }
     #endregion
+
     public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     #region Metode Utama public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     {

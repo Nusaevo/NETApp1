@@ -114,6 +114,7 @@ class DelivDtl extends BaseModel
                 $ivtBalUnit->save();
             });
         });
+        
 
         // Event saved: data sudah tersimpan, ID sudah tersedia. Buat atau update IvtLog.
         static::saved(function ($delivDtl) {

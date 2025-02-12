@@ -15,19 +15,18 @@ class IvtBal extends BaseModel
     public static function boot()
     {
         parent::boot();
-        static::saving(function ($ivtBal) {
+        static::created(function ($ivtBal) {
             $ivtBalUnit = IvtBalUnit::firstOrNew([
-                'ivt_id'  => $ivtBal->id,
-                'matl_id' => $ivtBal->matl_id,
-                'wh_id'   => $ivtBal->wh_id,
-                'batch_code' => $ivtBal->batch_code,
+                'ivt_id'    => $ivtBal->id,
+                'matl_id'   => $ivtBal->matl_id,
+                'wh_id'     => $ivtBal->wh_id,
+                'batch_code'=> $ivtBal->batch_code,
             ]);
             if (!$ivtBalUnit->exists) {
                 $ivtBalUnit->qty_oh = 0;
             }
             $ivtBalUnit->qty_oh = $ivtBal->qty_oh;
             $ivtBalUnit->save();
-
         });
     }
 
