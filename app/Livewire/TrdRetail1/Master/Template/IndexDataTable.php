@@ -47,9 +47,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Status", "audit_trail")
                 ->searchable()
                 ->sortable(),
-            Column::make("Table Name", "table_name")
-                ->searchable()
-                ->sortable(),
+            // Column::make("Table Name", "table_name")
+            //     ->searchable()
+            //     ->sortable(),
             Column::make("Created By", "created_by")
                 ->searchable()
                 ->sortable(),

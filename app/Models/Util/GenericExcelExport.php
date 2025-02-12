@@ -102,7 +102,7 @@ class GenericExcelExport
             $this->adjustColumnWidths($sheet, $sheetData['headers']);
 
             // Protect specific columns
-            $this->protectColumns($sheet, $sheetData['protectedColumns'] ?? [], $sheetData['allowInsert'] ?? false);
+            // $this->protectColumns($sheet, $sheetData['protectedColumns'] ?? [], $sheetData['allowInsert'] ?? false);
         }
 
         return $spreadsheet;
