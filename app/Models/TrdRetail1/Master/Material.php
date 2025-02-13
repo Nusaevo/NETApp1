@@ -105,7 +105,7 @@ class Material extends BaseModel
                 continue;
             }
 
-            $status = 'Success';
+            $status = '';
             $message = '';
 
             // Common validation for `No*`
@@ -121,9 +121,13 @@ class Material extends BaseModel
                 $brand = $row[1] ?? null; // Merk*
                 $type = $row[2] ?? null; // Jenis*
                 $no = $row[3] ?? null; // No*
+                $seq = $row[4] ?? null; // Seq*
                 $uom = $row[6] ?? null; // UOM*
                 $sellingPrice = $row[7] ?? null; // Harga Jual*
 
+                if (empty($no)) {
+                    $message .= 'Kolom No* tidak boleh kosong. ';
+                }
                 if (empty($category)) {
                     $message .= 'Kategori tidak boleh kosong. ';
                 }
@@ -133,8 +137,8 @@ class Material extends BaseModel
                 if (empty($type)) {
                     $message .= 'Jenis tidak boleh kosong. ';
                 }
-                if (empty($no)) {
-                    $message .= 'Kolom No* tidak boleh kosong. ';
+                if (empty($seq)) {
+                    $message .= 'Kolom Seq* tidak boleh kosong. ';
                 }
                 if (empty($uom)) {
                     $message .= 'UOM tidak boleh kosong. ';
@@ -143,24 +147,22 @@ class Material extends BaseModel
                     $message .= 'Harga jual harus berupa angka positif. ';
                 }
 
-                if (!empty($category) && !empty($brand) && !empty($type)) {
-                    // Buat key unik berdasarkan kombinasi
-                    $combinationKey = trim($category) . '_' . trim($brand) . '_' . trim($type);
+                // Buat key berdasarkan N
+                $combinationKey = trim($category) . '_' . trim($brand) . '_' . trim($type) . '_' . trim($seq);
+                if (isset($combinationTracker[$combinationKey])) {
+                    $message .= 'Duplikat dalam file: kombinasi Kategori, Merk, Jenis, dan Seq sudah ada. ';
+                } else {
+                    $combinationTracker[$combinationKey] = $index; // Tandai kombinasi sebagai sudah ada
+                }
 
-                    // 1. Cek duplikat dalam file Excel
-                    if (isset($combinationTracker[$combinationKey])) {
-                        $message .= 'Duplikat dalam file: kombinasi Kategori, Merk, dan Jenis sudah ada. ';
-                    } else {
-                        $combinationTracker[$combinationKey] = $index; // Tandai kombinasi sebagai sudah ada
-                        // 2. Cek duplikat di database
-                        $existingMaterial = Material::where('category', $category)
-                            ->where('brand', $brand)
-                            ->where('type_code', $type)
-                            ->first();
-                        if ($existingMaterial) {
-                            $message .= 'Material dengan kombinasi Kategori, Merk, dan Jenis sudah ada di database. ';
-                        }
-                    }
+                $existingMaterial = Material::where('category', $category)
+                    ->where('brand', $brand)
+                    ->where('type_code', $type)
+                    ->where('seq', $seq)
+                    ->first();
+
+                if ($existingMaterial) {
+                    $message .= 'Material dengan kombinasi Kategori, Merk, Jenis, dan Seq sudah ada di database. ';
                 }
             } elseif ($param === 'Update') {
                  // Validasi Template Update

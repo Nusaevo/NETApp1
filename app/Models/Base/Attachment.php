@@ -20,16 +20,7 @@ class Attachment extends Model
         $this->connection = $sessionAppCode;
     }
 
-    protected $fillable = [
-        'name',
-        'path',
-        'content_type',
-        'extension',
-        'descr',
-        'attached_objectid',
-        'attached_objecttype',
-        'seq',
-    ];
+    protected $fillable = ['name', 'path', 'content_type', 'extension', 'descr', 'attached_objectid', 'attached_objecttype', 'seq'];
 
     public function getAllColumns()
     {
@@ -63,10 +54,7 @@ class Attachment extends Model
         $imageData = substr($imageDataUrl, strpos($imageDataUrl, ',') + 1);
         $imageData = base64_decode($imageData);
 
-        $existingAttachment = self::where('attached_objectid', $objectId)
-            ->where('attached_objecttype', $objectType)
-            ->where('name', $filename)
-            ->first();
+        $existingAttachment = self::where('attached_objectid', $objectId)->where('attached_objecttype', $objectType)->where('name', $filename)->first();
 
         if ($objectType == 'NetStorage') {
             $filePath = "$objectType/$filename";
@@ -120,22 +108,34 @@ class Attachment extends Model
         $filePath = "{$objectType}/{$objectId}/{$filename}";
         $fullPath = "{$attachmentsPath}/{$filename}";
         try {
-            // ✅ 3. Generate dan Simpan Menggunakan GenericExcelExport
             $export = new GenericExcelExport([$templateConfig], $filename);
             $export->upload($fullPath);
-            // ✅ 4. Simpan Metadata Attachment di Database
-            Attachment::updateOrCreate(
-                [
-                    'attached_objectid' => $objectId,
-                    'attached_objecttype' => $objectType,
+
+            // ✅ 4. Cek apakah metadata Attachment sudah ada
+            $attachment = Attachment::where('attached_objectid', $objectId)->where('attached_objecttype', $objectType)->first();
+
+            if ($attachment) {
+                // Jika sudah ada, update semua field (replace)
+                $attachment->update([
                     'name' => $filename,
-                ],
-                [
                     'path' => $filePath,
                     'content_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     'extension' => 'xlsx',
-                ],
-            );
+                    'updated_at' => now(), // Pastikan updated_at diperbarui
+                ]);
+            } else {
+                // Jika tidak ada, buat baru
+                Attachment::create([
+                    'attached_objectid' => $objectId,
+                    'attached_objecttype' => $objectType,
+                    'name' => $filename,
+                    'path' => $filePath,
+                    'content_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'extension' => 'xlsx',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         } catch (\Exception $e) {
             throw new \Exception('Failed to generate and save Excel file: ' . $e->getMessage());
         }
@@ -143,10 +143,7 @@ class Attachment extends Model
 
     public static function deleteAttachmentByFilename($objectId, $objectType, $filename)
     {
-        $attachment = self::where('attached_objectid', $objectId)
-            ->where('attached_objecttype', $objectType)
-            ->where('name', $filename)
-            ->first();
+        $attachment = self::where('attached_objectid', $objectId)->where('attached_objecttype', $objectType)->where('name', $filename)->first();
 
         if ($attachment) {
             $appCode = Session::get('app_code');
@@ -189,7 +186,7 @@ class Attachment extends Model
         $appCode = Session::get('app_code');
         $uploadPath = config('app.storage_url') . "/$appCode";
         $fullPath = "$uploadPath/{$this->path}";
-        return str_replace("/", '/', $fullPath);
+        return str_replace('/', '/', $fullPath);
     }
 
     public function getUrlAttribute()
@@ -197,15 +194,12 @@ class Attachment extends Model
         $appCode = Session::get('app_code');
         $uploadPath = config('app.storage_url') . "/$appCode";
         $fullPath = "$uploadPath/{$this->path}";
-        return str_replace("/", '/', $fullPath);
+        return str_replace('/', '/', $fullPath);
     }
 
     protected static function reSortSequences($objectId, $objectType)
     {
-        $attachments = self::where('attached_objectid', $objectId)
-            ->where('attached_objecttype', $objectType)
-            ->orderBy('id')
-            ->get();
+        $attachments = self::where('attached_objectid', $objectId)->where('attached_objecttype', $objectType)->orderBy('id')->get();
 
         $seq = 1;
         foreach ($attachments as $attachment) {
