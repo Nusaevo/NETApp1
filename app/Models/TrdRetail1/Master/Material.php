@@ -50,7 +50,7 @@ class Material extends BaseModel
             'name' => 'Material_Update_Template',
             'headers' => ['No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang', 'Non Aktif', 'Keterangan', 'Version', 'Status', 'Message'],
             'data' => $data,
-            'protectedColumns' => ['A','G'],
+            'protectedColumns' => ['A', 'G'],
             'allowInsert' => false,
         ];
     }
@@ -121,7 +121,8 @@ class Material extends BaseModel
                 $brand = $row[1] ?? null; // Merk*
                 $type = $row[2] ?? null; // Jenis*
                 $no = $row[3] ?? null; // No*
-                $seq = $row[4] ?? null; // Seq*
+                $color_code = $row[4] ?? null; // Kode Warna*
+                $color_name = $row[5] ?? null; // Nama Warna*
                 $uom = $row[6] ?? null; // UOM*
                 $sellingPrice = $row[7] ?? null; // Harga Jual*
 
@@ -137,8 +138,8 @@ class Material extends BaseModel
                 if (empty($type)) {
                     $message .= 'Jenis tidak boleh kosong. ';
                 }
-                if (empty($seq)) {
-                    $message .= 'Kolom Seq* tidak boleh kosong. ';
+                if (empty($color_code)) {
+                    $message .= 'Kolom Kode Warna* tidak boleh kosong. ';
                 }
                 if (empty($uom)) {
                     $message .= 'UOM tidak boleh kosong. ';
@@ -147,25 +148,22 @@ class Material extends BaseModel
                     $message .= 'Harga jual harus berupa angka positif. ';
                 }
 
-                // Buat key berdasarkan N
-                $combinationKey = trim($category) . '_' . trim($brand) . '_' . trim($type) . '_' . trim($seq);
+                // Buat key berdasarkan kombinasi Kategori, Merk, Jenis, dan Color Code
+                $combinationKey = trim($category) . '_' . trim($brand) . '_' . trim($type) . '_' . trim($color_code);
                 if (isset($combinationTracker[$combinationKey])) {
-                    $message .= 'Duplikat dalam file: kombinasi Kategori, Merk, Jenis, dan Seq sudah ada. ';
+                    $message .= 'Duplikat dalam file: kombinasi Kategori, Merk, Jenis, dan Kode Warna sudah ada. ';
                 } else {
                     $combinationTracker[$combinationKey] = $index; // Tandai kombinasi sebagai sudah ada
                 }
 
-                $existingMaterial = Material::where('category', $category)
-                    ->where('brand', $brand)
-                    ->where('type_code', $type)
-                    ->where('seq', $seq)
-                    ->first();
+                // Cek duplikasi dalam database berdasarkan Kategori, Merk, Jenis, dan Color Code di JSONB (specs->color_code)
+                $existingMaterial = Material::where('category', $category)->where('brand', $brand)->where('type_code', $type)->whereJsonContains('specs->color_code', $color_code)->first();
 
                 if ($existingMaterial) {
-                    $message .= 'Material dengan kombinasi Kategori, Merk, Jenis, dan Seq sudah ada di database. ';
+                    $message .= 'Material dengan kombinasi Kategori, Merk, Jenis, dan Kode Warna sudah ada di database. ';
                 }
             } elseif ($param === 'Update') {
-                 // Validasi Template Update
+                // Validasi Template Update
                 $no = $row[0] ?? null; // No*
                 $materialCode = $row[6] ?? null; // Kode Barang
                 $version = $row[11] ?? null; // Version
@@ -412,9 +410,7 @@ class Material extends BaseModel
 
     public function hasQuantity()
     {
-        return IvtBal::where('matl_id', $this->id)
-            ->where('qty_oh', '>', 0)
-            ->exists();
+        return IvtBal::where('matl_id', $this->id)->where('qty_oh', '>', 0)->exists();
     }
 
     public function getStockAttribute()
