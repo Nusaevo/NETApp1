@@ -93,14 +93,15 @@ class BankListComponent extends DetailComponent
 
     protected function loadDetails()
     {
-        //find partner detail where partner_id = this->objecti->id
         if (!empty($this->objectIdValue)) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
             if ($partnerDetail) {
-                $this->input_details = json_decode($partnerDetail->banks, true) ?? [];
+                // Jika di model sudah ada casting, banks sudah berupa array
+                $this->input_details = $partnerDetail->banks ?? [];
             }
         }
     }
+
 
     public function SaveBank()
     {
@@ -112,16 +113,26 @@ class BankListComponent extends DetailComponent
         $banksArray = [];
         foreach ($this->input_details as $detail) {
             $banksArray[] = [
-                'bank_acct' => $detail['bank_acct'],
-                'bank_name' => $detail['bank_name'],
+                'bank_acct'     => $detail['bank_acct'],
+                'bank_name'     => $detail['bank_name'],
                 'bank_location' => $detail['bank_location'],
             ];
         }
+
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+
         if ($partnerDetail) {
+            // Jika partnerDetail sudah ada, lakukan update pada field banks
             $partnerDetail->update(['banks' => $banksArray]);
+        } else {
+            // Jika belum ada, buat record baru dengan menyertakan partner_id dan banks
+            PartnerDetail::create([
+                'partner_id' => $this->object->id,
+                'banks'      => $banksArray
+            ]);
         }
     }
+
 
     public function render()
     {

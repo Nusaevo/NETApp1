@@ -38,7 +38,6 @@ class ContactListComponent extends DetailComponent
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->loadDetails();
-            //load detail bank
         }
     }
 
@@ -106,14 +105,16 @@ class ContactListComponent extends DetailComponent
 
     protected function loadDetails()
     {
-        //find partner detail where partner_id = this->objecti->id
         if (!empty($this->objectIdValue)) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
             if ($partnerDetail) {
-                $this->input_details = json_decode($partnerDetail->contacts, true) ?? [];
+                // Jika pada model PartnerDetail sudah didefinisikan casts untuk contacts,
+                // maka data sudah otomatis berupa array sehingga tidak perlu json_decode()
+                $this->input_details = $partnerDetail->contacts ?? [];
             }
         }
     }
+
 
     public function SaveContact()
     {
@@ -138,6 +139,12 @@ class ContactListComponent extends DetailComponent
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
             $partnerDetail->update(['contacts' => $contactsArray]);
+        }else {
+            // Jika belum ada, buat record baru dengan menyertakan partner_id dan banks
+            PartnerDetail::create([
+                'partner_id' => $this->object->id,
+                'contacts'      => $contactsArray
+            ]);
         }
     }
 

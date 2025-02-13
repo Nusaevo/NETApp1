@@ -114,7 +114,7 @@ class DelivDtl extends BaseModel
                 $ivtBalUnit->save();
             });
         });
-        
+
 
         // Event saved: data sudah tersimpan, ID sudah tersedia. Buat atau update IvtLog.
         static::saved(function ($delivDtl) {
@@ -144,58 +144,72 @@ class DelivDtl extends BaseModel
                     'tr_desc'    => $delivDtl->matl_descr,
                 ]
             );
+
+            // Create or update BillingDtl
+            BillingDtl::updateOrCreate(
+                [
+                    'trhdr_id' => $delivDtl->trhdr_id,
+                    'tr_seq' => $delivDtl->tr_seq,
+                    'tr_type' => $delivDtl->tr_type == 'SD' ? 'ARB' : 'APB',
+                ],
+                [
+                    'trhdr_id' => $delivDtl->trhdr_id,
+                    'tr_type' => $delivDtl->tr_type == 'SD' ? 'ARB' : 'APB',
+                    'tr_code' => $delivDtl->tr_code,
+                    'tr_seq' => $delivDtl->tr_seq,
+                    'matl_id' => $delivDtl->matl_id,
+                    'matl_code' => $delivDtl->matl_code,
+                    'descr' => $delivDtl->matl_descr,
+                    'qty' => $delivDtl->qty,
+                    'price' => $orderDtl ? $orderDtl->amt : 0,
+                    'amt' => $delivDtl->qty * ($orderDtl ? $orderDtl->amt : 0),
+                    'dlvdtl_id' => $delivDtl->id,
+                    'dlvdtlr_seq' => $header ? $header->tr_seq : $delivDtl->tr_seq,
+                    'dlvhdr_type' => $header ? $header->tr_type : $delivDtl->tr_type,
+                    'dlvhdr_id' => $header ? $header->id : $delivDtl->trhdr_id,
+                ]
+            );
         });
 
-        // Event deleting (tidak berubah)
+        // Event deleting: update IvtBal dan IvtBalUnit
         static::deleting(function ($delivDtl) {
-            DB::beginTransaction();
-            try {
-                $delivDtls = DelivDtl::where('trhdr_id', $delivDtl->trhdr_id)
-                    ->where('tr_seq', $delivDtl->tr_seq)
-                    ->get();
+            DB::transaction(function () use ($delivDtl) {
+                $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
+                if ($warehouse) {
+                    $delivDtl->wh_id = $warehouse->id;
+                }
 
-                foreach ($delivDtls as $dtl) {
-                    $warehouse = ConfigConst::where('str1', $dtl->wh_code)->first();
-                    if ($warehouse) {
-                        $dtl->wh_id = $warehouse->id;
-                    }
+                $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
+                    ->where('wh_id', $delivDtl->wh_id)
+                    ->where('batch_code', $delivDtl->batch_code)
+                    ->lockForUpdate()
+                    ->first();
 
-                    $existingBal = IvtBal::where('matl_id', $dtl->matl_id)
-                        ->where('wh_id', $dtl->wh_id)
-                        ->where('batch_code', $dtl->batch_code)
+                $qtyChange = (float)$delivDtl->qty;
+                if ($delivDtl->tr_type === 'PD') {
+                    $qtyChange = -$qtyChange;
+                } else if ($delivDtl->tr_type === 'SD') {
+                    // No change needed for SD type
+                }
+
+                if ($existingBal) {
+                    $newQty = $existingBal->qty_oh + $qtyChange;
+                    $existingBal->update(['qty_oh' => $newQty]);
+
+                    $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                        ->where('wh_id', $delivDtl->wh_id)
                         ->lockForUpdate()
                         ->first();
-
-                    $qtyChange = (float)$dtl->qty;
-                    if ($dtl->tr_type === 'PD') {
-                        $qtyChange = -$qtyChange;
+                    if ($existingBalUnit) {
+                        $newUnitQty = $existingBalUnit->qty_oh + $qtyChange;
+                        $existingBalUnit->update(['qty_oh' => $newUnitQty]);
                     }
-
-                    if ($existingBal) {
-                        $newQty = $existingBal->qty_oh - $qtyChange;
-                        $existingBal->update(['qty_oh' => $newQty]);
-
-                        $existingBalUnit = IvtBalUnit::where('matl_id', $dtl->matl_id)
-                            ->where('wh_id', $dtl->wh_id)
-                            ->lockForUpdate()
-                            ->first();
-                        if ($existingBalUnit) {
-                            $newUnitQty = $existingBalUnit->qty_oh - $qtyChange;
-                            $existingBalUnit->update(['qty_oh' => $newUnitQty]);
-                        }
-                    }
-                    $dtl->forceDelete();
                 }
 
                 BillingDtl::where('trhdr_id', $delivDtl->trhdr_id)
                     ->where('tr_seq', $delivDtl->tr_seq)
                     ->forceDelete();
-
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
+            });
         });
     }
 

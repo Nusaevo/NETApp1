@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models\TrdTire1\Master;
+
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use Illuminate\Support\Facades\DB;
@@ -70,14 +71,13 @@ class Material extends BaseModel
     #region Attributes
     public function getSellingPriceTextAttribute()
     {
-            return rupiah($this->selling_price);
-
+        return rupiah($this->selling_price);
     }
 
     // Getter for jwl_buying_price_text
     public function getBuyingPriceTextAttribute()
     {
-            return rupiah($this->buying_price);
+        return rupiah($this->buying_price);
     }
 
     #endregion
@@ -88,12 +88,13 @@ class Material extends BaseModel
 
     public static function getAvailableMaterials()
     {
-        return self::whereHas('ivtBal', function ($query) {
-                    $query->where('qty_oh', '>', 0);
-                })
-                ->whereNull('materials.deleted_at')
-                ->distinct();
+        return self::whereHas('IvtBal', function ($query) {
+            $query->where('qty_oh', '>', 0);
+        })
+            ->whereNull('materials.deleted_at')
+            ->distinct();
     }
+
 
 
     public static function checkMaterialStockByMatlId($matlId)
@@ -168,7 +169,7 @@ class Material extends BaseModel
         $materialDescriptions = '';
 
         if ($matl_boms && count($matl_boms) > 0) {
-            $bomIds = array_filter(array_column($matl_boms, 'base_matl_id_value'), function($value) {
+            $bomIds = array_filter(array_column($matl_boms, 'base_matl_id_value'), function ($value) {
                 return !is_null($value) && $value !== '';
             });
 
@@ -235,5 +236,4 @@ class Material extends BaseModel
         $newMarkupPercentage = (($sellingPrice - $buyingPrice) / $buyingPrice) * 100;
         return numberFormat($newMarkupPercentage);
     }
-
 }

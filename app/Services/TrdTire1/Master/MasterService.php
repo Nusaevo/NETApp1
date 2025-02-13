@@ -91,7 +91,7 @@ class MasterService extends BaseService
         $data = $this->getConfigData('MMATL_JENIS');
         return $data->map(function ($data) {
             return [
-                'label' => $data->str1,
+                'label' => $data->str2,
                 'value' => $data->id,
             ];
         })->toArray();
@@ -126,8 +126,8 @@ class MasterService extends BaseService
         $data = $this->getConfigData('MMATL_PATTERN');
         return $data->map(function ($data) {
             return [
-                'label' => $data->str1,
-                'value' => $data->str1,
+                'label' => $data->str2,
+                'value' => $data->str2,
             ];
         })->toArray();;
     }
@@ -236,6 +236,17 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+    public function getAvaliableMaterials()
+    {
+        $materialsData = Material::getAvailableMaterials()->get();
+        return $materialsData->map(function ($data) {
+            return [
+                'label' => $data->code . " - " . $data->name,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
+
 
 
     public function getWarehouses()

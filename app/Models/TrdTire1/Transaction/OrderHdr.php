@@ -37,8 +37,8 @@ class OrderHdr extends BaseModel
         'npwp_name',
         'npwp_addr',
         'npwp_code',
-        'total_amt', // Add this line
-        'total_amt_tax' // Add this line
+        'total_amt',
+        'total_amt_tax'
     ];
 
     protected $casts = [
@@ -133,9 +133,9 @@ class OrderHdr extends BaseModel
         } else {
             switch ($sales_type) {
                 case 0: // MOTOR without tax invoice
-                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXx
+                    return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXXx
                 case 1: // MOBIL without tax invoice
-                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXx
+                    return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXxx
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }

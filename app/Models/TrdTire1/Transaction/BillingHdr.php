@@ -17,7 +17,7 @@ class BillingHdr extends BaseModel
     }
 
     protected $fillable = [
-        'tr_id',
+        'tr_code',
         'tr_type',
         'tr_date',
         'reff_code',

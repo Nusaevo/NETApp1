@@ -121,7 +121,13 @@ class ShippingAddressComponent extends DetailComponent
         }
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
-            $partnerDetail->update(['shipping_address' => json_encode($shippingAddressArray)]);
+            $partnerDetail->update(['shipping_address' => $shippingAddressArray]);
+        } else {
+            // Jika belum ada, buat record baru dengan menyertakan partner_id dan shipping_address
+            PartnerDetail::create([
+                'partner_id' => $this->object->id,
+                'shipping_address'      => $shippingAddressArray
+            ]);
         }
     }
 

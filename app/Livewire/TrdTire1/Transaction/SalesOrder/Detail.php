@@ -59,6 +59,7 @@ class Detail extends BaseComponent
         'updateAmount' => 'updateAmount',
         'updateDiscount' => 'updateDiscount',
         'updateDPP' => 'updateDPP',
+        'updatePPN' => 'updatePPN',
         'updateTotalTax' => 'updateTotalTax',
     ];
     #endregion
@@ -205,7 +206,15 @@ class Detail extends BaseComponent
         // $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
         if ($this->isEditOrView()) {
+            if (empty($this->objectIdValue)) {
+                $this->dispatch('error', 'Invalid object ID');
+                return;
+            }
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
+            if (!$this->object) {
+                $this->dispatch('error', 'Object not found');
+                return;
+            }
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
@@ -219,7 +228,7 @@ class Detail extends BaseComponent
             $this->isPanelEnabled = "true";
         }
         // Panggil perhitungan DPP dan PPN saat halaman dimuat
-        if (!empty($this->inputs['tax'])) {
+        if (!empty($this->inputs['tax_flag'])) {
             $this->onSOTaxChange();
         }
     }
@@ -315,11 +324,15 @@ class Detail extends BaseComponent
             $this->notaCount++;
             $this->updateVersionNumber2();
             // Logika cetak nota jual
-            $this->dispatch('success', 'Nota jual berhasil dicetak!');
+            return redirect()->route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
     }
+
     public function printDelivery()
     {
         try {

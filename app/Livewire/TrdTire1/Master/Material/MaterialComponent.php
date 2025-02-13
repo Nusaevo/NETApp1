@@ -109,6 +109,7 @@ class MaterialComponent extends BaseComponent
         $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
+        $this->materials['stock'] = $this->object->IvtBal->qty_oh ?? 0;
 
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);

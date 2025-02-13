@@ -20,12 +20,12 @@
                                 <div class="row">
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                    <x-ui-text-field label="{{ $this->trans('Nomor Surat Jalan') }}"
+                                    <x-ui-text-field label="{{ $this->trans('tr_code') }}"
                                         model="inputs.tr_code" type="text" :action="$actionValue" required="false"
                                         enabled="true" capslockMode="true" />
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" enabled="true" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('wh_code') }}" model="inputs.wh_code"
+                                    <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" model="inputs.wh_code"
                                         :options="$warehouses" required="true" :action="$actionValue" />
                                 </div>
                                 <div class="row">
@@ -33,7 +33,7 @@
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field-search label="{{ $this->trans('Nota Pembelian') }}"
+                                    <x-ui-text-field-search label="{{ $this->trans('reffhdrtr_code') }}"
                                         model="inputs.reffhdrtr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
                                         required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['reffhdrtr_code']" />
 
