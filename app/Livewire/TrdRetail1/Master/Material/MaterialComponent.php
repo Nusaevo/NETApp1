@@ -40,7 +40,7 @@ class MaterialComponent extends BaseComponent
         'materials.code' => 'required|string|max:255',
         'materials.category' => 'required',
         'materials.seq' => 'required',
-        'materials.name' => 'required|string|max:255',
+        // 'materials.name' => 'required|string|max:255',
         'materials.remark' => 'nullable|string|max:500',
         'materials.brand' => 'required|string|max:255',
         'materials.type_code' => 'required|string|max:255',

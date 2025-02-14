@@ -76,7 +76,7 @@
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                    type="text" :action="$actionValue" required="true" enabled="true" />
+                                    type="text" :action="$actionValue" required="true" enabled="false" />
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('remarks') }}" model="materials.remarks"
