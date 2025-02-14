@@ -83,35 +83,25 @@ class Partner extends BaseModel
     }
 
     public static function generateNewCode($name)
-{
-    $initialCode = strtoupper(substr($name, 0, 1));
-
-    // Ambil kode terakhir dengan format yang sesuai:
-    // Pastikan kode dimulai dengan $initialCode dan diikuti oleh satu atau lebih angka.
-    $latestCode = self::where('code', 'LIKE', $initialCode . '%')
-        ->whereRaw("code ~ '^" . $initialCode . "[0-9]+$'")
-        ->orderByRaw("CAST(REGEXP_REPLACE(code, '^[A-Za-z]+', '') AS INTEGER) DESC")
-        ->pluck('code')
-        ->first();
-
-    if ($latestCode) {
-        // Ambil bagian numerik dari kode dan increment nilainya
-        preg_match('/\d+$/', $latestCode, $matches);
-        $numericPart = isset($matches[0]) ? intval($matches[0]) + 1 : 1;
-        return $initialCode . str_pad($numericPart, 4, '0', STR_PAD_LEFT);
-    } else {
-        // Jika tidak ada kode ditemukan, mulai dari 0001
-        return $initialCode . '0001';
-    }
-}
-
-
-
-
-    // Fungsi untuk menghasilkan nama material, bisa dipanggil di dalam model ini
-    protected function generateName($brand, $size, $pattern)
     {
-        // Logika untuk menghasilkan nama berdasarkan nama, ukuran, dan pola
-        return $brand . ' ' . $size . ' ' . $pattern;
+        $initialCode = strtoupper(substr($name, 0, 1));
+
+        // Ambil kode terakhir dengan format yang sesuai:
+        // Pastikan kode dimulai dengan $initialCode dan diikuti oleh satu atau lebih angka.
+        $latestCode = self::where('code', 'LIKE', $initialCode . '%')
+            ->whereRaw("code ~ '^" . $initialCode . "[0-9]+$'")
+            ->orderByRaw("CAST(REGEXP_REPLACE(code, '^[A-Za-z]+', '') AS INTEGER) DESC")
+            ->pluck('code')
+            ->first();
+
+        if ($latestCode) {
+            // Ambil bagian numerik dari kode dan increment nilainya
+            preg_match('/\d+$/', $latestCode, $matches);
+            $numericPart = isset($matches[0]) ? intval($matches[0]) + 1 : 1;
+            return $initialCode . str_pad($numericPart, 4, '0', STR_PAD_LEFT);
+        } else {
+            // Jika tidak ada kode ditemukan, mulai dari 0001
+            return $initialCode . '0001';
+        }
     }
 }

@@ -44,13 +44,13 @@ class Material extends BaseModel
         'category',
         'dimension',
         'wgt',
-        'selling_price',
         'cost',
         'specs',
         'tag',
         'reserved',
         'stock',
-        'point'
+        'point',
+        'uom'
     ];
     public function MatlUom()
     {
@@ -235,5 +235,11 @@ class Material extends BaseModel
 
         $newMarkupPercentage = (($sellingPrice - $buyingPrice) / $buyingPrice) * 100;
         return numberFormat($newMarkupPercentage);
+    }
+    // Fungsi untuk menghasilkan nama material, bisa dipanggil di dalam model ini
+    protected function generateName($brand, $size, $pattern)
+    {
+        // Logika untuk menghasilkan nama berdasarkan nama, ukuran, dan pola
+        return $brand . ' ' . $size . ' ' . $pattern;
     }
 }

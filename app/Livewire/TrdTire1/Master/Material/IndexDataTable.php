@@ -26,7 +26,8 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return Material::select('materials.*');
+        return Material::select('materials.*', 'matl_uoms.selling_price')
+            ->leftJoin('matl_uoms', 'materials.id', '=', 'matl_uoms.matl_id');
     }
 
 

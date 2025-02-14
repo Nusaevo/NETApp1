@@ -38,7 +38,7 @@
                                     <x-ui-dialog-box id="partnerDialogBox" title="Search Custommer" width="600px"
                                         height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
                                         <x-slot name="body">
-                                            <x-ui-text-field type="text" label="Search Code/Nama Supplier"
+                                            <x-ui-text-field type="text" label="Search Code/Nama Custommer"
                                                 model="partnerSearchText" required="true" :action="$actionValue"
                                                 enabled="true" clickEvent="searchPartners" buttonName="Search" />
                                             <!-- Table -->
@@ -127,39 +127,39 @@
                     @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
             </div>
-            <div class="col-md-12">
-                <x-ui-card>
-                    <x-ui-padding>
-                        <div class="row">
-                            <x-ui-text-field label="{{ $this->trans('total_discount') }}" model="total_discount"
-                                type="text" :action="$actionValue" required="false" enabled="false" />
-                            <x-ui-text-field label="{{ $this->trans('PPN') }}" model="total_tax" type="text"
-                                :action="$actionValue" required="false" enabled="false" />
-                            <x-ui-text-field label="{{ $this->trans('DPP') }}" model="total_dpp" type="text"
-                                :action="$actionValue" required="false" enabled="false" />
-                            <x-ui-text-field label="{{ $this->trans('total_amount') }}" model="total_amount"
-                                type="text" :action="$actionValue" required="false" enabled="false" />
-                        </div>
-                        <div class="col-md-2">
-                            <x-ui-text-field label="{{ $this->trans('version') }}" model="versionNumber"
-                                type="text" :action="$actionValue" required="false" enabled="false" />
-                        </div>
-                        {{-- <div class="col-md-12">
-                            <x-ui-button clickEvent="printDelivery" button-name="Cetak Surat Jalan" loading="true"
-                                :action="$actionValue" cssClass="btn-primary" />
-                            <x-ui-button clickEvent="printInvoice" button-name="Cetak Nota Jual" loading="true"
-                                :action="$actionValue" cssClass="btn-primary" />
-                            <x-ui-button :action="$actionValue"
-                                clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($object->id),
-                                ]) }}"
-                                cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
-                                iconPath="print.svg" />
-                        </div> --}}
-                    </x-ui-padding>
-                </x-ui-card>
-            </div>
+            <x-ui-table id="SummaryTable">
+                <x-slot name="headers">
+                    <th style="width: 150px; text-align: center;">Total Discount</th>
+                    <th style="width: 150px; text-align: center;">PPN</th>
+                    <th style="width: 150px; text-align: center;">DPP</th>
+                    <th style="width: 150px; text-align: center;">Total Amount</th>
+                    <th style="width: 150px; text-align: center;">Version</th>
+                </x-slot>
+                <x-slot name="rows">
+                    <tr>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_discount" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_amount" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="versionNumber" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                    </tr>
+                </x-slot>
+            </x-ui-table>
             <x-ui-footer>
                 <div>
                     <x-ui-button :action="$actionValue"

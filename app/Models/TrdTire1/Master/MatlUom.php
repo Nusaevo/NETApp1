@@ -31,7 +31,8 @@ class MatlUom extends BaseModel
         'barcode',
         'qty_oh',
         'qty_fgr',
-        'qty_fgi'
+        'qty_fgi',
+        'selling_price',
     ];
 
     #region Relations

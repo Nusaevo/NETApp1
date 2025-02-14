@@ -145,7 +145,7 @@
                                     :options="$materialUOM" type="number" :action="$actionValue" required="false"
                                     enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('selling_price') }}"
-                                    model="materials.selling_price" type="number" :action="$actionValue" required="true"
+                                    model="matl_uoms.selling_price" type="number" :action="$actionValue" required="true"
                                     enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('cost') }}" model="materials.cost"
                                     type="number" :action="$actionValue" required="false" enabled="false" />

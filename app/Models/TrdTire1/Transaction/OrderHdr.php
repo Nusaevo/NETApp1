@@ -64,33 +64,36 @@ class OrderHdr extends BaseModel
 
     public function OrderDtl()
     {
-        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')
+            ->where('tr_type', $this->tr_type)
+            ->orderBy('tr_seq');
     }
 
     public function DelivHdr()
     {
-        return $this->hasOne(DelivHdr::class, 'tr_code', 'tr_code')->where('tr_type', $this->getDeliveryTrType());
+        return $this->hasOne(DelivHdr::class, 'tr_code', 'tr_code')
+            ->where('tr_type', $this->getDeliveryTrType());
     }
 
     public function BillingHdr()
     {
-        return $this->hasOne(BillingHdr::class, 'tr_code', 'tr_code')->where('tr_type', $this->getBillingTrType());
+        return $this->hasOne(BillingHdr::class, 'tr_code', 'tr_code')
+            ->where('tr_type', $this->getBillingTrType());
     }
     #endregion
 
     public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
-    #region Metode Utama public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     {
         $this->fill($inputs);
-        $this->tr_type = $trType; // Ensure tr_type is set
+        $this->tr_type = $trType; // Pastikan tr_type terisi
 
-        // Ensure partner_code is set
+        // Set partner_code berdasarkan partner_id
         if (!empty($inputs['partner_id'])) {
             $partner = Partner::find($inputs['partner_id']);
             $this->partner_code = $partner->code;
         }
 
-        // Set tax_pct based on tax_flag
+        // Set tax_pct berdasarkan tax_flag
         if (!empty($inputs['tax_flag'])) {
             $configData = ConfigConst::select('num1')
                 ->where('const_group', 'TRX_SO_TAX')
@@ -99,7 +102,7 @@ class OrderHdr extends BaseModel
             $this->tax_pct = $configData->num1 ?? 0;
         }
 
-        // Set default status
+        // Set default status jika baru
         if ($this->isNew()) {
             $this->status_code = Status::OPEN;
         }
@@ -108,34 +111,33 @@ class OrderHdr extends BaseModel
         $this->save();
     }
 
-
     public static function generateTransactionId($sales_type, $tr_type, $tax_doc_flag = false)
     {
         if ($tr_type == 'PO') {
             return self::generatePurchaseOrderId();
         }
 
-        $year = date('y'); // Two-digit year
-        $monthNumber = date('n'); // Month in number
-        $monthLetter = chr(64 + $monthNumber); // Month in letter (A, B, C, etc.)
-        $sequenceNumber = self::getSequenceNumber($sales_type, $tax_doc_flag); // Get sequence number
+        $year = date('y'); // Tahun dua digit
+        $monthNumber = date('n'); // Bulan dalam angka
+        $monthLetter = chr(64 + $monthNumber); // Bulan dalam huruf (A, B, C, dll.)
+        $sequenceNumber = self::getSequenceNumber($sales_type, $tax_doc_flag); // Dapatkan nomor urut
 
-        // Determine format based on sales_type and tax invoice
+        // Tentukan format berdasarkan sales_type dan flag tax invoice
         if ($tax_doc_flag) {
             switch ($sales_type) {
-                case 0: // MOTOR with tax invoice
-                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber); // Example: A25XXXXx
-                case 1: // MOBIL with tax invoice
-                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA25XXXxx
+                case 0: // MOTOR dengan tax invoice: Format: [A-Z][yy][5-digit]
+                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
+                case 1: // MOBIL dengan tax invoice: Format: [A-Z]{2}[yy][5-digit]
+                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
         } else {
             switch ($sales_type) {
-                case 0: // MOTOR without tax invoice
-                    return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber); // Example: A258XXXXx
-                case 1: // MOBIL without tax invoice
-                    return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber); // Example: AA258XXXxx
+                case 0: // MOTOR tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
+                    return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
+                case 1: // MOBIL tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
+                    return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
@@ -149,48 +151,67 @@ class OrderHdr extends BaseModel
         $lastId->last_cnt = $newId;
         $lastId->save();
 
-        return sprintf('PO%04d', $newId); // Example: PO0001
+        return sprintf('PO%04d', $newId); // Contoh: PO0001
     }
 
+    /**
+     * Fungsi ini mengambil nomor urut berdasarkan entri terakhir.
+     * Regex disesuaikan berdasarkan jenis kendaraan (MOTOR/MOBIL) dan flag tax invoice.
+     */
     private static function getSequenceNumber($sales_type, $tax_doc_flag)
     {
         // Mendapatkan bulan dan tahun saat ini
-        $currentYear = date('y'); // Dua digit terakhir tahun
+        $currentYear = date('y'); // Dua digit tahun
         $currentMonth = date('n'); // Bulan dalam angka
         $currentMonthLetter = chr(64 + $currentMonth); // Bulan dalam huruf
 
-        // Filter tambahan untuk tax_doc_flag
+        // Konversi flag tax ke angka
         $taxInvoiceFlag = $tax_doc_flag ? 1 : 0;
 
-        // Ambil entri terakhir dari tabel orderhdr dengan tr_type = 'SO', sales_type, dan tax_doc_flag
+        // Ambil entri terakhir dari tabel OrderHdr dengan tr_type = 'SO', sales_type, dan tax_doc_flag
         $lastOrder = OrderHdr::where('tr_type', 'SO')
-            ->where('sales_type', $sales_type) // Filter berdasarkan sales_type
-            ->where('tax_doc_flag', $taxInvoiceFlag) // Filter berdasarkan tax_doc_flag
+            ->where('sales_type', $sales_type)
+            ->where('tax_doc_flag', $taxInvoiceFlag)
             ->orderBy('id', 'desc')
             ->first();
 
-        // Jika ada entri sebelumnya, periksa bulan dan tahun
-        if ($lastOrder) {
-            // Ambil bulan dan tahun dari tr_code
-            preg_match('/([A-Z])(\d{2})(\d{4,5})$/', $lastOrder->tr_code, $matches); // Ambil bulan, tahun, dan nomor urut
-            if (isset($matches[1]) && isset($matches[2]) && isset($matches[3])) {
-                $lastMonthLetter = $matches[1];
-                $lastYear = (int)$matches[2];
-                $lastSequenceNumber = (int)$matches[3];
+        // Tentukan pola regex dan prefix yang diharapkan
+        if ($sales_type == 0) {
+            // MOTOR
+            if ($tax_doc_flag) {
+                // Format: [A-Z][yy][5-digit]
+                $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter;
+            } else {
+                // Format: [A-Z][yy]8[5-digit]
+                $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter;
+            }
+        } elseif ($sales_type == 1) {
+            // MOBIL
+            if ($tax_doc_flag) {
+                // Format: [A-Z]{2}[yy][5-digit]
+                $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
+            } else {
+                // Format: [A-Z]{2}[yy]8[5-digit]
+                $pattern = '/^([A-Z]{2})(\d{2})8(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
+            }
+        } else {
+            throw new \InvalidArgumentException('Invalid sales type');
+        }
 
-                // Cek apakah bulan dan tahun sama dengan yang sekarang
-                if ($lastYear == $currentYear && $lastMonthLetter == $currentMonthLetter) {
-                    return $lastSequenceNumber + 1; // Tambahkan 1 ke nomor urut
-                }
+        if ($lastOrder && preg_match($pattern, $lastOrder->tr_code, $matches)) {
+            // $matches[1] adalah prefix, $matches[2] adalah tahun, $matches[3] adalah nomor urut
+            if ($matches[1] === $expectedPrefix && $matches[2] == $currentYear) {
+                return (int)$matches[3] + 1;
             }
         }
 
         // Jika tidak ada entri sebelumnya atau bulan/tahun berbeda, mulai dari 1
         return 1;
     }
-
-
-
 
     public function saveOrderDetails($inputDetails, $trType, $inputs, $createBillingDelivery = false)
     {
@@ -214,9 +235,9 @@ class OrderHdr extends BaseModel
         ]);
 
         $billingHdr->fill([
-            'tr_date' => $this->tr_date,
-            'partner_id' => $this->partner_id,
-            'partner_code' => $this->partner_code,
+            'tr_date'         => $this->tr_date,
+            'partner_id'      => $this->partner_id,
+            'partner_code'    => $this->partner_code,
             'payment_term_id' => $this->payment_term_id,
         ]);
 
@@ -226,13 +247,12 @@ class OrderHdr extends BaseModel
 
         $billingHdr->save();
     }
-    // Di dalam model OrderHdr
+
     public function isOrderCompleted()
     {
-        // Logika untuk mengecek apakah order selesai
-        return $this->status == 'completed'; // Misalnya, status 'completed' menandakan order selesai
+        // Contoh logika untuk mengecek apakah order telah selesai
+        return $this->status == 'completed';
     }
-
 
     public function createOrUpdateDelivery()
     {
@@ -242,8 +262,8 @@ class OrderHdr extends BaseModel
         ]);
 
         $deliveryHdr->fill([
-            'tr_date' => $this->tr_date,
-            'partner_id' => $this->partner_id,
+            'tr_date'      => $this->tr_date,
+            'partner_id'   => $this->partner_id,
             'partner_code' => $this->partner_code,
         ]);
 
@@ -258,17 +278,17 @@ class OrderHdr extends BaseModel
     {
         $deliveryDtl = DelivDtl::firstOrNew([
             'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'tr_type' => $this->getDeliveryTrType(),
+            'tr_seq'   => $orderDtl->tr_seq,
+            'tr_type'  => $this->getDeliveryTrType(),
         ]);
 
         $deliveryDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type' => $this->getDeliveryTrType(),
-            'tr_code' => $this->tr_code,
-            'tr_seq' => $orderDtl->tr_seq,
-            'matl_id' => $orderDtl->matl_id,
-            'qty' => $orderDtl->qty,
+            'tr_type'  => $this->getDeliveryTrType(),
+            'tr_code'  => $this->tr_code,
+            'tr_seq'   => $orderDtl->tr_seq,
+            'matl_id'  => $orderDtl->matl_id,
+            'qty'      => $orderDtl->qty,
         ]);
 
         $deliveryDtl->save();
@@ -278,17 +298,17 @@ class OrderHdr extends BaseModel
     {
         $billingDtl = BillingDtl::firstOrNew([
             'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'tr_type' => $this->getBillingTrType(),
+            'tr_seq'   => $orderDtl->tr_seq,
+            'tr_type'  => $this->getBillingTrType(),
         ]);
 
         $billingDtl->fill([
             'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type' => $this->getBillingTrType(),
-            'tr_code' => $this->tr_code,
-            'tr_seq' => $orderDtl->tr_seq,
-            'matl_id' => $orderDtl->matl_id,
-            'qty' => $orderDtl->qty,
+            'tr_type'  => $this->getBillingTrType(),
+            'tr_code'  => $this->tr_code,
+            'tr_seq'   => $orderDtl->tr_seq,
+            'matl_id'  => $orderDtl->matl_id,
+            'qty'      => $orderDtl->qty,
         ]);
 
         $billingDtl->save();
@@ -322,7 +342,6 @@ class OrderHdr extends BaseModel
     {
         return $this->tr_type == "PO" ? "APB" : "ARB";
     }
-
 
     private function deleteOrderDetails()
     {

@@ -4,6 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\DetailComponent;
 use App\Models\TrdTire1\Master\Material;
+use App\Models\TrdTire1\Master\MatlUom;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 use Exception;
@@ -85,11 +86,16 @@ class MaterialListComponent extends DetailComponent
         if ($matl_id) {
             $material = Material::find($matl_id);
             if ($material) {
-                $this->input_details[$key]['matl_id'] = $material->id;
-                $this->input_details[$key]['price'] = $material->selling_price;
-                $this->input_details[$key]['matl_uom'] = $material->uom;
-                $this->input_details[$key]['matl_descr'] = $material->name;
-                $this->updateItemAmount($key);
+                $matlUom = MatlUom::where('matl_id', $matl_id)->first(); // Fetch MatlUom using matl_id
+                if ($matlUom) {
+                    $this->input_details[$key]['matl_id'] = $material->id;
+                    $this->input_details[$key]['price'] = $matlUom->selling_price; // Use selling_price from MatlUom
+                    $this->input_details[$key]['matl_uom'] = $material->uom;
+                    $this->input_details[$key]['matl_descr'] = $material->name;
+                    $this->updateItemAmount($key);
+                } else {
+                    $this->dispatch('error', __('generic.error.material_uom_not_found'));
+                }
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));
             }

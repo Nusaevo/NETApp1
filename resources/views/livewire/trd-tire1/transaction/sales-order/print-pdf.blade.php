@@ -1,12 +1,10 @@
 <div>
     <div>
         <div>
-            <!-- Tombol Back -->
             <x-ui-button clickEvent="" type="Back" button-name="Back" />
         </div>
     </div>
 
-    <!-- Load CSS khusus invoice -->
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
     <body>
@@ -15,14 +13,12 @@
                 <div class="container mb-5 mt-3">
                     <div class="row d-flex align-items-baseline">
                         <div class="col-xl-9">
-                            <!-- Judul / Info Nota -->
                             <p style="color: #7e8d9f; font-size: 20px;">
                                 NOTA PENJUALAN >>
                                 <strong>No: {{ $this->object->tr_code }}</strong>
                             </p>
                         </div>
                         <div class="col-xl-3 float-end">
-                            <!-- Tombol Print -->
                             <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark"
                                 onclick="printInvoice()">
                                 <i class="fas fa-print text-primary"></i> Print
@@ -31,52 +27,53 @@
                         <hr>
                     </div>
 
-                    <!-- Bagian yang akan diprint -->
                     <div id="print">
-                        <div class="invoice-box">
-
-                            <!-- Header: Nama Toko & Tanggal -->
-                            <table width="100%">
+                        <div class="invoice-box"
+                            style="max-width: 800px; margin: auto; padding: 20px; border: 1px solid #eee;">
+                            <!-- Header -->
+                            <table width="100%" style="margin-bottom: 10px;">
                                 <tr>
-                                    <td style="vertical-align: top;">
-                                        <h2 style="margin:0;">CAHAYA TERANG</h2>
-                                        <p style="margin:0;">SURABAYA</p>
+                                    <td style="width: 80%;">
+                                        <h2 style="margin: 0; text-decoration: underline; font-weight: bold;">CAHAYA
+                                            TERANG</h2>
+                                        <p style="margin: 0; text-align: center; width: 23%;">SURABAYA</p>
                                     </td>
-                                    <td style="text-align: right;">
-                                        <p style="margin:0;">
+                                    <td style="text-align: left;">
+                                        <p style="margin: 0;">
                                             Surabaya,
-                                            <!-- Contoh format 20-Nov-2024 -->
                                             {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                                         </p>
+                                        <!-- Customer Info -->
+                                        <div style="margin-bottom: 20px;">
+                                            <p style="margin: 0;">Kepada Yth :</p>
+                                            <p style="margin: 0;"><strong>{{ $this->object->Partner->name }}</strong>
+                                            </p>
+                                            <p style="margin: 0;">{{ $this->object->Partner->address }}</p>
+                                        </div>
                                     </td>
                                 </tr>
                             </table>
 
-                            <!-- Judul Nota & Nomor Nota -->
-                            <div style="text-align: center; margin-top: 10px;">
-                                <h3 style="margin:0;">NOTA PENJUALAN</h3>
-                                <p style="margin:0;">No. {{ $this->object->tr_code }}</p>
+                            <!-- Title -->
+                            <div style="text-align: center; margin: 20px 0;">
+                                <h3 style="margin: 0; font-weight: bold; text-decoration: underline;">NOTA PENJUALAN
+                                </h3>
+                                <p style="margin: 5px 0;">No. {{ $this->object->tr_code }}</p>
                             </div>
 
-                            <!-- Tujuan Nota (Kepada Yth) -->
-                            <div style="margin-top: 20px;">
-                                <p style="margin:0;">
-                                    Kepada Yth: <strong>{{ $this->object->Partner->name }}</strong>
-                                </p>
-                                <p style="margin:0;">
-                                    {{ $this->object->Partner->address }}
-                                </p>
-                            </div>
 
-                            <!-- Tabel Detail Penjualan -->
-                            <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+
+                            <!-- Items Table -->
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                                 <thead>
-                                    <tr style="border-bottom: 1px solid #ddd;">
-                                        <th style="text-align:center; padding: 8px;">Kode Barang</th>
-                                        <th style="text-align:center; padding: 8px;">Nama Barang</th>
-                                        <th style="text-align:center; padding: 8px;">QTY</th>
-                                        <th style="text-align:center; padding: 8px;">Harga Satuan</th>
-                                        <th style="text-align:center; padding: 8px;">Jumlah Harga</th>
+                                    <tr>
+                                        <th style="border: 1px solid #000; padding: 8px;">KODE BARANG</th>
+                                        <th style="border: 1px solid #000; padding: 8px;">NAMA BARANG</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: center;">QTY</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">HARGA
+                                            SATUAN</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">JUMLAH
+                                            HARGA</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -87,43 +84,46 @@
                                         @php
                                             $subTotal = $OrderDtl->qty * $OrderDtl->price;
                                             $grand_total += $subTotal;
+                                            $OrderHdr = $this->object->OrderHdr; // Access OrderHdr within the loop
                                         @endphp
-                                        <tr style="border-bottom: 1px solid #f0f0f0;">
-                                            <td style="text-align:center; padding: 8px;">{{ $OrderDtl->matl_code }}</td>
-                                            <td style="padding: 8px;">{{ $OrderDtl->matl_descr }}</td>
-                                            <td style="text-align:center; padding: 8px;">{{ ceil($OrderDtl->qty) }}</td>
-                                            <td style="text-align:right; padding: 8px;">
-                                                {{ rupiah(ceil($OrderDtl->price)) }}
+                                        <tr>
+                                            <td style="border: 1px solid #000; padding: 8px;">{{ $OrderDtl->matl_code }}
                                             </td>
-                                            <td style="text-align:right; padding: 8px;">
-                                                {{ rupiah(ceil($subTotal)) }}
-                                            </td>
+                                            <td style="border: 1px solid #000; padding: 8px; text-align: left;">
+                                                {{ $OrderDtl->matl_descr }}</td>
+                                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">
+                                                {{ ceil($OrderDtl->qty) }}</td>
+                                            <td style="border: 1px solid #000; padding: 8px; text-align: right;">
+                                                {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}</td>
+                                            <td style="border: 1px solid #000; padding: 8px; text-align: right;">
+                                                {{ number_format(ceil($subTotal), 0, ',', '.') }}</td>
                                         </tr>
                                     @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr style="border-top: 1px solid #ddd;">
-                                        <th colspan="4" style="text-align:right; padding: 8px;">Total</th>
-                                        <th style="text-align:right; padding: 8px;">
-                                            {{ rupiah($grand_total) }}
-                                        </th>
+                                    <tr>
+                                        <td colspan="4"
+                                            style="border: 1px solid #000; padding: 8px; text-align: right;">TOTAL:</td>
+                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;">
+                                            {{ number_format($grand_total, 0, ',', '.') }}</td>
                                     </tr>
-                                </tfoot>
+                                </tbody>
                             </table>
 
-                            <!-- Info Pembayaran -->
-                            <p style="margin-top: 10px;">
-                                Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
-                            </p>
-
-                        </div> <!-- /.invoice-box -->
-                    </div> <!-- /#print -->
+                            <!-- Payment Method -->
+                            <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+                                <p style="margin: 0;">Pembayaran:
+                                    <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
+                                </p>
+                                <p style="margin: 0;">Penerima:
+                                    <strong>{{ $OrderHdr ? $OrderHdr->partner_id->partner_name : 'N/A' }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </body>
 
-    <!-- Script Print -->
     <script type="text/javascript">
         function printInvoice() {
             var page = document.getElementById("print");
