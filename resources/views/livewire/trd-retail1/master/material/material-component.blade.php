@@ -66,6 +66,8 @@
                             </div>
 
                             <div class="row">
+                                <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="text"
+                                    :action="$actionValue" required="true" enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('color_code') }}" model="materials.color_code"
                                     type="text" :action="$actionValue" required="false" enabled="true" />
 
@@ -80,21 +82,22 @@
                                 <x-ui-text-field label="{{ $this->trans('remarks') }}" model="materials.remarks"
                                     type="textarea" :action="$customActionValue" />
                             </div>
-                            <div class="row">
+                            {{-- <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('buying_price') }}"
                                     model="materials.buying_price" type="number" :action="$actionValue" required="false"
                                     enabled="true" />
-                                <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="text"
-                                    :action="$actionValue" required="true" enabled="true" />
-                            </div>
+
+                            </div> --}}
 
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('selling_price') }}"
                                     model="materials.selling_price" type="number" :action="$actionValue" required="false"
                                     enabled="true" />
-                                <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs"
-                                    type="number" :action="$actionValue" required="true" enabled="true" />
-
+                                {{-- <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs"
+                                    type="number" :action="$actionValue" required="true" enabled="true" /> --}}
+                               <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="matl_uoms.matl_uom"
+                                        :options="$materialUOM" type="number" :action="$actionValue" required="false"
+                                        enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
                                     type="text" :action="$actionValue" required="false" enabled="false" />
 

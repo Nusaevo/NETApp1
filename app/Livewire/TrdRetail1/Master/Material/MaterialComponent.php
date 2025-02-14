@@ -25,7 +25,7 @@ class MaterialComponent extends BaseComponent
     public $photo;
 
     public $materialCategories;
-    public $materialUOMs;
+    public $materialUOM;
 
     public $capturedImages = [];
     public $deleteImages = [];
@@ -98,7 +98,7 @@ class MaterialComponent extends BaseComponent
 
         $this->masterService = new MasterService();
         $this->materialCategories = $this->masterService->getMatlCategoryData();
-        $this->materialUOMs = $this->masterService->getMatlUOMData();
+        $this->materialUOM = $this->masterService->getMatlUOMData();
 
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
