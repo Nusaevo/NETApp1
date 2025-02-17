@@ -140,14 +140,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-
             $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
-                        ->from('order_dtls')
-                        ->whereRaw('order_dtls.tr_code = order_hdrs.tr_code')
-                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('order_dtls.tr_type', 'PO');
+                        ->from('deliv_dtls')
+                        ->whereRaw('deliv_dtls.tr_code = deliv_hdrs.tr_code')
+                        ->where(DB::raw('UPPER(deliv_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
+                        ->where('deliv_dtls.tr_type', 'PD');
                 });
             }),
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
@@ -156,7 +155,8 @@ class IndexDataTable extends BaseDataTableComponent
                 });
             }),
             $this->createTextFilter('Transaction Code', 'tr_code', 'Cari Kode Transaksi', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+                $builder->where('deliv_hdrs.tr_type', 'PD')
+                        ->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
             DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
                 $builder->where('deliv_hdrs.tr_date', '>=', $value);
@@ -164,26 +164,6 @@ class IndexDataTable extends BaseDataTableComponent
             DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
                 $builder->where('deliv_hdrs.tr_date', '<=', $value);
             }),
-            // SelectFilter::make('Status', 'status_code')
-            //     ->options([
-            //         Status::OPEN => 'Open',
-            //         Status::COMPLETED => 'Selesai',
-            //         '' => 'Semua',
-            //     ])->filter(function ($builder, $value) {
-            //         if ($value === Status::ACTIVE) {
-            //             $builder->where('order_hdrs.status_code', Status::ACTIVE);
-            //         } else if ($value === Status::COMPLETED) {
-            //             $builder->where('order_hdrs.status_code', Status::COMPLETED);
-            //         } else if ($value === '') {
-            //             $builder->withTrashed();
-            //         }
-            //     }),
-            // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '>=', $value);
-            // }),
-            // DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '<=', $value);
-            // }),
         ];
     }
 }

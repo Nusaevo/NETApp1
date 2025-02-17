@@ -4,20 +4,45 @@ namespace App\Models\TrdTire1\Transaction;
 
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Master\Partner;
+use App\Models\TrdTire1\Master\PartnerLog;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
+use App\Models\TrdTire1\Master\PartnerBal;
+
 class BillingHdr extends BaseModel
 {
     use SoftDeletes;
 
-
     protected static function boot()
     {
         parent::boot();
+
+        static::created(function ($billingHdr) {
+            // Create PartnerBal
+            $partnerBal = PartnerBal::firstOrCreate(
+                [
+                    'partner_id' => $billingHdr->partner_id,
+                ],
+            );
+
+            // Create PartnerLog
+            PartnerLog::create([
+                'trhdr_id' => $billingHdr->id,
+                'tr_type' => $billingHdr->tr_type,
+                'tr_code' => $billingHdr->tr_code,
+                'tr_desc' => $billingHdr->tr_desc,
+                // 'tr_seq' => 1, // Assuming sequence starts at 1
+                // 'trdtl_id' => null, // Assuming no detail ID at this point
+                'partner_id' => $billingHdr->partner_id,
+                'partner_code' => $billingHdr->partner_code,
+                'tr_date' => $billingHdr->tr_date,
+                'tr_amt' => 0, // Assuming initial amount is 0
+            ]);
+        });
     }
 
     protected $fillable = [
-        'tr_id',
+        'tr_code',
         'tr_type',
         'tr_date',
         'reff_code',

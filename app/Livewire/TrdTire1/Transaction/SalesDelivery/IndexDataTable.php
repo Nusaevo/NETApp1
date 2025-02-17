@@ -11,11 +11,13 @@ use App\Enums\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
+use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = DelivHdr::class;
     public $bulkSelectedIds = null;
+
 
     public function mount(): void
     {
@@ -84,6 +86,22 @@ class IndexDataTable extends BaseDataTableComponent
                     return $delivery ? $delivery->tr_date : '';
                 })
                 ->sortable(),
+            Column::make($this->trans("warehouse"), "warehouse")
+                ->label(function ($row) {
+                    $delivery = DelivHdr::where('tr_type', 'SD')
+                        ->where('tr_code', $row->tr_code)
+                        ->first();
+                    return $delivery ? $delivery->wh_code : '';
+                })
+                ->sortable(),
+            Column::make($this->trans("Status"), "status")
+                ->label(function ($row) {
+                    $delivery = DelivHdr::where('tr_type', 'SD')
+                        ->where('tr_code', $row->tr_code)
+                        ->first();
+                    return $delivery ? 'Terkirim' : 'Belum';
+                })
+                ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -103,7 +121,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Sales Type', 'sales_type')
+            SelectFilter::make($this->trans("sales_type"), 'sales_type')
                 ->options([
                     ''          => 'Semua',
                     '0'    => 'Motor',
@@ -111,11 +129,34 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value !== '') {
-                        $builder->whereHas('OrderHdr', function ($query) use ($value) {
-                            $query->where('sales_type', $value);
+                        $builder->where('sales_type', $value);
+                    }
+                }),
+            SelectFilter::make($this->trans("shipping status"))
+                ->options([
+                    ''  => 'Semua',
+                    '1' => 'Terkirim',
+                    '0' => 'Belum Terkirim',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === '1') {
+                        $builder->whereHas('DelivHdr', function ($query) {
+                            $query->where('tr_type', 'SD');
+                        });
+                    } elseif ($value === '0') {
+                        $builder->whereDoesntHave('DelivHdr', function ($query) {
+                            $query->where('tr_type', 'SD');
                         });
                     }
                 }),
+            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+                $builder->where('tr_code', 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter($this->trans("supplier"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
             DateFilter::make('Tanggal Awal')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '>=', $value);
@@ -124,14 +165,6 @@ class IndexDataTable extends BaseDataTableComponent
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '<=', $value);
                 }),
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('tr_code', 'like', '%' . strtoupper($value) . '%');
-            }),
-            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
         ];
     }
 
@@ -146,8 +179,23 @@ class IndexDataTable extends BaseDataTableComponent
     public function setDeliveryDate()
     {
         if (count($this->getSelected()) > 0) {
-            $selectedItems = OrderHdr::whereIn('id', $this->getSelected())->pluck('tr_code')->toArray();
+            $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
+                ->get(['tr_code as nomor_nota', 'partner_id'])
+                ->map(function ($order) {
+                    $delivery = DelivHdr::where('tr_type', 'SD')
+                        ->where('tr_code', $order->tr_code)
+                        ->first();
+                    return [
+                        'nomor_nota' => $order->nomor_nota,
+                        'nama' => $order->Partner->name,
+                        'kota' => $order->Partner->city,
+                        'tr_date' => $delivery ? $delivery->tr_date : null,
+                    ];
+                })
+                ->toArray();
+
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
+            $this->dispatch('submitDeliveryDate');
         }
     }
 
@@ -162,10 +210,18 @@ class IndexDataTable extends BaseDataTableComponent
                 ->pluck('tr_code')
                 ->toArray();
 
-            // Hapus DelivHdr dengan tr_type 'SD' dan tr_code sesuai dengan yang dipilih
-            DelivHdr::where('tr_type', 'SD')
+            // Hapus DelivDtl dengan trhdr_id yang sesuai dengan DelivHdr yang akan dihapus
+            $delivHdrs = DelivHdr::where('tr_type', 'SD')
                 ->whereIn('tr_code', $selectedTrCodes)
-                ->delete();
+                ->get();
+
+            foreach ($delivHdrs as $delivHdr) {
+                $delivDtls = DelivDtl::where('trhdr_id', $delivHdr->id)->get();
+                foreach ($delivDtls as $delivDtl) {
+                    $delivDtl->delete(); // Trigger the deleting event
+                }
+                $delivHdr->delete();
+            }
 
             DB::commit();
 

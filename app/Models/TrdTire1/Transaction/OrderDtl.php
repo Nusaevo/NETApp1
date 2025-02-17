@@ -8,13 +8,13 @@ use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\TrdTire1\Inventories\IvtBalUnit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\TrdTire1\Master\MatlUom;
 
 class OrderDtl extends BaseModel
 {
     use SoftDeletes;
 
     protected $table = 'order_dtls';
-
     protected $fillable = [
         'tr_code',
         'trhdr_id',
@@ -30,6 +30,7 @@ class OrderDtl extends BaseModel
         'amt',
         'disc_pct',
         'dpp',
+        'price_uom'
 
     ];
 
@@ -57,6 +58,14 @@ class OrderDtl extends BaseModel
             }
 
             $orderDtl->amt = $priceDisc * $qty;
+            $orderDtl->amt_tax = $priceDisc * $qty;
+            // price_base = base_factor yang ada di MatlUom
+            $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
+                ->where('matl_uom', $orderDtl->matl_uom)
+                ->first();
+            $orderDtl->price_base = $matlUom->base_factor;
+            $orderDtl->qty_base = $qty * $matlUom->base_factor;
+            $orderDtl->qty_uom = $matlUom->matl_uom;
         });
         static::deleting(function ($orderDtl) {
             DB::beginTransaction();

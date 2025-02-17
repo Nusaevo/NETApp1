@@ -14,24 +14,40 @@
         </x-slot>
         <x-slot name="body">
             <div class="form-group">
-                <p>Nomor Nota yang dipilih :</p>
-                <ul>
-                    @foreach ($selectedItems as $item)
-                        <li>{{ $item }}</li>
-                    @endforeach
-                </ul>
-                <label for="deliveryDate">Tanggal Kirim</label>
-                <input type="date" class="form-control @error('tr_date') is-invalid @enderror" id="deliveryDate"
-                    wire:model="tr_date">
-                @error('tr_date')
-                    <div class="invalid-feedback">
-                        {{ $message }}
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="deliveryDate">Tanggal Kirim</label>
+                        <input label="Tanggal Kirim" type="date"
+                            class="form-control @error('tr_date') is-invalid @enderror" id="deliveryDate"
+                            wire:model="tr_date">
+                        @error('tr_date')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
-                @enderror
-                @dump(
-                    $inputs,
-                    $selectedItems,
-                )
+                    <div class="col-md-6">
+                        <label tyope="hidden" for=""></label>
+                        <x-ui-dropdown-select label="{{ $this->trans('wh_code') }}" model="inputs.wh_code"
+                            :options="$warehouses" required="true" :action="$actionValue" />
+                    </div>
+                </div>
+                <x-ui-table id="selectedItemsTable" padding="0px" margin="0px">
+                    <x-slot name="headers">
+                        <th>Nomor Nota</th>
+                        <th>Nama</th>
+                        <th>Kota</th>
+                    </x-slot>
+                    <x-slot name="rows">
+                        @foreach ($selectedItems as $item)
+                            <tr>
+                                <td>{{ $item['nomor_nota'] }}</td>
+                                <td>{{ $item['nama'] }}</td>
+                                <td>{{ $item['kota'] }}</td>
+                            </tr>
+                        @endforeach
+                    </x-slot>
+                </x-ui-table>
             </div>
         </x-slot>
         <x-slot name="footer">
@@ -57,6 +73,11 @@
             // Handle modal hidden event
             $('#modalDeliveryDate').on('hidden.bs.modal', function() {
                 @this.set('deliveryDate', '');
+            });
+
+            // Listener untuk submit delivery date
+            Livewire.on('submitDeliveryDate', event => {
+                @this.submitDeliveryDate();
             });
         });
     </script>

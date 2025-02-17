@@ -60,13 +60,35 @@ class DelivHdr extends BaseModel
     protected static function boot()
     {
         parent::boot();
+        // create billingHdr when deliveryHdr is created
+        // tr type if deliveryHdr is 'SD' => 'ARB'
+        // tr type if deliveryHdr is 'PD' => 'APB'
+        static::created(function ($delivHdr) {
+            $billingHdr = new BillingHdr();
+            $billingHdr->tr_code = $delivHdr->tr_code;
+            $billingHdr->tr_date = $delivHdr->tr_date;
+            $billingHdr->partner_id = $delivHdr->partner_id;
+            $billingHdr->partner_code = $delivHdr->partner_code;
+            // $billingHdr->payment_term_id = $delivHdr->OrderHdr->payment_term_id;
+            // $billingHdr->payment_term = $delivHdr->OrderHdr->payment_term;
+            // $billingHdr->payment_due_days = $delivHdr->OrderHdr->payment_due_days;
+            $billingHdr->tr_type = $delivHdr->tr_type == 'SD' ? 'ARB' : 'APB';
+            $billingHdr->save();
+        });
 
         // Hook untuk menghapus relasi saat header dihapus
         static::deleting(function ($orderHdr) {
             $orderHdr->deleteDeliveryAndBilling();
-            $orderHdr->deleteOrderDetails();
+            // $orderHdr->deleteOrderDetails();
         });
     }
+
+    public function deleteDeliveryAndBilling()
+    {
+        // Delete related delivery details
+        $this->DelivDtl()->delete();
+    }
+
     public function savePurchaseHeader($appCode, $trType, $inputs, $configCode)
     {
         DB::transaction(function () use ($appCode, $trType, $inputs, $configCode) {

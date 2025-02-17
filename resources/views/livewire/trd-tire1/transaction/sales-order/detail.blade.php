@@ -38,7 +38,7 @@
                                     <x-ui-dialog-box id="partnerDialogBox" title="Search Custommer" width="600px"
                                         height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
                                         <x-slot name="body">
-                                            <x-ui-text-field type="text" label="Search Code/Nama Supplier"
+                                            <x-ui-text-field type="text" label="Search Code/Nama Custommer"
                                                 model="partnerSearchText" required="true" :action="$actionValue"
                                                 enabled="true" clickEvent="searchPartners" buttonName="Search" />
                                             <!-- Table -->
@@ -86,81 +86,99 @@
                                     <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}" clickEvent=""
                                         model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions" required="false"
                                         :action="$actionValue" onChanged="onTaxPayerChanged" />
-                                    <div class="row">
-                                        <x-ui-text-field label="{{ $this->trans('Detail Custommer') }}"
-                                            model="inputs.textareacustommer" type="textarea" :action="$actionValue"
-                                            required="false" enabled="false" />
-                                        <x-ui-text-field label="{{ $this->trans('Detail kirim') }}"
-                                            model="inputs.textareasend_to" type="textarea" :action="$actionValue"
-                                            required="false" enabled="false" />
-                                        <x-ui-text-field label="{{ $this->trans('Detail pajak') }}"
-                                            model="inputs.textarea_npwp" type="textarea" :action="$actionValue"
-                                            required="false" enabled="false" />
-                                    </div>
-                                    <div class="row">
-                                        <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}"
-                                            model="inputs.tax_flag" :options="$SOTax" required="true"
-                                            :action="$actionValue" onChanged="onSOTaxChange" />
-                                        <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
-                                            model="inputs.payment_term_id" :options="$paymentTerms" required="true"
-                                            :action="$actionValue" />
-                                        <x-ui-text-field label="{{ $this->trans('due_date') }}"
-                                            model="inputs.due_date" type="date" :action="$actionValue" required="true"
-                                            :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('cust_reff') }}"
-                                            model="inputs.cust_reff" type="text" :action="$actionValue"
-                                            required="false" />
-                                    </div>
-
-                            </x-ui-padding>
-                        </x-ui-card>
+                                </div>
+                                <div class="row">
+                                    <x-ui-text-field label="{{ $this->trans('Detail Custommer') }}"
+                                        model="inputs.textareacustommer" type="textarea" :action="$actionValue"
+                                        required="false" enabled="false" />
+                                    <x-ui-text-field label="{{ $this->trans('Detail kirim') }}"
+                                        model="inputs.textareasend_to" type="textarea" :action="$actionValue"
+                                        required="false" enabled="false" />
+                                    <x-ui-text-field label="{{ $this->trans('Detail pajak') }}"
+                                        model="inputs.textarea_npwp" type="textarea" :action="$actionValue"
+                                        required="false" enabled="false" />
+                                </div>
+                                <div class="row">
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}"
+                                        model="inputs.tax_flag" :options="$SOTax" required="true" :action="$actionValue"
+                                        onChanged="onSOTaxChange" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
+                                        model="inputs.payment_term_id" :options="$paymentTerms" required="true"
+                                        :action="$actionValue" />
+                                    <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
+                                        type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                    <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
+                                        type="text" :action="$actionValue" required="false" />
+                                </div>
                     </div>
-                    <x-ui-footer>
-                        <div>
-                            <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
-                                :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
-                        </div>
-                    </x-ui-footer>
-                </div>
-                <br>
-                <div class="col-md-12">
-                    <x-ui-card title="Order Items">
-                        @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
+                    </x-ui-padding>
                     </x-ui-card>
                 </div>
-                <div class="col-md-12">
-                    <x-ui-card>
-                        <x-ui-padding>
-                            <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('total_discount') }}" model="total_discount"
-                                    type="text" :action="$actionValue" required="false" enabled="false" />
-                                <x-ui-text-field label="{{ $this->trans('PPN') }}" model="total_tax" type="text"
-                                    :action="$actionValue" required="false" enabled="false" />
-                                <x-ui-text-field label="{{ $this->trans('DPP') }}" model="total_dpp" type="text"
-                                    :action="$actionValue" required="false" enabled="false" />
-                                <x-ui-text-field label="{{ $this->trans('total_amount') }}" model="total_amount"
-                                    type="text" :action="$actionValue" required="false" enabled="false" />
-                            </div>
-                            <div class="row">
-                                <div class="col-md-2">
-                                    <x-ui-text-field label="{{ $this->trans('version') }}" model="versionNumber"
-                                        type="text" :action="$actionValue" required="false" enabled="false" />
-                                </div>
-                                <div class="col-md-10">
-                                    <x-ui-button clickEvent="createDelivery" button-name="Buat Surat Jalan"
-                                        loading="true" :action="$actionValue" cssClass="btn-primary" />
-                                    <x-ui-button clickEvent="printDelivery" button-name="Cetak Surat Jalan"
-                                        loading="true" :action="$actionValue" cssClass="btn-primary" />
-                                    <x-ui-button clickEvent="printInvoice" button-name="Cetak Nota Jual"
-                                        loading="true" :action="$actionValue" cssClass="btn-primary" />
-                                    <x-ui-button clickEvent="Save" button-name="Save" loading="true"
-                                        :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
-                                </div>
-                            </div>
-                        </x-ui-padding>
-                    </x-ui-card>
-                </div>
+                <x-ui-footer>
+                    <div>
+                        <x-ui-button clickEvent="Save" button-name="Save Header" loading="true" :action="$actionValue"
+                            cssClass="btn-primary" iconPath="save.svg" />
+                    </div>
+                </x-ui-footer>
             </div>
-        </x-ui-tab-view-content>
-    </x-ui-page-card>
+            <br>
+            <div class="col-md-12">
+                <x-ui-card title="Order Items">
+                    @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
+                </x-ui-card>
+            </div>
+            <x-ui-table id="SummaryTable">
+                <x-slot name="headers">
+                    <th style="width: 150px; text-align: center;">Total Discount</th>
+                    <th style="width: 150px; text-align: center;">PPN</th>
+                    <th style="width: 150px; text-align: center;">DPP</th>
+                    <th style="width: 150px; text-align: center;">Total Amount</th>
+                    <th style="width: 150px; text-align: center;">Version</th>
+                </x-slot>
+                <x-slot name="rows">
+                    <tr>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_discount" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="total_amount" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="versionNumber" label="" :action="$actionValue" enabled="false"
+                                type="text" />
+                        </td>
+                    </tr>
+                </x-slot>
+            </x-ui-table>
+            <x-ui-footer>
+                <div>
+                    <x-ui-button :action="$actionValue"
+                        clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($object->id),
+                        ]) }}"
+                        cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
+                        iconPath="print.svg" />
+                    <x-ui-button :action="$actionValue"
+                        clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($object->id),
+                        ]) }}"
+                        cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
+                        iconPath="print.svg" />
+                </div>
+            </x-ui-footer>
+</div>
+</x-ui-tab-view-content>
+</x-ui-page-card>
 </div>

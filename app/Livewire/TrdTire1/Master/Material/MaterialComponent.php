@@ -46,7 +46,7 @@ class MaterialComponent extends BaseComponent
         'materials.code' => 'required',
         'materials.type_code' => 'required',
         'materials.category' => 'required',
-        'materials.selling_price' => 'required',
+        'matl_uoms.selling_price' => 'required',
         'materials.size' => 'required',
         'materials.name' => 'required',
     ];
@@ -97,7 +97,7 @@ class MaterialComponent extends BaseComponent
             'materials.jwl_buying_price_usd'      =>  $this->trans('buying_price_usd'),
             'materials.jwl_selling_price_usd'      => $this->trans('selling_price_usd'),
             'materials.jwl_buying_price_idr'      =>  $this->trans('buying_price_idr'),
-            'materials.selling_price'      => $this->trans('selling_price'),
+            'matl_uoms.selling_price'      => $this->trans('selling_price'),
         ];
         $this->masterService = new MasterService();
         $this->materialType = $this->masterService->getMatlTypeData();
@@ -106,9 +106,11 @@ class MaterialComponent extends BaseComponent
         $this->materialMerk = $this->masterService->getMatlMerkData();
         $this->materialPattern = $this->masterService->getMatlPatternData();
         $this->materialUOM = $this->masterService->getMatlUOMData();
+        $this->matl_uoms = MatlUom::pluck('matl_uom', 'id')->toArray();
         $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
+        $this->materials['stock'] = $this->object->IvtBal->qty_oh ?? 0;
 
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
@@ -264,6 +266,11 @@ class MaterialComponent extends BaseComponent
         $this->object->save();
         $this->saveUOMs();
         $this->saveAttachment();
+
+        // Save UOM to materials table
+        $this->materials['uom'] = $this->object->MatlUom->first()->matl_uom ?? null;
+        $this->object->fill($this->materials);
+        $this->object->save();
     }
 
     private function validateMaterialCode()
@@ -301,6 +308,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
+        $this->matl_uoms['base_factor'] = 1;
         $this->object_uoms->fill($this->matl_uoms);
         $this->object_uoms->save();
     }
@@ -311,7 +319,7 @@ class MaterialComponent extends BaseComponent
 
     public function generateName()
     {
-        $this->materials['name'] = Partner::generateName($this->materials['brand'], $this->materials['size'], $this->materials['pattern']);
+        $this->materials['name'] = Material::generateName($this->materials['brand'], $this->materials['size'], $this->materials['pattern']);
     }
 
     public function onBrandChanged()

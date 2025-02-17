@@ -9,10 +9,15 @@ class PrintPdf extends BaseComponent
 {
     public $object;
     public $objectIdValue;
+
     protected function onPreRender()
     {
         if ($this->isEditOrView()) {
-        $this->object = OrderHdr::findOrFail($this->objectIdValue);
+            if (empty($this->objectIdValue)) {
+                $this->dispatch('error', 'Invalid object ID');
+                return;
+            }
+            $this->object = OrderHdr::findOrFail($this->objectIdValue);
         }
     }
 

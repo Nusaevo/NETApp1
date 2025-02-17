@@ -107,13 +107,16 @@ class Detail extends BaseComponent
 
         if ($this->object->PartnerDetail == null) {
             $this->object->PartnerDetail()->create([
-                'partner_id' => $this->object->id,
-                'shipping_address' => json_encode([[
-                    'name' => $this->inputs['name'],
+                'partner_id'       => $this->object->id,
+                'shipping_address' => [[
+                    'name'    => $this->inputs['name'],
                     'address' => $this->inputs['address'] . ' - ' . $this->inputs['city'],
-                ]]),
+                ]],
+                'partner_grp'  => $this->inputs['grp'],
+                'partner_code' => $this->inputs['code'],
             ]);
         }
+
 
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Master.Partner.Detail', [

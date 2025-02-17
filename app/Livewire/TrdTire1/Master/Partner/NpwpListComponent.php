@@ -97,7 +97,8 @@ class NpwpListComponent extends DetailComponent
         if (!empty($this->objectIdValue)) {
             $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
             if ($partnerDetail) {
-                $this->input_details = json_decode($partnerDetail->wp_details, true) ?? [];
+                $this->input_details = $partnerDetail->wp_details ?? [];
+
             }
         }
     }
@@ -121,6 +122,12 @@ class NpwpListComponent extends DetailComponent
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
         if ($partnerDetail) {
             $partnerDetail->update(['wp_details' => $wp_detailsArray]);
+        }else {
+            // Jika belum ada, buat record baru dengan menyertakan partner_id dan banks
+            PartnerDetail::create([
+                'partner_id' => $this->object->id,
+                'wp_details'      => $wp_detailsArray
+            ]);
         }
     }
 
