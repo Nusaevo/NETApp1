@@ -110,7 +110,7 @@ class Detail extends BaseComponent
                 'partner_id'       => $this->object->id,
                 'shipping_address' => [[
                     'name'    => $this->inputs['name'],
-                    'address' => $this->inputs['address'] . ' - ' . $this->inputs['city'],
+                    'address' => $this->inputs['address'] . "\n" . $this->inputs['city'],
                 ]],
                 'partner_grp'  => $this->inputs['grp'],
                 'partner_code' => $this->inputs['code'],

@@ -46,7 +46,7 @@
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('category') }}"
                                         model="materials.category" :options="$materialCategory" required="false"
-                                        :action="$actionValue" :buttonEnabled="$isPanelEnabled"/>
+                                        :action="$actionValue" :buttonEnabled="$isPanelEnabled" onChanged="generateNameTag"/>
                                     {{-- <x-ui-dropdown-select label="{{ $this->trans('class_code') }}"
                                         model="materials.class_code" :options="$materialJenis" required="false"
                                         :action="$actionValue" /> --}}
@@ -54,7 +54,7 @@
                                     <x-ui-text-field-search label="{{ $this->trans('class_code') }}"
                                         model="materials.class_code" type="string" :selectedValue="$materials['class_code']"
                                         :options="$materialJenis" required="false" :action="$actionValue"
-                                        clickEvent="openJenisDialogBox" buttonName="+" />
+                                        clickEvent="openJenisDialogBox" buttonName="+" onChanged="generateNameTag"/>
                                     <x-ui-dialog-box id="JenisDialogBox" title="Form Jenis" width="600px"
                                         height="400px" onOpened="openJenisDialogBox" onClosed="closeJenisDialogBox">
                                         <x-slot name="body">
@@ -94,7 +94,7 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                        type="text" :action="$actionValue" onChanged="generateName" required="true"
+                                        type="text" :action="$actionValue" onChanged="generateNameTag" required="true"
                                         enabled="true" capslockMode="true" />
                                 </div>
                             </x-ui-padding>
@@ -153,7 +153,7 @@
                         </x-ui-card>
                         <x-ui-card title="Associations">
                             <x-ui-padding>
-                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
+                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="matl_uoms.stock"
                                     type="number" :action="$actionValue" required="false" enabled="false" />
                                 <x-ui-text-field label="{{ $this->trans('reserved') }}" model="materials.reserved"
                                     type="text" :action="$actionValue" required="false" enabled="false" />
@@ -162,7 +162,7 @@
                         <x-ui-card title="Tagging">
                             <x-ui-padding>
                                 <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag"
-                                    type="text" :action="$actionValue" required="false" enabled="true" />
+                                    type="text" :action="$actionValue" required="false" enabled="true" onChanged="generateNameTag" enabled="false" />
                             </x-ui-padding>
                         </x-ui-card>
                     </div>

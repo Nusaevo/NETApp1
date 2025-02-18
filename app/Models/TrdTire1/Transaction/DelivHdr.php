@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
+use App\Models\TrdTire1\Master\MatlUom;
 
 class DelivHdr extends BaseModel
 {

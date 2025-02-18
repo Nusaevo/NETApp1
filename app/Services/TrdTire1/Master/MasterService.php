@@ -92,7 +92,7 @@ class MasterService extends BaseService
         return $data->map(function ($data) {
             return [
                 'label' => $data->str2,
-                'value' => $data->id,
+                'value' => $data->str2,
             ];
         })->toArray();
     }

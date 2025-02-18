@@ -61,7 +61,8 @@ class MaterialComponent extends BaseComponent
         'resetMaterial' => 'onReset',
         'onPartnerChanged' => 'onPartnerChanged',
         'onNameChanged' => 'onNameChanged',  // Listen to onNameChanged
-        'generateName' => 'generateName'
+        'generateName' => 'generateName',
+        'generateNameTag' => 'generateNameTag',
     ];
     #endregion
 
@@ -72,6 +73,9 @@ class MaterialComponent extends BaseComponent
         $this->isComponent = $isComponent;
         $this->resetAfterCreate = !$isComponent;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
+        // $this->materialUOM = $this->masterService->getMatlUOMData();
+        // $this->matl_uoms = MatlUom::pluck('matl_uom', 'id')->toArray();
+        // $this->object_uoms = MatlUom::first(); // Load first data from MMATL_UOM
     }
 
     protected function onPreRender()
@@ -89,7 +93,7 @@ class MaterialComponent extends BaseComponent
             'materials.reserved'      => $this->trans('reserved'),
             'materials.tag'      => $this->trans('tag'),
             'materials.size'      => $this->trans('size'),
-            'materials.stok'      => $this->trans('stock'),
+            'matl_uoms.stok'      => $this->trans('stock'),
             'materials.category'      => $this->trans('category'),
             'materials.remark'      => $this->trans('remark'),
             'materials.jwl_cost' => $this->trans('jwl_cost'),
@@ -106,16 +110,14 @@ class MaterialComponent extends BaseComponent
         $this->materialMerk = $this->masterService->getMatlMerkData();
         $this->materialPattern = $this->masterService->getMatlPatternData();
         $this->materialUOM = $this->masterService->getMatlUOMData();
-        $this->matl_uoms = MatlUom::pluck('matl_uom', 'id')->toArray();
         $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
-        $this->materials['stock'] = $this->object->IvtBal->qty_oh ?? 0;
+        $this->matl_uoms['stock'] = $this->object->IvtBal->qty_oh ?? 0;
 
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
             $this->isPanelEnabled = "false";
-
         }
     }
     public function onReset()
@@ -147,7 +149,6 @@ class MaterialComponent extends BaseComponent
             $decodedData = $this->object->specs;
             $this->materials['size'] = $decodedData['size'] ?? null;
             $this->materials['pattern'] = $decodedData['pattern'] ?? null;
-            $this->materials['point'] = $decodedData['point'] ?? null;
         } else {
             // Tangani jika material tidak ditemukan
             $this->dispatch('error', 'Material tidak ditemukan.');
@@ -252,12 +253,8 @@ class MaterialComponent extends BaseComponent
             $this->validateMaterialCode();
         }
 
-        // Debugging
-        \Log::info('Materials Data:', $this->materials);
-
         $dataToSave['size'] = $this->materials['size'] ?? null;
         $dataToSave['pattern'] = $this->materials['pattern'] ?? null;
-        $dataToSave['point'] = $this->materials['point'] ?? null;
 
 
         $this->materials['specs'] = $dataToSave;
@@ -268,8 +265,7 @@ class MaterialComponent extends BaseComponent
         $this->saveAttachment();
 
         // Save UOM to materials table
-        $this->materials['uom'] = $this->object->MatlUom->first()->matl_uom ?? null;
-        $this->object->fill($this->materials);
+        $this->object->uom = $this->object->MatlUom->first()->matl_uom ?? null;
         $this->object->save();
     }
 
@@ -309,6 +305,8 @@ class MaterialComponent extends BaseComponent
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
         $this->matl_uoms['base_factor'] = 1;
+        $this->matl_uoms['reff_factor'] = $this->matl_uoms['base_factor'];
+        $this->matl_uoms['reff_uom'] = $this->matl_uoms['matl_uom'];
         $this->object_uoms->fill($this->matl_uoms);
         $this->object_uoms->save();
     }
@@ -320,6 +318,12 @@ class MaterialComponent extends BaseComponent
     public function generateName()
     {
         $this->materials['name'] = Material::generateName($this->materials['brand'], $this->materials['size'], $this->materials['pattern']);
+        $this->generateNameTag();
+    }
+
+    public function generateNameTag()
+    {
+        $this->materials['tag'] = $this->materials['name'] . ' ' . $this->materials['category'] . ' ' . $this->materials['class_code'];
     }
 
     public function onBrandChanged()
@@ -583,3 +587,4 @@ class MaterialComponent extends BaseComponent
     }
     #region Brand Dialog Box
 }
+

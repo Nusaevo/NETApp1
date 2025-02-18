@@ -30,7 +30,7 @@ class BillingHdr extends BaseModel
                 'trhdr_id' => $billingHdr->id,
                 'tr_type' => $billingHdr->tr_type,
                 'tr_code' => $billingHdr->tr_code,
-                'tr_desc' => $billingHdr->tr_desc,
+                // 'tr_desc' => $billingHdr->tr_desc,
                 // 'tr_seq' => 1, // Assuming sequence starts at 1
                 // 'trdtl_id' => null, // Assuming no detail ID at this point
                 'partner_id' => $billingHdr->partner_id,

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Inventories\IvtLog;
+use App\Models\TrdTire1\Master\MatlUom;
 // Pastikan BillingDtl sudah di-import jika digunakan di sini
 use App\Models\TrdTire1\Transaction\{OrderDtl, BillingDtl};
 
@@ -112,6 +113,22 @@ class DelivDtl extends BaseModel
                 }
                 $ivtBalUnit->qty_oh += $qtyChange;
                 $ivtBalUnit->save();
+
+                // Update qty_oh in MatlUom
+                $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
+                    ->where('matl_uom', $delivDtl->matl_uom)
+                    ->first();
+                if ($matlUom) {
+                    if ($delivDtl->tr_type == 'PD') {
+                        $matlUom->qty_oh += $delta;
+                        // minus qty_fgr in matlUom
+                        $matlUom->qty_fgr -= $delta;
+                    } elseif ($delivDtl->tr_type == 'SD') {
+                        $matlUom->qty_oh -= $delta;
+                        $matlUom->qty_fgi -= $delta;
+                    }
+                    $matlUom->save();
+                }
             });
         });
 

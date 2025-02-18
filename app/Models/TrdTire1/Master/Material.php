@@ -45,11 +45,10 @@ class Material extends BaseModel
         'dimension',
         'wgt',
         'cost',
-        'specs',
         'tag',
         'reserved',
         'stock',
-        'point',
+        'specs',
         'uom'
     ];
     public function MatlUom()
@@ -128,42 +127,6 @@ class Material extends BaseModel
             ->first();
     }
 
-
-    public static function retrieveBomDetail($detail)
-    {
-        $baseMaterial = ConfigConst::where('id', $detail->base_matl_id)->first();
-        $formattedDetail = populateArrayFromModel($detail);
-
-        $formattedDetail['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
-        $formattedDetail['base_matl_id_value'] = $baseMaterial->id;
-        $formattedDetail['base_matl_id_note'] = $baseMaterial->note1;
-
-        $decodedData = $detail->jwl_sides_spec;
-
-        switch ($formattedDetail['base_matl_id_note']) {
-            case self::JEWELRY:
-                $formattedDetail['purity'] = $decodedData['purity'] ?? null;
-                break;
-            case self::DIAMOND:
-                $formattedDetail['shapes'] = $decodedData['shapes'] ?? null;
-                $formattedDetail['clarity'] = $decodedData['clarity'] ?? null;
-                $formattedDetail['color'] = $decodedData['color'] ?? null;
-                $formattedDetail['cut'] = $decodedData['cut'] ?? null;
-                $formattedDetail['gia_number'] = $decodedData['gia_number'] ?? 0;
-                break;
-            case self::GEMSTONE:
-                $formattedDetail['gemstone'] = $decodedData['gemstone'] ?? null;
-                $formattedDetail['gemcolor'] = $decodedData['gemcolor'] ?? null;
-                break;
-            case self::GOLD:
-                $formattedDetail['production_year'] = $decodedData['production_year'] ?? 0;
-                $formattedDetail['ref_mark'] = $decodedData['ref_mark'] ?? null;
-                break;
-        }
-
-        return $formattedDetail;
-    }
-
     public static function generateMaterialDescriptionsFromBOMs($matl_boms)
     {
         $materialDescriptions = '';
@@ -239,7 +202,6 @@ class Material extends BaseModel
     // Fungsi untuk menghasilkan nama material, bisa dipanggil di dalam model ini
     protected function generateName($brand, $size, $pattern)
     {
-        // Logika untuk menghasilkan nama berdasarkan nama, ukuran, dan pola
         return $brand . ' ' . $size . ' ' . $pattern;
     }
 }

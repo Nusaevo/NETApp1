@@ -66,6 +66,15 @@ class OrderDtl extends BaseModel
             $orderDtl->price_base = $matlUom->base_factor;
             $orderDtl->qty_base = $qty * $matlUom->base_factor;
             $orderDtl->qty_uom = $matlUom->matl_uom;
+            if ($matlUom) {
+                if ($orderDtl->tr_type === 'SO') {
+                    $matlUom->qty_fgi += $qty;
+                } elseif ($orderDtl->tr_type === 'PO') {
+                    $matlUom->qty_fgr += $qty;
+                }
+            }
+            $matlUom->save();
+
         });
         static::deleting(function ($orderDtl) {
             DB::beginTransaction();
