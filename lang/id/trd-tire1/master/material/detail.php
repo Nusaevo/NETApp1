@@ -12,6 +12,7 @@ return [
     'name' => 'Nama Barang',
     'jual' => 'Harga Jual',
     'cost' => 'Hpp',
+    'tag' => 'Tag',
     'wgt' => 'Pattern',
     'piece' => 'Satuan',
     'selling_price' => 'Harga Jual (IDR)',

@@ -137,11 +137,6 @@ class Detail extends BaseComponent
         $partner = Partner::find($this->inputs['partner_id']);
         $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
         $this->shipOptions = $partner ? $this->listShip($partner) : null;
-
-        // Set the send_to_name field based on the selected partner
-        // if ($partner) {
-        //     $this->inputs['send_to_name'] = $partner->name;
-        // }
     }
 
     private function listNpwp($partner)
@@ -397,7 +392,7 @@ class Detail extends BaseComponent
             $this->inputs['partner_name'] = $partner->code;
             $this->inputs['textareacustommer'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
 
-            // Set npwp_code with data from JSON wp_details
+            // Set npwpOptions with data from JSON wp_details
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
                 $wpDetails = $partner->PartnerDetail->wp_details;
                 if (is_string($wpDetails)) {
@@ -410,6 +405,12 @@ class Detail extends BaseComponent
                             'value' => $item['npwp'],
                         ];
                     }, $wpDetails);
+                    // Automatically select the first npwpOption
+                    $firstNpwpOption = $this->npwpOptions[0] ?? null;
+                    if ($firstNpwpOption) {
+                        $this->inputs['npwp_code'] = $firstNpwpOption['value'];
+                        $this->onTaxPayerChanged();
+                    }
                 }
             }
             // Set shipOptions with data from JSON shipping_address
@@ -425,6 +426,12 @@ class Detail extends BaseComponent
                             'value' => $item['name'],
                         ];
                     }, $shipDetail);
+                    // Automatically select the first shipOption
+                    $firstShipOption = $this->shipOptions[0] ?? null;
+                    if ($firstShipOption) {
+                        $this->inputs['ship_to_name'] = $firstShipOption['value'];
+                        $this->onShipToChanged();
+                    }
                 }
             }
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
 
+use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Livewire\Component\BaseComponent;
 
@@ -18,6 +19,9 @@ class PrintPdf extends BaseComponent
                 return;
             }
             $this->object = OrderHdr::findOrFail($this->objectIdValue);
+            // Update status_code to PRINT
+            $this->object->status_code = Status::PRINT;
+            $this->object->save();
         }
     }
 

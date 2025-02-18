@@ -284,6 +284,7 @@ class Detail extends BaseComponent
                 $orderDtl->qty_reff += $delta;
                 $orderDtl->save();
             }
+            
         }
         $existingDetails->each(function ($item) use ($existingDetails) {
             if (!isset($this->input_details[$item->tr_seq - 1])) {
