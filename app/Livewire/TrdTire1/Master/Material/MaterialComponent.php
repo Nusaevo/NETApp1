@@ -112,6 +112,7 @@ class MaterialComponent extends BaseComponent
         $this->materialUOM = $this->masterService->getMatlUOMData();
         $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
+        $this->materials['point'] = $decodedData['point'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
         $this->matl_uoms['stock'] = $this->object->IvtBal->qty_oh ?? 0;
 
@@ -148,6 +149,7 @@ class MaterialComponent extends BaseComponent
             // Decode the JSON from 'specs' and assign to $this->materials
             $decodedData = $this->object->specs;
             $this->materials['size'] = $decodedData['size'] ?? null;
+            $this->materials['point'] = $decodedData['point'] ?? null;
             $this->materials['pattern'] = $decodedData['pattern'] ?? null;
         } else {
             // Tangani jika material tidak ditemukan

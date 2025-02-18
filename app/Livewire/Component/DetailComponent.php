@@ -171,12 +171,12 @@ class DetailComponent extends Component
     protected function Save()
     {
         $this->validateForm();
-        DB::beginTransaction();
         try {
-            $this->updateVersionNumber();
-            $this->object->save();
-            $this->onValidateAndSave();
-            DB::commit();
+            DB::transaction(function () {
+                $this->updateVersionNumber();
+                $this->object->save();
+                $this->onValidateAndSave();
+            });
 
             if (!$this->isEditOrView() && $this->resetAfterCreate) {
                 $this->onReset();
@@ -184,7 +184,6 @@ class DetailComponent extends Component
 
             $this->dispatch('success', __('generic.string.save'));
         } catch (QueryException | PDOException | Exception $e) {
-            DB::rollBack();
             Log::error("Method Save :" . $e->getMessage());
             $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
@@ -193,19 +192,18 @@ class DetailComponent extends Component
     protected function SaveWithoutNotification()
     {
         $this->validateForm();
-        DB::beginTransaction();
         try {
-            $this->updateVersionNumber();
-            $this->object->save();
-            $this->onValidateAndSave();
-            DB::commit();
+            DB::transaction(function () {
+                $this->updateVersionNumber();
+                $this->object->save();
+                $this->onValidateAndSave();
+            });
 
             if (!$this->isEditOrView() && $this->resetAfterCreate) {
                 $this->onReset();
             }
         } catch (QueryException | PDOException | Exception $e) {
             Log::error("Method SaveWithoutNotification :" . $e->getMessage());
-            DB::rollBack();
             dd($e->getMessage());
         }
     }

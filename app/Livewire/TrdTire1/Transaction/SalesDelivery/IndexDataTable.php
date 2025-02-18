@@ -257,7 +257,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->count();
 
             if ($shippedOrders > 0) {
-                $this->dispatch('error', 'Tidak bisa membatalkan pesanan dengan status SHIP');
+                $this->dispatch('error', 'Tidak bisa membatalkan pesanan barang yang sudah dikirim');
                 return;
             }
 
