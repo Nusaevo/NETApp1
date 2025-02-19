@@ -55,6 +55,11 @@ class MasterService extends BaseService
         $data = $this->getConfigData('TRX_WAREHOUSE');
         return $this->mapData($data);
     }
+    public function getWarehouseType()
+    {
+        $data = $this->getConfigData('TRX_WH_TYPE');
+        return $this->mapData($data);
+    }
 
     public function getUOMData()
     {

@@ -152,6 +152,7 @@ class DelivDtl extends BaseModel
                     'matl_id'    => $delivDtl->matl_id,
                     'matl_uom'   => $delivDtl->matl_uom,
                     'wh_id'      => $delivDtl->wh_id,
+                    'wh_code'    => $delivDtl->wh_code,
                     'batch_code' => $delivDtl->batch_code,
                     'tr_date'    => $header ? $header->tr_date : null,
                     'qty'        => $delivDtl->qty,

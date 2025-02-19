@@ -44,10 +44,7 @@ class Material extends BaseModel
         'category',
         'dimension',
         'wgt',
-        'cost',
         'tag',
-        'reserved',
-        'stock',
         'specs',
         'uom'
     ];

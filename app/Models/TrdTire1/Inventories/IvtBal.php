@@ -5,6 +5,7 @@ namespace App\Models\TrdTire1\Inventories;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Base\BaseModel;
 use App\Enums\Constant;
+use App\Models\TrdTire1\Master\Material;
 
 class IvtBal extends BaseModel
 {
@@ -20,7 +21,7 @@ class IvtBal extends BaseModel
                 'ivt_id'    => $ivtBal->id,
                 'matl_id'   => $ivtBal->matl_id,
                 'wh_id'     => $ivtBal->wh_id,
-                'batch_code'=> $ivtBal->batch_code,
+                'batch_code' => $ivtBal->batch_code,
             ]);
             if (!$ivtBalUnit->exists) {
                 $ivtBalUnit->qty_oh = 0;
@@ -45,5 +46,9 @@ class IvtBal extends BaseModel
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();
+    }
+    public function material()
+    {
+        return $this->belongsTo(Material::class, 'matl_id');
     }
 }
