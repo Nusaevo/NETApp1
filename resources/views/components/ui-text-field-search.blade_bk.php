@@ -5,33 +5,29 @@
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
 @endphp
 
-<div class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
+<div wire:ignore.self class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
 
     <div class="input-group">
-        <div class="{{ $containerClass }}" x-data x-init="() => {
-                const initSelect2 = () => {
-                    const selectElement = document.getElementById('{{ $id }}');
-                    if (!selectElement) {
-                        console.warn(`Element #{{ $id }} not found.`);
-                        return;
-                    }
+        <div class="{{ $containerClass }}" x-data="{
+                initSelect2() {
+                    let selectId = '{{ $id }}';
+                    let selectElement = document.getElementById(selectId);
 
-                    // Destroy existing Select2 instance if it exists
-                    if ($(selectElement).hasClass('select2-hidden-accessible')) {
-                        $(selectElement).select2('destroy');
-                    }
+                    if (selectElement) {
+                        $(selectElement).select2();
+                        $(selectElement).on('change', function() {
+                            const value = $(this).val();
+                            @this.set('{{ $model }}', value);
+                            let onChanged = '{{ isset($onChanged) ? $onChanged : '' }}';
 
-                    // Initialize Select2
-                    $(selectElement).select2();
+                            console.log(`Value changed for ${selectId}:`, value);
 
-                    // Handle change event
-                    $(selectElement).on('change', function () {
-                        const value = $(this).val();
-                        @this.set('{{ $model }}', value);
+                            if (!onChanged) {
+                                console.warn('onChanged is not defined or empty.');
+                                return;
+                            }
 
-                        @if (isset($onChanged) && $onChanged)
-                            let onChanged = '{{ $onChanged }}';
                             if (onChanged.includes('$event.target.value')) {
                                 onChanged = onChanged.replace('$event.target.value', value);
                             }
@@ -44,36 +40,32 @@
                                         .split(',')
                                         .map(param => param.trim())
                                         .filter(param => param !== '');
+                                    console.log(`Calling Livewire method: ${methodName} with params:`, params);
                                     $wire.call(methodName, ...params);
                                 } else {
                                     console.error(`Invalid onChanged format: ${onChanged}`);
                                 }
                             } else {
+                                console.log(`Calling Livewire method: ${onChanged} with value: ${value}`);
                                 $wire.call(onChanged, value);
                             }
-                        @endif
-                    });
+                        });
 
-                    console.log(`Select2 initialized for #{{ $id }}`);
-                };
-
-                // Initialize Select2 on component mount
-                initSelect2();
-
-                // Reinitialize Select2 after Livewire updates
-                Livewire.hook('morphed', (el, component) => {
-                    initSelect2();
-                });
-            }">
+                        console.log(`select2 initialized for ${selectId}`);
+                    } else {
+                        console.warn(`Element with ID ${selectId} not found.`);
+                    }
+                }
+            }"
+            x-init="initSelect2();
+            Livewire.hook('morph.updated', () => { initSelect2(); });">
 
             <select id="{{ $id }}"
                 class="form-select responsive-input @error($model) is-invalid @enderror
                 @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
-                wire:model="{{ $model }}"
-                @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) &&
-                    ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')))
-                    disabled
-                @endif
+                wire:model="{{ $model }}" @if (
+                    !(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) &&
+                        ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
                 wire:loading.attr="disabled">
                 <option value="{{ $blankValue }}"></option>
                 @if (!is_null($options))
@@ -98,7 +90,7 @@
             @error($model)
                 <div class="error-message">{{ $message }}</div>
             @enderror
-        </div>
+        </div> <!-- Penutup div containerClass -->
 
         @if (isset($clickEvent) && $clickEvent !== '')
             <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary"
