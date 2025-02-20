@@ -81,6 +81,9 @@ class DelivHdr extends BaseModel
         static::deleting(function ($orderHdr) {
             $orderHdr->deleteDeliveryAndBilling();
             // $orderHdr->deleteOrderDetails();
+            BillingHdr::where('tr_code', $orderHdr->tr_code)
+                ->where('tr_type', $orderHdr->tr_type == 'SD' ? 'ARB' : 'APB')
+                ->forceDelete();
         });
     }
 

@@ -112,6 +112,7 @@ class MaterialComponent extends BaseComponent
         $this->materialUOM = $this->masterService->getMatlUOMData();
         $decodedData = $this->object->specs;
         $this->materials['size'] = $decodedData['size'] ?? null;
+        $this->materials['point'] = $decodedData['point'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
         $this->matl_uoms['stock'] = $this->object->IvtBal->qty_oh ?? 0;
 
@@ -148,6 +149,7 @@ class MaterialComponent extends BaseComponent
             // Decode the JSON from 'specs' and assign to $this->materials
             $decodedData = $this->object->specs;
             $this->materials['size'] = $decodedData['size'] ?? null;
+            $this->materials['point'] = $decodedData['point'] ?? null;
             $this->materials['pattern'] = $decodedData['pattern'] ?? null;
         } else {
             // Tangani jika material tidak ditemukan
@@ -405,36 +407,29 @@ class MaterialComponent extends BaseComponent
 
     public function getMatlCode()
     {
-        $code = "";
-        $configSnum = null;
-        if (!isNullOrEmptyString($this->materials['brand'])) {
-            $configSnum = ConfigSnum::where('code', '=', 'MMATL_' . $this->materials['brand'] . '_LASTID')
-                ->first();
-            $code = $this->materials['brand'];
-        } else {
+        if (empty($this->materials['brand'])) {
             $this->dispatch('error', "Mohon pilih merk untuk mendapatkan material code.");
             return;
         }
 
-        if ($configSnum != null) {
-            $stepCnt = $configSnum->step_cnt;
-            $proposedTrId = $configSnum->last_cnt + $stepCnt;
-            if ($proposedTrId > $configSnum->wrap_high) {
-                $proposedTrId = $configSnum->wrap_low;
-            }
-            $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+        $brandPrefix = $this->materials['brand'];
+        $lastMaterial = Material::where('code', 'like', $brandPrefix . '%')
+            ->orderBy('id', 'desc')
+            ->first();
 
-            // Format the proposed ID to 4 digits with leading zeros
-            $formattedTrId = str_pad($proposedTrId, 3, '0', STR_PAD_LEFT);
-
-            // Set kode material dan update configSnum
-            $this->materials['code'] = $code . $formattedTrId;
-            $configSnum->last_cnt = $proposedTrId;
-            $configSnum->save();
+        if ($lastMaterial) {
+            $lastCode = $lastMaterial->code;
+            $numericPart = substr($lastCode, strlen($brandPrefix));
+            $newNumber = ((int)$numericPart) + 1;
         } else {
-            $this->dispatch('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
+            $newNumber = 1;
         }
+
+        $formattedNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+
+        $this->materials['code'] = $brandPrefix . $formattedNumber;
     }
+
     #endregion
 
     #region Brand Dialog Box
@@ -587,4 +582,3 @@ class MaterialComponent extends BaseComponent
     }
     #region Brand Dialog Box
 }
-

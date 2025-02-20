@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
+namespace App\Livewire\TrdTire1\Transaction\SalesBilling;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr, BillingHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -29,22 +29,13 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::SHIP]);
+        return BillingHdr::with(['Partner'])
+            ->where('billing_hdrs.tr_type', 'ARB');
     }
+
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("tr_type"), "tr_type")
-                ->hideIf(true)
-                ->sortable(),
-            Column::make('currency', "curr_rate")
-                ->hideIf(true)
-                ->sortable(),
             Column::make($this->trans("tr_code"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
@@ -57,6 +48,23 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
+            Column::make($this->trans("date"), "tr_date")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("Tgl. Kirim"), "tr_date")
+                ->label(function ($row) {
+                    $delivery = DelivHdr::where('tr_type', 'SD')
+                        ->where('tr_code', $row->tr_code)
+                        ->first();
+                    return $delivery ? $delivery->tr_date : '';
+                })
+                ->sortable(),
+            Column::make($this->trans("tr_type"), "tr_type")
+                ->hideIf(true)
+                ->sortable(),
+            Column::make('currency', "curr_rate")
+                ->hideIf(true)
+                ->sortable(),
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
@@ -69,24 +77,12 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans('qty'))
-                ->label(function ($row) {
-                    return $row->total_qty;
-                })
-                ->sortable(),
             Column::make($this->trans('amt'), 'total_amt')
                 ->label(function ($row) {
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
-            Column::make($this->trans("Tanggal Kirim"), "tr_date")
-                ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery ? $delivery->tr_date : '';
-                })
-                ->sortable(),
+
             Column::make($this->trans("warehouse"), "warehouse")
                 ->label(function ($row) {
                     $delivery = DelivHdr::where('tr_type', 'SD')

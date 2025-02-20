@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
+namespace App\Livewire\TrdTire1\Transaction\SalesBilling;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
@@ -18,17 +18,16 @@ class Detail extends BaseComponent
     public $SOTax = [];
     public $SOSend = [];
     public $paymentTerms = [];
-    public $suppliers = [];
-    public $partnerSearchText = '';
-    public $selectedPartners = [];
+    public $suppliers;
     public $warehouses;
     public $partners;
-    public $sales_type;
+    public $vehicle_type;
     public $tax_invoice;
     public $transaction_id;
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
+
     public $total_amount;
     public $total_tax;
     public $total_dpp;
@@ -50,8 +49,15 @@ class Detail extends BaseComponent
 
 
     public $rules  = [
+        'inputs.tr_date' => 'nullable',
+        'inputs.send_to' => 'required',
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
+        'inputs.tax_payer' => 'nullable',
+        'inputs.payment_terms' => 'nullable',
+        'inputs.tax' => 'nullable',
+        'inputs.due_date' => 'nullable',
+        'inputs.cust_reff' => 'nullable',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -67,14 +73,14 @@ class Detail extends BaseComponent
 
     public function getTransactionCode()
     {
-        if (!isset($this->inputs['sales_type'])) {
+        if (!isset($this->inputs['vehicle_type'])) {
             $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
             return;
         }
 
-        $sales_type = $this->inputs['sales_type'];
+        $vehicle_type = $this->inputs['vehicle_type'];
         $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice']; // Check if tax invoice is checked
-        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, 'PO', $tax_invoice);
+        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($vehicle_type, 'PO', $tax_invoice);
     }
 
     public function onTaxInvoiceChanged()
@@ -88,14 +94,11 @@ class Detail extends BaseComponent
             // Ambil data konfigurasi berdasarkan konstanta pajak
             $configData = ConfigConst::select('num1', 'str1')
                 ->where('const_group', 'TRX_SO_TAX')
-                ->where('str1', $this->inputs['tax_flag'])
+                ->where('str1', $this->inputs['tax'])
                 ->first();
 
             $this->inputs['tax_value'] = $configData->num1 ?? 0; // Nilai pajak default 0 jika tidak ditemukan
             $taxType = $configData->str1 ?? ''; // Tipe pajak (str1)
-
-            // Simpan tax_pct
-            $this->inputs['tax_pct'] = $this->inputs['tax_value'];
 
             // Hitung DPP dan PPN berdasarkan tipe pajak
             $this->calculateDPPandPPN($taxType);
@@ -184,15 +187,13 @@ class Detail extends BaseComponent
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
-            $this->inputs['partner_name'] = $this->object->partner->code;
-            $this->inputs['textareasupplier'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
             $this->onPartnerChanged();
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
         }
         // Panggil perhitungan DPP dan PPN saat halaman dimuat
-        if (!empty($this->inputs['tax_flag'])) {
+        if (!empty($this->inputs['tax'])) {
             $this->onSOTaxChange();
         }
     }
@@ -203,7 +204,6 @@ class Detail extends BaseComponent
         $this->object = new OrderHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['due_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
@@ -214,7 +214,6 @@ class Detail extends BaseComponent
 
     public function render()
     {
-        // dd($this->inputs);
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
@@ -234,12 +233,6 @@ class Detail extends BaseComponent
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
-        }
-        // Ensure payment_term is set
-        if (!empty($this->inputs['payment_term_id'])) {
-            $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
-            $this->inputs['payment_term'] = $paymentTerm->str1;
-            $this->inputs['payment_due_days'] = $paymentTerm->num1; // Save payment_due_days from num1
         }
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
         if ($this->actionValue == 'Create') {
@@ -304,61 +297,6 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
-    public function openPartnerDialogBox()
-    {
-        $this->partnerSearchText = '';
-        $this->suppliers = [];
-        $this->selectedPartners = [];
-        $this->dispatch('openPartnerDialogBox');
-    }
-    public function searchPartners()
-    {
-        if (!empty($this->partnerSearchText)) {
-            $searchTerm = strtoupper($this->partnerSearchText);
-            $this->suppliers = Partner::where('grp', Partner::SUPPLIER)
-                ->where(function ($query) use ($searchTerm) {
-                    $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
-                        ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
-                })
-                ->get();
-        } else {
-            $this->dispatch('error', "Mohon isi kode atau nama supplier");
-        }
-    }
-
-    public function selectPartner($partnerId)
-    {
-        $key = array_search($partnerId, $this->selectedPartners);
-
-        if ($key !== false) {
-            unset($this->selectedPartners[$key]);
-            $this->selectedPartners = array_values($this->selectedPartners);
-        } else {
-            $this->selectedPartners[] = $partnerId;
-        }
-    }
-
-    public function confirmSelection()
-    {
-        if (empty($this->selectedPartners)) {
-            $this->dispatch('error', "Silakan pilih satu supplier terlebih dahulu.");
-            return;
-        }
-        if (count($this->selectedPartners) > 1) {
-            $this->dispatch('error', "Hanya boleh memilih satu supplier.");
-            return;
-        }
-        $partner = Partner::find($this->selectedPartners[0]);
-
-        if ($partner) {
-            $this->inputs['partner_id'] = $partner->id;
-            $this->inputs['partner_name'] = $partner->code;
-            $this->inputs['textareasupplier'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
-            $this->dispatch('success', "Supplier berhasil dipilih.");
-            $this->dispatch('closePartnerDialogBox');
-        }
-    }
-
 
 
 
@@ -372,7 +310,7 @@ class Detail extends BaseComponent
         $this->total_discount = ($data['total_discount']);
 
         // Recalculate DPP and PPN when amount or discount changes
-        $this->calculateDPPandPPN($this->inputs['tax_flag'] ?? '');
+        $this->calculateDPPandPPN($this->inputs['tax'] ?? '');
     }
 
     // Update discount percentage

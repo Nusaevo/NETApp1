@@ -256,20 +256,18 @@ class BaseComponent extends Component
     public function Save()
     {
         $this->validateForm();
-        DB::beginTransaction();
 
         try {
-            $this->updateVersionNumber();
-            $this->onValidateAndSave();
-            DB::commit();
+            DB::transaction(function () {
+                $this->updateVersionNumber();
+                $this->onValidateAndSave();
+            });
 
             if (!$this->isEditOrView() && $this->resetAfterCreate) {
                 $this->onReset();
             }
-
             $this->dispatch('success', __('generic.string.save'));
         } catch (QueryException | PDOException | Exception $e) {
-            DB::rollBack();
             $this->updateSharedVersionNumber(false);
             Log::error("Method Save : " . $e->getMessage());
             $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
@@ -279,19 +277,18 @@ class BaseComponent extends Component
     public function SaveWithoutNotification()
     {
         $this->validateForm();
-        DB::beginTransaction();
 
         try {
-            $this->updateVersionNumber();
-            $this->onValidateAndSave();
-            DB::commit();
+            DB::transaction(function () {
+                $this->updateVersionNumber();
+                $this->onValidateAndSave();
+            });
 
             if (!$this->isEditOrView() && $this->resetAfterCreate) {
                 $this->onReset();
             }
         } catch (QueryException | PDOException | Exception $e) {
             Log::error("Method SaveWithoutNotification : " . $e->getMessage());
-            DB::rollBack();
 
             if ($this->isEditOrView()) {
                 $this->updateSharedVersionNumber(false);
