@@ -37,7 +37,7 @@
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code" :options="$warehouses"
                         required="true" :action="$actionValue" :enabled="$isEdit" />
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}" model="inputs.wh_code2"
-                        :options="$warehouses" required="true" :enabled="$isEdit" />
+                        :options="$warehouses" required="true" enabled="$false" />
                 </div>
                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
             </x-slot>

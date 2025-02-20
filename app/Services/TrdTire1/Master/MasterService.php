@@ -124,9 +124,11 @@ class MasterService extends BaseService
     public function getMatlCategoryOptionsForSelectFilter()
     {
         $data = $this->getConfigData('MMATL_CATEGORY');
-        // Menggunakan pluck untuk mendapatkan key dan value yang sama (misalnya: 'Gold' => 'Gold')
-        return $data->pluck('str2', 'str2')->toArray();
+        $options = $data->pluck('str2', 'str2')->toArray();
+        // Tambahkan opsi kosong dengan label "All" sebagai pilihan default
+        return ['' => 'All'] + $options;
     }
+
 
     public function getMatlMerkData()
     {
