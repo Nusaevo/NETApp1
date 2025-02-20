@@ -19,9 +19,13 @@ class MaterialListComponent extends DetailComponent
     public $object_detail;
     public $trhdr_id;
     public $tr_seq;
+    public $warehouses;
+    public $warehousesType;
     public $tr_code;
     public $input_details = [];
     public $wh_code; // Add this property
+    public $isEdit = "false";
+    public $inputs = []; // Add this property
 
     protected $rules = [
         'input_details.*.qty' => 'required',
@@ -44,7 +48,10 @@ class MaterialListComponent extends DetailComponent
 
     protected function onPreRender()
     {
+        $this->isEdit = $this->isEditOrView() ? 'true' : 'false';
         $this->masterService = new MasterService();
+        $this->warehouses = $this->masterService->getWarehouse();
+        $this->warehousesType = $this->masterService->getWarehouseType();
         $ivttrDtl = IvttrDtl::where('trhdr_id', $this->objectIdValue)->first();
         if ($ivttrDtl) {
             $materialIds = IvtBal::where('wh_code', $ivttrDtl->wh_code)->pluck('matl_id')->toArray();

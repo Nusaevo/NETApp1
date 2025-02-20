@@ -35,6 +35,7 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     protected $masterService;
     public $isPanelEnabled = "false";
+    public $isEdit = "false";
 
     public $rules  = [
         'inputs.tr_date' => 'required',
@@ -58,6 +59,7 @@ class Detail extends BaseComponent
             'inputs.tax'      => $this->trans('tax'),
         ];
 
+        $this->isEdit = $this->isEditOrView() ? 'true' : 'false';
         $this->masterService = new MasterService();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->warehousesType = $this->masterService->getWarehouseType();
@@ -66,13 +68,13 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Invalid object ID');
                 return;
             }
-            $this->object = IvttrHdr::with('ivttrDtls')->find($this->objectIdValue);
+            $this->object = IvttrHdr::with('IvttrDtl')->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['tr_type'] = $this->object->tr_type;
             $this->inputs['tr_date'] = $this->object->tr_date;
             $this->inputs['tr_id'] = $this->object->tr_id;
-            $this->inputs['wh_code'] = $this->object->ivttrDtls->first()->wh_code ?? null;
-            $this->inputs['tr_descr'] = $this->object->ivttrDtls->first()->tr_descr ?? null;
+            $this->inputs['wh_code'] = $this->object->IvttrDtl->first()->wh_code ?? null;
+            $this->inputs['tr_descr'] = $this->object->IvttrDtl->first()->tr_descr ?? null;
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
@@ -85,6 +87,7 @@ class Detail extends BaseComponent
         $this->object = new IvttrHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['wh_code'] = "";
     }
 
     public function render()

@@ -8,7 +8,6 @@
                 <th style="width: 50px; text-align: center;">Quantity</th>
                 <th style="width: 70px; text-align: center;">Actions</th>
             </x-slot>
-
             <!-- Define table rows -->
             <x-slot name="rows">
                 @foreach ($input_details as $key => $input_detail)
@@ -22,17 +21,24 @@
                                 :enabled="true" />
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true" :action="$actionValue"
-                                onChanged="updateItemAmount({{ $key }})" type="number" required="true" />
+                            <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true"
+                                :action="$actionValue" onChanged="updateItemAmount({{ $key }})" type="number"
+                                required="true" />
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue" cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                            <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
+                                cssClass="btn-danger text-danger" iconPath="delete.svg" />
                         </td>
                     </tr>
                 @endforeach
             </x-slot>
-
             <x-slot name="button">
+                <div class="row">
+                    <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code" :options="$warehouses"
+                        required="true" :action="$actionValue" :enabled="$isEdit" />
+                    <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}" model="inputs.wh_code2"
+                        :options="$warehouses" required="true" :action="$actionValue" :enabled="$inputs['tr_type'] === 'TW'" />
+                </div>
                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
             </x-slot>
         </x-ui-table>

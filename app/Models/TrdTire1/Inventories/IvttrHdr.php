@@ -23,12 +23,12 @@ class IvttrHdr extends BaseModel
         return $this->orderBy('code', 'asc')->get();
     }
 
-    public function delivDtl()
+    public function DelivDtl()
     {
         return $this->belongsTo(DelivDtl::class, 'trdtl_id');
     }
 
-    public function ivttrDtls()
+    public function IvttrDtl()
     {
         return $this->hasMany(IvttrDtl::class, 'trhdr_id');
     }
@@ -48,16 +48,6 @@ class IvttrHdr extends BaseModel
 
         $this->tr_type = $inputs['tr_type'];
         $this->save();
-
-        IvttrDtl::updateOrCreate(
-            ['trhdr_id' => $this->id],
-            [
-                // 'tr_type' => $this->trType,
-                // 'tr_id' => $this->tr_id,
-                'wh_code' => $inputs['wh_code'],
-                'tr_descr' => $inputs['tr_descr']
-            ]
-        );
     }
 
     public function isOrderCompleted()

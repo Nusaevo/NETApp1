@@ -26,12 +26,6 @@
                                         required="false" enabled="false" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code"
-                                        :options="$warehouses" required="true" :action="$actionValue" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}"
-                                        model="inputs.wh_code2" :options="$warehouses" required="true" :action="$actionValue" enabled="false"/>
-                                </div>
-                                <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.tr_descr"
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
@@ -48,7 +42,7 @@
                 <br>
                 <div class="col-md-12">
                     <x-ui-card title="Order Items">
-                        @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
+                        @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId, 'wh_code' => $inputs['wh_code'], 'tr_type' => $inputs['tr_type']])
                     </x-ui-card>
                 </div>
 

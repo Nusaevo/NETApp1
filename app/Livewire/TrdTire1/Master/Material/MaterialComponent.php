@@ -406,29 +406,27 @@ class MaterialComponent extends BaseComponent
     }
 
     public function getMatlCode()
-    {
-        if (empty($this->materials['brand'])) {
-            $this->dispatch('error', "Mohon pilih merk untuk mendapatkan material code.");
-            return;
-        }
-
-        $brandPrefix = $this->materials['brand'];
-        $lastMaterial = Material::where('code', 'like', $brandPrefix . '%')
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($lastMaterial) {
-            $lastCode = $lastMaterial->code;
-            $numericPart = substr($lastCode, strlen($brandPrefix));
-            $newNumber = ((int)$numericPart) + 1;
-        } else {
-            $newNumber = 1;
-        }
-
-        $formattedNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
-        $this->materials['code'] = $brandPrefix . $formattedNumber;
+{
+    if (empty($this->materials['brand'])) {
+        $this->dispatch('error', "Mohon pilih merk untuk mendapatkan material code.");
+        return;
     }
+
+    $brandPrefix = $this->materials['brand'];
+    $start = strlen($brandPrefix) + 1;
+    // Menggunakan cast ke integer dengan sintaks ::int yang kompatibel dengan PostgreSQL
+    $maxNumber = Material::where('code', 'like', $brandPrefix . '%')
+        ->selectRaw("MAX(SUBSTRING(code, $start)::int) as max_num")
+        ->value('max_num');
+
+    $newNumber = $maxNumber ? $maxNumber + 1 : 1;
+
+    $formattedNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+
+    $this->materials['code'] = $brandPrefix . $formattedNumber;
+}
+
+
 
     #endregion
 
