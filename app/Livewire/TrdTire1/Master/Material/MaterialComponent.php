@@ -39,6 +39,8 @@ class MaterialComponent extends BaseComponent
     public $inputs_jenis = [];
     public $object_jenis;
     public $isPanelEnabled = "true";
+    public $inputs = [];
+
 
     protected $masterService;
     public $rules = [

@@ -124,7 +124,12 @@ class MasterService extends BaseService
     public function getMatlMerkData()
     {
         $data = $this->getConfigData('MMATL_MERK');
-        return $this->mapData($data);
+        return $data->map(function ($data) {
+            return [
+                'label' => $data->str2. " - " . $data->str1,
+                'value' => $data->str2,
+            ];
+        })->toArray();
     }
     public function getMatlPatternData()
     {
@@ -134,7 +139,7 @@ class MasterService extends BaseService
                 'label' => $data->str2,
                 'value' => $data->str2,
             ];
-        })->toArray();;
+        })->toArray();
     }
 
     public function getMatlUOMData()
