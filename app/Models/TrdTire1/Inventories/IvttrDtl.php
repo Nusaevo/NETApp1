@@ -51,7 +51,7 @@ class IvttrDtl extends BaseModel
     // SaveItem
     public function saveItem($data)
     {
-        $this->fill($data);
+        $this->fill($data)
         $this->save();
     }
 
