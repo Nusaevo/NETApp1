@@ -68,8 +68,8 @@ class IndexDataTable extends BaseDataTableComponent
                 ->setCallback(function ($value) {
                     return $value === null;
                 }),
-            Column::make($this->trans('created_date'), 'created_at')
-                ->sortable(),
+            // Column::make($this->trans('created_date'), 'created_at')
+            //     ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -89,16 +89,15 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            // Filter pencarian berdasarkan field tag dengan LIKE
-            $this->createTextFilter('Barang', 'tag', 'Cari Barang', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(tag)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            // Filter kategori menggunakan data dari masterService
             SelectFilter::make('Kategori', 'kategori_filter')
                 ->options($this->materialCategory)
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where('category', '=', $value);
                 }),
+            // Filter pencarian berdasarkan field tag dengan LIKE
+            $this->createTextFilter('Barang', 'tag', 'Cari Barang', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tag)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             // Filter status
             SelectFilter::make('Status', 'status_filter')
                 ->options([
