@@ -52,6 +52,7 @@ class Detail extends BaseComponent
     public $rules  = [
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
+        'inputs.tax_flag' => 'required',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',

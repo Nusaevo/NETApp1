@@ -211,48 +211,43 @@ class MaterialListComponent extends DetailComponent
 
     public function onValidateAndSave()
     {
-        $this->validate();
-        try {
-            // Fetch existing details from the database
-            $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)
-                ->where('tr_type', $this->object->trType)
-                ->get()
-                ->keyBy('tr_seq')
-                ->toArray();
+        // Fetch existing details from the database
+        $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)
+            ->where('tr_type', $this->object->trType)
+            ->get()
+            ->keyBy('tr_seq')
+            ->toArray();
 
-            // Determine which items to delete
-            $itemsToDelete = array_diff_key($existingDetails, $this->input_details);
-            foreach ($itemsToDelete as $tr_seq => $detail) {
-                $orderDtl = OrderDtl::find($detail['id']);
-                if ($orderDtl) {
-                    $orderDtl->forceDelete();
-                }
+        // Determine which items to delete
+        $itemsToDelete = array_diff_key($existingDetails, $this->input_details);
+        foreach ($itemsToDelete as $tr_seq => $detail) {
+            $orderDtl = OrderDtl::find($detail['id']);
+            if ($orderDtl) {
+                $orderDtl->forceDelete();
+            }
+        }
+
+        // Save or update new items
+        foreach ($this->input_details as $key => $detail) {
+            $tr_seq = $key + 1;
+            $orderDtl = OrderDtl::firstOrNew([
+                'tr_code' => $this->object->tr_code,
+                'tr_seq' => $tr_seq,
+            ]);
+
+            $detail['tr_code'] = $this->object->tr_code;
+            $detail['trhdr_id'] = $this->objectIdValue;
+            $detail['qty_reff'] = '0';
+            $detail['tr_type'] = $this->object->tr_type;
+
+            // Fetch matl_code from matl_id
+            $material = Material::find($detail['matl_id']);
+            if ($material) {
+                $detail['matl_code'] = $material->code;
             }
 
-            // Save or update new items
-            foreach ($this->input_details as $key => $detail) {
-                $tr_seq = $key + 1;
-                $orderDtl = OrderDtl::firstOrNew([
-                    'tr_code' => $this->object->tr_code,
-                    'tr_seq' => $tr_seq,
-                ]);
-
-                $detail['tr_code'] = $this->object->tr_code;
-                $detail['trhdr_id'] = $this->objectIdValue;
-                $detail['qty_reff'] = '0';
-                $detail['tr_type'] = $this->object->tr_type;
-
-                // Fetch matl_code from matl_id
-                $material = Material::find($detail['matl_id']);
-                if ($material) {
-                    $detail['matl_code'] = $material->code;
-                }
-
-                $orderDtl->fill($detail);
-                $orderDtl->save();
-            }
-        } catch (Exception $e) {
-            $this->dispatch('error', __('generic.error.save_item', ['message' => $e->getMessage()]));
+            $orderDtl->fill($detail);
+            $orderDtl->save();
         }
     }
 

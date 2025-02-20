@@ -27,14 +27,14 @@
                                         $wire.set('{{ $model }}', input.value);
                                     });
 
-                                    // Saat tekan Enter
+                                    {{-- // Saat tekan Enter
                                     input.addEventListener('keydown', function(event) {
                                         if (event.key === 'Enter') {
                                             event.preventDefault();
                                             input.value = input.value.toUpperCase();
                                             $wire.set('{{ $model }}', input.value);
                                         }
-                                    });
+                                    }); --}}
                                 }
                             }
                         }

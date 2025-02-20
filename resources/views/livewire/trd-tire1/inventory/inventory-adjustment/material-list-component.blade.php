@@ -17,8 +17,8 @@
                             <x-ui-text-field-search type="int" label="" clickEvent=""
                                 model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']" :options="$filteredMaterials"
                                 required="true" :action="$actionValue"
-                                onChanged="onMaterialChanged({{ $key }}, $event.target.value, inputs.wh_code)"
                                 :enabled="true" />
+                                @dump($input_details[$key]['matl_id'])
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true"
@@ -35,9 +35,9 @@
             <x-slot name="button">
                 <div class="row">
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code" :options="$warehouses"
-                        required="true" :action="$actionValue" :enabled="$isEdit" />
+                        required="true" :action="$actionValue" :enabled="$isEdit" onChanged="onWarehouseChanged($event.target.value)" />
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}" model="inputs.wh_code2"
-                        :options="$warehouses" required="true" :enabled="$isEdit" />
+                        :options="$warehouses" required="true" enabled="$false" />
                 </div>
                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
             </x-slot>

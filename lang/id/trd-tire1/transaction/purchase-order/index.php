@@ -3,7 +3,7 @@
 return [
     'tr_code' => 'Nomor Nota',
     'date' => 'Tanggal',
-    'supplier' => 'Custommer',
+    'supplier' => 'Supplier',
     'created_date' => 'Tgl dibuat',
     'status' => 'Status',
     'action' => 'Aksi',

@@ -38,8 +38,8 @@
                                         required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['reffhdrtr_code']" />
 
                                     <!-- Display Partner Name -->
-                                    <x-ui-text-field label="{{ $this->trans('custommer') }}" model="inputs.partner_name"
-                                        type="text" :action="$actionValue" required="false" readonly="true" />
+                                    <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
+                                        type="text" :action="$actionValue" required="false" readonly="true" enabled="false"/>
                                     <!-- Hidden input for partner ID -->
                                     <input type="hidden" wire:model="inputs.partner_id">
                                     {{-- <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"

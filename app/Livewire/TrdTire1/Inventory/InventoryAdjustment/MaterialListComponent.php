@@ -23,6 +23,7 @@ class MaterialListComponent extends DetailComponent
     public $warehouses;
     public $warehousesType;
     public $tr_code;
+
     public $input_details = [];
     public $wh_code; // Add this property
     public $isEdit = "false";
@@ -53,10 +54,9 @@ class MaterialListComponent extends DetailComponent
         $this->masterService = new MasterService();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->warehousesType = $this->masterService->getWarehouseType();
-        $ivttrDtl = IvttrDtl::where('trhdr_id', $this->objectIdValue)->first();
-        if ($ivttrDtl) {
-            $materialIds = IvtBal::where('wh_code', $ivttrDtl->wh_code)->pluck('matl_id')->toArray();
-            // dd($materialIds );
+
+        if (!empty($this->inputs['wh_code'])) {
+            $materialIds = IvtBal::where('wh_code', $this->inputs['wh_code'])->pluck('matl_id')->toArray();
             $this->materials = Material::whereIn('id', $materialIds)->get()
                 ->map(fn($m) => [
                     'value' => $m->id,
@@ -65,7 +65,29 @@ class MaterialListComponent extends DetailComponent
         } else {
             $this->materials = collect();
         }
+        // cari data material berdasarkan wh_code dari inputs.wh_code
+        // $this->getIvtBall($this->inputs['wh_code']);
+        // $this->materials = Material::all();
+        // $this->materials = Material::where('wh_code', $this->inputs['wh_code'])->get();
+        //
 
+
+
+
+        //  // Ensure wh_code is displayed during edit
+        // if (!empty($this->objectIdValue)) {
+        //     $this->object = IvttrDtl::find($this->objectIdValue);
+        //     $this->inputs = populateArrayFromModel($this->object);
+        //     $this->inputs['wh_code'] = $this->object->wh_code; // Ensure wh_code is not an array
+        //     $this->loadDetails();
+        // }
+        // // tampilkan wh_code dan matl_id pada ivttrDtl
+        // $this->object_detail = IvttrDtl::where('trhdr_id', $this->objectIdValue)->get();
+        // foreach ($this->object_detail as $key => $detail) {
+        //     $this->inputs = populateArrayFromModel($this->object);
+        //     $this->inputs['wh_code'] = $this->object->wh_code; // Ensure wh_code is not an array
+        //     $this->loadDetails();
+        // }
 
 
         if (!empty($this->objectIdValue)) {
@@ -77,34 +99,42 @@ class MaterialListComponent extends DetailComponent
 
     public function addItem()
     {
-        // Cek apakah nilai wh_code sudah dipilih
         if (empty($this->inputs['wh_code'])) {
             $this->dispatch('error', 'Mohon pilih gudang terlebih dahulu.');
             return;
         }
-        // Tambahkan item baru dan sertakan nilai wh_code
         $this->input_details[] = [
             'matl_id' => null,
             'qty'     => 0,
             'wh_code' => $this->inputs['wh_code']
         ];
-        // dd($this->input_details);
     }
 
-    public function onMaterialChanged($key, $matlId, $whCode)
-    {
-        // Contoh logika penyesuaian: cek apakah material yang dipilih sesuai dengan gudang
-        $material = Material::find($matlId);
-        if ($material && $material->warehouse_code != $whCode) {
-            $this->dispatch('error', 'Material tidak sesuai dengan gudang yang dipilih.');
-            return;
-        }
-        // Jika sesuai, simpan matl_id pada item yang bersangkutan
-        $this->input_details[$key]['matl_id'] = $matlId;
+    // public function onMaterialChanged($key, $matlId, $whCode)
+    // {
+    //     if (is_null($matlId)) {
+    //         $this->dispatch('error', 'Material ID tidak boleh kosong.');
+    //         return;
+    //     }
 
-        // Selanjutnya, Anda bisa memanggil fungsi untuk mengambil data ivtBall sesuai wh_code
-        $this->getIvtBall($whCode);
-    }
+    //     // Cari data material di tabel ivt_bals sesuai wh_code dan matl_id
+    //     $ivtBallRecord = DB::table('ivt_bals')
+    //         ->where('wh_code', $whCode)
+    //         ->where('matl_id', $matlId)
+    //         ->first();
+
+    //     // Jika material tidak ditemukan di gudang tersebut, tampilkan error
+    //     if (!$ivtBallRecord) {
+    //         $this->dispatch('error', 'Material tidak ditemukan di inventory gudang yang dipilih.');
+    //         return;
+    //     }
+
+    //     // Jika ditemukan, simpan matl_id pada item yang bersangkutan
+    //     $this->input_details[$key]['matl_id'] = $matlId;
+
+    //     // Jika diperlukan, Anda bisa mengambil data lain dari ivt_bals melalui $ivtBallRecord
+    // }
+
 
     protected function getIvtBall($whCode)
     {
@@ -128,21 +158,8 @@ class MaterialListComponent extends DetailComponent
 
         $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
 
-        $this->recalculateTotals();
     }
 
-    public function recalculateTotals()
-    {
-        $this->calculateTotalAmount();
-        $this->calculateTotalDiscount();
-
-        $this->dispatch('updateAmount', [
-            'total_amount' => $this->total_amount,
-            'total_discount' => $this->total_discount,
-            'total_tax' => $this->total_tax,
-            'total_dpp' => $this->total_dpp,
-        ]);
-    }
 
 
 
@@ -157,7 +174,6 @@ class MaterialListComponent extends DetailComponent
             $this->input_details = array_values($this->input_details);
 
             $this->dispatch('success', __('generic.string.delete_item'));
-            $this->recalculateTotals();
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
@@ -170,10 +186,12 @@ class MaterialListComponent extends DetailComponent
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
+                $this->input_details[$key]['wh_code'] = $this->object->wh_code; // Ensure wh_code is set
                 $this->updateItemAmount($key); // Ensure each input item is initialized and updated
             }
         }
     }
+
     public function SaveItem()
     {
         $this->Save();
@@ -189,11 +207,24 @@ class MaterialListComponent extends DetailComponent
             $ivttrDtl = IvttrDtl::firstOrNew([
                 'trhdr_id' => $this->objectIdValue,
                 'tr_seq' => $tr_seq,
+                'wh_code' => $this->inputs['wh_code'],
+                'matl_id' => $detail['matl_id'],
             ]);
             $ivttrDtl->matl_id = $detail['matl_id'];
             // $ivttrDtl->matl_code = $detail['matl_code'];
             $ivttrDtl->save();
         }
+    }
+
+    public function onWarehouseChanged($whCode)
+    {
+        $this->inputs['wh_code'] = $whCode;
+        $materialIds = IvtBal::where('wh_code', $whCode)->pluck('matl_id')->toArray();
+        $this->materials = Material::whereIn('id', $materialIds)->get()
+            ->map(fn($m) => [
+                'value' => $m->id,
+                'label' => $m->code . " - " . $m->name,
+            ]);
     }
 
     public function render()

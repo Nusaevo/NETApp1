@@ -52,6 +52,11 @@ class Material extends BaseModel
     {
         return $this->hasMany(MatlUom::class, 'matl_id');
     }
+    public function DefaultMatlUom()
+    {
+        return $this->hasOne(MatlUom::class, 'matl_id', 'id')
+            ->where('matl_uom', $this->uom);
+    }
 
     public function IvtBal()
     {
@@ -67,7 +72,7 @@ class Material extends BaseModel
     #region Attributes
     public function getSellingPriceTextAttribute()
     {
-        return rupiah($this->selling_price);
+        return rupiah($this->DefaultMatlUom->selling_price ?? 0);
     }
 
     // Getter for jwl_buying_price_text
