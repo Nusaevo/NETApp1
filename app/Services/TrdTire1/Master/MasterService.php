@@ -121,12 +121,19 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+    public function getMatlCategoryOptionsForSelectFilter()
+    {
+        $data = $this->getConfigData('MMATL_CATEGORY');
+        // Menggunakan pluck untuk mendapatkan key dan value yang sama (misalnya: 'Gold' => 'Gold')
+        return $data->pluck('str2', 'str2')->toArray();
+    }
+
     public function getMatlMerkData()
     {
         $data = $this->getConfigData('MMATL_MERK');
         return $data->map(function ($data) {
             return [
-                'label' => $data->str2. " - " . $data->str1,
+                'label' => $data->str1 . " - " . $data->str2,
                 'value' => $data->str2,
             ];
         })->toArray();

@@ -9,12 +9,14 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-
+use App\Services\TrdTire1\Master\MasterService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     protected $model = Material::class;
 
+    protected $masterService;
+    public $materialCategory;
 
     public function mount(): void
     {
@@ -22,14 +24,17 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setFilter('Status', 0);
         $this->setFilter('stock_filter', 'above_0');
         $this->setDefaultSort('created_at', 'desc');
+
+        // Inisialisasi masterService dan ambil data kategori material
+        $this->masterService = new MasterService();
+        $this->materialCategory = $this->masterService->getMatlCategoryOptionsForSelectFilter();
     }
 
     public function builder(): Builder
     {
-        return Material::select('materials.*', 'matl_uoms.selling_price')
-            ->leftJoin('matl_uoms', 'materials.id', '=', 'matl_uoms.matl_id');
+        return Material::with('IvtBal')
+            ->select('materials.*');
     }
-
 
     public function columns(): array
     {
@@ -40,7 +45,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("code"), "code")
                 ->format(function ($value, $row) {
                     return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
-                        'action' => encryptWithSessionKey('Edit'),
+                        'action'   => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey($row->id)
                     ]) . '">' . $row->code . '</a>';
                 })
@@ -55,13 +60,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make('Stock', 'IvtBal.qty_oh')
                 ->format(function ($value, $row, Column $column) {
-                    return $row->IvtBal?->qty_oh ?? 0; // Ensure null values are shown as 0
+                    return $row->IvtBal?->qty_oh ?? 0; // Pastikan nilai null ditampilkan sebagai 0
                 })
                 ->searchable()
                 ->sortable(),
-            // Column::make($this->trans("point"), "point")
-            //     ->searchable()
-            //     ->sortable(),
             BooleanColumn::make($this->trans("Status"), "deleted_at")
                 ->setCallback(function ($value) {
                     return $value === null;
@@ -71,14 +73,14 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
+                        'row'              => $row,
+                        'custom_actions'   => [],
+                        'enable_this_row'  => true,
+                        'allow_details'    => false,
+                        'allow_edit'       => true,
+                        'allow_disable'    => false,
+                        'allow_delete'     => false,
+                        'permissions'      => $this->permissions
                     ]);
                 }),
         ];
@@ -87,12 +89,20 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            $this->createTextFilter('Barang', 'name', 'Cari Kode Barang', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(code)'), '=', strtoupper($value));
+            // Filter pencarian berdasarkan field tag dengan LIKE
+            $this->createTextFilter('Barang', 'tag', 'Cari Barang', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tag)'), 'like', '%' . strtoupper($value) . '%');
             }),
+            // Filter kategori menggunakan data dari masterService
+            SelectFilter::make('Kategori', 'kategori_filter')
+                ->options($this->materialCategory)
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('category', '=', $value);
+                }),
+            // Filter status
             SelectFilter::make('Status', 'status_filter')
                 ->options([
-                    'active' => 'Active',
+                    'active'  => 'Active',
                     'deleted' => 'Non Active',
                 ])->filter(function (Builder $builder, string $value) {
                     if ($value === 'active') {
