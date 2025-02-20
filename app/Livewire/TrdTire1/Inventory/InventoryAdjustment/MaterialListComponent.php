@@ -11,6 +11,7 @@ use App\Models\TrdTire1\Inventories\IvtBal; // Add this import
 use App\Models\TrdTire1\Inventories\IvttrDtl; // Add this import
 use App\Models\TrdTire1\Inventories\IvttrHdr;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class MaterialListComponent extends DetailComponent
 {
@@ -76,46 +77,43 @@ class MaterialListComponent extends DetailComponent
 
     public function addItem()
     {
-        if (!empty($this->objectIdValue)) {
-            try {
-                $this->input_details[] = [
-                    'matl_id' => null,
-                    'qty' => null,
-                ];
-                $this->dispatch('success', __('generic.string.add_item'));
-            } catch (Exception $e) {
-                $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
-            }
-        } else {
-            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
+        // Cek apakah nilai wh_code sudah dipilih
+        if (empty($this->inputs['wh_code'])) {
+            $this->dispatch('error', 'Mohon pilih gudang terlebih dahulu.');
+            return;
         }
+        // Tambahkan item baru dan sertakan nilai wh_code
+        $this->input_details[] = [
+            'matl_id' => null,
+            'qty'     => 0,
+            'wh_code' => $this->inputs['wh_code']
+        ];
+        // dd($this->input_details);
     }
 
-    public function onMaterialChanged($key, $matl_id, $wh_code)
+    public function onMaterialChanged($key, $matlId, $whCode)
     {
-        if ($matl_id && $wh_code) {
-            $ivtBal = IvtBal::where('matl_id', $matl_id)->where('wh_code', $wh_code)->first();
-            if ($ivtBal) {
-                $material = Material::find($ivtBal->matl_id);
-                if ($material) {
-                    $matlUom = MatlUom::where('matl_id', $ivtBal->matl_id)->first();
-                    if ($matlUom) {
-                        $this->input_details[$key]['matl_id'] = $material->id;
-                        $this->input_details[$key]['price'] = $matlUom->selling_price;
-                        $this->input_details[$key]['matl_uom'] = $material->uom;
-                        $this->input_details[$key]['matl_descr'] = $material->name;
-                        $this->updateItemAmount($key);
-                    } else {
-                        $this->dispatch('error', __('generic.error.material_uom_not_found'));
-                    }
-                } else {
-                    $this->dispatch('error', __('generic.error.material_not_found'));
-                }
-            } else {
-                $this->dispatch('error', __('generic.error.ivtbal_not_found'));
-            }
+        // Contoh logika penyesuaian: cek apakah material yang dipilih sesuai dengan gudang
+        $material = Material::find($matlId);
+        if ($material && $material->warehouse_code != $whCode) {
+            $this->dispatch('error', 'Material tidak sesuai dengan gudang yang dipilih.');
+            return;
         }
+        // Jika sesuai, simpan matl_id pada item yang bersangkutan
+        $this->input_details[$key]['matl_id'] = $matlId;
+
+        // Selanjutnya, Anda bisa memanggil fungsi untuk mengambil data ivtBall sesuai wh_code
+        $this->getIvtBall($whCode);
     }
+
+    protected function getIvtBall($whCode)
+    {
+        // Contoh query untuk mengambil data dari ivtBall berdasarkan wh_code
+        $data = DB::table('ivtBall')->where('wh_code', $whCode)->get();
+        // Lakukan sesuatu dengan data yang didapatkan, misalnya menyimpannya ke property atau dispatch event
+        // $this->ivtBallData = $data;
+    }
+
 
     public function updateItemAmount($key)
     {
