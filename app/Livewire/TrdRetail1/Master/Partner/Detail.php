@@ -68,6 +68,7 @@ class Detail extends BaseComponent
         $this->reset('inputs');
         $this->object = new Partner();
         $this->inputs = populateArrayFromModel($this->object);
+
     }
 
     public function render()
