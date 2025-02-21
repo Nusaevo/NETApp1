@@ -117,25 +117,22 @@
                     </div>
 
                 </div>
+                <x-ui-footer>
+                    @if (!$isComponent && $actionValue == 'Edit')
+                        @include('layout.customs.buttons.disable')
+                    @endif
+                    <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$customActionValue"
+                        cssClass="btn-primary" iconPath="save.svg" />
+                    @if ($isComponent)
+                        <x-ui-button clickEvent="addPurchaseOrder" button-name="Add Item" loading="true" :action="$actionValue"
+                            cssClass="btn-primary" iconPath="add.svg" />
+                    @endif
+                </x-ui-footer>
             </div>
             <div class="tab-pane fade show" id="uom" role="tabpanel" aria-labelledby="uom-tab">
-                <x-ui-card>
-                    <div wire:ignore>
-
-                    </div>
-                </x-ui-card>
+                @livewire($currentRoute . '.uom-list-component', ['action' => $action, 'objectId' => $objectId])
+            </div>
             </div>
         </x-ui-tab-view-content>
-        <x-ui-footer>
-            @if (!$isComponent && $actionValue == 'Edit')
-                @include('layout.customs.buttons.disable')
-            @endif
-            <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$customActionValue"
-                cssClass="btn-primary" iconPath="save.svg" />
-            @if ($isComponent)
-                <x-ui-button clickEvent="addPurchaseOrder" button-name="Add Item" loading="true" :action="$actionValue"
-                    cssClass="btn-primary" iconPath="add.svg" />
-            @endif
-        </x-ui-footer>
     </x-ui-page-card>
 </div>

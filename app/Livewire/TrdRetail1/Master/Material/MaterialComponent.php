@@ -48,7 +48,6 @@ class MaterialComponent extends BaseComponent
         // 'materials.color_name' => 'required|string|max:100',
         'materials.selling_price' => 'nullable|numeric|min:0',
         'materials.buying_price' => 'nullable|numeric|min:0',
-        'materials.cogs' => 'required|numeric|min:0',
         // 'materials.stock' => 'required|integer|min:0',
         'materials.tag' => 'nullable|string|max:255',
         'matl_uoms.matl_uom' => 'required|string|max:50',

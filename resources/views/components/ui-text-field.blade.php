@@ -11,60 +11,34 @@
     <div class="input-group">
         <div class="{{ $containerClass }}">
             @if (isset($type) && $type === 'textarea')
-
-            <textarea style="min-height: 150px;"
-            wire:model.lazy="{{ $model }}"
-            id="{{ $id }}"
-            rows="{{ isset($rows) ? $rows : '10' }}"
-            class="form-control form-control-lg @error($model) is-invalid @enderror"
-            @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
-            @if (isset($required) && $required === 'true') required @endif
-            placeholder="{{ isset($label) ? $label : '' }}"
-            @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
-            autocomplete="off"
-            x-data="{
-                applyBehavior() {
-                    let input = this.$refs.inputField;
-                    if (input) {
-                        // Ensure Enter key always adds newline
-                        input.addEventListener('keydown', function(event) {
-                            if (event.key === 'Enter') {
-                                console.log('Enter key pressed'); // Console log when Enter is pressed
-                                event.preventDefault();
-                                let cursorPos = input.selectionStart;
-                                let textBefore = input.value.substring(0, cursorPos);
-                                let textAfter = input.value.substring(cursorPos);
-
-                                // Insert newline at cursor position
-                                input.value = textBefore + '\n' + textAfter;
-                                input.selectionStart = input.selectionEnd = cursorPos + 1; // Move cursor after newline
-
-                                $wire.set('{{ $model }}', input.value);
-                            }
-                        });
-
-                        // Convert to uppercase if capslockMode is enabled
-                        input.addEventListener('input', function() {
+                <textarea style="min-height: 150px;" wire:model.lazy="{{ $model }}" id="{{ $id }}"
+                    rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
+                    @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
+                    placeholder="{{ isset($label) ? $label : '' }}"
+                    @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif autocomplete="off"
+                    x-data="{
+                        applyCapsLock() {
                             if ({{ isset($capslockMode) && $capslockMode === 'true' ? 'true' : 'false' }}) {
-                                input.value = input.value.toUpperCase();
-                                $wire.set('{{ $model }}', input.value);
-                            }
-                        });
+                                let input = this.$refs.inputField;
+                                if (input) {
+                                    // Saat kehilangan fokus (blur)
+                                    input.addEventListener('blur', function() {
+                                        input.value = input.value.toUpperCase();
+                                        $wire.set('{{ $model }}', input.value);
+                                    });
 
-                        // Convert to uppercase on blur
-                        input.addEventListener('blur', function() {
-                            if ({{ isset($capslockMode) && $capslockMode === 'true' ? 'true' : 'false' }}) {
-                                input.value = input.value.toUpperCase();
-                                $wire.set('{{ $model }}', input.value);
+                                    // Saat tekan Enter
+                                    input.addEventListener('keydown', function(event) {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            input.value = input.value.toUpperCase();
+                                            $wire.set('{{ $model }}', input.value);
+                                        }
+                                    });
+                                }
                             }
-                        });
-                    }
-                }
-            }"
-            x-init="applyBehavior()"
-            x-ref="inputField">
-        </textarea>
-
+                        }
+                    }" x-init="applyCapsLock()" x-ref="inputField"></textarea>
             @elseif(isset($type) && $type === 'code')
                 <input wire:model.lazy="{{ $model }}" type="text"
                     class="form-control @error($model) is-invalid @enderror"
@@ -111,6 +85,7 @@
                             });
                             barcodeInput.addEventListener('keydown', function(event) {
                                 if (event.key === 'Enter') {
+                                    event.preventDefault();
                                     if (barcodeInput.value !== '') {
                                         Livewire.dispatch('scanBarcode', barcodeInput.value);
                                     }
