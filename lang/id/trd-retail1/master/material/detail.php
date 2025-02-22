@@ -8,7 +8,7 @@ return [
     'seq' => 'No',
     'barcode' => 'Kode Barcode',
     'brand' => 'Merk',
-    'type_code' => 'Jenis',
+    'class_code' => 'Jenis',
     'color_code' => 'Kode Warna',
     'color_name' => 'Nama Warna',
     'name' => 'Nama Barang',

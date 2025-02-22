@@ -139,6 +139,7 @@ class MasterService extends BaseService
     }
 
 
+
     public function getMatlMerkData()
     {
         $data = $this->getConfigData('MMATL_MERK');

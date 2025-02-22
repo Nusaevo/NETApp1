@@ -117,7 +117,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         $brandOptions = array_merge(['' => 'Select Brand'], Material::distinct('brand')->pluck('brand', 'brand')->toArray());
 
-        $typeOptions = array_merge(['' => 'Select Type'], Material::distinct('type_code')->pluck('type_code', 'type_code')->toArray());
+        $typeOptions = array_merge(['' => 'Select Type'], Material::distinct('class_code')->pluck('class_code', 'class_code')->toArray());
 
         return [
             // Category Filter
@@ -161,14 +161,14 @@ class IndexDataTable extends BaseDataTableComponent
                 ->setWireLive(true),
 
             // Type Filter
-            SelectFilter::make('Type', 'type_code')
+            SelectFilter::make('Type', 'class_code')
                 ->options($typeOptions)
                 ->filter(function (Builder $query, string $value) {
                     if ($value !== '') {
                         if ($this->isFirstFilterApplied($query)) {
                             $query->getQuery()->wheres = [];
                         }
-                        $query->where('type_code', $value);
+                        $query->where('class_code', $value);
                     }
                 })
                 ->setWireLive(true),

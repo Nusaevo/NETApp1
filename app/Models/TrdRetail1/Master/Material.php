@@ -24,7 +24,7 @@ class Material extends BaseModel
         parent::boot();
     }
 
-    protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'supplier_id', 'supplier_code', 'supplier_id1', 'supplier_id2', 'supplier_id3', 'matl_price', 'sellprc_calc_method', 'price_markup_id', 'price_markup_code', 'buying_price', 'selling_price', 'cogs', 'partner_id', 'partner_code', 'taxable', 'info', 'status_code', 'created_by', 'updated_by', 'remarks'];
+    protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'selling_price',  'taxable', 'uom','remarks'];
 
     /**
      * Get configuration for Create Template.
@@ -157,7 +157,7 @@ class Material extends BaseModel
                 }
 
                 // Cek duplikasi dalam database berdasarkan Kategori, Merk, Jenis, dan Color Code di JSONB (specs->color_code)
-                $existingMaterial = Material::where('category', $category)->where('brand', $brand)->where('type_code', $type)->whereJsonContains('specs->color_code', $color_code)->first();
+                $existingMaterial = Material::where('category', $category)->where('brand', $brand)->where('class_code', $type)->whereJsonContains('specs->color_code', $color_code)->first();
 
                 if ($existingMaterial) {
                     $message .= 'Material dengan kombinasi Kategori, Merk, Jenis, dan Kode Warna sudah ada di database. ';
@@ -280,7 +280,7 @@ class Material extends BaseModel
                         'category' => $category,
                         'brand' => $brand,
                         'seq' => $no,
-                        'type_code' => $type,
+                        'class_code' => $type,
                         'specs' => ['color_code' => $colorCode, 'color_name' => $colorName],
                         'selling_price' => $sellingPrice,
                         'remarks' => $remarks,
@@ -436,7 +436,7 @@ class Material extends BaseModel
                     $this->code, // Kode Barang
                     $this->MatlUom[0]->barcode, // Kode Barcode
                     $this->brand, // Merk
-                    $this->type_code, // Tipe
+                    $this->class_code, // Tipe
                     $colorCode, // Color Code
                     $colorName, // Color Name
                 ]),

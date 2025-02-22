@@ -43,12 +43,11 @@ class MaterialComponent extends BaseComponent
         // 'materials.name' => 'required|string|max:255',
         'materials.remark' => 'nullable|string|max:500',
         'materials.brand' => 'required|string|max:255',
-        'materials.type_code' => 'required|string|max:255',
+        'materials.class_code' => 'required|string|max:255',
         // 'materials.color_code' => 'required|string|max:50',
         // 'materials.color_name' => 'required|string|max:100',
         'materials.selling_price' => 'nullable|numeric|min:0',
         'materials.buying_price' => 'nullable|numeric|min:0',
-        'materials.cogs' => 'required|numeric|min:0',
         // 'materials.stock' => 'required|integer|min:0',
         'materials.tag' => 'nullable|string|max:255',
         'matl_uoms.matl_uom' => 'required|string|max:50',
@@ -84,7 +83,7 @@ class MaterialComponent extends BaseComponent
             'materials.name' => $this->trans('name'),
             'materials.remark' => $this->trans('remark'),
             'materials.brand' => $this->trans('brand'),
-            'materials.type_code' => $this->trans('type'),
+            'materials.class_code' => $this->trans('type'),
             'materials.color_code' => $this->trans('color_code'),
             'materials.color_name' => $this->trans('color_name'),
             'materials.selling_price' => $this->trans('selling_price'),
@@ -156,7 +155,7 @@ class MaterialComponent extends BaseComponent
         $this->masterService = new MasterService();
         $this->materials['name'] = $this->masterService->getMatlCategoryString($this->materials['category']). ' '
         . $this->materials['brand'] . ' '
-        . $this->materials['type_code'];
+        . $this->materials['class_code'];
 
         $this->object->fill($this->materials);
         if ($this->object->isNew()) {
