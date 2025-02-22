@@ -17,6 +17,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     protected $masterService;
     public $materialCategory;
+    public $materialBrand;
 
     public function mount(): void
     {
@@ -28,6 +29,7 @@ class IndexDataTable extends BaseDataTableComponent
         // Inisialisasi masterService dan ambil data kategori material
         $this->masterService = new MasterService();
         $this->materialCategory = $this->masterService->getMatlCategoryOptionsForSelectFilter();
+        $this->materialBrand = $this->masterService->getMatlBrandOptionsForSelectFilter();
     }
 
     public function builder(): Builder
@@ -89,10 +91,19 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            SelectFilter::make('Merk', 'brand_filter')
+                ->options($this->materialBrand)
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('brand', '=', $value);
+                    }
+                }),
             SelectFilter::make('Kategori', 'kategori_filter')
                 ->options($this->materialCategory)
                 ->filter(function (Builder $builder, string $value) {
-                    $builder->where('category', '=', $value);
+                    if ($value !== '') {
+                        $builder->where('category', '=', $value);
+                    }
                 }),
             // Filter pencarian berdasarkan field tag dengan LIKE
             $this->createTextFilter('Barang', 'tag', 'Cari Barang', function (Builder $builder, string $value) {
@@ -105,9 +116,9 @@ class IndexDataTable extends BaseDataTableComponent
                     'deleted' => 'Non Active',
                 ])->filter(function (Builder $builder, string $value) {
                     if ($value === 'active') {
-                        $builder->whereNull('deleted_at');
+                        $builder->whereNull('materials.deleted_at');
                     } elseif ($value === 'deleted') {
-                        $builder->whereNotNull('deleted_at');
+                        $builder->whereNotNull('materials.deleted_at');
                     }
                 }),
         ];

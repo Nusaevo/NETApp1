@@ -13,7 +13,7 @@ return [
     'cust_reff' => 'Referensi Pelanggan',
     'tanggal_transaksi' => 'Tanggal Transaksi',
     'detail_information' => 'Informasi Detail',
-    'supplier' => 'Custommer',
+    'supplier' => 'Supplier',
     'created_date' => 'Tgl dibuat',
     'status' => 'Status',
     'action' => 'Aksi',

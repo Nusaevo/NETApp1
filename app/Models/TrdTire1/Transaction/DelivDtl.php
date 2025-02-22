@@ -79,6 +79,7 @@ class DelivDtl extends BaseModel
             $ivtBal = IvtBal::firstOrCreate(
                 [
                     'matl_id'    => $delivDtl->matl_id,
+                    'matl_code'  => $delivDtl->matl_code,
                     'matl_uom'   => $delivDtl->matl_uom,
                     'wh_id'      => $delivDtl->wh_id,
                     'batch_code' => $delivDtl->batch_code,
@@ -100,20 +101,20 @@ class DelivDtl extends BaseModel
             $ivtBal->save();
             $delivDtl->ivt_id = $ivtBal->id;
 
-            // Update IvtBalUnit
-            $qtyChange = ($delivDtl->tr_type == 'PD') ? $delta : -$delta;
-            $ivtBalUnit = IvtBalUnit::firstOrNew([
-                'ivt_id'     => $ivtBal->id,
-                'matl_id'    => $delivDtl->matl_id,
-                'wh_id'      => $delivDtl->wh_id,
-                'batch_code' => $delivDtl->batch_code,
-            ]);
-            if (!$ivtBalUnit->exists) {
-                $ivtBalUnit->unit_code = $delivDtl->matl_uom;
-                $ivtBalUnit->qty_oh = 0;
-            }
-            $ivtBalUnit->qty_oh += $qtyChange;
-            $ivtBalUnit->save();
+            // // Update IvtBalUnit
+            // $qtyChange = ($delivDtl->tr_type == 'PD') ? $delta : -$delta;
+            // $ivtBalUnit = IvtBalUnit::firstOrNew([
+            //     'ivt_id'     => $ivtBal->id,
+            //     'matl_id'    => $delivDtl->matl_id,
+            //     'wh_id'      => $delivDtl->wh_id,
+            //     'batch_code' => $delivDtl->batch_code,
+            // ]);
+            // if (!$ivtBalUnit->exists) {
+            //     $ivtBalUnit->unit_code = $delivDtl->matl_uom;
+            //     $ivtBalUnit->qty_oh = 0;
+            // }
+            // $ivtBalUnit->qty_oh += $qtyChange;
+            // $ivtBalUnit->save();
 
             // Update qty_oh pada MatlUom
             $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
@@ -150,6 +151,7 @@ class DelivDtl extends BaseModel
                     'trdtl_id'   => $delivDtl->id,
                     'ivt_id'     => $delivDtl->ivt_id,
                     'matl_id'    => $delivDtl->matl_id,
+                    'matl_code'  => $delivDtl->matl_code,
                     'matl_uom'   => $delivDtl->matl_uom,
                     'wh_id'      => $delivDtl->wh_id,
                     'wh_code'    => $delivDtl->wh_code,
@@ -214,14 +216,14 @@ class DelivDtl extends BaseModel
                 $newQty = $existingBal->qty_oh + $qtyChange;
                 $existingBal->update(['qty_oh' => $newQty]);
 
-                $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                    ->where('wh_id', $delivDtl->wh_id)
-                    ->lockForUpdate()
-                    ->first();
-                if ($existingBalUnit) {
-                    $newUnitQty = $existingBalUnit->qty_oh + $qtyChange;
-                    $existingBalUnit->update(['qty_oh' => $newUnitQty]);
-                }
+                // $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                //     ->where('wh_id', $delivDtl->wh_id)
+                //     ->lockForUpdate()
+                //     ->first();
+                // if ($existingBalUnit) {
+                //     $newUnitQty = $existingBalUnit->qty_oh + $qtyChange;
+                //     $existingBalUnit->update(['qty_oh' => $newUnitQty]);
+                // }
             }
 
             BillingDtl::where('trhdr_id', $delivDtl->trhdr_id)

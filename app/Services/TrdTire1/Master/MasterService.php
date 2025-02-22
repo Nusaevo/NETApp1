@@ -128,6 +128,16 @@ class MasterService extends BaseService
         // Tambahkan opsi kosong dengan label "All" sebagai pilihan default
         return ['' => 'All'] + $options;
     }
+    public function getMatlBrandOptionsForSelectFilter()
+    {
+        $data = $this->getConfigData('MMATL_MERK');
+        $options = $data->mapWithKeys(function ($item) {
+            return [$item->str1 => $item->str1 . " - " . $item->str2];
+        })->toArray();
+        // Tambahkan opsi kosong dengan label "All" sebagai pilihan default
+        return ['' => 'All'] + $options;
+    }
+
 
 
     public function getMatlMerkData()

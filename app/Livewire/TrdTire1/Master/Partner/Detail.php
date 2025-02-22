@@ -18,6 +18,7 @@ class Detail extends BaseComponent
     public $PartnerType = [];
     protected $masterService;
     public $generalFilled = false;
+    public $partnerCharsDisabled = false; // Properti untuk enable/disable checkbox
 
     protected $defaultPartnerChars = [
         'IRC' => false,
@@ -85,6 +86,14 @@ class Detail extends BaseComponent
     #endregion
 
     #region CRUD Methods
+    // Method untuk menangani perubahan pada dropdown grp
+    public function onGrpChanged($value)
+    {
+        $this->inputs['grp'] = $value;
+        // Jika nilai 'S' maka disable checkbox partner_chars, selain itu enable
+        $this->partnerCharsDisabled = ($value === 'S');
+        // dd($this->partnerCharsDisabled);
+    }
     public function onValidateAndSave()
     {
         $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));

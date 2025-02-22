@@ -23,6 +23,7 @@ class MaterialListComponent extends DetailComponent
     public $warehouses;
     public $warehousesType;
     public $tr_code;
+
     public $input_details = [];
     public $wh_code; // Add this property
     public $isEdit = "false";
@@ -64,13 +65,29 @@ class MaterialListComponent extends DetailComponent
         } else {
             $this->materials = collect();
         }
-        // tampilkan wh_code dan matl_id pada ivttrDtl
-        $this->object_detail = IvttrDtl::where('trhdr_id', $this->objectIdValue)->get();
-        foreach ($this->object_detail as $key => $detail) {
-            $this->input_details[$key] = populateArrayFromModel($detail);
-            $this->input_details[$key]['wh_code'] = $this->object->wh_code; // Ensure wh_code is set
-            $this->updateItemAmount($key); // Ensure each input item is initialized and updated
-        }
+        // cari data material berdasarkan wh_code dari inputs.wh_code
+        // $this->getIvtBall($this->inputs['wh_code']);
+        // $this->materials = Material::all();
+        // $this->materials = Material::where('wh_code', $this->inputs['wh_code'])->get();
+        //
+
+
+
+
+        //  // Ensure wh_code is displayed during edit
+        // if (!empty($this->objectIdValue)) {
+        //     $this->object = IvttrDtl::find($this->objectIdValue);
+        //     $this->inputs = populateArrayFromModel($this->object);
+        //     $this->inputs['wh_code'] = $this->object->wh_code; // Ensure wh_code is not an array
+        //     $this->loadDetails();
+        // }
+        // // tampilkan wh_code dan matl_id pada ivttrDtl
+        // $this->object_detail = IvttrDtl::where('trhdr_id', $this->objectIdValue)->get();
+        // foreach ($this->object_detail as $key => $detail) {
+        //     $this->inputs = populateArrayFromModel($this->object);
+        //     $this->inputs['wh_code'] = $this->object->wh_code; // Ensure wh_code is not an array
+        //     $this->loadDetails();
+        // }
 
 
         if (!empty($this->objectIdValue)) {

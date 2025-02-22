@@ -23,27 +23,28 @@
                                 <x-ui-padding>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('category') }}" model="inputs.grp"
-                                            :options="$PartnerType" required="true" :action="$actionValue" />
+                                            :options="$PartnerType" required="true" :action="$actionValue"
+                                            onChanged="onGrpChanged($event.target.value)" />
                                         <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code"
                                             type="text" :action="$actionValue" enabled="false" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name"
-                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
+                                            type="text" :action="$actionValue" required="true" capslockMode="true" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address"
-                                            type="textarea" required="true" :action="$actionValue" capslockMode="true"/>
+                                            type="textarea" required="true" :action="$actionValue" capslockMode="true" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country"
-                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
+                                            type="text" :action="$actionValue" required="true" capslockMode="true" />
                                         <x-ui-text-field label="{{ $this->trans('province') }}" model="inputs.province"
-                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
+                                            type="text" :action="$actionValue" required="true" capslockMode="true" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('city') }}" model="inputs.city"
-                                            type="text" :action="$actionValue" required="true" capslockMode="true"/>
+                                            type="text" :action="$actionValue" required="true" capslockMode="true" />
                                         <x-ui-text-field label="{{ $this->trans('postal_code') }}"
                                             model="inputs.postal_code" type="text" :action="$actionValue" />
                                     </div>
@@ -64,13 +65,13 @@
                             <x-ui-card title="Point">
                                 <x-ui-option label="Multiple Options Checklist" model="inputs.partner_chars"
                                     :options="['IRC' => 'Poin IRC', 'GT' => 'Poin GT', 'ZN' => 'Poin ZN']" required="false" layout="horizontal" enabled="true"
-                                    type="checkbox" visible="true" />
+                                    type="checkbox" visible="true" enabled="true" />
                             </x-ui-card>
                             <x-ui-card title="Credit">
                                 <x-ui-padding>
                                     <div class="row">
-                                        <x-ui-text-field label="{{ $this->trans('amt_limit') }}" model="inputs.amt_limit"
-                                            type="number" :action="$actionValue" />
+                                        <x-ui-text-field label="{{ $this->trans('amt_limit') }}"
+                                            model="inputs.amt_limit" type="number" :action="$actionValue" />
                                     </div>
                                 </x-ui-padding>
                             </x-ui-card>
@@ -96,7 +97,7 @@
                             @endif
                             <div>
                                 <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
-                                :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+                                    :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
                             </div>
                         </x-ui-footer>
 
@@ -111,7 +112,8 @@
                 <div class="tab-pane fade show" id="bank" role="tabpanel" aria-labelledby="bank-tab">
                     @livewire($currentRoute . '.bank-list-component', ['action' => $action, 'objectId' => $objectId])
                 </div>
-                <div class="tab-pane fade show" id="alamat_kirim" role="tabpanel" aria-labelledby="alamat_kirim-tab">
+                <div class="tab-pane fade show" id="alamat_kirim" role="tabpanel"
+                    aria-labelledby="alamat_kirim-tab">
                     @livewire($currentRoute . '.shipping-address-component', ['action' => $action, 'objectId' => $objectId])
                 </div>
                 @if ($actionValue !== 'Create')
