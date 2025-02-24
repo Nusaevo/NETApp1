@@ -273,7 +273,7 @@ class Material extends BaseModel
 
                     // Generate kode material
                     $materialCode = Material::generateMaterialCode($category);
-                    $name = $masterService->getMatlCategoryString($category . ' ' . $brand . ' ' . $type);
+                    $name = $masterService->getMatlCategoryString($category). ' ' . $brand . ' ' . $type;
                     // Buat material baru
                     $material = Material::create([
                         'code' => $materialCode,
