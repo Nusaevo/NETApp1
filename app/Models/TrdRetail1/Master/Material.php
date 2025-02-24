@@ -273,17 +273,19 @@ class Material extends BaseModel
 
                     // Generate kode material
                     $materialCode = Material::generateMaterialCode($category);
-
+                    $name = $masterService->getMatlCategoryString($category . ' ' . $brand . ' ' . $type);
                     // Buat material baru
                     $material = Material::create([
                         'code' => $materialCode,
+                        'name' => $name,
                         'category' => $category,
                         'brand' => $brand,
                         'seq' => $no,
                         'class_code' => $type,
+                        'type_code' => 'P',
                         'specs' => ['color_code' => $colorCode, 'color_name' => $colorName],
-                        'selling_price' => $sellingPrice,
                         'remarks' => $remarks,
+                        'uom' => $uom,
                     ]);
 
                     // Buat UOM dan barcode
@@ -291,6 +293,10 @@ class Material extends BaseModel
                         $material->MatlUom()->create([
                             'matl_uom' => $uom,
                             'barcode' => $barcode,
+                            'reff_uom' => $uom,
+                            'reff_factor' => 1,
+                            'base_factor' => 1,
+                            'selling_price' => $sellingPrice,
                         ]);
                     }
                 } elseif ($param === 'Update') {
@@ -321,6 +327,7 @@ class Material extends BaseModel
                             'deleted_at' => $nonActive,
                             'remarks' => $remarks,
                             'version_number' => $version++,
+                            'uom' => $uom,
                         ]);
 
                         // Perbarui stok
@@ -332,14 +339,18 @@ class Material extends BaseModel
                                 $material->IvtBal()->create(['qty_oh' => $stock]);
                             }
                         }
+                        $material->MatlUom()->updateOrCreate(
+                            ['matl_uom' => $material->uom],
+                            [
+                                'matl_uom' => $uom,
+                                'barcode' => $barcode,
+                                'reff_uom' => $uom,
+                                'reff_factor' => 1,
+                                'base_factor' => 1,
+                                'selling_price' => $sellingPrice,
+                            ]
+                        );
 
-                        // Perbarui UOM dan barcode
-                        $uomData = $material->MatlUom()->first();
-                        if ($uomData) {
-                            $uomData->update(['matl_uom' => $uom, 'barcode' => $barcode]);
-                        } else {
-                            $material->MatlUom()->create(['matl_uom' => $uom, 'barcode' => $barcode]);
-                        }
                     } else {
                         $status = 'Error';
                         $message = 'Material dengan kode ' . $materialCode . ' tidak ditemukan.';

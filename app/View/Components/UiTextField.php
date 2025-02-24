@@ -16,6 +16,9 @@ class UiTextField extends UiBaseComponent
     // Number of rows for the text field, used when the input type is 'textarea'
     public $rows;
 
+    // Height of the text field, useful for textarea customization
+    public $height;
+
     // Label for a button associated with this text field, if applicable
     public $buttonName;
 
@@ -38,6 +41,7 @@ class UiTextField extends UiBaseComponent
      * @param string $span         Span or width of the field in the layout (e.g., 'Full', 'Half').
      * @param string $onChanged    Event name triggered when the field value changes.
      * @param int $rows            Number of rows displayed in the field (useful for text areas).
+     * @param int $height          Custom height for the text field (useful for textarea customization).
      * @param string $clickEvent   Event triggered by an associated button or clickable element.
      * @param string $buttonName   Name or label displayed on the associated button, if any.
      * @param string $capslockMode Enables automatic uppercase transformation ('true' or 'false').
@@ -54,6 +58,7 @@ class UiTextField extends UiBaseComponent
         $span = 'Full',
         $onChanged = '',
         $rows = 5,
+        $height = '',
         $clickEvent = '',
         $buttonName = "",
         $capslockMode = 'false',
@@ -73,6 +78,9 @@ class UiTextField extends UiBaseComponent
 
         // Number of rows for the field (useful when it’s a textarea)
         $this->rows = $rows;
+
+        // Custom height for the field
+        $this->height = $height;
 
         // Name or label for an associated button
         $this->buttonName = $buttonName;

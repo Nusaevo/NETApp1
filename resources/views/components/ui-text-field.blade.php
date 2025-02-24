@@ -11,7 +11,9 @@
     <div class="input-group">
         <div class="{{ $containerClass }}">
             @if (isset($type) && $type === 'textarea')
-                <textarea style="min-height: 150px;" wire:model.lazy="{{ $model }}" id="{{ $id }}"
+                <textarea
+                    style="{{ isset($height) && $height !== '' ? 'height: ' . $height . ';' : 'min-height: 80px;' }}"
+                     wire:model.lazy="{{ $model }}" id="{{ $id }}"
                     rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                     placeholder="{{ isset($label) ? $label : '' }}"
@@ -27,14 +29,14 @@
                                         $wire.set('{{ $model }}', input.value);
                                     });
 
-                                    {{-- // Saat tekan Enter
+                                    // Saat tekan Enter
                                     input.addEventListener('keydown', function(event) {
                                         if (event.key === 'Enter') {
                                             event.preventDefault();
                                             input.value = input.value.toUpperCase();
                                             $wire.set('{{ $model }}', input.value);
                                         }
-                                    }); --}}
+                                    });
                                 }
                             }
                         }
