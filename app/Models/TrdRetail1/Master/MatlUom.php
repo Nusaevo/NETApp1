@@ -14,10 +14,17 @@ class MatlUom extends BaseModel
     protected $table = 'matl_uoms';
     use SoftDeletes;
 
-
     protected static function boot()
     {
         parent::boot();
+        static::saving(function ($matlUom) {
+            if (!$matlUom->matl_code && $matlUom->matl_id) {
+                $material = Material::find($matlUom->matl_id);
+                if ($material) {
+                    $matlUom->matl_code = $material->code;
+                }
+            }
+        });
     }
 
     protected $fillable = [
