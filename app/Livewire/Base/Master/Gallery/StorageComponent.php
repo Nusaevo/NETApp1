@@ -7,6 +7,10 @@ use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use App\Models\Base\Attachment;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Http;
+use Exception;
+use Illuminate\Support\Facades\DB;
+use App\Models\TrdRetail1\Master\Material;
 
 class StorageComponent extends BaseComponent
 {
@@ -102,4 +106,124 @@ class StorageComponent extends BaseComponent
             $this->deleteImage($imageId);
         }
     }
+
+    //Custom Action For TrdRetail1
+
+    public $syncProgress = 0;
+    public $syncedImages = [];
+    public $failedImages = [];
+
+    private function fetchUrlContent($url)
+    {
+        $response = Http::get($url);
+
+        if ($response->failed()) {
+            throw new Exception("Failed to fetch content from URL: {$url}, Status Code: {$response->status()}");
+        }
+
+        return $response->body();
+    }
+
+    public function syncImages()
+    {
+        if (Session::get('app_code') != 'TrdRetail1') {
+            $this->dispatch('error', 'This feature is only available for TrdRetail1.');
+            return;
+        }
+
+        $this->dispatch('openSyncModal');
+        $this->syncProgress = 0;
+        $this->syncedImages = [];
+        $this->failedImages = [];
+
+        // Ambil semua attachment dari NetStorage
+        $attachments = Attachment::where('path', 'like', '%NetStorage%')->get();
+
+        if ($attachments->isEmpty()) {
+            $this->dispatch('error', 'No attachments found in NetStorage.');
+            $this->dispatch('syncComplete');
+            return;
+        }
+
+        $totalAttachments = $attachments->count();
+        $processed = 0;
+
+        foreach ($attachments as $attachment) {
+            try {
+                DB::beginTransaction();
+
+                $attachmentFilename = pathinfo($attachment->name, PATHINFO_FILENAME);
+                $material = Material::where('code', 'like', "%{$attachmentFilename}%")->first();
+
+                if ($material) {
+                    $url = $attachment->getUrl();
+                    $response = Http::get($url);
+
+                    if ($response->failed()) {
+                        throw new Exception("Failed to fetch image from URL: {$url}");
+                    }
+
+                    $imageData = $response->body();
+                    $mimeType = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpeg';
+                    $dataUri = "data:image/{$mimeType};base64," . base64_encode($imageData);
+
+                    $filename = uniqid() . '.jpg';
+
+                    $filePath = Attachment::saveAttachmentByFileName($dataUri, $material->id, class_basename($material), $filename);
+
+                    if ($filePath !== false) {
+                        $this->syncedImages[] = [
+                            'material_id' => $material->id,
+                            'file_name' => $filename,
+                            'path' => $filePath,
+                        ];
+
+                        $this->dispatch('pushSyncedImage', [
+                            'material_id' => $material->id,
+                            'file_name' => $filename,
+                            'path' => $filePath,
+                        ]);
+
+                        // Hapus attachment lama setelah sukses upload
+                        try {
+                            Attachment::deleteAttachmentById($attachment->id);
+                        } catch (Exception $e) {
+
+                        }
+                    } else {
+                        throw new Exception("Failed to save attachment: {$filename}");
+                    }
+                } else {
+                    throw new Exception("No material found matching attachment filename: {$attachmentFilename}");
+                }
+
+                DB::commit();
+            } catch (Exception $e) {
+                DB::rollBack();
+
+                $this->failedImages[] = [
+                    'file_name' => $attachmentFilename,
+                    'error' => $e->getMessage(),
+                ];
+
+                $this->dispatch('pushFailedImage', [
+                    'file_name' => $attachmentFilename,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $processed++;
+            $this->syncProgress = intval(($processed / $totalAttachments) * 100);
+            $this->dispatch('updateSyncProgress', $this->syncProgress);
+        }
+
+        if (!empty($this->failedImages)) {
+            $this->dispatch('error', 'Some images failed to sync. Please check the list.');
+        } else {
+            $this->dispatch('success', 'All images synchronized successfully.');
+        }
+
+        $this->dispatch('syncComplete');
+    }
+
 }
