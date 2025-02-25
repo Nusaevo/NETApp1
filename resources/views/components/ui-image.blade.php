@@ -1,13 +1,14 @@
-@props(['src', 'alt', 'width', 'height'])
+@props(['src', 'alt', 'width' => '300px', 'height' => '300px'])
+
 @php
 $imageSrc = !empty($src) ? $src : 'https://via.placeholder.com/300';
 @endphp
 
-<div style="position: relative; display: inline-block; cursor: pointer;" onclick="showImagePreview('{{ $src }}')">
+<div style="position: relative; display: inline-block; cursor: pointer; width: {{ $width }}; height: {{ $height }}; overflow: hidden; display: flex; align-items: center; justify-content: center;" onclick="showImagePreview('{{ $src }}')">
     <img
         src="{{ $imageSrc }}"
         alt="{{ $alt }}"
-        style="width: {{ $width }}; height: {{ $height }}; object-fit: cover; transition: filter 0.3s;"
+        style="max-width: 100%; max-height: 100%; object-fit: contain; transition: filter 0.3s;"
         onmouseover="this.style.filter='brightness(0.5)';"
         onmouseout="this.style.filter='brightness(1)';"
     >
@@ -19,7 +20,6 @@ $imageSrc = !empty($src) ? $src : 'https://via.placeholder.com/300';
 </div>
 
 <script>
-    // Show the eye icon on hover
     document.addEventListener('DOMContentLoaded', function() {
         const imageContainers = document.querySelectorAll('div[style*="position: relative; display: inline-block;"]');
         imageContainers.forEach(container => {
