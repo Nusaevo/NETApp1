@@ -250,7 +250,6 @@ class Material extends BaseModel
 
         try {
             foreach ($dataTable as $rowIndex => $row) {
-                // Skip header dan baris dengan status 'Error'
                 if ($rowIndex === 0 || ($row[$statusIndex] ?? '') === 'Error') {
                     continue;
                 }
@@ -271,10 +270,9 @@ class Material extends BaseModel
                     $remarks = $row[8] ?? ''; // Keterangan (Optional)
                     $barcode = $row[9] ?? ''; // Kode Barcode (Optional)
 
-                    // Generate kode material
                     $materialCode = Material::generateMaterialCode($category);
-                    $name =  Material::generateName($masterService->getMatlCategoryString($category), $brand, $type, $colorCode);
-                    // Buat material baru
+                    $name = Material::generateName($category, $brand, $type, $colorCode);
+
                     $material = Material::create([
                         'code' => $materialCode,
                         'name' => $name,
@@ -288,7 +286,9 @@ class Material extends BaseModel
                         'uom' => $uom,
                     ]);
 
-                    // Buat UOM dan barcode
+                    $tag = Material::generateTag($material->code, $material->MatlUom, $brand, $type, $material->specs);
+                    $material->update(['tag' => $tag]);
+
                     if ($material) {
                         $material->MatlUom()->create([
                             'matl_uom' => $uom,
@@ -300,7 +300,6 @@ class Material extends BaseModel
                         ]);
                     }
                 } elseif ($param === 'Update') {
-                    // Proses untuk template Update
                     $no = $row[0] ?? '';
                     $colorCode = $row[1] ?? '';
                     $colorName = $row[2] ?? '';
@@ -314,11 +313,9 @@ class Material extends BaseModel
                     $remarks = $row[10] ?? '';
                     $version = $row[11] ?? '';
 
-                    // Cari material berdasarkan kode
                     $material = Material::where('code', $materialCode)->first();
 
                     if ($material) {
-                        // Perbarui data material
                         $material->update([
                             'specs' => ['color_code' => $colorCode, 'color_name' => $colorName],
                             'selling_price' => $sellingPrice,
@@ -330,7 +327,9 @@ class Material extends BaseModel
                             'uom' => $uom,
                         ]);
 
-                        // Perbarui stok
+                        $tag = Material::generateTag($material->code, $material->MatlUom, $material->brand, $material->class_code, $material->specs);
+                        $material->update(['tag' => $tag]);
+
                         if ($stock !== null) {
                             $ivtBal = $material->IvtBal()->first();
                             if ($ivtBal) {
@@ -350,20 +349,18 @@ class Material extends BaseModel
                                 'selling_price' => $sellingPrice,
                             ]
                         );
-
                     } else {
                         $status = 'Error';
                         $message = 'Material dengan kode ' . $materialCode . ' tidak ditemukan.';
                     }
                 }
 
-                // Tambahkan status dan pesan ke baris
                 $dataTable[$rowIndex][$statusIndex] = $status;
                 $dataTable[$rowIndex][$messageIndex] = $message;
 
-                // Perbarui progress audit
                 $audit->updateAuditTrail(intval(50 + ($rowIndex / count($dataTable)) * 50), "Processed row $rowIndex.", Status::IN_PROGRESS);
             }
+
 
             DB::commit();
 
