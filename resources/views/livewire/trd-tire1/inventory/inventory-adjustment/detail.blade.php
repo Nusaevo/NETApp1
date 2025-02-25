@@ -19,14 +19,14 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('Tipe transaksi') }}"
-                                        model="inputs.tr_type" :options="$warehousesType" required="true" :action="$actionValue" />
+                                        model="inputs.tr_type" :options="$warehousesType" required="true" :action="$actionValue"/>
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_id" :action="$actionValue"
                                         required="false" enabled="false" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.tr_descr"
+                                    <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.remark"
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
                             </x-ui-padding>

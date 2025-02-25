@@ -114,6 +114,15 @@ class Detail extends BaseComponent
         }
 
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+
+        // Setelah header tersimpan, periksa tr_type
+        if ($this->inputs['tr_type'] === 'TW') {
+            $this->dispatch('toggleWarehouseDropdown', true);
+        } else {
+            $this->dispatch('toggleWarehouseDropdown', false);
+        }
+
+
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
@@ -147,6 +156,13 @@ class Detail extends BaseComponent
         }
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+
+    public function onTypeChanged($value)
+    {
+        $this->inputs['tr_type'] = $value;
+        $enabled = $value === 'TW';
+        $this->dispatch('toggleWarehouseDropdown', $enabled);
     }
     #endregion
 }

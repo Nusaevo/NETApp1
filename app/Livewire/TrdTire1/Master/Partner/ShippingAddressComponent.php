@@ -11,6 +11,9 @@ class ShippingAddressComponent extends DetailComponent
 {
     public $object_detail;
     public $input_details = [];
+    public $inputs = [
+        'grp' => '',
+    ];
 
     public $rules  = [
         'input_details.*.name' => 'required',
@@ -39,7 +42,7 @@ class ShippingAddressComponent extends DetailComponent
 
     public function addItem()
     {
-        if (!empty($this->objectIdValue)) {
+        if (!empty($this->objectIdValue) && $this->inputs['grp'] !== 'S') {
             try {
                 // isi default field sesuai field wp_details
                 $this->input_details[] = [
@@ -51,7 +54,11 @@ class ShippingAddressComponent extends DetailComponent
                 $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
             }
         } else {
-            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
+            if (empty($this->objectIdValue)) {
+                $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu.']));
+            } else {
+                $this->dispatch('error', __('generic.error.save', ['message' => 'Kategori tidak sesuai.']));
+            }
         }
     }
 

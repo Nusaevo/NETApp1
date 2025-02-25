@@ -14,11 +14,10 @@ use Illuminate\Support\Facades\Log;
 class Detail extends BaseComponent
 {
     #region Constant Variables
-    public $inputs = [];
     public $PartnerType = [];
     protected $masterService;
     public $generalFilled = false;
-    public $partnerCharsDisabled = false; // Properti untuk enable/disable checkbox
+    public $partnerCharsDisabled = 'false';
 
     protected $defaultPartnerChars = [
         'IRC' => false,
@@ -90,9 +89,8 @@ class Detail extends BaseComponent
     public function onGrpChanged($value)
     {
         $this->inputs['grp'] = $value;
-        // Jika nilai 'S' maka disable checkbox partner_chars, selain itu enable
-        $this->partnerCharsDisabled = ($value === 'S');
-        // dd($this->partnerCharsDisabled);
+        $this->partnerCharsDisabled = ($value === 'S') ? 'false' : 'true';
+
     }
     public function onValidateAndSave()
     {
@@ -114,7 +112,7 @@ class Detail extends BaseComponent
         $this->object->fill($this->inputs);
         $this->object->save();
 
-        if ($this->object->PartnerDetail == null) {
+        if ($this->object->PartnerDetail == null && $this->inputs['grp'] !== 'S') {
             $this->object->PartnerDetail()->create([
                 'partner_id'       => $this->object->id,
                 'shipping_address' => [[
@@ -147,3 +145,4 @@ class Detail extends BaseComponent
     #endregion
 
 }
+

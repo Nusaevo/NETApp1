@@ -29,12 +29,14 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            // Column::make($this->trans("tr_type"), "tr_type")
-            //     ->hideIf(true)
-            //     ->sortable(),
             Column::make($this->trans("date"), "tr_date")
-                ->searchable()
+            ->searchable()
+            ->sortable(),
+            Column::make($this->trans("tr_type"), "tr_type")
                 ->sortable(),
+            Column::make($this->trans("remark"), "remark")
+                ->sortable(),
+
             // Column::make($this->trans("tr_code"), "tr_code")
             //     ->format(function ($value, $row) {
             //         return '<a href="' . route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [

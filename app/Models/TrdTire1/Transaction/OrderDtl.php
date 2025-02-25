@@ -77,7 +77,6 @@ class OrderDtl extends BaseModel
 
         });
         static::deleting(function ($orderDtl) {
-            DB::beginTransaction();
             try {
                 $delivDtls = DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
                     ->where('tr_seq', $orderDtl->tr_seq)

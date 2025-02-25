@@ -43,12 +43,11 @@ class DelivDtl extends BaseModel
     ];
 
     protected static function boot()
-{
-    parent::boot();
+    {
+        parent::boot();
 
-    // Event saving: sebelum data disimpan, jalankan semua operasi dalam satu transaksi
-    static::saving(function ($delivDtl) {
-        DB::transaction(function () use ($delivDtl) {
+        // Event saving: sebelum data disimpan, jalankan semua operasi dalam satu transaksi
+        static::saving(function ($delivDtl) {
             // Persiapan data
             if (empty($delivDtl->batch_code)) {
                 $delivDtl->batch_code = date('y/m/d');
@@ -62,8 +61,7 @@ class DelivDtl extends BaseModel
                 $delivDtl->wh_id = $warehouse->id;
             }
 
-            // Cek apakah record DelivDtl sudah ada (update) atau baru (create)
-            $existing = null;
+            // Hitung delta antara qty baru dan qty lama
             $oldQty = 0;
             if ($delivDtl->exists) {
                 $existing = DelivDtl::find($delivDtl->id);
@@ -71,15 +69,19 @@ class DelivDtl extends BaseModel
                     $oldQty = (float)$existing->qty;
                 }
             }
-
             $newQty = (float)$delivDtl->qty;
             $delta = $newQty - $oldQty;
 
-            // Cari atau buat record IvtBal
+            // Update qty_reff di OrderDtl terkait (jika ada)
+            if ($orderDtl = $delivDtl->OrderDtl) {
+                $orderDtl->qty_reff += $delta;
+                $orderDtl->save();
+            }
+
+            // Update IvtBal
             $ivtBal = IvtBal::firstOrCreate(
                 [
                     'matl_id'    => $delivDtl->matl_id,
-                    'matl_code'  => $delivDtl->matl_code,
                     'matl_uom'   => $delivDtl->matl_uom,
                     'wh_id'      => $delivDtl->wh_id,
                     'batch_code' => $delivDtl->batch_code,
@@ -88,11 +90,10 @@ class DelivDtl extends BaseModel
                     'matl_code'  => $delivDtl->matl_code,
                     'matl_descr' => $delivDtl->matl_descr,
                     'wh_code'    => $delivDtl->wh_code,
-                    'qty_oh'     => 0, // Inisialisasi stok awal
+                    'qty_oh'     => 0,
                 ]
             );
 
-            // Update qty_oh pada IvtBal
             if ($delivDtl->tr_type == 'PD') {
                 $ivtBal->qty_oh += $delta;
             } elseif ($delivDtl->tr_type == 'SD') {
@@ -101,29 +102,12 @@ class DelivDtl extends BaseModel
             $ivtBal->save();
             $delivDtl->ivt_id = $ivtBal->id;
 
-            // // Update IvtBalUnit
-            // $qtyChange = ($delivDtl->tr_type == 'PD') ? $delta : -$delta;
-            // $ivtBalUnit = IvtBalUnit::firstOrNew([
-            //     'ivt_id'     => $ivtBal->id,
-            //     'matl_id'    => $delivDtl->matl_id,
-            //     'wh_id'      => $delivDtl->wh_id,
-            //     'batch_code' => $delivDtl->batch_code,
-            // ]);
-            // if (!$ivtBalUnit->exists) {
-            //     $ivtBalUnit->unit_code = $delivDtl->matl_uom;
-            //     $ivtBalUnit->qty_oh = 0;
-            // }
-            // $ivtBalUnit->qty_oh += $qtyChange;
-            // $ivtBalUnit->save();
-
-            // Update qty_oh pada MatlUom
             $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
                 ->where('matl_uom', $delivDtl->matl_uom)
                 ->first();
             if ($matlUom) {
                 if ($delivDtl->tr_type == 'PD') {
                     $matlUom->qty_oh += $delta;
-                    // Kurangi qty_fgr
                     $matlUom->qty_fgr -= $delta;
                 } elseif ($delivDtl->tr_type == 'SD') {
                     $matlUom->qty_oh -= $delta;
@@ -132,13 +116,11 @@ class DelivDtl extends BaseModel
                 $matlUom->save();
             }
         });
-    });
 
-    // Event saved: setelah data tersimpan, update IvtLog dan BillingDtl di dalam transaksi
-    static::saved(function ($delivDtl) {
-        DB::transaction(function () use ($delivDtl) {
-            $header = $delivDtl->DelivHdr;   // Ambil data header melalui relasi (pastikan relasi sudah didefinisikan)
-            $orderDtl = $delivDtl->OrderDtl;   // Jika diperlukan
+        // Event saved: setelah data tersimpan, update IvtLog dan BillingDtl di dalam transaksi
+        static::saved(function ($delivDtl) {
+            $header = $delivDtl->DelivHdr;
+            $orderDtl = $delivDtl->OrderDtl;
 
             IvtLog::updateOrCreate(
                 [
@@ -183,17 +165,15 @@ class DelivDtl extends BaseModel
                     'price'      => $orderDtl ? $orderDtl->amt : 0,
                     'amt'        => $delivDtl->qty * ($orderDtl ? $orderDtl->amt : 0),
                     'dlvdtl_id'  => $delivDtl->id,
-                    'dlvdtlr_seq'=> $header ? $header->tr_seq : $delivDtl->tr_seq,
-                    'dlvhdr_type'=> $header ? $header->tr_type : $delivDtl->tr_type,
+                    'dlvdtlr_seq' => $header ? $header->tr_seq : $delivDtl->tr_seq,
+                    'dlvhdr_type' => $header ? $header->tr_type : $delivDtl->tr_type,
                     'dlvhdr_id'  => $header ? $header->id : $delivDtl->trhdr_id,
                 ]
             );
         });
-    });
 
-    // Event deleting: update IvtBal dan IvtBalUnit dalam transaksi saat data dihapus
-    static::deleting(function ($delivDtl) {
-        DB::transaction(function () use ($delivDtl) {
+        // Event deleting: update IvtBal dan IvtBalUnit dalam transaksi saat data dihapus
+        static::deleting(function ($delivDtl) {
             $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
             if ($warehouse) {
                 $delivDtl->wh_id = $warehouse->id;
@@ -230,8 +210,7 @@ class DelivDtl extends BaseModel
                 ->where('tr_seq', $delivDtl->tr_seq)
                 ->forceDelete();
         });
-    });
-}
+    }
 
 
 

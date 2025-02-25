@@ -22,6 +22,7 @@ class IvtLog extends BaseModel
         'trdtl_id',
         'ivt_id',
         'matl_id',
+        'matl_code',
         'matl_uom',
         'wh_id',
         'wh_code',
