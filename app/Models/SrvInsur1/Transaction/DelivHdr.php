@@ -23,7 +23,6 @@ class DelivHdr extends BaseModel
         'reff_code',
         'partner_id',
         'partner_code',
-        'deliv_by',
         'status_code'
     ];
 

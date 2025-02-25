@@ -23,15 +23,21 @@ class MaterialListComponent extends DetailComponent
     public $warehouses;
     public $warehousesType;
     public $tr_code;
-
     public $input_details = [];
-    public $wh_code; // Add this property
+    public $wh_code;
     public $isEdit = "false";
-    public $inputs = []; // Add this property
+    public $isEditWhCode2 = "false";
+    public $inputs = [];
+    public $matl_id;
+    public $qty;
 
     protected $rules = [
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
+    ];
+
+    protected $listeners = [
+        'toggleWarehouseDropdown' => 'toggleWarehouseDropdown',
     ];
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $wh_code = null)
@@ -43,7 +49,7 @@ class MaterialListComponent extends DetailComponent
 
     public function onReset()
     {
-        $this->reset('input_details'); // Reset input_details instead of inputs
+        $this->reset('input_details');
         $this->object = new IvttrHdr();
         $this->object = new IvttrDtl();
     }
@@ -55,45 +61,24 @@ class MaterialListComponent extends DetailComponent
         $this->warehouses = $this->masterService->getWarehouse();
         $this->warehousesType = $this->masterService->getWarehouseType();
 
-        if (!empty($this->inputs['wh_code'])) {
-            $materialIds = IvtBal::where('wh_code', $this->inputs['wh_code'])->pluck('matl_id')->toArray();
-            $this->materials = Material::whereIn('id', $materialIds)->get()
-                ->map(fn($m) => [
-                    'value' => $m->id,
-                    'label' => $m->code . " - " . $m->name,
-                ]);
-        } else {
-            $this->materials = collect();
-        }
-        // cari data material berdasarkan wh_code dari inputs.wh_code
-        // $this->getIvtBall($this->inputs['wh_code']);
-        // $this->materials = Material::all();
-        // $this->materials = Material::where('wh_code', $this->inputs['wh_code'])->get();
-        //
-
-
-
-
-        //  // Ensure wh_code is displayed during edit
-        // if (!empty($this->objectIdValue)) {
-        //     $this->object = IvttrDtl::find($this->objectIdValue);
-        //     $this->inputs = populateArrayFromModel($this->object);
-        //     $this->inputs['wh_code'] = $this->object->wh_code; // Ensure wh_code is not an array
-        //     $this->loadDetails();
-        // }
-        // // tampilkan wh_code dan matl_id pada ivttrDtl
-        // $this->object_detail = IvttrDtl::where('trhdr_id', $this->objectIdValue)->get();
-        // foreach ($this->object_detail as $key => $detail) {
-        //     $this->inputs = populateArrayFromModel($this->object);
-        //     $this->inputs['wh_code'] = $this->object->wh_code; // Ensure wh_code is not an array
-        //     $this->loadDetails();
-        // }
-
-
         if (!empty($this->objectIdValue)) {
             $this->object = IvttrHdr::find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
+
+            if (isset($this->inputs['tr_type']) && $this->inputs['tr_type'] === 'TW') {
+                $this->isEditWhCode2 = 'true';
+            } else {
+                $this->isEditWhCode2 = 'false';
+            }
             $this->loadDetails();
+            if (!empty($this->inputs['wh_code'])) {
+                $materialIds = IvtBal::where('wh_code', $this->inputs['wh_code'])->pluck('matl_id')->toArray();
+                $this->materials = Material::whereIn('id', $materialIds)->get()
+                    ->map(fn($m) => [
+                        'value' => $m->id,
+                        'label' => $m->code . " - " . $m->name,
+                    ]);
+            }
         }
     }
 
@@ -108,33 +93,8 @@ class MaterialListComponent extends DetailComponent
             'qty'     => 0,
             'wh_code' => $this->inputs['wh_code']
         ];
+        $this->onWarehouseChanged($this->inputs['wh_code']);
     }
-
-    // public function onMaterialChanged($key, $matlId, $whCode)
-    // {
-    //     if (is_null($matlId)) {
-    //         $this->dispatch('error', 'Material ID tidak boleh kosong.');
-    //         return;
-    //     }
-
-    //     // Cari data material di tabel ivt_bals sesuai wh_code dan matl_id
-    //     $ivtBallRecord = DB::table('ivt_bals')
-    //         ->where('wh_code', $whCode)
-    //         ->where('matl_id', $matlId)
-    //         ->first();
-
-    //     // Jika material tidak ditemukan di gudang tersebut, tampilkan error
-    //     if (!$ivtBallRecord) {
-    //         $this->dispatch('error', 'Material tidak ditemukan di inventory gudang yang dipilih.');
-    //         return;
-    //     }
-
-    //     // Jika ditemukan, simpan matl_id pada item yang bersangkutan
-    //     $this->input_details[$key]['matl_id'] = $matlId;
-
-    //     // Jika diperlukan, Anda bisa mengambil data lain dari ivt_bals melalui $ivtBallRecord
-    // }
-
 
     protected function getIvtBall($whCode)
     {
@@ -143,7 +103,6 @@ class MaterialListComponent extends DetailComponent
         // Lakukan sesuatu dengan data yang didapatkan, misalnya menyimpannya ke property atau dispatch event
         // $this->ivtBallData = $data;
     }
-
 
     public function updateItemAmount($key)
     {
@@ -157,11 +116,7 @@ class MaterialListComponent extends DetailComponent
         }
 
         $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
-
     }
-
-
-
 
     public function deleteItem($index)
     {
@@ -170,6 +125,22 @@ class MaterialListComponent extends DetailComponent
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
             }
 
+            $detail = $this->input_details[$index];
+
+            // Jika item sudah ada di DB (biasanya ditandai dengan 'id')
+            if (!empty($detail['id'])) {
+                // Cari data IvttrDtl dengan id tersebut
+                $pos = IvttrDtl::find($detail['id']);
+
+                if ($pos) {
+                    // Hapus kedua record: tr_seq positif (misalnya 1) dan negatif (misalnya -1)
+                    IvttrDtl::where('trhdr_id', $pos->trhdr_id)
+                        ->whereIn('tr_seq', [$pos->tr_seq, -$pos->tr_seq])
+                        ->delete();
+                }
+            }
+
+            // Hapus juga dari array agar tidak muncul lagi di tampilan
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
 
@@ -179,18 +150,36 @@ class MaterialListComponent extends DetailComponent
         }
     }
 
+
+
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
+            // Ambil detail transaksi dengan tr_seq positif (nilai +) saja
+            $this->object_detail = IvttrDtl::where('trhdr_id', $this->object->id)
+                ->where('tr_seq', '>', 0)
+                ->orderBy('tr_seq')
+                ->get();
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
-                $this->input_details[$key]['wh_code'] = $this->object->wh_code; // Ensure wh_code is set
-                $this->updateItemAmount($key); // Ensure each input item is initialized and updated
+            }
+
+            // Jika ada transaksi dengan tr_seq negatif, ambil nilai wh_code-nya sebagai wh_code2
+            $negativeDetail = IvttrDtl::where('trhdr_id', $this->object->id)
+                ->where('tr_seq', '<', 0)
+                ->first();
+            if ($negativeDetail) {
+                $this->inputs['wh_code2'] = $negativeDetail->wh_code;
+            }
+
+            // Ambil wh_code dari transaksi positif (diasumsikan sama untuk seluruh detail)
+            if (count($this->object_detail) > 0) {
+                $this->inputs['wh_code'] = $this->object_detail->first()->wh_code;
             }
         }
     }
+
 
     public function SaveItem()
     {
@@ -199,20 +188,70 @@ class MaterialListComponent extends DetailComponent
 
     public function onValidateAndSave()
     {
-        // Save or update new items
+        // Ambil data IvtBal untuk gudang utama (wh_code)
+        $ivtBals = IvtBal::whereIn('matl_id', array_column($this->input_details, 'matl_id'))
+            ->where('wh_code', $this->inputs['wh_code'])
+            ->get()
+            ->keyBy('matl_id');
+
+        // Jika wh_code2 ada, ambil data IvtBal untuk gudang tujuan
+        if (!empty($this->inputs['wh_code2'])) {
+            $ivtBals2 = IvtBal::whereIn('matl_id', array_column($this->input_details, 'matl_id'))
+                ->where('wh_code', $this->inputs['wh_code2'])
+                ->get()
+                ->keyBy('matl_id');
+        }
+
         foreach ($this->input_details as $key => $detail) {
             $tr_seq = $key + 1;
 
-            // Save matl_id and matl_code to ivttrDtl
-            $ivttrDtl = IvttrDtl::firstOrNew([
-                'trhdr_id' => $this->objectIdValue,
-                'tr_seq' => $tr_seq,
-                'wh_code' => $this->inputs['wh_code'],
-                'matl_id' => $detail['matl_id'],
-            ]);
-            $ivttrDtl->matl_id = $detail['matl_id'];
-            // $ivttrDtl->matl_code = $detail['matl_code'];
-            $ivttrDtl->save();
+            if (!isset($ivtBals[$detail['matl_id']])) {
+                throw new Exception("Material dengan ID {$detail['matl_id']} tidak ditemukan di gudang {$this->inputs['wh_code']}.");
+            }
+            $mainBalance = $ivtBals[$detail['matl_id']];
+
+            // Transaksi pertama (positif)
+            IvttrDtl::updateOrCreate(
+                [
+                    'trhdr_id' => $this->objectIdValue,
+                    'tr_seq'   => $tr_seq,
+                ],
+                [
+                    'wh_code'    => $this->inputs['wh_code'],
+                    'matl_id'    => $detail['matl_id'],
+                    'tr_id'      => $this->objectIdValue,
+                    'matl_code'  => $mainBalance->matl_code,
+                    'matl_uom'   => $mainBalance->matl_uom,
+                    'batch_code' => $mainBalance->batch_code,
+                    'ivt_id'     => $mainBalance->id,
+                    'qty'        => $detail['qty'],
+                ]
+            );
+
+            // Jika ada wh_code2, simpan transaksi kedua (negatif)
+            if (!empty($this->inputs['wh_code2'])) {
+                if (!isset($ivtBals2[$detail['matl_id']])) {
+                    throw new Exception("Material dengan ID {$detail['matl_id']} tidak ditemukan di gudang {$this->inputs['wh_code2']}.");
+                }
+                $destBalance = $ivtBals2[$detail['matl_id']];
+                $tr_seq2 = - ($key + 1);
+                IvttrDtl::updateOrCreate(
+                    [
+                        'trhdr_id' => $this->objectIdValue,
+                        'tr_seq'   => $tr_seq2,
+                    ],
+                    [
+                        'wh_code'    => $this->inputs['wh_code2'],
+                        'matl_id'    => $detail['matl_id'],
+                        'tr_id'      => $this->objectIdValue,
+                        'matl_code'  => $destBalance->matl_code,
+                        'matl_uom'   => $destBalance->matl_uom,
+                        'batch_code' => $destBalance->batch_code,
+                        'ivt_id'     => $destBalance->id,
+                        'qty'        => -$detail['qty'],
+                    ]
+                );
+            }
         }
     }
 
@@ -225,6 +264,19 @@ class MaterialListComponent extends DetailComponent
                 'value' => $m->id,
                 'label' => $m->code . " - " . $m->name,
             ]);
+        // Automatically set matl_id for the last added item
+        if (!empty($this->input_details)) {
+            $lastIndex = count($this->input_details) - 1;
+            $this->input_details[$lastIndex]['matl_id'] = $this->materials->first()->value ?? null;
+        }
+    }
+
+    public function toggleWarehouseDropdown($enabled)
+    {
+        $this->isEditWhCode2 = $enabled ? 'true' : 'false';
+        if (!$enabled) {
+            $this->inputs['wh_code2'] = null;
+        }
     }
 
     public function render()

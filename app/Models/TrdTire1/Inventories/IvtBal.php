@@ -33,6 +33,7 @@ class IvtBal extends BaseModel
 
     protected $fillable = [
         'matl_id',
+        'matl_code',
         'matl_uom',
         'wh_id',
         'wh_code',

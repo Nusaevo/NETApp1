@@ -16,7 +16,8 @@ class IvttrHdr extends BaseModel
 
     protected $fillable = [
         'tr_type',
-        'tr_date'
+        'tr_date',
+        'remark',
     ];
     public function scopeGetActiveData()
     {
@@ -46,8 +47,12 @@ class IvttrHdr extends BaseModel
             $this->tr_id = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
         }
 
-        $this->tr_type = $inputs['tr_type'];
+        // $this->tr_type = $inputs['tr_type'];
         $this->save();
+    }
+    public function getTrIdAttribute($value)
+    {
+        return sprintf('%03d', $value);
     }
 
     public function isOrderCompleted()

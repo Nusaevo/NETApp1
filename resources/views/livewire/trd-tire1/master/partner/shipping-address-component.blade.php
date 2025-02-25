@@ -31,7 +31,8 @@
                     @endforeach
                 </x-slot>
                 <x-slot name="footerButton">
-                    <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" :action="$actionValue"/>
+                    <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
+                        :enabled="$inputs['grp'] !== 'S'" button-name="Add" :action="$actionValue"/>
                 </x-slot>
 
 

@@ -14,20 +14,27 @@
                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
-                            <x-ui-text-field-search type="int" label="" clickEvent=""
-                                model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']" :options="$filteredMaterials"
-                                required="true" :action="$actionValue"
-                                :enabled="true" />
-                                @dump($input_details[$key]['matl_id'])
+                            @if($isEdit)
+                                <x-ui-text-field-search type="int" label="" clickEvent=""
+                                    model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']" :options="$filteredMaterials"
+                                    required="true" :action="$actionValue"
+                                    :enabled="true" />
+                            @else
+                                {{ $input_details[$key]['matl_id'] }}
+                            @endif
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true"
-                                :action="$actionValue" onChanged="updateItemAmount({{ $key }})" type="number"
-                                required="true" />
+                            @if($isEdit)
+                                <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true"
+                                    :action="$actionValue" onChanged="updateItemAmount({{ $key }})" type="number"
+                                    required="true" />
+                            @else
+                                {{ $input_details[$key]['qty'] }}
+                            @endif
                         </td>
                         <td style="text-align: center;">
                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
-                                cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                                cssClass="btn-danger text-danger" iconPath="delete.svg"/>
                         </td>
                     </tr>
                 @endforeach
@@ -37,7 +44,7 @@
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code" :options="$warehouses"
                         required="true" :action="$actionValue" :enabled="$isEdit" onChanged="onWarehouseChanged($event.target.value)" />
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}" model="inputs.wh_code2"
-                        :options="$warehouses" required="true" enabled="$false" />
+                        :options="$warehouses" required="true" :enabled="$isEditWhCode2" />
                 </div>
                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
             </x-slot>
@@ -50,3 +57,9 @@
             cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>
 </div>
+
+<script>
+    Livewire.on('toggleWarehouseDropdown', (enabled) => {
+        @this.set('isEditWhCode2', enabled);
+    });
+</script>

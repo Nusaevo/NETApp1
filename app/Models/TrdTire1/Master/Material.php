@@ -46,7 +46,7 @@ class Material extends BaseModel
         'wgt',
         'tag',
         'specs',
-        'uom'
+        'uom',
     ];
     public function MatlUom()
     {
