@@ -5,7 +5,6 @@ namespace App\Models\TrdTire1\Transaction;
 use App\Models\TrdTire1\Master\Material;
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Inventories\IvtBal;
-use App\Models\TrdTire1\Inventories\IvtBalUnit;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdTire1\Master\MatlUom;
@@ -96,14 +95,14 @@ class OrderDtl extends BaseModel
                         $existingBal->qty_oh = $newQty;
                         $existingBal->save();
                         // Update corresponding record in IvtBalUnit
-                        $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                            ->where('wh_id', $delivDtl->wh_code)
-                            ->first();
-                        if ($existingBalUnit) {
-                            $existingBalUnitQty = $existingBalUnit->qty_oh;
-                            $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
-                            $existingBalUnit->save();
-                        }
+                        // $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                        //     ->where('wh_id', $delivDtl->wh_code)
+                        //     ->first();
+                        // if ($existingBalUnit) {
+                        //     $existingBalUnitQty = $existingBalUnit->qty_oh;
+                        //     $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
+                        //     $existingBalUnit->save();
+                        // }
                     }
                     $delivDtl->forceDelete();
                 }

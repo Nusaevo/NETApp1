@@ -16,19 +16,19 @@ class IvtBal extends BaseModel
     public static function boot()
     {
         parent::boot();
-        static::created(function ($ivtBal) {
-            $ivtBalUnit = IvtBalUnit::firstOrNew([
-                'ivt_id'    => $ivtBal->id,
-                'matl_id'   => $ivtBal->matl_id,
-                'wh_id'     => $ivtBal->wh_id,
-                'batch_code' => $ivtBal->batch_code,
-            ]);
-            if (!$ivtBalUnit->exists) {
-                $ivtBalUnit->qty_oh = 0;
-            }
-            $ivtBalUnit->qty_oh = $ivtBal->qty_oh;
-            $ivtBalUnit->save();
-        });
+        // static::created(function ($ivtBal) {
+        //     $ivtBalUnit = IvtBalUnit::firstOrNew([
+        //         'ivt_id'    => $ivtBal->id,
+        //         'matl_id'   => $ivtBal->matl_id,
+        //         'wh_id'     => $ivtBal->wh_id,
+        //         'batch_code' => $ivtBal->batch_code,
+        //     ]);
+        //     if (!$ivtBalUnit->exists) {
+        //         $ivtBalUnit->qty_oh = 0;
+        //     }
+        //     $ivtBalUnit->qty_oh = $ivtBal->qty_oh;
+        //     $ivtBalUnit->save();
+        // });
     }
 
     protected $fillable = [
@@ -39,9 +39,8 @@ class IvtBal extends BaseModel
         'wh_code',
         'batch_code',
         'qty_oh',
-        'wh_id',
-        'wh_code',
     ];
+
 
 
     public function scopeGetActiveData()
