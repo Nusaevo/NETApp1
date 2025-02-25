@@ -127,7 +127,6 @@ class MaterialComponent extends BaseComponent
             $this->materials['color_code'] = $specs['color_code'] ?? '';
             $this->materials['color_name'] = $specs['color_name'] ?? '';
             $this->materials['stock'] = $this->object->Stock;
-            $this->materials['tag'] = $this->object->Tag;
 
             foreach ($attachments as $attachment) {
                 $this->capturedImages[] = [
@@ -153,9 +152,14 @@ class MaterialComponent extends BaseComponent
             'color_name' => $this->materials['color_name'] ?? '',
         ];
         $this->masterService = new MasterService();
-        $this->materials['name'] = $this->masterService->getMatlCategoryString($this->materials['category']). ' '
-        . $this->materials['brand'] . ' '
-        . $this->materials['class_code'];
+
+        $this->materials['tag'] = Material::generateTag(
+            $this->materials['code'] ?? '',
+            $this->object->MatlUom,
+            $this->materials['brand'] ?? '',
+            $this->materials['class_code'] ?? '',
+            $this->materials['specs']
+        );
 
         $this->object->fill($this->materials);
         if ($this->object->isNew()) {
@@ -257,9 +261,20 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region Component Events
+    public function generateName()
+    {
+        $masterService = new MasterService();
+        $category = $this->materials['category'] ?? '';
+        $brand = $this->materials['brand'] ?? '';
+        $classCode = $this->materials['class_code'] ?? '';
+        $colorCode = $this->materials['color_code'] ?? '';
+        $this->materials['name'] = Material::generateName($masterService->getMatlCategoryString($category), $brand, $classCode, $colorCode);
+    }
+
     public function onCategoryChanged()
     {
         $this->materials['code'] = '';
+        $this->generateName();
     }
 
     public function submitImages($imageByteArrays)

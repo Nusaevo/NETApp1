@@ -24,7 +24,7 @@ class Material extends BaseModel
         parent::boot();
     }
 
-    protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'selling_price',  'taxable', 'uom','remarks'];
+    protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'selling_price',  'taxable', 'uom','remarks', 'tag'];
 
     /**
      * Get configuration for Create Template.
@@ -273,7 +273,7 @@ class Material extends BaseModel
 
                     // Generate kode material
                     $materialCode = Material::generateMaterialCode($category);
-                    $name = $masterService->getMatlCategoryString($category). ' ' . $brand . ' ' . $type;
+                    $name =  Material::generateName($masterService->getMatlCategoryString($category), $brand, $type, $colorCode);
                     // Buat material baru
                     $material = Material::create([
                         'code' => $materialCode,
@@ -429,29 +429,19 @@ class Material extends BaseModel
         return $this->IvtBal ? $this->IvtBal->qty_oh : 0;
     }
 
-    /**
-     * Get the concatenated tag attribute.
-     */
-    public function getTagAttribute()
+    public static function generateTag($code, $matlUoms, $brand, $classCode, $specs)
     {
-        // Extract color_code and color_name from specs
-        $specs = $this->specs ?? [];
-        $colorCode = $specs['color_code'] ?? '';
-        $colorName = $specs['color_name'] ?? '';
+        $barcode = optional($matlUoms->first())->barcode ?? '';
 
-        // Concatenate fields into the tag
-        return trim(
-            implode(
-                ' ',
-                array_filter([
-                    $this->code, // Kode Barang
-                    $this->MatlUom[0]->barcode, // Kode Barcode
-                    $this->brand, // Merk
-                    $this->class_code, // Tipe
-                    $colorCode, // Color Code
-                    $colorName, // Color Name
-                ]),
-            ),
-        );
+        return trim(implode(' ', array_filter([
+            $code,
+            $barcode,
+            $brand,
+            $classCode,
+            $specs['color_code'] ?? '',
+        ])));
+    }
+    public static function generateName($category, $brand, $type, $colorCode) {
+        return $category . ' ' . $brand . ' ' . $type . ' (' . $colorCode . ')';
     }
 }

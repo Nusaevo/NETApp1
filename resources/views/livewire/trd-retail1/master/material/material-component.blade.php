@@ -66,16 +66,16 @@
 
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand"
-                                    type="text" :action="$actionValue" required="true" enabled="true" />
+                                    type="text" :action="$actionValue" required="true" enabled="true" onChanged="generateName"/>
                                 <x-ui-text-field label="{{ $this->trans('class_code') }}" model="materials.class_code"
-                                    type="text" :action="$actionValue" required="true" enabled="true" />
+                                    type="text" :action="$actionValue" required="true" enabled="true" onChanged="generateName"/>
                             </div>
 
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="text"
                                     :action="$actionValue" required="true" enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('color_code') }}" model="materials.color_code"
-                                    type="text" :action="$actionValue" required="false" enabled="true" />
+                                    type="text" :action="$actionValue" required="false" enabled="true" onChanged="generateName"/>
 
                                 <x-ui-text-field label="{{ $this->trans('color_name') }}" model="materials.color_name"
                                     type="text" :action="$actionValue" required="false" enabled="true" />
