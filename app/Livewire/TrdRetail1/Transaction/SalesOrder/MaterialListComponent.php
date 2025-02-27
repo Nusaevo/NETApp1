@@ -88,7 +88,7 @@ class MaterialListComponent extends DetailComponent
             if ($material) {
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
-                $this->input_details[$key]['price'] = $material->selling_price;
+                $this->input_details[$key]['price'] = $material->MatlUom[0]->selling_price;
                 $this->input_details[$key]['matl_uom'] = $material->MatlUom[0]->id;
                 $this->input_details[$key]['matl_descr'] = $material->name;
                 $attachment = optional($material->Attachment)->first();
