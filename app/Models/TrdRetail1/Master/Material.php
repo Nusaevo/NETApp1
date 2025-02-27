@@ -33,7 +33,7 @@ class Material extends BaseModel
     {
         return [
             'name' => 'Material_Create_Template',
-            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Status', 'Message'],
+            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Stock', 'Status', 'Message'],
             'data' => $data,
             'protectedColumns' => [],
             'allowInsert' => true,
@@ -125,7 +125,7 @@ class Material extends BaseModel
                 $color_name = $row[5] ?? null; // Nama Warna*
                 $uom = $row[6] ?? null; // UOM*
                 $sellingPrice = $row[7] ?? null; // Harga Jual*
-
+                $stock = $row[10] ?? null; // Stock (index 10 berdasarkan header baru)
                 if (empty($no)) {
                     $message .= 'Kolom No* tidak boleh kosong. ';
                 }
@@ -147,7 +147,9 @@ class Material extends BaseModel
                 if (!isValidNumeric($sellingPrice)) {
                     $message .= 'Harga jual harus berupa angka positif. ';
                 }
-
+                if (!empty($stock) && (!is_numeric($stock) || $stock < 0)) {
+                    $message .= 'Stock harus berupa angka non-negatif. ';
+                }
                 // Buat key berdasarkan kombinasi Kategori, Merk, Jenis, dan Color Code
                 $combinationKey = trim($category) . '_' . trim($brand) . '_' . trim($type) . '_' . trim($color_code);
                 if (isset($combinationTracker[$combinationKey])) {
@@ -269,7 +271,7 @@ class Material extends BaseModel
                     $sellingPrice = convertFormattedNumber($row[7]); // Harga Jual*
                     $remarks = $row[8] ?? ''; // Keterangan (Optional)
                     $barcode = $row[9] ?? ''; // Kode Barcode (Optional)
-
+                    $stock = !empty($row[10]) ? convertFormattedNumber($row[10]) : 0; // Stock (index 10, default 0)
                     $materialCode = Material::generateMaterialCode($category);
                     $name = Material::generateName($category, $brand, $type, $colorCode);
 
@@ -298,6 +300,7 @@ class Material extends BaseModel
                             'base_factor' => 1,
                             'selling_price' => $sellingPrice,
                         ]);
+                        $material->IvtBal()->create(['qty_oh' => $stock]);
                     }
                 } elseif ($param === 'Update') {
                     $no = $row[0] ?? '';
