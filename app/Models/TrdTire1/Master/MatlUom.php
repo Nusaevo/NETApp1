@@ -41,12 +41,12 @@ class MatlUom extends BaseModel
         return $this->belongsTo(Material::class, 'matl_id');
     }
 
-    public function ivtBals()
+    public function ivtBal()
     {
         return $this->hasMany(IvtBal::class, 'matl_id');
     }
 
-    public function ivtBalUnits()
+    public function ivtBalUnit()
     {
         return $this->hasMany(IvtBalUnit::class, 'matl_id');
     }
@@ -58,35 +58,35 @@ class MatlUom extends BaseModel
         return $query->where('matl_id', $matl_id);
     }
 
-    public function createIvtBals()
-    {
-        $warehouseIds = ConfigConst::GetWarehouse()->pluck('id');
+    // public function createIvtBals()
+    // {
+    //     $warehouseIds = ConfigConst::GetWarehouse()->pluck('id');
 
-        $inventoryBalData = $warehouseIds->map(function ($warehouseId) {
-            return [
-                'matl_id' => $this->matl_id,
-                'wh_id' => $warehouseId,
-                'wh_code' => $warehouseId,
-            ];
-        })->toArray();
+    //     $inventoryBalData = $warehouseIds->map(function ($warehouseId) {
+    //         return [
+    //             'matl_id' => $this->matl_id,
+    //             'wh_id' => $warehouseId,
+    //             'wh_code' => $warehouseId,
+    //         ];
+    //     })->toArray();
 
-        IvtBal::insert($inventoryBalData);
+    //     IvtBal::insert($inventoryBalData);
 
-        $newIvtBals = IvtBal::whereIn('wh_id', $warehouseIds)
-                            ->where('matl_id', $this->matl_id)
-                            ->get();
+    //     $newIvtBals = IvtBal::whereIn('wh_id', $warehouseIds)
+    //                         ->where('matl_id', $this->matl_id)
+    //                         ->get();
 
-        // Prepare the inventory balance units data
-        $inventoryBalUnitsData = $newIvtBals->map(function ($ivtBal) {
-            return [
-                'ivt_id' => $ivtBal->id,
-                'matl_id' => $this->matl_id,
-                'wh_id' => $ivtBal->wh_id,
-                'matl_uom_id' => $this->id,
-                'uom' => $this->name,
-            ];
-        })->toArray();
-        IvtBalUnit::insert($inventoryBalUnitsData);
-    }
+    //     // Prepare the inventory balance units data
+    //     $inventoryBalUnitsData = $newIvtBals->map(function ($ivtBal) {
+    //         return [
+    //             'ivt_id' => $ivtBal->id,
+    //             'matl_id' => $this->matl_id,
+    //             'wh_id' => $ivtBal->wh_id,
+    //             'matl_uom_id' => $this->id,
+    //             'uom' => $this->name,
+    //         ];
+    //     })->toArray();
+    //     IvtBalUnit::insert($inventoryBalUnitsData);
+    // }
 
 }

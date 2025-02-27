@@ -14,27 +14,37 @@
                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
-                            @if($isEdit)
+                            @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
                                 <x-ui-text-field-search type="int" label="" clickEvent=""
-                                    model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']" :options="$filteredMaterials"
-                                    required="true" :action="$actionValue"
-                                    :enabled="true" />
+                                    model="input_details.{{ $key }}.matl_id" :selectedValue="$input_detail['matl_id']"
+                                    :options="$filteredMaterials" required="true" :action="$actionValue" :enabled="true" />
                             @else
-                                {{ $input_details[$key]['matl_id'] }}
+                                @php
+                                    $material = $filteredMaterials->firstWhere('value', $input_detail['matl_id']);
+                                @endphp
+                                {{ $material['label'] ?? '' }}
                             @endif
+                            @dump($input_details)
                         </td>
                         <td style="text-align: center;">
-                            @if($isEdit)
-                                <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true"
-                                    :action="$actionValue" onChanged="updateItemAmount({{ $key }})" type="number"
+                            @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
+                                <x-ui-text-field model="input_details.{{ $key }}.qty" label=""
+                                    :enabled="true" :action="$actionValue"
+                                    onChanged="updateItemAmount({{ $key }})"  type="text"
                                     required="true" />
                             @else
-                                {{ $input_details[$key]['qty'] }}
+                                {{ $input_detail['qty'] }}
                             @endif
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
-                                cssClass="btn-danger text-danger" iconPath="delete.svg"/>
+                            @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
+                                <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
+                                    cssClass="btn-danger text-danger" iconPath="delete.svg" :enabled="true" />
+                            @else
+                                <!-- Misal, jika tidak editable, tombol delete bisa disembunyikan atau non-aktif -->
+                                <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
+                                    cssClass="btn-danger text-danger" iconPath="delete.svg" :enabled="$isEdit" />
+                            @endif
                         </td>
                     </tr>
                 @endforeach
@@ -42,7 +52,8 @@
             <x-slot name="button">
                 <div class="row">
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code" :options="$warehouses"
-                        required="true" :action="$actionValue" :enabled="$isEdit" onChanged="onWarehouseChanged($event.target.value)" />
+                        required="true" :action="$actionValue" :enabled="$isEdit"
+                        onChanged="onWarehouseChanged($event.target.value)" />
                     <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}" model="inputs.wh_code2"
                         :options="$warehouses" required="true" :enabled="$isEditWhCode2" />
                 </div>

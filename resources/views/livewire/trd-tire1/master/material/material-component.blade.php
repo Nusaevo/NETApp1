@@ -3,7 +3,9 @@
         use App\Models\TrdTIre1\Master\Material;
     @endphp
 
-    <x-ui-page-card title="{{ $actionValue }} {!! $menuName !!}" status="{{ $status }}">
+    <x-ui-page-card
+        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->code ? ' (#' . $this->object->code . ')' : '' }}"
+        status="{{ $this->trans($status) }}">
 
         {{-- Tabs --}}
         @if ($actionValue === 'Create')
@@ -17,21 +19,23 @@
                     <div class="col-md-8">
                         <x-ui-card title="Product Type">
                             <x-ui-dropdown-select label="{{ $this->trans('type_code') }}" model="materials.type_code"
-                                :options="$materialType" required="true" :action="$actionValue" onChanged="onBrandChanged" :enabled="$isPanelEnabled"/>
+                                :options="$materialType" required="true" :action="$actionValue" onChanged="onBrandChanged"
+                                :enabled="$isPanelEnabled" />
                         </x-ui-card>
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('brand') }}" model="materials.brand"
                                         :selectedValue="$materials['brand']" :options="$materialMerk" required="false" :action="$actionValue"
-                                        onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+" :enabled="$isPanelEnabled" :buttonEnabled="$isPanelEnabled"/>
+                                        onChanged="generateName" clickEvent="openBrandDialogBox" buttonName="+"
+                                        :enabled="$isPanelEnabled" :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-dialog-box id="brandDialogBox" title="Form Merk" width="600px" height="400px"
                                         onOpened="openBrandDialogBox" onClosed="closeBrandDialogBox" :buttonEnabled="$isPanelEnabled">
                                         <x-slot name="body">
                                             <x-ui-text-field label="Code" model="inputs_brand.str1" type="text"
-                                                :action="$actionValue" required="true" enabled="true" capslockMode="true"/>
+                                                :action="$actionValue" required="true" enabled="true" capslockMode="true" />
                                             <x-ui-text-field label="Merk" model="inputs_brand.str2" type="text"
-                                                :action="$actionValue" required="true" enabled="true" capslockMode="true"/>
+                                                :action="$actionValue" required="true" enabled="true" capslockMode="true" />
                                         </x-slot>
                                         <x-slot name="footer">
                                             <x-ui-button clickEvent="saveBrand" button-name="Save" loading="true"
@@ -41,12 +45,12 @@
 
                                     <x-ui-text-field label="{{ $this->trans('code') }}" model="materials.code"
                                         type="code" :action="$actionValue" required="true" enabled="true"
-                                        clickEvent="getMatlCode" buttonName="Kode Baru" :buttonEnabled="$isPanelEnabled"/>
+                                        clickEvent="getMatlCode" buttonName="Kode Baru" :buttonEnabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('category') }}"
                                         model="materials.category" :options="$materialCategory" required="false"
-                                        :action="$actionValue" :buttonEnabled="$isPanelEnabled" onChanged="generateNameTag"/>
+                                        :action="$actionValue" :buttonEnabled="$isPanelEnabled" onChanged="generateNameTag" />
                                     {{-- <x-ui-dropdown-select label="{{ $this->trans('class_code') }}"
                                         model="materials.class_code" :options="$materialJenis" required="false"
                                         :action="$actionValue" /> --}}
@@ -54,7 +58,7 @@
                                     <x-ui-text-field-search label="{{ $this->trans('class_code') }}"
                                         model="materials.class_code" type="string" :selectedValue="$materials['class_code']"
                                         :options="$materialJenis" required="false" :action="$actionValue"
-                                        clickEvent="openJenisDialogBox" buttonName="+" onChanged="generateNameTag"/>
+                                        clickEvent="openJenisDialogBox" buttonName="+" onChanged="generateNameTag" />
                                     <x-ui-dialog-box id="JenisDialogBox" title="Form Jenis" width="600px"
                                         height="400px" onOpened="openJenisDialogBox" onClosed="closeJenisDialogBox">
                                         <x-slot name="body">
@@ -162,7 +166,8 @@
                         <x-ui-card title="Tagging">
                             <x-ui-padding>
                                 <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag"
-                                    type="text" :action="$actionValue" required="false" enabled="true" onChanged="generateNameTag" enabled="false" />
+                                    type="text" :action="$actionValue" required="false" enabled="true"
+                                    onChanged="generateNameTag" enabled="false" />
                             </x-ui-padding>
                         </x-ui-card>
                     </div>

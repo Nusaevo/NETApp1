@@ -5,7 +5,6 @@ namespace App\Models\TrdTire1\Transaction;
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Inventories\IvtBal;
-use App\Models\TrdTire1\Inventories\IvtBalUnit;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Constant;
@@ -172,7 +171,6 @@ class DelivDtl extends BaseModel
             );
         });
 
-        // Event deleting: update IvtBal dan IvtBalUnit dalam transaksi saat data dihapus
         static::deleting(function ($delivDtl) {
             $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
             if ($warehouse) {

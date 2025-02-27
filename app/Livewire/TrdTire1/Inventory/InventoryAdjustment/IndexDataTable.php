@@ -30,13 +30,15 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             Column::make($this->trans("date"), "tr_date")
-            ->searchable()
-            ->sortable(),
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("tr_id"), "tr_id")
+                ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")
                 ->sortable(),
             Column::make($this->trans("remark"), "remark")
                 ->sortable(),
-
+            // tr_id
             // Column::make($this->trans("tr_code"), "tr_code")
             //     ->format(function ($value, $row) {
             //         return '<a href="' . route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [

@@ -252,14 +252,12 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $this->generateName();
         if ($this->object->isNew()) {
             $this->validateMaterialCode();
         }
 
         $dataToSave['size'] = $this->materials['size'] ?? null;
         $dataToSave['pattern'] = $this->materials['pattern'] ?? null;
-
 
         $this->materials['specs'] = $dataToSave;
 
@@ -321,7 +319,18 @@ class MaterialComponent extends BaseComponent
 
     public function generateName()
     {
-        $this->materials['name'] = Material::generateName($this->materials['brand'], $this->materials['size'], $this->materials['pattern']);
+        $brandConfig = ConfigConst::where('const_group', 'MMATL_MERK')
+            ->where('str2', $this->materials['brand'])
+            ->first();
+
+        $brandCode = $brandConfig->str1;
+
+        $this->materials['name'] = Material::generateName(
+            $brandCode, // Gunakan kode brand (str1)
+            $this->materials['size'],
+            $this->materials['pattern']
+        );
+
         $this->generateNameTag();
     }
 
@@ -408,27 +417,35 @@ class MaterialComponent extends BaseComponent
     }
 
     public function getMatlCode()
-{
-    if (empty($this->materials['brand'])) {
-        $this->dispatch('error', "Mohon pilih merk untuk mendapatkan material code.");
-        return;
+    {
+        if (empty($this->materials['brand'])) {
+            $this->dispatch('error', "Mohon pilih merk untuk mendapatkan material code.");
+            return;
+        }
+
+        // Ambil kode brand (str1) berdasarkan nama brand (str2) yang dipilih
+        $brandConfig = ConfigConst::where('const_group', 'MMATL_MERK')
+            ->where('str2', $this->materials['brand'])
+            ->first();
+
+        if (!$brandConfig) {
+            $this->dispatch('error', "Merk tidak valid atau tidak ditemukan.");
+            return;
+        }
+
+        $brandPrefix = $brandConfig->str1; // Ambil str1 sebagai prefix
+        $start = strlen($brandPrefix) + 1;
+
+        // Query untuk mencari nomor terbesar
+        $maxNumber = Material::where('code', 'like', $brandPrefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(code, $start) AS INTEGER)) as max_num")
+            ->value('max_num');
+
+        $newNumber = $maxNumber ? $maxNumber + 1 : 1;
+        $formattedNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+
+        $this->materials['code'] = $brandPrefix . $formattedNumber;
     }
-
-    $brandPrefix = $this->materials['brand'];
-    $start = strlen($brandPrefix) + 1;
-    // Menggunakan cast ke integer dengan sintaks ::int yang kompatibel dengan PostgreSQL
-    $maxNumber = Material::where('code', 'like', $brandPrefix . '%')
-        ->selectRaw("MAX(SUBSTRING(code, $start)::int) as max_num")
-        ->value('max_num');
-
-    $newNumber = $maxNumber ? $maxNumber + 1 : 1;
-
-    $formattedNumber = str_pad($newNumber, 3, '0', STR_PAD_LEFT);
-
-    $this->materials['code'] = $brandPrefix . $formattedNumber;
-}
-
-
 
     #endregion
 

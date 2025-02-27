@@ -117,17 +117,16 @@ class OrderHdr extends BaseModel
             return self::generatePurchaseOrderId();
         }
 
-        $year = date('y'); // Tahun dua digit
-        $monthNumber = date('n'); // Bulan dalam angka
-        $monthLetter = chr(64 + $monthNumber); // Bulan dalam huruf (A, B, C, dll.)
-        $sequenceNumber = self::getSequenceNumber($sales_type, $tax_doc_flag); // Dapatkan nomor urut
+        $year = date('y');
+        $monthNumber = date('n');
+        $monthLetter = chr(64 + $monthNumber);
+        $sequenceNumber = self::getSequenceNumber($sales_type, $tax_doc_flag);
 
-        // Tentukan format berdasarkan sales_type dan flag tax invoice
         if ($tax_doc_flag) {
             switch ($sales_type) {
-                case 0: // MOTOR dengan tax invoice: Format: [A-Z][yy][5-digit]
+                case 0:
                     return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
-                case 1: // MOBIL dengan tax invoice: Format: [A-Z]{2}[yy][5-digit]
+                case 1:
                     return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
@@ -160,41 +159,32 @@ class OrderHdr extends BaseModel
      */
     private static function getSequenceNumber($sales_type, $tax_doc_flag)
     {
-        // Mendapatkan bulan dan tahun saat ini
-        $currentYear = date('y'); // Dua digit tahun
-        $currentMonth = date('n'); // Bulan dalam angka
-        $currentMonthLetter = chr(64 + $currentMonth); // Bulan dalam huruf
+        $currentYear = date('y');
+        $currentMonth = date('n');
+        $currentMonthLetter = chr(64 + $currentMonth);
 
-        // Konversi flag tax ke angka
         $taxInvoiceFlag = $tax_doc_flag ? 1 : 0;
 
-        // Ambil entri terakhir dari tabel OrderHdr dengan tr_type = 'SO', sales_type, dan tax_doc_flag
         $lastOrder = OrderHdr::where('tr_type', 'SO')
             ->where('sales_type', $sales_type)
             ->where('tax_doc_flag', $taxInvoiceFlag)
             ->orderBy('id', 'desc')
             ->first();
 
-        // Tentukan pola regex dan prefix yang diharapkan
         if ($sales_type == 0) {
-            // MOTOR
             if ($tax_doc_flag) {
-                // Format: [A-Z][yy][5-digit]
                 $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter;
             } else {
-                // Format: [A-Z][yy]8[5-digit]
                 $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter;
             }
         } elseif ($sales_type == 1) {
             // MOBIL
             if ($tax_doc_flag) {
-                // Format: [A-Z]{2}[yy][5-digit]
                 $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
             } else {
-                // Format: [A-Z]{2}[yy]8[5-digit]
                 $pattern = '/^([A-Z]{2})(\d{2})8(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
             }
@@ -203,13 +193,10 @@ class OrderHdr extends BaseModel
         }
 
         if ($lastOrder && preg_match($pattern, $lastOrder->tr_code, $matches)) {
-            // $matches[1] adalah prefix, $matches[2] adalah tahun, $matches[3] adalah nomor urut
             if ($matches[1] === $expectedPrefix && $matches[2] == $currentYear) {
                 return (int)$matches[3] + 1;
             }
         }
-
-        // Jika tidak ada entri sebelumnya atau bulan/tahun berbeda, mulai dari 1
         return 1;
     }
 
@@ -250,7 +237,6 @@ class OrderHdr extends BaseModel
 
     public function isOrderCompleted()
     {
-        // Contoh logika untuk mengecek apakah order telah selesai
         return $this->status == 'completed';
     }
 
