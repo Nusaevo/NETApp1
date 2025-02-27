@@ -17,16 +17,16 @@
                     <tr wire:key="list{{ $key }}">
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
-                            <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"
-                                :options="$materialUOM" required="true"/>
-                        </td>
-                        <td>
                             <x-ui-dropdown-select model="input_details.{{ $key }}.reff_uom"
                                 :options="$materialUOM" required="true"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.reff_factor"
                                 type="number" required="true"/>
+                        </td>
+                        <td>
+                            <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"
+                                :options="$materialUOM" required="true"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.base_factor"

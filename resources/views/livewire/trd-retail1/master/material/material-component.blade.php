@@ -92,7 +92,6 @@
                                 <x-ui-text-field label="{{ $this->trans('buying_price') }}"
                                     model="materials.buying_price" type="number" :action="$actionValue" required="false"
                                     enabled="true" />
-
                             </div> --}}
 
                             <div class="row">
