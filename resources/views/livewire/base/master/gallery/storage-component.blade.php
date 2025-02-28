@@ -15,9 +15,8 @@
                             aria-hidden="true"></span>
                     </span>
                 </button>
-
                 @if (session('app_code') == 'TrdRetail1')
-                    <button class="btn btn-primary" wire:click="syncImages">
+                    <button class="btn btn-primary"  wire:click="syncImages" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncModal">
                         <i class="bi bi-arrow-clockwise"></i> Sync Images
                         <span wire:loading>
                             <span class="spinner-border spinner-border-sm align-middle" role="status"
@@ -135,70 +134,66 @@
             toggleDeleteButton();
         }
     </script>
+    <div>
 
-
-    <x-ui-dialog-box id="syncModal" title="Image Sync Process">
-        <x-slot name="body">
-            <div id="sync-progress">
-                <p>Syncing images... Please wait.</p>
-                <div class="progress">
-                    <div id="sync-progress-bar" class="progress-bar" role="progressbar" style="width: 0%;"
-                        aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        <!-- Modal Dialog Box -->
+        <x-ui-dialog-box id="syncModal" title="Image Sync Simulation">
+            <x-slot name="body">
+                <div id="sync-container">
+                    <p id="sync-status-text" class="mt-2">{{ $status }}</p>
+                    <!-- Spinner Loading, ditampilkan saat proses Livewire berlangsung -->
+                    <div wire:loading>
+                        <div id="sync-spinner" class="d-flex justify-content-center my-3">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Bagian ini muncul setelah proses selesai (wire:loading.remove) -->
+                    <div wire:loading.remove>
+                        <!-- Tampilkan progress bar jika diinginkan -->
+                        <div class="progress mb-3">
+                            <div id="sync-progress-bar" class="progress-bar" role="progressbar"
+                                style="width: {{ $syncProgress }}%;" aria-valuenow="{{ $syncProgress }}"
+                                aria-valuemin="0" aria-valuemax="100">
+                                {{ $syncProgress }}%
+                            </div>
+                        </div>
+                        <!-- Section untuk menampilkan gambar yang berhasil disinkronisasi -->
+                        <div id="synced-images-section" style="display: block;">
+                            <hr>
+                            <h6>Synced Images:</h6>
+                            <ul id="synced-images-list"
+                                style="max-height: 200px; overflow-y: auto; list-style-type: none; padding: 0;">
+                                @foreach ($syncedImages as $image)
+                                    <li>Material Code: {{ $image['material_code'] }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <!-- Section untuk gambar yang gagal (jika ada) -->
+                        @if (count($failedImages))
+                            <div id="failed-images-section" style="display: block;">
+                                <hr>
+                                <h6>Failed Images:</h6>
+                                <ul id="failed-images-list"
+                                    style="max-height: 200px; overflow-y: auto; list-style-type: none; padding: 0; color: red;">
+                                    @foreach ($failedImages as $failed)
+                                        <li>File: {{ $failed['file_name'] }}, Error: {{ $failed['error'] }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
                 </div>
-                <p id="sync-status-text" class="mt-2">Starting...</p>
-            </div>
-            <hr>
-            <h6>Synced Images:</h6>
-            <ul id="synced-images-list" style="max-height: 200px; overflow-y: auto;"></ul>
+            </x-slot>
+            <x-slot name="footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="sync-close-btn">
+                    Close
+                </button>
+            </x-slot>
+        </x-ui-dialog-box>
+    </div>
 
-            <hr>
-            <h6>Failed Images:</h6>
-            <ul id="failed-images-list" style="max-height: 200px; overflow-y: auto; color: red;"></ul>
-        </x-slot>
-        <x-slot name="footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="sync-close-btn"
-                disabled>Close</button>
-        </x-slot>
-    </x-ui-dialog-box>
 
-    @push('scripts')
-        <script>
-            document.addEventListener('livewire:init', () => {
-                Livewire.on('openSyncModal', () => {
-                    const syncModal = new bootstrap.Modal(document.getElementById('syncModal'));
-                    syncModal.show();
-                    document.getElementById('sync-progress-bar').style.width = '0%';
-                    document.getElementById('sync-status-text').innerText = 'Starting...';
-                    document.getElementById('synced-images-list').innerHTML = '';
-                    document.getElementById('failed-images-list').innerHTML = '';
-                    document.getElementById('sync-close-btn').disabled = true;
-                });
-
-                Livewire.on('updateSyncProgress', (progress) => {
-                    const progressBar = document.getElementById('sync-progress-bar');
-                    progressBar.style.width = progress + '%';
-                    progressBar.setAttribute('aria-valuenow', progress);
-                });
-
-                Livewire.on('pushSyncedImage', (image) => {
-                    const syncedList = document.getElementById('synced-images-list');
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `Material ID: ${image.material_id}, File: ${image.file_name}`;
-                    syncedList.appendChild(listItem);
-                });
-
-                Livewire.on('pushFailedImage', (image) => {
-                    const failedList = document.getElementById('failed-images-list');
-                    const listItem = document.createElement('li');
-                    listItem.textContent = `File: ${image.file_name}, Error: ${image.error}`;
-                    failedList.appendChild(listItem);
-                });
-
-                Livewire.on('syncComplete', () => {
-                    document.getElementById('sync-close-btn').disabled = false;
-                });
-            });
-        </script>
-    @endpush
 
 </div>
