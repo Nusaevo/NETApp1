@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Models\TrdTire1\Transaction;;
+namespace App\Models\TrdTire1\Transaction;
 
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Master\Partner;
 use App\Models\TrdTire1\Transaction\PaymentDtl;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
+use App\Enums\TrdTire1\Status;
 use App\Traits\BaseTrait;
+
 class PaymentHdr extends BaseModel
 {
     use SoftDeletes;
@@ -17,9 +19,8 @@ class PaymentHdr extends BaseModel
         parent::boot();
     }
     protected $fillable = [
-        'tr_id',
         'tr_type',
-        'tr_id',
+        'tr_code',
         'tr_date',
         'reff_code',
         'partner_id',
@@ -33,7 +34,9 @@ class PaymentHdr extends BaseModel
         'bank_note',
         'curr_id',
         'curr_rate',
-        'status_code'
+        'status_code',
+        'version_number',
+        'updated_at'
     ];
 
     #region Relations
@@ -46,10 +49,36 @@ class PaymentHdr extends BaseModel
     {
         return $this->hasMany(PaymentDtl::class, 'trhdr_id', 'id');
     }
+    public function paymentSrc()
+    {
+        return $this->hasMany(PaymentSrc::class, 'trhdr_id', 'id');
+    }
 
     public static function getByCreatedByAndTrType($createdBy, $trType)
     {
         return self::where('created_by', $createdBy)->where('tr_type', $trType)->get();
+    }
+    public function saveOrderHeader($appCode, $trType, $inputs, $lastIdKey)
+    {
+        // Implement the logic to save the order header
+        // Example:
+        $this->fill($inputs);
+
+        // Generate tr_id with incremented value only if it's a new record
+        if (!$this->exists) {
+            $lastRecord = self::orderBy('tr_code', 'desc')->first();
+            $lastId = $lastRecord ? intval($lastRecord->tr_code) : 0;
+            $this->tr_code = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
+        }
+
+        // $this->tr_type = $inputs['tr_type'];
+        $this->save();
+    }
+
+    public function scopeGetByOrderHdr($query, $id, $trType)
+    {
+        return $query->where('id', $id) // Changed 'tr_id' to 'id'
+            ->where('tr_type', $trType);
     }
     #endregion
 }

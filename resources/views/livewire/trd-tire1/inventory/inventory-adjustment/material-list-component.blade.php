@@ -20,7 +20,7 @@
                                     :options="$filteredMaterials" required="true" :action="$actionValue" :enabled="true" />
                             @else
                                 @php
-                                    $material = $filteredMaterials->firstWhere('value', $input_detail['matl_id']);
+                                    $material = $filteredMaterials ? $filteredMaterials->firstWhere('value', $input_detail['matl_id']) : null;
                                 @endphp
                                 {{ $material['label'] ?? '' }}
                             @endif

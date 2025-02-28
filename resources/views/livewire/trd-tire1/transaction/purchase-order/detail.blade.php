@@ -41,7 +41,6 @@
                                     <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
                                         required="true" :action="$actionValue" enabled="false"
                                         clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
-
                                     <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
                                         height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
                                         <x-slot name="body">

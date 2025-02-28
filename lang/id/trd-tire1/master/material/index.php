@@ -12,4 +12,5 @@ return [
     'stock' => 'Stok',
     'category' => 'Kategori',
     'point' => 'Point',
+    'uom' => 'UOM',
 ];
