@@ -325,53 +325,55 @@ class Material extends BaseModel
                             'selling_price' => $sellingPrice,
                         ]);
 
-                        // Buat IvtBal (Stok awal)
-                        $ivtBal = IvtBal::create([
-                            'matl_id' => $material->id,
-                            'matl_uom' => $uom,
-                            'wh_id' => 1,
-                            'wh_code' => IvtBal::$defaultWhCode,
-                            'batch_code' => date('y/m/d'),
-                            'qty_oh' => $stock,
-                        ]);
+                        if ($stock > 0) {
+                            // Buat IvtBal (Stok awal)
+                            $ivtBal = IvtBal::create([
+                                'matl_id' => $material->id,
+                                'matl_uom' => $uom,
+                                'wh_id' => 1,
+                                'wh_code' => IvtBal::$defaultWhCode,
+                                'batch_code' => date('y/m/d'),
+                                'qty_oh' => $stock,
+                            ]);
 
-                        IvtBalUnit::create([
-                            'ivt_id' => $ivtBal->id,
-                            'matl_id' => $material->id,
-                            'matl_uom' => $uom,
-                            'wh_id' => 1,
-                            'unit_code' =>$material->id.'-'.$uom,
-                            'batch_code' => date('y/m/d'),
-                            'qty_oh' => $stock,
-                            'status_code' => 'A',
-                        ]);
+                            IvtBalUnit::create([
+                                'ivt_id' => $ivtBal->id,
+                                'matl_id' => $material->id,
+                                'matl_uom' => $uom,
+                                'wh_id' => 1,
+                                'unit_code' => $material->id . '-' . $uom,
+                                'batch_code' => date('y/m/d'),
+                                'qty_oh' => $stock,
+                                'status_code' => 'A',
+                            ]);
 
-                        $maxTrId = IvttrHdr::max('tr_id');
+                            $maxTrId = IvttrHdr::max('tr_id');
 
-                        $nextTrId = $maxTrId ? $maxTrId + 1 : 1;
+                            $nextTrId = $maxTrId ? $maxTrId + 1 : 1;
 
-                        // Buat Transaction Header (IvttrHdr)
-                        $ivtHdr = IvttrHdr::create([
-                            'tr_id' => $nextTrId,
-                            'tr_type' => 'IA',
-                            'tr_date' => now(),
-                            'remark' => "Initial stock adjustment for $materialCode",
-                        ]);
+                            // Buat Transaction Header (IvttrHdr)
+                            $ivtHdr = IvttrHdr::create([
+                                'tr_id' => $nextTrId,
+                                'tr_type' => 'IA',
+                                'tr_date' => now(),
+                                'remark' => "Initial stock adjustment for $materialCode",
+                            ]);
 
-                        // Buat Transaction Detail (IvttrDtl)
-                        IvttrDtl::create([
-                            'trhdr_id' => $ivtHdr->id,
-                            'tr_type' => 'IA',
-                            'tr_id' => $nextTrId,
-                            'tr_seq' => 1,
-                            'matl_id' => $material->id,
-                            'matl_code' => $materialCode,
-                            'matl_uom' => $uom,
-                            'wh_code' => IvtBal::$defaultWhCode,
-                            'batch_code' => date('y/m/d'),
-                            'qty' => $stock,
-                            'tr_descr' => "Initial stock for $materialCode",
-                        ]);
+                            // Buat Transaction Detail (IvttrDtl)
+                            IvttrDtl::create([
+                                'trhdr_id' => $ivtHdr->id,
+                                'tr_type' => 'IA',
+                                'tr_id' => $nextTrId,
+                                'tr_seq' => 1,
+                                'matl_id' => $material->id,
+                                'matl_code' => $materialCode,
+                                'matl_uom' => $uom,
+                                'wh_code' => IvtBal::$defaultWhCode,
+                                'batch_code' => date('y/m/d'),
+                                'qty' => $stock,
+                                'tr_descr' => "Initial stock for $materialCode",
+                            ]);
+                        }
                     }
                 } elseif ($param === 'Update') {
                     // Ambil data dari row
@@ -408,6 +410,7 @@ class Material extends BaseModel
                         $tag = Material::generateTag($material->code, $material->MatlUom, $material->brand, $material->class_code, $material->specs);
                         $material->update(['tag' => $tag]);
 
+                        if ($stock > 0) {
                         // Update atau buat IvtBal
                         $ivtBal = IvtBal::updateOrCreate(
                             [
@@ -431,7 +434,7 @@ class Material extends BaseModel
                             ],
                             [
                                 'batch_code' => date('y/m/d'),
-                                'unit_code' =>$material->id.'-'.$uom,
+                                'unit_code' => $material->id . '-' . $uom,
                                 'qty_oh' => $stock,
                                 'status_code' => 'A',
                             ],
@@ -474,6 +477,7 @@ class Material extends BaseModel
                             'qty' => $stock,
                             'tr_descr' => "Initial stock for $materialCode",
                         ]);
+                    }
                     } else {
                         $status = 'Error';
                         $message = 'Material dengan kode ' . $materialCode . ' tidak ditemukan.';
@@ -524,10 +528,8 @@ class Material extends BaseModel
     }
     public function DefaultUom()
     {
-        return $this->hasOne(MatlUom::class, 'matl_id', 'id')
-                    ->where('matl_uom', $this->uom);
+        return $this->hasOne(MatlUom::class, 'matl_id', 'id')->where('matl_uom', $this->uom);
     }
-
 
     public function IvtBal()
     {
