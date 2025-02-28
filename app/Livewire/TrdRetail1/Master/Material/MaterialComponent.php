@@ -46,7 +46,7 @@ class MaterialComponent extends BaseComponent
         'materials.class_code' => 'required|string|max:255',
         // 'materials.color_code' => 'required|string|max:50',
         // 'materials.color_name' => 'required|string|max:100',
-        'materials.selling_price' => 'nullable|numeric|min:0',
+        'matl_uoms.selling_price' => 'nullable|numeric|min:0',
         'materials.buying_price' => 'nullable|numeric|min:0',
         // 'materials.stock' => 'required|integer|min:0',
         'materials.tag' => 'nullable|string|max:255',
@@ -86,7 +86,7 @@ class MaterialComponent extends BaseComponent
             'materials.class_code' => $this->trans('type'),
             'materials.color_code' => $this->trans('color_code'),
             'materials.color_name' => $this->trans('color_name'),
-            'materials.selling_price' => $this->trans('selling_price'),
+            'matl_uoms.selling_price' => $this->trans('selling_price'),
             'materials.buying_price' => $this->trans('buying_price'),
             'materials.cogs' => $this->trans('cogs'),
             'materials.stock' => $this->trans('stock'),
@@ -119,7 +119,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->object = Material::find($objectId);
         if ($this->object) {
-            $this->object_uoms = $this->object->MatlUom[0];
+            $this->object_uoms = $this->object->DefaultUom;
             $this->materials = populateArrayFromModel($this->object);
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             $attachments = $this->object->Attachment;
@@ -127,7 +127,6 @@ class MaterialComponent extends BaseComponent
             $this->materials['color_code'] = $specs['color_code'] ?? '';
             $this->materials['color_name'] = $specs['color_name'] ?? '';
             $this->materials['stock'] = $this->object->Stock;
-
             foreach ($attachments as $attachment) {
                 $this->capturedImages[] = [
                     'url' => $attachment->getUrl(),
@@ -147,6 +146,21 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
+        // **Validasi UOM sebelum save**
+        $selectedUOM = $this->materials['uom'] ?? null;
+
+        if (!$selectedUOM) {
+            throw new \Exception('UOM tidak boleh kosong.');
+        }
+
+        $exists = MatlUom::where('matl_id', $this->object->id)
+            ->where('matl_uom', $selectedUOM)
+            ->exists();
+
+        if (!$exists) {
+            throw new \Exception("UOM '$selectedUOM' tidak ditemukan dalam daftar UOM yang valid.");
+        }
+
         $this->materials['specs'] = [
             'color_code' => $this->materials['color_code'] ?? '',
             'color_name' => $this->materials['color_name'] ?? '',
@@ -167,7 +181,6 @@ class MaterialComponent extends BaseComponent
         }
 
         $this->object->save();
-        $this->saveUOMs();
         $this->saveAttachment();
     }
 
@@ -208,13 +221,6 @@ class MaterialComponent extends BaseComponent
         } else {
             $this->dispatch('error', "Tidak ada kode ditemukan untuk kategori produk ini.");
         }
-    }
-    private function saveUOMs()
-    {
-        $this->matl_uoms['matl_id'] = $this->object->id;
-        $this->matl_uoms['matl_code'] = $this->object->code;
-        $this->object_uoms->fill($this->matl_uoms);
-        $this->object_uoms->save();
     }
 
     public function saveAttachment()

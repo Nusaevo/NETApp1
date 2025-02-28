@@ -24,7 +24,7 @@ class Material extends BaseModel
         parent::boot();
     }
 
-    protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'selling_price', 'taxable', 'uom', 'remarks', 'tag'];
+    protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'taxable', 'uom', 'remarks', 'tag'];
 
     /**
      * Get configuration for Create Template.
@@ -522,6 +522,12 @@ class Material extends BaseModel
     {
         return $this->hasMany(MatlUom::class, 'matl_id');
     }
+    public function DefaultUom()
+    {
+        return $this->hasOne(MatlUom::class, 'matl_id', 'id')
+                    ->where('matl_uom', $this->uom);
+    }
+
 
     public function IvtBal()
     {
