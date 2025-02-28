@@ -10,7 +10,7 @@ class IvtBal extends BaseModel
 {
     protected $table = 'ivt_bals';
     public $timestamps = false;
-
+    public static $defaultWhCode = 'G01';
 
     public static function boot()
     {

@@ -216,7 +216,6 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'downloadCreateTemplate' => 'Download Create Template',
             'downloadUpdateTemplate' => 'Download Update Template',
-            'syncImages' => 'Sync Photos from NetStorage',
         ];
     }
     /**
