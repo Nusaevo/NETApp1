@@ -5,7 +5,7 @@ namespace App\Models\TrdRetail1\Master;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\Base\Attachment;
-use App\Models\TrdRetail1\Inventories\IvtBal;
+use App\Models\TrdRetail1\Inventories\{IvtBal, IvttrHdr, IvttrDtl};
 use App\Models\TrdRetail1\Transaction\OrderDtl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -169,6 +169,7 @@ class Material extends BaseModel
                 $no = $row[0] ?? null; // No*
                 $materialCode = $row[6] ?? null; // Kode Barang
                 $version = $row[11] ?? null; // Version
+                $uom = $row[3] ?? '';
 
                 if (empty($no)) {
                     $message .= 'Kolom No* tidak boleh kosong. ';
@@ -301,6 +302,25 @@ class Material extends BaseModel
                             'selling_price' => $sellingPrice,
                         ]);
                         $material->IvtBal()->create(['qty_oh' => $stock]);
+                        $ivtHdr = IvttrHdr::create([
+                            'tr_type' => 'IA',
+                            'tr_date' => now(),
+                            'remark'  => "Initial stock adjustment for $materialCode",
+                        ]);
+
+                        IvttrDtl::create([
+                            'trhdr_id'  => $ivtHdr->id,
+                            'tr_type'   => 'IA',
+                            'tr_id'     => $material->id,
+                            'tr_seq'    => 1,
+                            'matl_id'   => $material->id,
+                            'matl_code' => $materialCode,
+                            'matl_uom'  => $uom,
+                            'wh_code'   => $ivtBal->wh_code ?? null,
+                            'batch_code'=> date('y/m/d'),
+                            'qty'       => $stock,
+                            'tr_descr'  => "Initial stock for $materialCode",
+                        ]);
                     }
                 } elseif ($param === 'Update') {
                     $no = $row[0] ?? '';
