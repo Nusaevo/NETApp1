@@ -54,6 +54,12 @@ class PaymentHdr extends BaseModel
         return $this->hasMany(PaymentSrc::class, 'trhdr_id', 'id');
     }
 
+    // Define the details relationship
+    public function details()
+    {
+        return $this->hasMany(PaymentSrc::class, 'trhdr_id', 'id');
+    }
+
     public static function getByCreatedByAndTrType($createdBy, $trType)
     {
         return self::where('created_by', $createdBy)->where('tr_type', $trType)->get();
@@ -69,6 +75,10 @@ class PaymentHdr extends BaseModel
             $lastRecord = self::orderBy('tr_code', 'desc')->first();
             $lastId = $lastRecord ? intval($lastRecord->tr_code) : 0;
             $this->tr_code = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
+        }
+        // Set default status jika baru
+        if ($this->isNew()) {
+            $this->status_code = Status::OPEN;
         }
 
         // $this->tr_type = $inputs['tr_type'];

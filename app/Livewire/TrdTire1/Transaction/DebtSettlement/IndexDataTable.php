@@ -30,9 +30,21 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make('Transaction', 'tr_code')
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("date"), "tr_date")
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("supplier"), "partner_id")
+                ->format(function ($value, $row) {
+                    if ($row->Partner && $row->Partner->name) {
+                        return $row->Partner->name;
+                    } else {
+                        return '';
+                    }
+                })
+                ->html(),
             // Column::make($this->trans("tr_type"), "tr_type")
             //     ->hideIf(true)
             //     ->sortable(),

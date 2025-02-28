@@ -50,7 +50,7 @@ class Material extends BaseModel
     ];
     public function MatlUom()
     {
-        return $this->hasMany(MatlUom::class, 'matl_id');
+        return $this->hasOne(MatlUom::class, 'matl_id');
     }
     public function DefaultMatlUom()
     {

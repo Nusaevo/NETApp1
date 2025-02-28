@@ -18,7 +18,7 @@
                         <td>
                             <x-ui-dropdown-select label="{{ $this->trans('tr_type') }}"
                                 model="input_details.{{ $key }}.pay_type_code" :options="$PaymentType"
-                                required="true" :action="$actionValue" enabled="false"/>
+                                required="true" :action="$actionValue" enabled="false" />
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.price" label=""
@@ -47,12 +47,105 @@
                 <x-ui-dialog-box id="PaymentDialogBox" title="Set Payment" width="600px" height="400px"
                     onOpened="openPaymentDialogBox" onClosed="closePaymentDialogBox">
                     <x-slot name="body">
-                        <div class="row col-md-6">
-                            @if (isset($activePaymentItemKey))
-                                <x-ui-dropdown-select label="{{ $this->trans('tr_type') }}"
-                                    model="input_details.{{ $activePaymentItemKey }}.tr_type" :options="$PaymentType"
-                                    required="true" :action="$actionValue" />
-                            @endif
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <span>Jenis</span>
+                            </div>
+                            <div class="col-md-5">
+                                @if (isset($activePaymentItemKey))
+                                    <x-ui-dropdown-select label="{{ $this->trans('tr_type') }}"
+                                        model="input_details.{{ $activePaymentItemKey }}.tr_type" :options="$PaymentType"
+                                        required="true" :action="$actionValue" />
+                                @endif
+                            </div>
+                        </div>
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <span>Tunai</span>
+                            </div>
+                            <div class="col-md-10">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.kas"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.amt"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <span>Giro</span>
+                            </div>
+                            <div class="col-md-10">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.kas"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.amt"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.field3"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.field4"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <span>Trf</span>
+                            </div>
+                            <div class="col-md-10">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.kas"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.amt"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.field3"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.field4"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row align-items-center">
+                            <div class="col-md-1">
+                                <span>Tunai</span>
+                            </div>
+                            <div class="col-md-10">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.kas"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <x-ui-text-field model="input_details.{{ $activePaymentItemKey }}.amt"
+                                            label="" :action="$actionValue" type="number" />
+                                    </div>
+                                </div>
+                            </div>
+>>>>>>> 3be3401e ([Adit] - Update TrdTire1)
                         </div>
                     </x-slot>
                     <x-slot name="footer">
