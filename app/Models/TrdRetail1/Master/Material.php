@@ -68,9 +68,7 @@ class Material extends BaseModel
         $errors = [];
         $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
 
-        $sheetName = $templateConfig['name'];
         $expectedHeaders = $templateConfig['headers'];
-        $filename = self::FILENAME_PREFIX . ($param === 'Create' ? 'Create' : 'Update') . '_Validation_Result_' . now()->format('Y-m-d_His') . '.xlsx';
 
         // Validate Headers
         $actualHeaders = $dataTable[0] ?? [];
@@ -252,7 +250,7 @@ class Material extends BaseModel
     {
         $statusIndex = array_search('Status', $dataTable[0]);
         $messageIndex = array_search('Message', $dataTable[0]);
-
+        $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();    $errors = [];
         DB::beginTransaction();
 
         try {
@@ -326,7 +324,6 @@ class Material extends BaseModel
                         ]);
 
                         if ($stock > 0) {
-                            // Buat IvtBal (Stok awal)
                             $ivtBal = IvtBal::create([
                                 'matl_id' => $material->id,
                                 'matl_uom' => $uom,
@@ -334,17 +331,6 @@ class Material extends BaseModel
                                 'wh_code' => IvtBal::$defaultWhCode,
                                 'batch_code' => date('y/m/d'),
                                 'qty_oh' => $stock,
-                            ]);
-
-                            IvtBalUnit::create([
-                                'ivt_id' => $ivtBal->id,
-                                'matl_id' => $material->id,
-                                'matl_uom' => $uom,
-                                'wh_id' => 1,
-                                'unit_code' => $material->id . '-' . $uom,
-                                'batch_code' => date('y/m/d'),
-                                'qty_oh' => $stock,
-                                'status_code' => 'A',
                             ]);
 
                             $maxTrId = IvttrHdr::max('tr_id');
@@ -423,23 +409,6 @@ class Material extends BaseModel
                                 'qty_oh' => $stock,
                             ],
                         );
-
-                        // Update atau buat IvtBalUnit
-                        IvtBalUnit::updateOrCreate(
-                            [
-                                'ivt_id' => $ivtBal->id,
-                                'matl_id' => $material->id,
-                                'matl_uom' => $uom,
-                                'wh_code' => IvtBal::$defaultWhCode,
-                            ],
-                            [
-                                'batch_code' => date('y/m/d'),
-                                'unit_code' => $material->id . '-' . $uom,
-                                'qty_oh' => $stock,
-                                'status_code' => 'A',
-                            ],
-                        );
-
                         // Update atau buat MatlUom
                         $material->MatlUom()->updateOrCreate(
                             ['matl_uom' => $material->uom],
@@ -490,7 +459,6 @@ class Material extends BaseModel
             }
             // Perbarui data pada konfigurasi template
             $templateConfig['data'] = array_slice($dataTable, 1);
-
             // Unggah hasil proses ke attachment
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
@@ -501,14 +469,6 @@ class Material extends BaseModel
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-
-            // Tangkap file & baris error
-            $errorFile = $e->getFile();
-            $errorLine = $e->getLine();
-            $errorMessage = $e->getMessage();
-
-            $fullErrorMessage = "Processing failed: {$errorMessage} in {$errorFile} on line {$errorLine}.";
-            dd($fullErrorMessage);
             $audit->updateAuditTrail(100, 'Processing failed: ' . $e->getMessage(), Status::ERROR);
 
             // Perbarui data pada konfigurasi template
