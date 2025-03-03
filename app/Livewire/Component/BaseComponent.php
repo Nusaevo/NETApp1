@@ -53,7 +53,6 @@ class BaseComponent extends Component
             $this->setActionAndObject($action, $objectId);
             $this->setActionValue($action, $actionValue);
             $this->setObjectIdValue($objectId, $objectIdValue);
-
             $this->onReset();
             $this->getRoute();
             $this->handleRouteChange();
@@ -164,14 +163,14 @@ class BaseComponent extends Component
     private function handleEditViewAction()
     {
         if ($this->object) {
-            $this->status = $this->object->deleted_at === null ? 'Active' : Status::getStatusString($this->object->status_code);
+            $this->status = Status::getStatusString($this->object->status_code);
         }
     }
 
     private function handleCreateAction()
     {
         if ($this->objectIdValue !== null && $this->object) {
-            $this->status = $this->object->deleted_at === null ? 'Active' : Status::getStatusString($this->object->status_code);
+            $this->status = Status::getStatusString($this->object->status_code);
         }
     }
 
@@ -308,6 +307,7 @@ class BaseComponent extends Component
                     $this->object->status_code = Status::ACTIVE;
                 }
                 $this->object->deleted_at = null;
+                $this->object->save();
                 $messageKey = 'generic.string.enable';
             } else {
                 if (isset($this->object->status_code)) {
@@ -317,8 +317,8 @@ class BaseComponent extends Component
                 $this->object->delete();
                 $messageKey = 'generic.string.disable';
             }
+            $this->status = Status::getStatusString($this->object->status_code);
 
-            $this->object->save();
             $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
             Log::error("Method Change : " . $e->getMessage());

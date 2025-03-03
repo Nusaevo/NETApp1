@@ -95,7 +95,7 @@ class IndexDataTable extends BaseDataTableComponent
                 if ($value === 'active') {
                     $builder->whereNull('deleted_at');
                 } elseif ($value === 'deleted') {
-                    $builder->whereNotNull('deleted_at');
+                    $builder->withTrashed()->whereNotNull('deleted_at');
                 }
             }),
             SelectFilter::make('Stock', 'stock_filter')

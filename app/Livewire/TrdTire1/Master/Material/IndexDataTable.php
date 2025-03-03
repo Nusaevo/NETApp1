@@ -118,7 +118,7 @@ class IndexDataTable extends BaseDataTableComponent
                     if ($value === 'active') {
                         $builder->whereNull('materials.deleted_at');
                     } elseif ($value === 'deleted') {
-                        $builder->whereNotNull('materials.deleted_at');
+                        $builder->withTrashed()->whereNotNull('materials.deleted_at');
                     }
                 }),
         ];

@@ -3,7 +3,7 @@
         use App\Models\TrdRetail1\Master\Material;
     @endphp
 
-    <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}" status="{{ $this->trans($status) }}">
+    <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}" status="{{ $status }}">
 
         {{-- Tabs --}}
         @if ($actionValue === 'Create')

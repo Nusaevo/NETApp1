@@ -49,7 +49,7 @@
     @foreach (getGlobalAssets('css') as $path)
         {!! sprintf(
             '
-                                    <link rel="stylesheet" href="%s">',
+                                                    <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -59,7 +59,7 @@
     @foreach (getVendors('css') as $path)
         {!! sprintf(
             '
-                                    <link rel="stylesheet" href="%s">',
+                                                    <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -69,7 +69,7 @@
     @foreach (getCustomCss() as $path)
         {!! sprintf(
             '
-                                    <link rel="stylesheet" href="%s">',
+                                                    <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -209,6 +209,30 @@
                 } else {
                     console.error('URL is not provided or is empty.');
                 }
+            });
+
+            Livewire.on('open-confirm-dialog', (dataArray) => {
+                let data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
+                let title = data.title || 'Confirm Action';
+                let message = data.message || 'Are you sure?';
+                let icon = data.icon || 'warning';
+                let confirmMethod = data.confirmMethod || '';
+                let confirmParams = data.confirmParams || null;
+                let confirmButtonText = data.confirmButtonText || 'Yes, confirm';
+
+                Swal.fire({
+                    title: title,
+                    text: message,
+                    icon: icon,
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: confirmButtonText
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Livewire.dispatch(confirmMethod, { data: confirmParams});
+                    }
+                });
             });
         });
     </script>

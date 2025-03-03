@@ -55,6 +55,7 @@ class MaterialComponent extends BaseComponent
     ];
 
     protected $listeners = [
+        'changeStatus'  => 'changeStatus',
         'captureImages' => 'captureImages',
         'submitImages' => 'submitImages',
         'submitAttachmentsFromStorage' => 'submitAttachmentsFromStorage',
@@ -98,7 +99,6 @@ class MaterialComponent extends BaseComponent
         $this->masterService = new MasterService();
         $this->materialCategories = $this->masterService->getMatlCategoryData();
         $this->materialUOM = $this->masterService->getMatlUOMData();
-
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
         }
@@ -117,7 +117,8 @@ class MaterialComponent extends BaseComponent
 
     protected function loadMaterial($objectId)
     {
-        $this->object = Material::find($objectId);
+        $this->object = Material::withTrashed()->find($objectId);
+
         if ($this->object) {
             $this->object_uoms = $this->object->DefaultUom;
             $this->materials = populateArrayFromModel($this->object);
@@ -326,6 +327,11 @@ class MaterialComponent extends BaseComponent
             $this->deleteImages[] = $this->capturedImages[$index]['filename'];
             unset($this->capturedImages[$index]);
         }
+    }
+
+    public function changeStatus()
+    {
+        $this->change();
     }
     #endregion
 }

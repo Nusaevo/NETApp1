@@ -12,6 +12,7 @@ use PhpOffice\PhpSpreadsheet\{Spreadsheet, Writer\Xlsx, Style\Protection};
 use Illuminate\Support\Facades\{File, Http};
 use App\Models\Base\Attachment;
 use Exception;
+use App\Enums\Status;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -19,6 +20,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     protected $masterService;
     public $materialCategories;
+    protected $listeners = ['refreshTable' => '$refresh', 'deleteMaterial'];
 
     public function mount(): void
     {
@@ -62,23 +64,23 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
 
             Column::make('Photo', 'id')
-            ->format(function ($value, $row) {
-                $firstAttachment = $row->Attachment->first();
-                $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-                return $imageUrl
-                    ? view('components.ui-image', [
-                        'src' => $imageUrl,
-                        'alt' => 'Photo',
-                        'width' => '50px',
-                        'height' => '50px',
-                    ])
-                    : '<span>No Image</span>';
-            })
-            ->html(),
+                ->format(function ($value, $row) {
+                    $firstAttachment = $row->Attachment->first();
+                    $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
+                    return $imageUrl
+                        ? view('components.ui-image', [
+                            'src' => $imageUrl,
+                            'alt' => 'Photo',
+                            'width' => '50px',
+                            'height' => '50px',
+                        ])
+                        : '<span>No Image</span>';
+                })
+                ->html(),
 
-            Column::make('UOM', 'id')->format(fn($value, $row) => $row->MatlUom[0]->matl_uom ?? '')->sortable()->collapseOnTablet(),
+            Column::make('UOM', 'id')->format(fn($value, $row) => $row->uom ?? '')->sortable()->collapseOnTablet(),
 
-            Column::make('Selling Price', 'selling_price_text')->label(fn($row) => $row->selling_price_text)->sortable()->collapseOnTablet(),
+            Column::make('Selling Price', 'id')->label(fn($row) => rupiah($row->DefaultUom->selling_price ?? 0))->sortable()->collapseOnTablet(),
 
             Column::make('Stock', 'IvtBal.qty_oh')->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)->sortable()->collapseOnTablet(),
 
@@ -108,12 +110,7 @@ class IndexDataTable extends BaseDataTableComponent
      */
     public function filters(): array
     {
-        $kategoriOptions = array_merge(
-            ['' => 'Select Category'],
-            collect($this->materialCategories)
-                ->pluck('label', 'value')
-                ->toArray(),
-        );
+        $kategoriOptions = array_merge(['' => 'Select Category'], collect($this->materialCategories)->pluck('label', 'value')->toArray());
 
         $brandOptions = array_merge(['' => 'Select Brand'], Material::distinct('brand')->pluck('brand', 'brand')->toArray());
 
@@ -192,6 +189,19 @@ class IndexDataTable extends BaseDataTableComponent
                         });
                     }
                 }),
+
+            SelectFilter::make('Status', 'status_filter')
+                ->options([
+                    'active' => 'Active',
+                    'deleted' => 'Non Active',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === 'active') {
+                        $builder->whereNull('deleted_at');
+                    } elseif ($value === 'deleted') {
+                        $builder->withTrashed()->whereNotNull('deleted_at');
+                    }
+                }),
         ];
     }
 
@@ -214,6 +224,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
+            'deleteSelected' => 'Delete Selected',
             'downloadCreateTemplate' => 'Download Create Template',
             'downloadUpdateTemplate' => 'Download Update Template',
         ];
@@ -237,30 +248,45 @@ class IndexDataTable extends BaseDataTableComponent
         $selectedIds = $this->getSelected();
         $materials = Material::whereIn('id', $selectedIds)->get();
         $data = $materials
-        ->map(function ($material, $index) {
-            $specs = $material->specs;
+            ->map(function ($material, $index) {
+                $specs = $material->specs;
 
-            return [
-                $material->seq,
-                $specs['color_code'] ?? '',
-                $specs['color_name'] ?? '',
-                $material->MatlUom[0]->matl_uom ?? '',
-                $material->selling_price ?? '',
-                $material->stock ?? '',
-                $material->code ?? '',
-                $material->MatlUom[0]->barcode ?? '',
-                $material->name ?? '',
-                $material->deleted_at ? 'Yes' : 'No',
-                $material->remarks ?? '',
-                $material->version_number ?? '',
-            ];
-        })
-        ->toArray();
-
+                return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
+            })
+            ->toArray();
 
         $sheets = [Material::getUpdateTemplateConfig($data)];
         $filename = 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
 
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
+    }
+
+    public function deleteSelected()
+    {
+        $selectedIds = $this->getSelected() ?? [];
+
+        if (empty($selectedIds)) {
+            $this->dispatch('error', 'No materials selected.');
+            return;
+        }
+        $ids = implode(',', $selectedIds);
+        $this->dispatch('open-confirm-dialog', [
+            'title' => 'Confirm Delete',
+            'message' => 'Are you sure you want to delete this?',
+            'icon' => 'warning',
+            'confirmMethod' => 'deleteMaterial',
+            'confirmParams' => implode(',', (array) $selectedIds),
+            'confirmButtonText' => 'Yes, delete it!',
+        ]);
+    }
+
+    public function deleteMaterial($data)
+    {
+        $idsArray = explode(',', $data);
+        Material::whereIn('id', $idsArray)->update(['status_code' => Status::NONACTIVE]);
+        Material::whereIn('id', $idsArray)->delete();
+        $this->dispatch('refreshTable');
+        $message = count($idsArray) > 1 ? 'Selected materials deleted successfully.' : 'Material deleted successfully.';
+        $this->dispatch('success', $message);
     }
 }

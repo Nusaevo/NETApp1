@@ -37,7 +37,7 @@ class UomListComponent extends DetailComponent
         $this->materialUOM = $this->masterService->getMatlUOMData(); // Ambil data UOM
 
         if (!empty($this->objectIdValue)) {
-            $this->object = Material::find($this->objectIdValue);
+            $this->object = Material::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->loadDetails();
         }
