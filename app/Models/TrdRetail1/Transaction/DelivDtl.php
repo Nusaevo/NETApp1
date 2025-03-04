@@ -68,17 +68,16 @@ class DelivDtl extends BaseModel
                 }
             }
 
-            $header = $delivDtl->DelivHdr;
             $orderDtl = $delivDtl->OrderDtl;
 
             IvtLog::updateOrCreate(
                 [
-                    'trhdr_id' => $header->id ?? $delivDtl->trhdr_id,
-                    'tr_type'  => $header->tr_type ?? $delivDtl->tr_type,
+                    'trhdr_id' => $delivDtl->trhdr_id,
+                    'tr_type'  => $delivDtl->tr_type,
                     'tr_seq'   => $delivDtl->tr_seq,
                 ],
                 [
-                    'tr_code'    => $header->tr_code ?? $delivDtl->tr_code,
+                    'tr_id'    => $delivDtl->tr_id,
                     'trdtl_id'   => $delivDtl->id,
                     'ivt_id'     => $delivDtl->ivt_id,
                     'matl_id'    => $delivDtl->matl_id,
@@ -87,7 +86,7 @@ class DelivDtl extends BaseModel
                     'wh_id'      => $delivDtl->wh_id,
                     'wh_code'    => $delivDtl->wh_code,
                     'batch_code' => $delivDtl->batch_code,
-                    'tr_date'    => $header->tr_date ?? null,
+                    'tr_date'    => date('Y-m-d'),
                     'qty'        => $delivDtl->qty,
                     'price'      => $orderDtl->amt ?? 0,
                     'amt'        => $delivDtl->qty * ($orderDtl->amt ?? 0),
@@ -143,7 +142,7 @@ class DelivDtl extends BaseModel
     }
 
 
-    protected $fillable = ['trhdr_id', 'tr_type', 'tr_id', 'tr_seq', 'reffdtl_id', 'reffhdrtr_type', 'reffhdrtr_id', 'reffdtltr_seq', 'matl_id', 'matl_code', 'matl_uom', 'matl_descr', 'wh_id', 'qty', 'qty_reff', 'status_code'];
+    protected $fillable = ['trhdr_id', 'tr_type', 'tr_id', 'tr_seq', 'reffdtl_id', 'reffhdrtr_type', 'reffhdrtr_id', 'reffdtltr_seq', 'matl_id', 'matl_code', 'matl_uom', 'matl_descr', 'wh_code', 'qty', 'qty_reff', 'status_code'];
     public function scopeGetByOrderHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)->where('tr_type', $trType);
@@ -155,12 +154,19 @@ class DelivDtl extends BaseModel
     {
         return $this->belongsTo(Material::class, 'matl_id');
     }
-
     public function DelivHdr()
     {
-        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+        if ($this->tr_type) {
+            return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')
+                ->where('tr_type', $this->tr_type);
+        }
+        return null;
     }
-
+    public function OrderDtl()
+    {
+        return $this->belongsTo(OrderDtl::class, 'reffdtl_id', 'id')
+            ->where('tr_type', $this->reffhdrtr_type);
+    }
     public function IvtBal()
     {
         return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')->where('wh_id', $this->wh_id);

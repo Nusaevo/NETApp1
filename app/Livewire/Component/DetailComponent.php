@@ -173,7 +173,8 @@ class DetailComponent extends Component
         $this->validateForm();
         try {
             DB::transaction(function () {
-                $this->updateVersionNumber();
+                // $this->updateVersionNumber();
+                // $this->object->version_number = $this->object->version_number + 1;
                 $this->object->save();
                 $this->onValidateAndSave();
             });
@@ -194,7 +195,8 @@ class DetailComponent extends Component
         $this->validateForm();
         try {
             DB::transaction(function () {
-                $this->updateVersionNumber();
+                // $this->updateVersionNumber();
+                // $this->object->version_number = $this->object->version_number + 1;
                 $this->object->save();
                 $this->onValidateAndSave();
             });

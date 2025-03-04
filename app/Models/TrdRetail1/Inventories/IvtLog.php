@@ -6,6 +6,7 @@ use App\Models\Base\BaseModel;
 
 class IvtLog extends BaseModel
 {
+    public $timestamps = false;
     protected static function boot()
     {
         parent::boot();

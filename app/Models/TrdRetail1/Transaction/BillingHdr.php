@@ -19,7 +19,7 @@ class BillingHdr extends BaseModel
             PartnerLog::create([
                 'trhdr_id' => $billingHdr->id,
                 'tr_type' => $billingHdr->tr_type,
-                'tr_code' => $billingHdr->tr_code,
+                'tr_id' => $billingHdr->tr_id,
                 'partner_id' => $billingHdr->partner_id,
                 'partner_code' => $billingHdr->partner_code,
                 'tr_date' => $billingHdr->tr_date,

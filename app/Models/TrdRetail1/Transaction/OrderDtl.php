@@ -92,6 +92,12 @@ class OrderDtl extends BaseModel
     {
         return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+
+    public function DelivDtl()
+    {
+        return $this->hasOne(DelivDtl::class, 'reffdtl_id', 'id')
+        ->where('tr_type', $this->tr_type);
+    }
     #endregion
 
 

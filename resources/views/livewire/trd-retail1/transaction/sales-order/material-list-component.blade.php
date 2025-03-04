@@ -3,7 +3,9 @@
         <x-ui-table id="Table">
             <x-slot name="headers">
                 <th style="width: 50px; text-align: center;">No</th>
-                <th style="width: 150px; text-align: center;">Code</th>
+                <th style="width: 100px; text-align: center;">Code</th>
+                <th style="width: 100px; text-align: center;">UOM</th>
+                <th style="width: 100px; text-align: center;">Warehouse</th>
                 <th style="width: 80px; text-align: center;">Image</th>
                 <th style="width: 150px; text-align: center;">Harga Satuan</th>
                 <th style="width: 80px; text-align: center;">Qty</th>
@@ -21,6 +23,21 @@
                                 required="true" :action="$actionValue"
                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                 :enabled="true" />
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-dropdown-select
+                                model="input_details.{{ $key }}.matl_uom"
+                                :options="$uomOptions"
+                                onChanged="onUomChanged({{ $key }}, $event.target.value)"
+                            />
+                        </td>
+
+                        <!-- Tambahkan kolom Warehouse -->
+                        <td style="text-align: center;">
+                            <x-ui-dropdown-select
+                                model="input_details.{{ $key }}.wh_code"
+                                :options="$warehouseOptions"
+                            />
                         </td>
                         <td style="text-align: center;">
                             @if (!empty($input_details[$key]['image_url']))
@@ -53,7 +70,7 @@
 
                 <!-- Total Row -->
                 <tr style="font-weight: bold; background-color: #f8f9fa;">
-                    <td colspan="5" style="text-align: right;">Total</td>
+                    <td colspan="7" style="text-align: right;">Total</td>
                     <td style="text-align: center;">{{ rupiah($total_amount) }}</td>
                     <td></td>
                 </tr>
@@ -68,17 +85,24 @@
         <x-ui-dialog-box id="itemDialogBox" title="Search Item" width="600px" height="400px"
             onOpened="openItemDialogBox" onClosed="closeItemDialogBox">
             <x-slot name="body">
-                <x-ui-text-field type="text" label="Search Code/Nama/Deskripsi Item" model="searchTerm"
-                    required="true" :action="$actionValue" enabled="true" clickEvent="searchMaterials" buttonName="Search" />
-                <!-- Table -->
+                <div class="row">
+                    <x-ui-text-field type="text" label="Search Code/Nama" model="searchTerm"
+                        required="true" :action="$actionValue" enabled="true" clickEvent="" buttonName="" />
+                    <!-- Table -->
+                    <x-ui-text-field-search label="Category" model="filterCategory" :options="$kategoriOptions" onChanged="" />
+                </div>
+                <div class="row">
+                    <x-ui-text-field-search label="Brand" model="filterBrand" :options="$brandOptions" onChanged="" />
+                    <x-ui-text-field-search label="Type" model="filterType" :options="$typeOptions" onChanged="" />
+                </div>
 
 
+                <x-ui-button clickEvent="searchMaterials" cssClass="btn btn-primary" button-name="Search" />
                 <x-ui-table id="materialsTable" padding="0px" margin="0px" height="400px">
                     <x-slot name="headers">
                         <th class="min-w-100px">Code</th>
                         <th class="min-w-100px">Image</th>
                         <th class="min-w-100px">Name</th>
-                        <th class="min-w-100px">Description</th>
                     </x-slot>
 
                     <x-slot name="rows">
@@ -90,8 +114,8 @@
                             @foreach ($materialList as $index => $material)
                                 <tr wire:key="row-{{ $index }}-supplier">
                                     <td style="text-align: center;">
-                                        <x-ui-option label="" required="false" layout="horizontal" enabled="true"
-                                            type="checkbox" visible="true" :options="[$material['id'] => $material['code']]"
+                                        <x-ui-option label="" required="false" layout="horizontal"
+                                            enabled="true" type="checkbox" visible="true" :options="[$material['id'] => $material['code']]"
                                             onChanged="selectMaterial({{ $material['id'] }})" />
                                     </td>
                                     <td style="text-align: center;">

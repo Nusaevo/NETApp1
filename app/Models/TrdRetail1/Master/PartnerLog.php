@@ -9,6 +9,7 @@ use App\Models\Base\BaseModel;
 class PartnerLog extends BaseModel
 {
     protected $table = 'partner_logs';
+    public $timestamps = false;
 
     protected static function boot()
     {
@@ -18,7 +19,7 @@ class PartnerLog extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
-        'tr_code',
+        'tr_id',
         'tr_seq',
         'trdtl_id',
         'partner_id',

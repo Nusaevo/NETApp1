@@ -352,6 +352,7 @@ class OrderHdr extends BaseModel
             'matl_descr' => $orderDtl->matl_descr,
             'matl_uom' => $orderDtl->matl_uom,
             'wh_id' => $detailData['wh_id'] ?? '',
+            'wh_code' => $detailData['wh_code'] ?? '',
             'qty' => $orderDtl->qty,
             'qty_reff' => $orderDtl->qty_reff,
         ]);
@@ -359,7 +360,6 @@ class OrderHdr extends BaseModel
         if ($delivDtl->isNew()) {
             $delivDtl->status_code = Status::OPEN; // or whatever status you want
         }
-
         $delivDtl->save();
 
         // 2) Create or update BillingDtl,

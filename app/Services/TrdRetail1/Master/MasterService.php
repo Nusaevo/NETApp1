@@ -74,6 +74,17 @@ class MasterService extends BaseService
         })->toArray();
     }
 
+    public function getWarehouseData()
+    {
+        $data = $this->getConfigData('MWAREHOUSE_LOCL1');
+        return $data->map(function ($item) {
+            return [
+                'label' => $item->str2,
+                'value' => $item->str1,
+            ];
+        })->toArray();
+    }
+
     public function getMatlCategoryString($str1)
     {
         $data = $this->mainConnection
@@ -119,6 +130,33 @@ class MasterService extends BaseService
             return [
                 'label' => $data->code . " - " . $data->name,
                 'value' => $data->id,
+            ];
+        })->toArray();
+    }
+    public function getMatlBrandData()
+    {
+        // Ambil semua brand unik dari tabel materials
+        $brands = Material::distinct('brand')->whereNotNull('brand')->get(['brand']);
+
+        // Mapping menjadi label-value
+        return $brands->map(function ($item) {
+            return [
+                'label' => $item->brand,
+                'value' => $item->brand,
+            ];
+        })->toArray();
+    }
+
+    public function getMatlTypeData()
+    {
+        // Ambil semua type (class_code) unik dari tabel materials
+        $types = Material::distinct('class_code')->whereNotNull('class_code')->get(['class_code']);
+
+        // Mapping menjadi label-value
+        return $types->map(function ($item) {
+            return [
+                'label' => $item->class_code,
+                'value' => $item->class_code,
             ];
         })->toArray();
     }

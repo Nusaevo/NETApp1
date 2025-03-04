@@ -3,9 +3,11 @@
 namespace App\Livewire\TrdRetail1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\DetailComponent;
+use App\Models\TrdJewel1\Master\MatlUom;
 use App\Models\TrdRetail1\Master\Material;
 use App\Services\TrdRetail1\Master\MasterService;
 use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\SysConfig1\ConfigConst;
 use Exception;
 
 class MaterialListComponent extends DetailComponent
@@ -21,10 +23,21 @@ class MaterialListComponent extends DetailComponent
     public $materialList = [];
     public $searchTerm = '';
     public $selectedMaterials = [];
+    public $materialCategories = [];
+    public $filterCategory = '';
+    public $filterBrand = '';
+    public $filterType = '';
+    public $kategoriOptions = '';
+    public $brandOptions = '';
+    public $typeOptions = '';
 
+    public $warehouseOptions = [];
+    public $uomOptions = [];
     protected $rules = [
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
+        'input_details.*.wh_code' => 'required',
+        'input_details.*.matl_uom' => 'required',
     ];
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
@@ -47,7 +60,11 @@ class MaterialListComponent extends DetailComponent
         ];
         $this->masterService = new MasterService();
         $this->materials = $this->masterService->getMaterials();
-
+        $this->kategoriOptions = $this->masterService->getMatlCategoryData();
+        $this->brandOptions =   $this->masterService->getMatlBrandData();
+        $this->typeOptions =   $this->masterService->getMatlTypeData();
+        $this->warehouseOptions = $this->masterService->getWarehouseData();
+        $this->uomOptions = $this->masterService->getMatlUOMData();
         if (!empty($this->objectIdValue)) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
@@ -89,8 +106,10 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
                 $this->input_details[$key]['price'] = $material->selling_price;
-                $this->input_details[$key]['matl_uom'] = $material->MatlUom[0]->id;
+                $this->input_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
                 $this->input_details[$key]['matl_descr'] = $material->name;
+                $this->input_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0;
+                $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
                 $this->updateItemAmount($key);
@@ -98,6 +117,21 @@ class MaterialListComponent extends DetailComponent
                 $this->dispatch('error', 'Material_not_found');
             }
         }
+    }
+    public function onUomChanged($key, $uomId)
+    {
+        $materialId = $this->input_details[$key]['matl_id'] ?? null;
+
+        if ($materialId) {
+            $matlUom = MatlUom::where('matl_id', $materialId)
+                ->where('matl_uom', $uomId)
+                ->first();
+
+            if ($matlUom) {
+                $this->input_details[$key]['price'] = $matlUom->selling_price;
+            }
+        }
+        $this->updateItemAmount($key);
     }
 
     public function updateItemAmount($key)
@@ -149,9 +183,9 @@ class MaterialListComponent extends DetailComponent
     {
         if (!empty($this->object)) {
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
-
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
+                $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
                 $this->updateItemAmount($key);
             }
         }
@@ -163,6 +197,10 @@ class MaterialListComponent extends DetailComponent
 
     public function onValidateAndSave()
     {
+        if (empty($this->objectIdValue)) {
+            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
+            return;
+        }
         // 1) Validate the input details
         $this->validate();
 
@@ -172,9 +210,12 @@ class MaterialListComponent extends DetailComponent
             ->get()
             ->keyBy('tr_seq')
             ->toArray();
+        $inputDetailsKeyed = collect($this->input_details)
+            ->keyBy('tr_seq')
+            ->toArray();
 
         // 3) Determine which items to delete (items in DB but not in $this->input_details)
-        $itemsToDelete = array_diff_key($existingDetails, $this->input_details);
+        $itemsToDelete = array_diff_key($existingDetails, $inputDetailsKeyed);
         foreach ($itemsToDelete as $tr_seq => $detail) {
             $orderDtl = OrderDtl::find($detail['id']);
             if ($orderDtl) {
@@ -188,8 +229,13 @@ class MaterialListComponent extends DetailComponent
         foreach ($this->input_details as $index => $detail) {
             $detail['tr_seq'] = $index + 1;
             $detail['tr_id'] = $this->object->tr_id;
-            $detail['wh_id'] = 18;
-            $detail['wh_code'] = 18;
+            $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
+            ->where('str1', $detail['wh_code'] ?? '')
+            ->first();
+
+            $detail['wh_id'] = $configConst ? $configConst->id : null;
+            $material = Material::find($detail['matl_id'] ?? null);
+            $detail['matl_code'] = $material ? $material->code : null;
             $itemsToSave[]    = $detail;
         }
         // 5) Save or update items.
@@ -210,26 +256,43 @@ class MaterialListComponent extends DetailComponent
 
     public function openItemDialogBox()
     {
+        if (empty($this->objectIdValue)) {
+            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
+            return;
+        }
         $this->searchTerm = '';
         $this->materialList = [];
         $this->selectedMaterials = [];
         $this->dispatch('openItemDialogBox');
     }
+
     public function searchMaterials()
     {
         $query = Material::query();
+
         if (!empty($this->searchTerm)) {
             $searchTermUpper = strtoupper($this->searchTerm);
             $query->where(function ($query) use ($searchTermUpper) {
                 $query
                     ->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                    ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%'])
-                    ->orWhereRaw('UPPER(materials.descr) LIKE ?', ['%' . $searchTermUpper . '%']);
+                    ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
             });
+        }
+
+        // Apply filters
+        if (!empty($this->filterCategory)) {
+            $query->where('category', $this->filterCategory);
+        }
+        if (!empty($this->filterBrand)) {
+            $query->where('brand', $this->filterBrand);
+        }
+        if (!empty($this->filterType)) {
+            $query->where('class_code', $this->filterType);
         }
 
         $this->materialList = $query->get();
     }
+
     public function selectMaterial($materialID)
     {
         $key = array_search($materialID, $this->selectedMaterials);
