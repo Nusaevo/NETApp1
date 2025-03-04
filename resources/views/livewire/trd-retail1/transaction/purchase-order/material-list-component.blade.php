@@ -1,11 +1,17 @@
 <div>
     <x-ui-card>
+
+        <!-- Tambahkan kolom Warehouse -->
+            <x-ui-dropdown-select
+                label="Lokasi"
+                model="wh_code"
+                :options="$warehouseOptions"
+            />
         <x-ui-table id="Table">
             <x-slot name="headers">
                 <th style="width: 50px; text-align: center;">No</th>
                 <th style="width: 100px; text-align: center;">Code</th>
                 <th style="width: 100px; text-align: center;">UOM</th>
-                <th style="width: 100px; text-align: center;">Warehouse</th>
                 <th style="width: 80px; text-align: center;">Image</th>
                 <th style="width: 150px; text-align: center;">Harga Satuan</th>
                 <th style="width: 80px; text-align: center;">Qty</th>
@@ -29,14 +35,6 @@
                                 model="input_details.{{ $key }}.matl_uom"
                                 :options="$uomOptions"
                                 onChanged="onUomChanged({{ $key }}, $event.target.value)"
-                            />
-                        </td>
-
-                        <!-- Tambahkan kolom Warehouse -->
-                        <td style="text-align: center;">
-                            <x-ui-dropdown-select
-                                model="input_details.{{ $key }}.wh_code"
-                                :options="$warehouseOptions"
                             />
                         </td>
                         <td style="text-align: center;">
@@ -70,7 +68,7 @@
 
                 <!-- Total Row -->
                 <tr style="font-weight: bold; background-color: #f8f9fa;">
-                    <td colspan="7" style="text-align: right;">Total</td>
+                    <td colspan="6" style="text-align: right;">Total</td>
                     <td style="text-align: center;">{{ rupiah($total_amount) }}</td>
                     <td></td>
                 </tr>
@@ -103,6 +101,7 @@
                         <th class="min-w-100px">Code</th>
                         <th class="min-w-100px">Image</th>
                         <th class="min-w-100px">Name</th>
+                        <th class="min-w-100px">Warna</th>
                     </x-slot>
 
                     <x-slot name="rows">
@@ -127,7 +126,9 @@
                                         @endif
                                     </td>
                                     <td>{{ $material->name }}</td>
-                                    <td>{{ $material->descr }}</td>
+                                    <td style="text-align: center;">
+                                        {{ $material->specs['color_name'] }}
+                                    </td>
                                 </tr>
                             @endforeach
                         @endif

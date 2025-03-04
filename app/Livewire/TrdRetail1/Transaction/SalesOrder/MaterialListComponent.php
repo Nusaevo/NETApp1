@@ -33,10 +33,12 @@ class MaterialListComponent extends DetailComponent
 
     public $warehouseOptions = [];
     public $uomOptions = [];
+
+    public $wh_code='';
     protected $rules = [
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
-        'input_details.*.wh_code' => 'required',
+        'wh_code' => 'required',
         'input_details.*.matl_uom' => 'required',
     ];
 
@@ -64,6 +66,7 @@ class MaterialListComponent extends DetailComponent
         $this->brandOptions =   $this->masterService->getMatlBrandData();
         $this->typeOptions =   $this->masterService->getMatlTypeData();
         $this->warehouseOptions = $this->masterService->getWarehouseData();
+        $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
         $this->uomOptions = $this->masterService->getMatlUOMData();
         if (!empty($this->objectIdValue)) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -109,7 +112,6 @@ class MaterialListComponent extends DetailComponent
                 $this->input_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
                 $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->input_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0;
-                $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
                 $this->updateItemAmount($key);
@@ -229,6 +231,7 @@ class MaterialListComponent extends DetailComponent
         foreach ($this->input_details as $index => $detail) {
             $detail['tr_seq'] = $index + 1;
             $detail['tr_id'] = $this->object->tr_id;
+            $detail['wh_code'] = $this->wh_code;
             $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
             ->where('str1', $detail['wh_code'] ?? '')
             ->first();
