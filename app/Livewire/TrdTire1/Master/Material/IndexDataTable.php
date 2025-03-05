@@ -60,6 +60,10 @@ class IndexDataTable extends BaseDataTableComponent
                     return $row->selling_price_text;
                 })
                 ->sortable(),
+            // kolom uom di tabel material
+            Column::make($this->trans("uom"), "uom")
+                ->searchable()
+                ->sortable(),
             Column::make('Stock', 'IvtBal.qty_oh')
                 ->format(function ($value, $row, Column $column) {
                     return $row->IvtBal?->qty_oh ?? 0; // Pastikan nilai null ditampilkan sebagai 0

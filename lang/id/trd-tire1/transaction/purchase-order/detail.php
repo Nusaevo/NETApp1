@@ -3,6 +3,7 @@
 return [
     'tr_code' => 'Kode Transaksi',
     'custommer' => 'Pelanggan',
+    'payment_terms' => 'Termin Pembayaran',
     'ship_to' => 'Kirim Ke',
     'tax_payer' => 'Wajib Pajak',
     'payment_term' => 'Termin Pembayaran',

@@ -181,6 +181,11 @@ class MasterService extends BaseService
         $data = $this->getConfigData('TRX_SO_TAX');
         return $this->mapData($data);
     }
+    public function getPaymentTypeData()
+    {
+        $data = $this->getConfigData('TRX_PAYMENT_SRCS');
+        return $this->mapData($data);
+    }
 
     public function getSOSendData()
     {
