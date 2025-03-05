@@ -3,6 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\DebtSettlement;
 
 use App\Livewire\Component\DetailComponent;
+use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Master\Material;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, PaymentHdr, PaymentSrc};
@@ -19,10 +20,6 @@ class MaterialListComponent extends DetailComponent
     public $tr_seq;
     public $tr_code;
     public $input_details = [];
-    public $total_amount = 0;
-    public $total_discount = 0;
-    public $total_tax = 0; // New property for total tax
-    public $total_dpp = 0; // New property for total tax
     public $activePaymentItemKey = null;
 
     protected $rules = [
@@ -47,10 +44,22 @@ class MaterialListComponent extends DetailComponent
         $this->PaymentType = $this->masterService->getPaymentTypeData();
         $this->materials = $this->masterService->getMaterials();
 
-        if (!empty($this->objectIdValue)) {
-            $this->object = PaymentHdr::withTrashed()->find($this->objectIdValue);
+        if ($this->isEditOrView()) {
+            if (empty($this->objectIdValue)) {
+                $this->dispatch('error', 'Invalid object ID');
+                return;
+            }
+            $this->object = PaymentHdr::with(['details'])->withTrashed()->find($this->objectIdValue);
+            if (!$this->object) {
+                $this->dispatch('error', 'Object not found');
+                return;
+            }
             $this->inputs = populateArrayFromModel($this->object);
-            $this->loadDetails();
+            foreach ($this->object->details as $key => $detail) {
+                $this->input_details[$key] = populateArrayFromModel($detail);
+                $this->input_details[$key]['pay_type_code'] = $detail->pay_type_code;
+                $this->input_details[$key]['pay_type_id'] = $detail->pay_type_id;
+            }
         }
     }
 
@@ -60,8 +69,6 @@ class MaterialListComponent extends DetailComponent
             try {
                 // Tambahkan item baru dengan placeholder untuk tr_type
                 $this->input_details[] = [
-                    'matl_id' => null,
-                    'qty' => null,
                     'tr_type' => null, // field untuk tipe pembayaran per item
                 ];
                 // Set indeks item baru sebagai aktif (opsional: jika ingin langsung atur payment)
@@ -93,6 +100,11 @@ class MaterialListComponent extends DetailComponent
         ]);
         $trType = $this->input_details[$key]['tr_type'];
         $this->input_details[$key]['pay_type_code'] = $trType;
+
+        // Set pay_type_id based on pay_type_code
+        $payType = ConfigConst::where('str1', $trType)->first();
+        $this->input_details[$key]['pay_type_id'] = $payType ? $payType->id : null;
+
         $this->dispatch('success', __('Payment type has been confirmed and updated for item ' . ($key + 1)));
 
         // Tutup dialog box setelah konfirmasi berhasil
@@ -102,86 +114,6 @@ class MaterialListComponent extends DetailComponent
         $this->activePaymentItemKey = null;
     }
 
-
-    public function onMaterialChanged($key, $matl_id)
-    {
-        if ($matl_id) {
-            $material = Material::find($matl_id);
-            if ($material) {
-                $matlUom = MatlUom::where('matl_id', $matl_id)->first(); // Fetch MatlUom using matl_id
-                if ($matlUom) {
-                    $this->input_details[$key]['matl_id'] = $material->id;
-                    $this->input_details[$key]['price'] = $matlUom->selling_price; // Use selling_price from MatlUom
-                    $this->input_details[$key]['matl_uom'] = $material->uom;
-                    $this->input_details[$key]['matl_descr'] = $material->name;
-                    $this->updateItemAmount($key);
-                } else {
-                    $this->dispatch('error', __('generic.error.material_uom_not_found'));
-                }
-            } else {
-                $this->dispatch('error', __('generic.error.material_not_found'));
-            }
-        }
-    }
-
-    public function updateItemAmount($key)
-    {
-        if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
-            $discountPercent = $this->input_details[$key]['disc_pct'] ?? 0;
-            $discountAmount = $amount * ($discountPercent / 100);
-            $this->input_details[$key]['amt'] = $amount - $discountAmount;
-        } else {
-            $this->input_details[$key]['amt'] = 0;
-        }
-
-        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
-
-        $this->recalculateTotals();
-    }
-
-    public function recalculateTotals()
-    {
-        $this->calculateTotalAmount();
-        $this->calculateTotalDiscount();
-
-        $this->dispatch('updateAmount', [
-            'total_amount' => $this->total_amount,
-            'total_discount' => $this->total_discount,
-            'total_tax' => $this->total_tax,
-            'total_dpp' => $this->total_dpp,
-        ]);
-    }
-
-    private function calculateTotalAmount()
-    {
-        $this->total_amount = array_sum(array_map(function ($detail) {
-            $qty = $detail['qty'] ?? 0;
-            $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc_pct'] ?? 0;
-            $amount = $qty * $price;
-            $discountAmount = $amount * ($discountPercent / 100);
-            return $amount - $discountAmount;
-        }, $this->input_details));
-
-        $this->total_amount = round($this->total_amount, 2);
-    }
-
-    private function calculateTotalDiscount()
-    {
-        $this->total_discount = array_sum(array_map(function ($detail) {
-            $qty = $detail['qty'] ?? 0;
-            $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc_pct'] ?? 0;
-            $amount = $qty * $price;
-            $discountAmount = $amount * ($discountPercent / 100);
-            return $discountAmount;
-        }, $this->input_details));
-
-        $this->total_discount = round($this->total_discount, 2);
-    }
-
-
     public function deleteItem($index)
     {
         try {
@@ -189,11 +121,15 @@ class MaterialListComponent extends DetailComponent
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
             }
 
+            // Permanently delete the item from the database if it exists
+            if (!empty($this->objectIdValue) && isset($this->input_details[$index]['id'])) {
+                PaymentSrc::where('id', $this->input_details[$index]['id'])->forceDelete();
+            }
+
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
 
             $this->dispatch('success', __('generic.string.delete_item'));
-            $this->recalculateTotals();
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
@@ -208,7 +144,8 @@ class MaterialListComponent extends DetailComponent
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
-                $this->updateItemAmount($key); // Ensure each input item is initialized and updated
+                $this->input_details[$key]['pay_type_code'] = $detail->pay_type_code;
+                $this->input_details[$key]['pay_type_id'] = $detail->pay_type_id;
             }
         }
     }
@@ -230,12 +167,15 @@ class MaterialListComponent extends DetailComponent
             $tr_seq = $key + 1;
 
             $data = [
-                'tr_type'       => $this->object->tr_type,
-                'pay_type_id'   => $detail['tr_type'],
-                'pay_type_code' => isset($this->PaymentType[$detail['tr_type']])
-                    ? $this->PaymentType[$detail['tr_type']]
-                    : null,
+                'tr_type' => $this->object->tr_type,
+                'pay_type_id' => $detail['pay_type_id'] ?? null,
+                'pay_type_code' => $detail['pay_type_code'] ?? null,
             ];
+
+            if (!empty($this->inputs['pay_type_id'])) {
+                $PaymentType = ConfigConst::find($this->inputs['pay_type_id']);
+                $this->inputs['pay_type_code'] = $PaymentType->str1;
+            }
 
             PaymentSrc::updateOrCreate(
                 [
@@ -248,7 +188,6 @@ class MaterialListComponent extends DetailComponent
 
         $this->dispatch('success', __('Data Payment berhasil disimpan.'));
     }
-
 
     public function render()
     {
