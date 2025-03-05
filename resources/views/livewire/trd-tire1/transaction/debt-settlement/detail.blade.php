@@ -67,7 +67,7 @@
                                     </x-ui-dialog-box>
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
+                                    <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
                                         required="false" enabled="false" />
                                 </div>
                             </x-ui-padding>
@@ -83,62 +83,15 @@
             </div>
             <br>
             <div class="col-md-12">
-                <x-ui-card title="Order Items">
+                <x-ui-card title="Pembayaran">
                     @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
             </div>
-            <x-ui-table id="SummaryTable">
-                <x-slot name="headers">
-                    <th style="width: 150px; text-align: center;">Total Discount</th>
-                    <th style="width: 150px; text-align: center;">PPN</th>
-                    <th style="width: 150px; text-align: center;">DPP</th>
-                    <th style="width: 150px; text-align: center;">Total Amount</th>
-                    <th style="width: 150px; text-align: center;">Version</th>
-                </x-slot>
-                <x-slot name="rows">
-                    <tr>
-                        <td style="text-align: center;">
-                            <x-ui-text-field model="total_discount" label="" :action="$actionValue" enabled="false"
-                                type="text" />
-                        </td>
-                        <td style="text-align: center;">
-                            <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
-                                type="text" />
-                        </td>
-                        <td style="text-align: center;">
-                            <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
-                                type="text" />
-                        </td>
-                        <td style="text-align: center;">
-                            <x-ui-text-field model="total_amount" label="" :action="$actionValue" enabled="false"
-                                type="text" />
-                        </td>
-                        <td style="text-align: center;">
-                            <x-ui-text-field model="versionNumber" label="" :action="$actionValue" enabled="false"
-                                type="text" />
-                        </td>
-                    </tr>
-                </x-slot>
-            </x-ui-table>
-            <x-ui-footer>
-                <div>
-                    <x-ui-button :action="$actionValue"
-                        clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($object->id),
-                        ]) }}"
-                        cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
-                        iconPath="print.svg" />
-                    <x-ui-button :action="$actionValue"
-                        clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($object->id),
-                        ]) }}"
-                        cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
-                        iconPath="print.svg" />
-                </div>
-            </x-ui-footer>
-</div>
-</x-ui-tab-view-content>
-</x-ui-page-card>
+            <div class="col-md-12">
+                <x-ui-card title="Hutang">
+                    @livewire($currentRoute . '.hutang-list-component', ['action' => $action, 'objectId' => $objectId])
+                </x-ui-card>
+            </div>
+        </x-ui-tab-view-content>
+    </x-ui-page-card>
 </div>
