@@ -59,6 +59,10 @@ class PaymentHdr extends BaseModel
     {
         return $this->hasMany(PaymentSrc::class, 'trhdr_id', 'id');
     }
+    public function details2()
+    {
+        return $this->hasMany(PaymentDtl::class, 'trhdr_id', 'id');
+    }
 
     public static function getByCreatedByAndTrType($createdBy, $trType)
     {
