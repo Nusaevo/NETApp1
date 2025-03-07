@@ -53,7 +53,7 @@ class HutangListComponent extends DetailComponent
             $this->inputs = populateArrayFromModel($this->object);
             foreach ($this->object->details as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
-                $this->input_details[$key]['amt'] = $detail->amt;
+                // $this->input_details[$key]['amt'] = $detail->amt;
             }
         }
     }
@@ -94,7 +94,7 @@ class HutangListComponent extends DetailComponent
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
+            $this->object_detail = PaymentDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
