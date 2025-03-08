@@ -18,7 +18,7 @@ class PaymentDtl extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
-        'tr_id',
+        'tr_code',
         'tr_seq',
         'billdtl_id',
         'billhdrtr_type',
@@ -38,6 +38,12 @@ class PaymentDtl extends BaseModel
     public function OrderDtl()
     {
         return $this->hasMany(PaymentHdr::class, 'trhdr_id', 'id');
+    }
+
+    public function scopeGetByOrderHdr($query, $id, $trType)
+    {
+        return $query->where('trhdr_id', $id)
+            ->where('tr_type', $trType);
     }
     #endregion
 

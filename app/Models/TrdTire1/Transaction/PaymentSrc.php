@@ -22,6 +22,11 @@ class PaymentSrc extends BaseModel
         'tr_seq',
         'pay_type_id',
         'pay_type_code',
+        'bank_id',
+        'bank_code',
+        'bank_reff',
+        // 'bank_date',
+        'amt',
     ];
 
     #region Relations
