@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\DebtSettlement;
+namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 
 use App\Livewire\Component\DetailComponent;
 use App\Models\TrdTire1\Master\Material;

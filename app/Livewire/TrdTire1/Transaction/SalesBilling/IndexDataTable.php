@@ -7,8 +7,8 @@ use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\S
 use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr, BillingHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
-use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Master\MatlUom;
+use App\Enums\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
@@ -30,7 +30,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return BillingHdr::with(['Partner'])
-            ->where('billing_hdrs.tr_type', 'ARB');
+            ->where('billing_hdrs.tr_type', 'ARB')
+            ->where('billing_hdrs.status_code', Status::ACTIVE);
+
     }
 
     public function columns(): array
@@ -168,10 +170,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'setDeliveryDate' => 'Set Tanggal Kirim',
-            'cancelDeliveryDate' => 'Batal Kirim',
-            'cancel' => 'Cancel',
-            'unCancel' => 'UnCancel',
+            'setDeliveryDate' => 'Set Tanggal Penagihan',
         ];
     }
 
@@ -194,132 +193,11 @@ class IndexDataTable extends BaseDataTableComponent
                 ->toArray();
 
             // Update status to SHIP
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
+            // OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
 
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
             $this->dispatch('submitDeliveryDate');
         }
     }
 
-    public function cancelDeliveryDate()
-    {
-        $selectedOrderIds = $this->getSelected();
-        if (count($selectedOrderIds) > 0) {
-            DB::beginTransaction();
-
-            // Ambil tr_code dari OrderHdr yang terpilih
-            $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
-                ->pluck('tr_code')
-                ->toArray();
-
-            // Hapus DelivDtl dengan trhdr_id yang sesuai dengan DelivHdr yang akan dihapus
-            $delivHdrs = DelivHdr::where('tr_type', 'SD')
-                ->whereIn('tr_code', $selectedTrCodes)
-                ->get();
-
-            foreach ($delivHdrs as $delivHdr) {
-                $delivDtls = DelivDtl::where('trhdr_id', $delivHdr->id)->get();
-                foreach ($delivDtls as $delivDtl) {
-                    $delivDtl->delete(); // Trigger the deleting event
-                }
-                $delivHdr->delete();
-            }
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);
-
-            DB::commit();
-
-            $this->clearSelected();
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Tanggal pengiriman berhasil dibatalkan'
-            ]);
-        }
-    }
-
-    public function cancel()
-    {
-        $selectedOrderIds = $this->getSelected();
-        if (count($selectedOrderIds) > 0) {
-            DB::beginTransaction();
-
-            // Ambil tr_code dari OrderHdr yang terpilih
-            $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
-                ->pluck('tr_code')
-                ->toArray();
-
-            // Validasi jika ada status SHIP
-            $shippedOrders = OrderHdr::whereIn('id', $selectedOrderIds)
-                ->where('status_code', Status::SHIP)
-                ->count();
-
-            if ($shippedOrders > 0) {
-                $this->dispatch('error', 'Tidak bisa membatalkan pesanan barang yang sudah dikirim');
-                return;
-            }
-
-
-            $orderDtls = OrderDtl::whereIn('trhdr_id', function ($query) use ($selectedTrCodes) {
-                $query->select('id')
-                    ->from('order_hdrs')
-                    ->whereIn('tr_code', $selectedTrCodes)
-                    ->where('tr_type', 'SO');
-            })->get();
-
-            foreach ($orderDtls as $orderDtl) {
-                $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)->first();
-                if ($matlUom) {
-                    $matlUom->qty_fgi -= $orderDtl->qty;
-                    $matlUom->save();
-                }
-            }
-
-            // Update status to CANCEL
-            OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::CANCEL]);
-
-            DB::commit();
-
-            $this->clearSelected();
-            $this->dispatch('success', ['Pesanan berhasil dibatalkan']);
-        }
-    }
-
-    public function unCancel()
-    {
-        $selectedOrderIds = $this->getSelected();
-        if (count($selectedOrderIds) > 0) {
-            DB::beginTransaction();
-
-            // Ambil tr_code dari OrderHdr yang terpilih
-            $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
-                ->pluck('tr_code')
-                ->toArray();
-
-            // Ambil matl_id dari OrderDtl yang sesuai dengan tr_code
-            $orderDtls = OrderDtl::whereIn('trhdr_id', function ($query) use ($selectedTrCodes) {
-                $query->select('id')
-                    ->from('order_hdrs')
-                    ->whereIn('tr_code', $selectedTrCodes)
-                    ->where('tr_type', 'SO');
-            })->get();
-
-            foreach ($orderDtls as $orderDtl) {
-                // Cari matl_id pada MatlUom dan tambahkan qty_fgi
-                $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)->first();
-                if ($matlUom) {
-                    $matlUom->qty_fgi += $orderDtl->qty;
-                    $matlUom->save();
-                }
-            }
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::OPEN]);
-
-
-            DB::commit();
-
-            $this->clearSelected();
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Pesanan berhasil dikembalikan dan stok diperbarui'
-            ]);
-        }
-    }
 }

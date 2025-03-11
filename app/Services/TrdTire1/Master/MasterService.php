@@ -4,6 +4,7 @@ namespace App\Services\TrdTire1\Master;
 
 use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Master\Partner;
+use App\Models\TrdTire1\Transaction\BillingHdr;
 use App\Services\Base\BaseService;
 use App\Models\TrdTire1\Transaction\OrderHdr;
 
@@ -280,8 +281,16 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
-
-
+    public function getBillCode()
+    {
+        $billingData = BillingHdr::getBillCode()->get();
+        return $billingData->map(function ($data) {
+            return [
+                'label' => $data->tr_code,
+                'value' => $data->id,
+            ];
+        })->toArray();
+    }
 
     public function getWarehouses()
     {
