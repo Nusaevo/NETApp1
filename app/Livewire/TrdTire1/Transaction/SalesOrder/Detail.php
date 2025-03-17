@@ -334,8 +334,10 @@ class Detail extends BaseComponent
             $this->suratJalanCount++;
             $this->updateVersionNumber2();
             // Logika cetak surat jalan
-            $this->dispatch('success', 'Surat Jalan berhasil dicetak!');
-        } catch (Exception $e) {
+            return redirect()->route('TrdTire1.Transaction.SalesOrder.PrintSuratJalan', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);        } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
     }
