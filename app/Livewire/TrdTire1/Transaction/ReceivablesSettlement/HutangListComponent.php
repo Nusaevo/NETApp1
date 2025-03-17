@@ -10,7 +10,7 @@ use App\Models\TrdTire1\Master\MatlUom; // Add this import
 use Exception;
 use Carbon\Carbon; // Add this import
 
-class HutangListComponent extends DetailComponent
+class DebtListComponent extends DetailComponent
 {
     public $materials;
     public $codeBill;

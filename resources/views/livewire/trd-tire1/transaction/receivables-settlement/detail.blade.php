@@ -89,7 +89,7 @@
             </div>
             <div class="col-md-12">
                 <x-ui-card title="Hutang">
-                    @livewire($currentRoute . '.hutang-list-component', ['action' => $action, 'objectId' => $objectId])
+                    @livewire($currentRoute . '.debt-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
             </div>
         </x-ui-tab-view-content>
