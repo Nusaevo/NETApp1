@@ -41,6 +41,11 @@ class BillingHdr extends BaseModel
         });
     }
 
+    public static function getBillCode()
+    {
+        return self::select('id', 'tr_code')->whereNull('deleted_at');
+    }
+
     protected $fillable = [
         'tr_code',
         'tr_type',

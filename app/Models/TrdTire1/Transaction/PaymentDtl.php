@@ -6,6 +6,7 @@ use App\Models\TrdTire1\Master\Partner;
 use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
+
 class PaymentDtl extends BaseModel
 {
     use SoftDeletes;
@@ -22,10 +23,11 @@ class PaymentDtl extends BaseModel
         'tr_seq',
         'billdtl_id',
         'billhdrtr_type',
-        'billhdrtr_id',
+        'biilhdrtr_code',
         'billdtltr_seq',
         'amt',
         'amt_base',
+        'tr_code',
         'status_code'
     ];
 
@@ -39,6 +41,11 @@ class PaymentDtl extends BaseModel
     {
         return $this->hasMany(PaymentHdr::class, 'trhdr_id', 'id');
     }
+    public function paymentHdr()
+    {
+        return $this->belongsTo(PaymentHdr::class, 'trhdr_id', 'id');
+    }
+
 
     public function scopeGetByOrderHdr($query, $id, $trType)
     {
