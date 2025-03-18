@@ -20,6 +20,7 @@ class Detail extends BaseComponent
     public $selectedPartners = [];
 
 
+    public $partners;
     public $warehouses;
     public $payments;
     public $deletedItems = [];
@@ -58,6 +59,7 @@ class Detail extends BaseComponent
 
         $this->masterService = new MasterService();
         $this->warehouses = $this->masterService->getWarehouse();
+        $this->partners = $this->masterService->getCustomers();
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);

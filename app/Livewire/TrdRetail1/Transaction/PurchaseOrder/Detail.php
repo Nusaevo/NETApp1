@@ -16,6 +16,7 @@ class Detail extends BaseComponent
     public $inputs = [];
 
     public $suppliers = [];
+    public $partners = [];
     public $partnerSearchText = '';
     public $selectedPartners = [];
 
@@ -58,6 +59,7 @@ class Detail extends BaseComponent
 
         $this->masterService = new MasterService();
         $this->warehouses = $this->masterService->getWarehouse();
+        $this->partners = $this->masterService->getSuppliers();
         if($this->isEditOrView())
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);

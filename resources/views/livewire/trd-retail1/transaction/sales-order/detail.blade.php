@@ -19,7 +19,8 @@
                             <div class="row">
                                 <x-ui-text-field label="Date" model="inputs.tr_date" type="date" :action="$actionValue"
                                     required="true" :enabled="$isPanelEnabled" />
-
+                                <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+{{--
                                 <x-ui-text-field type="text" label="Customer" model="inputs.partner_name"
                                     required="true" :action="$actionValue" enabled="false" clickEvent="openPartnerDialogBox"
                                     buttonName="Search" :buttonEnabled="$isPanelEnabled" />
@@ -65,7 +66,7 @@
                                             </x-slot>
                                         </x-ui-table>
                                     </x-slot>
-                                </x-ui-dialog-box>
+                                </x-ui-dialog-box> --}}
                                 <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
                                     :action="$actionValue" required="false" enabled="false" />
                             </div>
