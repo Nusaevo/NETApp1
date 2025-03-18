@@ -33,9 +33,9 @@
                                         :enabled="true" />
                                     <x-ui-text-field label="Group" model="inputs.grp" type="text" :action="$actionValue"
                                         required="true" />
-                                    <x-ui-text-field label="qty" model="inputs.qty" type="text" :action="$actionValue"
+                                    <x-ui-text-field label="qty" model="inputs.qty" type="number" :action="$actionValue"
                                         required="true" />
-                                    <x-ui-text-field label="Reward" model="inputs.reward" type="text"
+                                    <x-ui-text-field label="Reward" model="inputs.reward" type="number"
                                         :action="$actionValue" required="true" />
                                 </div>
                             </x-ui-padding>

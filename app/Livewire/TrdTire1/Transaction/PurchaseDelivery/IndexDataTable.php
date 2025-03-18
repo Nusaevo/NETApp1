@@ -65,9 +65,12 @@ class IndexDataTable extends BaseDataTableComponent
                     return $totalQty;
                 })
                 ->sortable(),
-            Column::make($this->trans('amt'), 'total_amt')
+            Column::make($this->trans('total_item'), 'total_item')
                 ->label(function ($row) {
-                    return rupiah($row->total_amt);
+                    $lastDetail = DelivDtl::where('trhdr_id', $row->id)
+                        ->orderBy('tr_seq', 'desc')
+                        ->first();
+                    return $lastDetail ? $lastDetail->tr_seq : 0;
                 })
                 ->sortable(),
             // Column::make($this->trans("amt"), "total_amt_in_idr")

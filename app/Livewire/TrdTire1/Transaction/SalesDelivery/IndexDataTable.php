@@ -31,7 +31,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::SHIP]);
+            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::SHIP, Status::OPEN]);
     }
     public function columns(): array
     {
@@ -314,7 +314,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $matlUom->save();
                 }
             }
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::OPEN]);
+            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);
 
 
             DB::commit();

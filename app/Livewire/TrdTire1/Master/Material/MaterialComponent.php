@@ -116,11 +116,12 @@ class MaterialComponent extends BaseComponent
         $this->materials['size'] = $decodedData['size'] ?? null;
         $this->materials['point'] = $decodedData['point'] ?? null;
         $this->materials['pattern'] = $decodedData['pattern'] ?? null;
-        $this->matl_uoms['stock'] = $this->object->IvtBal->qty_oh ?? 0;
 
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
             $this->isPanelEnabled = "false";
+            $this->matl_uoms['qty_oh'] = $this->object->MatlUom->qty_oh ?? 0; // Ensure qty_oh is updated
+            $this->matl_uoms['qty_fgi'] = $this->object->MatlUom->qty_fgi ?? 0; // Ensure qty_fgi is updated
         }
     }
     public function onReset()
