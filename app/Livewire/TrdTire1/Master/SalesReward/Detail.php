@@ -25,11 +25,18 @@ class Detail extends BaseComponent
 
     public $returnIds = [];
     public $currencyRate = 0;
+    public $materialList = [];
+    public $searchTerm = '';
+    public $selectedMaterials = [];
+    public $filterCategory = '';
+    public $filterBrand = '';
+    public $filterType = '';
+    public $kategoriOptions = '';
+    public $brandOptions = '';
+    public $typeOptions = '';
 
     public $rules  = [
         'inputs.code' => 'required',
-        'input_details.*.qty' => 'required', // Add validation rules for material details
-        'input_details.*.matl_id' => 'required',
     ];
 
     public $materials;
@@ -49,38 +56,40 @@ class Detail extends BaseComponent
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
-            'inputs.tax'      => $this->trans('tax'),
-            'inputs.tr_code'      => $this->trans('tr_code'),
-            'inputs.partner_id'      => $this->trans('partner_id'),
-            'inputs.send_to_name'      => $this->trans('send_to_name'),
+            'inputs.tax'         => $this->trans('tax'),
+            'inputs.tr_code'     => $this->trans('tr_code'),
+            'inputs.partner_id'  => $this->trans('partner_id'),
         ];
 
         $this->masterService = new MasterService();
         $this->materials = $this->masterService->getMaterials(); // Load materials
-
+        $this->kategoriOptions = $this->masterService->getMatlCategoryData();
+        $this->brandOptions =   $this->masterService->getMatlMerkData();
+        $this->typeOptions =   $this->masterService->getMatlTypeData();
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {
                 $this->dispatch('error', 'Invalid object ID');
                 return;
             }
-            $this->object = SalesReward::find($this->objectIdValue);
-            if (!$this->object) {
+
+            // Ambil salah satu record sebagai acuan header
+            $salesReward = SalesReward::find($this->objectIdValue);
+            if (!$salesReward) {
                 $this->dispatch('error', 'Object not found');
                 return;
             }
-            $this->inputs = populateArrayFromModel($this->object);
-            $this->inputs['status_code_text'] = $this->object->status_Code_text;
-            $this->inputs['matl_id'] = $this->object->matl_id; // Set selected matl_id
-            $this->object->code = $this->inputs['code'];
-            $this->object->descrs = $this->inputs['descrs'];
-            $this->object->beg_date = $this->inputs['beg_date'];
-            $this->object->end_date = $this->inputs['end_date'];
-            $this->object->grp = $this->inputs['grp'];
-            $this->object->reward = $this->inputs['reward'];
-            $this->object->qty = $this->inputs['qty'];
-            $this->object->matl_id = $this->inputs['matl_id'];
+
+            // Set data header ke property inputs
+            $this->inputs = populateArrayFromModel($salesReward);
+            $this->inputs['status_code_text'] = $salesReward->status_Code_text;
+            $this->inputs['matl_id'] = $salesReward->matl_id; // Set nilai matl_id dari header
+
+            // Ambil seluruh detail berdasarkan kode yang sama
+            $details = SalesReward::where('code', $salesReward->code)->get();
+            $this->input_details = $details->toArray();
         }
     }
+
 
     public function onReset()
     {
@@ -99,44 +108,211 @@ class Detail extends BaseComponent
     #endregion
 
     #region CRUD Methods
+    public function addItem()
+    {
+            try {
+                $this->input_details[] = [
+                    'matl_id' => null,
+                    'qty' => null,
+                    'price' => 0.0
+                ];
+                $this->dispatch('success', __('generic.string.add_item'));
+            } catch (Exception $e) {
+                $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
+            }
+    }
+    public function openItemDialogBox()
+    {
+        $this->searchTerm = '';
+        $this->materialList = [];
+        $this->selectedMaterials = [];
+        $this->dispatch('openItemDialogBox');
+    }
+
 
     public function onValidateAndSave()
     {
-        $this->validate();
+        // Validasi data header dan detail
+        // $this->validate([
+        //     'inputs.code'               => 'required',
+        //     'inputs.descrs'             => 'required',
+        //     'inputs.beg_date'           => 'required|date',
+        //     'inputs.end_date'           => 'required|date',
+        //     'input_details.*.matl_id'   => 'required',
+        //     'input_details.*.qty'       => 'required|numeric',
+        //     'input_details.*.reward'    => 'required|numeric',
+        //     'input_details.*.grp'       => 'required',
+        // ]);
 
-        if ($this->actionValue == 'Create') {
-            $this->object = new SalesReward();
+        $headerCode = $this->inputs['code'];
+
+        // Ambil seluruh record yang sudah tersimpan berdasarkan code header
+        $existingRecords = SalesReward::where('code', $headerCode)->get();
+        $existingIds = $existingRecords->pluck('id')->toArray();
+
+        $submittedIds = [];
+
+        // Iterasi setiap item detail dari input form
+        foreach ($this->input_details as $detail) {
+            // Cek apakah record detail sudah ada, misalnya via id
+            if (isset($detail['id'])) {
+                $salesReward = SalesReward::find($detail['id']);
+            } else {
+                // Jika tidak ada id, coba cari berdasarkan kombinasi code dan matl_id
+                $salesReward = SalesReward::where('code', $headerCode)
+                    ->where('matl_id', $detail['matl_id'])
+                    ->first();
+
+                if (!$salesReward) {
+                    $salesReward = new SalesReward();
+                }
+            }
+
+            // Set data header yang sama untuk setiap record
+            $salesReward->code     = $headerCode;
+            $salesReward->descrs   = $this->inputs['descrs'];
+            $salesReward->beg_date = $this->inputs['beg_date'];
+            $salesReward->end_date = $this->inputs['end_date'];
+
+            // Set data detail spesifik item
+            $salesReward->matl_id = $detail['matl_id'];
+            $material = Material::find($detail['matl_id']);
+            $salesReward->matl_code = $material ? $material->code : null;
+            $salesReward->qty    = $detail['qty'];
+            $salesReward->reward = $detail['reward'];
+            $salesReward->grp    = $detail['grp'];
+
+            // Simpan record (insert atau update)
+            $salesReward->save();
+
+            // Simpan id record yang diproses
+            $submittedIds[] = $salesReward->id;
+        }
+
+        // Hapus record yang sudah ada di database tapi tidak ada di input form (jika ada penghapusan detail)
+        $idsToDelete = array_diff($existingIds, $submittedIds);
+        if (!empty($idsToDelete)) {
+            SalesReward::destroy($idsToDelete);
+        }
+
+        $this->dispatch('success', 'Data Sales Reward berhasil disimpan.');
+    }
+    public function deleteItem($index)
+    {
+        try {
+            if (!isset($this->input_details[$index])) {
+                throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
+            }
+
+            unset($this->input_details[$index]);
+            $this->input_details = array_values($this->input_details);
+
+            $this->dispatch('success', __('generic.string.delete_item'));
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
+        }
+    }
+    public function searchMaterials()
+    {
+        $query = Material::query();
+
+        if (!empty($this->searchTerm)) {
+            $searchTermUpper = strtoupper($this->searchTerm);
+            $query->where(function ($query) use ($searchTermUpper) {
+                $query
+                    ->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                    ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
+            });
+        }
+
+        // Apply filters
+        if (!empty($this->filterCategory)) {
+            $query->where('category', $this->filterCategory);
+        }
+        if (!empty($this->filterBrand)) {
+            $query->where('brand', $this->filterBrand);
+        }
+        if (!empty($this->filterType)) {
+            $query->where('class_code', $this->filterType);
+        }
+
+        $this->materialList = $query->get();
+    }
+    public function selectMaterial($materialID)
+    {
+        $key = array_search($materialID, $this->selectedMaterials);
+
+        if ($key !== false) {
+            unset($this->selectedMaterials[$key]);
+            $this->selectedMaterials = array_values($this->selectedMaterials);
         } else {
-            $this->object = SalesReward::find($this->objectIdValue);
-        }
-
-        $this->object->code = $this->inputs['code'];
-        $this->object->descrs = $this->inputs['descrs'];
-        $this->object->beg_date = $this->inputs['beg_date'];
-        $this->object->end_date = $this->inputs['end_date'];
-        $this->object->grp = $this->inputs['grp'];
-        $this->object->reward = $this->inputs['reward'];
-        $this->object->qty = $this->inputs['qty'];
-        $this->object->matl_id = $this->inputs['matl_id'];
-
-        // Fetch and set matl_code based on matl_id
-        $material = Material::find($this->inputs['matl_id']);
-        if ($material) {
-            $this->object->matl_code = $material->code;
-        }
-
-        // ...additional fields...
-
-        $this->object->save();
-
-        if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Master.SalesReward.Detail', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
-            ]);
+            $this->selectedMaterials[] = $materialID;
         }
     }
 
+    public function confirmSelection()
+    {
+        if (empty($this->selectedMaterials)) {
+            $this->dispatch('error', 'Silakan pilih setidaknya satu material terlebih dahulu.');
+            return;
+        }
+
+        foreach ($this->selectedMaterials as $matl_id) {
+            $exists = collect($this->input_details)->contains('matl_id', $matl_id);
+
+            if ($exists) {
+                $this->dispatch('error', "Material dengan ID $matl_id sudah ada dalam daftar.");
+                continue;
+            }
+
+            // Jika tidak duplikat, tambahkan ke daftar
+            $key = count($this->input_details);
+            $this->input_details[] = [
+                'matl_id' => $matl_id,
+                'qty' => null,
+                'price' => 0.0
+            ];
+            $this->onMaterialChanged($key, $matl_id);
+        }
+
+        $this->dispatch('success', 'Item berhasil dipilih.');
+        $this->dispatch('closeItemDialogBox');
+    }
+    public function onMaterialChanged($key, $matl_id)
+    {
+        if ($matl_id) {
+            $duplicate = collect($this->input_details)->contains(function ($detail, $index) use ($key, $matl_id) {
+                return $index != $key && isset($detail['matl_id']) && $detail['matl_id'] == $matl_id;
+            });
+
+            if ($duplicate) {
+                $this->dispatch('error', 'Material sudah ada dalam daftar.');
+                return;
+            }
+
+            $material = Material::find($matl_id);
+            if ($material) {
+                $this->input_details[$key]['matl_id'] = $material->id;
+                $this->input_details[$key]['matl_code'] = $material->code;
+            } else {
+                $this->dispatch('error', 'Material_not_found');
+            }
+        }
+    }
+    public function printInvoice()
+    {
+        try {
+            // $this->notaCount++;
+            $this->updateVersionNumber2();
+            // Logika cetak nota jual
+            return redirect()->route('TrdTire1.Master.SalesReward.PrintPdf', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);
+        } catch (Exception $e) {
+            $this->dispatch('error', $e->getMessage());
+        }
+    }
     public function delete()
     {
         try {

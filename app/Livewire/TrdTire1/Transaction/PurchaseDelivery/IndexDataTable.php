@@ -59,35 +59,18 @@ class IndexDataTable extends BaseDataTableComponent
                         '<span class="text-muted">Nama tidak tersedia</span>';
                 })
                 ->html(),
-
-            // Column::make($this->trans("matl_code"), 'id')
-            //     ->format(function ($value, $row) {
-            //         // Manually load DelivDtl using a query
-            //         $DelivDtl = DelivDtl::where('tr_code', $row->tr_code)
-            //             ->where('tr_type', $row->tr_type)
-            //             ->orderBy('id')
-            //             ->get();
-
-            //         // Generate links if data is available
-            //         $matlCodes = $DelivDtl->pluck('matl_code', 'matl_id');
-            //         $links = $matlCodes->map(function ($code, $id) {
-            //             return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
-            //                 'action' => encryptWithSessionKey('Edit'),
-            //                 'objectId' => encryptWithSessionKey($id)
-            //             ]) . '">' . $code . '</a>';
-            //         });
-
-            //         return $links->implode(', ');
-            //     })
-            //     ->html(),
             Column::make($this->trans('qty'), 'total_qty')
                 ->label(function ($row) {
-                    return $row->total_qty;
+                    $totalQty = DelivDtl::where('trhdr_id', $row->id)->sum('qty');
+                    return $totalQty;
                 })
                 ->sortable(),
-            Column::make($this->trans('amt'), 'total_amt')
+            Column::make($this->trans('total_item'), 'total_item')
                 ->label(function ($row) {
-                    return rupiah($row->total_amt);
+                    $lastDetail = DelivDtl::where('trhdr_id', $row->id)
+                        ->orderBy('tr_seq', 'desc')
+                        ->first();
+                    return $lastDetail ? $lastDetail->tr_seq : 0;
                 })
                 ->sortable(),
             // Column::make($this->trans("amt"), "total_amt_in_idr")
@@ -153,10 +136,6 @@ class IndexDataTable extends BaseDataTableComponent
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
-            }),
-            $this->createTextFilter('Transaction Code', 'tr_code', 'Cari Kode Transaksi', function (Builder $builder, string $value) {
-                $builder->where('deliv_hdrs.tr_type', 'PD')
-                        ->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
             DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
                 $builder->where('deliv_hdrs.tr_date', '>=', $value);

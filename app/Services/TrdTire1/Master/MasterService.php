@@ -133,7 +133,7 @@ class MasterService extends BaseService
     {
         $data = $this->getConfigData('MMATL_MERK');
         $options = $data->mapWithKeys(function ($item) {
-            return [$item->str1 => $item->str1 . " - " . $item->str2];
+            return [$item->str2 => $item->str1 . " - " . $item->str2];
         })->toArray();
         // Tambahkan opsi kosong dengan label "All" sebagai pilihan default
         return ['' => 'All'] + $options;

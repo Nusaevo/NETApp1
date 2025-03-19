@@ -157,9 +157,9 @@
                         </x-ui-card>
                         <x-ui-card title="Associations">
                             <x-ui-padding>
-                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="matl_uoms.stock"
-                                    type="number" :action="$actionValue" required="false" enabled="false" />
-                                <x-ui-text-field label="{{ $this->trans('reserved') }}" model="materials.reserved"
+                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="matl_uoms.qty_oh"
+                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                <x-ui-text-field label="{{ $this->trans('reserved') }}" model="matl_uoms.qty_fgi"
                                     type="text" :action="$actionValue" required="false" enabled="false" />
                             </x-ui-padding>
                         </x-ui-card>

@@ -9,10 +9,12 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Models\TrdTire1\Master\MatlUom;
 use App\Enums\Status;
+use App\Enums\TrdTire1\Status as TrdTire1Status;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
+use Barryvdh\DomPDF\Facade as PDF; // Add this line
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -84,22 +86,8 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
-
-            Column::make($this->trans("warehouse"), "warehouse")
-                ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery ? $delivery->wh_code : '';
-                })
-                ->sortable(),
-            Column::make($this->trans("Status"), "status")
-                ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery ? 'Terkirim' : 'Belum';
-                })
+            Column::make($this->trans("Tanggal Tagih"), "print_date")
+                ->searchable()
                 ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
@@ -171,32 +159,69 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             'setDeliveryDate' => 'Set Tanggal Penagihan',
+            'print' => 'Cetak',
         ];
     }
 
     public function setDeliveryDate()
     {
         if (count($this->getSelected()) > 0) {
-            $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
+            $selectedItems = BillingHdr::whereIn('id', $this->getSelected())
                 ->get(['tr_code as nomor_nota', 'partner_id'])
-                ->map(function ($order) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $order->tr_code)
+                ->map(function ($billing) {
+                    $delivery = DelivHdr::where('tr_type', 'ARB')
+                        ->where('tr_code', $billing->tr_code)
                         ->first();
                     return [
-                        'nomor_nota' => $order->nomor_nota,
-                        'nama' => $order->Partner->name,
-                        'kota' => $order->Partner->city,
+                        'nomor_nota' => $billing->nomor_nota,
+                        'nama' => $billing->Partner->name,
+                        'kota' => $billing->Partner->city,
                         'tr_date' => $delivery ? $delivery->tr_date : null,
                     ];
                 })
                 ->toArray();
 
-            // Update status to SHIP
-            // OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
-
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
             $this->dispatch('submitDeliveryDate');
+        }
+    }
+
+    public function submitDeliveryDate()
+    {
+        $selectedOrderIds = $this->getSelected();
+        if (count($selectedOrderIds) > 0) {
+            BillingHdr::whereIn('id', $selectedOrderIds)->update(['print_date' => $this->tr_date]);
+
+            $this->clearSelected();
+            $this->dispatch('showAlert', [
+                'type' => 'success',
+                'message' => 'Tanggal penagihan berhasil diatur'
+            ]);
+        }
+    }
+
+    public function print()
+    {
+        $selectedOrderIds = $this->getSelected();
+        if (count($selectedOrderIds) > 0) {
+            $selectedOrders = BillingHdr::whereIn('id', $selectedOrderIds)->get();
+
+            // Update status to PRINT
+            BillingHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => \App\Enums\TrdTire1\Status::PRINT]);
+
+            // Clear selected items
+            $this->clearSelected();
+
+            // Dispatch event to show success message
+            $this->dispatch('showAlert', [
+                'type' => 'success',
+                'message' => 'Nota berhasil dicetak'
+            ]);
+
+            // Redirect to print view
+            return redirect()->route('TrdTire1.Transaction.SalesBilling.PrintPdf', [
+                'orderIds' => encryptWithSessionKey($selectedOrderIds)
+            ]);
         }
     }
 

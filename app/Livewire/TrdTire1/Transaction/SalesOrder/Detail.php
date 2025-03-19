@@ -3,12 +3,12 @@
 namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{BillingDtl, BillingHdr, DelivDtl, DelivHdr, OrderHdr, OrderDtl};
 use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
-use Illuminate\Support\Facades\{Session};
+use Illuminate\Support\Facades\{Session, DB};
 use Exception;
 
 class Detail extends BaseComponent
@@ -48,6 +48,8 @@ class Detail extends BaseComponent
     public $isPanelEnabled = "false";
     public $notaCount = 0; // x: jumlah nota jual dicetak
     public $suratJalanCount = 0; // y: jumlah surat jalan dicetak
+
+    public $payer = "true"; // Add this line to define the payer property
 
     public $rules  = [
         'inputs.tr_code' => 'required',
@@ -107,7 +109,7 @@ class Detail extends BaseComponent
     {
         try {
             $taxValue = (float)($this->inputs['tax_value'] ?? 0); // Nilai pajak (persentase)
-            $totalAmount = (float)$this->total_amount; // Total amount dari input
+            $totalAmount = (float)$this->total_amount;
 
             if ($taxType === 'I') {
                 $dpp = $totalAmount / (1 + $taxValue / 100); // Rumus DPP
@@ -120,13 +122,10 @@ class Detail extends BaseComponent
                 $ppn = 0; // PPN nol
             }
 
-            // Simpan hasil perhitungan
             $this->total_dpp = rupiah(round($dpp, 2));
             $this->total_tax = rupiah(round($ppn, 2));
 
-            // Dispatch event untuk memperbarui UI
             $this->dispatch('updateDPP', $this->total_dpp);
-            // $this->dispatch('updateTotalTax', $this->total_tax);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
@@ -184,6 +183,97 @@ class Detail extends BaseComponent
         }, $shipDetail);
     }
 
+    public function onTaxDocFlagChanged()
+    {
+        $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
+    }
+
+    public function onPaymentTermChanged()
+    {
+        if (!empty($this->inputs['payment_term_id'])) {
+            $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
+            if ($paymentTerm) {
+                $dueDays = $paymentTerm->num1;
+                $this->inputs['due_date'] = date('Y-m-d', strtotime("+$dueDays days"));
+            }
+        }
+    }
+
+    private function createDelivAndBilling()
+    {
+        try {
+            DB::beginTransaction();
+
+            // Create DelivDtl
+            DelivDtl::create([
+                'trhdr_id' => $this->object->id,
+                'tr_type' => 'SD',
+                'tr_code' => $this->inputs['tr_code'],
+                'tr_seq' => 1, // Example sequence number
+                'matl_id' => $this->inputs['matl_id'],
+                'matl_code' => $this->inputs['matl_code'],
+                'matl_descr' => $this->inputs['matl_descr'],
+                'qty' => $this->inputs['qty'],
+            ]);
+
+            // Create BillingDtl
+            BillingDtl::create([
+                'trhdr_id' => $this->object->id,
+                'tr_type' => 'ARB',
+                'tr_code' => $this->inputs['tr_code'],
+                'tr_seq' => 1, // Example sequence number
+                'matl_id' => $this->inputs['matl_id'],
+                'matl_code' => $this->inputs['matl_code'],
+                'matl_descr' => $this->inputs['matl_descr'],
+                'qty' => $this->inputs['qty'],
+                'price' => $this->inputs['price'],
+                'amt' => $this->inputs['amt'],
+            ]);
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->dispatch('error', $e->getMessage());
+        }
+    }
+
+    private function createDelivAndBillingHdr()
+    {
+        try {
+            DB::beginTransaction();
+
+            // Ensure partner_id is set
+            if (empty($this->inputs['partner_id'])) {
+                throw new Exception('Partner ID is required');
+            }
+
+            // Create DelivHdr
+            $delivHdr = DelivHdr::create([
+                'trhdr_id' => $this->object->id,
+                'tr_type' => 'SD',
+                'tr_code' => $this->inputs['tr_code'],
+                'partner_id' => $this->inputs['partner_id'],
+                'partner_code' => $this->inputs['partner_code'],
+                'tr_date' => now(),
+            ]);
+
+            // Create BillingHdr
+            $billingHdr = BillingHdr::create([
+                'trhdr_id' => $this->object->id,
+                'tr_type' => 'ARB',
+                'tr_code' => $this->inputs['tr_code'],
+                'partner_id' => $this->inputs['partner_id'],
+                'partner_code' => $this->inputs['partner_code'],
+                'tr_date' => now(),
+            ]);
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->dispatch('error', $e->getMessage());
+        }
+    }
+
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -213,7 +303,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
-            $this->inputs['partner_name'] = $this->object->partner->code; // Set partner_name
+            $this->inputs['partner_name'] = $this->object->partner->code;
             $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
             $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr; // Populate textarea_npwp
             $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
@@ -221,11 +311,14 @@ class Detail extends BaseComponent
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
+            $this->inputs['tax_doc_flag'] = true;
+            $this->inputs['tax_flag'] = 'I';
         }
         // Panggil perhitungan DPP dan PPN saat halaman dimuat
         if (!empty($this->inputs['tax_flag'])) {
             $this->onSOTaxChange();
         }
+        $this->dispatch('updateTaxPayerEnabled', !empty($this->inputs['tax_doc_flag']));
     }
 
     public function onReset()
@@ -234,6 +327,7 @@ class Detail extends BaseComponent
         $this->object = new OrderHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['due_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
@@ -272,7 +366,18 @@ class Detail extends BaseComponent
             $this->inputs['payment_due_days'] = $paymentTerm->num1; // Save payment_due_days from num1
         }
 
+        // Ensure npwp_code is set to null if tax_payer is disabled
+        if ($this->payer === "false") {
+            $this->inputs['npwp_code'] = null;
+        }
+
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+
+        // Check if payment term is CASH and create DelivHdr and BillingHdr
+        if ($paymentTerm->str2 === 'CASH') {
+            $this->createDelivAndBillingHdr();
+        }
+
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
@@ -334,8 +439,10 @@ class Detail extends BaseComponent
             $this->suratJalanCount++;
             $this->updateVersionNumber2();
             // Logika cetak surat jalan
-            $this->dispatch('success', 'Surat Jalan berhasil dicetak!');
-        } catch (Exception $e) {
+            return redirect()->route('TrdTire1.Transaction.SalesOrder.PrintSuratJalan', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id)
+            ]);        } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
     }
@@ -392,27 +499,33 @@ class Detail extends BaseComponent
             $this->inputs['partner_name'] = $partner->code;
             $this->inputs['textareacustommer'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
 
-            // Set npwpOptions with data from JSON wp_details
-            if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
-                $wpDetails = $partner->PartnerDetail->wp_details;
-                if (is_string($wpDetails)) {
-                    $wpDetails = json_decode($wpDetails, true);
-                }
-                if (is_array($wpDetails) && !empty($wpDetails)) {
-                    $this->npwpOptions = array_map(function ($item) {
-                        return [
-                            'label' => $item['npwp'],
-                            'value' => $item['npwp'],
-                        ];
-                    }, $wpDetails);
-                    // Automatically select the first npwpOption
-                    $firstNpwpOption = $this->npwpOptions[0] ?? null;
-                    if ($firstNpwpOption) {
-                        $this->inputs['npwp_code'] = $firstNpwpOption['value'];
-                        $this->onTaxPayerChanged();
+            if (!empty($this->inputs['tax_doc_flag'])) {
+                // Set npwpOptions with data from JSON wp_details
+                if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+                    $wpDetails = $partner->PartnerDetail->wp_details;
+                    if (is_string($wpDetails)) {
+                        $wpDetails = json_decode($wpDetails, true);
+                    }
+                    if (is_array($wpDetails) && !empty($wpDetails)) {
+                        $this->npwpOptions = array_map(function ($item) {
+                            return [
+                                'label' => $item['npwp'],
+                                'value' => $item['npwp'],
+                            ];
+                        }, $wpDetails);
+                        // Automatically select the first npwpOption
+                        $firstNpwpOption = $this->npwpOptions[0] ?? null;
+                        if ($firstNpwpOption) {
+                            $this->inputs['npwp_code'] = $firstNpwpOption['value'];
+                            $this->onTaxPayerChanged();
+                        }
                     }
                 }
+            } else {
+                $this->inputs['npwp_code'] = null;
+                $this->inputs['textarea_npwp'] = null;
             }
+
             // Set shipOptions with data from JSON shipping_address
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
                 $shipDetail = $partner->PartnerDetail->shipping_address;

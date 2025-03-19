@@ -49,7 +49,7 @@ class DelivDtl extends BaseModel
         static::saving(function ($delivDtl) {
             // Persiapan data
             if (empty($delivDtl->batch_code)) {
-                $delivDtl->batch_code = date('y/m/d');
+                $delivDtl->batch_code = date('ymd');
             }
             if (empty($delivDtl->matl_uom)) {
                 // Pastikan value sudah terisi jika diperlukan

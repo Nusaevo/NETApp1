@@ -59,7 +59,8 @@ class BillingHdr extends BaseModel
         'curr_id',
         'curr_code',
         'curr_rate',
-        'status_code'
+        'status_code',
+        'print_date',
     ];
 
     #region Relations

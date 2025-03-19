@@ -74,6 +74,35 @@ class OrderDtl extends BaseModel
             }
             $matlUom->save();
 
+            // Create BillingDtl and DelivDtl if payment term is CASH
+            $orderHdr = $orderDtl->OrderHdr;
+            if ($orderHdr && $orderHdr->payment_term === 'CASH') {
+                BillingDtl::create([
+                    'trhdr_id' => $orderDtl->trhdr_id,
+                    'tr_type' => 'ARB',
+                    'tr_code' => $orderDtl->tr_code,
+                    'tr_seq' => $orderDtl->tr_seq,
+                    'matl_id' => $orderDtl->matl_id,
+                    'matl_code' => $orderDtl->matl_code,
+                    'matl_uom' => $orderDtl->matl_uom,
+                    'descr' => $orderDtl->matl_descr,
+                    'qty' => $orderDtl->qty,
+                    'price' => $orderDtl->price,
+                    'amt' => $orderDtl->amt,
+                ]);
+
+                DelivDtl::create([
+                    'trhdr_id' => $orderDtl->trhdr_id,
+                    'tr_type' => 'SD',
+                    'tr_code' => $orderDtl->tr_code,
+                    'tr_seq' => $orderDtl->tr_seq,
+                    'matl_id' => $orderDtl->matl_id,
+                    'matl_code' => $orderDtl->matl_code,
+                    'matl_uom' => $orderDtl->matl_uom,
+                    'matl_descr' => $orderDtl->matl_descr,
+                    'qty' => $orderDtl->qty,
+                ]);
+            }
         });
         static::deleting(function ($orderDtl) {
             try {

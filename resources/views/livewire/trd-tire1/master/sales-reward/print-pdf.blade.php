@@ -1,21 +1,22 @@
 <div>
+    <!-- Tombol Back -->
     <div>
-        <div>
-            <x-ui-button clickEvent="" type="Back" button-name="Back" />
-        </div>
+        <x-ui-button clickEvent="back" type="Back" button-name="Back" />
     </div>
 
+    <!-- Include CSS Invoice -->
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
     <body>
         <div class="card">
             <div class="card-body">
                 <div class="container mb-5 mt-3">
+                    <!-- Header Report -->
                     <div class="row d-flex align-items-baseline">
                         <div class="col-xl-9">
                             <p style="color: #7e8d9f; font-size: 20px;">
-                                NOTA PENJUALAN >>
-                                <strong>No: {{ $this->object->tr_code }}</strong>
+                                SALES REWARD REPORT >>
+                                <strong>No: {{ $this->object->code ?? '' }}</strong>
                             </p>
                         </div>
                         <div class="col-xl-3 float-end">
@@ -27,96 +28,69 @@
                         <hr>
                     </div>
 
+                    <!-- Area yang akan di-print -->
                     <div id="print">
                         <div class="invoice-box"
                             style="max-width: 800px; margin: auto; padding: 20px; border: 1px solid #eee;">
-                            <!-- Header -->
-                            <table width="100%" style="margin-bottom: 10px;">
-                                <tr>
-                                    <td style="width: 80%;">
-                                        <h2 style="margin: 0; text-decoration: underline; font-weight: bold;">CAHAYA
-                                            TERANG</h2>
-                                        <p style="margin: 0; text-align: center; width: 23%;">SURABAYA</p>
-                                    </td>
-                                    <td style="text-align: left;">
-                                        <p style="margin: 0;">
-                                            Surabaya,
-                                            {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
-                                        </p>
-                                        <!-- Customer Info -->
-                                        <div style="margin-bottom: 20px;">
-                                            <p style="margin: 0;">Kepada Yth :</p>
-                                            <p style="margin: 0;"><strong>{{ $this->object->Partner->name }}</strong>
-                                            </p>
-                                            <p style="margin: 0;">{{ $this->object->Partner->address }}</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
 
-                            <!-- Title -->
+                            <!-- Judul Report -->
                             <div style="text-align: center; margin: 20px 0;">
-                                <h3 style="margin: 0; font-weight: bold; text-decoration: underline;">NOTA PENJUALAN
+                                <h3 style="margin: 0; font-weight: bold; text-decoration: underline;">
+                                    SALES REWARD REPORT
                                 </h3>
-                                <p style="margin: 5px 0;">No. {{ $this->object->tr_code }}</p>
+                                <p style="margin: 5px 0;">
+                                    Program Code: {{ $this->object->code ?? '' }}
+                                </p>
+                                <p style="margin: 5px 0;">
+                                    Period: {{ $this->object->beg_date ?? '' }}
+                                    -
+                                    {{ $this->object->end_date ?? '' }} </p>
                             </div>
 
-
-
-                            <!-- Items Table -->
+                            <!-- Tabel Detail Item -->
                             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                                 <thead>
                                     <tr>
+                                        <th style="border: 1px solid #000; padding: 8px;">No</th>
                                         <th style="border: 1px solid #000; padding: 8px;">KODE BARANG</th>
                                         <th style="border: 1px solid #000; padding: 8px;">NAMA BARANG</th>
+                                        <th style="border: 1px solid #000; padding: 8px;">GROUP</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: center;">QTY</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">HARGA
-                                            SATUAN</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">JUMLAH
-                                            HARGA</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">REWARD</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @php
                                         $grand_total = 0;
                                     @endphp
-                                    @foreach ($this->object->OrderDtl as $key => $OrderDtl)
+                                    @foreach ($this->object->details ?? [] as $key => $detail)
                                         @php
-                                            $subTotal = $OrderDtl->qty * $OrderDtl->price;
+                                            $subTotal = $detail->qty * $detail->reward;
                                             $grand_total += $subTotal;
-                                            $OrderHdr = $this->object->OrderHdr; // Access OrderHdr within the loop
                                         @endphp
                                         <tr>
-                                            <td style="border: 1px solid #000; padding: 8px;">{{ $OrderDtl->matl_code }}
-                                            </td>
-                                            <td style="border: 1px solid #000; padding: 8px; text-align: left;">
-                                                {{ $OrderDtl->matl_descr }}</td>
                                             <td style="border: 1px solid #000; padding: 8px; text-align: center;">
-                                                {{ ceil($OrderDtl->qty) }}</td>
+                                                {{ $loop->iteration }}
+                                            </td>
+                                            <td style="border: 1px solid #000; padding: 8px;">
+                                                {{ $detail->matl_code }}
+                                            </td>
+                                            <td style="border: 1px solid #000; padding: 8px;">
+                                                {{ $detail->material->name ?? '-' }}
+                                            </td>
+                                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">
+                                                {{ $detail->grp ?? '-' }}
+                                            </td>
+                                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">
+                                                {{ ceil($detail->qty) }}
+                                            </td>
                                             <td style="border: 1px solid #000; padding: 8px; text-align: right;">
-                                                {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}</td>
-                                            <td style="border: 1px solid #000; padding: 8px; text-align: right;">
-                                                {{ number_format(ceil($subTotal), 0, ',', '.') }}</td>
+                                                {{ number_format(ceil($detail->reward), 0, ',', '.') }}
+                                            </td>
                                         </tr>
                                     @endforeach
-                                    <tr>
-                                        <td colspan="4"
-                                            style="border: 1px solid #000; padding: 8px; text-align: right;">TOTAL:</td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: right;">
-                                            {{ number_format($grand_total, 0, ',', '.') }}</td>
-                                    </tr>
                                 </tbody>
                             </table>
-
-                            <!-- Payment Method -->
-                            <div style="margin-top: 20px; display: flex; justify-content: space-between;">
-                                <p style="margin: 0;">Pembayaran:
-                                    <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
-                                </p>
-                                <p style="margin: 0;">Penerima:
-                                    <strong>{{ $OrderHdr ? $OrderHdr->partner_id->partner_name : 'N/A' }}</strong>
-                                </p>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -124,6 +98,7 @@
         </div>
     </body>
 
+    <!-- Script untuk Print -->
     <script type="text/javascript">
         function printInvoice() {
             var page = document.getElementById("print");
