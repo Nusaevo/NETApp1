@@ -366,6 +366,11 @@ class Detail extends BaseComponent
             $this->inputs['payment_due_days'] = $paymentTerm->num1; // Save payment_due_days from num1
         }
 
+        // Ensure npwp_code is set to null if tax_payer is disabled
+        if ($this->payer === "false") {
+            $this->inputs['npwp_code'] = null;
+        }
+
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
 
         // Check if payment term is CASH and create DelivHdr and BillingHdr
