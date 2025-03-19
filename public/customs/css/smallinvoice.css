@@ -1,35 +1,30 @@
 @page {
-    size: 12cm auto portrait;
-    margin: 0mm;
-    margin-top: 5mm;
-    margin-bottom: 0mm;
-    margin-left: 0mm;
-    margin-right: 0mm;
+    size: 11cm auto;
+    margin: 2mm; /* Mengatur margin 5mm di semua sisi */
 }
 
-@page :first {
-    margin-bottom: 0mm; /* margin bottom untuk halaman pertama */
+body {
+    margin: 0;
 }
 
 @media print {
-    .invoice-box{
-      page-break-before: auto !important;
-      page-break-after: auto !important;
-      page-break-inside: avoid !important;
+    @page {
+        margin: 2mm;
+        margin-top: 10mm;
     }
-     /* Add this rule to remove top padding on all pages after the first page */
-    .invoice-box:not(:first-of-type) {
-        padding-top: 0 !important;
-    }
-  }
 
-.qty_column_width{
+    body {
+        margin: 0;
+    }
+}
+
+.qty_column_width {
     width: 50px;
 }
 #print {
     width: 12cm;
-  }
-.tbl{
+}
+.tbl {
     white-space: normal;
     line-height: normal;
     font-weight: bold;
@@ -43,18 +38,18 @@
 .heading {
     border: 1px solid black;
 }
-.right{
-  text-align: right;
+.right {
+    text-align: right;
 }
-.center{
+.center {
     text-align: center;
 }
-.item{
+.item {
     font-size: 14px;
-    font-family: 'Calibri';
+    font-family: "Calibri";
 }
-.top_border{
-   border-top:  1px solid;
+.top_border {
+    border-top: 1px solid;
 }
 
 .invoice-box {
@@ -62,11 +57,12 @@
     margin-left: 0;
     margin-right: 50px;
     padding: 30px;
+    padding-top :10px;
     border: 1px solid #eee;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
     font-size: 12px;
     line-height: 24px;
-    font-family: 'Calibri';
+    font-family: "Calibri";
     font-weight: bold;
 }
 
@@ -108,8 +104,6 @@
     border-bottom: 1px solid #ddd;
     font-weight: bold;
 }
-
-
 
 .invoice-box table tr.details td {
     /* padding-bottom: 5px; */

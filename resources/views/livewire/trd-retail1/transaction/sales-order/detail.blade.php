@@ -84,6 +84,12 @@
 
                             @endif
                             <div>
+                                @php
+                                $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
+                                @endphp
+                                <x-ui-button :action="$actionValue" clickEvent="{{ route($printPdfRoute,
+                                ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($object->id)]) }}"
+                                    cssClass="btn-primary" type="Route" loading="true" button-name="Print" iconPath="print.svg" />
                                 <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
                                     :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
                             </div>

@@ -5,7 +5,7 @@
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
 @endphp
 
-<div class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
+<div wire:ignore class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
 
     <div class="input-group">
@@ -17,15 +17,18 @@
                         return;
                     }
 
-                    // Destroy existing Select2 instance if it exists
+                    // Jika instance Select2 sudah ada, hancurkan terlebih dahulu
                     if ($(selectElement).hasClass('select2-hidden-accessible')) {
                         $(selectElement).select2('destroy');
                     }
 
-                    // Initialize Select2
+                    // Inisialisasi Select2
                     $(selectElement).select2();
 
-                    // Handle change event
+                    // Pastikan tidak terjadi duplikasi event binding
+                    $(selectElement).off('change');
+
+                    // Tangani event change pada elemen tersebut
                     $(selectElement).on('change', function () {
                         const value = $(this).val();
                         @this.set('{{ $model }}', value);
@@ -52,18 +55,16 @@
                                 $wire.call(onChanged, value);
                             }
                         @endif
+
+                        // Reinisialisasi Select2 hanya untuk elemen ini setelah terjadi perubahan
+                        initSelect2();
                     });
 
                     console.log(`Select2 initialized for #{{ $id }}`);
                 };
 
-                // Initialize Select2 on component mount
+                // Inisialisasi Select2 saat komponen dibuat
                 initSelect2();
-
-                // Reinitialize Select2 after Livewire updates
-                Livewire.hook('morphed', (el, component) => {
-                    initSelect2();
-                });
             }">
 
             <select id="{{ $id }}"

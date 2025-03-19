@@ -54,7 +54,16 @@ class Material extends BaseModel
             'allowInsert' => false,
         ];
     }
-
+    public static function getExcelTemplateConfig(array $data = []): array
+    {
+        return [
+            'name' => 'Material_Update_Template',
+            'headers' => ['Kode Warna', 'Nama Warna', 'Harga Jual', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang'],
+            'data' => $data,
+            'protectedColumns' => [],
+            'allowInsert' => false,
+        ];
+    }
     /**
      * Validate uploaded Excel data based on template rules.
      *
@@ -349,7 +358,7 @@ class Material extends BaseModel
                                 'matl_uom'  => $uom,
                                 'wh_id'     => 1,
                                 'wh_code'   => IvtBal::$defaultWhCode,
-                                'batch_code'=> date('y/m/d'),
+                                'batch_code'=> '',
                                 'qty_oh'    => $stock,
                             ]);
 
@@ -529,10 +538,15 @@ class Material extends BaseModel
 
     public function IvtBal()
     {
-        return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
-            'qty_oh' => '0',
-        ]);
+        return $this->hasOne(IvtBal::class, 'matl_id', 'id')
+            ->withDefault(['qty_oh' => '0'])
+            ->where(function ($query) {
+                if ($this->relationLoaded('DefaultUom') && $this->DefaultUom) {
+                    $query->where('ivt_bals.matl_uom', $this->DefaultUom->matl_uom);
+                }
+            });
     }
+
     #endregion
 
     #region Attributes
@@ -558,7 +572,7 @@ class Material extends BaseModel
 
     public function getStockAttribute()
     {
-        return $this->IvtBal ? $this->IvtBal->qty_oh : 0;
+        return IvtBal::where('matl_id', $this->id)->sum('qty_oh');
     }
 
     public static function generateTag($code, $matlUoms, $brand, $classCode, $specs)

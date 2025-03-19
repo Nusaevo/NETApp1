@@ -34,7 +34,7 @@ class UomListComponent extends DetailComponent
             'input_details.*.selling_price' => 'Selling Price',
         ];
         $this->masterService = new MasterService();
-        $this->materialUOM = $this->masterService->getMatlUOMData(); // Ambil data UOM
+        $this->materialUOM = $this->masterService->getMatlUOMData();
 
         if (!empty($this->objectIdValue)) {
             $this->object = Material::withTrashed()->find($this->objectIdValue);
@@ -90,12 +90,14 @@ class UomListComponent extends DetailComponent
             $uoms = MatlUom::where('matl_id', $this->objectIdValue)->get();
             $this->input_details = $uoms->map(function ($uom) {
                 return [
+                    'id' => $uom->id,
                     'matl_uom' => $uom->matl_uom,
                     'reff_uom' => $uom->reff_uom,
                     'reff_factor' => $uom->reff_factor ?? 1,
                     'base_factor' => $uom->base_factor ?? 1,
                     'barcode' => $uom->barcode,
                     'selling_price' => $uom->selling_price,
+                    'buying_price' => $uom->buying_price,
                 ];
             })->toArray();
         }
@@ -108,7 +110,8 @@ class UomListComponent extends DetailComponent
 
     protected function onValidateAndSave()
     {
-        foreach ($this->input_details as $detail) {
+        foreach ($this->input_details as $key => $detail) {
+            $matlUom =
             MatlUom::updateOrCreate(
                 ['matl_id' => $this->object->id, 'matl_uom' => $detail['matl_uom']],
                 [
@@ -119,11 +122,31 @@ class UomListComponent extends DetailComponent
                     'selling_price' => $detail['selling_price'],
                 ]
             );
+            $this->input_details[$key]['id'] = $matlUom->id;
         }
     }
 
     public function render()
     {
         return view(getViewPath(__NAMESPACE__, class_basename($this)));
+    }
+    public function printBarcode($index)
+    {
+        if (isset($this->input_details[$index])) {
+
+            $itemId = (string) $this->input_details[$index]['id'];
+            $itemBarcode = MatlUom::find($itemId);
+
+            if ($itemBarcode) {
+                $itemBarcodeString = (string) $itemBarcode->barcode;
+
+                if ($itemBarcodeString !== (string) $this->input_details[$index]['barcode']) {
+                    $this->dispatch('error',"Mohon save item terlebih dahulu");
+                }else{
+                    return redirect()->route($this->appCode.'.Master.Material.PrintPdf', ["action" => encryptWithSessionKey('Edit'),'objectId' => encryptWithSessionKey($itemId)]);
+                }
+            } else {
+            }
+        }
     }
 }

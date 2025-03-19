@@ -40,6 +40,7 @@ class MatlUom extends BaseModel
         'qty_fgr',
         'qty_fgi',
         'selling_price',
+        'buying_price'
     ];
     #region Relations
     public function Material()
@@ -47,12 +48,21 @@ class MatlUom extends BaseModel
         return $this->belongsTo(Material::class, 'matl_id');
     }
 
-    public function ivtBals()
+    public function IvtBal()
     {
-        return $this->hasMany(IvtBal::class, 'matl_id');
+        return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')
+            ->whereColumn('ivt_bals.matl_uom', 'matl_uoms.matl_uom')
+            ->withDefault(['qty_oh' => '0']);
     }
 
-    public function ivtBalUnits()
+    public function getStockAttribute()
+    {
+        return $this->MatlUom->sum(function ($uom) {
+            return $uom->IvtBal ? $uom->IvtBal->qty_oh : 0;
+        });
+    }
+
+    public function IvtBalUnits()
     {
         return $this->hasMany(IvtBalUnit::class, 'matl_id');
     }

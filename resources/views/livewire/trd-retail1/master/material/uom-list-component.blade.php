@@ -8,7 +8,8 @@
                 <th style="text-align: center; width: 50px;">Reff Factor</th>
                 <th style="text-align: center; width: 50px;">Base Factor</th>
                 <th style="text-align: center; width: 150px;">Barcode</th>
-                <th style="text-align: center; width: 150px;">Selling Price</th>
+                <th style="text-align: center; width: 150px;">Buying Price (IDR)</th>
+                <th style="text-align: center; width: 150px;">Selling Price (IDR)</th>
                 <th style="text-align: center; width: 50px;">Actions</th>
             </x-slot>
 
@@ -18,36 +19,42 @@
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
                             <x-ui-dropdown-select model="input_details.{{ $key }}.reff_uom"
-                                :options="$materialUOM" required="true"/>
+                                :options="$materialUOM" required="true"  :action="$actionValue"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.reff_factor"
-                                type="number" required="true"/>
+                                type="number" required="true"  :action="$actionValue"/>
                         </td>
                         <td>
                             <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"
-                                :options="$materialUOM" required="true"/>
+                                :options="$materialUOM" required="true"  :action="$actionValue"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.base_factor"
-                                type="number" required="true"/>
+                                type="number" required="true"  :action="$actionValue"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.barcode"
-                                type="text" required="false"/>
+                                type="text" required="false" enabled="true"  :action="$actionValue"/>
+                        </td>
+                        <td style="text-align: center;">
+                            <x-ui-text-field model="input_details.{{ $key }}.buying_price"
+                                type="number" required="false" enabled="false" :action="$actionValue"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.selling_price"
-                                type="number" required="false"/>
+                                type="number" required="false"  :action="$actionValue"/>
                         </td>
                         <td style="text-align: center;">
                             <x-ui-button clickEvent="deleteItem({{ $key }})" cssClass="btn-danger"
-                                iconPath="delete.svg" button-name=""/>
+                                iconPath="delete.svg" button-name=""  :action="$actionValue"/>
+                            <x-ui-button button-name="" click-event="printBarcode({{ $key }})" :action="$actionValue" cssClass="btn-secondary" iconPath="print.svg"/>
                         </td>
                     </tr>
                 @endforeach
             </x-slot>
-
+            @if ($actionValue == "Edit")
+            @endif
             <x-slot name="button">
                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                     button-name="Add"/>

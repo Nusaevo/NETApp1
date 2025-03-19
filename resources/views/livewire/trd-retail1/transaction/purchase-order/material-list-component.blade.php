@@ -48,7 +48,7 @@
 
                         <td style="text-align: center;">
                             <x-ui-text-field model="input_details.{{ $key }}.price" label=""
-                                type="number" :action="$actionValue" enabled="false" />
+                                type="number" :action="$actionValue" enabled="true" onChanged="updateItemAmount({{ $key }})"/>
                         </td>
 
                         <td style="text-align: center;">

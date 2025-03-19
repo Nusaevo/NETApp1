@@ -2,7 +2,7 @@
 
 namespace App\Models\TrdRetail1\Transaction;
 
-use App\Models\TrdRetail1\Master\Material;
+use App\Models\TrdRetail1\Master\{Material,MatlUom};
 use App\Models\Base\BaseModel;
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Inventories\IvtBalUnit;
@@ -21,16 +21,31 @@ class OrderDtl extends BaseModel
             $price = $orderDtl->price;
             $orderDtl->amt = $qty * $price;
         });
+        static::saved(function ($orderDtl) {
+            $lastOrderDtl = OrderDtl::join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+                ->where('order_dtls.matl_id', $orderDtl->matl_id)
+                ->orderBy('order_hdrs.tr_date', 'desc')
+                ->select('order_dtls.*')
+                ->first();
+            if ($lastOrderDtl) {
+                $buyingPrice = $lastOrderDtl->price;
+                $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)->first();
+                if ($matlUom) {
+                    $matlUom->buying_price = $buyingPrice;
+                    $matlUom->save();
+                }
+            }
+
+        });
         static::deleting(function ($orderDtl) {
             DB::beginTransaction();
             try {
                 $delivDtls = DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
                     ->where('tr_seq', $orderDtl->tr_seq)
                     ->get();
-
                 foreach ($delivDtls as $delivDtl) {
                     $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                        ->where('wh_id', $delivDtl->wh_code)
+                        ->where('wh_code', $delivDtl->wh_code)
                         ->first();
                     $qtyChange = (float)$delivDtl->qty;
                     if ($delivDtl->tr_type === 'PD') {
@@ -42,14 +57,14 @@ class OrderDtl extends BaseModel
                         $existingBal->qty_oh = $newQty;
                         $existingBal->save();
                         // Update corresponding record in IvtBalUnit
-                        $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                            ->where('wh_id', $delivDtl->wh_code)
-                            ->first();
-                        if ($existingBalUnit) {
-                            $existingBalUnitQty = $existingBalUnit->qty_oh;
-                            $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
-                            $existingBalUnit->save();
-                        }
+                        // $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                        //     ->where('wh_id', $delivDtl->wh_code)
+                        //     ->first();
+                        // if ($existingBalUnit) {
+                        //     $existingBalUnitQty = $existingBalUnit->qty_oh;
+                        //     $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
+                        //     $existingBalUnit->save();
+                        // }
                     }
                     $delivDtl->forceDelete();
                 }

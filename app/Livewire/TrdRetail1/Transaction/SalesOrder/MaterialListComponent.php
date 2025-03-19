@@ -205,7 +205,6 @@ class MaterialListComponent extends DetailComponent
         }
         // 1) Validate the input details
         $this->validate();
-
         // 2) Retrieve existing details from the database
         $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)
             ->where('tr_type', $this->object->tr_type)

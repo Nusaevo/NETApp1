@@ -42,7 +42,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return Material::query()
-            ->with(['IvtBal'])
+            ->with(['IvtBal','MatlUom'])
             ->select('materials.*')
             ->whereRaw('1=0'); // Start with an empty query by default
     }
@@ -81,9 +81,12 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('UOM', 'id')->format(fn($value, $row) => $row->uom ?? '')->sortable()->collapseOnTablet(),
 
             Column::make('Selling Price', 'id')->label(fn($row) => rupiah($row->DefaultUom->selling_price ?? 0))->sortable()->collapseOnTablet(),
-
-            Column::make('Stock', 'IvtBal.qty_oh')->format(fn($value, $row) => $row->IvtBal?->qty_oh ?? 0)->sortable()->collapseOnTablet(),
-
+            Column::make('Buying Price', 'id')->label(fn($row) => rupiah($row->DefaultUom->buying_price ?? 0))->sortable()->collapseOnTablet(),
+            Column::make('stock', 'stock')
+            ->label(function ($row) {
+                return $row->stock;
+            })
+            ->sortable()->collapseOnTablet(),
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
             }),
@@ -178,15 +181,14 @@ class IndexDataTable extends BaseDataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value === 'above_0') {
-                        $builder->whereHas('IvtBal', function ($query) {
-                            $query->where('qty_oh', '>', 0);
+                        $builder->whereHas('ivtBals', function ($query) {
+                            $query->havingRaw('SUM(qty_oh) > 0');
                         });
                     } elseif ($value === 'below_0') {
-                        $builder->where(function ($query) {
-                            $query->whereDoesntHave('IvtBal')->orWhereHas('IvtBal', function ($query) {
-                                $query->where('qty_oh', '<=', 0);
+                        $builder->whereDoesntHave('ivtBals')
+                            ->orWhereHas('ivtBals', function ($query) {
+                                $query->havingRaw('SUM(qty_oh) <= 0');
                             });
-                        });
                     }
                 }),
 
@@ -226,7 +228,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'deleteSelected' => 'Delete Selected',
             'downloadCreateTemplate' => 'Download Create Template',
-            'downloadUpdateTemplate' => 'Download Update Template',
+            'exportExcel' => 'Export Excel',
         ];
     }
     /**
@@ -239,7 +241,26 @@ class IndexDataTable extends BaseDataTableComponent
 
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
+   /**
+     * Generate and download an Excel template for updating materials.
+     */
+    public function exportExcel()
+    {
+        $selectedIds = $this->getSelected();
+        $materials = Material::whereIn('id', $selectedIds)->get();
+        $data = $materials
+            ->map(function ($material, $index) {
+                $specs = $material->specs;
 
+                return [$specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->DefaultUom->barcode ?? '', $material->name ?? ''];
+            })
+            ->toArray();
+
+        $sheets = [Material::getExcelTemplateConfig($data)];
+        $filename = 'Material_Data_' . now()->format('Y-m-d') . '.xlsx';
+
+        return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
+    }
     /**
      * Generate and download an Excel template for updating materials.
      */
@@ -251,7 +272,7 @@ class IndexDataTable extends BaseDataTableComponent
             ->map(function ($material, $index) {
                 $specs = $material->specs;
 
-                return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->MatlUom[0]->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->MatlUom[0]->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
+                return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->DefaultUom->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->DefaultUom->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
             })
             ->toArray();
 
