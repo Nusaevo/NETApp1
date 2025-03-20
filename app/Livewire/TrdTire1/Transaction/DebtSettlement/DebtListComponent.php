@@ -57,6 +57,7 @@ class DebtListComponent extends DetailComponent
                 $this->dispatch('error', 'Invalid object ID');
                 return;
             }
+
             if (!$this->object) {
                 $this->dispatch('error', 'Object not found');
                 return;

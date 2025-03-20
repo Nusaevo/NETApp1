@@ -6,7 +6,7 @@ use App\Livewire\Component\DetailComponent;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Master\Material;
 use App\Services\TrdTire1\Master\MasterService;
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, PaymentHdr, PaymentSrc};
+use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, PaymentDtl, PaymentHdr, PaymentSrc};
 use App\Models\TrdTire1\Master\MatlUom; // Add this import
 use App\Models\TrdTire1\Master\Partner;
 use Exception;
@@ -27,6 +27,7 @@ class PaymentListComponent extends DetailComponent
     public $isGiro = "false";
     public $isTrf = "false";
     public $isAdv = "false";
+    public $input_payments = [];
 
     protected $rules = [
         'input_details.*.pay_type_code' => 'required',
@@ -41,7 +42,7 @@ class PaymentListComponent extends DetailComponent
     {
         $this->reset('input_details'); // Reset input_details instead of inputs
         $this->object = new PaymentHdr();
-        $this->object = new PaymentSrc();
+        // $this->object = new PaymentSrc();
         foreach ($this->input_details as $key => $detail) {
             $this->input_details[$key]['bank_date'] = date('Y-m-d');
         }
@@ -58,60 +59,67 @@ class PaymentListComponent extends DetailComponent
                 $this->dispatch('error', 'Invalid object ID');
                 return;
             }
-            $this->object = PaymentHdr::with(['details'])->withTrashed()->find($this->objectIdValue);
-            if (!$this->object) {
-                $this->dispatch('error', 'Object not found');
-                return;
+            if (!empty($this->objectIdValue)) {
+                $this->object = PaymentHdr::withTrashed()->find($this->objectIdValue);
+                if (!$this->object) {
+                    // Log the error for debugging purposes
+                    \Log::error('Object not found', ['objectIdValue' => $this->objectIdValue]);
+                    $this->dispatch('error', 'Object not found');
+                    return;
+                }
+                $this->inputs = populateArrayFromModel($this->object);
+                $this->loadDetails();
             }
-            $this->inputs = populateArrayFromModel($this->object);
-            foreach ($this->object->details as $key => $detail) {
-                $this->input_details[$key] = populateArrayFromModel($detail);
-                $this->input_details[$key]['tr_type']      = $detail->pay_type_code;
-                $this->input_details[$key]['pay_type_code'] = $detail->pay_type_code;
-                $this->input_details[$key]['pay_type_id']  = $detail->pay_type_id;
+            if (!empty($this->object->details)) { // Ensure details is not null
+                foreach ($this->object->details as $key => $detail) {
+                    $this->input_details[$key] = populateArrayFromModel($detail);
+                    $this->input_details[$key]['tr_type']      = $detail->pay_type_code;
+                    $this->input_details[$key]['pay_type_code'] = $detail->pay_type_code;
+                    $this->input_details[$key]['pay_type_id']  = $detail->pay_type_id;
 
-                // Tampilkan data sesuai dengan tipe pembayaran yang tersimpan
-                switch ($detail->pay_type_code) {
-                    case 'CASH': // Jika tipe tunai tersimpan sebagai CASH atau TUNAI
-                    case 'TUNAI':
-                        $this->input_details[$key]['amt_tunai'] = $detail->amt;
-                        // Jika ada field lain untuk tunai, misalnya bank_code_tunai, isi di sini
-                        break;
+                    // Tampilkan data sesuai dengan tipe pembayaran yang tersimpan
+                    switch ($detail->pay_type_code) {
+                        case 'CASH': // Jika tipe tunai tersimpan sebagai CASH atau TUNAI
+                        case 'TUNAI':
+                            $this->input_details[$key]['amt_tunai'] = $detail->amt;
+                            // Jika ada field lain untuk tunai, misalnya bank_code_tunai, isi di sini
+                            break;
 
-                    case 'GIRO':
-                        $this->input_details[$key]['amt_giro'] = $detail->amt;
-                        if (!empty($detail->bank_reff)) {
-                            $split = explode(' - ', $detail->bank_reff);
-                            $this->input_details[$key]['bank_reff_giro'] = $split[0] ?? '';
-                            $this->input_details[$key]['bank_reff_no_giro'] = $split[1] ?? '';
-                        } else {
-                            $this->input_details[$key]['bank_reff_giro'] = '';
-                            $this->input_details[$key]['bank_reff_no_giro'] = '';
-                        }
-                        break;
+                        case 'GIRO':
+                            $this->input_details[$key]['amt_giro'] = $detail->amt;
+                            if (!empty($detail->bank_reff)) {
+                                $split = explode(' - ', $detail->bank_reff);
+                                $this->input_details[$key]['bank_reff_giro'] = $split[0] ?? '';
+                                $this->input_details[$key]['bank_reff_no_giro'] = $split[1] ?? '';
+                            } else {
+                                $this->input_details[$key]['bank_reff_giro'] = '';
+                                $this->input_details[$key]['bank_reff_no_giro'] = '';
+                            }
+                            break;
 
-                    case 'TRF':
-                        // Sesuaikan field untuk tipe Transfer (TRF)
-                        $this->input_details[$key]['amt_trf'] = $detail->amt;
-                        if (!empty($detail->bank_reff)) {
-                            $split = explode(' - ', $detail->bank_reff);
-                            $this->input_details[$key]['bank_reff_transfer'] = $split[0] ?? '';
-                            $this->input_details[$key]['bank_reff_no_transfer'] = $split[1] ?? '';
-                        } else {
-                            $this->input_details[$key]['bank_reff_transfer'] = '';
-                            $this->input_details[$key]['bank_reff_no_transfer'] = '';
-                        }
-                        break;
+                        case 'TRF':
+                            // Sesuaikan field untuk tipe Transfer (TRF)
+                            $this->input_details[$key]['amt_trf'] = $detail->amt;
+                            if (!empty($detail->bank_reff)) {
+                                $split = explode(' - ', $detail->bank_reff);
+                                $this->input_details[$key]['bank_reff_transfer'] = $split[0] ?? '';
+                                $this->input_details[$key]['bank_reff_no_transfer'] = $split[1] ?? '';
+                            } else {
+                                $this->input_details[$key]['bank_reff_transfer'] = '';
+                                $this->input_details[$key]['bank_reff_no_transfer'] = '';
+                            }
+                            break;
 
-                    case 'ADV':
-                        // Sesuaikan field untuk tipe Advance (ADV)
-                        $this->input_details[$key]['amt_advance'] = $detail->amt;
-                        // Misal, bank_code_advance, dll.
-                        break;
+                        case 'ADV':
+                            // Sesuaikan field untuk tipe Advance (ADV)
+                            $this->input_details[$key]['amt_advance'] = $detail->amt;
+                            // Misal, bank_code_advance, dll.
+                            break;
 
-                    default:
-                        // Jika tipe tidak dikenali, biarkan field–fieldnya default atau kosong
-                        break;
+                        default:
+                            // Jika tipe tidak dikenali, biarkan field–fieldnya default atau kosong
+                            break;
+                    }
                 }
             }
         }
@@ -125,31 +133,18 @@ class PaymentListComponent extends DetailComponent
                 $this->input_details[] = [
                     'tr_type' => null,
                 ];
-                // Set indeks item baru sebagai aktif (opsional: jika ingin langsung atur payment)
+                $this->input_payments[] = [
+                    'tr_type' => null,
+                ];
                 $newKey = array_key_last($this->input_details);
                 $this->activePaymentItemKey = $newKey;
-                $this->dispatch('success', __('generic.string.add_item'));
+                $this->dispatch('openPaymentDialogBox');
             } catch (Exception $e) {
                 $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
             }
-            // dd($this->input_details);
         } else {
             $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
         }
-    }
-    public function openPaymentDialog($key)
-    {
-        $this->activePaymentItemKey = $key;
-
-        // Jika data tr_type sudah ada (misalnya saat edit), langsung update flag status input
-        if (isset($this->input_details[$key]['tr_type']) && !empty($this->input_details[$key]['tr_type'])) {
-            $this->onPaymentTypeChange();
-        } else {
-            // Jika belum ada, pastikan semua flag dinonaktifkan
-            $this->isCash = $this->isGiro = $this->isTrf = $this->isAdv = false;
-        }
-
-        $this->dispatch('openPaymentDialogBox');
     }
 
     public function confirmPayment()
@@ -160,22 +155,56 @@ class PaymentListComponent extends DetailComponent
         }
         $key = $this->activePaymentItemKey;
         $this->validate([
-            "input_details.$key.tr_type" => 'required',
+            "input_payments.$key.tr_type" => 'required',
         ]);
-        $trType = $this->input_details[$key]['tr_type'];
+        $trType = $this->input_payments[$key]['tr_type'];
         $this->input_details[$key]['pay_type_code'] = $trType;
 
         // Set pay_type_id based on pay_type_code
         $payType = ConfigConst::where('str1', $trType)->first();
         $this->input_details[$key]['pay_type_id'] = $payType ? $payType->id : null;
 
+        // Update input_details with payment details
+        switch ($trType) {
+            case 'CASH':
+                $this->input_details[$key]['amt_tunai'] = $this->input_payments[$key]['amt_tunai'];
+                break;
+            case 'GIRO':
+                $this->input_details[$key]['amt_giro'] = $this->input_payments[$key]['amt_giro'];
+                $this->input_details[$key]['bank_reff_giro'] = $this->input_payments[$key]['bank_reff_giro'];
+                $this->input_details[$key]['bank_reff_no_giro'] = $this->input_payments[$key]['bank_reff_no_giro'];
+                $this->input_details[$key]['bank_date_giro'] = $this->input_payments[$key]['bank_date_giro'];
+                break;
+            case 'TRF':
+                $this->input_details[$key]['amt_trf'] = $this->input_payments[$key]['amt_trf'];
+                $this->input_details[$key]['bank_reff_transfer'] = $this->input_payments[$key]['bank_reff_transfer'];
+                $this->input_details[$key]['bank_reff_no_transfer'] = $this->input_payments[$key]['bank_reff_no_transfer'];
+                $this->input_details[$key]['bank_date_transfer'] = $this->input_payments[$key]['bank_date_transfer'];
+                break;
+            case 'ADV':
+                $this->input_details[$key]['amt_advance'] = $this->input_payments[$key]['amt_advance'];
+                $this->input_details[$key]['bank_code_advance'] = $this->input_payments[$key]['bank_code_advance'];
+                break;
+        }
+
         $this->dispatch('success', __('Payment type has been confirmed and updated for item ' . ($key + 1)));
-
-        // Tutup dialog box setelah konfirmasi berhasil
         $this->dispatch('closePaymentDialogBox');
-
-        // Reset activePaymentItemKey jika sudah selesai
         $this->activePaymentItemKey = null;
+    }
+
+    public function openPaymentDialog($key)
+    {
+        $this->activePaymentItemKey = $key;
+
+        // Jika data tr_type sudah ada (misalnya saat edit), langsung update flag status input
+        if (isset($this->input_payments[$key]['tr_type']) && !empty($this->input_payments[$key]['tr_type'])) {
+            $this->onPaymentTypeChange();
+        } else {
+            // Jika belum ada, pastikan semua flag dinonaktifkan
+            $this->isCash = $this->isGiro = $this->isTrf = $this->isAdv = "false";
+        }
+
+        $this->dispatch('openPaymentDialogBox');
     }
 
     public function deleteItem($index)
@@ -203,8 +232,8 @@ class PaymentListComponent extends DetailComponent
     public function onPaymentTypeChange()
     {
         $key = $this->activePaymentItemKey;
-        $newType = $this->input_details[$key]['tr_type'] ?? null;
-        $oldType = $this->input_details[$key]['current_type'] ?? null;
+        $newType = $this->input_payments[$key]['tr_type'] ?? null;
+        $oldType = $this->input_payments[$key]['current_type'] ?? null;
 
         // Konfigurasi tiap tr_type dengan field, nama flag, dan key backup-nya
         $paymentTypes = [
@@ -235,9 +264,9 @@ class PaymentListComponent extends DetailComponent
             if ($oldType === $type && $newType !== $type) {
                 $backup = [];
                 foreach ($config['fields'] as $field) {
-                    $backup[$field] = $this->input_details[$key][$field] ?? null;
+                    $backup[$field] = $this->input_payments[$key][$field] ?? null;
                 }
-                $this->input_details[$key][$config['backupKey']] = $backup;
+                $this->input_payments[$key][$config['backupKey']] = $backup;
             }
         }
 
@@ -245,29 +274,29 @@ class PaymentListComponent extends DetailComponent
         foreach ($paymentTypes as $type => $config) {
             if ($newType === $type) {
                 $this->{$config['flag']} = "true";
-                if (isset($this->input_details[$key][$config['backupKey']])) {
+                if (isset($this->input_payments[$key][$config['backupKey']])) {
                     foreach ($config['fields'] as $field) {
-                        $this->input_details[$key][$field] = $this->input_details[$key][$config['backupKey']][$field]
-                            ?? $this->input_details[$key][$field];
+                        $this->input_payments[$key][$field] = $this->input_payments[$key][$config['backupKey']][$field]
+                            ?? $this->input_payments[$key][$field];
                     }
                 }
             } else {
                 $this->{$config['flag']} = "false";
                 foreach ($config['fields'] as $field) {
-                    $this->input_details[$key][$field] = null;
+                    $this->input_payments[$key][$field] = null;
                 }
             }
         }
 
         // Perbarui current_type dengan tipe baru yang dipilih
-        $this->input_details[$key]['current_type'] = $newType;
+        $this->input_payments[$key]['current_type'] = $newType;
     }
 
 
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-            $this->object_detail = PaymentHdr::where('id', $this->object->id) // Ensure 'id' is used instead of 'tr_id'
+            $this->object_detail = PaymentSrc::where('trhdr_id', $this->object->id)
                 ->where('tr_type', $this->object->tr_type)
                 ->get();
 
