@@ -49,6 +49,9 @@ class Detail extends BaseComponent
     public $total_discount = 0;
     public $total_tax = 0; // New property for total tax
     public $total_dpp = 0; // New property for total tax
+    public $groupInput = '';
+    public $qtyInput = 0;
+    public $rewardInput = 0;
     #endregion
 
     #region Populate Data methods
@@ -269,7 +272,9 @@ class Detail extends BaseComponent
             $key = count($this->input_details);
             $this->input_details[] = [
                 'matl_id' => $matl_id,
-                'qty' => null,
+                'grp' => $this->groupInput,
+                'qty' => $this->qtyInput,
+                'reward' => $this->rewardInput,
                 'price' => 0.0
             ];
             $this->onMaterialChanged($key, $matl_id);

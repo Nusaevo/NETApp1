@@ -49,7 +49,7 @@ class Detail extends BaseComponent
     public $notaCount = 0; // x: jumlah nota jual dicetak
     public $suratJalanCount = 0; // y: jumlah surat jalan dicetak
 
-    public $payer = "true"; // Add this line to define the payer property
+    public $payer = "true"; // Ensure this line is present to define the payer property
 
     public $rules  = [
         'inputs.tr_code' => 'required',
@@ -186,6 +186,7 @@ class Detail extends BaseComponent
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
+        $this->dispatch('updateTaxPayerEnabled', $this->payer); // Ensure the UI is updated
     }
 
     public function onPaymentTermChanged()
@@ -439,7 +440,7 @@ class Detail extends BaseComponent
             $this->suratJalanCount++;
             $this->updateVersionNumber2();
             // Logika cetak surat jalan
-            return redirect()->route('TrdTire1.Transaction.SalesOrder.PrintSuratJalan', [
+            return redirect()->route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);        } catch (Exception $e) {

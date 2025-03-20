@@ -139,11 +139,17 @@
                     <x-ui-text-field-search label="Type" model="filterType" :options="$typeOptions" onChanged="" />
                 </div>
 
-
                 <x-ui-button clickEvent="searchMaterials" cssClass="btn btn-primary" button-name="Search" />
+                <div class="row mt-2">
+                    <x-ui-text-field label="Group" model="groupInput" type="text" :action="$actionValue" required="true" />
+                    <x-ui-text-field label="Qty" model="qtyInput" type="number" :action="$actionValue" required="true" />
+                    <x-ui-text-field label="Reward" model="rewardInput" type="number" :action="$actionValue" required="true" />
+                </div>
                 <x-ui-table id="materialsTable" padding="0px" margin="0px" height="400px">
                     <x-slot name="headers">
-                        <th class="min-w-100px">Code</th>
+                        <th class="min-w-100px">
+                            Code
+                        </th>
                         <th class="min-w-100px">Merk</th>
                         <th class="min-w-100px">Kategori</th>
                         <th class="min-w-100px">Nama</th>
@@ -168,7 +174,6 @@
                             @endforeach
                         @endif
                     </x-slot>
-
                     <x-slot name="footer">
                         <x-ui-button clickEvent="confirmSelection" button-name="Confirm Selection" loading="true"
                             :action="$actionValue" cssClass="btn-primary" />
@@ -185,8 +190,7 @@
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($object->id),
             ]) }}"
-            cssClass="btn-primary" type="Route" loading="true" button-name="Cetak"
-            iconPath="print.svg" />
+            cssClass="btn-primary" type="Route" loading="true" button-name="Cetak" iconPath="print.svg" />
         <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary"
             iconPath="save.svg" />
     </x-ui-footer>
