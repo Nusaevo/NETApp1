@@ -61,7 +61,7 @@ class DebtListComponent extends DetailComponent
                 $this->dispatch('error', 'Object not found');
                 return;
             }
-            $this->inputs = populateArrayFromModel($this->object);
+            // $this->inputs = populateArrayFromModel($this->object);
             if ($this->object && $this->object->details) {
                 foreach ($this->object->details as $key => $detail) {
                     $this->input_details[$key] = populateArrayFromModel($detail);

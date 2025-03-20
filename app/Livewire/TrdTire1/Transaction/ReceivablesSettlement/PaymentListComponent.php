@@ -11,7 +11,7 @@ use App\Models\TrdTire1\Master\MatlUom; // Add this import
 use App\Models\TrdTire1\Master\Partner;
 use Exception;
 
-class MaterialListComponent extends DetailComponent
+class PaymentListComponent extends DetailComponent
 {
     public $materials;
     protected $masterService;

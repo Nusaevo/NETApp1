@@ -84,7 +84,7 @@
             <br>
             <div class="col-md-12">
                 <x-ui-card title="Pembayaran">
-                    @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
+                    @livewire($currentRoute . '.payment-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
             </div>
             <div class="col-md-12">

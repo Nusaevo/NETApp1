@@ -110,7 +110,12 @@
                                 dateFormat: 'yy-mm-dd',
                                 changeMonth: true,
                                 changeYear: true,
-                                showButtonPanel: true
+                                showButtonPanel: true,
+                                beforeShow: function(input, inst) {
+                                    setTimeout(function(){
+                                        $('.ui-datepicker').css('z-index', 99999999999999);
+                                    }, 0);
+                                }
                             }).on('change', function() {
                                 $wire.set('{{ $model }}', myJQuery(this).val());
                                 @if (isset($onChanged) && $onChanged !== '') Livewire.dispatch('{{ $onChanged }}'); @endif
