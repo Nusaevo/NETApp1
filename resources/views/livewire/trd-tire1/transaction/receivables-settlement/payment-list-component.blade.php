@@ -119,6 +119,8 @@
                                         label="Amount" :action="$actionValue" type="number" :enabled="$isAdv" />
                                 </div>
                             </div>
+                            
+                        </div>
                     </x-slot>
                     <x-slot name="footer">
                         <x-ui-button clickEvent="confirmPayment" button-name="Save" loading="true" :action="$actionValue"
