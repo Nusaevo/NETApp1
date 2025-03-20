@@ -572,8 +572,9 @@ class Material extends BaseModel
 
     public function getStockAttribute()
     {
-        return IvtBal::where('matl_id', $this->id)->sum('qty_oh');
+        return IvtBal::where('matl_id', $this->id)->first()?->qty_oh;
     }
+
 
     public static function generateTag($code, $matlUoms, $brand, $classCode, $specs)
     {
