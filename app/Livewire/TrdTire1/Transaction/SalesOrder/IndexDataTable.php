@@ -7,7 +7,7 @@ use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\S
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
-use App\Enums\Status;
+use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +25,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->where('order_hdrs.status_code', Status::OPEN);
+            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN]);
     }
     public function columns(): array
     {

@@ -170,7 +170,7 @@
                         cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
                         iconPath="print.svg" />
                     <x-ui-button :action="$actionValue"
-                        clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
+                        clickEvent="{{ route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
                             'action' => encryptWithSessionKey('Edit'),
                             'objectId' => encryptWithSessionKey($object->id),
                         ]) }}"
