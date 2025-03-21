@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
+namespace App\Livewire\TrdTire1\Tax\TaxInvoice;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\{BillingDtl, BillingHdr, DelivDtl, DelivHdr, OrderHdr, OrderDtl};
@@ -186,7 +186,7 @@ class Detail extends BaseComponent
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
-        // $this->dispatch('updateTaxPayerEnabled', $this->payer); // Ensure the UI is updated
+        $this->dispatch('updateTaxPayerEnabled', $this->payer); // Ensure the UI is updated
     }
 
     public function onPaymentTermChanged()
@@ -329,7 +329,6 @@ class Detail extends BaseComponent
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['due_date']  = date('Y-m-d');
-        $this->inputs['print_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";

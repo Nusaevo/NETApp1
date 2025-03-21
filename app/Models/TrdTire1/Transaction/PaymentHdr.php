@@ -13,6 +13,7 @@ use App\Traits\BaseTrait;
 class PaymentHdr extends BaseModel
 {
     use SoftDeletes;
+    protected $table = 'payment_hdrs';
 
     protected static function boot()
     {
@@ -55,14 +56,14 @@ class PaymentHdr extends BaseModel
     }
 
     // Define the details relationship
-    public function details()
-    {
-        return $this->hasMany(PaymentSrc::class, 'trhdr_id', 'id');
-    }
-    public function details2()
-    {
-        return $this->hasMany(PaymentDtl::class, 'trhdr_id', 'id');
-    }
+    // public function details()
+    // {
+    //     return $this->hasMany(PaymentSrc::class, 'trhdr_id', 'id');
+    // }
+    // public function details2()
+    // {
+    //     return $this->hasMany(PaymentDtl::class, 'trhdr_id', 'id');
+    // }
 
     public static function getByCreatedByAndTrType($createdBy, $trType)
     {
@@ -76,8 +77,8 @@ class PaymentHdr extends BaseModel
 
         // Generate tr_id with incremented value only if it's a new record
         if (!$this->exists) {
-            $lastRecord = self::orderBy('tr_code', 'desc')->first();
-            $lastId = $lastRecord ? intval($lastRecord->tr_code) : 0;
+            $lastRecord = self::where('tr_type', $trType)->orderBy('tr_code', 'desc')->first();
+            $lastId = $lastRecord ? intval($lastRecord->tr_code) : 0; // Ensure tr_code is treated as an integer
             $this->tr_code = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
         }
         // Set default status jika baru

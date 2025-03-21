@@ -8,6 +8,7 @@ use App\Models\TrdTire1\Master\Material;
 use App\Enums\Status;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
+use App\Models\TrdTire1\Master\PartnerDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -25,6 +26,7 @@ class OrderHdr extends BaseModel
         'payment_term_id',
         'payment_due_days',
         'tr_date',
+        'print_date',
         'due_date',
         'cust_reff',
         'curr_rate',
@@ -38,7 +40,7 @@ class OrderHdr extends BaseModel
         'npwp_addr',
         'npwp_code',
         'total_amt',
-        'total_amt_tax'
+        'total_amt_tax',
     ];
 
     protected $casts = [
@@ -60,6 +62,11 @@ class OrderHdr extends BaseModel
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
+    }
+    public function partnerDetail()
+    {
+        // Misalnya, jika relasi adalah one-to-one dari tabel partner_details yang menggunakan partner_id sebagai foreign key:
+        return $this->hasOne(PartnerDetail::class, 'partner_id', 'partner_id');
     }
 
     public function OrderDtl()

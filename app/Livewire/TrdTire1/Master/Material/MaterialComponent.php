@@ -145,7 +145,7 @@ class MaterialComponent extends BaseComponent
 
         if ($this->object) {
             $this->materials = $this->object->toArray(); // Atau sesuaikan dengan cara Anda mengisi data
-            $this->object_uoms = $this->object->MatlUom[0] ?? new MatlUom();
+            $this->object_uoms = $this->object->MatlUom ?? new MatlUom();
             $this->materials = populateArrayFromModel($this->object);
             $this->matl_uoms = populateArrayFromModel($this->object_uoms);
 
@@ -268,7 +268,8 @@ class MaterialComponent extends BaseComponent
         $this->saveAttachment();
 
         // Save UOM to materials table
-        $this->object->uom = $this->object->MatlUom->first()->matl_uom ?? null;
+        // $this->object->uom = $this->object->MatlUom->first()->matl_uom ?? null;
+        $this->object->uom = $this->matl_uoms['matl_uom']; // Set UOM from matl_uom
         $this->object->save();
     }
 
@@ -310,8 +311,15 @@ class MaterialComponent extends BaseComponent
         $this->matl_uoms['base_factor'] = 1;
         $this->matl_uoms['reff_factor'] = $this->matl_uoms['base_factor'];
         $this->matl_uoms['reff_uom'] = $this->matl_uoms['matl_uom'];
-        $this->object_uoms->fill($this->matl_uoms);
-        $this->object_uoms->save();
+
+        $existingUom = MatlUom::where('matl_id', $this->object->id)->first();
+        if ($existingUom) {
+            $existingUom->fill($this->matl_uoms);
+            $existingUom->save();
+        } else {
+            $this->object_uoms->fill($this->matl_uoms);
+            $this->object_uoms->save();
+        }
     }
 
     #endregion

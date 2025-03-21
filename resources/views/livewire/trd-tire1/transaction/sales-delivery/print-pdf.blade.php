@@ -35,11 +35,17 @@
                                 <tr>
                                     <td style="width: 30%;">
                                         <div style="text-align: center;">
-                                            <h2 style="margin: 0; text-decoration: underline; font-weight: bold;">CAHAYA TERANG</h2>
+                                            <h2 style="margin: 0; text-decoration: underline; font-weight: bold;">CAHAYA
+                                                TERANG</h2>
                                             <p style="margin: 0;">SURABAYA</p>
                                         </div>
                                     </td>
-                                    <td style="text-align: right;">
+                                    <td colspan="3"
+                                        style="text-align: center; margin-top: 20px; vertical-align: bottom;">
+                                        <h3 style="margin: 0; text-decoration: underline;">SURAT JALAN</h3>
+                                        <p style="margin: 5px 0;">No. {{ $this->object->tr_code }}</p>
+                                    </td>
+                                    <td style="text-align: right; vertical-align: bottom;">
                                         <p style="margin: 0;">
                                             Surabaya,
                                             {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
@@ -50,12 +56,6 @@
                                     </td>
                                 </tr>
                             </table>
-
-                            <!-- Title -->
-                            <div style="text-align: center; margin: 20px 0;">
-                                <h3 style="margin: 0; font-weight: bold; text-decoration: underline;">SURAT JALAN</h3>
-                                <p style="margin: 5px 0;">No. {{ $this->object->tr_code }}</p>
-                            </div>
 
                             <!-- Items Table -->
                             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
@@ -109,10 +109,10 @@
                                         <td>Penerima:</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding-top: 20px;">(__________)</td>
-                                        <td style="padding-top: 20px;">(__________)</td>
-                                        <td style="padding-top: 20px;">(__________)</td>
-                                        <td style="padding-top: 20px;">(__________)</td>
+                                        <td style="padding-top: 40px;">(__________)</td>
+                                        <td style="padding-top: 40px;">(__________)</td>
+                                        <td style="padding-top: 40px;">(__________)</td>
+                                        <td style="padding-top: 40px;">(__________)</td>
                                     </tr>
                                 </table>
                             </div>

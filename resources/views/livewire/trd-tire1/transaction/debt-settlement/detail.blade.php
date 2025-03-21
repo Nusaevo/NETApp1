@@ -87,11 +87,11 @@
                     @livewire($currentRoute . '.payment-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
             </div>
-            <div class="col-md-12">
+            {{-- <div class="col-md-12">
                 <x-ui-card title="Hutang">
                     @livewire($currentRoute . '.debt-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
-            </div>
+            </div> --}}
         </x-ui-tab-view-content>
     </x-ui-page-card>
 </div>
