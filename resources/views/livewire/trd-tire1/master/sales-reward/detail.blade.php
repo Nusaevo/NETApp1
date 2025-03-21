@@ -129,7 +129,7 @@
             onOpened="openItemDialogBox" onClosed="closeItemDialogBox">
             <x-slot name="body">
                 <div class="row">
-                    <x-ui-text-field type="text" label="Search Code/Nama" model="searchTerm" required="true"
+                    <x-ui-text-field type="text" label="Search Code/Nama" model="searchTerm"
                         :action="$actionValue" enabled="true" clickEvent="" buttonName="" />
                     <!-- Table -->
                     <x-ui-text-field-search label="Category" model="filterCategory" :options="$kategoriOptions" onChanged="" />
@@ -141,9 +141,9 @@
 
                 <x-ui-button clickEvent="searchMaterials" cssClass="btn btn-primary" button-name="Search" />
                 <div class="row mt-2">
-                    <x-ui-text-field label="Group" model="groupInput" type="text" :action="$actionValue" required="true" />
-                    <x-ui-text-field label="Qty" model="qtyInput" type="number" :action="$actionValue" required="true" />
-                    <x-ui-text-field label="Reward" model="rewardInput" type="number" :action="$actionValue" required="true" />
+                    <x-ui-text-field label="Group" model="groupInput" type="text" :action="$actionValue" />
+                    <x-ui-text-field label="Qty" model="qtyInput" type="number" :action="$actionValue" />
+                    <x-ui-text-field label="Reward" model="rewardInput" type="number" :action="$actionValue" />
                 </div>
                 <x-ui-table id="materialsTable" padding="0px" margin="0px" height="400px">
                     <x-slot name="headers">

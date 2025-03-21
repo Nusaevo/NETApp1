@@ -23,7 +23,6 @@
                                     <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                         type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                         :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
-                                    @dump($payer)
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"

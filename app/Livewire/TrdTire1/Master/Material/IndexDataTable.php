@@ -61,7 +61,10 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
             // kolom uom di tabel material
-            Column::make($this->trans("uom"), "uom")
+            Column::make($this->trans("uom"), "MatlUom.matl_uom")
+                ->format(function ($value, $row) {
+                    return $row->MatlUom?->matl_uom ?? '';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make('Stock', 'MatlUom.qty_oh')

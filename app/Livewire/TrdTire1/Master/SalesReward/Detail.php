@@ -236,7 +236,7 @@ class Detail extends BaseComponent
             $query->where('brand', $this->filterBrand);
         }
         if (!empty($this->filterType)) {
-            $query->where('class_code', $this->filterType);
+            $query->where('type_code', $this->filterType);
         }
 
         $this->materialList = $query->get();

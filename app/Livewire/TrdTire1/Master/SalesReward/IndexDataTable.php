@@ -30,6 +30,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
+            Column::make($this->trans("Kode Program"), "code")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("Nama Program"), "descrs")
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("matl_code"), "matl_code")
                 ->searchable()
                 ->sortable(),

@@ -53,6 +53,7 @@ class Detail extends BaseComponent
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
         'inputs.tax_flag' => 'required',
+        'inputs.payment_term_id' => 'required',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -191,6 +192,7 @@ class Detail extends BaseComponent
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
+            $this->inputs['tax_flag'] = 'I';
         }
         // Panggil perhitungan DPP dan PPN saat halaman dimuat
         if (!empty($this->inputs['tax_flag'])) {
