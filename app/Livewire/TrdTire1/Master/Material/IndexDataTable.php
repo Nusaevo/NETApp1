@@ -55,9 +55,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("description_material"), "name")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("selling_price"), "selling_price")
-                ->label(function ($row) {
-                    return $row->selling_price_text;
+            Column::make($this->trans("selling_price"), "MatlUom.selling_price")
+                ->format(function ($value, $row) {
+                    return rupiah($row->MatlUom?->selling_price ?? 0);
                 })
                 ->sortable(),
             // kolom uom di tabel material

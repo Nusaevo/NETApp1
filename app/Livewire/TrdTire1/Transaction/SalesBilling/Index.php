@@ -33,7 +33,7 @@ class Index extends BaseComponent
     public function submitDeliveryDate()
     {
         $this->validate([
-            'tr_date' => 'date',
+            'tr_date' => 'required|date',
         ]);
 
         DB::beginTransaction();

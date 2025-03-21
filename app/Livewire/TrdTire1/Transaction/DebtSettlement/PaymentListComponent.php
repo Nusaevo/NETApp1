@@ -62,8 +62,6 @@ class PaymentListComponent extends DetailComponent
             if (!empty($this->objectIdValue)) {
                 $this->object = PaymentHdr::withTrashed()->find($this->objectIdValue);
                 if (!$this->object) {
-                    // Log the error for debugging purposes
-                    \Log::error('Object not found', ['objectIdValue' => $this->objectIdValue]);
                     $this->dispatch('error', 'Object not found');
                     return;
                 }

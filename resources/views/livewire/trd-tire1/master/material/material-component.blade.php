@@ -147,10 +147,10 @@
                             <x-ui-padding>
                                 <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="matl_uoms.matl_uom"
                                     :options="$materialUOM" type="number" :action="$actionValue" required="false"
-                                    enabled="true" />
+                                    enabled="true" :selectedValue="$matl_uoms['matl_uom']" />
                                 <x-ui-text-field label="{{ $this->trans('selling_price') }}"
                                     model="matl_uoms.selling_price" type="number" :action="$actionValue" required="true"
-                                    enabled="true" />
+                                    enabled="true" :value="$matl_uoms['selling_price']" />
                                 <x-ui-text-field label="{{ $this->trans('cost') }}" model="materials.cost"
                                     type="number" :action="$actionValue" required="false" enabled="false" />
                             </x-ui-padding>
@@ -158,9 +158,9 @@
                         <x-ui-card title="Associations">
                             <x-ui-padding>
                                 <x-ui-text-field label="{{ $this->trans('stock') }}" model="matl_uoms.qty_oh"
-                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                    type="text" :action="$actionValue" required="false" enabled="false" :value="$matl_uoms['qty_oh']" />
                                 <x-ui-text-field label="{{ $this->trans('reserved') }}" model="matl_uoms.qty_fgi"
-                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                    type="text" :action="$actionValue" required="false" enabled="false" :value="$matl_uoms['qty_fgi']" />
                             </x-ui-padding>
                         </x-ui-card>
                         <x-ui-card title="Tagging">

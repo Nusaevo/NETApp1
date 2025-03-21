@@ -78,7 +78,7 @@ class PaymentHdr extends BaseModel
         // Generate tr_id with incremented value only if it's a new record
         if (!$this->exists) {
             $lastRecord = self::where('tr_type', $trType)->orderBy('tr_code', 'desc')->first();
-            $lastId = $lastRecord ? intval($lastRecord->tr_code) : 0;
+            $lastId = $lastRecord ? intval($lastRecord->tr_code) : 0; // Ensure tr_code is treated as an integer
             $this->tr_code = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
         }
         // Set default status jika baru
