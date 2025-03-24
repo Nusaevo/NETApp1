@@ -266,7 +266,7 @@ class Detail extends BaseComponent
             // NOTE: Pengurangan qty_reff sudah dipindahkan ke dalam event saving model
 
             $detailRecord = DelivDtl::firstOrNew([
-                'trhdr_id' => $this->object->id,
+                'trhdr_id' => $this->object->id, // Ensure trhdr_id is set correctly
                 'tr_seq'   => $tr_seq,
             ]);
 
