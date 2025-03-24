@@ -26,7 +26,8 @@ class PaymentSrc extends BaseModel
         'bank_id',
         'bank_code',
         'bank_reff',
-        // 'bank_date',
+        'bank_date',
+        'bank_note',
         'amt',
     ];
 

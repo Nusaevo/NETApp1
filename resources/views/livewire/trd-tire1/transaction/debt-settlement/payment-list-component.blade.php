@@ -61,7 +61,7 @@
                         @if ($isCash === 'true')
                             <div class="row" title="Tunai">
                                 <div class="col-md-3">
-                                    <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_code_tunai"
+                                    <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_note"
                                         label="Tunai" :action="$actionValue" type="text" :enabled="$isCash" />
                                 </div>
                                 <div class="col-md-3">
@@ -123,7 +123,7 @@
                             <div class="row" title="Advance">
                                 <div class="col-md-3">
                                     <x-ui-text-field
-                                        model="input_payments.{{ $activePaymentItemKey }}.bank_code_advance"
+                                        model="input_payments.{{ $activePaymentItemKey }}.bank_note"
                                         label="Advance" :action="$actionValue" type="text" :enabled="$isAdv" />
                                 </div>
                                 <div class="col-md-3">

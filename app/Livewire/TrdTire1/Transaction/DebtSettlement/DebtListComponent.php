@@ -57,16 +57,14 @@ class DebtListComponent extends DetailComponent
                 $this->dispatch('error', 'Invalid object ID');
                 return;
             }
-
-            if (!$this->object) {
-                $this->dispatch('error', 'Object not found');
-                return;
-            }
-            // $this->inputs = populateArrayFromModel($this->object);
-            if ($this->object && $this->object->details) {
-                foreach ($this->object->details as $key => $detail) {
-                    $this->input_details[$key] = populateArrayFromModel($detail);
+            if (!empty($this->objectIdValue)) {
+                $this->object = PaymentHdr::withTrashed()->find($this->objectIdValue);
+                if (!$this->object) {
+                    $this->dispatch('error', 'Object not found');
+                    return;
                 }
+                $this->inputs = populateArrayFromModel($this->object);
+                $this->loadDetails(); // Load details when editing
             }
         }
     }
@@ -104,16 +102,24 @@ class DebtListComponent extends DetailComponent
         }
     }
 
-    protected function loadDetails()
+    public function loadDetails()
     {
         if (!empty($this->object)) {
-            $this->object_detail = PaymentDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
+            $this->object_detail = PaymentDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
+                ->orderBy('tr_seq')
+                ->get();
 
             foreach ($this->object_detail as $key => $detail) {
-                $this->input_details[$key] = populateArrayFromModel($detail);
+                $this->input_details[$key] = [
+                    'biilhdrtr_code' => $detail->biilhdrtr_code,
+                    'amt'             => $detail->amt,
+                    'tr_date'         => $detail->tr_date,
+                    // tambahkan field lain sesuai kebutuhan
+                ];
             }
         }
     }
+
     public function SaveItem()
     {
         $this->Save();
@@ -140,12 +146,18 @@ class DebtListComponent extends DetailComponent
                 $tr_code = $paymentHdr ? $paymentHdr->tr_code : null;
 
                 if ($tr_type && $tr_code) {
+                    // Ambil billing detail berdasarkan billing header
+                    $billingDtl = BillingDtl::where('trhdr_id', $billingHdr->id)->first();
+
                     $data = [
                         'tr_type'        => $tr_type,
                         'tr_code'        => $tr_code,
                         'amt'            => $detail['amt'], // Input dari user
                         // Simpan tr_code dari billingHdr ke kolom biilhdrtr_code
                         'biilhdrtr_code' => $billingHdr->tr_code,
+                        'billdtl_id'     => $billingDtl ? $billingDtl->id : null,
+                        'billhdrtr_type' => $billingHdr->tr_type,
+                        'billdtltr_seq'  => $billingDtl ? $billingDtl->tr_seq : null,
                     ];
 
                     PaymentDtl::updateOrCreate(

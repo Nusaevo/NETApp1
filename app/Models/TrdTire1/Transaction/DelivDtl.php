@@ -120,6 +120,10 @@ class DelivDtl extends BaseModel
         static::saved(function ($delivDtl) {
             $header = $delivDtl->DelivHdr;
             $orderDtl = $delivDtl->OrderDtl;
+            $billingHdr = BillingHdr::where('tr_code', $delivDtl->tr_code)
+                ->where('tr_type', $delivDtl->tr_type == 'SD' ? 'ARB' : 'APB')
+                ->first();
+
 
             IvtLog::updateOrCreate(
                 [
@@ -147,12 +151,12 @@ class DelivDtl extends BaseModel
 
             BillingDtl::updateOrCreate(
                 [
-                    'trhdr_id' => $delivDtl->trhdr_id,
+                    'trhdr_id' => $billingHdr->id,
                     'tr_seq'   => $delivDtl->tr_seq,
                     'tr_type'  => $delivDtl->tr_type == 'SD' ? 'ARB' : 'APB',
                 ],
                 [
-                    'trhdr_id'   => $delivDtl->trhdr_id,
+                    'trhdr_id' => $billingHdr->id,
                     'tr_type'    => $delivDtl->tr_type == 'SD' ? 'ARB' : 'APB',
                     'tr_code'    => $delivDtl->tr_code,
                     'tr_seq'     => $delivDtl->tr_seq,
