@@ -73,16 +73,8 @@
                         </x-ui-card>
 
                         <x-ui-footer>
-                            @if (
-                                $actionValue !== 'Create' &&
-                                    (!$object instanceof App\Models\SysConfig1\ConfigUser || auth()->user()->id !== $object->id))
-                                @if (isset($permissions['delete']) && $permissions['delete'])
-                                    <div style="padding-right: 10px;">
-                                        @include('layout.customs.buttons.disable')
-                                    </div>
-                                @endif
 
-                            @endif
+                            @include('layout.customs.transaction-form-footer')
                             <div>
                                 @php
                                 $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);

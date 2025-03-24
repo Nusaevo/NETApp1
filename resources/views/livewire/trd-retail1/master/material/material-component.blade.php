@@ -61,7 +61,7 @@
                                     type="text" :action="$actionValue" required="true" enabled="false"
                                     clickEvent="getMatlCode" buttonName="Get Code" :buttonEnabled="$panelEnabled" />
                                 <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
-                                    type="text" :action="$actionValue" enabled="true" />
+                                    type="text" :action="$actionValue" enabled="false" />
                             </div>
 
                             <div class="row">
@@ -97,7 +97,7 @@
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('selling_price') }}"
                                     model="matl_uoms.selling_price" type="number" :action="$actionValue" required="false"
-                                    :enabled="$panelEnabled"/>
+                                    :enabled="$panelEnabled" enabled="false" />
                                 {{-- <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs"
                                     type="number" :action="$actionValue" required="true" enabled="true" /> --}}
                                 <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="materials.uom"

@@ -28,6 +28,7 @@ class IvtBal extends BaseModel
         'qty_oh',
         'wh_id',
         'wh_code',
+        'matl_code'
     ];
 
 

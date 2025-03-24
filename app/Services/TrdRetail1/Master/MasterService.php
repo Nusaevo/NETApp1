@@ -22,6 +22,7 @@ class MasterService extends BaseService
             ->orderBy('seq')
             ->get();
     }
+
     protected function getSysConfigData($constGroup)
     {
         return $this->configConnection
@@ -32,6 +33,7 @@ class MasterService extends BaseService
             ->orderBy('seq')
             ->get();
     }
+
     public function isValidMatlCategory($str1)
     {
         $result = $this->mainConnection

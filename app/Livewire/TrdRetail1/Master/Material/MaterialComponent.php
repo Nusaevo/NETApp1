@@ -50,8 +50,7 @@ class MaterialComponent extends BaseComponent
         'materials.buying_price' => 'nullable|numeric|min:0',
         // 'materials.stock' => 'required|integer|min:0',
         'materials.tag' => 'nullable|string|max:255',
-        'matl_uoms.matl_uom' => 'required|string|max:50',
-        'matl_uoms.barcode' => 'nullable|string|max:255',
+        'matl_uoms.barcode' => 'nullable',
     ];
 
     protected $listeners = [
@@ -144,46 +143,72 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region CRUD Methods
-
     public function onValidateAndSave()
     {
-        // **Validasi UOM sebelum save**
+        // 1. Pastikan input 'uom' tidak kosong
         $selectedUOM = $this->materials['uom'] ?? null;
-
         if (!$selectedUOM) {
             throw new \Exception('UOM tidak boleh kosong.');
         }
 
-        $exists = MatlUom::where('matl_id', $this->object->id)
-            ->where('matl_uom', $selectedUOM)
-            ->exists();
+        // 2. Jika data Material lama (bukan baru), pastikan UOM sudah terdaftar
+        if (!$this->object->isNew()) {
+            $exists = MatlUom::where('matl_id', $this->object->id)
+                ->where('matl_uom', $selectedUOM)
+                ->exists();
 
-        if (!$exists) {
-            throw new \Exception("UOM '$selectedUOM' tidak ditemukan dalam daftar UOM yang valid.");
+            if (!$exists) {
+                throw new \Exception("UOM '$selectedUOM' tidak ditemukan dalam daftar UOM yang valid untuk material ini.");
+            }
         }
 
+        // 3. Siapkan data specs, dsb. (terserah logika Anda)
         $this->materials['specs'] = [
             'color_code' => $this->materials['color_code'] ?? '',
             'color_name' => $this->materials['color_name'] ?? '',
         ];
-        $this->masterService = new MasterService();
 
+        // 4. Buat tag & generateName (sesuai logika internal Anda)
         $this->materials['tag'] = Material::generateTag(
-            $this->materials['code'] ?? '',
-            $this->object->MatlUom,
-            $this->materials['brand'] ?? '',
+            $this->materials['code']       ?? '',
+            $this->object->MatlUom,  // atau null, tergantung implementasi
+            $this->materials['brand']      ?? '',
             $this->materials['class_code'] ?? '',
             $this->materials['specs']
         );
+        $this->generateName(); // method apa pun yang Anda punya
 
+        // 5. Isi model Material dengan data input
         $this->object->fill($this->materials);
+
+        // 6. Jika baru, pastikan kode material valid (misal unique)
         if ($this->object->isNew()) {
             $this->validateMaterialCode();
         }
 
+        // 7. Simpan Material agar mendapatkan ID (jika baru), atau update (jika lama)
         $this->object->save();
+
+        // 8. Jika Material masih baru (artinya baru saja disimpan) -> Buat MatlUom
+        //    (Jika TIDAK baru, artinya UOM sudah dicek, tidak perlu bikin lagi)
+        if ($this->object->wasRecentlyCreated) {
+            // Buat record MatlUom baru
+            $matlUom = new MatlUom();
+            $matlUom->matl_id       = $this->object->id;
+            $matlUom->matl_uom      = $selectedUOM;
+            $matlUom->barcode       = "";
+            $matlUom->reff_uom      = $selectedUOM;
+            $matlUom->reff_factor   = 1;
+            $matlUom->base_factor   = 1;
+            $matlUom->selling_price = 0;
+            $matlUom->qty_oh        = 0;
+            $matlUom->save();
+        }
+
+        // 9. Simpan attachment (jika ada)
         $this->saveAttachment();
     }
+
 
     private function validateMaterialCode()
     {
@@ -275,7 +300,7 @@ class MaterialComponent extends BaseComponent
         $brand = $this->materials['brand'] ?? '';
         $classCode = $this->materials['class_code'] ?? '';
         $colorCode = $this->materials['color_code'] ?? '';
-        $this->materials['name'] = Material::generateName($masterService->getMatlCategoryString($category), $brand, $classCode, $colorCode);
+        $this->materials['name'] = Material::generateName($category, $brand, $classCode, $colorCode);
     }
 
     public function onCategoryChanged()

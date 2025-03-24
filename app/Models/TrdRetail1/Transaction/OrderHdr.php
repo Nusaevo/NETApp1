@@ -180,8 +180,37 @@ class OrderHdr extends BaseModel
             }
         }
     }
-    // You can add your checks like isOrderEnableToDelete() etc. if needed
-    // ...
+
+    public function isOrderEnableToDelete(): bool
+    {
+        if ($this->tr_type == 'PO') {
+            foreach ($this->OrderDtl as $orderDtl) {
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
+                    ->where('tr_type', 'SO')
+                    ->where('tr_id', '!=', $this->tr_id)
+                    ->first();
+
+                if ($relatedOrderDtl) {
+                    return false;
+                }
+            }
+        }
+
+        if ($this->tr_type == 'SO') {
+            foreach ($this->OrderDtl as $orderDtl) {
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
+                    ->where('tr_type', 'BB')
+                    ->where('tr_id', '!=', $this->tr_id)
+                    ->first();
+
+                if ($relatedOrderDtl) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
     /* ======================================================
      *               MAIN SAVE METHODS (REFACTORED)
@@ -258,7 +287,6 @@ class OrderHdr extends BaseModel
                 $orderDtl->status_code = Status::OPEN;
             }
             $orderDtl->save();
-
             // 2) If $createBillingDelivery is true, do Delivery & Billing in ONE method
             if ($createBillingDelivery) {
                 $this->createDeliveryAndBillingDetail($orderDtl, $detailData, $values['delivTrType'], $values['billingTrType']);

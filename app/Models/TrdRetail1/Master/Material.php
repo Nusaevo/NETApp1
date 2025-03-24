@@ -33,7 +33,7 @@ class Material extends BaseModel
     {
         return [
             'name' => 'Material_Create_Template',
-            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Stock', 'Status', 'Message'],
+            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Beli*', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Stock', 'Status', 'Message'],
             'data' => $data,
             'protectedColumns' => [],
             'allowInsert' => true,
@@ -61,7 +61,7 @@ class Material extends BaseModel
             'headers' => ['Kode Warna', 'Nama Warna', 'Harga Jual', 'STOK', 'Kode Barang', 'Kode Barcode', 'Nama Barang'],
             'data' => $data,
             'protectedColumns' => [],
-            'allowInsert' => false,
+            'allowInsert' => true,
         ];
     }
     /**
@@ -122,18 +122,20 @@ class Material extends BaseModel
                 $message .= 'Kolom No* tidak boleh kosong. ';
             }
 
+            $headerIndex = array_flip($actualHeaders);
             $validUOMs = ConfigConst::where('const_group', 'MMATL_UOM')->pluck('str1')->toArray();
             if ($param === 'Create') {
                 // Validation for Create template
-                $category = $row[0] ?? null; // Kategori*
-                $brand = $row[1] ?? null; // Merk*
-                $type = $row[2] ?? null; // Jenis*
-                $no = $row[3] ?? null; // No*
-                $color_code = $row[4] ?? null; // Kode Warna*
-                $color_name = $row[5] ?? null; // Nama Warna*
-                $uom = $row[6] ?? null; // UOM*
-                $sellingPrice = $row[7] ?? null; // Harga Jual*
-                $stock = $row[10] ?? null; // Stock (index 10 berdasarkan header baru)
+                $category    = $row[$headerIndex['Kategori*']]   ?? null; // Kategori*
+                $brand       = $row[$headerIndex['Merk*']]       ?? null; // Merk*
+                $type        = $row[$headerIndex['Jenis*']]      ?? null; // Jenis*
+                $no          = $row[$headerIndex['No']]          ?? null; // No
+                $colorCode   = $row[$headerIndex['Kode Warna']]  ?? null; // Kode Warna
+                $colorName   = $row[$headerIndex['Nama Warna']]  ?? null; // Nama Warna
+                $uom         = $row[$headerIndex['UOM*']]        ?? null; // UOM*
+                $buyingPrice = $row[$headerIndex['Harga Beli*']] ?? null; // Harga Beli*
+                $sellingPrice= $row[$headerIndex['Harga Jual*']] ?? null; // Harga Jual*
+                $stock       = $row[$headerIndex['Stock']]       ?? null; // Stock
                 if (empty($no)) {
                     $message .= 'Kolom No* tidak boleh kosong. ';
                 }
@@ -157,6 +159,9 @@ class Material extends BaseModel
                 if (!isValidNumeric($sellingPrice)) {
                     $message .= 'Harga jual harus berupa angka positif. ';
                 }
+                if (!isValidNumeric($buyingPrice)) {
+                    $message .= 'Harga beli harus berupa angka positif. ';
+                }
                 if (!empty($stock) && (!is_numeric($stock) || $stock < 0)) {
                     $message .= 'Stock harus berupa angka non-negatif. ';
                 }
@@ -176,10 +181,10 @@ class Material extends BaseModel
                 }
             } elseif ($param === 'Update') {
                 // Validasi Template Update
-                $no = $row[0] ?? null; // No*
-                $materialCode = $row[6] ?? null; // Kode Barang
-                $version = $row[11] ?? null; // Version
-                $uom = $row[3] ?? '';
+                $no           = $row[$headerIndex['No']]          ?? null;
+                $materialCode = $row[$headerIndex['Kode Barang']] ?? null;
+                $version      = $row[$headerIndex['Version']]     ?? null;
+                $uom          = $row[$headerIndex['UOM*']]        ?? null;
 
                 if (empty($no)) {
                     $message .= 'Kolom No* tidak boleh kosong. ';
@@ -261,7 +266,7 @@ class Material extends BaseModel
         $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
 
         DB::beginTransaction();
-
+        $headerIndex = array_flip($dataTable[0]);
         try {
             // Array untuk menampung detail yang perlu diinsert ke IvttrDtl
             $ivtDetails = [];
@@ -276,17 +281,22 @@ class Material extends BaseModel
 
                 if ($param === 'Create') {
                     // Ambil data dari row
-                    $category     = $row[0] ?? '';
-                    $brand        = $row[1] ?? '';
-                    $type         = $row[2] ?? '';
-                    $no           = $row[3] ?? '';
-                    $colorCode    = $row[4] ?? '';
-                    $colorName    = $row[5] ?? '';
-                    $uom          = $row[6] ?? '';
-                    $sellingPrice = convertFormattedNumber($row[7]);
-                    $remarks      = $row[8] ?? '';
-                    $barcode      = $row[9] ?? '';
-                    $stock        = !empty($row[10]) ? convertFormattedNumber($row[10]) : 0;
+                    $category     = $row[$headerIndex['Kategori*']]   ?? '';
+                    $brand        = $row[$headerIndex['Merk*']]       ?? '';
+                    $type         = $row[$headerIndex['Jenis*']]      ?? '';
+                    $no           = $row[$headerIndex['No']]          ?? '';
+                    $colorCode    = $row[$headerIndex['Kode Warna']]  ?? '';
+                    $colorName    = $row[$headerIndex['Nama Warna']]  ?? '';
+                    $uom          = $row[$headerIndex['UOM*']]        ?? '';
+
+                    $buyingPrice  = convertFormattedNumber($row[$headerIndex['Harga Beli*']] ?? null);
+                    $sellingPrice = convertFormattedNumber($row[$headerIndex['Harga Jual*']] ?? null);
+                    $remarks      = $row[$headerIndex['Keterangan']]  ?? '';
+                    $barcode      = $row[$headerIndex['Kode Barcode']]?? '';
+                    $stockRaw     = $row[$headerIndex['Stock']]       ?? '';
+                    $stock        = !empty($stockRaw)
+                                    ? convertFormattedNumber($stockRaw)
+                                    : 0;
 
                     // Buat kode material & nama
                     $materialCode = Material::generateMaterialCode($category);
@@ -346,6 +356,7 @@ class Material extends BaseModel
                             'reff_uom'     => $uom,
                             'reff_factor'  => 1,
                             'base_factor'  => 1,
+                            'buying_price'=> $buyingPrice,
                             'selling_price'=> $sellingPrice,
                             'qty_oh'=> $stock,
                         ]);
@@ -373,19 +384,18 @@ class Material extends BaseModel
                     }
                 } elseif ($param === 'Update') {
                     // Ambil data dari row
-                    $no           = $row[0] ?? '';
-                    $colorCode    = $row[1] ?? '';
-                    $colorName    = $row[2] ?? '';
-                    $uom          = $row[3] ?? '';
-                    $sellingPrice = convertFormattedNumber($row[4]);
-                    $stock        = convertFormattedNumber($row[5] ?? null);
-                    $materialCode = $row[6] ?? '';
-                    $barcode      = $row[7] ?? '';
-                    $materialName = $row[8] ?? '';
-                    $nonActive    = ($row[9] === 'Yes') ? now() : null;
-                    $remarks      = $row[10] ?? '';
-                    $version      = $row[11] ?? '';
-
+                    $no           = $row[$headerIndex['No']]          ?? '';
+                    $colorCode    = $row[$headerIndex['Kode Warna']]  ?? '';
+                    $colorName    = $row[$headerIndex['Nama Warna']]  ?? '';
+                    $uom          = $row[$headerIndex['UOM*']]        ?? '';
+                    $sellingPrice = convertFormattedNumber($row[$headerIndex['Harga Jual*']] ?? null);
+                    $stock        = convertFormattedNumber($row[$headerIndex['STOK']] ?? null);
+                    $materialCode = $row[$headerIndex['Kode Barang']] ?? '';
+                    $barcode      = $row[$headerIndex['Kode Barcode']]?? '';
+                    $materialName = $row[$headerIndex['Nama Barang']] ?? '';
+                    $nonActive    = ($row[$headerIndex['Non Aktif']] === 'Yes') ? now() : null;
+                    $remarks      = $row[$headerIndex['Keterangan']]  ?? '';
+                    $version      = $row[$headerIndex['Version']]     ?? '';
                     // Cek apakah material ada di database
                     $material = Material::where('code', $materialCode)->first();
 
@@ -572,18 +582,19 @@ class Material extends BaseModel
 
     public function getStockAttribute()
     {
-        return IvtBal::where('matl_id', $this->id)->first()?->qty_oh;
+        return $this->defaultMatlUom?->qty_oh ?? 0;
     }
-
 
     public static function generateTag($code, $matlUoms, $brand, $classCode, $specs)
     {
         $barcode = optional($matlUoms->first())->barcode ?? '';
-
-        return trim(implode(' ', array_filter([$code, $barcode, $brand, $classCode, $specs['color_code'] ?? ''])));
+        return trim(implode(' ', array_filter([$code, $barcode, $brand, $classCode, $specs['color_code'] ?? '', $specs['color_name'] ?? ''])));
     }
+
     public static function generateName($category, $brand, $type, $colorCode)
     {
+        $masterService = new MasterService();
+        $category = $masterService->getMatlCategoryString($category);
         return $category . ' ' . $brand . ' ' . $type . ' (' . $colorCode . ')';
     }
 }

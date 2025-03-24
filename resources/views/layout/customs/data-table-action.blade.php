@@ -1,16 +1,12 @@
-<div class="text-center" style="position: relative;">
+<div class="text-center position-relative">
     @if($enable_this_row)
-    <div class="dropdown">
-        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton{{ $row->id }}" data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="svg-icon svg-icon-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 8C13.1 8 14 7.1 14 6C14 4.9 13.1 4 12 4C10.9 4 10 4.9 10 6C10 7.1 10.9 8 12 8Z" fill="currentColor"></path>
-                    <path d="M12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14Z" fill="currentColor"></path>
-                    <path d="M12 20C13.1 20 14 19.1 14 18C14 16.9 13.1 16 12 16C10.9 16 10 16.9 10 18C10 19.1 10.9 20 12 20Z" fill="currentColor"></path>
-                </svg>
-            </span>
+    <div class="btn-group dropup d-none d-md-inline-block">
+        <button class="btn btn-primary btn-sm dropdown-toggle" type="button"
+            id="dropdownMenuButton{{ $row->id }}" data-bs-toggle="dropdown" data-bs-display="static"
+            aria-expanded="false">
+            <i class="bi bi-three-dots-vertical"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ $row->id }}">
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
             @if($allow_details && isset($permissions['read']) && $permissions['read'])
             <li>
                 <a class="dropdown-item btn btn-sm" href="#" wire:click="viewData({{ $row->id }})">
