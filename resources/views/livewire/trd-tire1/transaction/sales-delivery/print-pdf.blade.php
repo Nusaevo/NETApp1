@@ -33,39 +33,43 @@
                             <!-- Header -->
                             <table width="100%" style="margin-bottom: 10px;">
                                 <tr>
-                                    <td style="width: 30%;">
+                                    <td style="width: 25%;">
                                         <div style="text-align: center;">
-                                            <h2 style="margin: 0; text-decoration: underline; font-weight: bold;">CAHAYA
+                                            <h2 style="margin: 0; text-decoration: underline; font-weight: bold; font-size: 22px;">CAHAYA
                                                 TERANG</h2>
-                                            <p style="margin: 0;">SURABAYA</p>
+                                            <p style="margin-top: -5px;">SURABAYA</p>
                                         </div>
                                     </td>
-                                    <td colspan="3"
-                                        style="text-align: center; margin-top: 20px; vertical-align: bottom;">
-                                        <h3 style="margin: 0; text-decoration: underline;">SURAT JALAN</h3>
-                                        <p style="margin: 5px 0;">No. {{ $this->object->tr_code }}</p>
+                                    <td
+                                        style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 50%;">
+                                        <h3 style="margin-bottom: -5px; text-decoration: underline;">
+                                            SURAT JALAN</h3>
+                                        <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
                                     </td>
-                                    <td style="text-align: right; vertical-align: bottom;">
-                                        <p style="margin: 0;">
+                                    <td style="text-align: left; vertical-align: bottom; width: 30%;">
+                                        <p style="margin-bottom: -8px;">
                                             Surabaya,
                                             {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                                         </p>
-                                        <p style="margin: 0;">Kepada Yth :</p>
-                                        <p style="margin: 0;"><strong>{{ $this->object->Partner->name }}</strong></p>
-                                        <p style="margin: 0;">{{ $this->object->Partner->address }}</p>
+                                        <p style="margin-bottom: -8px;">Kepada Yth :</p>
+                                        <p style="margin-bottom: -8px;">
+                                            <strong>{{ $this->object->Partner->name }}</strong>
+                                        </p>
+                                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
                                     </td>
                                 </tr>
                             </table>
 
                             <!-- Items Table -->
-                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <table
+                                style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000;">
                                 <thead>
                                     <tr>
-                                        <th style="border: 1px solid #000; padding: 8px; width: 5%;">NO</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">KODE BARANG</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">KETERANGAN</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">QTY</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">NAMA BARANG</th>
+                                        <th style="border: 1px solid #000; text-align: center; width: 5%;">NO</th>
+                                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 20%;">KODE BARANG</th>
+                                        <th style="border: 1px solid #000; text-align: center; width: 25%;">KETERANGAN</th>
+                                        <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%;">QTY</th>
+                                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: auto;">NAMA BARANG</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -78,43 +82,64 @@
                                             $total_qty += $OrderDtl->qty;
                                         @endphp
                                         <tr>
-                                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">{{ $counter++ }}</td>
-                                            <td style="border: 1px solid #000; padding: 8px; text-align: left;">{{ $OrderDtl->matl_code }}</td>
-                                            <td style="border: 1px solid #000; padding: 8px;"></td>
-                                            <td style="border: 1px solid #000; padding: 8px; text-align: center;">{{ ceil($OrderDtl->qty) }}</td>
-                                            <td style="border: 1px solid #000; padding: 8px;">{{ $OrderDtl->matl_descr }}</td>
+                                            <td
+                                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center;">
+                                                {{ $counter++ }}
+                                            </td>
+                                            <td
+                                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left;">
+                                                {{ $OrderDtl->matl_code }}</td>
+                                            <td
+                                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center;">
+                                            </td>
+                                            <td
+                                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 10px;">
+                                                {{ ceil($OrderDtl->qty) }}</td>
+                                            <td
+                                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left;">
+                                                {{ $OrderDtl->matl_descr }}</td>
                                         </tr>
                                     @endforeach
-                                    <tr>
-                                        <td colspan="3" style="border: 1px solid #000; padding: 8px; text-align: right;"><strong>TOTAL :</strong></td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;">{{ $total_qty }}</td>
-                                        <td style="border: 1px solid #000; padding: 8px;"></td>
-                                    </tr>
                                 </tbody>
+                            </table>
+                            <table style="width: 100%; margin-top: -21px;">
+                                <tr>
+                                    <td style="text-align: right; padding-right: 10px; width: 50%;">TOTAL :</td>
+                                    <td style="border: 1px solid #000; text-align: right; padding-right: 10px; width: 15%;">{{ $total_qty }}
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
                             </table>
 
                             <!-- Recipient Info -->
-                            <div style="margin: 20px 0;">
+                            <div style="margin-top: 70px;">
                                 <p style="margin: 0 0 10px 0;">
                                     {{ $this->object->Partner->name }} -
                                     {{ $this->object->Partner->address }} -
                                     {{ $this->object->Partner->city }}
                                 </p>
 
-                                <table width="100%" style="margin-top: 30px; text-align: center;">
-                                    <tr>
-                                        <td>Administrasi:</td>
-                                        <td>Gudang:</td>
-                                        <td>Driver:</td>
-                                        <td>Penerima:</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding-top: 40px;">(__________)</td>
-                                        <td style="padding-top: 40px;">(__________)</td>
-                                        <td style="padding-top: 40px;">(__________)</td>
-                                        <td style="padding-top: 40px;">(__________)</td>
-                                    </tr>
-                                </table>
+                                <div width="100%" style="margin-top: -10px;">
+                                    <div class="row justify-content-between" style="text-align: center;">
+                                        <div style="width: 25%;">
+                                            <p>Administrasi:</p><br><br>
+                                            <p>(________________)</p>
+                                        </div>
+                                        <div style="width: 25%;">
+                                            <p>Gudang:</p><br><br>
+                                            <p>(________________)</p>
+                                        </div>
+                                        <div style="width: 25%;">
+                                            <p>Driver:</p><br><br>
+                                            <p>(________________)</p>
+                                        </div>
+                                        <div style="width: 25%;">
+                                            <p>Penerima:</p><br><br>
+                                            <p>(________________)</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

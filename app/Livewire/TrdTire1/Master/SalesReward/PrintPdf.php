@@ -3,13 +3,20 @@
 namespace App\Livewire\TrdTire1\Master\SalesReward;
 
 use App\Enums\TrdTire1\Status;
+use App\Models\TrdTire1\Master\SalesReward;
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Livewire\Component\BaseComponent;
 
 class PrintPdf extends BaseComponent
 {
     public $object;
-    public $objectIdValue;
+    public $objectId;
+    public $returnIds; // Added to store the IDs
+
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    {
+        $this->objectIdValue = decryptWithSessionKey($objectId);
+    }
 
     protected function onPreRender()
     {
@@ -18,12 +25,26 @@ class PrintPdf extends BaseComponent
                 $this->dispatch('error', 'Invalid object ID');
                 return;
             }
-            $this->object = OrderHdr::findOrFail($this->objectIdValue);
-            // Update status_code to PRINT
-            $this->object->status_code = Status::PRINT;
-            $this->object->save();
+
+            // Ambil record yang dipilih berdasarkan objectIdValue
+            $selectedSalesReward = SalesReward::findOrFail($this->objectIdValue);
+            $code = $selectedSalesReward->code;
+
+            // Ambil semua record dengan nilai kolom code yang sama
+            $salesRewards = SalesReward::where('code', $code)->get();
+            $this->returnIds = $salesRewards->pluck('id')->toArray();
+
+            // Update status_code setiap record menjadi PRINT
+            foreach ($salesRewards as $salesReward) {
+                $salesReward->status_code = Status::PRINT;
+                $salesReward->save();
+            }
+
+            // Jika perlu, set object ke record yang dipilih
+            $this->object = $selectedSalesReward;
         }
     }
+
 
     protected function onLoadForEdit()
     {

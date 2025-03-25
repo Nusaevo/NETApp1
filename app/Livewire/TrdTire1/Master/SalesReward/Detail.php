@@ -312,7 +312,7 @@ class Detail extends BaseComponent
             // Logika cetak nota jual
             return redirect()->route('TrdTire1.Master.SalesReward.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
+                'objectId' => encryptWithSessionKey((string)$this->object->id) // Pastikan ID dikonversi ke string sebelum dienkripsi
             ]);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());

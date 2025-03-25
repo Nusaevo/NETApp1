@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Tax\TaxInvoice;
+namespace App\Livewire\TrdTire1\Transaction\ProsesGt;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\OrderHdr;
