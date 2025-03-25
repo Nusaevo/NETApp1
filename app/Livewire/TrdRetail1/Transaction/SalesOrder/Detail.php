@@ -114,7 +114,7 @@ class Detail extends BaseComponent
         );
 
         if ($this->actionValue === 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
+            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
                 'action'   => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id),
             ]);
