@@ -350,6 +350,7 @@ class Material extends BaseModel
                         // Buat MatlUom
                         $matlUom = $material->MatlUom()->create([
                             'matl_uom'     => $uom,
+                            'matl_code'      => $materialCode,
                             'barcode'      => $barcode,
                             'reff_uom'     => $uom,
                             'reff_factor'  => 1,
@@ -361,11 +362,16 @@ class Material extends BaseModel
 
                         // Jika stock diisi > 0, siapkan data untuk inventory
                         if ($stock > 0) {
-                            // Buat atau update IvtBal
+                            $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
+                            ->where('str1', IvtBal::$defaultWhCode ?? '')
+                            ->first();
+
+                            $wh_id = $configConst ? $configConst->id : null;
                             IvtBal::create([
                                 'matl_id'   => $material->id,
                                 'matl_uom'  => $uom,
-                                'wh_id'     => 1,
+                                'matl_code'      => $materialCode,
+                                'wh_id'     => $wh_id,
                                 'wh_code'   => IvtBal::$defaultWhCode,
                                 'batch_code'=> '',
                                 'qty_oh'    => $stock,
@@ -430,6 +436,7 @@ class Material extends BaseModel
                                 [
                                     'matl_id'  => $material->id,
                                     'matl_uom' => $uom,
+                                    'matl_code'      => $material->code,
                                     'wh_code'  => IvtBal::$defaultWhCode,
                                 ],
                                 [
@@ -580,7 +587,7 @@ class Material extends BaseModel
 
     public function getStockAttribute()
     {
-        return $this->defaultMatlUom?->qty_oh ?? 0;
+        return $this->DefaultUom?->qty_oh ?? 0;
     }
 
     public static function generateTag($code, $matlUoms, $brand, $classCode, $specs)
