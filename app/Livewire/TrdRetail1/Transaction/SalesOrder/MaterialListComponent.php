@@ -214,7 +214,6 @@ class MaterialListComponent extends DetailComponent
         $inputDetailsKeyed = collect($this->input_details)
             ->keyBy('tr_seq')
             ->toArray();
-
         // 3) Determine which items to delete (items in DB but not in $this->input_details)
         $itemsToDelete = array_diff_key($existingDetails, $inputDetailsKeyed);
         foreach ($itemsToDelete as $tr_seq => $detail) {

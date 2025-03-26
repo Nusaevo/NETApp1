@@ -5,7 +5,7 @@ namespace App\Models\TrdRetail1\Master;
 use App\Helpers\SequenceUtility;
 use App\Models\Base\BaseModel;
 use App\Models\Base\Attachment;
-use App\Models\TrdRetail1\Inventories\{IvtBal, IvttrHdr, IvttrDtl, IvtBalUnit};
+use App\Models\TrdRetail1\Inventories\{IvtBal, IvttrHdr, IvttrDtl, IvtBalUnit, IvtLog};
 use App\Models\TrdRetail1\Transaction\OrderDtl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -266,7 +266,6 @@ class Material extends BaseModel
         DB::beginTransaction();
         $headerIndex = array_flip($dataTable[0]);
         try {
-            // Array untuk menampung detail yang perlu diinsert ke IvttrDtl
             $ivtDetails = [];
 
             foreach ($dataTable as $rowIndex => $row) {
@@ -278,7 +277,6 @@ class Material extends BaseModel
                 $message = '';
 
                 if ($param === 'Create') {
-                    // Ambil data dari row
                     $category     = $row[$headerIndex['Kategori*']]   ?? '';
                     $brand        = $row[$headerIndex['Merk*']]       ?? '';
                     $type         = $row[$headerIndex['Jenis*']]      ?? '';
@@ -292,21 +290,16 @@ class Material extends BaseModel
                     $remarks      = $row[$headerIndex['Keterangan']]  ?? '';
                     $barcode      = $row[$headerIndex['Kode Barcode']]?? '';
                     $stockRaw     = $row[$headerIndex['Stock']]       ?? '';
-                    $stock        = !empty($stockRaw)
-                                    ? convertFormattedNumber($stockRaw)
-                                    : 0;
+                    $stock        = !empty($stockRaw) ? convertFormattedNumber($stockRaw) : 0;
 
-                    // Buat kode material & nama
                     $materialCode = Material::generateMaterialCode($category);
                     $name         = Material::generateName($category, $brand, $type, $colorCode);
 
-                    // Cek UOM validasi dari ConfigConst
                     $validUOMs = ConfigConst::where('const_group', 'MMATL_UOM')->pluck('str1')->toArray();
                     if (!in_array($uom, $validUOMs)) {
                         $message .= 'UOM tidak ditemukan. ';
                     }
 
-                    // Cek apakah material sudah ada di database
                     $existingMaterial = Material::where('category', $category)
                         ->where('brand', $brand)
                         ->where('class_code', $type)
@@ -320,7 +313,6 @@ class Material extends BaseModel
                     if (!empty($message)) {
                         $status = 'Error';
                     } else {
-                        // Buat Material
                         $material = Material::create([
                             'code'       => $materialCode,
                             'name'       => $name,
@@ -337,47 +329,37 @@ class Material extends BaseModel
                             'uom'     => $uom,
                         ]);
 
-                        // Generate tag
-                        $tag = Material::generateTag(
-                            $material->code,
-                            $material->MatlUom,
-                            $brand,
-                            $type,
-                            $material->specs
-                        );
+                        $tag = Material::generateTag($material->code, $material->MatlUom, $brand, $type, $material->specs);
                         $material->update(['tag' => $tag]);
 
-                        // Buat MatlUom
-                        $matlUom = $material->MatlUom()->create([
+                        $material->MatlUom()->create([
                             'matl_uom'     => $uom,
-                            'matl_code'      => $materialCode,
+                            'matl_code'    => $materialCode,
                             'barcode'      => $barcode,
                             'reff_uom'     => $uom,
                             'reff_factor'  => 1,
                             'base_factor'  => 1,
-                            'buying_price'=> $buyingPrice,
+                            'buying_price' => $buyingPrice,
                             'selling_price'=> $sellingPrice,
-                            'qty_oh'=> $stock,
+                            'qty_oh'       => $stock,
                         ]);
 
-                        // Jika stock diisi > 0, siapkan data untuk inventory
                         if ($stock > 0) {
                             $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
-                            ->where('str1', IvtBal::$defaultWhCode ?? '')
-                            ->first();
+                                ->where('str1', IvtBal::$defaultWhCode ?? '')
+                                ->first();
 
                             $wh_id = $configConst ? $configConst->id : null;
                             IvtBal::create([
                                 'matl_id'   => $material->id,
                                 'matl_uom'  => $uom,
-                                'matl_code'      => $materialCode,
+                                'matl_code' => $materialCode,
                                 'wh_id'     => $wh_id,
                                 'wh_code'   => IvtBal::$defaultWhCode,
                                 'batch_code'=> '',
                                 'qty_oh'    => $stock,
                             ]);
 
-                            // Kumpulkan data detail untuk IvttrDtl
                             $ivtDetails[] = [
                                 'matl_id'   => $material->id,
                                 'matl_code' => $materialCode,
@@ -386,8 +368,7 @@ class Material extends BaseModel
                             ];
                         }
                     }
-                } elseif ($param === 'Update') {
-                    // Ambil data dari row
+                } else if ($param === 'Update') {
                     $no           = $row[$headerIndex['No']]          ?? '';
                     $colorCode    = $row[$headerIndex['Kode Warna']]  ?? '';
                     $colorName    = $row[$headerIndex['Nama Warna']]  ?? '';
@@ -400,11 +381,10 @@ class Material extends BaseModel
                     $nonActive    = ($row[$headerIndex['Non Aktif']] === 'Yes') ? now() : null;
                     $remarks      = $row[$headerIndex['Keterangan']]  ?? '';
                     $version      = $row[$headerIndex['Version']]     ?? '';
-                    // Cek apakah material ada di database
+
                     $material = Material::where('code', $materialCode)->first();
 
                     if ($material) {
-                        // Update Material
                         $material->update([
                             'specs'         => [
                                 'color_code' => $colorCode,
@@ -419,7 +399,6 @@ class Material extends BaseModel
                             'uom'           => $uom,
                         ]);
 
-                        // Update Tag
                         $tag = Material::generateTag(
                             $material->code,
                             $material->MatlUom,
@@ -429,15 +408,13 @@ class Material extends BaseModel
                         );
                         $material->update(['tag' => $tag]);
 
-                        // Jika stock diisi > 0, siapkan data untuk inventory
                         if ($stock > 0) {
-                            // Update atau buat IvtBal
-                            IvtBal::updateOrCreate(
+                            $ivtBal = IvtBal::updateOrCreate(
                                 [
-                                    'matl_id'  => $material->id,
-                                    'matl_uom' => $uom,
-                                    'matl_code'      => $material->code,
-                                    'wh_code'  => IvtBal::$defaultWhCode,
+                                    'matl_id'   => $material->id,
+                                    'matl_uom'  => $uom,
+                                    'matl_code' => $material->code,
+                                    'wh_code'   => IvtBal::$defaultWhCode,
                                 ],
                                 [
                                     'batch_code'=> date('y/m/d'),
@@ -445,7 +422,6 @@ class Material extends BaseModel
                                 ]
                             );
 
-                            // Update atau buat MatlUom
                             $material->MatlUom()->updateOrCreate(
                                 ['matl_uom' => $uom],
                                 [
@@ -454,11 +430,10 @@ class Material extends BaseModel
                                     'reff_factor'  => 1,
                                     'base_factor'  => 1,
                                     'selling_price'=> $sellingPrice,
-                                    'qty_oh'=> $stock,
+                                    'qty_oh'       => $stock,
                                 ]
                             );
 
-                            // Kumpulkan data detail untuk IvttrDtl
                             $ivtDetails[] = [
                                 'matl_id'   => $material->id,
                                 'matl_code' => $materialCode,
@@ -475,7 +450,6 @@ class Material extends BaseModel
                 $dataTable[$rowIndex][$statusIndex]  = $status;
                 $dataTable[$rowIndex][$messageIndex] = $message;
 
-                // Update progress audit
                 $audit->updateAuditTrail(
                     intval(50 + ($rowIndex / count($dataTable)) * 50),
                     "Processed row $rowIndex.",
@@ -483,15 +457,10 @@ class Material extends BaseModel
                 );
             }
 
-            /**
-             * Setelah loop selesai, buat IvttrHdr hanya sekali
-             * jika memang ada row yang memiliki stok > 0
-             */
             if (!empty($ivtDetails)) {
                 $maxTrId = IvttrHdr::max('tr_id');
                 $nextTrId = $maxTrId ? $maxTrId + 1 : 1;
 
-                // Buat Transaction Header (IvttrHdr) satu kali
                 $ivtHdr = IvttrHdr::create([
                     'tr_id'   => $nextTrId,
                     'tr_type' => 'IA',
@@ -499,13 +468,12 @@ class Material extends BaseModel
                     'remark'  => 'Initial stock adjustment from Excel upload',
                 ]);
 
-                // Buat Transaction Detail (IvttrDtl) untuk setiap material
                 $seq = 1;
                 foreach ($ivtDetails as $detail) {
-                    IvttrDtl::create([
+                    $trDtl = IvttrDtl::create([
                         'trhdr_id'   => $ivtHdr->id,
                         'tr_type'    => 'IA',
-                        'tr_id'      => $ivtHdr->id, // atau pakai $nextTrId jika ingin konsisten
+                        'tr_id'      => $ivtHdr->id,
                         'tr_seq'     => $seq++,
                         'matl_id'    => $detail['matl_id'],
                         'matl_code'  => $detail['matl_code'],
@@ -515,31 +483,50 @@ class Material extends BaseModel
                         'qty'        => $detail['qty'],
                         'tr_descr'   => "Initial stock for {$detail['matl_code']}",
                     ]);
+
+                    $ivtBal = IvtBal::where([
+                        'matl_id'    => $trDtl->matl_id,
+                        'matl_uom'   => $trDtl->matl_uom,
+                        'wh_code'    => $trDtl->wh_code,
+                        'batch_code' => $trDtl->batch_code,
+                    ])->first();
+
+                    IvtLog::create([
+                        'trhdr_id'   => $trDtl->trhdr_id,
+                        'tr_type'    => $trDtl->tr_type,
+                        'tr_seq'     => $trDtl->tr_seq,
+                        'tr_id'      => $trDtl->tr_id,
+                        'trdtl_id'   => $trDtl->id,
+                        'ivt_id'     => $ivtBal->id ?? null,
+                        'matl_id'    => $trDtl->matl_id,
+                        'matl_code'  => $trDtl->matl_code,
+                        'matl_uom'   => $trDtl->matl_uom,
+                        'wh_id'      => $ivtBal->wh_id ?? null,
+                        'wh_code'    => $trDtl->wh_code,
+                        'batch_code' => $trDtl->batch_code,
+                        'tr_date'    => date('Y-m-d'),
+                        'qty'        => $trDtl->qty,
+                        'price'      => 0,
+                        'amt'        => 0,
+                        'tr_desc'    => $trDtl->tr_descr,
+                    ]);
                 }
             }
 
-            // Perbarui data pada konfigurasi template
             $templateConfig['data'] = array_slice($dataTable, 1);
-            // Unggah hasil proses ke attachment
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
-            // Audit selesai
             $audit->updateAuditTrail(100, 'Upload and processing completed successfully.', Status::SUCCESS);
-
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
             $audit->updateAuditTrail(100, 'Processing failed: ' . $e->getMessage(), Status::ERROR);
-
-            // Perbarui data pada konfigurasi template
             $templateConfig['data'] = array_slice($dataTable, 1);
-
-            // Unggah hasil proses ke attachment
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
-
             throw $e;
         }
     }
+
 
     #region Relations
     public function MatlUom()

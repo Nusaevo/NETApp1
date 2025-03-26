@@ -47,7 +47,23 @@ class MatlUom extends BaseModel
     {
         return $this->belongsTo(Material::class, 'matl_id');
     }
+    /**
+     * Recalc qty_oh di MatlUom berdasarkan sum dari IvtBal.
+     */
+    public static function recalcMatlUomQtyOh($matlId, $matlUom)
+    {
+        $matlUomRec = MatlUom::where([
+            'matl_id' => $matlId,
+            'matl_uom' => $matlUom,
+        ])->first();
 
+        if ($matlUomRec) {
+            $sumOh = IvtBal::where('matl_id', $matlId)->where('matl_uom', $matlUom)->sum('qty_oh');
+
+            $matlUomRec->qty_oh = $sumOh;
+            $matlUomRec->save();
+        }
+    }
     public function IvtBal()
     {
         return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')
