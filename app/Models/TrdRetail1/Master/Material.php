@@ -356,7 +356,6 @@ class Material extends BaseModel
                                 'matl_code' => $materialCode,
                                 'wh_id'     => $wh_id,
                                 'wh_code'   => IvtBal::$defaultWhCode,
-                                'batch_code'=> '',
                                 'qty_oh'    => $stock,
                             ]);
 
@@ -417,7 +416,6 @@ class Material extends BaseModel
                                     'wh_code'   => IvtBal::$defaultWhCode,
                                 ],
                                 [
-                                    'batch_code'=> date('y/m/d'),
                                     'qty_oh'    => $stock,
                                 ]
                             );
@@ -479,16 +477,14 @@ class Material extends BaseModel
                         'matl_code'  => $detail['matl_code'],
                         'matl_uom'   => $detail['matl_uom'],
                         'wh_code'    => IvtBal::$defaultWhCode,
-                        'batch_code' => date('y/m/d'),
                         'qty'        => $detail['qty'],
                         'tr_descr'   => "Initial stock for {$detail['matl_code']}",
                     ]);
 
                     $ivtBal = IvtBal::where([
-                        'matl_id'    => $trDtl->matl_id,
-                        'matl_uom'   => $trDtl->matl_uom,
-                        'wh_code'    => $trDtl->wh_code,
-                        'batch_code' => $trDtl->batch_code,
+                        'matl_id'  => $trDtl->matl_id,
+                        'matl_uom' => $trDtl->matl_uom,
+                        'wh_code'  => $trDtl->wh_code,
                     ])->first();
 
                     IvtLog::create([
@@ -503,7 +499,6 @@ class Material extends BaseModel
                         'matl_uom'   => $trDtl->matl_uom,
                         'wh_id'      => $ivtBal->wh_id ?? null,
                         'wh_code'    => $trDtl->wh_code,
-                        'batch_code' => $trDtl->batch_code,
                         'tr_date'    => date('Y-m-d'),
                         'qty'        => $trDtl->qty,
                         'price'      => 0,
@@ -526,6 +521,7 @@ class Material extends BaseModel
             throw $e;
         }
     }
+
 
 
     #region Relations
