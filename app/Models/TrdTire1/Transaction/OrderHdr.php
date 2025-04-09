@@ -71,10 +71,9 @@ class OrderHdr extends BaseModel
 
     public function OrderDtl()
     {
-        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')
-            ->where('tr_type', $this->tr_type)
-            ->orderBy('tr_seq');
+        return $this->hasMany(OrderDtl::class, 'tr_code', 'tr_code')->orderBy('tr_seq');
     }
+
 
     public function DelivHdr()
     {
@@ -112,6 +111,7 @@ class OrderHdr extends BaseModel
         // Set default status jika baru
         if ($this->isNew()) {
             $this->status_code = Status::OPEN;
+            $this->print_date = '1900-01-01'; // Set default value for print_date
         }
 
         // Simpan header

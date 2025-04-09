@@ -10,14 +10,15 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Models\SysConfig1\Configsnum; // Add this line
+use App\Models\SysConfig1\Configsnum;
+use Illuminate\Support\Carbon; // Add this line
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    public $print_date; // Add this line
-    public $selectedItems = []; // Add this line
-    public $deletedRemarks = []; // Add this line
-    public $filters = []; // Add this line
+    public $print_date;
+    public $selectedItems = [];
+    public $deletedRemarks = [];
+    public $filters = [];
 
     protected $model = OrderHdr::class;
     public function mount(): void
@@ -25,6 +26,17 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchDisabled();
         $this->setDefaultSort('tr_date', 'desc');
         $this->setDefaultSort('tr_code', 'desc');
+
+        // Set default filter for print_date to the most recent date
+        $latestPrintDate = OrderHdr::whereNotNull('print_date')
+            ->orderBy('print_date', 'desc')
+            ->value('print_date');
+        $this->filters['print_date'] = $latestPrintDate;
+
+        // Apply the filter to ensure data matches the default print_date
+        if ($latestPrintDate) {
+            $this->builder()->where('print_date', $latestPrintDate);
+        }
     }
 
     public function builder(): Builder
@@ -140,40 +152,20 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->hideIf(true)
                 ->html(),
-            // Column::make($this->trans("amt"), "total_amt_in_idr")
-            //     ->label(function ($row) {
-            //         $totalAmt = 0;
-
-            //         $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-
-            //         if ($orderDetails->isEmpty()) {
-            //             return 'N/A';
-            //         }
-            //     })
-            //     ->sortable(),
-
-            // Column::make($this->trans('status'), "status_code")
-            //     ->sortable()
-            //     ->format(function ($value, $row, Column $column) {
-            //         return Status::getStatusString($value);
-            //     }),
-            // Column::make($this->trans("created_date"), "created_at")
-            //     ->searchable()
-            //     ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'row' => $row,
                         'custom_actions' => [
-                            // [
-                            //     'label' => 'Print',
-                            //     'route' => route('TrdTire1.Procurement.PurchaseOrder.PrintPdf', [
-                            //         'action' => encryptWithSessionKey('Edit'),
-                            //         'objectId' => encryptWithSessionKey($row->id)
-                            //     ]),
-                            //     'icon' => 'bi bi-printer'
-                            // ],
+                            [
+                                'label' => 'Print',
+                                'route' => route('TrdTire1.Tax.TaxInvoice.PrintPdf', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($row->id)
+                                ]),
+                                'icon' => 'bi bi-printer'
+                            ],
                         ],
                         'enable_this_row' => true,
                         'allow_details' => false,
@@ -196,6 +188,18 @@ class IndexDataTable extends BaseDataTableComponent
             ->pluck('print_date', 'print_date')
             ->toArray();
 
+        // Add "Not Selected" option for print_date
+        $printDates = ['' => 'Not Selected'] + $printDates;
+
+        $masaOptions = OrderHdr::selectRaw("TO_CHAR(tr_date, 'YYYY-MM') as filter_value, TO_CHAR(tr_date, 'FMMonth-YYYY') as display_value") // Updated for PostgreSQL
+            ->distinct()
+            ->get()
+            ->pluck('display_value', 'filter_value')
+            ->toArray();
+
+        // Add "Not Selected" option for masa
+        $masaOptions = ['' => 'Not Selected'] + $masaOptions;
+
         return [
             SelectFilter::make('Nomor Faktur Pajak Terakhir')
                 ->options([$configDetails['last_cnt'] => $configDetails['last_cnt']])
@@ -206,8 +210,18 @@ class IndexDataTable extends BaseDataTableComponent
             SelectFilter::make('Tanggal Proses')
                 ->options($printDates)
                 ->filter(function (Builder $builder, string $value) {
-                    $this->filters['print_date'] = $value; // Add this line
-                    $builder->where('print_date', $value);
+                    if ($value) { // Only apply filter if a value is selected
+                        $this->filters['print_date'] = $value;
+                        $builder->where('print_date', $value);
+                    }
+                }),
+            SelectFilter::make('Masa')
+                ->options($masaOptions)
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value) { // Only apply filter if a value is selected
+                        $this->filters['masa'] = $value; // Ensure the filter value is set
+                        $builder->whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$value]); // Filter using YYYY-MM
+                    }
                 }),
             DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where('order_hdrs.tr_date', '=', $value);
@@ -220,26 +234,6 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
-            // SelectFilter::make('Status', 'status_code')
-            //     ->options([
-            //         Status::OPEN => 'Open',
-            //         Status::COMPLETED => 'Selesai',
-            //         '' => 'Semua',
-            //     ])->filter(function ($builder, $value) {
-            //         if ($value === Status::ACTIVE) {
-            //             $builder->where('order_hdrs.status_code', Status::ACTIVE);
-            //         } else if ($value === Status::COMPLETED) {
-            //             $builder->where('order_hdrs.status_code', Status::COMPLETED);
-            //         } else if ($value === '') {
-            //             $builder->withTrashed();
-            //         }
-            //     }),
-            // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '>=', $value);
-            // }),
-            // DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '<=', $value);
-            // }),
         ];
     }
     public function bulkActions(): array
@@ -250,6 +244,7 @@ class IndexDataTable extends BaseDataTableComponent
             'deleteNomorFaktur' => 'Hapus Nomor Faktur',
             'changeNomorFaktur' => 'Ubah Nomor Faktur',
             'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
+            'cetakLaporanPenjualan' => 'Cetak Laporan Penjualan',
         ];
     }
 
@@ -424,14 +419,39 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cetakProsesDate()
     {
-        $selectedPrintDate = $this->filters['print_date'] ?? null;
+        $selectedPrintDate = $this->filters['print_date'] ?? null; // Ensure print_date is set
         if ($selectedPrintDate) {
-            $orders = OrderHdr::where('print_date', $selectedPrintDate)->get();
-            $orderIds = $orders->pluck('id')->toArray(); // Add this line
+            $orderIds = OrderHdr::where('print_date', $selectedPrintDate)
+                ->where('tr_type', 'SO')
+                ->whereIn('status_code', [Status::PRINT, Status::OPEN])
+                ->pluck('id')
+                ->toArray();
             return redirect()->route('TrdTire1.Tax.TaxInvoice.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey(json_encode($orderIds)), // Modify this line
+                'objectId' => encryptWithSessionKey(json_encode($orderIds)),
+                'additionalParam' => $selectedPrintDate, // Pass selected print_date
             ]);
         }
+        $this->dispatch('error', 'Tanggal proses belum dipilih.');
+    }
+
+    public function cetakLaporanPenjualan()
+    {
+        $selectedMasa = $this->filters['masa'] ?? null; // Ensure 'masa' filter is set
+        if ($selectedMasa) {
+            $orderIds = OrderHdr::whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$selectedMasa])
+                ->where('tr_type', 'SO')
+                ->whereIn('status_code', [Status::PRINT, Status::OPEN])
+                ->pluck('id')
+                ->toArray();
+
+            return redirect()->route('TrdTire1.Transaction.PurchaseDelivery.PrintPdf', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey(json_encode($orderIds)),
+                'additionalParam' => $selectedMasa, // Pass selected 'masa'
+            ]);
+        }
+
+        $this->dispatch('error', 'Masa belum dipilih.');
     }
 }

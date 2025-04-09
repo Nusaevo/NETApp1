@@ -329,7 +329,6 @@ class Detail extends BaseComponent
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['due_date']  = date('Y-m-d');
-        $this->inputs['print_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
@@ -370,7 +369,7 @@ class Detail extends BaseComponent
 
         // Ensure npwp_code is set to null if tax_payer is disabled
         if ($this->payer === "false") {
-            $this->inputs['npwp_code'] = null;
+            $this->inputs['npwp_code'] = '';
         }
 
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');

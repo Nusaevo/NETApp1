@@ -109,9 +109,6 @@
                                         type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
                                         type="text" :action="$actionValue" required="false" />
-                                    <x-ui-text-field label="{{ $this->trans('Tanggal Proses') }}"
-                                        model="inputs.print_date" type="date" :action="$actionValue" required="false"
-                                        :enabled="$payer" />
                                 </div>
                             </x-ui-padding>
                         </x-ui-card>

@@ -140,24 +140,9 @@
             </div>
         </div>
     </body>
-    {{-- <script type="text/javascript">
+    <script>
         function printInvoice() {
-            var page = document.getElementById("print").innerHTML;
-            var style = `
-                <style>
-                    body { font-family: Arial, sans-serif; }
-                    .invoice-box { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #000; }
-                    table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-                    th { text-align: center; }
-                </style>
-            `;
-
-            var newWin = window.open('', 'Print-Window');
-            newWin.document.open();
-            newWin.document.write('<html><head>' + style + '</head><body onload="window.print()">' + page + '</body></html>');
-            newWin.document.close();
-            setTimeout(function() { newWin.close(); }, 10);
+            window.print();
         }
-    </script> --}}
+    </script>
 </div>

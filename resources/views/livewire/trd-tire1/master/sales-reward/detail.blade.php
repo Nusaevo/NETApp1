@@ -188,7 +188,7 @@
         <x-ui-button :action="$actionValue"
             clickEvent="{{ route('TrdTire1.Master.SalesReward.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($object->id),
+                'objectId' => encryptWithSessionKey($inputs['code']), // Pass the correct code
             ]) }}"
             cssClass="btn-primary" type="Route" loading="true" button-name="Cetak" iconPath="print.svg" />
         <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary"

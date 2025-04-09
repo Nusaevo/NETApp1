@@ -6,6 +6,7 @@ use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Master\SalesReward;
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Livewire\Component\BaseComponent;
+use Exception;
 
 class PrintPdf extends BaseComponent
 {
@@ -13,36 +14,37 @@ class PrintPdf extends BaseComponent
     public $objectId;
     public $returnIds; // Added to store the IDs
 
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
-    {
-        $this->objectIdValue = decryptWithSessionKey($objectId);
-    }
 
     protected function onPreRender()
     {
-        if ($this->isEditOrView()) {
-            if (empty($this->objectIdValue)) {
-                $this->dispatch('error', 'Invalid object ID');
+        if (empty($this->objectIdValue) && !empty($this->objectId)) {
+            try {
+                $this->objectIdValue = decryptWithSessionKey($this->objectId);
+            } catch (Exception $e) {
+                $this->dispatch('error', 'Invalid object ID format.');
                 return;
             }
-
-            // Ambil record yang dipilih berdasarkan objectIdValue
-            $selectedSalesReward = SalesReward::findOrFail($this->objectIdValue);
-            $code = $selectedSalesReward->code;
-
-            // Ambil semua record dengan nilai kolom code yang sama
-            $salesRewards = SalesReward::where('code', $code)->get();
-            $this->returnIds = $salesRewards->pluck('id')->toArray();
-
-            // Update status_code setiap record menjadi PRINT
-            foreach ($salesRewards as $salesReward) {
-                $salesReward->status_code = Status::PRINT;
-                $salesReward->save();
-            }
-
-            // Jika perlu, set object ke record yang dipilih
-            $this->object = $selectedSalesReward;
         }
+        // if (empty($this->objectIdValue)) {
+        //     $this->dispatch('error', 'Invalid object ID');
+        //     return;
+        // }
+
+        // Ambil record berdasarkan code
+        $salesReward = SalesReward::where('code', $this->objectIdValue)->first();
+        if (!$salesReward) {
+            $this->dispatch('error', 'Object not found');
+            return;
+        }
+        // Set header object
+        $this->object = $salesReward;
+        // Ambil semua detail berdasarkan code yang sama
+        $details = SalesReward::where('code', $this->object->code)->get();
+        $this->returnIds = $details->pluck('id')->toArray();
+        $this->object->beg_date = date('Y-m-d', strtotime($this->object->beg_date));
+        $this->object->end_date = date('Y-m-d', strtotime($this->object->end_date));
+
+        SalesReward::where('code', $this->object->code)->update(['status_code' => Status::PRINT]);
     }
 
 

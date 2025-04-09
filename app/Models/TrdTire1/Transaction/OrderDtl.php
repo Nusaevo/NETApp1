@@ -158,6 +158,11 @@ class OrderDtl extends BaseModel
     {
         return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+    // public function OrderDtl()
+    // {
+    //     return $this->hasMany(OrderDtl::class);  // pastikan nama model dan foreign key sesuai
+    // }
+
     #endregion
 
     public function scopeGetByOrderHdr($query, $id, $trType)

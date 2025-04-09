@@ -87,9 +87,14 @@ class Detail extends BaseComponent
             $this->inputs['status_code_text'] = $salesReward->status_Code_text;
             $this->inputs['matl_id'] = $salesReward->matl_id; // Set nilai matl_id dari header
 
+            // Format tanggal tanpa jam
+            $this->inputs['beg_date'] = date('Y-m-d', strtotime($salesReward->beg_date));
+            $this->inputs['end_date'] = date('Y-m-d', strtotime($salesReward->end_date));
+
             // Ambil seluruh detail berdasarkan kode yang sama
             $details = SalesReward::where('code', $salesReward->code)->get();
             $this->input_details = $details->toArray();
+            // dd($this->input_details);
         }
     }
 
@@ -312,7 +317,7 @@ class Detail extends BaseComponent
             // Logika cetak nota jual
             return redirect()->route('TrdTire1.Master.SalesReward.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey((string)$this->object->id) // Pastikan ID dikonversi ke string sebelum dienkripsi
+                'objectId' => encryptWithSessionKey((string)$this->object->id)
             ]);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());

@@ -8,7 +8,7 @@ use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\S
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
-use App\Enums\Status;
+use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -24,7 +24,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return SalesReward::query()
-            ->where('status_code', Status::ACTIVE);
+            ->whereIn('status_code', [Status::ACTIVE, Status::PRINT]);
     }
 
     public function columns(): array

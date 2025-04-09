@@ -51,10 +51,10 @@
                             <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                                 <thead>
                                     <tr>
-                                        <th style="border: 1px solid #000; padding: 8px;">No</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: center;">No</th>
                                         <th style="border: 1px solid #000; padding: 8px;">KODE BARANG</th>
                                         <th style="border: 1px solid #000; padding: 8px;">NAMA BARANG</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">GROUP</th>
+                                        <th style="border: 1px solid #000; padding: 8px; text-align: center;">GROUP</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: center;">QTY</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: right;">REWARD</th>
                                     </tr>
@@ -63,8 +63,9 @@
                                     @php
                                         $grand_total = 0;
                                     @endphp
-                                    @foreach ($this->object->details ?? [] as $key => $detail)
+                                    @foreach ($this->returnIds as $key => $id)
                                         @php
+                                            $detail = \App\Models\TrdTire1\Master\SalesReward::find($id);
                                             $subTotal = $detail->qty * $detail->reward;
                                             $grand_total += $subTotal;
                                         @endphp
@@ -72,11 +73,11 @@
                                             <td style="border: 1px solid #000; padding: 8px; text-align: center;">
                                                 {{ $loop->iteration }}
                                             </td>
-                                            <td style="border: 1px solid #000; padding: 8px;">
-                                                {{ $detail->matl_code }}
+                                            <td style="border: 1px solid #000; padding: 8px; text-align: left;">
+                                                {{ $detail->matl_code ?? '-' }}
                                             </td>
                                             <td style="border: 1px solid #000; padding: 8px;">
-                                                {{ $detail->material->name ?? '-' }}
+                                                {{ $detail->descrs ?? '-' }}
                                             </td>
                                             <td style="border: 1px solid #000; padding: 8px; text-align: center;">
                                                 {{ $detail->grp ?? '-' }}
@@ -99,22 +100,9 @@
     </body>
 
     <!-- Script untuk Print -->
-    <script type="text/javascript">
+    <script>
         function printInvoice() {
-            var page = document.getElementById("print");
-            var newWin = window.open('', 'Print-Window');
-            newWin.document.open();
-            newWin.document.write(
-                '<html>' +
-                '<link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}" >' +
-                '<body onload="window.print()">' +
-                page.innerHTML +
-                '</body></html>'
-            );
-            newWin.document.close();
-            setTimeout(function() {
-                newWin.close();
-            }, 10);
+            window.print();
         }
     </script>
 </div>
