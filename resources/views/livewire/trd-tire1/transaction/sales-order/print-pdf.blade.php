@@ -32,41 +32,47 @@
                             <!-- Header -->
                             <table width="100%" style="margin-bottom: 10px;">
                                 <tr>
-                                    <td style="width: 30%;">
+                                    <td style="width: 20%;">
                                         <div style="text-align: center;">
                                             <h2 style="margin: 0; text-decoration: underline; font-weight: bold;">CAHAYA
                                                 TERANG</h2>
-                                            <p style="margin: 0;">SURABAYA</p>
+                                            <p style="margin-top: -5px;">SURABAYA</p>
                                         </div>
                                     </td>
-                                    <td colspan="2"
-                                        style="text-align: center; margin-top: 20px; vertical-align: bottom;">
-                                        <h3 style="margin: 0; font-weight: bold; text-decoration: underline;">NOTA
+                                    <td
+                                        style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 50%;">
+                                        <h3 style="margin-bottom: -5px; font-weight: bold; text-decoration: underline;">
+                                            NOTA
                                             PENJUALAN</h3>
-                                        <p style="margin: 5px 0;">No. {{ $this->object->tr_code }}</p>
+                                        <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
                                     </td>
-                                    <td style="text-align: right; vertical-align: bottom;">
-                                        <p style="margin: 0;">
+                                    <td style="text-align: left; vertical-align: bottom; width: 30%;">
+                                        <p style="margin-bottom: -8px;">
                                             Surabaya,
                                             {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                                         </p>
-                                        <p style="margin: 0;">Kepada Yth :</p>
-                                        <p style="margin: 0;"><strong>{{ $this->object->Partner->name }}</strong></p>
-                                        <p style="margin: 0;">{{ $this->object->Partner->address }}</p>
+                                        <p style="margin-bottom: -8px;">Kepada Yth :</p>
+                                        <p style="margin-bottom: -8px;">
+                                            <strong>{{ $this->object->Partner->name }}</strong>
+                                        </p>
+                                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
                                     </td>
                                 </tr>
                             </table>
 
                             <!-- Items Table -->
-                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <table
+                                style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000;">
                                 <thead>
                                     <tr>
-                                        <th style="border: 1px solid #000; padding: 8px;">KODE BARANG</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">NAMA BARANG</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: center;">QTY</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">HARGA
+                                        <th style="border: 1px solid #000; text-align: center;">KODE
+                                            BARANG</th>
+                                        <th style="border: 1px solid #000; text-align: center;">NAMA
+                                            BARANG</th>
+                                        <th style="border: 1px solid #000; text-align: center;">QTY</th>
+                                        <th style="border: 1px solid #000; text-align: center;">HARGA
                                             SATUAN</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">JUMLAH
+                                        <th style="border: 1px solid #000; text-align: center;">JUMLAH
                                             HARGA</th>
                                     </tr>
                                 </thead>
@@ -79,39 +85,54 @@
                                             $subTotal = $OrderDtl->qty * $OrderDtl->price;
                                             $grand_total += $subTotal;
                                         @endphp
-                                        <tr style="border: 1px solid #000;">
-                                            <td style="padding: 8px; border: 1px solid #000;">{{ $OrderDtl->matl_code }}</td>
-                                            <td style="padding: 8px; text-align: left; border: 1px solid #000;">
+                                        <tr>
+                                            <td
+                                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center;">
+                                                {{ $OrderDtl->matl_code }}
+                                            </td>
+                                            <td
+                                                style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;">
                                                 {{ $OrderDtl->matl_descr }}
-                                                @if($loop->last)
-                                                    <p style="margin: 0; text-align: left;">Penerima: ________________</p>
+                                                @if ($loop->last)
+                                                    <p style="margin-top: 5px; margin-bottom: -5px">Penerima:
+                                                        ________________
+                                                    </p>
                                                 @endif
                                             </td>
-                                            <td style="padding: 8px; text-align: center; border: 1px solid #000;">{{ ceil($OrderDtl->qty) }}</td>
-                                            <td style="padding: 8px; text-align: right; border: 1px solid #000;">
+                                            <td style="text-align: center;">
+                                                {{ ceil($OrderDtl->qty) }}</td>
+                                            <td
+                                                style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;">
                                                 {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
+                                                @if ($loop->last)
+                                                    <p
+                                                        style="border: 1px solid #000; text-align: right; font-weight: bold; margin-left: -6px; margin-right: -6px; margin-top: 10px; margin-bottom: -5.7px; padding: 2px;">
+                                                        TOTAL:
+                                                    </p>
+                                                @endif
                                             </td>
-                                            <td style="padding: 8px; text-align: right; border: 1px solid #000;">
+                                            <td
+                                                style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;">
                                                 {{ number_format(ceil($subTotal), 0, ',', '.') }}
+                                                @if ($loop->last)
+                                                    <p
+                                                        style="border: 1px solid #000; text-align: right; font-weight: bold; margin-left: -5.7px; margin-right: -6px; margin-top: 10px; margin-bottom: -6px; padding: 2px;">
+                                                        {{ number_format($grand_total, 0, ',', '.') }}
+                                                    </p>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
-                                    <!-- Empty row for spacing like in the image -->
-                                    <tr>
-                                        <td colspan="3"
-                                            style="border: 1px solid #000; padding: 8px; border-right: none; text-align: center;">
-                                            <p style="margin: 0;">Pembayaran:
-                                                <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
-                                            </p>
-                                        </td>
-                                        <td
-                                            style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">
-                                            TOTAL:</td>
-                                        <td
-                                            style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">
-                                            {{ number_format($grand_total, 0, ',', '.') }}</td>
-                                    </tr>
                                 </tbody>
+                            </table>
+                            <table style="margin-top: -19px; width: 60.9%;">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; border: 1px solid #000;">
+                                        <p style="margin: 0;">Pembayaran:
+                                            <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
+                                        </p>
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                     </div>
@@ -119,23 +140,9 @@
             </div>
         </div>
     </body>
-
-    <script type="text/javascript">
+    <script>
         function printInvoice() {
-            var page = document.getElementById("print");
-            var newWin = window.open('', 'Print-Window');
-            newWin.document.open();
-            newWin.document.write(
-                '<html>' +
-                '<link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}" >' +
-                '<body onload="window.print()">' +
-                page.innerHTML +
-                '</body></html>'
-            );
-            newWin.document.close();
-            setTimeout(function() {
-                newWin.close();
-            }, 10);
+            window.print();
         }
     </script>
 </div>

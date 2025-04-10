@@ -5,16 +5,9 @@ namespace App\Livewire\TrdTire1\Transaction\SalesBilling;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
 use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr, BillingHdr};
-use App\Models\SysConfig1\ConfigRight;
-use App\Models\TrdTire1\Master\GoldPriceLog;
-use App\Models\TrdTire1\Master\MatlUom;
-use App\Enums\Status;
-use App\Enums\TrdTire1\Status as TrdTire1Status;
+use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
-use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
-use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
-use Barryvdh\DomPDF\Facade as PDF; // Add this line
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -33,7 +26,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return BillingHdr::with(['Partner'])
             ->where('billing_hdrs.tr_type', 'ARB')
-            ->where('billing_hdrs.status_code', Status::ACTIVE);
+            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT]);
 
     }
 

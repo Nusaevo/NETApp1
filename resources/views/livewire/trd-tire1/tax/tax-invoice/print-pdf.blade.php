@@ -1,141 +1,120 @@
 <div>
+    <!-- Tombol Back -->
     <div>
-        <div>
-            <x-ui-button clickEvent="" type="Back" button-name="Back" />
-        </div>
+        <x-ui-button clickEvent="back" type="Back" button-name="Back" />
     </div>
 
+    <!-- Include CSS Invoice -->
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
-    <body>
-        <div class="card">
-            <div class="card-body">
-                <div class="container mb-5 mt-3">
-                    <div class="row d-flex align-items-baseline">
-                        <div class="col-xl-9">
-                            <p style="color: #7e8d9f; font-size: 20px;">
-                                NOTA PENJUALAN >>
-                                <strong>No: {{ $this->object->tr_code }}</strong>
-                            </p>
-                        </div>
-                        <div class="col-xl-3 float-end">
-                            <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark"
-                                onclick="printInvoice()">
-                                <i class="fas fa-print text-primary"></i> Print
-                            </a>
-                        </div>
-                        <hr>
+    <div class="card">
+        <div class="card-body">
+            <div class="container mb-5 mt-3">
+                <!-- Header Report -->
+                <div class="row d-flex align-items-baseline">
+                    <div class="col-xl-9">
+                        <p style="color: #7e8d9f; font-size: 20px;">
+                            FAKTUR PAJAK REPORT
+                            {{-- <strong>No: {{ $this->object->code ?? '' }}</strong> --}}
+                        </p>
                     </div>
-
-                    <div id="print">
-                        <div class="invoice-box" style="max-width: 800px; margin: auto; padding: 20px;  solid #000;">
-                            <!-- Header -->
-                            <table width="100%" style="margin-bottom: 10px;">
-                                <tr>
-                                    <td style="width: 30%;">
-                                        <div style="text-align: center;">
-                                            <h2 style="margin: 0; text-decoration: underline; font-weight: bold;">CAHAYA
-                                                TERANG</h2>
-                                            <p style="margin: 0;">SURABAYA</p>
-                                        </div>
-                                    </td>
-                                    <td colspan="2"
-                                        style="text-align: center; margin-top: 20px; vertical-align: bottom;">
-                                        <h3 style="margin: 0; font-weight: bold; text-decoration: underline;">NOTA
-                                            PENJUALAN</h3>
-                                        <p style="margin: 5px 0;">No. {{ $this->object->tr_code }}</p>
-                                    </td>
-                                    <td style="text-align: right; vertical-align: bottom;">
-                                        <p style="margin: 0;">
-                                            Surabaya,
-                                            {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
-                                        </p>
-                                        <p style="margin: 0;">Kepada Yth :</p>
-                                        <p style="margin: 0;"><strong>{{ $this->object->Partner->name }}</strong></p>
-                                        <p style="margin: 0;">{{ $this->object->Partner->address }}</p>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Items Table -->
-                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <div class="col-xl-3 float-end">
+                        <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark"
+                            onclick="printInvoice()">
+                            <i class="fas fa-print text-primary"></i> Print
+                        </a>
+                    </div>
+                    <hr>
+                </div>
+                <div id="print">
+                    <div class="invoice-box page" style="max-width: 2480px; margin: auto; padding: 20px;">
+                        {{-- yang di print --}}
+                        <h3 class="text-left" style="text-decoration: underline;">Proses Faktur Pajak</h3>
+                        <p class="text-left">Tanggal Proses:
+                            {{ \Carbon\Carbon::parse($printDate)->format('d-M-Y') }}</p>
+                        @if (!isset($orders))
+                            <p class="text-center text-danger">Tidak ada data untuk ditampilkan.</p>
+                        @else
+                            <table class="table table-bordered">
                                 <thead>
-                                    <tr>
-                                        <th style="border: 1px solid #000; padding: 8px;">KODE BARANG</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">NAMA BARANG</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: center;">QTY</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">HARGA
-                                            SATUAN</th>
-                                        <th style="border: 1px solid #000; padding: 8px; text-align: right;">JUMLAH
-                                            HARGA</th>
+                                    <tr style="border-bottom: 1px solid #000;">
+                                        <th>No. Nota</th>
+                                        <th>No. Faktur</th>
+                                        <th>Tanggal</th>
+                                        <th>Nama Pelanggan</th>
+                                        <th>Nama Barang</th>
+                                        <th>Qty</th>
+                                        <th>Harga Pcs</th>
+                                        <th>Amt</th>
+                                        <th>PPN</th>
+                                        <th>Amt + PPN</th>
+                                        <th>Amt Nota</th>
+                                        <th>Hitung PPN</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
-                                        $grand_total = 0;
-                                    @endphp
-                                    @foreach ($this->object->OrderDtl as $key => $OrderDtl)
+                                    @foreach ($orders as $order)
                                         @php
-                                            $subTotal = $OrderDtl->qty * $OrderDtl->price;
-                                            $grand_total += $subTotal;
+                                            $totalAmt = 0;
+                                            $totalPpn = 0;
                                         @endphp
-                                        <tr style="border: 1px solid #000;">
-                                            <td style="padding: 8px; border: 1px solid #000;">{{ $OrderDtl->matl_code }}</td>
-                                            <td style="padding: 8px; text-align: left; border: 1px solid #000;">
-                                                {{ $OrderDtl->matl_descr }}
-                                                @if($loop->last)
-                                                    <p style="margin: 0; text-align: left;">Penerima: ________________</p>
+                                        @foreach ($order->OrderDtl as $index => $detail)
+                                            @php
+                                                $amt = $detail->qty * $detail->price;
+                                                $ppn = $amt * 0.1;
+                                                $totalAmt += $amt;
+                                                $totalPpn += $ppn;
+                                            @endphp
+                                            <tr style="font-weight: normal;">
+                                                @if ($index === 0)
+                                                    <!-- Hanya tampilkan pada seq 1 -->
+                                                    <td rowspan="{{ count($order->OrderDtl) }}">{{ $order->tr_code }}
+                                                    </td>
+                                                    <td rowspan="{{ count($order->OrderDtl) }}"
+                                                        style="text-align: left">{{ $order->print_remarks }}</td>
+                                                    <td rowspan="{{ count($order->OrderDtl) }}">
+                                                        {{ \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y') }}
+                                                    </td>
+                                                    <td rowspan="{{ count($order->OrderDtl) }}">
+                                                        {{ $order->Partner?->name ?? 'N/A' }}</td>
                                                 @endif
-                                            </td>
-                                            <td style="padding: 8px; text-align: center; border: 1px solid #000;">{{ ceil($OrderDtl->qty) }}</td>
-                                            <td style="padding: 8px; text-align: right; border: 1px solid #000;">
-                                                {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
-                                            </td>
-                                            <td style="padding: 8px; text-align: right; border: 1px solid #000;">
-                                                {{ number_format(ceil($subTotal), 0, ',', '.') }}
-                                            </td>
-                                        </tr>
+                                                <td>{{ $detail->matl_descr }}</td>
+                                                <td style="text-align: center">{{ $detail->qty }}</td>
+                                                <td>{{ number_format($detail->price, 0, ',', '.') }}</td>
+                                                <td>{{ number_format($amt, 0, ',', '.') }}</td>
+                                                <td>{{ number_format($ppn, 0, ',', '.') }}</td>
+                                                <td>{{ number_format($amt + $ppn, 0, ',', '.') }}</td>
+                                                <td>{{ number_format($totalAmt, 0, ',', '.') }}</td>
+                                                <!-- Tampilkan total Amt Nota -->
+                                                <td>{{ number_format($totalPpn, 0, ',', '.') }}</td>
+                                                <!-- Tampilkan total Hitung PPN -->
+                                            </tr>
+                                        @endforeach
+                                        @if (count($order->OrderDtl) > 1)
+                                            <!-- Tampilkan subtotal jika lebih dari satu item -->
+                                            <tr style="font-weight: normal; border-top: 1px solid #000;">
+                                                <td colspan="7" style="text-align: right;"></td>
+                                                <td style="border-top: 1px solid #000;">
+                                                    {{ number_format($totalAmt, 0, ',', '.') }}</td>
+                                                <td style="border-top: 1px solid #000;">
+                                                    {{ number_format($totalPpn, 0, ',', '.') }}</td>
+                                                <td style="border-top: 1px solid #000;">
+                                                    {{ number_format($totalAmt + $totalPpn, 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endif
                                     @endforeach
-                                    <!-- Empty row for spacing like in the image -->
-                                    <tr>
-                                        <td colspan="3"
-                                            style="border: 1px solid #000; padding: 8px; border-right: none; text-align: center;">
-                                            <p style="margin: 0;">Pembayaran:
-                                                <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
-                                            </p>
-                                        </td>
-                                        <td
-                                            style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">
-                                            TOTAL:</td>
-                                        <td
-                                            style="border: 1px solid #000; padding: 8px; text-align: right; font-weight: bold;">
-                                            {{ number_format($grand_total, 0, ',', '.') }}</td>
-                                    </tr>
                                 </tbody>
                             </table>
-                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
-    </body>
-
-    <script type="text/javascript">
+    </div>
+    <!-- Script untuk Print -->
+    <script>
         function printInvoice() {
-            var page = document.getElementById("print");
-            var newWin = window.open('', 'Print-Window');
-            newWin.document.open();
-            newWin.document.write(
-                '<html>' +
-                '<link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}" >' +
-                '<body onload="window.print()">' +
-                page.innerHTML +
-                '</body></html>'
-            );
-            newWin.document.close();
-            setTimeout(function() {
-                newWin.close();
-            }, 10);
+            window.print();
         }
     </script>
 </div>

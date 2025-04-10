@@ -3,16 +3,33 @@
 namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
 
 use App\Models\TrdTire1\Transaction\OrderHdr;
+use App\Enums\TrdTire1\Status;
 use App\Livewire\Component\BaseComponent;
 
 class PrintPdf extends BaseComponent
 {
+    public $masa; // Selected masa (month-year)
+    public $orders = []; // Orders to be displayed
     public $object;
     public $objectIdValue;
+
     protected function onPreRender()
     {
         if ($this->isEditOrView()) {
-        $this->object = OrderHdr::findOrFail($this->objectIdValue);
+            if (empty($this->additionalParam)) { // Check if 'masa' is passed
+                $this->dispatch('error', 'Masa belum dipilih.');
+                return;
+            }
+
+            $this->masa = $this->additionalParam; // Use the selected masa
+
+            // Fetch orders based on the selected masa
+            $this->orders = OrderHdr::with(['OrderDtl', 'Partner']) // Fetch required relations
+                ->whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$this->masa])
+                ->where('tr_type', 'SO')
+                ->whereIn('status_code', [Status::PRINT, Status::OPEN])
+                ->whereNull('deleted_at')
+                ->get();
         }
     }
 

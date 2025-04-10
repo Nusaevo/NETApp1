@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
+namespace App\Livewire\TrdTire1\Transaction\ProsesGt;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\{BillingDtl, BillingHdr, DelivDtl, DelivHdr, OrderHdr, OrderDtl};
@@ -186,7 +186,7 @@ class Detail extends BaseComponent
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
-        // $this->dispatch('updateTaxPayerEnabled', $this->payer); // Ensure the UI is updated
+        $this->dispatch('updateTaxPayerEnabled', $this->payer); // Ensure the UI is updated
     }
 
     public function onPaymentTermChanged()
@@ -369,7 +369,7 @@ class Detail extends BaseComponent
 
         // Ensure npwp_code is set to null if tax_payer is disabled
         if ($this->payer === "false") {
-            $this->inputs['npwp_code'] = '';
+            $this->inputs['npwp_code'] = null;
         }
 
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
