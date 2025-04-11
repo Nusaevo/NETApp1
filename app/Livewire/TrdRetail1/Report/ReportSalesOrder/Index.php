@@ -60,10 +60,10 @@ class Index extends BaseComponent
     public function search()
     {
         $params = [];
-        $where = "WHERE po_dtl.tr_type = 'PO' AND po_dtl.deleted_at IS NULL AND po_hdr.deleted_at IS NULL AND materials.deleted_at IS NULL";
+        $where = "WHERE so_dtl.tr_type = 'SO' AND so_dtl.deleted_at IS NULL AND so_hdr.deleted_at IS NULL AND materials.deleted_at IS NULL";
 
         if ($this->startDate && $this->endDate) {
-            $where .= " AND po_hdr.tr_date BETWEEN ? AND ?";
+            $where .= " AND so_hdr.tr_date BETWEEN ? AND ?";
             $params[] = $this->startDate;
             $params[] = $this->endDate;
         }
@@ -83,35 +83,49 @@ class Index extends BaseComponent
             $params[] = '%' . $this->customer . '%';
         }
 
+        if ($this->startQty && $this->endQty) {
+            $where .= " AND so_dtl.qty BETWEEN ? AND ?";
+            $params[] = $this->startQty;
+            $params[] = $this->endQty;
+        }
+
+
         $query = "
             SELECT
-                po_hdr.tr_date,
+                so_hdr.tr_date,
+                materials.id AS material_id,
                 materials.code AS material_code,
                 materials.category,
                 materials.brand,
                 materials.type_code,
                 materials.specs->>'color_code' AS color_code,
                 materials.specs->>'color_name' AS color_name,
-                po_dtl.qty,
-                po_dtl.price,
-                (po_dtl.qty * po_dtl.price) AS total,
-                partners.name AS partner_name
-            FROM order_dtls po_dtl
-            LEFT JOIN materials ON materials.id = po_dtl.matl_id
-            LEFT JOIN order_hdrs po_hdr ON po_hdr.id = po_dtl.trhdr_id
-            LEFT JOIN partners ON partners.id = po_hdr.partner_id
+                so_dtl.qty,
+                so_dtl.price,
+                (so_dtl.qty * so_dtl.price) AS total
+            FROM order_dtls so_dtl
+            LEFT JOIN materials ON materials.id = so_dtl.matl_id
+            LEFT JOIN order_hdrs so_hdr ON so_hdr.id = so_dtl.trhdr_id
+            LEFT JOIN partners ON partners.id = so_hdr.partner_id
             $where
-            ORDER BY po_hdr.tr_date ASC
         ";
-
 
         $this->results = DB::connection(Session::get('app_code'))->select($query, $params);
     }
 
     public function resetFilters()
     {
+        $this->startDate = null;
+        $this->endDate = null;
+        $this->merk = null;
+        $this->jenis = null;
+        $this->customer = null;
+        $this->startQty = null;
+        $this->endQty = null;
+        $this->groupBy = 'Tanggal';
         $this->results = [];
     }
+
 
     public function render()
     {

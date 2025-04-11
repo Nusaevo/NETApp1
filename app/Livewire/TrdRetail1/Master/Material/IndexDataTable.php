@@ -9,7 +9,7 @@ use App\Models\Util\{GenericExport, GenericExcelExport};
 use App\Services\TrdRetail1\Master\MasterService;
 use Illuminate\Database\Eloquent\Builder;
 use PhpOffice\PhpSpreadsheet\{Spreadsheet, Writer\Xlsx, Style\Protection};
-use Illuminate\Support\Facades\{File, Http};
+use Illuminate\Support\Facades\{File, Http, DB};
 use App\Models\Base\Attachment;
 use Exception;
 use App\Enums\Status;
@@ -66,6 +66,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable()
                 ->collapseOnTablet(),
 
+            Column::make('Tag', 'tag')
+                ->sortable()
+                ->collapseOnTablet()
+                ->hideIf(true),
             Column::make('Color Code', 'specs->color_code')->format(fn($value, $row) => $row['specs->color_code'] ?? '')->sortable(),
 
             Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
@@ -142,6 +146,14 @@ class IndexDataTable extends BaseDataTableComponent
             // ->setFilterPillValues([
             //     '3' => 'Tag 1',
             // ]),
+            $this->createTextFilter('Kode Barang', 'code', 'Cari Barang', function (Builder $builder, string $value) {
+                if ($this->isFirstFilterApplied($builder)) {
+                    $builder->getQuery()->wheres = [];
+                }
+                $builder->where('code', 'ILIKE', "%{$value}%");
+            }),
+
+
             SelectFilter::make('Category', 'category')
                 ->options($kategoriOptions)
                 ->filter(function (Builder $query, string $value) {

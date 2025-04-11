@@ -1,9 +1,8 @@
 <div>
-    {{-- @php
-        use App\Services\TrdJewel1\Master\MasterService;
+    @php
+        use App\Models\Base\Attachment;
+    @endphp
 
-        $masterService = new MasterService();
-    @endphp --}}
     <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
         <x-ui-expandable-card id="ReportFilterCard" title="Filter" :isOpen="true">
             <div class="card-body">
@@ -43,41 +42,58 @@
                             <x-ui-text-field type="number" label="Qty Akhir" model="endQty" action="Edit" />
                         </div>
                     </div>
+
+                    {{-- <div class="row">
+                        <div class="col-md-6">
+                            <x-ui-dropdown-select label="Group By" model="groupBy" :options="[['label' => 'Tanggal', 'value' => 'Tanggal'], ['label' => 'Kode Barang', 'value' => 'KodeBarang']]" action="Edit" />
+                        </div>
+                    </div> --}}
                 </div>
             </div>
+
             <div class="card-footer d-flex justify-content-end">
-                <div>
-                    <x-ui-button clickEvent="reset" button-name="Reset" loading="true" action="Edit"
-                        cssClass="btn-light" />
-                </div>
-                <div class="ml-2">
-                    <x-ui-button clickEvent="search" button-name="Search" loading="true" action="Edit"
-                        cssClass="btn-primary" />
-                </div>
-                <button type="button" class="btn btn-light text-capitalize border-0" onclick="printReport()">
-                    <i class="fas fa-print text-primary"></i> Print
-                </button>
+                <x-ui-button clickEvent="resetFilters" button-name="Reset" loading="true" action="Edit"
+                    cssClass="btn-secondary" />
+                <x-ui-button clickEvent="search" button-name="Search" loading="true" action="Edit"
+                    cssClass="btn-primary" />
+                <x-ui-button :action="$actionValue" clickEvent="" jsClick="printReport()" cssClass="btn-primary"
+                    loading="true" button-name="Print" iconPath="print.svg" />
             </div>
         </x-ui-expandable-card>
 
         <div id="print">
             <x-ui-table id="LaporanPenerimaan">
                 <x-slot name="headers">
-                    <th style="text-align: center;">No</th>
-                    <th style="text-align: center;">Tanggal</th>
-                    <th style="text-align: center;">Kode Barang</th>
-                    <th style="text-align: center;">Kategori</th>
-                    <th style="text-align: center;">Keterangan</th>
-                    <th style="text-align: center;">Warna</th>
-                    <th style="text-align: center;">Qty</th>
-                    <th style="text-align: center;">Harga</th>
-                    <th style="text-align: center;">Total</th>
+                    <th>No</th>
+                    {{-- <th>Photo</th> --}}
+                    <th>Tanggal</th>
+                    <th>Kode Barang</th>
+                    <th>Kategori</th>
+                    <th>Keterangan</th>
+                    <th>Warna</th>
+                    <th>Qty</th>
+                    <th>Harga</th>
+                    <th>Total</th>
                 </x-slot>
 
                 <x-slot name="rows">
                     @foreach ($results as $res)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
+                            {{-- <td>
+                            @php
+                                $materialId = $res->material_id;
+                                $attachment = Attachment::where('attached_objecttype', 'Material')
+                                    ->where('attached_objectid', $materialId)
+                                    ->first();
+                            @endphp
+                            @if ($attachment)
+                                <x-ui-image src="{{ $attachment->getUrl() }}" alt="Photo" width="50px" height="50px" />
+                            @else
+                                <span>No Image</span>
+                            @endif
+                        </td> --}}
+
                             <td>{{ $res->tr_date }}</td>
                             <td>{{ $res->material_code }}</td>
                             <td>{{ $res->category }}</td>
@@ -91,7 +107,126 @@
                 </x-slot>
             </x-ui-table>
         </div>
+        <script type="text/javascript">
+            function printReport() {
+                window.print();
+            }
+        </script>
+
+        <style>
+            @page {
+                /* size: 210mm 140mm;*/
+                /* Ukuran khusus 210 x 140 mm */
+                /* margin: 0 10mm;*/
+                /* Margin kanan dan kiri */
+                margin: 0;
+            }
 
 
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Calibri';
+                font-size: 14px;
+                color: #555;
+            }
+
+            .container {
+                padding: 0;
+                margin: 0;
+            }
+
+            .card {
+                border: none;
+                box-shadow: none;
+            }
+
+            #print {
+                width: 100%;
+                height: 100%;
+                box-sizing: border-box;
+            }
+
+            .invoice-box-container {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                /* Ubah untuk menyesuaikan konten */
+                box-sizing: border-box;
+                page-break-inside: avoid;
+                margin-left: 5px;
+            }
+
+            .invoice-box {
+                width: 100%;
+                height: auto;
+                /* Sesuaikan tinggi dengan konten */
+                border: 1px solid #eee;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+                line-height: 20px;
+                /* Kurangi jarak baris untuk menghemat ruang */
+                font-weight: 400;
+                /* Kurangi ketebalan font untuk menghemat ruang */
+                color: #555;
+                box-sizing: border-box;
+                page-break-inside: avoid;
+                margin: 0;
+                padding: 5mm 10mm;
+                /* Padding atas, bawah, kiri, dan kanan */
+            }
+
+            .invoice-box table {
+                width: 100%;
+                line-height: inherit;
+                text-align: left;
+                border-collapse: collapse;
+            }
+
+            .invoice-box table td {
+                vertical-align: top;
+                padding: 1mm;
+                /* Kurangi padding untuk menghemat ruang */
+            }
+
+            .information td {
+                border-top: 3px solid #ddd;
+                border-bottom: 3px solid #ddd;
+            }
+
+            @media print {
+                body * {
+                    visibility: hidden;
+                }
+
+                #print,
+                #print * {
+                    visibility: visible;
+                }
+
+                #print {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    box-sizing: border-box;
+                }
+
+                .btn,
+                .d-flex {
+                    display: none;
+                }
+
+                .invoice-box {
+                    border: none;
+                    box-shadow: none;
+                    margin: 0;
+                    padding: 5mm 10mm;
+                    height: auto;
+                    page-break-after: always;
+                }
+            }
+        </style>
     </x-ui-page-card>
+
 </div>

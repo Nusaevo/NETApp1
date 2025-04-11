@@ -94,6 +94,11 @@
                             @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
                         </x-ui-card>
                     </div>
+                    <div class="col-md-12">
+                        <x-ui-card title="Return Items">
+                            @livewire($currentRoute . '.return-list-component', ['action' => $action, 'objectId' => $objectId])
+                        </x-ui-card>
+                    </div>
                 </div>
             </div>
         </x-ui-tab-view-content>
