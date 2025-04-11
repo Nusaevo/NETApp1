@@ -33,7 +33,7 @@
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
                                         model="inputs.payment_term_id" :options="$paymentTerms" required="true"
-                                        :action="$actionValue" />
+                                        :action="$actionValue" onChanged="onPaymentTermChanged"/>
                                     <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>

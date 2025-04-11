@@ -78,7 +78,7 @@
                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
-                            <x-ui-text-field-search type="int" label="" clickEvent=""
+                            <x-ui-dropdown-select type="int" label="" clickEvent=""
                                 model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']" :options="$materials"
                                 required="true" :action="$actionValue"
                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"

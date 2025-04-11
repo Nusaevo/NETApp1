@@ -126,15 +126,18 @@ class ShippingAddressComponent extends DetailComponent
                 'address' => $detail['address'],
             ];
         }
+
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+        $partnerData = [
+            'partner_grp' => $this->object->grp,
+            'partner_code' => $this->object->code,
+            'shipping_address' => $shippingAddressArray,
+        ];
+
         if ($partnerDetail) {
-            $partnerDetail->update(['shipping_address' => $shippingAddressArray]);
+            $partnerDetail->update($partnerData);
         } else {
-            // Jika belum ada, buat record baru dengan menyertakan partner_id dan shipping_address
-            PartnerDetail::create([
-                'partner_id' => $this->object->id,
-                'shipping_address'      => $shippingAddressArray
-            ]);
+            PartnerDetail::create(array_merge(['partner_id' => $this->object->id], $partnerData));
         }
     }
 

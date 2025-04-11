@@ -120,16 +120,16 @@ class BankListComponent extends DetailComponent
         }
 
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+        $partnerData = [
+            'partner_grp' => $this->object->grp,
+            'partner_code' => $this->object->code,
+            'banks' => $banksArray,
+        ];
 
         if ($partnerDetail) {
-            // Jika partnerDetail sudah ada, lakukan update pada field banks
-            $partnerDetail->update(['banks' => $banksArray]);
+            $partnerDetail->update($partnerData);
         } else {
-            // Jika belum ada, buat record baru dengan menyertakan partner_id dan banks
-            PartnerDetail::create([
-                'partner_id' => $this->object->id,
-                'banks'      => $banksArray
-            ]);
+            PartnerDetail::create(array_merge(['partner_id' => $this->object->id], $partnerData));
         }
     }
 

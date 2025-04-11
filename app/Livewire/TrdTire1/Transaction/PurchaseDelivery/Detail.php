@@ -46,32 +46,22 @@ class Detail extends BaseComponent
     public $npwpOptions = [];
 
     protected $masterService;
-    public $isPanelEnabled = "false";
+    public $isPanelEnabled = true;
     public $purchaseOrders = [];
 
     protected $rules = [
-        'inputs.tr_date' => 'nullable',
         'inputs.tr_code' => 'required',
+        'inputs.wh_code' => 'required',
         'inputs.reffhdrtr_code' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.send_to' => 'nullable',
-        'inputs.tax_payer' => 'nullable',
-        'inputs.payment_terms' => 'nullable',
-        'inputs.tax' => 'nullable',
-        'inputs.due_date' => 'nullable',
-        'inputs.cust_reff' => 'nullable',
-        'input_details.*.qty_order' => 'required',
-        'input_details.*.price' => 'nullable',
-        'input_details.*.matl_descr' => 'nullable',
-        'input_details.*.matl_uom' => 'nullable',
         'input_details.*.qty' => 'required',
     ];
 
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
-        'onPurchaseOrderSelected' => 'onPurchaseOrderChanged',
-        'load-purchase-order-details' => 'loadPurchaseOrderDetails'
+        'load-purchase-order-details' => 'loadPurchaseOrderDetails',
+        'onPurchaseOrderChanged' => 'onPurchaseOrderChanged' // Add this listener
     ];
     #endregion
 
@@ -94,7 +84,7 @@ class Detail extends BaseComponent
 
         if ($this->isEditOrView()) {
             $this->object = DelivHdr::withTrashed()->find($this->objectIdValue);
-
+            $this->isPanelEnabled = "false";
             // Populate inputs array
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
@@ -165,7 +155,11 @@ class Detail extends BaseComponent
         try {
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
-            $this->dispatch('success', 'Item berhasil dihapus');
+
+            // Jika tidak ada item lagi di input_details, enable kolom reffhdrtr_code dan wh_code
+            if (empty($this->input_details)) {
+                $this->isPanelEnabled = "true"; // Atau bisa juga true jika menggunakan boolean
+            }
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
         }
@@ -173,30 +167,23 @@ class Detail extends BaseComponent
 
     public function onPurchaseOrderChanged($value)
     {
+        $this->input_details = []; // Clear existing items
+        $this->inputs['reffhdrtr_code'] = $value; // Update the purchase order code
         if ($value) {
-            $order = OrderHdr::where('tr_code', $value)->first();
-
-            if ($order) {
-                $partner = Partner::find($order->partner_id);
-                $this->inputs['partner_id'] = $partner->id;
-                $this->inputs['partner_name'] = $partner->name;
-            }
-
-            $this->inputs['reffhdrtr_code'] = $value; // Set purchase order number to reffhdrtr_code
-            $this->loadPurchaseOrderDetails($value);
+            $this->loadPurchaseOrderDetails($value); // Reload details for the new purchase order
         }
     }
 
     public function loadPurchaseOrderDetails($reffhdrtr_code)
     {
-        $this->input_details = [];
+        $this->input_details = []; // Ensure input_details is cleared
         $orderDetails = OrderDtl::where('tr_code', $reffhdrtr_code)->get();
 
         foreach ($orderDetails as $detail) {
             $qty_remaining = $detail->qty - $detail->qty_reff;
             $this->input_details[] = [
                 'matl_id' => $detail->matl_id,
-                'qty_order' => $qty_remaining, // Set calculated quantity to qty_order
+                'qty_order' => $qty_remaining,
                 'matl_descr' => $detail->matl_descr,
                 'matl_uom' => $detail->matl_uom,
                 'order_id' => $detail->id,
@@ -295,7 +282,50 @@ class Detail extends BaseComponent
         });
     }
 
+    public function addItem()
+    {
+        if (empty($this->inputs['reffhdrtr_code'])) {
+            $this->dispatch('error', 'Mohon pilih nota pembelian terlebih dahulu.');
+            return;
+        }
 
+        // $this->isPanelEnabled = false;
+
+        $this->input_details[] = [
+            'matl_id' => null,
+            'qty_order' => null,
+            'matl_descr' => null,
+            'matl_uom' => null,
+            'order_id' => null,
+            'qty' => null,
+        ];
+    }
+
+    public function onMaterialChanged($index, $matl_id)
+    {
+        if (empty($this->inputs['reffhdrtr_code'])) {
+            $this->dispatch('error', 'Mohon pilih nota pembelian terlebih dahulu.');
+            return;
+        }
+
+        $orderDetail = OrderDtl::where('tr_code', $this->inputs['reffhdrtr_code'])
+            ->where('matl_id', $matl_id)
+            ->first();
+
+        if ($orderDetail) {
+            $qty_remaining = $orderDetail->qty - $orderDetail->qty_reff;
+
+            $this->input_details[$index] = array_merge($this->input_details[$index], [
+                'matl_id' => $orderDetail->matl_id,
+                'qty_order' => $qty_remaining,
+                'matl_descr' => $orderDetail->matl_descr,
+                'matl_uom' => $orderDetail->matl_uom,
+                'order_id' => $orderDetail->id,
+            ]);
+        } else {
+            $this->dispatch('error', 'Material tidak ditemukan pada nota pembelian.');
+        }
+    }
 
     public function delete()
     {
@@ -309,7 +339,6 @@ class Detail extends BaseComponent
             $this->object->save();
             $this->object->delete();
 
-            $this->dispatch('success', 'Data berhasil dihapus');
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());

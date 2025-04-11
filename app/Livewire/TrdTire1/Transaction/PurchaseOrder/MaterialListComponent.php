@@ -22,6 +22,7 @@ class MaterialListComponent extends DetailComponent
     public $total_discount = 0;
     public $total_tax = 0; // New property for total tax
     public $total_dpp = 0; // New property for total tax
+    public $deleted_items = []; // Tambahkan properti untuk melacak item yang dihapus
 
     protected $rules = [
         'input_details.*.qty' => 'nullable',
@@ -159,12 +160,16 @@ class MaterialListComponent extends DetailComponent
         $this->total_discount = round($this->total_discount, 2);
     }
 
-
     public function deleteItem($index)
     {
         try {
             if (!isset($this->input_details[$index])) {
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
+            }
+
+            // Add the item to the deleted_items list
+            if (isset($this->input_details[$index]['id'])) {
+                $this->deleted_items[] = $this->input_details[$index]['id'];
             }
 
             unset($this->input_details[$index]);
@@ -188,9 +193,29 @@ class MaterialListComponent extends DetailComponent
             }
         }
     }
+
     public function SaveItem()
     {
         $this->Save();
+
+        // Restore qty_fgr for deleted items
+        if (!empty($this->deleted_items)) {
+            foreach ($this->deleted_items as $deletedItemId) {
+                $orderDtl = OrderDtl::find($deletedItemId);
+                if ($orderDtl) {
+                    $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
+                        ->where('matl_uom', $orderDtl->matl_uom)
+                        ->first();
+                    if ($matlUom) {
+                        $matlUom->qty_fgr -= $orderDtl->qty;
+                        $matlUom->save();
+                    }
+                    $orderDtl->forceDelete(); // Permanently delete the item
+                }
+            }
+            $this->deleted_items = []; // Reset the deleted_items list after processing
+        }
+
         $orderHdr = OrderHdr::find($this->objectIdValue);
         if ($orderHdr) {
             $orderHdr->total_amt = $this->total_amount;
