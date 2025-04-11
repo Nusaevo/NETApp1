@@ -63,27 +63,27 @@ class ReturnDtl extends BaseModel
         //         IvtBalUnit::create($inventoryBalUnitsData);
         //     }
         // });
-        static::created(function ($returnDtl) {
-            $OrderDtl = $returnDtl->OrderDtl;  // Assuming the relation method name is OrderDtl
-            if ($OrderDtl) {
-                $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
-                $returnQty = ceil($OrderDtl->qty);
-                $newQtyReff = $OrderDtlQtyReff - $returnQty;
-                $OrderDtl->qty_reff = number_format($newQtyReff, 2);
-                $OrderDtl->save();
-            }
-        });
+        // static::created(function ($returnDtl) {
+        //     $OrderDtl = $returnDtl->OrderDtl;  // Assuming the relation method name is OrderDtl
+        //     if ($OrderDtl) {
+        //         $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
+        //         $returnQty = ceil($OrderDtl->qty);
+        //         $newQtyReff = $OrderDtlQtyReff - $returnQty;
+        //         $OrderDtl->qty_reff = number_format($newQtyReff, 2);
+        //         $OrderDtl->save();
+        //     }
+        // });
 
-        static::deleting(function ($returnDtl) {
-                $OrderDtl = $returnDtl->OrderDtl;
-                if ($OrderDtl) {
-                    $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
-                    $returnQty =  ceil($OrderDtl->qty);
-                    $newQtyReff = $OrderDtlQtyReff + $returnQty;
-                    $OrderDtl->qty_reff = number_format($newQtyReff, 2);
-                    $OrderDtl->save();
-                }
-        });
+        // static::deleting(function ($returnDtl) {
+        //         $OrderDtl = $returnDtl->OrderDtl;
+        //         if ($OrderDtl) {
+        //             $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
+        //             $returnQty =  ceil($OrderDtl->qty);
+        //             $newQtyReff = $OrderDtlQtyReff + $returnQty;
+        //             $OrderDtl->qty_reff = number_format($newQtyReff, 2);
+        //             $OrderDtl->save();
+        //         }
+        // });
     }
 
     protected $fillable = [

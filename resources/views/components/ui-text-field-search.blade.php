@@ -72,7 +72,7 @@
                 @if (!is_null($options))
                     @foreach ($options as $option)
                         <option value="{{ $option['value'] }}"
-                            {{ $selectedValue == $option['value'] ? 'selected' : '' }}>
+                        {{ isset($selectedValue) && $selectedValue === $option['value'] ? 'selected' : '' }}>
                             {{ $option['label'] }}
                         </option>
                     @endforeach

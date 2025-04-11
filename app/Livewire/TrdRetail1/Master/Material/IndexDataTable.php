@@ -58,6 +58,13 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('No', 'seq')->sortable(),
 
             Column::make('Code', 'code')->sortable()->collapseOnTablet(),
+            Column::make('Merk', 'brand')
+                ->sortable()
+                ->collapseOnTablet(),
+
+            Column::make('Jenis', 'class_code')
+                ->sortable()
+                ->collapseOnTablet(),
 
             Column::make('Color Code', 'specs->color_code')->format(fn($value, $row) => $row['specs->color_code'] ?? '')->sortable(),
 

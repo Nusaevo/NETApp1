@@ -123,7 +123,6 @@ class OrderHdr extends BaseModel
         return $this->status_code === Status::COMPLETED;
     }
 
-
     /* ======================================================
      *             PRIVATE HELPER METHODS
      * ====================================================== */
@@ -137,16 +136,23 @@ class OrderHdr extends BaseModel
      */
     private function getTrTypeValues($trType)
     {
+        /* AR / AP Payment
+         - Customer/Vendor level
+         - Payment Channel level: Bank, CASH, etc.
+         - TrType: ARP, APP */
+
         if ($trType === 'PO') {
             return [
                 'delivTrType' => 'PD',
                 'billingTrType' => 'APB',
+                'paymentTrType' => 'APP',
             ];
         } else {
             // For 'SO' or other
             return [
                 'delivTrType' => 'SD',
                 'billingTrType' => 'ARB',
+                'paymentTrType' => 'ARP',
             ];
         }
     }
@@ -185,10 +191,7 @@ class OrderHdr extends BaseModel
     {
         if ($this->tr_type == 'PO') {
             foreach ($this->OrderDtl as $orderDtl) {
-                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
-                    ->where('tr_type', 'SO')
-                    ->where('tr_id', '!=', $this->tr_id)
-                    ->first();
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)->where('tr_type', 'SO')->where('tr_id', '!=', $this->tr_id)->first();
 
                 if ($relatedOrderDtl) {
                     return false;
@@ -198,10 +201,7 @@ class OrderHdr extends BaseModel
 
         if ($this->tr_type == 'SO') {
             foreach ($this->OrderDtl as $orderDtl) {
-                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
-                    ->where('tr_type', 'BB')
-                    ->where('tr_id', '!=', $this->tr_id)
-                    ->first();
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)->where('tr_type', 'BB')->where('tr_id', '!=', $this->tr_id)->first();
 
                 if ($relatedOrderDtl) {
                     return false;
@@ -210,7 +210,6 @@ class OrderHdr extends BaseModel
         }
         return true;
     }
-
 
     /* ======================================================
      *               MAIN SAVE METHODS (REFACTORED)
@@ -241,7 +240,6 @@ class OrderHdr extends BaseModel
 
         // 4. Save the OrderHdr
         $this->save();
-
         // 5. If needed, create both Delivery & Billing headers in one step
         if ($createBillingDelivery) {
             $this->createDeliveryAndBillingHeader($trType, $inputs);
@@ -289,7 +287,7 @@ class OrderHdr extends BaseModel
             $orderDtl->save();
             // 2) If $createBillingDelivery is true, do Delivery & Billing in ONE method
             if ($createBillingDelivery) {
-                $this->createDeliveryAndBillingDetail($orderDtl, $detailData, $values['delivTrType'], $values['billingTrType']);
+                $this->createDeliveryAndBillingDetail($orderDtl, $detailData, $values['delivTrType'], $values['billingTrType'], $values['paymentTrType']);
             }
         }
     }
@@ -346,6 +344,33 @@ class OrderHdr extends BaseModel
             $billingHdr->status_code = Status::OPEN;
         }
         $billingHdr->save();
+
+        $paymentHdr = PaymentHdr::firstOrNew([
+            'tr_id' => $this->tr_id,
+            'tr_type' => $values['paymentTrType'],
+        ]);
+
+        $paymentHdr->fill([
+            'tr_id' => $this->tr_id,
+            'tr_type' => $values['paymentTrType'],
+            'tr_date' => $this->tr_date,
+            'partner_id' => $this->partner_id,
+            'partner_code' => $this->partner_code,
+            'bank_id' => $inputs['bank_id'] ?? 0,
+            'bank_code' => $inputs['bank_code'] ?? '',
+            'bank_reff' => $inputs['bank_reff'] ?? '',
+            'bank_due' => $inputs['bank_due'] ?? '1900-01-01',
+            'bank_rcv' => $inputs['bank_rcv'] ?? 0,
+            'bank_rcv_base' => $inputs['bank_rcv_base'] ?? 0,
+            'bank_note' => $inputs['bank_note'] ?? '',
+            'curr_id' => $this->curr_id,
+            'curr_rate' => $this->curr_rate,
+        ]);
+
+        if ($paymentHdr->isNew()) {
+            $paymentHdr->status_code = Status::OPEN;
+        }
+        $paymentHdr->save();
     }
 
     /**
@@ -357,7 +382,7 @@ class OrderHdr extends BaseModel
      * @param  string   $billingTrType  Transaction type for Billing (e.g., 'APB', 'ARB').
      * @return void
      */
-    private function createDeliveryAndBillingDetail($orderDtl, array $detailData, $delivTrType, $billingTrType)
+    private function createDeliveryAndBillingDetail($orderDtl, array $detailData, $delivTrType, $billingTrType, $paymentTrType)
     {
         // 1) Create or update DelivDtl
         $delivDtl = DelivDtl::firstOrNew([
@@ -424,5 +449,26 @@ class OrderHdr extends BaseModel
         }
 
         $billingDtl->save();
+
+        $paymentDtl = PaymentDtl::firstOrNew([
+            'trhdr_id' => $orderDtl->trhdr_id,
+            'tr_seq' => $orderDtl->tr_seq,
+            'tr_type' => $paymentTrType,
+        ]);
+
+        $paymentDtl->fill([
+            'trhdr_id' => $orderDtl->trhdr_id,
+            'tr_type' => $paymentTrType,
+            'tr_id' => $orderDtl->tr_id,
+            'tr_seq' => $orderDtl->tr_seq,
+            'billdtl_id' => $billingDtl->id,
+            'billhdrtr_type' => $billingDtl->tr_type,
+            'billhdrtr_id' => $billingDtl->tr_id,
+            'billdtltr_seq' => $billingDtl->tr_seq,
+            'amt' => $billingDtl->amt,
+            'amt_base' => $billingDtl->amt,
+            'status_code' => Status::OPEN,
+        ]);
+        $paymentDtl->save();
     }
 }

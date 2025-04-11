@@ -43,7 +43,6 @@ class SidebarMenu extends Component
         if (empty($trusteeData)) {
             return $mainMenu;
         }
-
         foreach ($trusteeData as $configMenu) {
             $this->addMenuItem($mainMenu, $configMenu);
         }
