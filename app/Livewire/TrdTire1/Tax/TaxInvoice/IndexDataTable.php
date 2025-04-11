@@ -26,17 +26,6 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchDisabled();
         $this->setDefaultSort('tr_date', 'desc');
         $this->setDefaultSort('tr_code', 'desc');
-
-        // Set default filter for print_date to the most recent date
-        $latestPrintDate = OrderHdr::whereNotNull('print_date')
-            ->orderBy('print_date', 'desc')
-            ->value('print_date');
-        $this->filters['print_date'] = $latestPrintDate;
-
-        // Apply the filter to ensure data matches the default print_date
-        if ($latestPrintDate) {
-            $this->builder()->where('print_date', $latestPrintDate);
-        }
     }
 
     public function builder(): Builder
@@ -250,6 +239,14 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function setProsesDate()
     {
+
+        $newDataCount = OrderHdr::where('print_date', '1900-01-01')->count();
+
+        if ($newDataCount === 0) {
+            $this->dispatch('error', 'Tidak ada data baru yang bisa diproses.');
+            return;
+        }
+
         // Update all print_date to current date if it is '1900-01-01'
         OrderHdr::where('print_date', '1900-01-01')
             ->update(['print_date' => now()]);
@@ -259,6 +256,11 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function nomorFaktur()
     {
+        if (count($this->getSelected()) === 0) {
+            $this->dispatch('error', 'Tidak ada item yang dipilih.');
+            return;
+        }
+
         if (count($this->getSelected()) > 0) {
             $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
             if ($config) {
@@ -312,6 +314,11 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function deleteNomorFaktur()
     {
+        if (count($this->getSelected()) === 0) {
+            $this->dispatch('error', 'Tidak ada item yang dipilih.');
+            return;
+        }
+
         if (count($this->getSelected()) > 0) {
             $orders = OrderHdr::whereIn('id', $this->getSelected())->get(['id', 'print_remarks']);
             $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
@@ -346,6 +353,11 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function changeNomorFaktur()
     {
+        if (count($this->getSelected()) === 0) {
+            $this->dispatch('error', 'Tidak ada item yang dipilih.');
+            return;
+        }
+
         if (count($this->getSelected()) > 0) {
             $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
             if ($config) {

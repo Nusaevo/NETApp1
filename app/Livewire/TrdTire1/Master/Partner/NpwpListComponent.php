@@ -119,15 +119,18 @@ class NpwpListComponent extends DetailComponent
                 'wp_location' => $detail['wp_location'],
             ];
         }
+
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+        $partnerData = [
+            'partner_grp' => $this->object->grp,
+            'partner_code' => $this->object->code,
+            'wp_details' => $wp_detailsArray,
+        ];
+
         if ($partnerDetail) {
-            $partnerDetail->update(['wp_details' => $wp_detailsArray]);
-        }else {
-            // Jika belum ada, buat record baru dengan menyertakan partner_id dan banks
-            PartnerDetail::create([
-                'partner_id' => $this->object->id,
-                'wp_details'      => $wp_detailsArray
-            ]);
+            $partnerDetail->update($partnerData);
+        } else {
+            PartnerDetail::create(array_merge(['partner_id' => $this->object->id], $partnerData));
         }
     }
 

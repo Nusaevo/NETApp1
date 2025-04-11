@@ -63,13 +63,13 @@ class OrderDtl extends BaseModel
                 ->where('matl_uom', $orderDtl->matl_uom)
                 ->first();
             $orderDtl->price_base = $matlUom->base_factor;
-            $orderDtl->qty_base = $qty * $matlUom->base_factor;
+            // $orderDtl->qty_base = $qty * $matlUom->base_factor;
             $orderDtl->qty_uom = $matlUom->matl_uom;
             if ($matlUom) {
                 if ($orderDtl->tr_type === 'SO') {
-                    $matlUom->qty_fgi += $qty;
+                    $matlUom->qty_fgi = $qty;
                 } elseif ($orderDtl->tr_type === 'PO') {
-                    $matlUom->qty_fgr += $qty;
+                    $matlUom->qty_fgr = $qty;
                 }
             }
             $matlUom->save();
@@ -123,15 +123,6 @@ class OrderDtl extends BaseModel
                         $newQty = $existingBalQty + $qtyChange;
                         $existingBal->qty_oh = $newQty;
                         $existingBal->save();
-                        // Update corresponding record in IvtBalUnit
-                        // $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-                        //     ->where('wh_id', $delivDtl->wh_code)
-                        //     ->first();
-                        // if ($existingBalUnit) {
-                        //     $existingBalUnitQty = $existingBalUnit->qty_oh;
-                        //     $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
-                        //     $existingBalUnit->save();
-                        // }
                     }
                     $delivDtl->forceDelete();
                 }

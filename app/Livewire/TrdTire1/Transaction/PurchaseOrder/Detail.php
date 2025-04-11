@@ -252,6 +252,16 @@ class Detail extends BaseComponent
             ]);
         }
     }
+    public function onPaymentTermChanged()
+    {
+        if (!empty($this->inputs['payment_term_id'])) {
+            $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
+            if ($paymentTerm) {
+                $dueDays = $paymentTerm->num1;
+                $this->inputs['due_date'] = date('Y-m-d', strtotime("+$dueDays days"));
+            }
+        }
+    }
 
     public function delete()
     {

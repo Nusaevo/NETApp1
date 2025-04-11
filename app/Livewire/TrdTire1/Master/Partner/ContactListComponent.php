@@ -137,14 +137,16 @@ class ContactListComponent extends DetailComponent
             ];
         }
         $partnerDetail = PartnerDetail::where('partner_id', $this->object->id)->first();
+        $partnerData = [
+            'partner_grp' => $this->object->grp,
+            'partner_code' => $this->object->code,
+            'contacts' => $contactsArray,
+        ];
+
         if ($partnerDetail) {
-            $partnerDetail->update(['contacts' => $contactsArray]);
-        }else {
-            // Jika belum ada, buat record baru dengan menyertakan partner_id dan banks
-            PartnerDetail::create([
-                'partner_id' => $this->object->id,
-                'contacts'      => $contactsArray
-            ]);
+            $partnerDetail->update($partnerData);
+        } else {
+            PartnerDetail::create(array_merge(['partner_id' => $this->object->id], $partnerData));
         }
     }
 

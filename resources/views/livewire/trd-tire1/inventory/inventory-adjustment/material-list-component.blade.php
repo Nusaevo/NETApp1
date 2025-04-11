@@ -24,7 +24,6 @@
                                 @endphp
                                 {{ $material['label'] ?? '' }}
                             @endif
-                            @dump($input_details)
                         </td>
                         <td style="text-align: center;">
                             @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])

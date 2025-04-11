@@ -87,8 +87,8 @@
                                         @endforeach
                                         <!-- Subtotal -->
                                         <tr style="border-top: 1px solid #000; font-weight: normal;">
-                                            <td colspan="6" style="text-align: right;"></td>
-                                            <td style="border-top: 1px solid #000;">{{ number_format($totalDpp, 0, ',', '.') }}</td>
+                                            <td colspan="6"></td>
+                                            <td style="border-top: 1px solid #000; text-align: left;">{{ number_format($totalDpp, 0, ',', '.') }}</td>
                                             <td style="border-top: 1px solid #000;">{{ number_format($totalPpn, 0, ',', '.') }}</td>
                                             <td style="border-top: 1px solid #000;">{{ number_format($totalJumlah, 0, ',', '.') }}</td>
                                         </tr>

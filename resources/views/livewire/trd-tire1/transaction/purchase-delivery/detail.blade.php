@@ -19,133 +19,20 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
-                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                    <x-ui-text-field label="{{ $this->trans('tr_code') }}"
-                                        model="inputs.tr_code" type="text" :action="$actionValue" required="false"
-                                        enabled="true" capslockMode="true" />
+                                        :action="$actionValue" required="true" enabled="false" />
+                                    <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
+                                        type="text" :action="$actionValue" required="true" :enabled="$isPanelEnabled"
+                                        capslockMode="true" />
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.reff_date" type="date"
                                         :action="$actionValue" required="true" enabled="true" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" model="inputs.wh_code"
-                                        :options="$warehouses" required="true" :action="$actionValue" />
+
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
-                                <div class="row">
-                                    <x-ui-text-field-search label="{{ $this->trans('reffhdrtr_code') }}"
-                                        model="inputs.reffhdrtr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
-                                        required="false" onChanged="onPurchaseOrderChanged" :selectedValue="$inputs['reffhdrtr_code']" />
-
-                                    <!-- Display Partner Name -->
-                                    <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
-                                        type="text" :action="$actionValue" required="false" readonly="true" enabled="false"/>
-                                    <!-- Hidden input for partner ID -->
-                                    <input type="hidden" wire:model="inputs.partner_id">
-                                    {{-- <x-ui-text-field-search type="int" label="{{ $this->trans('custommer') }}"
-                                        clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
-                                        required="true" :action="$actionValue" :enabled="$isPanelEnabled" /> --}}
-                                </div>
                             </x-ui-padding>
                         </x-ui-card>
-                        {{-- </div>
-                    <x-ui-footer>
-                        <div>
-                            <x-ui-button clickEvent="Save" button-name="Save Header" loading="true" :action="$actionValue"
-                                cssClass="btn-primary" iconPath="save.svg" />
-                        </div>
-                    </x-ui-footer> --}}
-
-                        {{-- <div class="col-md-12">
-                        <x-ui-card title="Order Info">
-                            <x-ui-text-field label="Date" model="inputs.tr_date" type="date" :action="$actionValue"
-                                required="true" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field-search type="int" label="Supplier" clickEvent=""
-                                model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers" required="true"
-                                :action="$actionValue" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
-                                :action="$actionValue" required="false" enabled="false" />
-                        </x-ui-card>
-
-                        <x-ui-footer>
-                            @if ($actionValue !== 'Create' && (!$object instanceof App\Models\SysConfig1\ConfigUser || auth()->user()->id !== $object->id))
-                                @if (isset($permissions['delete']) && $permissions['delete'])
-                                    <div style="padding-right: 10px;">
-                                        @include('layout.customs.buttons.disable')
-                                    </div>
-                                @endif
-
-                            @endif
-                            <div>
-                                <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
-                                    :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
-                            </div>
-
-                        </x-ui-footer>
-
-                    </div> --}}
-                        {{-- <div class="col-md-12">
-                        <x-ui-card title="Order Items">
-                            <div>
-                                <x-ui-card>
-                                    <div>
-                                        <x-ui-list-table id="Table" title="Material List">
-                                            <x-slot name="body">
-                                                @foreach ($input_details as $key => $input_detail)
-                                                    <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
-                                                        <x-ui-list-body>
-                                                            <x-slot name="rows">
-                                                                <div class="row">
-                                                                    <div class="col-md-6">
-                                                                        <x-ui-text-field-search type="int"
-                                                                            label='kode' clickEvent=""
-                                                                            model="input_details.{{ $key }}.matl_id"
-                                                                            :selectedValue="$input_details[$key]['matl_id']" :options="$materials"
-                                                                            required="true" :action="$actionValue"
-                                                                            onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                                            :enabled="true" />
-                                                                    </div>
-                                                                    <div class="col-md-3">
-                                                                        <x-ui-text-field
-                                                                            model="input_details.{{ $key }}.qty_order"
-                                                                            label="Quantity Belum Dikirim"
-                                                                            enabled="true" class="form-control"
-                                                                            onChanged="updateAmount({{ $key }})"
-                                                                            type="number" enabled="false" />
-                                                                    </div>
-                                                                    <div class="col-md-3">
-                                                                        <x-ui-text-field label="Quantity"
-                                                                            model="input_details.{{ $key }}.qty"
-                                                                            required="false" enabled="true" />
-                                                                    </div>
-                                                                </div>
-                                                            </x-slot>
-
-                                                            <x-slot name="button">
-                                                                <x-ui-link-text type="close" :clickEvent="'deleteItem(' . $key . ')'"
-                                                                    class="btn btn-link" name="x" />
-                                                            </x-slot>
-                                                        </x-ui-list-body>
-                                                    </tr>
-                                                @endforeach
-                                            </x-slot>
-                                            <x-slot name="footerButton">
-                                                <x-ui-button clickEvent="addItem" cssClass="btn btn-primary"
-                                                    iconPath="add.svg" button-name="Add" />
-                                            </x-slot>
-                                        </x-ui-list-table>
-                                    </div>
-                                </x-ui-card>
-                                <x-ui-footer>
-                                    <div>
-                                        <x-ui-button clickEvent="Save" button-name="Save" loading="true"
-                                            :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
-                                    </div>
-                                </x-ui-footer>
-                            </div>
-
-                        </x-ui-card>
-                    </div> --}}
                         <div>
                             <x-ui-card>
                                 <x-ui-table id="Table">
@@ -164,16 +51,15 @@
                                             <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                                 <td style="text-align: center;">{{ $loop->iteration }}</td>
                                                 <td>
-                                                    <x-ui-text-field-search type="int" label="" clickEvent=""
+                                                    <x-ui-dropdown-select type="int" label="" clickEvent=""
                                                         model="input_details.{{ $key }}.matl_id"
                                                         :selectedValue="$input_details[$key]['matl_id']" :options="$materials" required="true"
                                                         :action="$actionValue"
                                                         onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                        enabled="false" />
+                                                        enabled="true" />
                                                 </td>
                                                 <td style="text-align: center;">
-                                                    <x-ui-text-field
-                                                        model="input_details.{{ $key }}.qty_order"
+                                                    <x-ui-text-field model="input_details.{{ $key }}.qty_order"
                                                         enabled="true" class="form-control" type="number"
                                                         enabled="false" :action="$actionValue" />
                                                 </td>
@@ -191,10 +77,26 @@
                                         @endforeach
                                     </x-slot>
 
-                                    {{-- <x-slot name="button">
+                                    <x-slot name="button">
+                                        <div class="row">
+                                            <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
+                                                model="inputs.reffhdrtr_code" type="text" :action="$actionValue"
+                                                :options="$purchaseOrders" required="false" :selectedValue="$inputs['reffhdrtr_code']"
+                                                :enabled="$isPanelEnabled"
+                                                onChanged="onPurchaseOrderChanged($event.target.value)" />
+                                            <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}"
+                                                model="inputs.wh_code" :options="$warehouses" required="true"
+                                                :action="$actionValue" :enabled="$isPanelEnabled" />
+                                            <!-- Display Partner Name -->
+                                            <x-ui-text-field label="{{ $this->trans('supplier') }}"
+                                                model="inputs.partner_name" type="text" :action="$actionValue"
+                                                required="false" readonly="true" enabled="false" />
+                                            <!-- Hidden input for partner ID -->
+                                            <input type="hidden" wire:model="inputs.partner_id">
+                                        </div>
                                         <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                            button-name="Add" />
-                                    </x-slot> --}}
+                                            button-name="Add" :enabled="$inputs['reffhdrtr_code'] ? true : false" />
+                                    </x-slot>
                                 </x-ui-table>
                             </x-ui-card>
 

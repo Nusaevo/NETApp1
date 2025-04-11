@@ -507,8 +507,6 @@ class MaterialComponent extends BaseComponent
         // Refresh list merk dan update pilihan di form
         $this->masterService = new MasterService();
         $this->materialMerk = $this->masterService->getMatlMerkData();
-        $this->materials['brand'] = $this->object_brand->str1;
-        $this->generateName();
 
         // Tampilkan pesan sukses dan tutup dialog
         $this->dispatch('success', 'Brand berhasil disimpan.');
