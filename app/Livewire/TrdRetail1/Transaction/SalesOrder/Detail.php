@@ -119,6 +119,7 @@ class Detail extends BaseComponent
                 'objectId' => encryptWithSessionKey($this->object->id),
             ]);
         }
+        $this->dispatch('saveMaterialList');
     }
 
 

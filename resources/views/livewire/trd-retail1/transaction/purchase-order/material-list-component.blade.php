@@ -143,9 +143,4 @@
             </x-slot>
         </x-ui-dialog-box>
     </x-ui-card>
-
-    <x-ui-footer>
-        <x-ui-button clickEvent="SaveItem" button-name="Save Item" loading="true" :action="$actionValue"
-            cssClass="btn-primary" iconPath="save.svg" />
-    </x-ui-footer>
 </div>

@@ -35,6 +35,12 @@ class DetailComponent extends Component
     public $menuName = "";
     protected $versionSessionKey = 'session_version_number';
     protected $permissionSessionKey = 'session_permissions';
+    public function updated($propertyName)
+    {
+        $this->hasChanges = true;
+        Session::put('page_has_changes', true);
+        $this->dispatch('form-changed', hasChanges: true);
+    }
 
     protected function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {

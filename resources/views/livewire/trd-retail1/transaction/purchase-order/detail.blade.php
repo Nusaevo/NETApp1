@@ -22,7 +22,9 @@
                                 {{-- <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
                                     required="true" :action="$actionValue" enabled="false" clickEvent="openPartnerDialogBox"
                                     buttonName="Search" :buttonEnabled="$isPanelEnabled" /> --}}
-                                <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}"
+                                    clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
+                                    required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
 
                                 {{-- <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
                                     height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
@@ -70,22 +72,19 @@
                                     :action="$actionValue" required="false" enabled="false" />
                             </div>
                         </x-ui-card>
-
-                        <x-ui-footer>
-                            @include('layout.customs.transaction-form-footer')
-                            <div>
-                                <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
-                                    :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
-                            </div>
-
-                        </x-ui-footer>
-
                     </div>
                     <div class="col-md-12">
                         <x-ui-card title="Order Items">
                             @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId])
                         </x-ui-card>
                     </div>
+                    <x-ui-footer>
+                        @include('layout.customs.transaction-form-footer')
+                        <div>
+                            <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
+                                cssClass="btn-primary" iconPath="save.svg" />
+                        </div>
+                    </x-ui-footer>
                 </div>
             </div>
         </x-ui-tab-view-content>

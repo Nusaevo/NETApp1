@@ -35,9 +35,16 @@ class BaseComponent extends Component
     public $bypassPermissions = false;
     public $menuName = "";
     public $isComponent = false;
+    public bool $hasChanges = false;
 
     protected $versionSessionKey = 'session_version_number';
     protected $permissionSessionKey = 'session_permissions';
+    public function updated($propertyName)
+    {
+        $this->hasChanges = true;
+        Session::put('page_has_changes', true);
+        $this->dispatch('form-changed', hasChanges: true);
+    }
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
@@ -254,6 +261,9 @@ class BaseComponent extends Component
 
     public function Save()
     {
+        $this->hasChanges = false;
+        Session::forget('page_has_changes');
+        $this->dispatch('form-changed', hasChanges: false);
         $this->validateForm();
 
         try {
@@ -275,6 +285,10 @@ class BaseComponent extends Component
 
     public function SaveWithoutNotification()
     {
+        sleep(1);
+
+        $this->hasChanges = false;
+        $this->dispatch('form-changed', ['hasChanges' => false]);
         $this->validateForm();
 
         try {

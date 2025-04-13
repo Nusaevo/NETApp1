@@ -50,7 +50,7 @@
     @foreach (getGlobalAssets('css') as $path)
         {!! sprintf(
             '
-                                                    <link rel="stylesheet" href="%s">',
+                                                            <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -60,7 +60,7 @@
     @foreach (getVendors('css') as $path)
         {!! sprintf(
             '
-                                                    <link rel="stylesheet" href="%s">',
+                                                            <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -70,7 +70,7 @@
     @foreach (getCustomCss() as $path)
         {!! sprintf(
             '
-                                                    <link rel="stylesheet" href="%s">',
+                                                            <link rel="stylesheet" href="%s">',
             asset($path),
         ) !!}
     @endforeach
@@ -231,7 +231,9 @@
                     confirmButtonText: confirmButtonText
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        Livewire.dispatch(confirmMethod, { data: confirmParams});
+                        Livewire.dispatch(confirmMethod, {
+                            data: confirmParams
+                        });
                     }
                 });
             });
@@ -263,6 +265,26 @@
             window.print();
         }
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let hasChanges = false;
+
+            // Tampilkan alert sebelum meninggalkan halaman (refresh, close tab, dll)
+            window.addEventListener('beforeunload', function(e) {
+                if (hasChanges) {
+                    e.preventDefault();
+                    e.returnValue = 'You have unsaved changes. Do you really want to leave?';
+                }
+            });
+
+            // Tangkap event dari Livewire saat ada perubahan
+            Livewire.on('form-changed', function(data) {
+                hasChanges = data.hasChanges;
+                console.log('[Livewire] Form changed status:', hasChanges);
+            });
+        });
+    </script>
+
     @livewireScripts
 </body>
 <!--end::Body-->

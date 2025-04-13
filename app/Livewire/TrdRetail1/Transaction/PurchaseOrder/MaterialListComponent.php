@@ -9,6 +9,8 @@ use App\Services\TrdRetail1\Master\MasterService;
 use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigConst;
 use Exception;
+use Illuminate\Foundation\Exceptions\Renderer\Listener;
+use Livewire\Attributes\Modelable;
 
 class MaterialListComponent extends DetailComponent
 {
@@ -18,7 +20,10 @@ class MaterialListComponent extends DetailComponent
     public $trhdr_id;
     public $tr_seq;
     public $tr_code;
+
+    #[Modelable]
     public $input_details = [];
+
     public $total_amount = 0;
     public $materialList = [];
     public $searchTerm = '';
@@ -35,6 +40,9 @@ class MaterialListComponent extends DetailComponent
     public $uomOptions = [];
 
     public $wh_code='';
+    protected $listeners = [
+        'saveMaterialList'  => 'saveMaterialList'
+    ];
     protected $rules = [
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
@@ -84,7 +92,7 @@ class MaterialListComponent extends DetailComponent
                     'qty' => null,
                     'price' => 0.0
                 ];
-                $this->dispatch('success', __('generic.string.add_item'));
+
             } catch (Exception $e) {
                 $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
             }
@@ -167,9 +175,6 @@ class MaterialListComponent extends DetailComponent
     public function deleteItem($index)
     {
         try {
-            if (!isset($this->input_details[$index])) {
-                throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
-            }
 
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
@@ -192,16 +197,11 @@ class MaterialListComponent extends DetailComponent
             }
         }
     }
-    public function SaveItem()
-    {
-        $this->Save();
-    }
 
-    public function onValidateAndSave()
+    public function saveMaterialList()
     {
         if (empty($this->objectIdValue)) {
-            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
-            return;
+             return;
         }
         // 1) Validate the input details
         $this->validate();

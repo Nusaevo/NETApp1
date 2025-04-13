@@ -19,8 +19,10 @@
                             <div class="row">
                                 <x-ui-text-field label="Date" model="inputs.tr_date" type="date" :action="$actionValue"
                                     required="true" :enabled="$isPanelEnabled" />
-                                <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
-{{--
+                                <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}"
+                                    clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
+                                    required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                {{--
                                 <x-ui-text-field type="text" label="Customer" model="inputs.partner_name"
                                     required="true" :action="$actionValue" enabled="false" clickEvent="openPartnerDialogBox"
                                     buttonName="Search" :buttonEnabled="$isPanelEnabled" />
@@ -72,21 +74,6 @@
                             </div>
                         </x-ui-card>
 
-                        <x-ui-footer>
-
-                            @include('layout.customs.transaction-form-footer')
-                            <div>
-                                @php
-                                $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
-                                @endphp
-                                <x-ui-button :action="$actionValue" clickEvent="{{ route($printPdfRoute,
-                                ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($object->id)]) }}"
-                                    cssClass="btn-primary" type="Route" loading="true" button-name="Print" iconPath="print.svg" />
-                                <x-ui-button clickEvent="Save" button-name="Save Header" loading="true"
-                                    :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
-                            </div>
-
-                        </x-ui-footer>
 
                     </div>
                     <div class="col-md-12">
@@ -102,6 +89,25 @@
                 </div>
             </div>
         </x-ui-tab-view-content>
+
+        <x-ui-footer>
+
+            @include('layout.customs.transaction-form-footer')
+            <div>
+                @php
+                    $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
+                @endphp
+                <x-ui-button :action="$actionValue"
+                    clickEvent="{{ route($printPdfRoute, [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($object->id),
+                    ]) }}"
+                    cssClass="btn-primary" type="Route" loading="true" button-name="Print" iconPath="print.svg" />
+                <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
+                    cssClass="btn-primary" iconPath="save.svg" />
+            </div>
+
+        </x-ui-footer>
         {{-- <x-ui-footer> --}}
         {{-- @if ($actionValue === 'Edit')
             <x-ui-button :action="$actionValue" clickEvent="createReturn"
