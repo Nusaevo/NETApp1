@@ -169,8 +169,19 @@ class Detail extends BaseComponent
     {
         $this->input_details = []; // Clear existing items
         $this->inputs['reffhdrtr_code'] = $value; // Update the purchase order code
+
         if ($value) {
             $this->loadPurchaseOrderDetails($value); // Reload details for the new purchase order
+
+            // Load supplier data based on the selected purchase order
+            $orderHeader = OrderHdr::where('tr_code', $value)->first();
+            if ($orderHeader && $orderHeader->partner) {
+                $this->inputs['partner_id'] = $orderHeader->partner->id;
+                $this->inputs['partner_name'] = $orderHeader->partner->name;
+            } else {
+                $this->inputs['partner_id'] = null;
+                $this->inputs['partner_name'] = null;
+            }
         }
     }
 
@@ -277,7 +288,7 @@ class Detail extends BaseComponent
 
         $existingDetails->each(function ($item) {
             if (!isset($this->input_details[$item->tr_seq - 1])) {
-                $item->delete();
+                $item->forceDelete(); // Force delete the DelivDtl record
             }
         });
     }
