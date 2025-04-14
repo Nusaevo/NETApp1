@@ -14,8 +14,7 @@ class DelivHdr extends BaseModel
 {
     use SoftDeletes;
 
-    protected $table = 'deliv_hdrs'; // Update the table name
-
+    protected $table = 'deliv_hdrs'; 
     protected $primaryKey = 'id';
     public $timestamps = true;
     protected $fillable = [

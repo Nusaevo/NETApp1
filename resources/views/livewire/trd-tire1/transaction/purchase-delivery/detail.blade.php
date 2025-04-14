@@ -79,14 +79,14 @@
 
                                     <x-slot name="button">
                                         <div class="row">
+                                            <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}"
+                                                model="inputs.wh_code" :options="$warehouses" required="true"
+                                                :action="$actionValue" :enabled="$isPanelEnabled" />
                                             <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
                                                 model="inputs.reffhdrtr_code" type="text" :action="$actionValue"
                                                 :options="$purchaseOrders" required="false" :selectedValue="$inputs['reffhdrtr_code']"
                                                 :enabled="$isPanelEnabled"
                                                 onChanged="onPurchaseOrderChanged($event.target.value)" />
-                                            <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}"
-                                                model="inputs.wh_code" :options="$warehouses" required="true"
-                                                :action="$actionValue" :enabled="$isPanelEnabled" />
                                             <!-- Display Partner Name -->
                                             <x-ui-text-field label="{{ $this->trans('supplier') }}"
                                                 model="inputs.partner_name" type="text" :action="$actionValue"
