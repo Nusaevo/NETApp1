@@ -51,7 +51,7 @@ class Detail extends BaseComponent
 
     public $rules  = [
         'inputs.tr_code' => 'required',
-        'inputs.partner_id' => 'required',
+        'inputs.partner_name' => 'required',
         'inputs.tax_flag' => 'required',
         'inputs.payment_term_id' => 'required',
     ];

@@ -31,6 +31,20 @@
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
+                                <div class="row">
+                                    <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" model="inputs.wh_code"
+                                        :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                    <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
+                                        model="inputs.reffhdrtr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
+                                        required="false" :selectedValue="$inputs['reffhdrtr_code']" :enabled="$isPanelEnabled"
+                                        onChanged="onPurchaseOrderChanged($event.target.value)" />
+                                    <!-- Display Partner Name -->
+                                    <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
+                                        type="text" :action="$actionValue" required="false" readonly="true"
+                                        enabled="false" />
+                                    <!-- Hidden input for partner ID -->
+                                    <input type="hidden" wire:model="inputs.partner_id">
+                                </div>
                             </x-ui-padding>
                         </x-ui-card>
                         <div>
@@ -59,7 +73,8 @@
                                                         enabled="true" />
                                                 </td>
                                                 <td style="text-align: center;">
-                                                    <x-ui-text-field model="input_details.{{ $key }}.qty_order"
+                                                    <x-ui-text-field
+                                                        model="input_details.{{ $key }}.qty_order"
                                                         enabled="true" class="form-control" type="number"
                                                         enabled="false" :action="$actionValue" />
                                                 </td>
@@ -78,22 +93,6 @@
                                     </x-slot>
 
                                     <x-slot name="button">
-                                        <div class="row">
-                                            <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}"
-                                                model="inputs.wh_code" :options="$warehouses" required="true"
-                                                :action="$actionValue" :enabled="$isPanelEnabled" />
-                                            <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
-                                                model="inputs.reffhdrtr_code" type="text" :action="$actionValue"
-                                                :options="$purchaseOrders" required="false" :selectedValue="$inputs['reffhdrtr_code']"
-                                                :enabled="$isPanelEnabled"
-                                                onChanged="onPurchaseOrderChanged($event.target.value)" />
-                                            <!-- Display Partner Name -->
-                                            <x-ui-text-field label="{{ $this->trans('supplier') }}"
-                                                model="inputs.partner_name" type="text" :action="$actionValue"
-                                                required="false" readonly="true" enabled="false" />
-                                            <!-- Hidden input for partner ID -->
-                                            <input type="hidden" wire:model="inputs.partner_id">
-                                        </div>
                                         <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                             button-name="Add" :enabled="$inputs['reffhdrtr_code'] ? true : false" />
                                     </x-slot>

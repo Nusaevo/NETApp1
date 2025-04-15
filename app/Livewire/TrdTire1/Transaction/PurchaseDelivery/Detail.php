@@ -212,23 +212,6 @@ class Detail extends BaseComponent
             return;
         }
 
-        // Validasi detail
-        if (empty($this->input_details) || count($this->input_details) == 0) {
-            $this->dispatch('error', 'Detail transaksi tidak boleh kosong');
-            return;
-        }
-
-        $errorItems = [];
-        foreach ($this->input_details as $key => $detail) {
-            if (isset($detail['qty']) && $detail['qty'] > $detail['qty_order']) {
-                $errorItems[] = $detail['matl_descr'];
-            }
-        }
-        if (!empty($errorItems)) {
-            $this->dispatch('error', 'Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
-            return;
-        }
-
         // Update data partner jika ada
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
@@ -244,9 +227,23 @@ class Detail extends BaseComponent
 
         if (!$this->object) {
             $this->object = new DelivHdr();
+            $this->object->status_code = Status::OPEN; // Set status_code to OPEN when creating
         }
+
         $this->object->fill($this->inputs);
         $this->object->save();
+
+        // Validasi detail
+        $errorItems = [];
+        foreach ($this->input_details as $key => $detail) {
+            if (isset($detail['qty']) && $detail['qty'] > $detail['qty_order']) {
+                $errorItems[] = $detail['matl_descr'];
+            }
+        }
+        if (!empty($errorItems)) {
+            $this->dispatch('error', 'Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
+            return;
+        }
 
         $existingDetails = DelivDtl::where('trhdr_id', $this->object->id)
             ->where('tr_type', $this->object->tr_type)
@@ -261,7 +258,6 @@ class Detail extends BaseComponent
             $newQty = $detail['qty'];
             // Perhitungan delta (digunakan di model)
             $oldQty = isset($existingDetails[$tr_seq]) ? $existingDetails[$tr_seq]->qty : 0;
-            // NOTE: Pengurangan qty_reff sudah dipindahkan ke dalam event saving model
 
             $detailRecord = DelivDtl::firstOrNew([
                 'trhdr_id' => $this->object->id, // Ensure trhdr_id is set correctly
@@ -285,12 +281,12 @@ class Detail extends BaseComponent
             ]);
             $detailRecord->save();
         }
-
         $existingDetails->each(function ($item) {
             if (!isset($this->input_details[$item->tr_seq - 1])) {
                 $item->forceDelete(); // Force delete the DelivDtl record
             }
         });
+
     }
 
     public function addItem()
