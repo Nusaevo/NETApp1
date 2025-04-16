@@ -306,10 +306,10 @@ class Detail extends BaseComponent
             if ($material) {
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
-                $this->input_details[$key]['price'] = $material->buying_price;
+                $this->input_details[$key]['price'] = $material->selling_price;
                 $this->input_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
                 $this->input_details[$key]['matl_descr'] = $material->name;
-                $this->input_details[$key]['price'] = $material->DefaultUom->buying_price ?? 0;
+                $this->input_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0;
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
                 $this->updateItemAmount($key);
