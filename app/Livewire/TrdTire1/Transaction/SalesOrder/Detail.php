@@ -3,17 +3,17 @@
 namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{BillingDtl, BillingHdr, DelivDtl, DelivHdr, OrderHdr, OrderDtl};
-use App\Models\TrdTire1\Master\{Partner, Material};
+use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, DelivHdr, DelivDtl, BillingHdr, BillingDtl};
+use App\Models\TrdTire1\Master\{Partner, Material, MatlUom};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
-use Illuminate\Support\Facades\{Session, DB};
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class Detail extends BaseComponent
 {
-    #region Constant Variables
+    // Header properties
     public $inputs = [];
     public $SOTax = [];
     public $SOSend = [];
@@ -29,76 +29,72 @@ class Detail extends BaseComponent
     public $payments;
     public $deletedItems = [];
     public $newItems = [];
-    public $total_amount;
-    public $total_tax;
-    public $total_dpp;
-    public $total_discount;
+    public $total_amount = 0;
+    public $total_tax = 0;
+    public $total_dpp = 0;
+    public $total_discount = 0;
     public $trType = "SO";
     public $versionNumber = "0.0";
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
     public $currency = [];
-
     public $returnIds = [];
     public $currencyRate = 0;
     public $npwpOptions = [];
     public $shipOptions = [];
-    protected $masterService;
+    public $notaCount = 0;
+    public $suratJalanCount = 0;
     public $isPanelEnabled = "false";
-    public $notaCount = 0; // x: jumlah nota jual dicetak
-    public $suratJalanCount = 0; // y: jumlah surat jalan dicetak
+    public $payer = "true"; // Default true, akan dipengaruhi oleh tax_doc_flag
 
-    public $payer = "true"; // Ensure this line is present to define the payer property
+    // Detail (item) properties
+    public $input_details = [];
+    public $materials;
+    protected $masterService;
 
+    // Gabungan validasi untuk header dan detail (item)
     public $rules  = [
-        'inputs.tr_code' => 'required',
-        'inputs.partner_id' => 'required',
+        'inputs.tr_code'       => 'required',
+        'inputs.partner_id'    => 'required',
+        'input_details.*.qty'  => 'required',
+        'input_details.*.matl_id'  => 'required',
     ];
+
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
-        'delete' => 'delete',
-        'updateAmount' => 'updateAmount',
-        'updateDiscount' => 'updateDiscount',
-        'updateDPP' => 'updateDPP',
-        'updatePPN' => 'updatePPN',
-        'updateTotalTax' => 'updateTotalTax',
+        'delete'        => 'delete',
+        'updateAmount'  => 'updateAmount',
     ];
-    #endregion
 
-    #region Populate Data methods
-
+    /*
+     * Method untuk generate kode transaksi.
+     */
     public function getTransactionCode()
     {
         if (!isset($this->inputs['sales_type']) || !isset($this->trType)) {
             $this->dispatch('warning', 'Tipe Kendaraan dan Jenis Transaksi harus diisi');
             return;
         }
-
         $sales_type = $this->inputs['sales_type'];
-        $tax_doc_flag = !empty($this->inputs['tax_doc_flag']); // Konversi ke boolean
+        $tax_doc_flag = !empty($this->inputs['tax_doc_flag']);
         $tr_type = $this->trType;
-
         $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_doc_flag);
-        // dd($this->inputs['tr_code']);
     }
 
+    /*
+     * Mengatur perhitungan pajak (DPP dan PPN) berdasarkan tax_flag dan tax_value.
+     */
     public function onSOTaxChange()
     {
         try {
-            // Ambil data konfigurasi berdasarkan konstanta pajak
             $configData = ConfigConst::select('num1', 'str1')
                 ->where('const_group', 'TRX_SO_TAX')
                 ->where('str1', $this->inputs['tax_flag'])
                 ->first();
-
-            $this->inputs['tax_value'] = $configData->num1 ?? 0; // Nilai pajak default 0 jika tidak ditemukan
-            $taxType = $configData->str1 ?? ''; // Tipe pajak (str1)
-
-            // Simpan tax_pct
+            $this->inputs['tax_value'] = $configData->num1 ?? 0;
+            $taxType = $configData->str1 ?? '';
             $this->inputs['tax_pct'] = $this->inputs['tax_value'];
-
-            // Hitung DPP dan PPN berdasarkan tipe pajak
             $this->calculateDPPandPPN($taxType);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
@@ -108,34 +104,34 @@ class Detail extends BaseComponent
     public function calculateDPPandPPN($taxType)
     {
         try {
-            $taxValue = (float)($this->inputs['tax_value'] ?? 0); // Nilai pajak (persentase)
+            $taxValue = (float)($this->inputs['tax_value'] ?? 0);
             $totalAmount = (float)$this->total_amount;
-
             if ($taxType === 'I') {
-                $dpp = $totalAmount / (1 + $taxValue / 100); // Rumus DPP
-                $ppn = $totalAmount - $dpp; // Rumus PPN
+                $dpp = $totalAmount / (1 + $taxValue / 100);
+                $ppn = $totalAmount - $dpp;
             } elseif ($taxType === 'E') {
-                $dpp = $totalAmount; // DPP sama dengan total amount
-                $ppn = ($taxValue / 100) * $totalAmount; // Rumus PPN
+                $dpp = $totalAmount;
+                $ppn = ($taxValue / 100) * $totalAmount;
             } else {
-                $dpp = $totalAmount; // DPP sama dengan total amount
-                $ppn = 0; // PPN nol
+                $dpp = $totalAmount;
+                $ppn = 0;
             }
-
-            $this->total_dpp = rupiah(round($dpp, 2));
-            $this->total_tax = rupiah(round($ppn, 2));
-
+            $this->total_dpp = round($dpp, 2);
+            $this->total_tax = round($ppn, 2);
             $this->dispatch('updateDPP', $this->total_dpp);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
     }
 
+    /*
+     * Ketika partner berubah, ambil data NPWP dan Shipping Address dari detail partner
+     */
     public function onPartnerChanged()
     {
         $partner = Partner::find($this->inputs['partner_id']);
-        $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
-        $this->shipOptions = $partner ? $this->listShip($partner) : null;
+        $this->npwpOptions = $partner ? $this->listNpwp($partner) : [];
+        $this->shipOptions = $partner ? $this->listShip($partner) : [];
     }
 
     private function listNpwp($partner)
@@ -144,49 +140,40 @@ class Detail extends BaseComponent
             return [];
         }
         $wpDetails = $partner->PartnerDetail->wp_details;
-
         if (is_string($wpDetails)) {
             $wpDetails = json_decode($wpDetails, true);
         }
-        // Jika gagal decode atau bukan array, return array kosong untuk mencegah error
-        if (!is_array($wpDetails)) {
-            return [];
-        }
-
-        return array_map(function ($item) {
+        return is_array($wpDetails) ? array_map(function ($item) {
             return [
-                'label' => ($item['npwp']),
+                'label' => $item['npwp'],
                 'value' => $item['npwp'],
             ];
-        }, $wpDetails);
+        }, $wpDetails) : [];
     }
+
     private function listShip($partner)
     {
         if (!$partner->PartnerDetail || empty($partner->PartnerDetail->shipping_address)) {
             return [];
         }
         $shipDetail = $partner->PartnerDetail->shipping_address;
-
         if (is_string($shipDetail)) {
             $shipDetail = json_decode($shipDetail, true);
         }
-        // Jika gagal decode atau bukan array, return array kosong untuk mencegah error
-        if (!is_array($shipDetail)) {
-            return [];
-        }
-
-        return array_map(function ($item) {
+        return is_array($shipDetail) ? array_map(function ($item) {
             return [
-                'label' => ($item['name']),
+                'label' => $item['name'],
                 'value' => $item['name'],
             ];
-        }, $shipDetail);
+        }, $shipDetail) : [];
     }
 
+    /*
+     * Update flag NPWP (payer) ketika tax_doc_flag berubah.
+     */
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
-        // $this->dispatch('updateTaxPayerEnabled', $this->payer); // Ensure the UI is updated
     }
 
     public function onPaymentTermChanged()
@@ -200,88 +187,17 @@ class Detail extends BaseComponent
         }
     }
 
-    private function createDelivAndBilling()
-    {
-        try {
-            DB::beginTransaction();
-
-            // Create DelivDtl
-            DelivDtl::create([
-                'trhdr_id' => $this->object->id,
-                'tr_type' => 'SD',
-                'tr_code' => $this->inputs['tr_code'],
-                'tr_seq' => 1, // Example sequence number
-                'matl_id' => $this->inputs['matl_id'],
-                'matl_code' => $this->inputs['matl_code'],
-                'matl_descr' => $this->inputs['matl_descr'],
-                'qty' => $this->inputs['qty'],
-            ]);
-
-            // Create BillingDtl
-            BillingDtl::create([
-                'trhdr_id' => $this->object->id,
-                'tr_type' => 'ARB',
-                'tr_code' => $this->inputs['tr_code'],
-                'tr_seq' => 1, // Example sequence number
-                'matl_id' => $this->inputs['matl_id'],
-                'matl_code' => $this->inputs['matl_code'],
-                'matl_descr' => $this->inputs['matl_descr'],
-                'qty' => $this->inputs['qty'],
-                'price' => $this->inputs['price'],
-                'amt' => $this->inputs['amt'],
-            ]);
-
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatch('error', $e->getMessage());
-        }
-    }
-
-    private function createDelivAndBillingHdr()
-    {
-        try {
-            DB::beginTransaction();
-
-            // Ensure partner_id is set
-            if (empty($this->inputs['partner_id'])) {
-                throw new Exception('Partner ID is required');
-            }
-
-            // Create DelivHdr
-            $delivHdr = DelivHdr::create([
-                'trhdr_id' => $this->object->id,
-                'tr_type' => 'SD',
-                'tr_code' => $this->inputs['tr_code'],
-                'partner_id' => $this->inputs['partner_id'],
-                'partner_code' => $this->inputs['partner_code'],
-                'tr_date' => now(),
-            ]);
-
-            // Create BillingHdr
-            $billingHdr = BillingHdr::create([
-                'trhdr_id' => $this->object->id,
-                'tr_type' => 'ARB',
-                'tr_code' => $this->inputs['tr_code'],
-                'partner_id' => $this->inputs['partner_id'],
-                'partner_code' => $this->inputs['partner_code'],
-                'tr_date' => now(),
-            ]);
-
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatch('error', $e->getMessage());
-        }
-    }
-
+    /*
+     * Proses inisialisasi data pada render (pre-render).
+     * Bila mode edit/view, load data header (OrderHdr) dan detail (OrderDtl).
+     */
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
-            'inputs.tax'      => $this->trans('tax'),
+            'inputs.tax'          => $this->trans('tax'),
             'inputs.tr_code'      => $this->trans('tr_code'),
-            'inputs.partner_id'      => $this->trans('partner_id'),
-            'inputs.send_to_name'      => $this->trans('send_to_name'),
+            'inputs.partner_id'   => $this->trans('partner_id'),
+            'inputs.send_to_name' => $this->trans('send_to_name'),
         ];
 
         $this->masterService = new MasterService();
@@ -289,8 +205,9 @@ class Detail extends BaseComponent
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
-        // $this->suppliers = $this->masterService->getSuppliers();
         $this->warehouses = $this->masterService->getWarehouse();
+        $this->materials = $this->masterService->getMaterials();
+
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {
                 $this->dispatch('error', 'Invalid object ID');
@@ -306,127 +223,337 @@ class Detail extends BaseComponent
             $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
             $this->inputs['partner_name'] = $this->object->partner->code;
             $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
-            $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr; // Populate textarea_npwp
+            $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr;
             $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
             $this->onPartnerChanged();
-        }
-        if (!$this->isEditOrView()) {
+            $this->loadDetails();
+        } else {
             $this->isPanelEnabled = "true";
             $this->inputs['tax_doc_flag'] = true;
             $this->inputs['tax_flag'] = 'I';
         }
-        // Panggil perhitungan DPP dan PPN saat halaman dimuat
         if (!empty($this->inputs['tax_flag'])) {
             $this->onSOTaxChange();
         }
         $this->dispatch('updateTaxPayerEnabled', !empty($this->inputs['tax_doc_flag']));
     }
 
+    /*
+     * Reset state untuk header dan detail.
+     */
     public function onReset()
     {
-        $this->reset('inputs');
+        $this->reset('inputs', 'input_details');
         $this->object = new OrderHdr();
         $this->inputs = populateArrayFromModel($this->object);
-        $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['tr_date']   = date('Y-m-d');
         $this->inputs['due_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['tr_type']   = $this->trType;
+        $this->inputs['curr_id']   = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
-        $this->inputs['wh_code'] = 18;
-        $this->inputs['partner_id'] = 0;
-
+        $this->inputs['wh_code']   = 18;
+        $this->inputs['partner_id']= 0;
     }
 
-    public function render()
+    /*
+     * TAMBAH ITEM (detail) pada sales order.
+     */
+    public function addItem()
     {
-        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
-        return view($renderRoute);
+            try {
+                $this->input_details[] = [
+                    'matl_id'  => null,
+                    'qty'      => null,
+                ];
+                $this->dispatch('success', __('generic.string.add_item'));
+            } catch (Exception $e) {
+                $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
+            }
     }
-    #endregion
 
-    #region CRUD Methods
-
-    public function onValidateAndSave()
+    /*
+     * Update item ketika material dipilih.
+     */
+    public function onMaterialChanged($key, $matl_id)
     {
-        if ($this->actionValue == 'Edit') {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
+        if ($matl_id) {
+            $material = Material::find($matl_id);
+            if ($material) {
+                $matlUom = MatlUom::where('matl_id', $matl_id)->first();
+                if ($matlUom) {
+                    $this->input_details[$key]['matl_id']    = $material->id;
+                    $this->input_details[$key]['price']       = $matlUom->selling_price;
+                    $this->input_details[$key]['matl_uom']    = $material->uom;
+                    $this->input_details[$key]['matl_descr']  = $material->name;
+                    $this->updateItemAmount($key);
+                } else {
+                    $this->dispatch('error', __('generic.error.material_uom_not_found'));
+                }
+            } else {
+                $this->dispatch('error', __('generic.error.material_not_found'));
             }
         }
+    }
 
-        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $partner = Partner::find($this->inputs['partner_id']);
-            $this->inputs['partner_code'] = $partner->code;
+    /*
+     * Hitung ulang jumlah per item dan total order.
+     */
+    public function updateItemAmount($key)
+    {
+        if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
+            $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+            $discountPercent = $this->input_details[$key]['disc_pct'] ?? 0;
+            $discountAmount = $amount * ($discountPercent / 100);
+            $this->input_details[$key]['amt'] = $amount - $discountAmount;
+        } else {
+            $this->input_details[$key]['amt'] = 0;
         }
+        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
+        $this->recalculateTotals();
+    }
 
-        // Ensure payment_term is set
-        if (!empty($this->inputs['payment_term_id'])) {
-            $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
-            $this->inputs['payment_term'] = $paymentTerm->str1;
-            $this->inputs['payment_due_days'] = $paymentTerm->num1; // Save payment_due_days from num1
-        }
+    public function recalculateTotals()
+    {
+        $this->calculateTotalAmount();
+        $this->calculateTotalDiscount();
+        $this->dispatch('updateAmount', [
+            'total_amount'    => $this->total_amount,
+            'total_discount'  => $this->total_discount,
+            'total_tax'       => $this->total_tax,
+            'total_dpp'       => $this->total_dpp,
+        ]);
+    }
 
-        // Ensure npwp_code is set to null if tax_payer is disabled
-        if ($this->payer === "false") {
-            $this->inputs['npwp_code'] = '';
-        }
+    private function calculateTotalAmount()
+    {
+        $this->total_amount = array_sum(array_map(function ($detail) {
+            $qty = $detail['qty'] ?? 0;
+            $price = $detail['price'] ?? 0;
+            $discountPercent = $detail['disc_pct'] ?? 0;
+            $amount = $qty * $price;
+            $discountAmount = $amount * ($discountPercent / 100);
+            return $amount - $discountAmount;
+        }, $this->input_details));
+        $this->total_amount = round($this->total_amount, 2);
+    }
 
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+    private function calculateTotalDiscount()
+    {
+        $this->total_discount = array_sum(array_map(function ($detail) {
+            $qty = $detail['qty'] ?? 0;
+            $price = $detail['price'] ?? 0;
+            $discountPercent = $detail['disc_pct'] ?? 0;
+            $amount = $qty * $price;
+            return $amount * ($discountPercent / 100);
+        }, $this->input_details));
+        $this->total_discount = round($this->total_discount, 2);
+    }
 
-        // Check if payment term is CASH and create DelivHdr and BillingHdr
-        if ($paymentTerm->str2 === 'CASH') {
-            $this->createDelivAndBillingHdr();
-        }
-
-        if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
-            ]);
+    public function deleteItem($index)
+    {
+        try {
+            if (!isset($this->input_details[$index])) {
+                throw new Exception(__('generic.error.delete_item', ['message' => 'Item tidak ditemukan.']));
+            }
+            unset($this->input_details[$index]);
+            $this->input_details = array_values($this->input_details);
+            $this->dispatch('success', __('generic.string.delete_item'));
+            $this->recalculateTotals();
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
     }
 
+    /*
+     * Load detail item (OrderDtl) jika header sudah tersimpan.
+     */
+    protected function loadDetails()
+    {
+        if (!empty($this->object)) {
+            $objectDetails = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
+                ->orderBy('tr_seq')
+                ->get();
+            foreach ($objectDetails as $key => $detail) {
+                $this->input_details[$key] = populateArrayFromModel($detail);
+                $this->updateItemAmount($key);
+            }
+        }
+    }
+
+    /*
+     * Save semua data: bila hanya header yang terisi maka hanya OrderHdr yang disimpan,
+     * dan bila terdapat item (detail) maka OrderDtl juga akan tersimpan.
+     */
+    public function onValidateAndSave()
+    {
+        // Validasi input header dan detail
+        $this->validate([
+            'inputs.tr_code'         => 'required',
+            'inputs.partner_id'      => 'required',
+            'input_details.*.qty'    => 'required',
+            'input_details.*.matl_id'=> 'required',
+        ]);
+
+        // Jika dalam mode edit dan status order sudah Completed, batalkan penyimpanan
+        if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
+            $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
+            return;
+        }
+
+        try {
+            // Mulai transaksi database
+            DB::beginTransaction();
+
+            // Update partner_code bila partner telah dipilih
+            if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
+                $partner = Partner::find($this->inputs['partner_id']);
+                if ($partner) {
+                    $this->inputs['partner_code'] = $partner->code;
+                }
+            }
+
+            // Set data payment term bila ada
+            if (!empty($this->inputs['payment_term_id'])) {
+                $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
+                if ($paymentTerm) {
+                    $this->inputs['payment_term'] = $paymentTerm->str1;
+                    $this->inputs['payment_due_days'] = $paymentTerm->num1;
+                }
+            }
+
+            // Jika NPWP dinonaktifkan, kosongkan npwp_code
+            if ($this->payer === "false") {
+                $this->inputs['npwp_code'] = '';
+            }
+
+            // Simpan data header menggunakan method yang sudah ada
+            // Pastikan method saveOrderHeader() tersedia pada model atau komponen Anda
+            $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+
+            // Simpan detail order jika ada input item
+            if (!empty($this->input_details)) {
+                // Ambil data detail yang sudah tersimpan (jika ada) untuk perbandingan
+                $existingDetails = OrderDtl::where('trhdr_id', $this->object->id)
+                    ->where('tr_type', $this->object->tr_type)
+                    ->get()
+                    ->keyBy('tr_seq')
+                    ->toArray();
+
+                // Hapus detail yang sudah tidak ada di form
+                $itemsToDelete = array_diff_key($existingDetails, $this->input_details);
+                foreach ($itemsToDelete as $tr_seq => $detail) {
+                    $orderDtl = OrderDtl::find($detail['id']);
+                    if ($orderDtl) {
+                        $orderDtl->forceDelete();
+                    }
+                }
+
+                // Simpan atau perbarui setiap detail item
+                foreach ($this->input_details as $key => $detail) {
+                    $tr_seq = $key + 1;
+                    $orderDtl = OrderDtl::firstOrNew([
+                        'tr_code' => $this->object->tr_code,
+                        'tr_seq'  => $tr_seq,
+                    ]);
+
+                    $detail['tr_code']   = $this->object->tr_code;
+                    $detail['trhdr_id']  = $this->object->id;
+                    $detail['tr_type']   = $this->object->tr_type;
+
+                    // Ambil data material untuk mengisi matl_code dan satuan (uom)
+                    $material = Material::find($detail['matl_id']);
+                    if ($material) {
+                        $detail['matl_code'] = $material->code;
+                        $detail['matl_uom']  = $material->uom;
+                        $detail['price_uom'] = $material->uom;
+                    }
+
+                    $orderDtl->fill($detail);
+                    $orderDtl->save();
+                }
+            }
+
+            // Hitung ulang total_amt dari semua detail yang tersimpan
+            $totalAmt = 0;
+            foreach ($this->input_details as $detail) {
+                $qty = $detail['qty'] ?? 0;
+                $price = $detail['price'] ?? 0;
+                $disc_pct = isset($detail['disc_pct']) ? $detail['disc_pct'] : 0;
+                $amount = $qty * $price;
+                $discount = $amount * ($disc_pct / 100);
+                $totalAmt += ($amount - $discount);
+            }
+
+            // Update field total_amt dan total_amt_tax pada OrderHdr
+            $this->object->total_amt = round($totalAmt, 2);
+            // Logika perhitungan pajak:
+            // jika tax_flag 'I' (inclusive) maka total_amt_tax sama dengan total_amt,
+            // jika tax_flag 'E' (exclusive) maka total_amt_tax = total_amt * (1 + (tax_pct/100))
+            // dan jika lainnya, total_amt_tax = total_amt.
+            if ($this->object->tax_flag === 'I') {
+                $this->object->total_amt_tax = $this->object->total_amt;
+            } elseif ($this->object->tax_flag === 'E') {
+                $taxPct = ($this->object->tax_pct ?? 0) / 100;
+                $this->object->total_amt_tax = round($this->object->total_amt * (1 + $taxPct), 2);
+            } else {
+                $this->object->total_amt_tax = $this->object->total_amt;
+            }
+
+            $this->object->save();
+
+            // Commit transaksi jika semua proses berhasil
+            DB::commit();
+
+            // Redirect jika mode create agar user melihat hasil penyimpanan (mode edit)
+            if ($this->actionValue === 'Create') {
+                return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
+                    'action'   => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id)
+                ]);
+            }
+
+            $this->dispatch('success', 'Sales Order berhasil disimpan.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            $this->dispatch('error', 'Gagal menyimpan: ' . $e->getMessage());
+        }
+    }
+
+
+    /*
+     * Hapus Sales Order (header dan berkaitan dengan detail-nya)
+     */
     public function delete()
     {
         try {
             if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena status sudah Completed');
                 return;
             }
-
             if (!$this->object->isOrderEnableToDelete()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+                $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena memiliki material yang sudah dijual.');
                 return;
             }
-
-            if (isset($this->object->status_code)) {
-                $this->object->status_code =  Status::NONACTIVE;
-            }
+            $this->object->status_code = Status::NONACTIVE;
             $this->object->save();
             $this->object->delete();
-            $messageKey = 'generic.string.disable';
-            $this->dispatch('success', __($messageKey));
+            $this->dispatch('success', __('generic.string.disable'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
-
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
 
-    private function updateVersionNumber2()
-    {
-        $this->versionNumber = "{$this->notaCount}.{$this->suratJalanCount}";
-    }
-
+    /*
+     * Cetak invoice dan surat jalan.
+     */
     public function printInvoice()
     {
         try {
             $this->notaCount++;
-            $this->updateVersionNumber2();
-            // Logika cetak nota jual
+            $this->versionNumber = "{$this->notaCount}.{$this->suratJalanCount}";
             return redirect()->route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                'action' => encryptWithSessionKey('Edit'),
+                'action'   => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
         } catch (Exception $e) {
@@ -438,15 +565,19 @@ class Detail extends BaseComponent
     {
         try {
             $this->suratJalanCount++;
-            $this->updateVersionNumber2();
-            // Logika cetak surat jalan
+            $this->versionNumber = "{$this->notaCount}.{$this->suratJalanCount}";
             return redirect()->route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
-                'action' => encryptWithSessionKey('Edit'),
+                'action'   => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
-            ]);        } catch (Exception $e) {
+            ]);
+        } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
     }
+
+    /*
+     * Metode tambahan untuk pencarian dan pemilihan partner (supplier/customer)
+     */
     public function openPartnerDialogBox()
     {
         $this->partnerSearchText = '';
@@ -454,6 +585,7 @@ class Detail extends BaseComponent
         $this->selectedPartners = [];
         $this->dispatch('openPartnerDialogBox');
     }
+
     public function searchPartners()
     {
         if (!empty($this->partnerSearchText)) {
@@ -461,7 +593,7 @@ class Detail extends BaseComponent
             $this->suppliers = Partner::where('grp', Partner::CUSTOMER)
                 ->where(function ($query) use ($searchTerm) {
                     $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
-                        ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
+                          ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
                 })
                 ->get();
         } else {
@@ -472,7 +604,6 @@ class Detail extends BaseComponent
     public function selectPartner($partnerId)
     {
         $key = array_search($partnerId, $this->selectedPartners);
-
         if ($key !== false) {
             unset($this->selectedPartners[$key]);
             $this->selectedPartners = array_values($this->selectedPartners);
@@ -480,7 +611,6 @@ class Detail extends BaseComponent
             $this->selectedPartners[] = $partnerId;
         }
     }
-
 
     public function confirmSelection()
     {
@@ -493,15 +623,12 @@ class Detail extends BaseComponent
             return;
         }
         $partner = Partner::find($this->selectedPartners[0]);
-
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
-            $this->inputs['partner_code'] = $partner->code; // Set partner_code
+            $this->inputs['partner_code'] = $partner->code;
             $this->inputs['partner_name'] = $partner->code;
             $this->inputs['textareacustommer'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
-
             if (!empty($this->inputs['tax_doc_flag'])) {
-                // Set npwpOptions with data from JSON wp_details
                 if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
                     $wpDetails = $partner->PartnerDetail->wp_details;
                     if (is_string($wpDetails)) {
@@ -514,7 +641,6 @@ class Detail extends BaseComponent
                                 'value' => $item['npwp'],
                             ];
                         }, $wpDetails);
-                        // Automatically select the first npwpOption
                         $firstNpwpOption = $this->npwpOptions[0] ?? null;
                         if ($firstNpwpOption) {
                             $this->inputs['npwp_code'] = $firstNpwpOption['value'];
@@ -526,8 +652,6 @@ class Detail extends BaseComponent
                 $this->inputs['npwp_code'] = null;
                 $this->inputs['textarea_npwp'] = null;
             }
-
-            // Set shipOptions with data from JSON shipping_address
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
                 $shipDetail = $partner->PartnerDetail->shipping_address;
                 if (is_string($shipDetail)) {
@@ -540,7 +664,6 @@ class Detail extends BaseComponent
                             'value' => $item['name'],
                         ];
                     }, $shipDetail);
-                    // Automatically select the first shipOption
                     $firstShipOption = $this->shipOptions[0] ?? null;
                     if ($firstShipOption) {
                         $this->inputs['ship_to_name'] = $firstShipOption['value'];
@@ -548,7 +671,6 @@ class Detail extends BaseComponent
                     }
                 }
             }
-
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
         }
@@ -597,30 +719,12 @@ class Detail extends BaseComponent
         }
     }
 
-    #endregion
-
-    #region Component Events
-    // Update total amount based on changes
-    public function updateAmount($data)
+    /*
+     * Render view berdasarkan path yang telah ditentukan.
+     */
+    public function render()
     {
-        $this->total_amount = $data['total_amount'];
-        $this->total_discount = ($data['total_discount']);
-
-        // Recalculate DPP and PPN when amount or discount changes
-        $this->calculateDPPandPPN($this->inputs['tax_flag'] ?? '');
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
-
-    // Update discount percentage
-    // public function updateDiscount($discount)
-    // {
-    //     $this->total_discount = $discount;
-    //     $this->calculateDPPandPPN($this->inputs['tax'] ?? '');
-    // }
-
-    // Update DPP
-    // public function updateDPP($dpp)
-    // {
-    //     $this->total_dpp = $dpp;
-    // }
-    #endregion
 }

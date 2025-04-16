@@ -197,7 +197,6 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->toArray();
 
-            // Update status to SHIP
             OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
 
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
