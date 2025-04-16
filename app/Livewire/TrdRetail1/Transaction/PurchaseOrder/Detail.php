@@ -390,10 +390,6 @@ class Detail extends BaseComponent
 
     public function openItemDialogBox()
     {
-        if (empty($this->objectIdValue)) {
-            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
-            return;
-        }
         $this->searchTerm = '';
         $this->materialList = [];
         $this->selectedMaterials = [];
