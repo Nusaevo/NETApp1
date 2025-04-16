@@ -229,7 +229,7 @@
 
                         </x-ui-card>
                         @if ($actionValue === 'Edit')
-                        <x-ui-card title="">
+                        <x-ui-card title="Barang Retur">
                             <x-ui-table id="ReturnTable">
                                 <x-slot name="headers">
                                     <th style="text-align: center;">No</th>

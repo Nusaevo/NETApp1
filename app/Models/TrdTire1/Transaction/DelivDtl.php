@@ -155,8 +155,8 @@ class DelivDtl extends BaseModel
                         'batch_code' => $delivDtl->batch_code ?? '',
                         'tr_date'    => date('Y-m-d'),
                         'qty'        => $newQty,
-                        'price'      => $delivDtl->OrderDtl->amt ?? 0,
-                        'amt'        => $newQty * ($delivDtl->OrderDtl->amt ?? 0),
+                        'price'      => $delivDtl->OrderDtl->price ?? 0,
+                        'amt'        =>  $delivDtl->OrderDtl->amt ?? 0,
                         'tr_desc'    => $delivDtl->matl_descr,
                     ]
                 );
@@ -216,8 +216,8 @@ class DelivDtl extends BaseModel
                     'batch_code' => $delivDtl->batch_code,
                     'tr_date'    => $header ? $header->tr_date : null,
                     'qty'        => $delivDtl->qty,
-                    'price'      => $orderDtl ? $orderDtl->amt : 0,
-                    'amt'        => $delivDtl->qty * ($orderDtl ? $orderDtl->amt : 0),
+                    'price'      => $orderDtl ? $orderDtl->price : 0,
+                    'amt'        =>  $orderDtl ? $orderDtl->amt : 0,
                     'tr_desc'    => $delivDtl->matl_descr,
                 ]
             );
