@@ -131,71 +131,60 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
+        // Jika mode edit dan order sudah completed, tampilkan peringatan dan hentikan proses.
         if ($this->actionValue === 'Edit') {
             if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                $this->dispatch('warning', 'Nota ini tidak bisa di edit, karena status sudah Completed');
                 return;
             }
         }
 
+        // Update partner_code berdasarkan partner_id jika diperlukan.
         if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner ? $partner->code : null;
         }
 
-        $this->object->saveOrderHeader(
+        // Persiapkan array detail untuk disimpan.
+        // Contoh: Update urutan (tr_seq), tambahkan info warehouse dan material.
+        $itemsToSave = [];
+        foreach ($this->input_details as $index => $detail) {
+            $detail['tr_seq'] = $index + 1;          // Pastikan urutan detail tersimpan dengan benar.
+            $detail['tr_id'] = $this->object->tr_id;   // Gunakan tr_id yang sudah di-generate.
+            $detail['trhdr_id'] = $this->object->id;    // Header ID pada OrderHdr.
+            $detail['tr_type'] = $this->trType;
+            $detail['wh_code'] = $this->wh_code;        // Misalnya warehouse code disediakan dari properti komponen.
+
+            // Cari konfigurasi warehouse jika diperlukan.
+            $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
+                ->where('str1', $detail['wh_code'] ?? '')
+                ->first();
+            $detail['wh_id'] = $configConst ? $configConst->id : null;
+
+            // Ambil data material untuk mendapatkan material code.
+            $material = Material::find($detail['matl_id'] ?? null);
+            $detail['matl_code'] = $material ? $material->code : null;
+
+            // Jika diperlukan, tambahkan atau ubah field lain di detail.
+            $itemsToSave[] = $detail;
+        }
+
+        // Simpan header dan detail secara terpadu menggunakan method saveOrder.
+        // Parameter: tipe transaksi, data header, data detail, dan flag untuk membuat header delivery/billing/payment.
+        $this->object->saveOrder(
             $this->trType,
             $this->inputs,
+            $itemsToSave,
             true
         );
 
-       $existingDetails = OrderDtl::where('trhdr_id', $this->object->id)
-           ->where('tr_type', $this->object->tr_type)
-           ->get()
-           ->keyBy('tr_seq')
-           ->toArray();
-       $inputDetailsKeyed = collect($this->input_details)
-           ->keyBy('tr_seq')
-           ->toArray();
-
-       // 3) Determine which items to delete (items in DB but not in $this->input_details)
-       $itemsToDelete = array_diff_key($existingDetails, $inputDetailsKeyed);
-       foreach ($itemsToDelete as $tr_seq => $detail) {
-           $orderDtl = OrderDtl::find($detail['id']);
-           if ($orderDtl) {
-               $orderDtl->forceDelete();
-           }
-       }
-
-       // 4) Build the array of items to save.
-       //    We must assign tr_seq = $index + 1 so they're saved in the correct sequence.
-       $itemsToSave = [];
-       foreach ($this->input_details as $index => $detail) {
-           $detail['tr_seq'] = $index + 1;
-           $detail['tr_id'] = $this->object->tr_id;
-           $detail['wh_code'] = $this->wh_code;
-           $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
-           ->where('str1', $detail['wh_code'] ?? '')
-           ->first();
-
-           $detail['wh_id'] = $configConst ? $configConst->id : null;
-           $material = Material::find($detail['matl_id'] ?? null);
-           $detail['matl_code'] = $material ? $material->code : null;
-           $itemsToSave[]    = $detail;
-       }
-       // 5) Save or update items.
-       //    Pass `true` for $createBillingDelivery if you want DelivDtl & BillingDtl created right away.
-       $this->object->saveOrderDetails(
-           $this->object->tr_type,
-           $itemsToSave,
-           true  // or false if you do NOT want to create DelivDtl & BillingDtl now
-       );
-       if ($this->actionValue === 'Create') {
-           return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
-               'action'   => encryptWithSessionKey('Edit'),
-               'objectId' => encryptWithSessionKey($this->object->id),
-           ]);
-       }
+        // Redirect bila aksi adalah Create, atau lakukan tindakan lanjutan sesuai kebutuhan.
+        if ($this->actionValue === 'Create') {
+            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
+                'action'   => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id),
+            ]);
+        }
     }
 
 
