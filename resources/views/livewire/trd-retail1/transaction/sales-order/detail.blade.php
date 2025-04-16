@@ -26,6 +26,48 @@
                                     clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
                                     required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
 
+                                {{-- <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
+                                    height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
+                                    <x-slot name="body">
+                                        <x-ui-text-field type="text" label="Search Code/Nama Supplier"
+                                            model="partnerSearchText" required="true" :action="$actionValue" enabled="true"
+                                            clickEvent="searchPartners" buttonName="Search" />
+                                        <!-- Table -->
+                                        <x-ui-table id="partnersTable" padding="0px" margin="0px">
+                                            <x-slot name="headers">
+                                                <th class="min-w-100px">Code</th>
+                                                <th class="min-w-100px">Name</th>
+                                                <th class="min-w-100px">Address</th>
+                                            </x-slot>
+                                            <x-slot name="rows">
+                                                @if (empty($suppliers))
+                                                    <tr>
+                                                        <td colspan="4" class="text-center text-muted">No Data Found
+                                                        </td>
+                                                    </tr>
+                                                @else
+                                                    @foreach ($suppliers as $key => $supplier)
+                                                        <tr wire:key="row-{{ $key }}-supplier">
+                                                            <td>
+                                                                <x-ui-option label="" required="false"
+                                                                    layout="horizontal" enabled="true" type="checkbox"
+                                                                    visible="true" :options="[$supplier['id'] => $supplier['code']]"
+                                                                    onChanged="selectPartner({{ $supplier['id'] }})" />
+                                                            </td>
+                                                            <td>{{ $supplier['name'] }}</td>
+                                                            <td>{{ $supplier['address'] }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                @endif
+                                            </x-slot>
+                                            <x-slot name="footer">
+                                                <x-ui-button clickEvent="confirmSelection"
+                                                    button-name="Confirm Selection" loading="true" :action="$actionValue"
+                                                    cssClass="btn-primary" />
+                                            </x-slot>
+                                        </x-ui-table>
+                                    </x-slot>
+                                </x-ui-dialog-box> --}}
                                 <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
                                     :action="$actionValue" required="false" enabled="false" />
                             </div>
@@ -48,9 +90,9 @@
                                             <th style="width: 100px; text-align: center;">Code</th>
                                             <th style="width: 100px; text-align: center;">UOM</th>
                                             <th style="width: 80px; text-align: center;">Image</th>
-                                            <th style="width: 150px; text-align: center;">Harga Satuan</th>
+                                            <th style="width: 100px; text-align: center;">Harga Satuan</th>
                                             <th style="width: 80px; text-align: center;">Qty</th>
-                                            <th style="width: 150px; text-align: center;">Amount</th>
+                                            <th style="width: 120px; text-align: center;">Amount</th>
                                             <th style="width: 70px; text-align: center;">Actions</th>
                                         </x-slot>
 
@@ -91,12 +133,16 @@
                                                             type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                                                     </td>
                                                     <td style="text-align: center;">
-                                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label=""
+                                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
                                                             type="text" enabled="false" />
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                                             cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                                                      @if ($actionValue === 'Edit')
+                                                      <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="Retur" loading="true" :action="$actionValue"
+                                                            cssClass="btn-secondary"/>
+                                                      @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -178,9 +224,46 @@
                                         </x-slot>
                                     </x-ui-dialog-box>
                                 </x-ui-card>
+
                             </div>
 
                         </x-ui-card>
+                        @if ($actionValue === 'Edit')
+                        <x-ui-card title="">
+                            <x-ui-table id="ReturnTable">
+                                <x-slot name="headers">
+                                    <th style="text-align: center;">No</th>
+                                    <th style="text-align: center;">Code</th>
+                                    <th style="text-align: center;">Name</th>
+                                    <th style="text-align: center;">Qty</th>
+                                    <th style="text-align: center;">UOM</th>
+                                    <th style="text-align: center;">Amount</th>
+                                    <th style="text-align: center;">Actions</th>
+                                </x-slot>
+                                <x-slot name="rows">
+                                    @forelse ($return_details as $index => $item)
+                                        <tr wire:key="return-{{ $index }}">
+                                            <td style="text-align: center;">{{ $loop->iteration }}</td>
+                                            <td style="text-align: center;">{{ $item['matl_code'] }}</td>
+                                            <td>{{ $item['matl_descr'] }}</td>
+                                            <td style="text-align: center;">
+                                                <x-ui-text-field type="number" model="return_details.{{ $index }}.qty" label="" enabled="true" onChanged="" />
+                                            </td>
+                                            <td style="text-align: center;">{{ $item['matl_uom'] }}</td>
+                                            <td style="text-align: center;">{{ rupiah($item['amt'] ?? 0) }}</td>
+                                            <td style="text-align: center;">
+                                                <x-ui-button :clickEvent="'deleteReturnItem(' . $index . ')'" button-name="" cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">Belum ada item retur</td>
+                                        </tr>
+                                    @endforelse
+                                </x-slot>
+                            </x-ui-table>
+                        </x-ui-card>
+                        @endif
                     </div>
                     <x-ui-footer>
                         @include('layout.customs.transaction-form-footer')

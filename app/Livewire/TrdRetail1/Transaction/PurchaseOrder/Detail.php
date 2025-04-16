@@ -16,7 +16,6 @@ class Detail extends BaseComponent
     public $object_detail;
     public $inputs = [];
     public $input_details = [];
-    public $return_details = [];
 
     public $suppliers = [];
     public $partners = [];

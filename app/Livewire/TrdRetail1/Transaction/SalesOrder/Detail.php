@@ -16,6 +16,7 @@ class Detail extends BaseComponent
     public $object_detail;
     public $inputs = [];
     public $input_details = [];
+    public $return_details = [];
 
     public $customers = [];
     public $partners = [];
@@ -190,7 +191,7 @@ class Detail extends BaseComponent
            true  // or false if you do NOT want to create DelivDtl & BillingDtl now
        );
        if ($this->actionValue === 'Create') {
-           return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
+           return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
                'action'   => encryptWithSessionKey('Edit'),
                'objectId' => encryptWithSessionKey($this->object->id),
            ]);

@@ -133,14 +133,12 @@
                                                             type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                                                     </td>
                                                     <td style="text-align: center;">
-                                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label=""
-                                                            type="text" enabled="false" />
+                                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
+                                                        type="text" enabled="false" />
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                                             cssClass="btn-danger text-danger" iconPath="delete.svg" />
-                                                        <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="Retur" loading="true" :action="$actionValue"
-                                                            cssClass="btn-secondary"/>
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -222,40 +220,7 @@
                                         </x-slot>
                                     </x-ui-dialog-box>
                                 </x-ui-card>
-                                <x-ui-card title="">
-                                    <x-ui-table id="ReturnTable">
-                                        <x-slot name="headers">
-                                            <th style="text-align: center;">No</th>
-                                            <th style="text-align: center;">Code</th>
-                                            <th style="text-align: center;">Name</th>
-                                            <th style="text-align: center;">Qty</th>
-                                            <th style="text-align: center;">UOM</th>
-                                            <th style="text-align: center;">Amount</th>
-                                            <th style="text-align: center;">Actions</th>
-                                        </x-slot>
-                                        <x-slot name="rows">
-                                            @forelse ($return_details as $index => $item)
-                                                <tr wire:key="return-{{ $index }}">
-                                                    <td style="text-align: center;">{{ $loop->iteration }}</td>
-                                                    <td style="text-align: center;">{{ $item['matl_code'] }}</td>
-                                                    <td>{{ $item['matl_descr'] }}</td>
-                                                    <td style="text-align: center;">
-                                                        <x-ui-text-field type="number" model="return_details.{{ $index }}.qty" label="" enabled="true" onChanged="" />
-                                                    </td>
-                                                    <td style="text-align: center;">{{ $item['matl_uom'] }}</td>
-                                                    <td style="text-align: center;">{{ rupiah($item['amt'] ?? 0) }}</td>
-                                                    <td style="text-align: center;">
-                                                        <x-ui-button :clickEvent="'deleteReturnItem(' . $index . ')'" button-name="" cssClass="btn-danger text-danger" iconPath="delete.svg" />
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="7" class="text-center text-muted">Belum ada item retur</td>
-                                                </tr>
-                                            @endforelse
-                                        </x-slot>
-                                    </x-ui-table>
-                                </x-ui-card>
+
                             </div>
 
                         </x-ui-card>
