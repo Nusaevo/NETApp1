@@ -65,7 +65,6 @@ class MaterialListComponent extends DetailComponent
 
     public function addItem()
     {
-        if (!empty($this->objectIdValue)) {
             try {
                 $this->input_details[] = [
                     'matl_id' => null,
@@ -77,9 +76,6 @@ class MaterialListComponent extends DetailComponent
             } catch (Exception $e) {
                 $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
             }
-        } else {
-            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
-        }
     }
 
     public function onMaterialChanged($key, $matl_id)

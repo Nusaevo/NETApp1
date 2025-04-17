@@ -311,16 +311,16 @@ class OrderHdr extends BaseModel
     {
         if ($this->DelivHdr) {
             foreach ($this->DelivHdr->DelivDtl as $detail) {
-                $detail->delete();
+                $detail->forceDelete();
             }
-            $this->DelivHdr->delete();
+            $this->DelivHdr->forceDelete();
         }
 
         if ($this->BillingHdr) {
             foreach ($this->BillingHdr->BillingDtl as $detail) {
-                $detail->delete();
+                $detail->forceDelete();
             }
-            $this->BillingHdr->delete();
+            $this->BillingHdr->forceDelete();
         }
     }
     #endregion
@@ -339,7 +339,7 @@ class OrderHdr extends BaseModel
     private function deleteOrderDetails()
     {
         foreach ($this->OrderDtl as $detail) {
-            $detail->delete();
+            $detail->forceDelete();
         }
     }
     #endregion

@@ -172,7 +172,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'setDeliveryDate' => 'Set Tanggal Kirim',
+            'setDeliveryDate' => 'Kirim',
             'cancelDeliveryDate' => 'Batal Kirim',
             'cancel' => 'Cancel',
             'unCancel' => 'UnCancel',
@@ -197,7 +197,6 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->toArray();
 
-            // Update status to SHIP
             OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
 
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
@@ -224,9 +223,14 @@ class IndexDataTable extends BaseDataTableComponent
             foreach ($delivHdrs as $delivHdr) {
                 $delivDtls = DelivDtl::where('trhdr_id', $delivHdr->id)->get();
                 foreach ($delivDtls as $delivDtl) {
-                    $delivDtl->delete(); // Trigger the deleting event
+                    // Adjust qty_fgi in MatlUom
+                    $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
+                        ->where('matl_uom', $delivDtl->matl_uom)
+                        ->first();
+                    $delivDtl->forceDelete(); // Permanently delete DelivDtl
                 }
-                $delivHdr->delete();
+                // Permanently delete DelivHdr
+                $delivHdr->forceDelete();
             }
             OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);
 

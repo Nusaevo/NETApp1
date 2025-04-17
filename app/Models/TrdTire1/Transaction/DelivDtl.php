@@ -128,6 +128,18 @@ class DelivDtl extends BaseModel
                     }
                 }
 
+                // Kurangi qty_fgi jika transaksi adalah SD
+                if ($delta != 0 && $delivDtl->tr_type === 'SD') {
+                    $matlUomRec = MatlUom::where([
+                        'matl_id'  => $delivDtl->matl_id,
+                        'matl_uom' => $delivDtl->matl_uom,
+                    ])->first();
+
+                    if ($matlUomRec) {
+                        $matlUomRec->decrement('qty_fgi', $delta); // Ensure this is applied only once
+                    }
+                }
+
                 // Simpan id IvtBal ke DelivDtl
                 $delivDtl->ivt_id = $ivtBal->id;
                 // Simpan data secara quiet untuk menghindari pemicu event kembali
@@ -216,8 +228,8 @@ class DelivDtl extends BaseModel
                     'batch_code' => $delivDtl->batch_code,
                     'tr_date'    => $header ? $header->tr_date : null,
                     'qty'        => $delivDtl->qty,
-                    'price'      => $orderDtl ? $orderDtl->price : 0,
-                    'amt'        =>  $orderDtl ? $orderDtl->amt : 0,
+                    'price'      => $delivDtl->OrderDtl->price ?? 0,
+                    'amt'        => $delivDtl->OrderDtl->amt ?? 0,
                     'tr_desc'    => $delivDtl->matl_descr,
                 ]
             );
@@ -303,7 +315,7 @@ class DelivDtl extends BaseModel
                     // Restore qty_fgr by the quantity being deleted
                     $matlUomRec->increment('qty_fgr', $delivDtl->qty);
                 } elseif ($delivDtl->tr_type === 'SD') {
-                    $matlUomRec->increment('qty_fgi', $delivDtl->qty);
+                    $matlUomRec->increment('qty_fgi', $delivDtl->qty); // Ensure this is applied only once
                 }
                 MatlUom::recalcMatlUomQtyOh($delivDtl->matl_id, $delivDtl->matl_uom);
             }

@@ -134,26 +134,6 @@ class IndexDataTable extends BaseDataTableComponent
                         ->where('order_dtls.tr_type', 'SO');
                 });
             }),
-            // SelectFilter::make('Status', 'status_code')
-            //     ->options([
-            //         Status::OPEN => 'Open',
-            //         Status::COMPLETED => 'Selesai',
-            //         '' => 'Semua',
-            //     ])->filter(function ($builder, $value) {
-            //         if ($value === Status::ACTIVE) {
-            //             $builder->where('order_hdrs.status_code', Status::ACTIVE);
-            //         } else if ($value === Status::COMPLETED) {
-            //             $builder->where('order_hdrs.status_code', Status::COMPLETED);
-            //         } else if ($value === '') {
-            //             $builder->withTrashed();
-            //         }
-            //     }),
-            // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '>=', $value);
-            // }),
-            // DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '<=', $value);
-            // }),
         ];
     }
 }
