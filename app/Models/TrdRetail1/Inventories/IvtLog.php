@@ -59,8 +59,8 @@ class IvtLog extends BaseModel
             'batch_code' => $delivDtl->batch_code ?? '',
             'tr_date' => date('Y-m-d'),
             'qty' => $qty,
-            'price' => 0,
-            'amt' => 0,
+            'price' => $delivDtl->OrderDtl->price->price,
+            'amt' => $delivDtl->OrderDtl->price->amt,
             'tr_desc' => $desc,
         ]);
     }

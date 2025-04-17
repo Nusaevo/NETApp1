@@ -168,7 +168,7 @@ class DelivDtl extends BaseModel
                         'tr_date'    => date('Y-m-d'),
                         'qty'        => $newQty,
                         'price'      => $delivDtl->OrderDtl->price ?? 0,
-                        'amt'        => $delivDtl->OrderDtl->amt ?? 0,
+                        'amt'        =>  $delivDtl->OrderDtl->amt ?? 0,
                         'tr_desc'    => $delivDtl->matl_descr,
                     ]
                 );

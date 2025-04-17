@@ -273,7 +273,7 @@
             window.addEventListener('beforeunload', function(e) {
                 if (hasChanges) {
                     e.preventDefault();
-                    e.returnValue = 'You have unsaved changes. Do you really want to leave?';
+                    e.returnValue = 'Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?';
                 }
             });
 
