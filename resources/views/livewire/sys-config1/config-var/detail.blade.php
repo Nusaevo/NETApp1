@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
-    <x-ui-page-card title="{{ $actionValue }} {!! $menuName !!}" status="{{ $status }}">
+    <x-ui-page-card isForm="true" title="{{ $actionValue }} {!! $menuName !!}" status="{{ $status }}">
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
 
 

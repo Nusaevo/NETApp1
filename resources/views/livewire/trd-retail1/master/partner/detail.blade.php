@@ -8,7 +8,7 @@ use App\Models\TrdJewel1\Master\Partner;
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
-    <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}" status="{{ $this->trans($status) }}">
+    <x-ui-page-card isForm="true" title="{{ $this->trans($actionValue) }} {!! $menuName !!}" status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
         <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
@@ -31,10 +31,7 @@ use App\Models\TrdJewel1\Master\Partner;
                     </div>
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('contact_person') }}" model="inputs.contact_person" type="text" :action="$actionValue" span="HalfWidth" />
-                        @if(in_array($inputs['grp'], [Partner::CUSTOMER]))
-                        <x-ui-text-field label="{{ $this->trans('ring_size') }}" model="inputs.ring_size" type="text" :action="$actionValue" />
-                        <x-ui-text-field label="{{ $this->trans('partner_ring_size') }}" model="inputs.partner_ring_size" type="text" :action="$actionValue" />
-                        @endif
+
                     </div>
 
                 </x-ui-card>

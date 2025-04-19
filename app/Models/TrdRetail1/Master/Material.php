@@ -74,6 +74,7 @@ class Material extends BaseModel
      */
     public static function validateExcelUpload($dataTable, $audit, $param)
     {
+
         $errors = [];
         $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
 
@@ -81,13 +82,22 @@ class Material extends BaseModel
 
         // Validate Headers
         $actualHeaders = $dataTable[0] ?? [];
-        if ($expectedHeaders !== $actualHeaders) {
-            $audit->updateAuditTrail(100, 'Template salah: Header tidak sesuai dengan template.', Status::ERROR);
-            $templateConfig['data'] = array_slice($dataTable, 1);
+        $missing = array_diff($expectedHeaders, $actualHeaders);
+
+        if (! empty($missing)) {
+            // Audit and upload the entire file for review
+            $audit->updateAuditTrail(
+                100,
+                'Template salah: kolom header berikut tidak ditemukan — ' . implode(', ', $missing),
+                Status::ERROR
+            );
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
+
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
             return [
-                'success' => false,
+                'success'   => false,
                 'dataTable' => $dataTable,
             ];
         }
@@ -101,7 +111,8 @@ class Material extends BaseModel
                 // Skip header row
                 if (count($dataTable) === 1 || empty(array_filter($dataTable[1] ?? []))) {
                     $audit->updateAuditTrail(100, 'Error: Data tidak ditemukan.', Status::ERROR);
-                    $templateConfig['data'] = array_slice($dataTable, 1);
+                    $templateConfig['headers'] = $dataTable[0] ?? [];
+                    $templateConfig['data']    = array_slice($dataTable, 1);
                     Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
                     return [
@@ -110,6 +121,17 @@ class Material extends BaseModel
                     ];
                 }
                 continue;
+            }
+
+            $allBlank = true;
+            foreach ($row as $cell) {
+                if (trim((string)$cell) !== '') {
+                    $allBlank = false;
+                    break;
+                }
+            }
+            if ($allBlank) {
+                continue;  // skip this row entirely
             }
 
             $status = '';
@@ -210,7 +232,9 @@ class Material extends BaseModel
 
         // Jika terdapat error, unggah hasil validasi
         if (!empty($errors)) {
-            $templateConfig['data'] = array_slice($dataTable, 1);
+
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
         }
 

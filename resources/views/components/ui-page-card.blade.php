@@ -14,7 +14,6 @@
                     </div>
                 @endif
             @endisset
-
         </div>
 
         {{-- Slot --}}
@@ -46,3 +45,23 @@
         @endisset
     </div>
 </div>
+
+@if (isset($isForm) && $isForm === 'true')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let hasChanges = false;
+
+            window.addEventListener('beforeunload', function(e) {
+                if (hasChanges) {
+                    e.preventDefault();
+                    e.returnValue = 'Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?';
+                }
+            });
+
+            Livewire.on('form-changed', function(data) {
+                hasChanges = data.hasChanges;
+                console.log('[Livewire] Form changed status:', hasChanges);
+            });
+        });
+    </script>
+@endif

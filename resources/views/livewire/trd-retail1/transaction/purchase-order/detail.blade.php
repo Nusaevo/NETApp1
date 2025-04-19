@@ -2,9 +2,9 @@
     <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
-    <x-ui-page-card
+    <x-ui-page-card isForm="true"
         title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}"
-        status="{{ $this->trans($status) }}">
+        status="{{ $this->trans($status) }}" >
 
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
@@ -22,7 +22,7 @@
                                 {{-- <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
                                     required="true" :action="$actionValue" enabled="false" clickEvent="openPartnerDialogBox"
                                     buttonName="Search" :buttonEnabled="$isPanelEnabled" /> --}}
-                                <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}"
+                                <x-ui-text-field-search type="int" label="{{ $this->trans('supplier') }}"
                                     clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
                                     required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
 
@@ -134,11 +134,15 @@
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
-                                                        type="text" enabled="false" />
+                                                            type="text" enabled="false" />
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                                             cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                                                      @if ($actionValue === 'Edit')
+                                                      <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="Retur" loading="true" :action="$actionValue"
+                                                            cssClass="btn-secondary"/>
+                                                      @endif
                                                     </td>
                                                 </tr>
                                             @endforeach

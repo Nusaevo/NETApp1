@@ -153,7 +153,7 @@
                             });
                         }
                     }
-                }" x-init="initInputMask()" wire:model.lazy="{{ $model }}"
+                }" x-init="initInputMask()" wire:model.defer="{{ $model }}"
                     id="{{ $id }}" type="text"
                     class="form-control number-mask @error($model)
 is-invalid

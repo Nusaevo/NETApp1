@@ -34,6 +34,10 @@ class MaterialComponent extends BaseComponent
     public $panelEnabled = 'true';
     public $btnAction = 'true';
 
+    // UomListComponent properties
+    public $object_detail;
+    public $input_details = [];
+
     protected $masterService;
 
     public $rules = [
@@ -51,6 +55,13 @@ class MaterialComponent extends BaseComponent
         // 'materials.stock' => 'required|integer|min:0',
         'materials.tag' => 'nullable|string|max:255',
         'matl_uoms.barcode' => 'nullable',
+        // UomListComponent rules
+        'input_details.*.matl_uom' => 'required|string|max:50',
+        'input_details.*.reff_uom' => 'required|string|max:50',
+        'input_details.*.reff_factor' => 'required|numeric|min:1',
+        'input_details.*.base_factor' => 'required|numeric|min:1',
+        'input_details.*.barcode' => 'nullable|string|max:50',
+        'input_details.*.selling_price' => 'nullable|numeric|min:0',
     ];
 
     protected $listeners = [
@@ -93,6 +104,13 @@ class MaterialComponent extends BaseComponent
             'materials.matl_uom' => $this->trans('uom'),
             'materials.tag' => $this->trans('tag'),
             'matl_uoms.barcode' => $this->trans('barcode'),
+            // UomListComponent validations
+            'input_details.*.matl_uom' => $this->trans('Base UOM'),
+            'input_details.*.reff_uom' => $this->trans('Reff UOM'),
+            'input_details.*.reff_factor' => $this->trans('Reff Factor'),
+            'input_details.*.base_factor' => $this->trans('Base Factor'),
+            'input_details.*.barcode' => $this->trans('barcode'),
+            'input_details.*.selling_price' => $this->trans('selling_price'),
         ];
 
         $this->masterService = new MasterService();
@@ -100,13 +118,16 @@ class MaterialComponent extends BaseComponent
         $this->materialUOM = $this->masterService->getMatlUOMData();
         if ($this->isEditOrView()) {
             $this->loadMaterial($this->objectIdValue);
+            $this->loadUomDetails();
         }
     }
+
     public function onReset()
     {
         $this->product_code = '';
         $this->reset('materials');
         $this->reset('matl_uoms');
+        $this->reset('input_details');
         $this->object = new Material();
         $this->object_uoms = new MatlUom();
         $this->materials['category'] = "";
@@ -133,6 +154,26 @@ class MaterialComponent extends BaseComponent
                     'filename' => $attachment->name,
                 ];
             }
+        }
+    }
+
+    // UomListComponent loadDetails method
+    protected function loadUomDetails()
+    {
+        if (!empty($this->objectIdValue)) {
+            $uoms = MatlUom::where('matl_id', $this->objectIdValue)->get();
+            $this->input_details = $uoms->map(function ($uom) {
+                return [
+                    'id' => $uom->id,
+                    'matl_uom' => $uom->matl_uom,
+                    'reff_uom' => $uom->reff_uom,
+                    'reff_factor' => $uom->reff_factor ?? 1,
+                    'base_factor' => $uom->base_factor ?? 1,
+                    'barcode' => $uom->barcode,
+                    'selling_price' => $uom->selling_price,
+                    'buying_price' => $uom->buying_price,
+                ];
+            })->toArray();
         }
     }
 
@@ -203,6 +244,20 @@ class MaterialComponent extends BaseComponent
             $matlUom->selling_price = 0;
             $matlUom->qty_oh        = 0;
             $matlUom->save();
+        }else{
+            foreach ($this->input_details as $key => $detail) {
+                $matlUom = MatlUom::updateOrCreate(
+                    ['matl_id' => $this->object->id, 'matl_uom' => $detail['matl_uom']],
+                    [
+                        'reff_uom' => $detail['reff_uom'],
+                        'reff_factor' => $detail['reff_factor'] ?? 1,
+                        'base_factor' => $detail['base_factor'] ?? 1,
+                        'barcode' => $detail['barcode'],
+                        'selling_price' => $detail['selling_price'],
+                    ]
+                );
+                $this->input_details[$key]['id'] = $matlUom->id;
+            }
         }
 
         // 9. Simpan attachment (jika ada)
@@ -290,6 +345,7 @@ class MaterialComponent extends BaseComponent
             throw new Exception($errorMessage);
         }
     }
+
     #endregion
 
     #region Component Events
@@ -357,6 +413,64 @@ class MaterialComponent extends BaseComponent
     public function changeStatus()
     {
         $this->change();
+    }
+
+    // UomListComponent methods
+    public function addItem()
+    {
+        if (!empty($this->objectIdValue)) {
+            try {
+                $this->input_details[] = [
+                    'matl_uom' => '',
+                    'reff_uom' => '',
+                    'reff_factor' => 1, // Default 1
+                    'base_factor' => 1, // Default 1
+                    'barcode' => '',
+                    'selling_price' => 0,
+                ];
+                $this->dispatch('success', __('generic.string.add_item'));
+            } catch (Exception $e) {
+                $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
+            }
+        } else {
+            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Material terlebih dahulu']));
+        }
+    }
+
+    public function deleteItem($index)
+    {
+        try {
+            if (!isset($this->input_details[$index])) {
+                throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
+            }
+
+            unset($this->input_details[$index]);
+            $this->input_details = array_values($this->input_details);
+            $this->dispatch('success', __('generic.string.delete_item'));
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function printBarcode($index)
+    {
+        if (isset($this->input_details[$index])) {
+            $itemId = (string) $this->input_details[$index]['id'];
+            $itemBarcode = MatlUom::find($itemId);
+
+            if ($itemBarcode) {
+                $itemBarcodeString = (string) $itemBarcode->barcode;
+
+                if ($itemBarcodeString !== (string) $this->input_details[$index]['barcode']) {
+                    $this->dispatch('error',"Mohon save item terlebih dahulu");
+                } else {
+                    return redirect()->route($this->appCode.'.Master.Material.PrintPdf', [
+                        "action" => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($itemId)
+                    ]);
+                }
+            }
+        }
     }
     #endregion
 }

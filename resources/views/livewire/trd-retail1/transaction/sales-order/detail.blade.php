@@ -2,7 +2,7 @@
     <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
-    <x-ui-page-card
+    <x-ui-page-card isForm="true"
         title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 
@@ -22,7 +22,7 @@
                                 {{-- <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
                                     required="true" :action="$actionValue" enabled="false" clickEvent="openPartnerDialogBox"
                                     buttonName="Search" :buttonEnabled="$isPanelEnabled" /> --}}
-                                <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}"
+                                <x-ui-text-field-search type="int" label="{{ $this->trans('customer') }}"
                                     clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
                                     required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
 

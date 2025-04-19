@@ -30,7 +30,6 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Disable default search
         $this->setSearchDisabled();
-        $this->setDefaultSort('created_at', 'desc');
     }
 
     /**
@@ -42,9 +41,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return Material::query()
-            ->with(['IvtBal','MatlUom'])
+            ->with(['IvtBal', 'MatlUom'])
             ->select('materials.*')
-            ->whereRaw('1=0'); // Start with an empty query by default
+            ->whereRaw('1=0')
+            ->orderBy('brand', 'asc')
+            ->orderBy('class_code', 'asc')
+            ->orderBy('seq', 'asc');
     }
 
     /**
@@ -55,54 +57,58 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('No', 'seq')->sortable(),
+            // 1. Merk
+            Column::make($this->trans('brand'), 'brand')->sortable()->collapseOnTablet(),
 
-            Column::make('Code', 'code')->sortable()->collapseOnTablet(),
-            Column::make('Merk', 'brand')
-                ->sortable()
-                ->collapseOnTablet(),
+            // 2. Jenis
+            Column::make($this->trans('class_code'), 'class_code')->sortable()->collapseOnTablet(),
 
-            Column::make('Jenis', 'class_code')
-                ->sortable()
-                ->collapseOnTablet(),
+            // 3. No
+            Column::make($this->trans('no'), 'seq')->sortable(),
 
-            Column::make('Tag', 'tag')
-                ->sortable()
-                ->collapseOnTablet()
-                ->hideIf(true),
-            Column::make('Color Code', 'specs->color_code')->format(fn($value, $row) => $row['specs->color_code'] ?? '')->sortable(),
+            // 4. Kode
+            Column::make($this->trans('code'), 'code')->sortable()->collapseOnTablet(),
 
-            Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
+            Column::make($this->trans('color'), 'specs')
+                ->label(function ($row) {
+                    $code = data_get($row->specs, 'color_code', '');
+                    $name = data_get($row->specs, 'color_name', '');
+                    return trim("$code - $name", ' -');
+                })
+                ->sortable(),
 
-            Column::make('Photo', 'id')
+            // 7. Photo
+            Column::make($this->trans('photo'), 'id')
                 ->format(function ($value, $row) {
                     $firstAttachment = $row->Attachment->first();
-                    $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-                    return $imageUrl
+                    $url = $firstAttachment ? $firstAttachment->getUrl() : null;
+                    return $url
                         ? view('components.ui-image', [
-                            'src' => $imageUrl,
-                            'alt' => 'Photo',
+                            'src' => $url,
+                            'alt' => $this->trans('photo'),
                             'width' => '50px',
                             'height' => '50px',
                         ])
-                        : '<span>No Image</span>';
+                        : '<span>' . $this->trans('no_image') . '</span>';
                 })
                 ->html(),
 
-            Column::make('UOM', 'id')->format(fn($value, $row) => $row->uom ?? '')->sortable()->collapseOnTablet(),
+            // 8. Harga Jual
+            Column::make($this->trans('selling_price'), 'id')->label(fn($row) => rupiah($row->DefaultUom->selling_price ?? 0))->sortable()->collapseOnTablet(),
 
-            Column::make('Selling Price', 'id')->label(fn($row) => rupiah($row->DefaultUom->selling_price ?? 0))->sortable()->collapseOnTablet(),
-            Column::make('Buying Price', 'id')->label(fn($row) => rupiah($row->DefaultUom->buying_price ?? 0))->sortable()->collapseOnTablet(),
-            Column::make('stock', 'stock')
-            ->label(function ($row) {
-                return $row->stock;
-            })
-            ->sortable()->collapseOnTablet(),
-            BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
-                return $value === null;
-            }),
-            // Column::make($this->trans('created_date'), 'created_at')->sortable()->collapseOnTablet(),
-            Column::make('Action', 'id')->format(function ($value, $row, $column) {
+            // 9. Modal
+            Column::make($this->trans('buying_price'), 'id')->label(fn($row) => rupiah($row->DefaultUom->buying_price ?? 0))->sortable()->collapseOnTablet(),
+
+            // 10. Stock
+            Column::make($this->trans('stock'), 'stock')->label(fn($row) => $row->stock)->sortable()->collapseOnTablet(),
+
+            // 11. UOM
+            Column::make($this->trans('uom'), 'id')->format(fn($value, $row) => $row->uom ?? '')->sortable()->collapseOnTablet(),
+
+            // Status & Action tetap di paling bawah
+            BooleanColumn::make($this->trans('status'), 'deleted_at')->setCallback(fn($value) => $value === null),
+
+            Column::make($this->trans('action'), 'id')->format(function ($value, $row) {
                 return view('layout.customs.data-table-action', [
                     'row' => $row,
                     'custom_actions' => [],
@@ -124,11 +130,11 @@ class IndexDataTable extends BaseDataTableComponent
      */
     public function filters(): array
     {
-        $kategoriOptions = array_merge(['' => 'Select Category'], collect($this->materialCategories)->pluck('label', 'value')->toArray());
+        $kategoriOptions = array_merge(['' => $this->trans('select_category')], collect($this->materialCategories)->pluck('label', 'value')->toArray());
 
-        $brandOptions = array_merge(['' => 'Select Brand'], Material::distinct('brand')->pluck('brand', 'brand')->toArray());
+        $brandOptions = array_merge(['' => $this->trans('select_brand')], Material::distinct('brand')->pluck('brand', 'brand')->toArray());
 
-        $typeOptions = array_merge(['' => 'Select Type'], Material::distinct('class_code')->pluck('class_code', 'class_code')->toArray());
+        $typeOptions = array_merge(['' => $this->trans('select_type')], Material::distinct('class_code')->pluck('class_code', 'class_code')->toArray());
 
         return [
             // Category Filter
@@ -146,20 +152,21 @@ class IndexDataTable extends BaseDataTableComponent
             // ->setFilterPillValues([
             //     '3' => 'Tag 1',
             // ]),
-            $this->createTextFilter('Kode Barang', 'code', 'Cari Barang', function (Builder $builder, string $value) {
+            $this->createTextFilter($this->trans('code'), 'code', $this->trans('code'), function (Builder $builder, string $value) {
                 if ($this->isFirstFilterApplied($builder)) {
                     $builder->getQuery()->wheres = [];
+                    $builder->getQuery()->orders = [];
                 }
                 $builder->where('code', 'ILIKE', "%{$value}%");
             }),
 
-
-            SelectFilter::make('Category', 'category')
+            SelectFilter::make($this->trans('category_label'), 'category')
                 ->options($kategoriOptions)
                 ->filter(function (Builder $query, string $value) {
                     if ($value !== '') {
                         if ($this->isFirstFilterApplied($query)) {
                             $query->getQuery()->wheres = [];
+                            $query->getQuery()->orders = [];
                         }
                         $query->where('category', $value);
                     }
@@ -167,12 +174,13 @@ class IndexDataTable extends BaseDataTableComponent
                 ->setWireLive(true),
 
             // Brand Filter
-            SelectFilter::make('Brand', 'brand')
+            SelectFilter::make($this->trans('brand_label'), 'brand')
                 ->options($brandOptions)
                 ->filter(function (Builder $query, string $value) {
                     if ($value !== '') {
                         if ($this->isFirstFilterApplied($query)) {
                             $query->getQuery()->wheres = [];
+                            $query->getQuery()->orders = [];
                         }
                         $query->where('brand', $value);
                     }
@@ -180,41 +188,52 @@ class IndexDataTable extends BaseDataTableComponent
                 ->setWireLive(true),
 
             // Type Filter
-            SelectFilter::make('Type', 'class_code')
-                ->options($typeOptions)
-                ->filter(function (Builder $query, string $value) {
-                    if ($value !== '') {
-                        if ($this->isFirstFilterApplied($query)) {
-                            $query->getQuery()->wheres = [];
-                        }
-                        $query->where('class_code', $value);
+            $this->createTextFilter(
+                $this->trans('type_label'),
+                'class_code',
+                $this->trans('class_code'),
+                function (Builder $builder, string $value) {
+                    if ($this->isFirstFilterApplied($builder)) {
+                        $builder->getQuery()->wheres = [];
+                        $builder->getQuery()->orders = [];
                     }
-                })
-                ->setWireLive(true),
+                    $builder->where('class_code', 'ILIKE', "%{$value}%");
+                }
+            ),
 
-            SelectFilter::make('Stock', 'stock_filter')
+            SelectFilter::make($this->trans('stock_label'), 'stock_filter')
                 ->options([
-                    'all' => 'All',
-                    'above_0' => 'Available',
-                    'below_0' => 'Out of Stock',
+                    'all'     => $this->trans('all'),
+                    'above_0' => $this->trans('available'),
+                    'below_0' => $this->trans('out_of_stock'),
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if ($value === 'above_0') {
-                        $builder->whereHas('ivtBals', function ($query) {
-                            $query->havingRaw('SUM(qty_oh) > 0');
-                        });
-                    } elseif ($value === 'below_0') {
-                        $builder->whereDoesntHave('ivtBals')
-                            ->orWhereHas('ivtBals', function ($query) {
-                                $query->havingRaw('SUM(qty_oh) <= 0');
-                            });
+                    // reset default whereRaw/orders kalau ini filter pertama
+                    if ($this->isFirstFilterApplied($builder)) {
+                        $builder->getQuery()->wheres = [];
+                        $builder->getQuery()->orders = [];
                     }
+
+                    // join manual ke mu
+                    $builder->leftJoin('matl_uoms as mu', function ($join) {
+                        $join->on('mu.matl_id', '=', 'materials.id')
+                             ->whereColumn('mu.matl_uom', 'materials.uom');
+                    });
+
+                    if ($value === 'above_0') {
+                        $builder->where('mu.qty_oh', '>', 0);
+                    } elseif ($value === 'below_0') {
+                        $builder->where('mu.qty_oh', '<=', 0);
+                    }
+                    // pastikan select materials.* lagi setelah join
+                    $builder->select('materials.*');
                 }),
 
-            SelectFilter::make('Status', 'status_filter')
+
+            SelectFilter::make($this->trans('status_label'), 'status_filter')
                 ->options([
-                    'active' => 'Active',
-                    'deleted' => 'Non Active',
+                    'active' => $this->trans('active'),
+                    'deleted' => $this->trans('non_active'),
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value === 'active') {
@@ -247,7 +266,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'deleteSelected' => 'Delete Selected',
             'downloadCreateTemplate' => 'Download Create Template',
-            'exportExcel' => 'Export Excel',
+            // 'exportExcel' => 'Export Excel',
         ];
     }
     /**
@@ -260,7 +279,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
-   /**
+    /**
      * Generate and download an Excel template for updating materials.
      */
     public function exportExcel()
@@ -306,13 +325,13 @@ class IndexDataTable extends BaseDataTableComponent
         $selectedIds = $this->getSelected() ?? [];
 
         if (empty($selectedIds)) {
-            $this->dispatch('error', 'No materials selected.');
+            $this->dispatch('error', $this->trans('no_materials_selected'));
             return;
         }
         $ids = implode(',', $selectedIds);
         $this->dispatch('open-confirm-dialog', [
             'title' => 'Confirm Delete',
-            'message' => 'Are you sure you want to delete this?',
+            'message' => $this->trans('delete_confirm'),
             'icon' => 'warning',
             'confirmMethod' => 'deleteMaterial',
             'confirmParams' => implode(',', (array) $selectedIds),
@@ -326,7 +345,7 @@ class IndexDataTable extends BaseDataTableComponent
         Material::whereIn('id', $idsArray)->update(['status_code' => Status::NONACTIVE]);
         Material::whereIn('id', $idsArray)->delete();
         $this->dispatch('refreshTable');
-        $message = count($idsArray) > 1 ? 'Selected materials deleted successfully.' : 'Material deleted successfully.';
+        $message = count($idsArray) > 1 ? $this->trans('delete_success_multiple') : $this->trans('delete_success_single');
         $this->dispatch('success', $message);
     }
 }
