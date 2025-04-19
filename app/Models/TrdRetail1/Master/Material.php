@@ -54,6 +54,7 @@ class Material extends BaseModel
             'allowInsert' => false,
         ];
     }
+
     public static function getExcelTemplateConfig(array $data = []): array
     {
         return [
@@ -299,6 +300,16 @@ class Material extends BaseModel
 
                 $status  = 'Success';
                 $message = '';
+                $allBlank = true;
+                foreach ($row as $cell) {
+                    if (trim((string)$cell) !== '') {
+                        $allBlank = false;
+                        break;
+                    }
+                }
+                if ($allBlank) {
+                    continue;  // skip this row entirely
+                }
 
                 if ($param === 'Create') {
                     $category     = $row[$headerIndex['Kategori*']]   ?? '';
@@ -532,7 +543,8 @@ class Material extends BaseModel
                 }
             }
 
-            $templateConfig['data'] = array_slice($dataTable, 1);
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
             $audit->updateAuditTrail(100, 'Upload and processing completed successfully.', Status::SUCCESS);
@@ -540,7 +552,8 @@ class Material extends BaseModel
         } catch (\Exception $e) {
             DB::rollback();
             $audit->updateAuditTrail(100, 'Processing failed: ' . $e->getMessage(), Status::ERROR);
-            $templateConfig['data'] = array_slice($dataTable, 1);
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
             throw $e;
         }
