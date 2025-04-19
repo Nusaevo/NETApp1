@@ -10,7 +10,7 @@
         @if ($actionValue === 'Create')
             <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
         @elseif($actionValue !== 'Create')
-            <x-ui-tab-view id="myTab" tabs="general,uom"> </x-ui-tab-view>
+            <x-ui-tab-view id="myTab" tabs="general"> </x-ui-tab-view>
         @endif
 
         <x-ui-tab-view-content id="tabMaterial" class="tab-content">
@@ -62,8 +62,8 @@
                                     type="text" :action="$actionValue" required="true" enabled="false"
                                     clickEvent="getMatlCode" buttonName="{{ $this->trans('get_code') }}"
                                     :buttonEnabled="$panelEnabled" />
-                                <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
-                                    type="text" :action="$actionValue" enabled="false" />
+                                {{-- <x-ui-text-field label="{{ $this->trans('barcode') }}" model="matl_uoms.barcode"
+                                    type="text" :action="$actionValue" enabled="false" /> --}}
                             </div>
 
                             <div class="row">
@@ -71,7 +71,7 @@
                                     type="text" :action="$actionValue" required="true" enabled="true"
                                     onChanged="generateName" />
                                 <x-ui-text-field label="{{ $this->trans('class_code') }}" model="materials.class_code"
-                                    type="text" :action="$actionValue" required="true" enabled="true"
+                                    type="text" :action="$actionValue" required="false" enabled="true"
                                     onChanged="generateName" />
                             </div>
 
@@ -87,7 +87,7 @@
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                    type="text" :action="$actionValue" required="true" enabled="false" />
+                                    type="text" :action="$actionValue" required="true" enabled="true" />
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('descr') }}" model="materials.descr"
@@ -100,16 +100,16 @@
                             </div> --}}
 
                             <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('selling_price') }}"
+                                {{-- <x-ui-text-field label="{{ $this->trans('selling_price') }}"
                                     model="matl_uoms.selling_price" type="number" :action="$actionValue" required="false"
-                                    :enabled="$panelEnabled" enabled="false" />
+                                    :enabled="$panelEnabled" enabled="false" /> --}}
                                 {{-- <x-ui-text-field label="{{ $this->trans('cogs') }}" model="materials.cogs"
                                     type="number" :action="$actionValue" required="true" enabled="true" /> --}}
-                                <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="materials.uom"
+                                {{-- <x-ui-dropdown-select label="{{ $this->trans('uom') }}" model="materials.uom"
                                     :options="$materialUOM" type="number" :action="$actionValue" required="false"
-                                    enabled="true" />
-                                <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
-                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                    enabled="true" /> --}}
+                                {{-- <x-ui-text-field label="{{ $this->trans('stock') }}" model="materials.stock"
+                                    type="text" :action="$actionValue" required="false" enabled="false" /> --}}
 
                             </div>
                             <div class="row">
@@ -122,12 +122,8 @@
                                 </div>
                             </div>
                         </x-ui-card>
-
                     </div>
-
                 </div>
-            </div>
-            <div class="tab-pane fade show" id="uom" role="tabpanel" aria-labelledby="uom-tab">
                 <x-ui-card>
                     <x-ui-table id="Table" title="{{ $this->trans('uom_list') }}">
                         <x-slot name="headers">
@@ -137,9 +133,9 @@
                             <th style="text-align: center; width: 50px;">{{ $this->trans('reff_factor') }}</th>
                             <th style="text-align: center; width: 50px;">{{ $this->trans('base_factor') }}</th>
                             <th style="text-align: center; width: 150px;">{{ $this->trans('barcode') }}</th>
-                            <th style="text-align: center; width: 150px;">{{ $this->trans('buying_price_idr') }}
+                            <th style="text-align: center; width: 150px;">{{ $this->trans('buying_price') }}
                             </th>
-                            <th style="text-align: center; width: 150px;">{{ $this->trans('selling_price_idr') }}
+                            <th style="text-align: center; width: 150px;">{{ $this->trans('selling_price') }}
                             </th>
                             <th style="text-align: center; width: 50px;">{{ $this->trans('actions') }}</th>
                         </x-slot>
@@ -194,7 +190,6 @@
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>
-
 
             </div>
         </x-ui-tab-view-content>

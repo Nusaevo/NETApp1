@@ -1,19 +1,21 @@
 <?php
 
 return [
-    'code' => 'Code',
+    'code' => 'Kode Produk',
     'brand' => 'Merk',
     'class_code' => 'Jenis',
     'tag' => 'Tag',
-    'color' => 'Color',
-    'photo' => 'Photo',
-    'uom' => 'UOM',
+    'color' => 'Warna',
+    'photo' => 'Foto',
+    'uom' => 'Satuan',
     'selling_price' => 'Harga Jual',
-    'buying_price' => 'Harga Beli',
+    'buying_price' => 'Modal',
     'stock' => 'Stock',
     'status' => 'Status',
     'created_date' => 'Created Date',
     'action' => 'Action',
+    'no' => 'No',
+
 
     // Filter labels
     'category_label' => 'Kategori',

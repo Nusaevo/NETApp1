@@ -328,7 +328,11 @@ class Material extends BaseModel
                     $stock        = !empty($stockRaw) ? convertFormattedNumber($stockRaw) : 0;
 
                     $materialCode = Material::generateMaterialCode($category);
-                    $name         = Material::generateName($category, $brand, $type, $colorCode);
+                    $name = '';
+                    $generated = Material::generateName($category, $brand, $type, $colorCode, $colorName);
+                    if ($generated !== '') {
+                        $name = $generated;
+                    }
 
                     $validUOMs = ConfigConst::where('const_group', 'MMATL_UOM')->pluck('str1')->toArray();
                     if (!in_array($uom, $validUOMs)) {
@@ -616,10 +620,14 @@ class Material extends BaseModel
         return trim(implode(' ', array_filter([$code, $barcode, $brand, $classCode, $specs['color_code'] ?? '', $specs['color_name'] ?? ''])));
     }
 
-    public static function generateName($category, $brand, $type, $colorCode)
+    public static function generateName($category, $brand, $type, $colorCode, $colorName)
     {
         $masterService = new MasterService();
-        $category = $masterService->getMatlCategoryString($category);
-        return $category . ' ' . $brand . ' ' . $type . ' (' . $colorCode . ')';
+        $data = $masterService->getMatlCategoryDetail($category);
+        if($data->num1 == 1){
+            return 'BENANG ' . $brand . ' ' . $type . ' (' . $colorCode . ')' .  $colorName;
+        }else{
+            return '';
+        }
     }
 }

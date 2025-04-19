@@ -47,7 +47,7 @@ class MaterialComponent extends BaseComponent
         // 'materials.name' => 'required|string|max:255',
         'materials.remark' => 'nullable|string|max:500',
         'materials.brand' => 'required|string|max:255',
-        'materials.class_code' => 'required|string|max:255',
+        'materials.class_code' => 'nullable|string|max:255',
         // 'materials.color_code' => 'required|string|max:50',
         // 'materials.color_name' => 'required|string|max:100',
         'matl_uoms.selling_price' => 'nullable|numeric|min:0',
@@ -217,7 +217,7 @@ class MaterialComponent extends BaseComponent
             $this->materials['class_code'] ?? '',
             $this->materials['specs']
         );
-        $this->generateName(); // method apa pun yang Anda punya
+        // $this->generateName(); // method apa pun yang Anda punya
 
         // 5. Isi model Material dengan data input
         $this->object->fill($this->materials);
@@ -356,7 +356,11 @@ class MaterialComponent extends BaseComponent
         $brand = $this->materials['brand'] ?? '';
         $classCode = $this->materials['class_code'] ?? '';
         $colorCode = $this->materials['color_code'] ?? '';
-        $this->materials['name'] = Material::generateName($category, $brand, $classCode, $colorCode);
+        $colorName = $this->materials['color_name'] ?? '';
+        $generated = Material::generateName($category, $brand, $classCode, $colorCode, $colorName);
+        if ($generated !== '') {
+            $this->materials['name'] = $generated;
+        }
     }
 
     public function onCategoryChanged()

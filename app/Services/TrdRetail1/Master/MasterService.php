@@ -101,6 +101,16 @@ class MasterService extends BaseService
         return $data ? $data->str2 : null;
     }
 
+    public function getMatlCategoryDetail(string $str1): ?object
+    {
+        return $this->mainConnection
+            ->table('config_consts')
+            ->select('str2', 'num1')
+            ->where('const_group', 'MMATL_CATEGL1')
+            ->where('str1', $str1)
+            ->whereNull('deleted_at')
+            ->first();
+    }
 
     public function getSuppliers()
     {

@@ -153,7 +153,7 @@ class StorageComponent extends BaseComponent
                 DB::beginTransaction();
 
                 $attachmentFilename = pathinfo($attachment->name, PATHINFO_FILENAME);
-                $material = Material::where('code', 'like', "%{$attachmentFilename}%")->first();
+                $material = Material::where('code', '=', "{$attachmentFilename}")->first();
 
                 if (!$material) {
                     throw new Exception("No material found matching filename: {$attachmentFilename}");
