@@ -76,7 +76,7 @@
                             </div>
 
                             <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="text"
+                                <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="number"
                                     :action="$actionValue" required="true" enabled="true" />
                                 <x-ui-text-field label="{{ $this->trans('color_code') }}" model="materials.color_code"
                                     type="text" :action="$actionValue" required="false" enabled="true"
@@ -87,7 +87,7 @@
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                    type="text" :action="$actionValue" required="true" enabled="true" />
+                                    type="text" capslockMode="true" :action="$actionValue" required="true" enabled="true" />
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('descr') }}" model="materials.descr"
@@ -113,8 +113,8 @@
 
                             </div>
                             <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag"
-                                    type="text" :action="$actionValue" required="false" enabled="false" />
+                                {{-- <x-ui-text-field label="{{ $this->trans('tag') }}" model="materials.tag"
+                                    type="text" :action="$actionValue" required="false" enabled="false" /> --}}
 
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('remarks') }}" model="materials.remarks"
@@ -128,15 +128,16 @@
                     <x-ui-table id="Table" title="{{ $this->trans('uom_list') }}">
                         <x-slot name="headers">
                             <th style="text-align: center; width: 10px;">{{ $this->trans('seq') }}</th>
-                            <th style="text-align: center; width: 50px;">{{ $this->trans('base_uom') }}</th>
-                            <th style="text-align: center; width: 50px;">{{ $this->trans('reff_uom') }}</th>
-                            <th style="text-align: center; width: 50px;">{{ $this->trans('reff_factor') }}</th>
-                            <th style="text-align: center; width: 50px;">{{ $this->trans('base_factor') }}</th>
+                            <th style="text-align: center; width: 100px;">{{ $this->trans('base_uom') }}</th>
+                            <th style="text-align: center; width: 10px;">{{ $this->trans('reff_uom') }}</th>
+                            <th style="text-align: center; width: 100px;">{{ $this->trans('reff_factor') }}</th>
+                            <th style="text-align: center; width: 10px;">{{ $this->trans('base_factor') }}</th>
                             <th style="text-align: center; width: 150px;">{{ $this->trans('barcode') }}</th>
                             <th style="text-align: center; width: 150px;">{{ $this->trans('buying_price') }}
                             </th>
                             <th style="text-align: center; width: 150px;">{{ $this->trans('selling_price') }}
                             </th>
+                            <th style="text-align: center; width: 150px;">{{ $this->trans('stock') }}</th>
                             <th style="text-align: center; width: 50px;">{{ $this->trans('actions') }}</th>
                         </x-slot>
 
@@ -171,6 +172,10 @@
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.selling_price"
                                             type="number" required="false" :action="$actionValue" />
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_details.{{ $key }}.qty_oh"
+                                            type="number" required="false" enabled="false" :action="$actionValue" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-button clickEvent="deleteItem({{ $key }})"

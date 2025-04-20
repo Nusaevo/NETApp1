@@ -11,6 +11,8 @@ return [
     'postal_code' => 'Kode Pos',
     'contact_person' => 'Kontak Person',
 
+    'phone' => 'No. Telp',
+    'email' => 'Email',
     // Tab names
     'general' => 'Umum',
     'transactions' => 'Transaksi',

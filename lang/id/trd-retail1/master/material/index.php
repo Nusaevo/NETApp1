@@ -15,6 +15,7 @@ return [
     'created_date' => 'Created Date',
     'action' => 'Action',
     'no' => 'No',
+    'product' => 'Produk',
 
 
     // Filter labels

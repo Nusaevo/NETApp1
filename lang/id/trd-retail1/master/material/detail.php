@@ -53,14 +53,24 @@ return [
     'general_information' => 'Informasi Umum',
 
     // UOM List Component
-    'uom_list' => 'Daftar Satuan',
-    'base_uom' => 'Satuan Dasar',
-    'reff_uom' => 'Satuan Referensi',
-    'reff_factor' => 'Faktor Referensi',
-    'base_factor' => 'Faktor Dasar',
-    'buying_price' => 'Modal',
-    'selling_price' => 'Harga Jual',
-    'save_uom' => 'Simpan Satuan',
-    'get_code' => 'Dapatkan Kode',
-    'add_item' => 'Tambah Item',
+    'uom_list'       => 'Satuan, Barcode & Harga',
+
+    // Entry UOM (table header)
+    'base_uom'       => 'Satuan',
+    'reff_factor'    => 'Faktor Konversi',
+    'reff_uom'       => 'Satuan Referensi',
+    'base_factor'    => 'Faktor Konversi ke Satuan Dasar',
+
+    // Partner form
+    'phone'          => 'Telepon',
+
+    // Edit Produk – Entry Ukuran
+    'entry_ukuran'   => 'Entry Ukuran',
+
+    // tombol / aksi lain (tidak berubah key, hanya untuk referensi)
+    'buying_price'   => 'Modal',
+    'selling_price'  => 'Harga Jual',
+    'save_uom'       => 'Simpan Satuan',
+    'get_code'       => 'Dapatkan Kode',
+    'add_item'       => 'Tambah Item',
 ];

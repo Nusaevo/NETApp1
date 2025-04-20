@@ -27,37 +27,43 @@ class IndexDataTable extends BaseDataTableComponent
         $this->masterService = new MasterService();
         $this->materialCategories = $this->masterService->getMatlCategoryData();
         $this->setSearchDisabled();
-        $this->defaultSorts = [
-            'Material.brand'      => 'asc',
-            'Material.class_code' => 'asc',
-            'Material.seq'        => 'asc',
-        ];
+        $this->setDefaultSort('Material.code', 'asc');
     }
 
     public function builder(): Builder
     {
-        return MatlUom::query()->with('Material')->whereRaw('1=0')->select('matl_uoms.*');
+        $query = MatlUom::query()
+            ->with('Material')
+            ->join('materials', 'materials.id', '=', 'matl_uoms.matl_id')
+            ->select('matl_uoms.*')
+            ->whereRaw('1=0');
+        return $query;
     }
+
 
     public function columns(): array
     {
         return [
-            Column::make($this->trans('no'), 'Material.seq')->sortable(),
-            Column::make($this->trans('code'), 'Material.code'),
+            Column::make($this->trans('no'), 'Material.seq')
+            ->sortable(),
+            Column::make($this->trans('code'), 'Material.code')
+            ->format(function ($value, $row) {
+                return '<a href="' .
+                    route($this->appCode . '.Master.Material.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->Material->id),
+                    ]) .
+                    '">' .
+                    $row->Material->code .
+                    '</a>';
+            })
+            ->html()->sortable(
+                fn(Builder $query, string $direction) =>
+                    // karena kita sudah join ke materials di builder()
+                    $query->orderBy('materials.code', $direction)
+            ),
             Column::make($this->trans('name'), 'Material.name')->sortable(),
             // Column::make($this->trans('brand'), 'Material.brand')->sortable(),
-
-            // Column::make($this->trans('class_code'), 'Material.class_code')->sortable(),
-
-
-            Column::make($this->trans('color'), 'Material.specs')
-                ->label(function ($row) {
-                    $specs = $row->Material->specs;
-                    $code = data_get($specs, 'color_code', '');
-                    $name = data_get($specs, 'color_name', '');
-                    return trim($code . ' - ' . $name, ' -');
-                })
-                ->sortable(),
             Column::make($this->trans('photo'), 'Material.id')
                 ->format(function ($value, $row) {
                     $attachment = $row->Material->Attachment->first();
@@ -82,19 +88,18 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('uom'), 'matl_uom'),
 
             BooleanColumn::make($this->trans('status'), 'Material.deleted_at')->setCallback(fn($value) => $value === null),
+            Column::make($this->trans('action'), 'id')
+            ->format(fn($value, $matlUom) => view('layout.customs.data-table-action', [
+                'row'    => $matlUom->Material,
+                'custom_actions'  => [],
+                'enable_this_row' => true,
+                'allow_details'   => false,
+                'allow_edit'      => true,
+                'allow_disable'   => false,
+                'allow_delete'    => false,
+                'permissions'     => $this->permissions,
+            ])),
 
-            Column::make($this->trans('action'), 'matl_uom')->format(
-                fn($value, $row) => view('layout.customs.data-table-action', [
-                    'row' => $row,
-                    'custom_actions' => [],
-                    'enable_this_row' => true,
-                    'allow_details' => false,
-                    'allow_edit' => true,
-                    'allow_disable' => false,
-                    'allow_delete' => false,
-                    'permissions' => $this->permissions,
-                ]),
-            ),
         ];
     }
 
@@ -108,12 +113,11 @@ class IndexDataTable extends BaseDataTableComponent
 
         return [
             // CODE
-            $this->createTextFilter($this->trans('code'), 'code', $this->trans('code'), function (Builder $q, string $v) {
+            $this->createTextFilter($this->trans('product'), 'tag', "Cari Produk", function (Builder $q, string $v) {
                 if ($this->isFirstFilterApplied($q)) {
                     $q->getQuery()->wheres = [];
-                    $q->getQuery()->orders = [];
                 }
-                $q->whereHas('Material', fn(Builder $m) => $m->where('code', 'ILIKE', "%{$v}%"));
+                $q->whereHas('Material', fn(Builder $m) => $m->where('tag', 'ILIKE', "%{$v}%"));
             }),
 
             // CATEGORY
@@ -122,7 +126,6 @@ class IndexDataTable extends BaseDataTableComponent
                 ->filter(function (Builder $q, string $v) {
                     if ($this->isFirstFilterApplied($q)) {
                         $q->getQuery()->wheres = [];
-                        $q->getQuery()->orders = [];
                     }
                     if ($v !== '') {
                         $q->whereHas('Material', fn(Builder $m) => $m->where('category', $v));
@@ -136,7 +139,6 @@ class IndexDataTable extends BaseDataTableComponent
                 ->filter(function (Builder $q, string $v) {
                     if ($this->isFirstFilterApplied($q)) {
                         $q->getQuery()->wheres = [];
-                        $q->getQuery()->orders = [];
                     }
                     if ($v !== '') {
                         $q->whereHas('Material', fn(Builder $m) => $m->where('brand', $v));
@@ -148,7 +150,6 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter($this->trans('type_label'), 'class_code', $this->trans('class_code'), function (Builder $q, string $v) {
                 if ($this->isFirstFilterApplied($q)) {
                     $q->getQuery()->wheres = [];
-                    $q->getQuery()->orders = [];
                 }
                 $q->whereHas('Material', fn(Builder $m) => $m->where('class_code', 'ILIKE', "%{$v}%"));
             }),
@@ -162,7 +163,6 @@ class IndexDataTable extends BaseDataTableComponent
                 ->filter(function (Builder $q, string $v) {
                     if ($this->isFirstFilterApplied($q)) {
                         $q->getQuery()->wheres = [];
-                        $q->getQuery()->orders = [];
                     }
                     if ($v === 'above_0') {
                         $q->where('qty_oh', '>', 0);

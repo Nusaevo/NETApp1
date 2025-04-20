@@ -368,7 +368,7 @@ class Material extends BaseModel
                             'uom'     => $uom,
                         ]);
 
-                        $tag = Material::generateTag($material->code, $material->MatlUom, $brand, $type, $material->specs);
+                        $tag = Material::generateTag($material->name, $material->code, $material->MatlUom, $brand, $type, $material->specs);
                         $material->update(['tag' => $tag]);
 
                         $material->MatlUom()->create([
@@ -438,6 +438,7 @@ class Material extends BaseModel
                         ]);
 
                         $tag = Material::generateTag(
+                            $material->name,
                             $material->code,
                             $material->MatlUom,
                             $material->brand,
@@ -614,20 +615,38 @@ class Material extends BaseModel
         return $this->DefaultUom?->qty_oh ?? 0;
     }
 
-    public static function generateTag($code, $matlUoms, $brand, $classCode, $specs)
+    public static function generateTag($name, $code, $matlUoms, $brand, $classCode, $specs)
     {
         $barcode = optional($matlUoms->first())->barcode ?? '';
-        return trim(implode(' ', array_filter([$code, $barcode, $brand, $classCode, $specs['color_code'] ?? '', $specs['color_name'] ?? ''])));
+        return trim(implode(' ', array_filter([$name, $code, $barcode, $brand, $classCode, $specs['color_code'] ?? '', $specs['color_name'] ?? ''])));
     }
 
-    public static function generateName($category, $brand, $type, $colorCode, $colorName)
-    {
+    public static function generateName(
+        $category,
+        $brand,
+        $type,
+        $colorCode,
+        $colorName
+    ) {
         $masterService = new MasterService();
         $data = $masterService->getMatlCategoryDetail($category);
-        if($data->num1 == 1){
-            return 'BENANG ' . $brand . ' ' . $type . ' (' . $colorCode . ')' .  $colorName;
-        }else{
-            return '';
+
+        // hanya generate kalau num1 == 1
+        if ((int) $data->num1 === 1) {
+            // bangun string dulu
+            $raw = sprintf(
+                'Benang %s %s %s %s',
+                $brand,
+                $type,
+                $colorCode,
+                $colorName
+            );
+
+            // kembalikan versi UPPERCASE
+            return strtoupper($raw);
         }
+
+        return '';
     }
+
 }
