@@ -1,33 +1,119 @@
 <?php
 
-use App\Models\SysConfig1\ConfigMenu;
-use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigRight;
-use Illuminate\Support\Facades\Config;
-use App\Models\SysConfig1\ConfigAppl;
-use Illuminate\Support\Facades\Session;
+use App\Models\SysConfig1\{ConfigMenu, ConfigUser, ConfigConst, ConfigRight, ConfigAppl};
 use App\Enums\Constant;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{Config, Session, Crypt, DB};
 
-if (!function_exists('populateArrayFromModel')) {
-    /**
-     * Populate an array with all column values from a model.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @return array
-     */
-    function populateArrayFromModel($model)
-    {
-        $data = [];
-        $attributes = $model->getAllColumns();
+/**
+ * Manage table schema operations for a model.
+ *
+ * @param \Illuminate\Database\Eloquent\Model $model
+ * @param string|null $column
+ * @param string|null $operation ('columns', 'hasColumn', 'type')
+ * @return mixed
+ */
+function schemaHelper($model, $column = null, $operation = 'columns')
+{
+    $connection = $model->getConnectionName();
+    $table = $model->getTable();
+    $result = null;
 
-        foreach ($attributes as $attribute) {
-            $value = $model->getAllColumnValues($attribute);
-            $data[$attribute] = $value;
+    try {
+        switch ($operation) {
+            case 'columns':
+                // Operasi: Ambil semua kolom
+                $result = Schema::connection($connection)->getColumnListing($table);
+                break;
+
+            case 'hasColumn':
+                // Operasi: Periksa keberadaan kolom
+                if ($column) {
+                    $result = Schema::connection($connection)->hasColumn($table, $column);
+                }
+                break;
+
+            case 'type':
+                // Operasi: Ambil tipe kolom
+                if ($column) {
+                    $result = Schema::connection($connection)->getColumnType($table, $column);
+                }
+                break;
+
+            default:
+                // Jika operasi tidak dikenal, kembalikan null (opsional)
+                $result = null;
         }
-        return $data;
+    } catch (\Exception $e) {
+        logger()->error('Schema Helper Error: ' . $e->getMessage());
+    }
+
+    return $result;
+}
+
+/**
+ * Populate model attributes with default values based on column type.
+ *
+ * @param \Illuminate\Database\Eloquent\Model $model
+ * @return array
+ */
+function populateArrayFromModel($model)
+{
+    $data = [];
+
+    if (schemaHelper($model, 'id', 'hasColumn')) {
+        $data['id'] = $model->id;
+    }
+
+    $columns = $model->getFillable();
+
+    foreach ($columns as $column) {
+        if (schemaHelper($model, $column, 'hasColumn')) {
+            $type = schemaHelper($model, $column, 'type') ?? 'string';
+            $value = $model->{$column} ?? getDefaultValueForType($type);
+            $data[$column] = $value;
+        }
+    }
+
+    return $data;
+}
+
+
+/**
+ * Get default value based on column type.
+ *
+ * @param string $type
+ * @return mixed
+ */
+function getDefaultValueForType($type)
+{
+    return match ($type) {
+        // Tipe String
+        'string', 'text', 'char', 'varchar' => '',
+        // Tipe Numerik
+        'integer', 'bigint', 'smallint', 'tinyint', 'numeric', 'int', 'int2', 'int4', 'int8' => 0,
+        'decimal', 'float', 'double' => 0.0,
+        // Tipe Boolean
+        'boolean' => false,
+        // Tipe JSON
+        'json', 'jsonb' => [],
+        // Tipe Waktu dan Tanggal
+        'datetime', 'date', 'time', 'timestamp' => now(),
+        // Default
+        default => null,
+    };
+}
+
+if (!function_exists('isJsonFormat')) {
+    /**
+     * Check if a string is in JSON format.
+     *
+     * @param string $string
+     * @return bool
+     */
+    function isJsonFormat($string)
+    {
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
     }
 }
 
@@ -146,7 +232,7 @@ if (!function_exists('registerDynamicConnections')) {
 
         // Set base connection credentials globally
         Config::set('database.connections.pgsql', $baseConnection);
-        $configConnectionName = Constant::ConfigConn();
+        $configConnectionName = Constant::configConn();
 
         try {
             // Fetch dynamic database configurations

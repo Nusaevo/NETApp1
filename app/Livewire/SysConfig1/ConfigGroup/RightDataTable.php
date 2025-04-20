@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Livewire\SysConfig1\ConfigGroup;
 
 use App\Livewire\Component\BaseDataTableComponent;
@@ -17,6 +18,7 @@ class RightDataTable extends BaseDataTableComponent
     public function mount($groupId = null, $appId = null, $selectedMenus = null): void
     {
         $this->groupId = $groupId;
+        $this->isComponent = true;
         $this->appId = $appId;
         $this->selectedRows = $selectedMenus ?: [];
     }

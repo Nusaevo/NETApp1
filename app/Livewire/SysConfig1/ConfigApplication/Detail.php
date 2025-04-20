@@ -14,7 +14,7 @@ class Detail extends BaseComponent
     public $rules = [
         'inputs.code' => 'required|string|min:1|max:100',
         'inputs.name' => 'required|string|min:1|max:100',
-        'inputs.latest_version' => 'string|min:1|max:15',
+        'inputs.latest_version' => 'required',
         'inputs.descr' => 'string|min:1|max:500',
         'inputs.db_name' => 'required|string|min:1|max:100',
     ];
@@ -67,7 +67,7 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
 
         if($this->object->isDuplicateCode())
         {

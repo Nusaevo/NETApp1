@@ -2,15 +2,13 @@
 
 namespace App\Models\Base;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\TrdJewel1\Base\Attachment;
-use App\Traits\BaseTrait;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Session;
-use App\Enums\Status;
+use Illuminate\Database\Eloquent\{Model, Factories\HasFactory};
+use Illuminate\Support\Facades\{Schema, Session};
 use App\Models\SysConfig1\ConfigSnum;
+use App\Models\Base\{Attachment};
+use App\Traits\BaseTrait;
+use App\Enums\Status;
+
 
 
 class BaseModel extends Model
@@ -19,10 +17,21 @@ class BaseModel extends Model
     use BaseTrait;
 
     protected $fillable = [];
+
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $sessionAppCode = Session::get('app_code');
+        $this->connection = $sessionAppCode;
+    }
+
     protected static function boot()
     {
         parent::boot();
-
+        static::saving(function ($model) {
+            $model->sanitizeAttributes();
+        });
         static::retrieved(function ($model) {
             $attributes = $model->getAllColumns();
 
@@ -35,13 +44,16 @@ class BaseModel extends Model
                     }
                 }
 
+                if (is_string($value) && isJsonFormat($value)) {
+                    $value = json_decode($value, true);
+                }
+
                 $model->{$attribute} = $value;
             }
         });
 
         self::bootUpdatesCreatedByAndUpdatedAt();
     }
-
 
     public function getAllColumns()
     {
@@ -55,6 +67,22 @@ class BaseModel extends Model
         }
         return null;
     }
+
+    public function getStatusCodeTextAttribute()
+    {
+        // Check if the `status_code` column exists in the current table
+        if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'status_code')) {
+            $statusCode = $this->attributes['status_code'] ?? null;
+
+            if ($statusCode) {
+                // Return the full status string from the Status enum
+                return Status::getStatusString($statusCode);
+
+            }
+        }
+        return null;
+    }
+
 
     public function isNew()
     {
@@ -97,21 +125,37 @@ class BaseModel extends Model
         }
     }
 
-    public function fillAndSanitize(array $attributes)
+    /**
+     * Fill the model with sanitized attributes.
+     *
+     * - Dates: Sanitized via `sanitizeDate`
+     * - Numeric strings: Properly formatted (`.` and `,` swapped)
+     * - Strings: Trimmed whitespace
+     * - Arrays: JSON-encoded
+     *
+     * @param array $attributes
+     */
+        /**
+     * Sanitize model attributes before saving.
+     */
+    protected function sanitizeAttributes()
     {
-        $sanitizedAttributes = [];
-
-        foreach ($attributes as $key => $value) {
-            if (isDateAttribute($value)) {
-                $sanitizedAttributes[$key] = sanitizeDate($value);
-            } elseif ((isFormattedNumeric($value) !== false) ){
-                $sanitizedAttributes[$key] = str_replace('.', '', $value);
-                $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
-            } else {
-                $sanitizedAttributes[$key] = $value;
+        foreach ($this->attributes as $key => $value) {
+            if (isDateAttribute($key, $value)) {
+                // Sanitize Date
+                $this->attributes[$key] = $this->sanitizeDate($value);
+            } elseif (isFormattedNumeric($value)) {
+                // Format Numeric Strings (e.g., "1.000,50" => "1000.50")
+                $this->attributes[$key] = str_replace('.', '', $value);
+                $this->attributes[$key] = str_replace(',', '.', $this->attributes[$key]);
+            } elseif (is_array($value)) {
+                // Encode Arrays as JSON
+                $this->attributes[$key] = json_encode($value);
+            } elseif (is_string($value)) {
+                // Trim Strings
+                $this->attributes[$key] = trim($value);
             }
         }
-        $this->fill($sanitizedAttributes);
     }
 
     public function isDuplicateCode()

@@ -3,10 +3,9 @@
 namespace App\Livewire\TrdJewel1\Master\Currency;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\DateFilter};
 use App\Models\TrdJewel1\Master\GoldPriceLog;
 use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -14,8 +13,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setSearchDisabled();
         $this->setSort('log_date', 'desc');
     }
@@ -46,7 +43,7 @@ class IndexDataTable extends BaseDataTableComponent
                     return dollar($value);
                 }),
             Column::make($this->trans('created_date'), 'created_at')
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

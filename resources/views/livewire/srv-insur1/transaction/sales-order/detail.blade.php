@@ -161,7 +161,7 @@
                                                         ? $detail['image_path']
                                                         : 'https://via.placeholder.com/300';
                                             @endphp
-                                            <img src="{{ $imagePath }}" alt="Material Photo"
+                                            <img src="{{ $imagePath }}" alt="Material"
                                                 style="width: 200px; height: 200px;">
                                         </x-slot>
 

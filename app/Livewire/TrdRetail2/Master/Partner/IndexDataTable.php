@@ -3,14 +3,13 @@
 namespace App\Livewire\TrdRetail2\Master\Partner;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\TrdRetail2\Master\Partner;
-use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Services\SysConfig1\ConfigService;
 use App\Enums\Status;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -18,8 +17,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
     }

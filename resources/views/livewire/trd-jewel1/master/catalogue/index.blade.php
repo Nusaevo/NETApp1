@@ -25,9 +25,9 @@
              <div class="list-catalogue-item">
                  <div class="image-container gallery-image-container">
                      @if($material->Attachment->first())
-                     <img src="{{ $material->Attachment->first()->getUrl() }}" alt="Captured Image" class="photo-box-image gallery-photo-box-image">
+                     <x-ui-image src="{{ $material->Attachment->first()->getUrl() }}"  alt="Captured Image" width="300px" height="200px" />
                      @else
-                     <img src="https://via.placeholder.com/300" alt="Material Photo" class="photo-box-image gallery-photo-box-image">
+                     <img src="https://via.placeholder.com/300" alt="Material" class="photo-box-image gallery-photo-box-image">
                      @endif
                  </div>
                  <div class="material-info">

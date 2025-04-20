@@ -2,14 +2,14 @@
 
 namespace App\Models\TrdJewel1\Transaction;
 
-use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Partner;
 use App\Models\TrdJewel1\Transaction\ReturnDtl;
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Enums\Constant;
-class ReturnHdr extends TrdJewel1BaseModel
+class ReturnHdr extends BaseModel
 {
     use SoftDeletes;
 

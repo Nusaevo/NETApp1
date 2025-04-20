@@ -1,32 +1,17 @@
 <?php
+
 namespace App\Livewire\TrdJewel1\Transaction\Buyback;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdJewel1\Transaction\ReturnHdr;
-use App\Models\TrdJewel1\Transaction\ReturnDtl;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
-use App\Models\TrdJewel1\Transaction\OrderDtl;
-use App\Models\TrdJewel1\Master\Partner;
-use App\Models\SysConfig1\ConfigConst;
-use Illuminate\Support\Facades\Crypt;
-use App\Models\TrdJewel1\Master\Material;
-use App\Models\TrdJewel1\Master\MatlUom;
-use App\Enums\Status;
-use App\Models\TrdJewel1\Transaction\BillingDtl;
-use App\Models\TrdJewel1\Transaction\BillingHdr;
-use App\Models\TrdJewel1\Transaction\DelivDtl;
-use App\Models\TrdJewel1\Transaction\DelivHdr;
-use Exception;
+use Illuminate\Support\Facades\{Crypt, DB, Auth, Session};
+use App\Models\TrdJewel1\Transaction\{ReturnHdr, ReturnDtl, OrderHdr, OrderDtl, BillingDtl, BillingHdr, DelivDtl, DelivHdr};
+use App\Models\TrdJewel1\Master\{Partner, Material, MatlUom, GoldPriceLog};
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
+use App\Enums\{Status, Constant};
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Models\TrdJewel1\Master\GoldPriceLog;
-use Illuminate\Support\Facades\Auth;
-
-use App\Enums\Constant;
-use App\Models\SysConfig1\ConfigSnum;
-use Illuminate\Support\Facades\Session;
-use function PHPUnit\Framework\throwException;
+use Exception;
 use App\Services\TrdJewel1\Master\MasterService;
+use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
 {
@@ -167,7 +152,7 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         if ($this->object->tr_id === null || $this->object->tr_id == 0) {
             $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
                 ->where('code', '=',  "BUYBACK_LASTID")
@@ -192,7 +177,7 @@ class Detail extends BaseComponent
             if (!isset($this->object_detail[$index])) {
                 $this->object_detail[$index] = new ReturnDtl();
             }
-            $this->object_detail[$index]->fillAndSanitize($data);
+            $this->object_detail[$index]->fill($data);
             if ($this->object_detail[$index]->isNew()) {
                 $this->object->status_code = Status::OPEN;
                 $this->object_detail[$index]->tr_id =  $this->object->tr_id;

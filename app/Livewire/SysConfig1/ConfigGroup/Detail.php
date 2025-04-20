@@ -3,16 +3,12 @@
 namespace App\Livewire\SysConfig1\ConfigGroup;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\SysConfig1\ConfigGroup;
-use App\Models\SysConfig1\ConfigAppl;
-use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigRight;
+use App\Models\SysConfig1\{ConfigGroup, ConfigAppl, ConfigUser, ConfigRight};
 use App\Services\SysConfig1\ConfigService;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Crypt;
-use Exception;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{Crypt, DB};
 use App\Enums\Status;
+use Exception;
 
 
 class Detail extends BaseComponent
@@ -136,7 +132,6 @@ class Detail extends BaseComponent
                 ->get();
         }
         if ($existingConfigGroups->isNotEmpty()) {
-            dd($existingConfigGroups);
             $existingUserIds = $existingConfigGroups->flatMap(function ($configGroup) {
                 if ($configGroup->ConfigUser) {
                     return $configGroup->ConfigUser->pluck('id');
@@ -155,7 +150,7 @@ class Detail extends BaseComponent
         $this->validateApplicationUsers();
         $application = ConfigAppl::find($this->inputs['app_id']);
         $this->inputs['app_code'] = $application->code;
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         if($this->object->isDuplicateCode())
         {
             $this->addError('inputs.code', __('generic.error.duplicate_code'));

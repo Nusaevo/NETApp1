@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'order_info' => 'Order Info',
+    'date' => 'Date',
+    'partner' => 'Partner',
+    'status' => 'Status',
+    'order_items' => 'Order Items',
+    'location' => 'Location',
+    'code' => 'Code',
+    'uom' => 'UOM',
+    'image' => 'Image',
+    'unit_price' => 'Unit Price',
+    'qty' => 'Quantity',
+    'amount' => 'Amount',
+    'actions' => 'Actions',
+    'total' => 'Total',
+    'add_item' => 'Add Item',
+    'add_multiple_items' => 'Add Multiple Items',
+    'search_item' => 'Search Item',
+    'search_code_name' => 'Search Code/Name',
+    'category' => 'Category',
+    'brand' => 'Brand',
+    'type' => 'Type',
+    'confirm_selection' => 'Confirm Selection',
+    'no_data_found' => 'No Data Found',
+];

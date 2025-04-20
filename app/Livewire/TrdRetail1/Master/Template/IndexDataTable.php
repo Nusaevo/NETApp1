@@ -17,8 +17,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setSearchDisabled();
         $this->setDefaultSort('created_at', 'desc');
     }
@@ -49,9 +47,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make("Status", "audit_trail")
                 ->searchable()
                 ->sortable(),
-            Column::make("Table Name", "table_name")
-                ->searchable()
-                ->sortable(),
+            // Column::make("Table Name", "table_name")
+            //     ->searchable()
+            //     ->sortable(),
             Column::make("Created By", "created_by")
                 ->searchable()
                 ->sortable(),

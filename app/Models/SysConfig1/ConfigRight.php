@@ -1,34 +1,21 @@
 <?php
 namespace App\Models\SysConfig1;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
-use App\Models\Base\BaseModel;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
+use App\Models\SysConfig1\Base\SysConfig1BaseModel;
 
-
-class ConfigRight extends BaseModel
+class ConfigRight extends SysConfig1BaseModel
 {
     protected $table = 'config_rights';
 
     use SoftDeletes;
-        public static function boot()
+    public static function boot()
     {
         parent::boot();
     }
 
-    protected $fillable = [
-        'group_id',
-        'menu_id',
-        'group_code',
-        'menu_seq',
-        'menu_code',
-        'trustee',
-        'app_id',
-        'app_code'
-    ];
+    protected $fillable = ['group_id', 'menu_id', 'group_code', 'menu_seq', 'menu_code', 'trustee', 'app_id', 'app_code'];
 
     #region Relations
 
@@ -53,68 +40,58 @@ class ConfigRight extends BaseModel
     #endregion
     public static function getPermissionsByMenu($menu, $appCode = null)
     {
+        // Default permissions
         $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
 
-        // Use the provided app_code or fallback to the session.
+        // Gunakan appCode dari parameter atau fallback ke session
         $appCode = $appCode ?: session('app_code');
 
-        if (Auth::check()) {
-            $userId = Auth::id();
+        // Pastikan user sudah login
+        if (!Auth::check()) {
+            return $permissions;
+        }
 
-            // First, get the user's group IDs
-            // $userGroupIds = ConfigUser::find($userId)
-            // ->ConfigGroup()
-            // ->pluck('config_groups.id');
+        $userId = Auth::id();
 
-            // if ($userGroupIds->isEmpty()) {
-            //     return $permissions;
-            // }
-            // // Find the menu based on the menu_link and app_code
-            // $configMenu = ConfigMenu::where('menu_link', $menu)
-            //                         ->whereHas('ConfigAppl', function ($query) use ($appCode) {
-            //                             $query->where('app_code', $appCode);
-            //                         })
-            //                         ->first();
-            // if (!$configMenu) {
-            //     return $permissions;
-            // }
-
-            // // Now, find the ConfigRight based on the user's group and the found menu
-            // $configRight = ConfigRight::whereIn('group_id', $userGroupIds)
-            //                         ->where('menu_id', $configMenu->id)
-            //                         ->first();
-
-
-            $configRight = ConfigRight::join('config_menus', 'config_rights.menu_id', '=', 'config_menus.id')
+        // Query untuk mendapatkan ConfigRight
+        $configRight = ConfigRight::join('config_menus', 'config_rights.menu_id', '=', 'config_menus.id')
             ->join('config_appls', 'config_menus.app_id', '=', 'config_appls.id')
             ->join('config_grpusers', 'config_rights.group_id', '=', 'config_grpusers.group_id')
             ->join('config_users', 'config_grpusers.user_id', '=', 'config_users.id')
             ->where('config_users.id', $userId)
             ->where('config_menus.menu_link', $menu)
             ->where('config_appls.code', $appCode)
-            ->select('config_rights.*')
+            ->select('config_rights.trustee') // Ambil hanya kolom yang diperlukan
             ->first();
-            if (!$configRight) {
-                return $permissions;
-            }
 
-            if ($configRight) {
-                // Parsing the trustee string
-                $trustee = $configRight->trustee;
-                $permissions['create'] = strpos($trustee, 'C') !== false;
-                $permissions['read'] = strpos($trustee, 'R') !== false;
-                $permissions['update'] = strpos($trustee, 'U') !== false;
-                $permissions['delete'] = strpos($trustee, 'D') !== false;
-            }
+        // Jika ConfigRight ditemukan, parse trustee
+        if ($configRight) {
+            $permissions = self::parseTrustee($configRight->trustee);
         }
+
         return $permissions;
+    }
+
+    /**
+     * Fungsi untuk memparse trustee string menjadi permissions array.
+     */
+    protected static function parseTrustee($trustee)
+    {
+        return [
+            'create' => strpos($trustee, 'C') !== false,
+            'read' => strpos($trustee, 'R') !== false,
+            'update' => strpos($trustee, 'U') !== false,
+            'delete' => strpos($trustee, 'D') !== false,
+        ];
     }
 
     public static function saveRights($configGroup, $selectedMenus)
     {
         try {
             // Retrieve all existing rights for the group to decide which to update, delete, or create
-            $existingRights = static::where('group_id', $configGroup->id)->get()->keyBy('menu_id');
+            $existingRights = static::where('group_id', $configGroup->id)
+                ->get()
+                ->keyBy('menu_id');
 
             // Determine which menu IDs need to be deleted
             $menuIdsToDelete = array_diff($existingRights->keys()->toArray(), array_keys($selectedMenus));
@@ -122,8 +99,8 @@ class ConfigRight extends BaseModel
             // Delete rights that are not in the selectedMenus anymore
             if (!empty($menuIdsToDelete)) {
                 static::where('group_id', $configGroup->id)
-                      ->whereIn('menu_id', $menuIdsToDelete)
-                      ->forceDelete();
+                    ->whereIn('menu_id', $menuIdsToDelete)
+                    ->forceDelete();
             }
 
             foreach ($selectedMenus as $menuId => $permissions) {
@@ -173,5 +150,4 @@ class ConfigRight extends BaseModel
         $trustee .= $permissions['delete'] ? 'D' : '';
         return $trustee;
     }
-
 }

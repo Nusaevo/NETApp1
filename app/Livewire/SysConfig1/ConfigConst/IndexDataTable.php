@@ -3,13 +3,10 @@
 namespace App\Livewire\SysConfig1\ConfigConst;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigAppl;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter};
+use App\Models\SysConfig1\{ConfigConst, ConfigAppl};
 use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\{Config, Session, DB};
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -20,8 +17,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
@@ -54,52 +49,39 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Const Group", "const_group")
-                ->searchable()
-                ->sortable(),
-            Column::make("Seq", "seq")
-                ->searchable()
-                ->sortable(),
-            Column::make("Str1", "str1")
-                ->searchable()
-                ->sortable(),
-            Column::make("Str2", "str2")
-                ->searchable()
-                ->sortable(),
-            Column::make("Num1", "num1")
-                ->searchable()
-                ->sortable(),
-            Column::make("Num2", "num2")
-                ->searchable()
-                ->sortable(),
-            Column::make("Note1", "note1")
-                ->searchable()
-                ->sortable(),
-            Column::make('Created Date', 'created_at')
-                ->sortable(),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [
-                            [
-                                'label' => 'Edit',
-                                'route' => route('SysConfig1.ConfigConst.Detail', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($row->id),
-                                    'additionalParam' => $this->selectedAppId
-                                ]),
-                                'icon' => 'bi bi-pencil'
-                            ],
+            Column::make('Const Group', 'const_group')->searchable()->sortable(),
+            Column::make('Seq', 'seq')->searchable()->sortable(),
+            Column::make('Str1', 'str1')->searchable()->sortable(),
+            Column::make('Str2', 'str2')->searchable()->sortable(),
+            Column::make('Num1', 'num1')->searchable()->sortable()->collapseOnTablet(),
+            Column::make('Num2', 'num2')->searchable()->sortable()->collapseOnTablet(),
+            Column::make('Note1', 'note1')->searchable()->sortable()->collapseOnTablet(),
+            BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
+                return $value === null;
+            }),
+            Column::make('Created Date', 'created_at')->sortable()->collapseOnTablet(),
+            Column::make('Actions', 'id')->format(function ($value, $row, Column $column) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                    'custom_actions' => [
+                        [
+                            'label' => 'Edit',
+                            'route' => route('SysConfig1.ConfigConst.Detail', [
+                                'action' => encryptWithSessionKey('Edit'),
+                                'objectId' => encryptWithSessionKey($row->id),
+                                'additionalParam' => $this->selectedAppId,
+                            ]),
+                            'icon' => 'bi bi-pencil',
                         ],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => false,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
-                    ]);
-                }),
+                    ],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => false,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
 
@@ -109,11 +91,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         if ($this->isSysConfig1) {
             // Add Config Application Filter only for SysConfig1
-            $configApplOptions = ConfigAppl::whereNotNull('db_name')
-            ->where('db_name', '!=', '')
-            ->orderBy('seq')
-            ->pluck('name', 'id')
-            ->toArray();
+            $configApplOptions = ConfigAppl::whereNotNull('db_name')->where('db_name', '!=', '')->orderBy('seq')->pluck('name', 'id')->toArray();
             if (!empty($configApplOptions)) {
                 $filters[] = SelectFilter::make('Config Appl', 'app_id')
                     ->options($configApplOptions)
@@ -125,29 +103,23 @@ class IndexDataTable extends BaseDataTableComponent
         }
 
         // Add Group Filter
-        $filters[] = $this->createTextFilter(
-            'Group',
-            'const_group',
-            'Search Group',
-            function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(const_group)'), 'like', '%' . strtoupper($value) . '%');
-            }
-        );
+        $filters[] = $this->createTextFilter('Group', 'const_group', 'Search Group', function (Builder $builder, string $value) {
+            $builder->where(DB::raw('UPPER(const_group)'), 'like', '%' . strtoupper($value) . '%');
+        });
 
         // Add Status Filter
-        $filters[] = SelectFilter::make('Status', 'status')
+        $filters[] = SelectFilter::make('Status', 'status_filter')
             ->options([
-                '0' => 'Active',
-                '1' => 'Inactive',
+                'active' => 'Active',
+                'deleted' => 'Non Active',
             ])
             ->filter(function (Builder $builder, string $value) {
-                if ($value === '0') {
-                    $builder->withoutTrashed();
-                } elseif ($value === '1') {
-                    $builder->onlyTrashed();
+                if ($value === 'active') {
+                    $builder->whereNull('deleted_at');
+                } elseif ($value === 'deleted') {
+                    $builder->withTrashed()->whereNotNull('deleted_at');
                 }
             });
-
         return $filters;
     }
 

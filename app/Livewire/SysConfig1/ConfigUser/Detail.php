@@ -4,9 +4,8 @@ namespace App\Livewire\SysConfig1\ConfigUser;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigUser;
+use Illuminate\Support\Facades\{DB, Log};
 use Exception;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class Detail extends BaseComponent
 {
@@ -71,7 +70,7 @@ class Detail extends BaseComponent
 
         $this->validatePassword();
 
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         if($this->object->isDuplicateCode())
         {
             $this->addError('inputs.code', __('generic.error.duplicate_code'));

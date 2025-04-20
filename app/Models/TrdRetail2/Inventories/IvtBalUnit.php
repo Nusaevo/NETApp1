@@ -3,11 +3,11 @@
 namespace App\Models\TrdRetail2\Inventories;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TrdRetail2\Base\TrdRetail2BaseModel;
+use App\Models\Base\BaseModel;
 use Illuminate\Support\Str;
 use App\Enums\Constant;
 
-class IvtBalUnit extends TrdRetail2BaseModel
+class IvtBalUnit extends BaseModel
 {
     protected $table = 'ivt_bal_units';
     public $timestamps = false;

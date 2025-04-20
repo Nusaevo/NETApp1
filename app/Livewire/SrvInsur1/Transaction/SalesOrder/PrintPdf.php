@@ -27,9 +27,9 @@ class PrintPdf extends BaseComponent
         $this->printRemarks = $masterService->getPrintRemarks($this->appCode);
 
         $this->object = OrderHdr::findOrFail($this->objectIdValue);
-        $this->printSettings = json_decode($this->object->print_settings, true) ?? $this->printSettings;
+        $this->printSettings = $this->object->print_settings ?? $this->printSettings;
         if ($this->object->print_settings) {
-            $savedSettings = json_decode($this->object->print_settings, true);
+            $savedSettings = $this->object->print_settings;
             foreach ($this->printSettings as &$setting) {
                 foreach ($savedSettings as $savedSetting) {
                     if ($setting['code'] === $savedSetting['code'] && $setting['value'] === $savedSetting['value']) {
@@ -43,7 +43,7 @@ class PrintPdf extends BaseComponent
         }
 
         if ($this->object->print_remarks) {
-            $savedRemarks = json_decode($this->object->print_remarks, true);
+            $savedRemarks = $this->object->print_remarks;
             foreach ($this->printRemarks as &$remark) {
                 foreach ($savedRemarks as $savedRemark) {
                     if ($remark['code'] === $savedRemark['code'] && $remark['value'] === $savedRemark['value']) {

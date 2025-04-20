@@ -2,21 +2,20 @@
 
 namespace App\Models\TrdRetail1\Inventories;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Enums\Constant;
+use App\Models\TrdTire1\Master\Material;
 
-class IvtBal extends TrdRetail1BaseModel
+class IvtBal extends BaseModel
 {
     protected $table = 'ivt_bals';
     public $timestamps = false;
-
+    public static $defaultWhCode = 'G01';
 
     public static function boot()
     {
         parent::boot();
         static::saving(function ($IvtBal) {
-            $qty_oh = $IvtBal->qty_oh;
-            $IvtBal->qty_oh = $qty_oh;
         });
     }
 
@@ -29,6 +28,7 @@ class IvtBal extends TrdRetail1BaseModel
         'qty_oh',
         'wh_id',
         'wh_code',
+        'matl_code'
     ];
 
 

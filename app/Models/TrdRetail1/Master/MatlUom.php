@@ -2,22 +2,29 @@
 
 namespace App\Models\TrdRetail1\Master;
 use App\Helpers\SequenceUtility;
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Inventories\IvtBalUnit;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class MatlUom extends TrdRetail1BaseModel
+class MatlUom extends BaseModel
 {
     protected $table = 'matl_uoms';
     use SoftDeletes;
 
-
     protected static function boot()
     {
         parent::boot();
+        static::saving(function ($matlUom) {
+            if (!$matlUom->matl_code && $matlUom->matl_id) {
+                $material = Material::find($matlUom->matl_id);
+                if ($material) {
+                    $matlUom->matl_code = $material->code;
+                }
+            }
+        });
     }
 
     protected $fillable = [
@@ -31,21 +38,47 @@ class MatlUom extends TrdRetail1BaseModel
         'barcode',
         'qty_oh',
         'qty_fgr',
-        'qty_fgi'
+        'qty_fgi',
+        'selling_price',
+        'buying_price'
     ];
-
     #region Relations
     public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id');
     }
-
-    public function ivtBals()
+    /**
+     * Recalc qty_oh di MatlUom berdasarkan sum dari IvtBal.
+     */
+    public static function recalcMatlUomQtyOh($matlId, $matlUom)
     {
-        return $this->hasMany(IvtBal::class, 'matl_id');
+        $matlUomRec = MatlUom::where([
+            'matl_id' => $matlId,
+            'matl_uom' => $matlUom,
+        ])->first();
+
+        if ($matlUomRec) {
+            $sumOh = IvtBal::where('matl_id', $matlId)->where('matl_uom', $matlUom)->sum('qty_oh');
+
+            $matlUomRec->qty_oh = $sumOh;
+            $matlUomRec->save();
+        }
+    }
+    public function IvtBal()
+    {
+        return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')
+            ->whereColumn('ivt_bals.matl_uom', 'matl_uoms.matl_uom')
+            ->withDefault(['qty_oh' => '0']);
     }
 
-    public function ivtBalUnits()
+    public function getStockAttribute()
+    {
+        return $this->MatlUom->sum(function ($uom) {
+            return $uom->IvtBal ? $uom->IvtBal->qty_oh : 0;
+        });
+    }
+
+    public function IvtBalUnits()
     {
         return $this->hasMany(IvtBalUnit::class, 'matl_id');
     }

@@ -3,25 +3,14 @@
 namespace App\Livewire\TrdJewel1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
-use App\Models\TrdJewel1\Transaction\OrderDtl;
-use App\Models\TrdJewel1\Master\Partner;
+use Illuminate\Support\Facades\{Crypt, DB, Auth};
+use App\Models\TrdJewel1\Transaction\{OrderHdr, OrderDtl, BillingDtl, BillingHdr, DelivDtl, DelivHdr};
+use App\Models\TrdJewel1\Master\{Partner, Material, MatlUom, GoldPriceLog};
 use App\Models\SysConfig1\ConfigConst;
-use Illuminate\Support\Facades\Crypt;
-use App\Models\TrdJewel1\Master\Material;
-use App\Models\TrdJewel1\Master\MatlUom;
 use App\Enums\Status;
-use App\Models\TrdJewel1\Transaction\BillingDtl;
-use App\Models\TrdJewel1\Transaction\BillingHdr;
-use App\Models\TrdJewel1\Transaction\DelivDtl;
-use App\Models\TrdJewel1\Transaction\DelivHdr;
-use Exception;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Models\TrdJewel1\Master\GoldPriceLog;
-use Illuminate\Support\Facades\Auth;
+use Exception;
 use App\Services\TrdJewel1\Master\MasterService;
-use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
 {
@@ -99,7 +88,7 @@ class Detail extends BaseComponent
         {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             if ($this->object->print_settings) {
-                $savedSettings = json_decode($this->object->print_settings, true);
+                $savedSettings = $this->object->print_settings;
                 foreach ($this->printSettings as &$settings) {
                     foreach ($savedSettings as $savedSetting) {
                         if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
@@ -111,7 +100,7 @@ class Detail extends BaseComponent
             }
 
             if ($this->object->print_remarks) {
-                $savedSettings = json_decode($this->object->print_remarks, true);
+                $savedSettings = $this->object->print_remarks;
                 foreach ($this->printRemarks as &$settings) {
                     foreach ($savedSettings as $savedSetting) {
                         if ($settings['code'] === $savedSetting['code'] && $settings['value'] === $savedSetting['value']) {
@@ -256,8 +245,8 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->inputs['print_settings'] = json_encode($this->filterprintRemarks($this->printSettings));
-        $this->inputs['print_remarks'] = json_encode($this->filterprintRemarks($this->printRemarks));
+        $this->inputs['print_settings'] = $this->filterprintRemarks($this->printSettings);
+        $this->inputs['print_remarks'] = $this->filterprintRemarks($this->printRemarks);
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {

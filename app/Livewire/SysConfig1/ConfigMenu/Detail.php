@@ -3,10 +3,10 @@
 namespace App\Livewire\SysConfig1\ConfigMenu;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\SysConfig1\ConfigMenu;
-use App\Models\SysConfig1\ConfigAppl;
+use App\Models\SysConfig1\{ConfigMenu, ConfigAppl};
 use App\Services\SysConfig1\ConfigService;
 use Exception;
+
 
 class Detail extends BaseComponent
 {
@@ -74,7 +74,7 @@ class Detail extends BaseComponent
     {
         $application = ConfigAppl::find($this->inputs['app_id']);
         $this->inputs['app_code'] = $application->code;
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
 
         // if($this->object->isDuplicateCode())
         // {

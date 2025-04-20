@@ -1,20 +1,19 @@
 <?php
-namespace App\Livewire\TrdJewel1\Master\Material;
-use App\Livewire\Component\BaseComponent;
 
+namespace App\Livewire\TrdJewel1\Master\Material;
+
+use App\Livewire\Component\DetailComponent;
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;
-use App\Enums\Status;
-use App\Enums\Constant;
-use Illuminate\Support\Facades\Session;
-class TransactionDataTable extends BaseComponent
+use Illuminate\Support\Facades\{DB, Session};
+use App\Enums\{Status, Constant};
+
+class TransactionDataTable extends DetailComponent
 {
     public int $perPage = 50;
     public $materialID;
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->bypassPermissions = true;
         $this->materialID = $objectIdValue;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }

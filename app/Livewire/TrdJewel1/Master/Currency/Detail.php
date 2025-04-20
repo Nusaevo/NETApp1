@@ -4,10 +4,7 @@ namespace App\Livewire\TrdJewel1\Master\Currency;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\GoldPriceLog;
-use App\Models\SysConfig1\ConfigConst;
 use App\Services\TrdJewel1\Master\MasterService;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
 use Exception;
 
 class Detail extends BaseComponent
@@ -42,7 +39,7 @@ class Detail extends BaseComponent
         {
             $this->object = GoldPriceLog::find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $this->inputs['log_date'] = dateFormat($this->object->log_date, 'd-m-Y');
+            $this->inputs['log_date'] = dateFormat($this->object->log_date, 'Y-m-d');
         }
         $this->permissions['delete'] = false;
     }
@@ -55,7 +52,7 @@ class Detail extends BaseComponent
         $this->currencies = $this->currencyData['currencies'];
         $defaultCurrency = $this->currencyData['defaultCurrency'];
         $this->inputs['curr_id'] = $defaultCurrency['value'];
-        $this->inputs['log_date']  = date('d-m-Y');
+        $this->inputs['log_date']  = date('Y-m-d');
         $this->object = new GoldPriceLog();
     }
 
@@ -83,7 +80,7 @@ class Detail extends BaseComponent
         }
         $this->currencyChanged();
 
-        $this->object->fillAndSanitize($this->inputs);
+        $this->object->fill($this->inputs);
         $this->object->save();
     }
 

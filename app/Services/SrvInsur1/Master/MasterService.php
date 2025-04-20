@@ -2,9 +2,7 @@
 
 namespace App\Services\SrvInsur1\Master;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\SrvInsur1\Master\Partner;
-use App\Enums\Constant;
 use App\Services\Base\BaseService;
 
 class MasterService extends BaseService
@@ -14,21 +12,21 @@ class MasterService extends BaseService
         parent::__construct();
     }
 
-    protected function getConfigData($constGroup, $appCode)
+    protected function getConfigData($constGroup)
     {
-        return $this->configConnection
+        return $this->mainConnection
             ->table('config_consts')
             ->select('id', 'str1', 'str2', 'note1')
             ->where('const_group', $constGroup)
-            ->where('app_code', $appCode)
+
             ->whereNull('deleted_at')
             ->orderBy('seq')
             ->get();
     }
 
-    public function getCurrencyData($appCode)
+    public function getCurrencyData()
     {
-        $data = $this->getConfigData('MCURRENCY_CODE', $appCode);
+        $data = $this->getConfigData('MCURRENCY_CODE');
 
         $currencies = $data->map(function ($item) {
             return [
@@ -44,9 +42,9 @@ class MasterService extends BaseService
         ];
     }
 
-    public function getPartnerTypes($appCode)
+    public function getPartnerTypes()
     {
-        $data = $this->getConfigData('PARTNERS_TYPE', $appCode);
+        $data = $this->getConfigData('PARTNERS_TYPE');
 
         return $this->mapData($data);
     }
@@ -57,25 +55,25 @@ class MasterService extends BaseService
         return $this->mapData($data);
     }
 
-    public function getUOMData($appCode)
+    public function getUOMData()
     {
-        $data = $this->getConfigData('MMATL_UOM', $appCode);
+        $data = $this->getConfigData('MMATL_UOM');
         return $this->mapData($data);
     }
 
-    public function getMatlCategory1Data($appCode)
+    public function getMatlCategory1Data()
     {
-        $data = $this->getConfigData('MMATL_CATEGL1', $appCode);
+        $data = $this->getConfigData('MMATL_CATEGL1');
         return $this->mapData($data);
     }
 
-    public function getMatlCategory1String($appCode, $str1)
+    public function getMatlCategory1String( $str1)
     {
-        $data = $this->configConnection
+        $data = $this->mainConnection
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL1')
-            ->where('app_code', $appCode)
+
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -83,19 +81,19 @@ class MasterService extends BaseService
         return $data ? $data->str2 : null;
     }
 
-    public function getMatlCategory2Data($appCode)
+    public function getMatlCategory2Data()
     {
-        $data = $this->getConfigData('MMATL_CATEGL2', $appCode);
+        $data = $this->getConfigData('MMATL_CATEGL2');
         return $this->mapData($data);
     }
 
-    public function getMatlCategory2String($appCode, $str1)
+    public function getMatlCategory2String( $str1)
     {
-        $data = $this->configConnection
+        $data = $this->mainConnection
             ->table('config_consts')
             ->select('str2')
             ->where('const_group', 'MMATL_CATEGL2')
-            ->where('app_code', $appCode)
+
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -103,19 +101,19 @@ class MasterService extends BaseService
         return $data ? $data->str2 : null;
     }
 
-    public function getMatlJewelPurityData($appCode)
+    public function getMatlJewelPurityData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GOLDPURITY', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GOLDPURITY');
         return $this->mapData($data);
     }
 
-    public function getMatlJewelPurityString($appCode, $str1)
+    public function getMatlJewelPurityString( $str1)
     {
-        $data = $this->configConnection
+        $data = $this->mainConnection
             ->table('config_consts')
             ->select('str1', 'str2')
             ->where('const_group', 'MMATL_JEWEL_GOLDPURITY')
-            ->where('app_code', $appCode)
+
             ->where('str1', $str1)
             ->whereNull('deleted_at')
             ->first();
@@ -124,9 +122,9 @@ class MasterService extends BaseService
     }
 
 
-    public function getMatlBaseMaterialData($appCode)
+    public function getMatlBaseMaterialData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_COMPONENTS', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_COMPONENTS');
         return $data->map(function ($item) {
             return [
                 'label' => $item->str1 . " - " . $item->str2,
@@ -135,9 +133,9 @@ class MasterService extends BaseService
         })->toArray();
     }
 
-    public function getMatlSideMaterialOriginData($appCode)
+    public function getMatlSideMaterialOriginData()
     {
-        $data = $this->getConfigData('MMATL_ORIGINS', $appCode);
+        $data = $this->getConfigData('MMATL_ORIGINS');
         return $data->map(function ($item) {
             return [
                 'label' => $item->str1 . " - " . $item->str2,
@@ -146,52 +144,52 @@ class MasterService extends BaseService
         })->toArray();
     }
 
-    public function getMatlSideMaterialShapeData($appCode)
+    public function getMatlSideMaterialShapeData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GEMSHAPES', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GEMSHAPES');
         return $this->mapData($data);
     }
 
-    public function getMatlSideMaterialClarityData($appCode)
+    public function getMatlSideMaterialClarityData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GIACLARITY', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GIACLARITY');
         return $this->mapData($data);
     }
 
-    public function getMatlSideMaterialGemColorData($appCode)
+    public function getMatlSideMaterialGemColorData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GEMCOLORS', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GEMCOLORS');
         return $this->mapData($data);
     }
 
-    public function getMatlSideMaterialGiaColorData($appCode)
+    public function getMatlSideMaterialGiaColorData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GIACOLORS', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GIACOLORS');
         return $this->mapData($data);
     }
 
-    public function getMatlSideMaterialGemstoneData($appCode)
+    public function getMatlSideMaterialGemstoneData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GEMSTONES', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GEMSTONES');
         return $this->mapData($data);
     }
 
-    public function getMatlSideMaterialCutData($appCode)
+    public function getMatlSideMaterialCutData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GIACUT', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GIACUT');
         return $this->mapData($data);
     }
 
-    public function getMatlSideMaterialPurityData($appCode)
+    public function getMatlSideMaterialPurityData()
     {
-        $data = $this->getConfigData('MMATL_JEWEL_GOLDPURITY', $appCode);
+        $data = $this->getConfigData('MMATL_JEWEL_GOLDPURITY');
         return $this->mapData($data);
     }
 
 
-    public function getPaymentTerm($appCode)
+    public function getPaymentTerm()
     {
-        $data = $this->getConfigData('MPAYMENT_TERMS', $appCode);
+        $data = $this->getConfigData('MPAYMENT_TERMS');
 
         $payments = $data->map(function ($item) {
             return [
@@ -225,13 +223,13 @@ class MasterService extends BaseService
         })->toArray();
     }
 
-    public function getWarehouses($appCode)
+    public function getWarehouses()
     {
-        return $this->configConnection
+        return $this->mainConnection
             ->table('config_consts')
             ->select('id', 'str1')
             ->where('const_group', 'WAREHOUSE_LOC')
-            ->where('app_code', $appCode)
+
             ->whereNull('deleted_at')
             ->orderBy('seq')
             ->get()
@@ -243,9 +241,9 @@ class MasterService extends BaseService
             })->toArray();
     }
 
-    public function getPrintSettings($appCode)
+    public function getPrintSettings()
     {
-        $data = $this->getConfigData('TRX_NJ_PRINT_OPTIONS', $appCode);
+        $data = $this->getConfigData('TRX_NJ_PRINT_OPTIONS');
 
         $options = $data->map(function ($item) {
             return [
@@ -259,9 +257,9 @@ class MasterService extends BaseService
         return $options;
     }
 
-    public function getPrintRemarks($appCode)
+    public function getPrintRemarks()
     {
-        $data = $this->getConfigData('TRX_NJ_REMARK', $appCode);
+        $data = $this->getConfigData('TRX_NJ_REMARK');
 
         $options = $data->map(function ($item) {
             return [
@@ -275,13 +273,13 @@ class MasterService extends BaseService
         return $options;
     }
 
-    public function getDefaultCurrencyStr1($appCode): string
+    public function getDefaultCurrencyStr1(): string
     {
-        $defaultCurrency = $this->configConnection
+        $defaultCurrency = $this->mainConnection
             ->table('config_consts')
             ->select('str1')
             ->where('const_group', 'MCURRENCY_CODE')
-            ->where('app_code', $appCode)
+
             ->whereNull('deleted_at')
             ->orderByDesc('num1')
             ->first();
@@ -289,9 +287,9 @@ class MasterService extends BaseService
         return $defaultCurrency ? $defaultCurrency->str1 : '';
     }
 
-    public function globalCurrency($price = 0, $use_name = true, $appCode = null): string
+    public function globalCurrency($price = 0, $use_name = true): string
     {
-        $currencyStr1 = $this->getDefaultCurrencyStr1($appCode);
+        $currencyStr1 = $this->getDefaultCurrencyStr1();
         $formattedPrice = number_format($price, 2, ',', '.');
         if ($use_name) {
             return $currencyStr1 . ' ' . $formattedPrice;
@@ -299,4 +297,6 @@ class MasterService extends BaseService
             return $formattedPrice;
         }
     }
+
+
 }

@@ -1,54 +1,61 @@
 @php
     $id = str_replace(['.', '[', ']'], '_', $model);
-    $blankValue = (isset($type) && $type === 'int') ? '0' : '';
+    $blankValue = isset($type) && $type === 'int' ? '0' : '';
+
+    // Menentukan class untuk kolom dan form-floating
+    $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
+    $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
 @endphp
 
-<div wire:ignore.self class="col-sm mb-5"
-     @if(isset($span)) span="{{ $span }}" @endif
-     @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
-    <div class="form-floating">
-        <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}"
-                @if(isset($modelType) && $modelType === 'lazy') wire:model.lazy="{{ isset($model) ? $model : '' }}"
-                @else wire:model="{{ isset($model) ? $model : '' }}"
-                @endif
+<div class="{{ $colClass }}" wire:ignore.self
+    @if (isset($span)) span="{{ $span }}" @endif
+    @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
+
+    <div class="input-group">
+        <div class="{{ $containerClass }}">
+            <select id="{{ $id }}" name="{{ isset($model) ? $model : '' }}" wire:key="{{ $id }}"
+                @if (isset($modelType) && $modelType === 'lazy') wire:model.lazy="{{ isset($model) ? $model : '' }}"
+                @else wire:model="{{ isset($model) ? $model : '' }}" @endif
                 @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif
-                class="form-select @error($model) is-invalid @enderror @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"
-                @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && (isset($action) && $action === 'View' || (isset($enabled) && $enabled === 'false'))) disabled @endif
-                @if (isset($required) && $required === 'true') required @endif
-                wire:loading.attr="disabled">
+                class="form-select @error($model) is-invalid @enderror
+                @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"
+                {{-- Disable dropdown when in "View" mode or when "enabled" is "false" --}}
+                @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
+                @if (isset($required) && $required === 'true') required @endif wire:loading.attr="disabled">
 
-            <!-- Blank option with dynamic value -->
-            <option value="{{ $blankValue }}"></option>
+                <!-- Blank option with dynamic value -->
+                <option value="{{ $blankValue }}"></option>
 
-            @if (!is_null($options))
-                @forelse ($options as $option)
-                    <option value="{{ $option['value'] }}" @if(isset($model) && $model === $option['value']) selected @endif>
-                        {{ $option['label'] }}
-                    </option>
-                @empty
-                    <!-- No options available -->
-                @endforelse
+                @if (!is_null($options))
+                    @foreach ($options as $option)
+                        <option value="{{ $option['value'] }}"
+                            @if (isset($model) && $model === $option['value']) selected
+                            @elseif($selectedValue === $option['value']) selected @endif>
+                            {{ $option['label'] }}
+                        </option>
+                    @endforeach
+                @endif
+            </select>
+
+            @if (!empty($label))
+                <label for="{{ $id }}" class="@if (isset($required) && $required === 'true') required @endif">
+                    {{ $label }}
+                </label>
             @endif
-        </select>
 
-        @if (!empty($label))
-            <label for="{{ $id }}" class="@if(isset($required) && $required === 'true') required @endif">{{ $label }}</label>
+            @if (!empty($placeHolder))
+                <div class="placeholder-text">{{ $placeHolder }}</div>
+            @endif
+
+            @error($model)
+                <div class="error-message">{{ $message }}</div>
+            @enderror
+        </div> <!-- Penutup div containerClass -->
+
+        <!-- Button for Click Event -->
+        @if (isset($clickEvent) && $clickEvent !== '')
+            <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary"
+                :buttonName="$buttonName" :action="$action" :enabled="$buttonEnabled" loading="true" />
         @endif
-        @if(!empty($placeHolder))
-            <div class="placeholder-text">{{ $placeHolder }}</div>
-        @endif
-        @error($model)
-            <div class="error-message">{{ $message }}</div>
-        @enderror
     </div>
-
-    <!-- Refresh Button -->
-    {{-- @if (isset($clickEvent) && $clickEvent !== '')
-        @if ((isset($enabled) && ($enabled === 'always' || $enabled === 'true')) || ((!empty($action) && $action !== 'View') && (isset($enabled) && $enabled !== 'false')))
-            <button type="button" wire:click="{{ $clickEvent }}" wire:loading.attr="disabled" class="btn btn-secondary btn-sm" data-toggle="tooltip" title="Refresh your search to get the latest data"
-                    @if (!(isset($enabled) && ($enabled === 'always' || $enabled === 'true')) && ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif>
-                <i class="bi bi-arrow-repeat"></i>
-            </button>
-        @endif
-    @endif --}}
 </div>

@@ -12,6 +12,7 @@ use App\Services\SysConfig1\ConfigService;
 
 use Illuminate\Support\Facades\Session;
 use App\Models\SysConfig1\ConfigAppl;
+use App\Models\SysConfig1\ConfigUser;
 class LoginRequest extends FormRequest
 {
     /**
@@ -79,6 +80,14 @@ class LoginRequest extends FormRequest
                 Session::put('app_id', $firstApp->id);
                 Session::put('app_code', $firstApp->code);
                 Session::put('database', $firstApp->db_name);
+
+
+                $user = ConfigUser::find(Auth::id());
+
+                if ($user) {
+                    $groupCodes = $user->getGroupCodesBySessionAppCode();
+                    Session::put('group_codes', $groupCodes);
+                }
             }
         }
 

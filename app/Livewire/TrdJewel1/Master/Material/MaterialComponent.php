@@ -3,19 +3,16 @@
 namespace App\Livewire\TrdJewel1\Master\Material;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdJewel1\Master\Material;
-use App\Models\TrdJewel1\Master\MatlUom;
-use App\Models\TrdJewel1\Master\MatlBom;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigSnum;
-use App\Models\TrdJewel1\Base\Attachment;
-use Exception;
-use Illuminate\Support\Facades\DB;
 use Livewire\WithFileUploads;
-use Ratchet\Client\Connector;
-use React\EventLoop\Factory;
+use Illuminate\Support\Facades\{DB};
+use App\Models\TrdJewel1\Master\{Material, MatlUom, MatlBom};
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
+use App\Models\Base\Attachment;
 use App\Enums\Status;
 use App\Services\TrdJewel1\Master\MasterService;
+use Exception;
+use Ratchet\Client\Connector;
+use React\EventLoop\Factory;
 
 class MaterialComponent extends BaseComponent
 {
@@ -52,7 +49,7 @@ class MaterialComponent extends BaseComponent
     public $partners = [];
     public $sideMaterialGemStone = [];
     public $sideMaterialJewelOrigins = [];
-    public $searchMode = false;
+    public $isComponent = false;
     public $panelEnabled = "true";
     public $btnAction = "true";
     public $orderedMaterial = false;
@@ -109,11 +106,10 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region Populate Data methods
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $searchMode = false)
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isComponent = false)
     {
-        $this->searchMode = $searchMode;
-        $this->resetAfterCreate = !$searchMode;
-        $this->bypassPermissions = $searchMode;
+        $this->isComponent = $isComponent;
+        $this->resetAfterCreate = !$isComponent;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
@@ -179,17 +175,20 @@ class MaterialComponent extends BaseComponent
     {
         $this->product_code = "";
         $this->reset('materials');
-        $this->materials['partner_id'] = 0;
-        $this->materials['jwl_category1'] = "";
-        $this->materials['jwl_category2'] = "";
-        $this->materials['jwl_carat'] = "";
-        $this->materials['code'] = '';
-        $this->matl_uoms['matl_uom'] = 'PCS';
-        $this->materials['markup'] = 0;
+        // $this->materials['partner_id'] = 0;
+        // $this->materials['jwl_category1'] = "";
+        // $this->materials['jwl_category2'] = "";
+        // $this->materials['jwl_carat'] = "";
+        // $this->materials['code'] = '';
+
         $this->reset('matl_uoms');
         $this->reset('matl_boms');
         $this->object = new Material();
         $this->object_uoms = new MatlUom();
+        $this->materials = populateArrayFromModel($this->object);
+        $this->matl_uoms = populateArrayFromModel($this->object_uoms);
+        $this->matl_uoms['matl_uom'] = 'PCS';
+        $this->materials['markup'] = 0;
         $this->object_boms = [];
         $this->deletedItems = [];
         $this->capturedImages = [];
@@ -214,8 +213,7 @@ class MaterialComponent extends BaseComponent
 
                 $this->matl_boms[$key]['base_matl_id_value'] =  $baseMaterial->id;
                 $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
-
-                $decodedData = json_decode($detail->jwl_sides_spec, true);
+                $decodedData = $detail->jwl_sides_spec;
                 switch ($this->matl_boms[$key]['base_matl_id_note']) {
                     case Material::JEWELRY:
                         $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
@@ -345,7 +343,7 @@ class MaterialComponent extends BaseComponent
         $this->validatePrices();
         $this->materials['name'] = Material::generateMaterialDescriptions($this->materials);
         $this->generateMaterialDescriptionsFromBOMs();
-        $this->object->fillAndSanitize($this->materials);
+        $this->object->fill($this->materials);
 
         if ($this->object->isNew()) {
             $this->validateMaterialCode();
@@ -361,7 +359,7 @@ class MaterialComponent extends BaseComponent
             $this->deleteRemovedItems();
         }
 
-        if(!$this->searchMode && $this->actionValue == "Create"){
+        if(!$this->isComponent && $this->actionValue == "Create"){
             return redirect()->route($this->appCode.'.Master.Material.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
@@ -469,7 +467,7 @@ class MaterialComponent extends BaseComponent
     {
         $this->matl_uoms['matl_id'] = $this->object->id;
         $this->matl_uoms['matl_code'] = $this->object->code;
-        $this->object_uoms->fillAndSanitize($this->matl_uoms);
+        $this->object_uoms->fill($this->matl_uoms);
         $this->object_uoms->save();
     }
 
@@ -480,7 +478,7 @@ class MaterialComponent extends BaseComponent
                 $this->object_boms[$index] = new MatlBom();
             }
             $bomData = $this->prepareBOMData($bomData, $index);
-            $this->object_boms[$index]->fillAndSanitize($bomData);
+            $this->object_boms[$index]->fill($bomData);
             $this->object_boms[$index]->save();
         }
     }
@@ -493,7 +491,6 @@ class MaterialComponent extends BaseComponent
         $bomData['seq'] = $index + 1;
         $bomData['base_matl_id'] = $bomData['base_matl_id_value'];
         $bomData['jwl_sides_spec'] = $this->generateJWLSidesSpec($bomData);
-
         return $bomData;
     }
 
@@ -524,7 +521,7 @@ class MaterialComponent extends BaseComponent
             ];
         }
 
-        return json_encode($dataToSave);
+        return $dataToSave;
     }
 
     private function deleteRemovedItems()

@@ -29,13 +29,13 @@ class PrintPdf extends BaseComponent
     protected function onLoadForEdit()
     {
         $this->object = OrderHdr::findOrFail($this->objectIdValue);
-        $this->printSettings = json_decode($this->object->print_settings, true) ?? $this->printSettings;
+        $this->printSettings = $this->object->print_settings ?? $this->printSettings;
     }
 
 
     public function savePrintSettings()
     {
-        $this->order->print_settings = json_encode($this->printSettings);
+        $this->order->print_settings = $this->printSettings;
         $this->order->save();
         $this->dispatch('notify', 'Pengaturan cetak disimpan.');
     }

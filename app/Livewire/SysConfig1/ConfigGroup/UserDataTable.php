@@ -1,16 +1,14 @@
 <?php
+
 namespace App\Livewire\SysConfig1\ConfigGroup;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\SelectFilter, Columns\LinkColumn};
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\SysConfig1\ConfigGroup;
-use App\Models\SysConfig1\ConfigUser;
-use App\Models\SysConfig1\ConfigRight;
+use App\Models\SysConfig1\{ConfigGroup, ConfigUser, ConfigRight};
 use Illuminate\Support\Facades\Crypt;
 use Exception;
+
 class UserDataTable extends BaseDataTableComponent
 {
     protected $model = ConfigUser::class;
@@ -20,7 +18,7 @@ class UserDataTable extends BaseDataTableComponent
     public function mount($groupId = null, $selectedUserIds = null): void
     {
         $this->customRoute = "SysConfig1.ConfigUser";
-        $this->getPermission($this->customRoute);
+        $this->isComponent = true;
         $this->groupId = $groupId;
         $this->selectedRows = $selectedUserIds;
     }

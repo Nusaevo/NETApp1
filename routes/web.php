@@ -7,6 +7,9 @@ use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Utils\PasswordEncryptionController;
+
+
+use App\Http\Controllers\DropdownSearchController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -102,5 +105,7 @@ Route::get('/error', function () {
 });
 
 Route::get('/auth/redirect/{provider}', [SocialiteController::class, 'redirect']);
+Route::get('/search-dropdown', [DropdownSearchController::class, 'index'])->name('search.partner');
+
 
 require __DIR__ . '/auth.php';

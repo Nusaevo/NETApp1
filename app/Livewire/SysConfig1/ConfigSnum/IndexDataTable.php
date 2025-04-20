@@ -3,13 +3,11 @@
 namespace App\Livewire\SysConfig1\ConfigSnum;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use App\Models\SysConfig1\ConfigSnum;
-use App\Models\SysConfig1\ConfigAppl;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter};
+use App\Models\SysConfig1\{ConfigSnum, ConfigAppl};
 use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\{Config, Session, DB};
+
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -20,8 +18,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
@@ -55,40 +51,35 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make("Code", "code")
-                ->searchable()
-                ->sortable(),
-            Column::make("Last Count", "last_cnt")
-                ->searchable()
-                ->sortable(),
-            Column::make("Description", "descr")
-                ->searchable()
-                ->sortable(),
-            Column::make('Created Date', 'created_at')
-                ->sortable(),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [
-                            [
-                                'label' => 'Edit',
-                                'route' => route('SysConfig1.ConfigSnum.Detail', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($row->id),
-                                    'additionalParam' => $this->selectedAppId
-                                ]),
-                                'icon' => 'bi bi-pencil'
-                            ],
+            Column::make('Code', 'code')->searchable()->sortable(),
+            Column::make('Last Count', 'last_cnt')->searchable()->sortable(),
+            Column::make('Description', 'descr')->searchable()->sortable(),
+            BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
+                return $value === null;
+            }),
+            Column::make('Created Date', 'created_at')->sortable(),
+            Column::make('Actions', 'id')->format(function ($value, $row) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                    'custom_actions' => [
+                        [
+                            'label' => 'Edit',
+                            'route' => route('SysConfig1.ConfigSnum.Detail', [
+                                'action' => encryptWithSessionKey('Edit'),
+                                'objectId' => encryptWithSessionKey($row->id),
+                                'additionalParam' => $this->selectedAppId,
+                            ]),
+                            'icon' => 'bi bi-pencil',
                         ],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => false,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
-                    ]);
-                }),
+                    ],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => false,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
 
@@ -98,11 +89,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         if ($this->isSysConfig1) {
             // Add Config Application Filter only for SysConfig1
-            $configApplOptions = ConfigAppl::whereNotNull('db_name')
-            ->where('db_name', '!=', '')
-            ->orderBy('seq')
-            ->pluck('name', 'id')
-            ->toArray();
+            $configApplOptions = ConfigAppl::whereNotNull('db_name')->where('db_name', '!=', '')->orderBy('seq')->pluck('name', 'id')->toArray();
             if (!empty($configApplOptions)) {
                 $filters[] = SelectFilter::make('Config Appl', 'app_id')
                     ->options($configApplOptions)
@@ -114,26 +101,21 @@ class IndexDataTable extends BaseDataTableComponent
         }
 
         // Add Code Filter
-        $filters[] = $this->createTextFilter(
-            'Code',
-            'code',
-            'Search Code',
-            function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-            }
-        );
+        $filters[] = $this->createTextFilter('Code', 'code', 'Search Code', function (Builder $builder, string $value) {
+            $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+        });
 
         // Add Status Filter
-        $filters[] = SelectFilter::make('Status', 'status')
+        $filters[] = SelectFilter::make('Status', 'status_filter')
             ->options([
-                '0' => 'Active',
-                '1' => 'Non Active'
+                'active' => 'Active',
+                'deleted' => 'Non Active',
             ])
             ->filter(function (Builder $builder, string $value) {
-                if ($value === '0') {
-                    $builder->withoutTrashed();
-                } elseif ($value === '1') {
-                    $builder->onlyTrashed();
+                if ($value === 'active') {
+                    $builder->whereNull('deleted_at');
+                } elseif ($value === 'deleted') {
+                    $builder->withTrashed()->whereNotNull('deleted_at');
                 }
             });
 

@@ -1,0 +1,27 @@
+<?php
+
+return [
+    'order_info' => 'Informasi Pesanan',
+    'date' => 'Tanggal',
+    'partner' => 'Partner',
+    'status' => 'Status',
+    'order_items' => 'Item Pesanan',
+    'location' => 'Lokasi',
+    'code' => 'Kode',
+    'uom' => 'Satuan',
+    'image' => 'Gambar',
+    'unit_price' => 'Harga Satuan',
+    'qty' => 'Kuantitas',
+    'amount' => 'Jumlah',
+    'actions' => 'Aksi',
+    'total' => 'Total',
+    'add_item' => 'Tambah Item',
+    'add_multiple_items' => 'Tambah Beberapa Item',
+    'search_item' => 'Cari Item',
+    'search_code_name' => 'Cari Kode/Nama',
+    'category' => 'Kategori',
+    'brand' => 'Merek',
+    'type' => 'Tipe',
+    'confirm_selection' => 'Konfirmasi Pilihan',
+    'no_data_found' => 'Data Tidak Ditemukan',
+];

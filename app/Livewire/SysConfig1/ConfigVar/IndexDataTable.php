@@ -1,14 +1,14 @@
 <?php
+
 namespace App\Livewire\SysConfig1\ConfigVar;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\SysConfig1\ConfigVar;
 use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Support\Facades\DB;
 use App\Services\SysConfig1\ConfigService;
+
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -18,8 +18,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
         $this->configService = new ConfigService();
@@ -52,12 +50,16 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("Seq"), "seq")
                 ->searchable()
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
             Column::make($this->trans("Default Value"), "default_value")
                 ->searchable()
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
+                BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
+                }),
             Column::make($this->trans('Created Date'), 'created_at')
-                ->sortable(),
+                ->sortable()->collapseOnTablet(),
             Column::make($this->trans('Actions'), 'id')
                 ->format(function ($value, $row) {
                     return view('layout.customs.data-table-action', [
@@ -100,14 +102,17 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Var Group', 'var_group', 'Cari Var Group', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(var_group)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            SelectFilter::make('Status', 'Status')
-                ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
-                }),
+            SelectFilter::make('Status', 'status_filter')
+            ->options([
+                'active' => 'Active',
+                'deleted' => 'Non Active',
+            ])->filter(function (Builder $builder, string $value) {
+                if ($value === 'active') {
+                    $builder->whereNull('deleted_at');
+                } elseif ($value === 'deleted') {
+                    $builder->withTrashed()->whereNotNull('deleted_at');
+                }
+            }),
         ];
     }
 }

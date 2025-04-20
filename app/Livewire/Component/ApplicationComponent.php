@@ -2,11 +2,11 @@
 
 namespace App\Livewire\Component;
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{Auth, Session};
 use Livewire\Component;
-use App\Models\SysConfig1\ConfigAppl;
-use Illuminate\Support\Facades\Session;
+use App\Models\SysConfig1\{ConfigAppl, ConfigUser};
 use App\Services\SysConfig1\ConfigService;
+
 
 class ApplicationComponent extends Component
 {
@@ -45,7 +45,12 @@ class ApplicationComponent extends Component
             Session::put('app_id', $selectedApp->id);
             Session::put('app_code', $selectedApplication);
             Session::put('database', $selectedApp->db_name);
+            $user = ConfigUser::find(Auth::id());
 
+            if ($user) {
+                $groupCodes = $user->getGroupCodesBySessionAppCode();
+                Session::put('group_codes', $groupCodes);
+            }
             return redirect('/' . $selectedApplication . '/Home');
         }
 

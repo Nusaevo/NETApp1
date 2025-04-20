@@ -1,0 +1,64 @@
+<?php
+
+namespace App\Models\TrdRetail1\Inventories;
+
+use App\Models\TrdRetail1\Transaction\DelivDtl;
+use App\Enums\Constant;
+use App\Models\Base\BaseModel;
+
+class IvttrHdr extends BaseModel
+{
+    protected $table = 'ivttr_hdrs';
+    protected static function boot()
+    {
+        parent::boot();
+    }
+
+    protected $fillable = [
+        'tr_id',
+        'tr_type',
+        'tr_date',
+        'remark',
+    ];
+    public function scopeGetActiveData()
+    {
+        return $this->orderBy('code', 'asc')->get();
+    }
+
+    public function DelivDtl()
+    {
+        return $this->belongsTo(DelivDtl::class, 'trdtl_id');
+    }
+
+    public function IvttrDtl()
+    {
+        return $this->hasMany(IvttrDtl::class, 'trhdr_id');
+    }
+
+    public function saveOrderHeader($appCode, $trType, $inputs, $lastIdKey)
+    {
+        // Implement the logic to save the order header
+        // Example:
+        $this->fill($inputs);
+
+        // Generate tr_id with incremented value only if it's a new record
+        if (!$this->exists) {
+            $lastRecord = self::orderBy('tr_id', 'desc')->first();
+            $lastId = $lastRecord ? intval($lastRecord->tr_id) : 0;
+            $this->tr_id = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
+        }
+
+        // $this->tr_type = $inputs['tr_type'];
+        $this->save();
+    }
+    public function getTrIdAttribute($value)
+    {
+        return sprintf('%03d', $value);
+    }
+
+    public function isOrderCompleted()
+    {
+        // Contoh logika untuk mengecek apakah order telah selesai
+        return $this->status == 'completed';
+    }
+}

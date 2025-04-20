@@ -3,13 +3,12 @@
 namespace App\Livewire\SysConfig1\ConfigApplication;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\SysConfig1\ConfigAppl;
-use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use App\Enums\Status;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -17,56 +16,56 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
     }
-
-    public function builder(): Builder
-    {
-        return ConfigAppl::query()
-            ->withTrashed()
-            ->select();
-    }
+    // public $column = [
+    //     'name' => '',
+    //     'code' => '',
+    // ];
 
     public function columns(): array
     {
         return [
-            Column::make($this->trans("Application Code"), "code")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Name"), "name")
-                ->searchable()
-                ->sortable(),
-            Column::make("Seq", "seq")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Latest Version"), "latest_version")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Status"), "status_code")
+            Column::make($this->trans('Application Code'), 'code')
                 ->searchable()
                 ->sortable()
-                ->format(function ($value) {
-                    return Status::getStatusString($value);
-                }),
-            Column::make($this->trans('Created Date'), 'created_at')
-                ->sortable(),
-            Column::make($this->trans('Actions'), 'id')
-                ->format(function ($value, $row) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
-                    ]);
-                }),
+                // ->secondaryHeader(function () {
+                //     return view('tables.cells.input-search', [
+                //         'field' => 'code',
+                //         'columnSearch' => $this->column,
+                //     ]);
+                // })
+                ->html(),
+            Column::make($this->trans('Name'), 'name')
+                ->searchable()
+                ->sortable()
+                // ->secondaryHeader(function () {
+                //     return view('tables.cells.input-search', [
+                //         'field' => 'name',
+                //         'column' => $this->column,
+                //     ]);
+                // })
+                ->html(),
+            Column::make('Seq', 'seq')->searchable()->sortable()->collapseOnTablet(),
+            Column::make($this->trans('Latest Version'), 'latest_version')->searchable()->sortable()->collapseOnTablet(),
+            BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
+                return $value === null;
+            }),
+            Column::make($this->trans('Created Date'), 'created_at')->sortable()->collapseOnTablet(),
+            Column::make($this->trans('Actions'), 'id')->format(function ($value, $row) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                    'custom_actions' => [],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => true,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
 
@@ -79,13 +78,22 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nama', 'name', 'Cari Nama Aplikasi', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            SelectFilter::make('Status', 'Status')
+            SelectFilter::make('Status')
+                ->setFilterPillTitle('Status')
+                ->setFilterPillValues([
+                    'active' => 'Active',
+                    'deleted' => 'Non Active',
+                ])
                 ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
-                ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
+                    'active' => 'Active',
+                    'deleted' => 'Non Active',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === 'active') {
+                        $builder->whereNull('deleted_at');
+                    } elseif ($value === 'deleted') {
+                        $builder->withTrashed()->whereNotNull('deleted_at');
+                    }
                 }),
         ];
     }

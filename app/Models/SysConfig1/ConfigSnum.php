@@ -3,20 +3,12 @@ namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
 
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
-use Illuminate\Support\Facades\Session;
-use App\Enums\Constant;
+
 class ConfigSnum extends BaseModel
 {
     protected $table = 'config_snums';
 
     use SoftDeletes;
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $sessionAppCode = Session::get('app_code');
-        $this->connection = $sessionAppCode;
-    }
 
     protected $fillable = [
         'code',

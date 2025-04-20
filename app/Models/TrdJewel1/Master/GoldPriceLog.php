@@ -2,12 +2,12 @@
 
 namespace App\Models\TrdJewel1\Master;
 
-use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
+use App\Models\Base\BaseModel;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class GoldPriceLog extends TrdJewel1BaseModel
+class GoldPriceLog extends BaseModel
 {
     protected $table = 'goldprice_logs';
 
@@ -32,7 +32,7 @@ class GoldPriceLog extends TrdJewel1BaseModel
 
     public static function GetTodayCurrencyRate()
     {
-        $currentDate = Carbon::today();
+        $currentDate = Carbon::today()->format('Y-m-d');
         $currencyRatesData = self::whereDate('log_date', $currentDate)
             ->orderBy('log_date', 'asc')
             ->first(['log_date', 'curr_rate']);

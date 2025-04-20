@@ -1,14 +1,14 @@
 <?php
+
 namespace App\Livewire\SysConfig1\ConfigGroup;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\SysConfig1\ConfigGroup;
-use Illuminate\Database\Eloquent\Builder;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use App\Enums\Status;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -16,8 +16,6 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function mount(): void
     {
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setSort('created_at', 'desc');
         $this->setFilter('Status', 0);
         $this->setSearchDisabled();
@@ -45,13 +43,11 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Group Name"), "descr")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Status"), "status_code")
-                ->searchable()
-                ->sortable()
-                ->format(function ($value) {
-                    return Status::getStatusString($value);
+            BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
                 }),
-            Column::make($this->trans('Created Date'), 'created_at')
+            Column::make($this->trans('Created Date'), 'created_at')->collapseOnTablet()
                 ->sortable(),
             Column::make($this->trans('Actions'), 'id')
                 ->format(function ($value, $row) {
@@ -95,13 +91,16 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nama', 'descr', 'Cari Nama Group', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(descr)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            SelectFilter::make('Status', 'Status')
+            SelectFilter::make('Status', 'status_filter')
                 ->options([
-                    '0' => 'Active',
-                    '1' => 'Non Active'
+                    'active' => 'Active',
+                    'deleted' => 'Non Active',
                 ])->filter(function (Builder $builder, string $value) {
-                    if ($value === '0') $builder->withoutTrashed();
-                    else if ($value === '1') $builder->onlyTrashed();
+                    if ($value === 'active') {
+                        $builder->whereNull('deleted_at');
+                    } elseif ($value === 'deleted') {
+                        $builder->withTrashed()->whereNotNull('deleted_at');
+                    }
                 }),
         ];
     }

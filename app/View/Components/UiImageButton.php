@@ -13,6 +13,8 @@ class UiImageButton extends UiBaseComponent
     // JavaScript function or code to execute when the button is clicked
     public $jsClick;
 
+    public $hideStorageButton;
+
     /**
      * Constructor for the UiImageButton component.
      *
@@ -29,11 +31,11 @@ class UiImageButton extends UiBaseComponent
         $visible = 'true',
         $cssClass = '',
         $dataBsTarget = "",
-        $jsClick = ""
+        $jsClick = "",
+        $hideStorageButton = ""
     ) {
         // Call parent constructor to initialize base component properties
-        parent::__construct('', '', 'false', $enabled, $visible, '', '', $clickEvent);
-
+        parent::__construct('', '', 'false', $enabled, $visible, '', '', $clickEvent, $hideStorageButton);
         // Apply additional CSS classes if specified
         $this->cssClass = $cssClass;
 
@@ -42,6 +44,8 @@ class UiImageButton extends UiBaseComponent
 
         // JavaScript function or code to execute on button click
         $this->jsClick = $jsClick;
+
+        $this->hideStorageButton = $hideStorageButton;
     }
 
     /**

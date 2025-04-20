@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Models\TrdRetail2\Master;
-use App\Models\TrdRetail2\Base\TrdRetail2BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class MatlBom extends TrdRetail2BaseModel
+class MatlBom extends BaseModel
 {
     protected $table = 'matl_boms';
     use SoftDeletes;
@@ -45,7 +45,7 @@ class MatlBom extends TrdRetail2BaseModel
      */
     public function getDetailsAttribute()
     {
-        return $this->attributes['specs'] ? json_decode($this->attributes['details'], true) : null;
+        return $this->attributes['specs'] ? $this->attributes['details'] : null;
     }
 
     /**
@@ -56,7 +56,7 @@ class MatlBom extends TrdRetail2BaseModel
      */
     public function setDetailsAttribute($value)
     {
-        $this->attributes['specs'] = $value ? json_encode($value) : null;
+        $this->attributes['specs'] = $value ? $value : null;
     }
     #endregion
 

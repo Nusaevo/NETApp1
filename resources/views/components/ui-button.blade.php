@@ -23,6 +23,43 @@
         <span class="spinner-border spinner-border-sm" id="backManualButtonLoading" role="status" aria-hidden="true" style="display: none;"></span>
     </a>
 </div>
+@elseif(isset($type) && $type == 'InputButton')
+    @if (isset($loading) && $loading === 'true')
+    <button type="button"
+            @if (isset($id)) id="{{ $id }}" @endif
+            class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action"
+            @if (!(isset($enabled) && $enabled === 'always') && (isset($enabled) && $enabled === 'false' || (isset($action) && $action === 'View'))) disabled @endif
+            @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
+            @if (isset($clickEvent) && $clickEvent) wire:click="{{ $clickEvent }}" @endif
+            wire:loading.attr="disabled"
+            @if (isset($dataBsTarget) && $dataBsTarget !=='' ) data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal" @endif
+            @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif
+            wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+
+        <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+            @if (isset($iconPath) && $iconPath)
+            <img src="{{ imagePath($iconPath) }}" alt="Icon" style="width: 20px; height: 20px;">
+            @endif
+            <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
+        </span>
+
+        <span wire:loading wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+            <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+        </span>
+    </button>
+
+    @else
+    <button type="button"
+            @if (isset($id)) id="{{ $id }}" @endif
+            class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action"
+            @if (!(isset($enabled) && $enabled === 'always') && (isset($enabled) && $enabled === 'false' || (isset($action) && $action === 'View'))) disabled @endif
+            @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
+            @if (isset($clickEvent) && $clickEvent) wire:click="{{ $clickEvent }}" @endif
+            @if (isset($dataBsTarget) && $dataBsTarget !=='' ) data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal" @endif
+            @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif>
+        <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
+    </button>
+    @endif
 @else
 <span style="padding: 2px;">
     @if (isset($loading) && $loading === 'true')

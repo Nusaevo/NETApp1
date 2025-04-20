@@ -2,14 +2,13 @@
 
 namespace App\Models\SysConfig1;
 
-// use App\Core\Traits\SpatieLogsActivity;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\{Factories\HasFactory, SoftDeletes};
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Traits\BaseTrait;
 use Illuminate\Support\Facades\Schema;
+use App\Traits\BaseTrait;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+
 class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
     use HasFactory, Notifiable;
@@ -21,7 +20,9 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     protected static function boot()
     {
         parent::boot();
-
+        static::saving(function ($model) {
+            $model->sanitizeAttributes();
+        });
         static::retrieved(function ($model) {
             $attributes = $model->getAllColumns();
 
@@ -29,8 +30,8 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
                 $value = $model->getAllColumnValues($attribute);
                 if (is_numeric($value) && strpos($value, '.') !== false) {
                     $decimalPart = explode('.', $value)[1];
-                    if ((int)$decimalPart === 0) {
-                        $value = (int)$value;
+                    if ((int) $decimalPart === 0) {
+                        $value = (int) $value;
                     }
                 }
 
@@ -45,26 +46,14 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
      *
      * @var array
      */
-    protected $fillable = [
-        'code',
-        'password',
-        'name',
-        'dept',
-        'phone',
-        'email',
-        'status_code'
-    ];
+    protected $fillable = ['code', 'password', 'name', 'dept', 'phone', 'email', 'status_code'];
 
     /**
      * The attributes that should be hidden for arrays.
      *
      * @var array
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
+    protected $hidden = ['password', 'remember_token'];
 
     public function getAllColumns()
     {
@@ -79,22 +68,39 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         return null;
     }
 
-    public function fillAndSanitize(array $attributes)
+    /**
+     * Fill the model with sanitized attributes.
+     *
+     * - Dates: Sanitized via `sanitizeDate`
+     * - Numeric strings: Properly formatted (`.` and `,` swapped)
+     * - Strings: Trimmed whitespace
+     * - Arrays: JSON-encoded
+     *
+     * @param array $attributes
+     */
+        /**
+     * Sanitize model attributes before saving.
+     */
+    protected function sanitizeAttributes()
     {
-        $sanitizedAttributes = [];
-
-        foreach ($attributes as $key => $value) {
-            if (isDateAttribute($value)) {
-                $sanitizedAttributes[$key] = sanitizeDate($value);
-            } elseif (isFormattedNumeric($value) !== false) {
-                $sanitizedAttributes[$key] = str_replace('.', '', $value);
-                $sanitizedAttributes[$key] = str_replace(',', '.', $sanitizedAttributes[$key]);
-            } else {
-                $sanitizedAttributes[$key] = $value;
+        foreach ($this->attributes as $key => $value) {
+            if (isDateAttribute($key, $value)) {
+                // Sanitize Date
+                $this->attributes[$key] = $this->sanitizeDate($value);
+            } elseif (isFormattedNumeric($value)) {
+                // Format Numeric Strings (e.g., "1.000,50" => "1000.50")
+                $this->attributes[$key] = str_replace('.', '', $value);
+                $this->attributes[$key] = str_replace(',', '.', $this->attributes[$key]);
+            } elseif (is_array($value)) {
+                // Encode Arrays as JSON
+                $this->attributes[$key] = json_encode($value);
+            } elseif (is_string($value)) {
+                // Trim Strings
+                $this->attributes[$key] = trim($value);
             }
         }
-        $this->fill($sanitizedAttributes);
     }
+
 
     public function isDuplicateCode()
     {
@@ -104,8 +110,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
             $upperCode = strtoupper($this->code);
 
             // Perform a query to check for duplicates with case-insensitive comparison
-            $query = $this->newQuery()
-                ->whereRaw('UPPER(code) = ?', [$upperCode]);
+            $query = $this->newQuery()->whereRaw('UPPER(code) = ?', [$upperCode]);
 
             // Exclude the current model instance from the check if it is not new
             if (!$this->isNew()) {
@@ -126,8 +131,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
             $upperName = strtoupper($this->name);
 
             // Perform a query to check for duplicates with case-insensitive comparison
-            $query = $this->newQuery()
-                ->whereRaw('UPPER(name) = ?', [$upperName]);
+            $query = $this->newQuery()->whereRaw('UPPER(name) = ?', [$upperName]);
 
             // Exclude the current model instance from the check if it is not new
             if (!$this->isNew()) {
@@ -148,7 +152,6 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
 
     #region Attributes
     #endregion
-
 
     /**
      * The attributes that should be cast to native types.
@@ -176,7 +179,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     public function isNew()
     {
         $isNew = empty($this->id);
-        return  $isNew;
+        return $isNew;
     }
 
     public function setStatus($value)
@@ -188,4 +191,26 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         }
     }
 
+    /**
+     * Get list of group codes for the current session app code.
+     *
+     * @return array
+     */
+    public function getGroupCodesBySessionAppCode()
+    {
+        // Periksa apakah kode aplikasi ada di session
+        $appCode = session('app_code');
+
+        if (!$appCode) {
+            return []; // Jika app_code tidak ada di session, kembalikan array kosong
+        }
+
+        // Ambil grup yang terkait dengan pengguna ini
+        $groupCodes = $this->ConfigGroup()
+            ->where('app_code', $appCode)
+            ->pluck('code') // Ambil hanya kolom 'code'
+            ->toArray();
+
+        return $groupCodes;
+    }
 }

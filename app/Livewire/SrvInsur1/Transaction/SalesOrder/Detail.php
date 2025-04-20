@@ -3,24 +3,14 @@
 namespace App\Livewire\SrvInsur1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\SrvInsur1\Transaction\OrderHdr;
-use App\Models\SrvInsur1\Transaction\OrderDtl;
-use App\Models\SrvInsur1\Master\Partner;
+use Illuminate\Support\Facades\{Crypt, DB, Auth};
+use App\Models\SrvInsur1\Transaction\{OrderHdr, OrderDtl, BillingDtl, BillingHdr, DelivDtl, DelivHdr};
+use App\Models\SrvInsur1\Master\{Partner, Material, MatlUom, GoldPriceLog};
 use App\Models\SysConfig1\ConfigConst;
-use Illuminate\Support\Facades\Crypt;
-use App\Models\SrvInsur1\Master\Material;
-use App\Models\SrvInsur1\Master\MatlUom;
 use App\Enums\Status;
-use App\Models\SrvInsur1\Transaction\BillingDtl;
-use App\Models\SrvInsur1\Transaction\BillingHdr;
-use App\Models\SrvInsur1\Transaction\DelivDtl;
-use App\Models\SrvInsur1\Transaction\DelivHdr;
-use Exception;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Models\SrvInsur1\Master\GoldPriceLog;
-use Illuminate\Support\Facades\Auth;
 use App\Services\SrvInsur1\Master\MasterService;
+use Exception;
 use function PHPUnit\Framework\throwException;
 
 class Detail extends BaseComponent
@@ -255,8 +245,8 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->inputs['print_settings'] = json_encode($this->filterprintRemarks($this->printSettings));
-        $this->inputs['print_remarks'] = json_encode($this->filterprintRemarks($this->printRemarks));
+        $this->inputs['print_settings'] = $this->filterprintRemarks($this->printSettings);
+        $this->inputs['print_remarks'] = $this->filterprintRemarks($this->printRemarks);
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {

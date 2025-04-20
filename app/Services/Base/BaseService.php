@@ -16,12 +16,12 @@ class BaseService
 
         // Check session value and set appropriate connection
         if (Session::get('app_code') === 'SysConfig1') {
-            $this->setMainConnection(Constant::ConfigConn());
+            $this->setMainConnection(Constant::configConn());
         } else {
             $this->setMainConnection($appCodeConnection);
         }
 
-        $this->setConfigConnection(Constant::ConfigConn());
+        $this->setConfigConnection(Constant::configConn());
     }
 
     public function setMainConnection($connectionName)

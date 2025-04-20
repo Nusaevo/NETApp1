@@ -2,14 +2,14 @@
 
 namespace App\Models\TrdJewel1\Transaction;
 
-use App\Models\TrdJewel1\Base\TrdJewel1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\TrdJewel1\Master\Material;
 use App\Models\TrdJewel1\Inventories\IvtBal;
 use App\Models\TrdJewel1\Inventories\IvtBalUnit;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 use App\Traits\BaseTrait;
-class DelivDtl extends TrdJewel1BaseModel
+class DelivDtl extends BaseModel
 {
     use SoftDeletes;
 

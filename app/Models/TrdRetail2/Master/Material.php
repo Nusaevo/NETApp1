@@ -3,7 +3,7 @@
 namespace App\Models\TrdRetail2\Master;
 
 use App\Helpers\SequenceUtility;
-use App\Models\TrdRetail2\Base\TrdRetail2BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\Base\BaseModel\Attachment;
 use App\Models\TrdRetail2\Inventories\IvtBal;
 use App\Models\TrdRetail2\Transaction\OrderDtl;
@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Constant;
 
-class Material extends TrdRetail2BaseModel
+class Material extends BaseModel
 {
     protected $table = 'materials';
     const JEWELRY = 'JEWELRY';
@@ -102,7 +102,7 @@ class Material extends TrdRetail2BaseModel
         return $this->hasMany(MatlBom::class, 'matl_id')->orderBy('seq');
     }
 
-    public function ivtBal()
+    public function IvtBal()
     {
         return $this->hasOne(IvtBal::class, 'matl_id')->withDefault([
             'qty_oh' => '$0.00'
@@ -235,7 +235,6 @@ class Material extends TrdRetail2BaseModel
         if ($relatedOrderDtl) {
             return true;
         }
-
         return false;
     }
 
@@ -249,7 +248,7 @@ class Material extends TrdRetail2BaseModel
         $formattedDetail['base_matl_id_value'] = $baseMaterial->id;
         $formattedDetail['base_matl_id_note'] = $baseMaterial->note1;
 
-        $decodedData = json_decode($detail->jwl_sides_spec, true);
+        $decodedData = $detail->jwl_sides_spec;
 
         switch ($formattedDetail['base_matl_id_note']) {
             case self::JEWELRY:

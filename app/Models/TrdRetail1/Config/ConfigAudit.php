@@ -2,9 +2,9 @@
 
 namespace App\Models\TrdRetail1\Config;
 
-use App\Models\TrdRetail1\Base\TrdRetail1BaseModel;
+use App\Models\Base\BaseModel;
 use Illuminate\Support\Facades\Auth;
-class ConfigAudit extends TrdRetail1BaseModel
+class ConfigAudit extends BaseModel
 {
     protected $table = 'config_audits';
     public $timestamps = false;

@@ -3,15 +3,13 @@
 namespace App\Livewire\TrdJewel1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseDataTableComponent;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
-use App\Models\TrdJewel1\Transaction\OrderHdr;
-use App\Models\TrdJewel1\Transaction\OrderDtl;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Columns\BooleanColumn, Filters\TextFilter};
+use App\Models\TrdJewel1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Illuminate\Database\Eloquent\Builder;
 use App\Enums\Status;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -20,8 +18,6 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->customRoute = "";
-        $this->getPermission($this->customRoute);
         $this->setDefaultSort('tr_date', 'desc');
         $this->setDefaultSort('tr_id', 'desc');
     }
@@ -36,32 +32,37 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
-                ->sortable(),
-            Column::make($this->trans("tr_id"), "tr_id")
+            Column::make($this->trans('date'), 'tr_date')->sortable(),
+            Column::make($this->trans('tr_id'), 'tr_id')
                 ->format(function ($value, $row) {
-                        return '<a href="' . route($this->appCode.'.Transaction.SalesOrder.Detail', [
+                    return '<a href="' .
+                        route($this->appCode . '.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->id)
-                        ]) . '">' . $row->tr_id . '</a>';
+                            'objectId' => encryptWithSessionKey($row->id),
+                        ]) .
+                        '">' .
+                        $row->tr_id .
+                        '</a>';
                 })
                 ->html(),
-            Column::make($this->trans("tr_type"), "tr_type")
-                ->hideIf(true)
-                ->sortable(),
-            Column::make($this->trans("customer"), "partner_id")
+            Column::make($this->trans('tr_type'), 'tr_type')->hideIf(true)->sortable(),
+            Column::make($this->trans('customer'), 'partner_id')
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode.'.Master.Partner.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->partner_id)
-                        ]) . '">' . $row->Partner->name . '</a>';
+                        return '<a href="' .
+                            route($this->appCode . '.Master.Partner.Detail', [
+                                'action' => encryptWithSessionKey('Edit'),
+                                'objectId' => encryptWithSessionKey($row->partner_id),
+                            ]) .
+                            '">' .
+                            $row->Partner->name .
+                            '</a>';
                     } else {
                         return '';
                     }
                 })
                 ->html(),
-            Column::make($this->trans("matl_code"), 'id')
+            Column::make($this->trans('matl_code'), 'id')
                 ->format(function ($value, $row) {
                     // Manually load OrderDtl using a query
                     $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
@@ -72,53 +73,53 @@ class IndexDataTable extends BaseDataTableComponent
                     // Generate links if data is available
                     $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
                     $links = $matlCodes->map(function ($code, $id) {
-                        return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($id)
-                        ]) . '">' . $code . '</a>';
+                        return '<a href="' .
+                            route($this->appCode . '.Master.Material.Detail', [
+                                'action' => encryptWithSessionKey('Edit'),
+                                'objectId' => encryptWithSessionKey($id),
+                            ]) .
+                            '">' .
+                            $code .
+                            '</a>';
                     });
 
                     return $links->implode(', ');
                 })
                 ->html(),
-            Column::make($this->trans("qty"), "total_qty")
+            Column::make($this->trans('qty'), 'total_qty')
                 ->label(function ($row) {
                     return $row->total_qty;
                 })
                 ->sortable(),
-            Column::make($this->trans("amt"), "total_amt")
+            Column::make($this->trans('amt'), 'total_amt')
                 ->label(function ($row) {
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
-            Column::make($this->trans('status'), "status_code")
-                ->sortable()
-                ->format(function ($value, $row, Column $column) {
-                    return Status::getStatusString($value);
-                }),
-            Column::make('Actions', 'id')
-                ->format(function ($value, $row, Column $column) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [
-                            [
-                                'label' => 'Print',
-                                'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($row->id)
-                                ]),
-                                'icon' => 'bi bi-printer'
-                            ],
+            BooleanColumn::make($this->trans('Status'), 'status_code')->setCallback(function ($value) {
+                return $value === Status::COMPLETED;
+            }),
+            Column::make('Actions', 'id')->format(function ($value, $row, Column $column) {
+                return view('layout.customs.data-table-action', [
+                    'row' => $row,
+                    'custom_actions' => [
+                        [
+                            'label' => 'Print',
+                            'route' => route($this->appCode . '.Transaction.SalesOrder.PrintPdf', [
+                                'action' => encryptWithSessionKey('Edit'),
+                                'objectId' => encryptWithSessionKey($row->id),
+                            ]),
+                            'icon' => 'bi bi-printer',
                         ],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions,
-
-                    ]);
-                }),
+                    ],
+                    'enable_this_row' => true,
+                    'allow_details' => false,
+                    'allow_edit' => true,
+                    'allow_disable' => false,
+                    'allow_delete' => false,
+                    'permissions' => $this->permissions,
+                ]);
+            }),
         ];
     }
 
@@ -132,7 +133,8 @@ class IndexDataTable extends BaseDataTableComponent
             }),
             $this->createTextFilter('Barang', 'matl_code', 'Cari Barang', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
-                    $query->select(DB::raw(1))
+                    $query
+                        ->select(DB::raw(1))
                         ->from('order_dtls')
                         ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
                         ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')

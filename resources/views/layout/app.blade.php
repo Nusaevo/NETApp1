@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" {!! printHtmlAttributes('html') !!}>
 <!--begin::Head-->
+
 <head>
     <base href="" />
     <title>{{ config('app.name', 'Laravel') }}</title>
@@ -22,6 +23,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/barcodes/JsBarcode.code128.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.flash.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -37,7 +39,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/inputmask.min.js"></script>
     <script>
         var myJQuery = jQuery;
-
     </script>
     {!! includeFavicon() !!}
 
@@ -46,23 +47,32 @@
     <!--end::Fonts-->
 
     <!--begin::Global Stylesheets Bundle(used by all pages)-->
-    @foreach(getGlobalAssets('css') as $path)
-    {!! sprintf('
-    <link rel="stylesheet" href="%s">', asset($path)) !!}
+    @foreach (getGlobalAssets('css') as $path)
+        {!! sprintf(
+            '
+                                                            <link rel="stylesheet" href="%s">',
+            asset($path),
+        ) !!}
     @endforeach
     <!--end::Global Stylesheets Bundle-->
 
     <!--begin::Vendor Stylesheets(used by this page)-->
-    @foreach(getVendors('css') as $path)
-    {!! sprintf('
-    <link rel="stylesheet" href="%s">', asset($path)) !!}
+    @foreach (getVendors('css') as $path)
+        {!! sprintf(
+            '
+                                                            <link rel="stylesheet" href="%s">',
+            asset($path),
+        ) !!}
     @endforeach
     <!--end::Vendor Stylesheets-->
 
     <!--begin::Custom Stylesheets(optional)-->
-    @foreach(getCustomCss() as $path)
-    {!! sprintf('
-    <link rel="stylesheet" href="%s">', asset($path)) !!}
+    @foreach (getCustomCss() as $path)
+        {!! sprintf(
+            '
+                                                            <link rel="stylesheet" href="%s">',
+            asset($path),
+        ) !!}
     @endforeach
     <!--end::Custom Stylesheets-->
 
@@ -71,6 +81,7 @@
 <!--end::Head-->
 
 <!--begin::Body-->
+
 <body {!! printHtmlClasses('body') !!} {!! printHtmlAttributes('body') !!}>
 
     @include('partials/theme-mode/_init')
@@ -78,10 +89,10 @@
     <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
         <!--begin::Page-->
         <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
-            @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_header')
+            @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_header')
             <!--begin::Wrapper-->
             <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
-                @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_sidebar')
+                @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_sidebar')
                 <!--begin::Main-->
                 <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
                     <!--begin::Content wrapper-->
@@ -98,7 +109,7 @@
                         <!--end::Content-->
                     </div>
                     <!--end::Content wrapper-->
-                    @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_footer')
+                    @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_footer')
                 </div>
                 <!--end:::Main-->
             </div>
@@ -122,22 +133,41 @@
         </div>
     </div>
 
+    <!-- Modal Preview Image -->
+    <x-ui-dialog-box id="imagePreviewModal" title="Image Preview" width="800px" height="800px"
+        onOpened="openImageFullScreenDialogBox" onClosed="closeImageFullScreenDialogBox">
+        <x-slot name="body">
+            <img id="previewImage" src="" alt="Image Preview" style="width: 100%; height: auto;">
+        </x-slot>
+        <x-slot name="footer">
+            <button type="button" class="btn btn-secondary" id="closeModalButton">Close</button>
+        </x-slot>
+    </x-ui-dialog-box>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalId = '#imagePreviewModal';
+            document.getElementById('closeModalButton').addEventListener('click', function() {
+                window.dispatchEvent(new Event('closeImageFullScreenDialogBox'));
+            });
+        });
+    </script>
+
     <!--begin::Javascript-->
     <!--begin::Global Javascript Bundle(mandatory for all pages)-->
-    @foreach(getGlobalAssets() as $path)
-    {!! sprintf('<script src="%s"></script>', asset($path)) !!}
+    @foreach (getGlobalAssets() as $path)
+        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
     @endforeach
     <!--end::Global Javascript Bundle-->
 
     <!--begin::Vendors Javascript(used by this page)-->
-    @foreach(getVendors('js') as $path)
-    {!! sprintf('<script src="%s"></script>', asset($path)) !!}
+    @foreach (getVendors('js') as $path)
+        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
     @endforeach
     <!--end::Vendors Javascript-->
 
     <!--begin::Custom Javascript(optional)-->
-    @foreach(getCustomJs() as $path)
-    {!! sprintf('<script src="%s"></script>', asset($path)) !!}
+    @foreach (getCustomJs() as $path)
+        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
     @endforeach
     <!--end::Custom Javascript-->
     @stack('scripts')
@@ -163,11 +193,11 @@
                 let confirmButtonText = 'Ok';
 
                 Swal.fire({
-                    html: message
-                    , icon: icon
-                    , buttonsStyling: false
-                    , confirmButtonText: confirmButtonText
-                    , customClass: {
+                    html: message,
+                    icon: icon,
+                    buttonsStyling: false,
+                    confirmButtonText: confirmButtonText,
+                    customClass: {
                         confirmButton: 'btn btn-primary'
                     }
                 });
@@ -181,8 +211,33 @@
                     console.error('URL is not provided or is empty.');
                 }
             });
-        });
 
+            Livewire.on('open-confirm-dialog', (dataArray) => {
+                let data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
+                let title = data.title || 'Confirm Action';
+                let message = data.message || 'Are you sure?';
+                let icon = data.icon || 'warning';
+                let confirmMethod = data.confirmMethod || '';
+                let confirmParams = data.confirmParams || null;
+                let confirmButtonText = data.confirmButtonText || 'Yes, confirm';
+
+                Swal.fire({
+                    title: title,
+                    text: message,
+                    icon: icon,
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: confirmButtonText
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Livewire.dispatch(confirmMethod, {
+                            data: confirmParams
+                        });
+                    }
+                });
+            });
+        });
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -198,14 +253,21 @@
             });
         });
     </script>
+    <script>
+        function showImagePreview(imageUrl) {
+            const previewImage = document.getElementById('previewImage');
+            previewImage.src = imageUrl;
+            $('#imagePreviewModal').modal('show');
+        }
+    </script>
     <script type="text/javascript">
         function printReport() {
             window.print();
         }
     </script>
+
     @livewireScripts
 </body>
 <!--end::Body-->
 
 </html>
-

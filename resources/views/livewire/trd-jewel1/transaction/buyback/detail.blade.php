@@ -2,7 +2,7 @@
     <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
-    <x-ui-page-card title="{{ $this->trans($actionValue)}} {!! $menuName !!}  {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
+    <x-ui-page-card isForm="true" title="{{ $this->trans($actionValue)}} {!! $menuName !!}  {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
         <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>
@@ -86,7 +86,7 @@
                                         @php
                                         $imagePath = isset($detail['image_path']) && !empty($detail['image_path']) ? $detail['image_path'] : 'https://via.placeholder.com/300';
                                         @endphp
-                                        <img src="{{ $imagePath }}" alt="Material Photo" style="width: 200px; height: 200px;">
+                                        <x-ui-image src="{{ $imagePath }}" alt="Material" width="200px" height="200px" />
                                     </x-slot>
 
                                     <x-slot name="rows">

@@ -2,14 +2,13 @@
 
 namespace App\Models\SrvInsur1\Master;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\{Factories\HasFactory, SoftDeletes};
 use App\Helpers\SequenceUtility;
-use App\Models\SrvInsur1\Base\SrvInsur1BaseModel;
+use App\Models\Base\BaseModel;
 use App\Models\SrvInsur1\Transaction\OrderHdr;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class Partner extends SrvInsur1BaseModel
+class Partner extends BaseModel
 {
     protected $table = 'partners';
     const CUSTOMER = 'C';

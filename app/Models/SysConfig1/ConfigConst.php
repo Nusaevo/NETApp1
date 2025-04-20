@@ -2,11 +2,10 @@
 
 namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
-use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Session;
-use App\Enums\Constant;
+
 class ConfigConst extends BaseModel
 {
     protected $table = 'config_consts';
@@ -15,12 +14,6 @@ class ConfigConst extends BaseModel
 
     const CURRENCY_DOLLAR_ID = '125';
     const CURRENCY_RUPIAH_ID = '124';
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $sessionAppCode = Session::get('app_code');
-        $this->connection = $sessionAppCode;
-    }
 
     protected $fillable = [
         'const_group',
@@ -36,24 +29,52 @@ class ConfigConst extends BaseModel
         'note1',
     ];
 
+    protected static $serialNumberMappings = [
+        'TrdJewel1' => [
+            'MMATL_CATEGL1' => "Serial Number untuk Category pada TrdJewel1"
+        ],
+        'TrdTire1' => [
+            'MMATL_MERK' => "Serial Number untuk Merk pada TrdTire1",
+        ]
+    ];
+
     public static function boot()
     {
         parent::boot();
         static::created(function ($model) {
-            if ($model->const_group === 'MMATL_CATEGL1') {
-                ConfigSnum::create([
-                    'code' => "MMATL_".$model->str1."_LASTID",
-                    // 'app_id' => $model->app_id,
-                    // 'app_code' => $model->app_code,
-                    'last_cnt' => 1,
-                    'wrap_low' => 1,
-                    'wrap_high' => 99999999,
-                    'step_cnt' => 1,
-                    'descr' => "Serial Number untuk Barang dengan Category " . $model->str1
-                ]);
+            $appCode = session('app_code');
+
+            if ($appCode && isset(self::$serialNumberMappings[$appCode])) {
+                $appMapping = self::$serialNumberMappings[$appCode];
+
+                if (isset($appMapping[$model->const_group])) {
+                    $description = $appMapping[$model->const_group];
+                    if($appCode == 'TrdRetail1') {
+                        ConfigSnum::create([
+                            'code' => "MMATL_" . $model->str1 . "_LASTID",
+                            'last_cnt' => 0,
+                            'wrap_low' => 1000,
+                            'wrap_high' => 99999999,
+                            'step_cnt' => 1,
+                            'descr' => $description . " " . $model->str1
+                        ]);
+                    }else{
+                        ConfigSnum::create([
+                            'code' => "MMATL_" . $model->str1 . "_LASTID",
+                            'last_cnt' => 0,
+                            'wrap_low' => 1,
+                            'wrap_high' => 99999999,
+                            'step_cnt' => 1,
+                            'descr' => $description . " " . $model->str1
+                        ]);
+                    }
+                }
+            } else {
+                \Log::warning("App code not found or invalid in session for ConfigConst creation.");
             }
         });
     }
+
 
     #region Relations
 

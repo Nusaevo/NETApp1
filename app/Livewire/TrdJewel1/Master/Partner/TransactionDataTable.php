@@ -1,28 +1,24 @@
 <?php
 
 namespace App\Livewire\TrdJewel1\Master\Partner;
-use App\Livewire\Component\BaseComponent;
 
+use App\Livewire\Component\DetailComponent;
 use Livewire\Component;
-use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\{DB, Session};
+use Rappasoft\LaravelLivewireTables\Views\{Column, Filters\TextFilter};
 use App\Models\TrdJewel1\Transaction\OrderHdr;
 use App\Models\SysConfig1\ConfigRight;
-use App\Enums\Status;
-use Illuminate\Support\Facades\DB;
-use App\Enums\Constant;
-use Illuminate\Support\Facades\Session;
+use App\Enums\{Status, Constant};
+use Illuminate\Database\Eloquent\Builder;
 
-class TransactionDataTable extends BaseComponent
+
+class TransactionDataTable extends DetailComponent
 {
     public int $perPage = 50;
     public $partnerID;
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->bypassPermissions = true;
-        $this->materialID = $objectIdValue;
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 

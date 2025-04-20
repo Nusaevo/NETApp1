@@ -20,6 +20,8 @@ class UiDropdownSelect extends UiBaseComponent
 
     // Placeholder text displayed in the text field when it is empty
     public $placeHolder;
+    public $buttonName;
+    public $buttonEnabled;
     /**
      * Constructor for the UiDropdownSelect component.
      *
@@ -52,6 +54,8 @@ class UiDropdownSelect extends UiBaseComponent
         $clickEvent = null,
         $type = 'string',
         $placeHolder = '',
+        $buttonName = "",
+        $buttonEnabled = 'true'
     ) {
         // Call parent constructor to initialize base component properties
         parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, $clickEvent, str_replace(['.', '[', ']'], '_', $model));
@@ -73,6 +77,9 @@ class UiDropdownSelect extends UiBaseComponent
 
         // Placeholder text displayed when the field is empty
         $this->placeHolder = $placeHolder;
+        // Name or label for an associated button
+        $this->buttonName = $buttonName;
+        $this->buttonEnabled = $buttonEnabled;
     }
 
     /**

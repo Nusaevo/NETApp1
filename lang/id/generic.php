@@ -9,6 +9,12 @@ return [
         'disable' => 'Berhasil menonaktifkan data.',
         'enable' => 'Berhasil mengaktifkan data.',
         'currency_needed' => 'Kurs mata uang harian belum diinputkan. Harap input kurs mata uang harian di Master Currency.',
+        'add_item' => 'Item berhasil ditambahkan.',
+        'delete_item' => 'Item berhasil dihapus.',
+        'empty_item' => 'Tidak ada item untuk ditampilkan.',
+        'save_item' => 'Item berhasil disimpan.',
+        'update_item' => 'Item berhasil diperbarui.',
+        'duplicate_item' => 'Item ini sudah ada dalam daftar.',
     ],
     'error' => [
         'title' => 'Gagal',
@@ -22,5 +28,10 @@ return [
         'field_required' => "Field :field harus diisi. Harap lengkapi :field untuk melanjutkan.",
         'duplicate_code' => "Kode ini sudah dipakai. Silakan gunakan kode yang berbeda.",
         'duplicate_name' => "Nama ini sudah dipakai. Silakan gunakan nama yang berbeda.",
+        'add_item' => 'Gagal menambahkan item,\nPesan kesalahan: :message',
+        'delete_item' => 'Gagal menghapus item,\nPesan kesalahan: :message',
+        'empty_item' => 'Tidak ada item yang ditemukan.',
+        'save_item' => 'Gagal menyimpan item,\nPesan kesalahan: :message',
+        'update_item' => 'Gagal memperbarui item,\nPesan kesalahan: :message',
     ],
 ];

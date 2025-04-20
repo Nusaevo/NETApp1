@@ -4,11 +4,11 @@ namespace App\Livewire\TrdJewel1\Master\Partner;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdJewel1\Master\Partner;
-use App\Services\TrdJewel1\Master\MasterService as MasterMasterService;
+use Illuminate\Support\Facades\{DB};
+use App\Services\TrdJewel1\Master\{MasterService as MasterMasterService, MasterService};
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
-use App\Services\TrdJewel1\Master\MasterService;
 use Exception;
+
 
 class Detail extends BaseComponent
 {
@@ -55,12 +55,11 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
 
         $this->partnerTypes = $this->masterService->getPartnerTypes();
-
         if($this->isEditOrView())
         {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $decodedData = json_decode($this->object->partner_chars, true);
+            $decodedData = $this->object->partner_chars;
             switch ($this->object->grp) {
                 case Partner::CUSTOMER:
                     $this->inputs['ring_size'] = $decodedData['ring_size'] ?? null;
@@ -89,6 +88,7 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
+        dd($this->inputs['grp']);
         // if (isset($this->inputs['code'])) {
         //     $existingPartner = Partner::where('code', $this->inputs['code'])
         //                               ->where('id', '!=', $this->object->id ?? null)
@@ -120,8 +120,8 @@ class Detail extends BaseComponent
             $dataToSave['ring_size'] = $this->inputs['ring_size'] ?? null;
             $dataToSave['partner_ring_size'] = $this->inputs['partner_ring_size'] ?? null;
         }
-        $this->inputs['partner_chars'] = json_encode($dataToSave);
-        $this->object->fillAndSanitize($this->inputs);
+        $this->inputs['specs'] = $dataToSave;
+        $this->object->fill($this->inputs);
         $this->object->save();
     }
 
@@ -134,6 +134,9 @@ class Detail extends BaseComponent
 
     #region Component Events
 
+    public function onPartnerChanged()
+    {
+    }
     #endregion
 
 }

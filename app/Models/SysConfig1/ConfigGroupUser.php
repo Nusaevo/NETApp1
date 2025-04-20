@@ -2,7 +2,9 @@
 namespace App\Models\SysConfig1;
 use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
-class ConfigGroupUser extends BaseModel
+use App\Models\SysConfig1\Base\SysConfig1BaseModel;
+
+class ConfigGroupUser extends SysConfig1BaseModel
 {
     protected $table = 'config_grpusers';
     use SoftDeletes;

@@ -2,11 +2,10 @@
 
 namespace App\Services\SysConfig1;
 
-use App\Models\SysConfig1\ConfigAppl;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\SysConfig1\ConfigUser;
+use App\Models\SysConfig1\{ConfigAppl, ConfigConst, ConfigUser};
 use Illuminate\Support\Facades\Auth;
 use App\Services\Base\BaseService;
+
 
 class ConfigService extends BaseService
 {

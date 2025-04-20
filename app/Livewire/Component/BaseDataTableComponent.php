@@ -3,14 +3,13 @@
 namespace App\Livewire\Component;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use App\Models\SysConfig1\{ConfigRight,ConfigMenu};
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Exception;
 use App\Enums\Status;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\SysConfig1\ConfigRight;
-use App\Models\SysConfig1\ConfigMenu;
 use App\Models\Util\GenericExport;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Support\Facades\Session;
@@ -23,21 +22,23 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $customRoute;
     public $langBasePath;
     public $appCode;
+    public $isComponent = false;
 
     public $baseRenderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
     public $menu_link;
-
+    protected $versionSessionKey = 'session_version_number';
+    protected $permissionSessionKey = 'session_permissions';
 
     abstract public function columns(): array;
 
     protected $listeners = [
         'refreshData' => 'render',
-        'viewData'  => 'View',
-        'editData'  => 'Edit',
-        'deleteData'  => 'Delete',
-        'disableData'  => 'Disable',
-        'selectData'  => 'SelectObject',
+        'viewData' => 'View',
+        'editData' => 'Edit',
+        'deleteData' => 'Delete',
+        'disableData' => 'Disable',
+        'selectData' => 'SelectObject',
     ];
 
     public function configure(): void
@@ -54,14 +55,14 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
         $fullUrl = str_replace('.', '/', $this->baseRoute);
         $this->menu_link = ConfigMenu::getFullPathLink($fullUrl);
-        $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute);
+        $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute);
 
         if (!empty($this->customRoute)) {
-            $this->langBasePath = str_replace('.', '/', $this->customRoute) . "/index";
+            $this->langBasePath = str_replace('.', '/', $this->customRoute) . '/index';
         } else {
-            $this->langBasePath  = str_replace('.', '/', $this->baseRenderRoute)."/index";
+            $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute) . '/index';
         }
-        $this->permissions = ConfigRight::getPermissionsByMenu($this->menu_link);
+        $this->permissions = Session::get($this->permissionSessionKey, []);
 
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
@@ -75,36 +76,48 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->setTbodyAttributes([
             'class' => 'data-table-body',
         ]);
-        $this->setTdAttributes(function(Column $column, $row, $columnIndex, $rowIndex) {
+        $this->setTdAttributes(function (Column $column, $row, $columnIndex, $rowIndex) {
             if ($column->isField('deleted_at')) {
-              return [
-                'class' => 'text-center',
-              ];
+                return [
+                    'class' => 'text-center',
+                ];
             }
             return [];
         });
         $this->setConfigurableAreas([
-            'toolbar-left-start' =>  ['layout.customs.buttons.create', [
-                'route' => $this->baseRoute.".Detail", 'permissions' => $this->permissions
-            ],]
+            'toolbar-left-start' => [
+                'layout.customs.buttons.create',
+                [
+                    'route' => $this->cleanBaseRoute($this->baseRoute) . '.Detail',
+                    'permissions' => $this->permissions,
+                    'isComponent' => $this->isComponent,
+                ],
+            ],
         ]);
-
         $this->setFilterPillsDisabled();
         $this->setSortingPillsDisabled();
         $this->setFilterLayout('slide-down');
         $this->setFilterSlideDownDefaultStatusEnabled();
+        $this->setQueryStringStatusForSort(true);
         $this->setSingleSortingDisabled();
+        $this->setQueryStringStatus(true);
     }
+
+    private function cleanBaseRoute($route)
+    {
+        return Str::endsWith($route, '.Detail') ? Str::replaceLast('.Detail', '', $route) : $route;
+    }
+
 
     public function viewData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->baseRoute . ".Detail";
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
         return $this->redirectDetail($id, 'View', $route);
     }
 
     public function editData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . ".Detail" : $this->baseRoute . ".Detail";
+        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
         return $this->redirectDetail($id, 'Edit', $route);
     }
 
@@ -129,18 +142,18 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->object->updateObject($this->object->version_number);
             $this->object->delete();
 
-            $this->dispatch('success', __('generic.string.disable', ['object' => "object"]));
+            $this->dispatch('success', __('generic.string.disable', ['object' => 'object']));
         } catch (Exception $e) {
             // Handle the exception
 
-            $this->dispatch('error', __('generic.string.disable', ['object' => "object", 'message' => $e->getMessage()]));
+            $this->dispatch('error', __('generic.string.disable', ['object' => 'object', 'message' => $e->getMessage()]));
         }
         $this->dispatch('refreshData');
     }
 
     public function trans($key)
     {
-        $fullKey = $this->langBasePath . "." . $key;
+        $fullKey = $this->langBasePath . '.' . $key;
         $translation = __($fullKey);
         if ($translation === $fullKey) {
             return $key;
@@ -153,7 +166,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
     {
         $this->permissions = ConfigRight::getPermissionsByMenu($customRoute ? $customRoute : $this->menu_link);
     }
-
 
     public function createTextFilter($name, $field, $placeholder, $filterCallback)
     {
@@ -207,3 +219,4 @@ abstract class BaseDataTableComponent extends DataTableComponent
     // }
 
 }
+
