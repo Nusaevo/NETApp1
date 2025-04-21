@@ -76,8 +76,6 @@
                     <div class="col-md-12">
                         <x-ui-card title="Order Items">
                             <div>
-                                <x-ui-card>
-
                                     <!-- Tambahkan kolom Warehouse -->
                                         <x-ui-dropdown-select
                                             label="Lokasi"
@@ -95,7 +93,6 @@
                                             <th style="width: 120px; text-align: center;">Amount</th>
                                             <th style="width: 70px; text-align: center;">Actions</th>
                                         </x-slot>
-
                                         <x-slot name="rows">
                                             @foreach ($input_details as $key => $input_detail)
                                                 <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
@@ -223,7 +220,6 @@
 
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                </x-ui-card>
 
                             </div>
 

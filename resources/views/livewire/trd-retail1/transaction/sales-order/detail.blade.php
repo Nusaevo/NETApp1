@@ -76,8 +76,6 @@
                     <div class="col-md-12">
                         <x-ui-card title="Order Items">
                             <div>
-                                <x-ui-card>
-
                                     <!-- Tambahkan kolom Warehouse -->
                                         <x-ui-dropdown-select
                                             label="Lokasi"
@@ -223,8 +221,6 @@
 
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                </x-ui-card>
-
                             </div>
 
                         </x-ui-card>
