@@ -29,7 +29,8 @@ class OrderDtl extends BaseModel
         'amt',
         'disc_pct',
         'dpp',
-        'price_uom'
+        'price_uom',
+        'amt_tax',
 
     ];
 
@@ -43,21 +44,19 @@ class OrderDtl extends BaseModel
             $taxPct = $orderDtl->OrderHdr->tax_pct / 100;
             $priceDisc = $price * (1 - $discPct);
 
-            // Include PPN
+            // Calculate DPP based on tax flag
             if ($orderDtl->OrderHdr->tax_flag === 'I') {
-                $orderDtl->dpp =  $price * (1 - $discPct) / (1 + $taxPct);
-            }
-            // Exclude PPN
-            elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
-                $orderDtl->dpp =  $price * (1 - $discPct);
-            }
-            // Default value
-            else {
-                $orderDtl->dpp =  $price * (1 - $discPct);
+                $orderDtl->dpp = $priceDisc / (1 + $taxPct);
+            } elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
+                $orderDtl->dpp = $priceDisc;
+            } else {
+                $orderDtl->dpp = $priceDisc;
             }
 
+            // Calculate amt and amt_tax
             $orderDtl->amt = $priceDisc * $qty;
-            $orderDtl->amt_tax = $priceDisc * $qty;
+            $orderDtl->amt_tax = round($orderDtl->amt * (1 + $taxPct), 2); // Include tax in the total amount
+
             // price_base = base_factor yang ada di MatlUom
             $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
                 ->where('matl_uom', $orderDtl->matl_uom)
@@ -130,6 +129,15 @@ class OrderDtl extends BaseModel
                 BillingDtl::where('trhdr_id', $orderDtl->trhdr_id)
                     ->where('tr_seq', $orderDtl->tr_seq)
                     ->forceDelete();
+
+                // Decrement qty_fgr in MatlUom
+                $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
+                    ->where('matl_uom', $orderDtl->matl_uom)
+                    ->first();
+
+                if ($matlUom) {
+                    $matlUom->decrement('qty_fgr', $orderDtl->qty);
+                }
 
                 DB::commit();
             } catch (\Exception $e) {
