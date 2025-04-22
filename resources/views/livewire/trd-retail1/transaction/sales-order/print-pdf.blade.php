@@ -3,7 +3,7 @@
         <x-ui-button click-event="" type="Back" button-name="Back" />
     </div>
     {{-- <link rel="stylesheet" href="{{ asset('/customs/css/smallinvoice.css') }}"> --}}
-    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/smallinvoice.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/trdretail1/smallinvoice.css') }}">
     <div class="card">
         <div class="card-body">
             <div class="container mb-5 mt-3">
@@ -25,8 +25,8 @@
                                 <td colspan="6">
                                     <table class="tbl" style="width: 100%; text-align: center; margin-top: 10px;">
                                         <tr>
-                                        <td style="width: 20%; text-align: left; vertical-align: middle;">
-                                            <div style="text-align: left;">
+                                        <td style="width: 20%; text-align: center; vertical-align: middle;">
+                                            <div style="text-align: center;">
                                                 <img src="{{ asset('customs/logos/TrdRetail1.png') }}" alt="Logo" style="width: 140px; height: 60px; margin-bottom: 5px;">
                                             </div>
                                         </td>
@@ -58,10 +58,7 @@
                                 @foreach ($object->OrderDtl as $key => $item)
                                     @if ($item->qty != 0)
                                         <tr>
-                                            <td colspan="4"><b>{{ $item->Material->brand }} {{ $item->Material->category }}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="4"> {{ $item->Material->code }}  {{ $item->Material->specs['color_code'] }}  {{ $item->Material->specs['color_name']}}</td>
+                                            <td colspan="4"><b>{{ $item->Material->name }}</b></td>
                                         </tr>
                                         <tr>
                                             <td class="item left">{{ qty($item->qty) }} {{ $item->matl_uom }}</td>
@@ -87,8 +84,10 @@
                             <table class="tbl" style="width: 100%; text-align: center; margin-top: 10px;">
                             <tr>
                                 <td colspan="2" style="text-align: left;">
-                                    KEMALA DEWI - 088123501235
+                                    {{ $this->object->Partner->name }}
+                                    {{ $this->object->Partner->phone ? ' - '.$this->object->Partner->phone : '' }}
                                 </td>
+
                             </tr>
                             <tr>
                                 <td colspan="2">
@@ -109,7 +108,7 @@
             var newWin = window.open('', 'Print-Window');
             newWin.document.open();
             newWin.document.write(
-                '<html > <link rel="stylesheet" href="{{ asset('customs/css/smallinvoice.css') }}" ><body onload="window.print()" style="max-height:72mm;">' +
+                '<html > <link rel="stylesheet" href="{{ asset('customs/css/trdretail1/smallinvoice.css') }}" ><body onload="window.print()" style="max-height:72mm;">' +
                 page.innerHTML + '</body></html>');
             newWin.document.close();
             setTimeout(function() {

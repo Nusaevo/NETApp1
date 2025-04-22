@@ -183,14 +183,24 @@ class BaseComponent extends Component
 
     public function getRoute()
     {
+        // Ambil nama route
         if (isNullOrEmptyString($this->baseRoute)) {
             $this->baseRoute = Route::currentRouteName();
         }
 
+        // Dapatkan route path dari config
         $route = ConfigMenu::getRoute($this->baseRoute);
         $this->baseRenderRoute = strtolower($route);
 
-        $fullUrl = str_replace('.', '/', $this->baseRoute);
+        // Konversi ke format path (dot → slash)
+        $path = str_replace('.', '/', $this->baseRoute);
+
+        // Ambil query string mentah, kalau ada
+        $queryString = request()->getQueryString(); // hasil: "TYPE=C&other=val" atau null
+
+        // Gabungkan path + query jika ada
+        $fullUrl = $queryString ? $path . '?' . $queryString : $path;
+
         $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);
         $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
         $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute);

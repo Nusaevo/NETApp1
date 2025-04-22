@@ -73,7 +73,9 @@ class SidebarMenu extends Component
 
     private function addMenuItem(&$mainMenu, $configMenu)
     {
-        $route = str_replace('/', '.', $configMenu->menulink);
+        $raw   = $configMenu->menulink;
+        $path  = parse_url($raw, PHP_URL_PATH) ?: $raw;
+        $route = str_replace('/', '.', trim($path, '/'));
 
         if (!Route::has($route)) {
             return;
@@ -88,12 +90,25 @@ class SidebarMenu extends Component
             $mainMenu[] = $menuItem;
         }
     }
-
     private function createMenuItem($configMenu)
     {
+        // misal menulink = "TrdRetail1/Master/Partner?TYPE=C&foo=bar"
+        $link = $configMenu->menulink;
+
+        // pisahkan path & query
+        [$rawPath, $query] = array_pad(explode('?', $link, 2), 2, null);
+        $routeName = str_replace('/', '.', $rawPath);
+
+        // parse query → params array
+        $params = [];
+        if ($query) {
+            parse_str($query, $params);
+        }
+
         return [
-            'title' => $configMenu->menucaption,
-            'path' => str_replace('/', '.', $configMenu->menulink),
+            'title'  => $configMenu->menucaption,
+            'path'   => $routeName,
+            'params' => $params,
             'bullet' => '<span class="bullet bullet-dot"></span>',
             'icon' => '<span class="bullet bullet-dot"></span>',
         ];
