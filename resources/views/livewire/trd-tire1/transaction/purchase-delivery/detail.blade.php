@@ -36,7 +36,7 @@
                                         :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
                                     <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
                                         model="inputs.reffhdrtr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
-                                        required="false" :selectedValue="$inputs['reffhdrtr_code']" :enabled="$isPanelEnabled"
+                                        required="false" :selectedValue="$inputs['reffhdrtr_code'] ?? ''"
                                         onChanged="onPurchaseOrderChanged($event.target.value)" />
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
@@ -94,13 +94,15 @@
 
                                     <x-slot name="button">
                                         <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                            button-name="Add" :enabled="$inputs['reffhdrtr_code'] ? true : false" />
+                                            button-name="Add" :enabled="isset($inputs['reffhdrtr_code']) && $inputs['reffhdrtr_code'] ? true : false" />
                                     </x-slot>
                                 </x-ui-table>
                             </x-ui-card>
 
                             <!-- Footer with Save button -->
                             <x-ui-footer>
+                                <x-ui-button clickEvent="Delete" button-name="Delete" loading="true" :action="$actionValue"
+                                    cssClass="btn-danger" iconPath="delete.svg" />
                                 <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
                                     cssClass="btn-primary" iconPath="save.svg" />
                             </x-ui-footer>

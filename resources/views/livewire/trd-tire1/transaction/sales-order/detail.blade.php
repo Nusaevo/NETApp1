@@ -80,10 +80,10 @@
                                             </x-ui-table>
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                    <x-ui-text-field-search label="{{ $this->trans('ship_to') }}" clickEvent=""
+                                    <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
                                         model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
                                         required="false" :action="$actionValue" onChanged="onShipToChanged" />
-                                    <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}" clickEvent=""
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
                                         model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions" required="false"
                                         :action="$actionValue" onChanged="onTaxPayerChanged" :enabled="$payer" />
                                 </div>
@@ -176,6 +176,12 @@
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>
+                    <x-ui-footer>
+                        <x-ui-button clickEvent="deleteTransaction" button-name="Delete" loading="true" :action="$actionValue"
+                            cssClass="btn-danger" iconPath="delete.svg" />
+                        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
+                            cssClass="btn-primary" iconPath="save.svg" />
+                    </x-ui-footer>
                 </div>
                 <x-ui-table id="SummaryTable">
                     <x-slot name="headers">
@@ -226,8 +232,6 @@
                             ]) }}"
                             cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
                             iconPath="print.svg" />
-                        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
-                            cssClass="btn-primary" iconPath="save.svg" />
                     </div>
                 </x-ui-footer>
         </x-ui-tab-view-content>

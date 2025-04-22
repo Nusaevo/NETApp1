@@ -420,9 +420,9 @@ class Detail extends BaseComponent
         ]);
 
         // Check if order can be edited
-        if ($this->actionValue == 'Edit') {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+        foreach ($this->input_details as $key => $detail) {
+            if (isset($detail['qty_reff']) && $detail['qty'] < $detail['qty_reff']) {
+                $this->dispatch('error', __('Qty tidak boleh kurang dari Qty Reff pada item ke-' . ($key + 1)));
                 return;
             }
         }
@@ -485,6 +485,10 @@ class Detail extends BaseComponent
                         $detail['matl_uom'] = $material->uom;
                         $detail['price_uom'] = $material->uom;
                     }
+
+                    // Calculate amt_tax based on tax_pct
+                    $taxPct = (float)($this->inputs['tax_pct'] ?? 0);
+                    $detail['amt_tax'] = round(($detail['amt'] ?? 0) * ($taxPct / 100), 2);
 
                     $orderDtl->fill($detail);
                     $orderDtl->save();
@@ -560,6 +564,51 @@ class Detail extends BaseComponent
         }
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+
+    /**
+     * Delete the transaction (header and/or details)
+     */
+    public function deleteTransaction()
+    {
+        try {
+            // 1) Pastikan object ada dan memang tercatat di DB
+            if (!$this->object || is_null($this->object->id) ||
+                !OrderHdr::where('id', $this->object->id)->exists()) {
+                throw new \Exception(__('Data header tidak ditemukan'));
+            }
+
+            DB::beginTransaction();
+
+            // 2) Hapus detail jika ada
+            $detailsExist = OrderDtl::where('trhdr_id', $this->object->id)
+                ->where('tr_type', $this->object->tr_type)
+                ->exists();
+
+            if ($detailsExist) {
+                $orderDetails = OrderDtl::where('trhdr_id', $this->object->id)
+                    ->where('tr_type', $this->object->tr_type)
+                    ->get();
+
+                foreach ($orderDetails as $detail) {
+                    $detail->forceDelete(); // Event deleting di OrderDtl akan menangani pengurangan qty_fgr
+                }
+            }
+
+            // 3) Hapus header
+            $this->object->forceDelete();
+
+            DB::commit();
+
+            $this->dispatch('success', __('Data berhasil terhapus'));
+            return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('error', __('generic.error.delete', [
+                'message' => $e->getMessage()
+            ]));
+        }
     }
 
     /**

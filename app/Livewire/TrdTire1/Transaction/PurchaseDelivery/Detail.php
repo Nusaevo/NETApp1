@@ -52,7 +52,6 @@ class Detail extends BaseComponent
     protected $rules = [
         'inputs.tr_code' => 'required',
         'inputs.wh_code' => 'required',
-        'inputs.reffhdrtr_code' => 'required',
         'inputs.partner_id' => 'required',
         'input_details.*.qty' => 'required',
     ];
@@ -144,7 +143,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['order_id'] = $detail->OrderDtl->id;
                 $this->input_details[$key]['qty'] = $detail->qty;
-                $this->input_details[$key]['qty_order'] = $detail->OrderDtl->qty - $detail->OrderDtl->qty_reff;
+                $this->input_details[$key]['qty_order'] = ($detail->OrderDtl->qty - $detail->OrderDtl->qty_reff) + $detail->qty; // Adjust qty_order
                 // dd($this->input_details[$key]);
             }
         }
@@ -158,7 +157,8 @@ class Detail extends BaseComponent
 
             // Jika tidak ada item lagi di input_details, enable kolom reffhdrtr_code dan wh_code
             if (empty($this->input_details)) {
-                $this->isPanelEnabled = "true"; // Atau bisa juga true jika menggunakan boolean
+                $this->isPanelEnabled = true; // Enable warehouse and reffhdrtr_code fields
+                $this->inputs['reffhdrtr_code'] = null; // Set reffhdrtr_code to null
             }
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());

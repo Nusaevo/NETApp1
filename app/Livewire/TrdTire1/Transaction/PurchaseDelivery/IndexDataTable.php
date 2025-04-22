@@ -25,8 +25,10 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return DelivHdr::with(['DelivDtl', 'Partner'])
             ->where('deliv_hdrs.tr_type', 'PD')
-            ->where('deliv_hdrs.status_code', Status::OPEN)
-            ->orWhere('deliv_hdrs.status_code', Status::ACTIVE); // Include non-active records
+            ->where(function ($query) {
+                $query->where('deliv_hdrs.status_code', Status::OPEN)
+                      ->orWhere('deliv_hdrs.status_code', Status::ACTIVE);
+            });
     }
     public function columns(): array
     {
