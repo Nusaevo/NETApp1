@@ -22,9 +22,11 @@ class Material extends BaseModel
     protected static function boot()
     {
         parent::boot();
-        static::saving(function (Material $m) {
+        $saving = function (Material $m) {
             $specs = $m->specs ?: [];
-
+            if (is_string($specs)) {
+                $specs = json_decode($specs, true);
+            }
             if (isset($specs['color_code'])) {
                 $specs['color_code'] = strtoupper(str_replace(' ', '', $specs['color_code']));
             }
@@ -32,19 +34,18 @@ class Material extends BaseModel
             if (isset($specs['color_name'])) {
                 $specs['color_name'] = strtoupper($specs['color_name']);
             }
-
             $m->specs = $specs;
+            foreach (['brand', 'class_code', 'name'] as $attr) {
+                if ($m->{$attr}) {
+                    $m->{$attr} = strtoupper($m->{$attr});
+                }
+            }
+        };
 
-            if ($m->brand) {
-                $m->brand = strtoupper($m->brand);
-            }
-            if ($m->class_code) {
-                $m->class_code = strtoupper($m->class_code);
-            }
-            if ($m->name) {
-                $m->name = strtoupper($m->name);
-            }
-        });
+        static::creating($saving);
+        static::updating($saving);
+        static::updating($saving);
+
     }
 
     protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'taxable', 'uom', 'remarks', 'tag'];
@@ -385,7 +386,8 @@ class Material extends BaseModel
                             'type_code'  => '',
                             'specs'      => [
                                 'color_code' => $colorCode,
-                                'color_name' => $colorName
+                                'color_name' => $colorName,
+                                'size' => '',
                             ],
                             'remarks' => $remarks,
                             'uom'     => $uom,
