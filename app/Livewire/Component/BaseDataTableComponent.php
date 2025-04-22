@@ -23,13 +23,12 @@ abstract class BaseDataTableComponent extends DataTableComponent
     public $langBasePath;
     public $appCode;
     public $isComponent = false;
-
     public $baseRenderRoute;
     public $permissions = ['create' => false, 'read' => false, 'update' => false, 'delete' => false];
     public $menu_link;
     protected $versionSessionKey = 'session_version_number';
     protected $permissionSessionKey = 'session_permissions';
-
+    public ?string $initialQueryString = null;
     abstract public function columns(): array;
 
     protected $listeners = [
@@ -40,6 +39,20 @@ abstract class BaseDataTableComponent extends DataTableComponent
         'disableData' => 'Disable',
         'selectData' => 'SelectObject',
     ];
+    private function captureOriginalQueryFromReferer(): ?string
+    {
+        // 1) get the Referer (or use url()->previous())
+        $referer = request()->headers->get('referer')
+                 ?: url()->previous();
+
+        // 2) if we got something, parse out the "foo=bar&baz=qux" part
+        if ($referer) {
+            return parse_url($referer, PHP_URL_QUERY);
+        }
+
+        return null;
+    }
+
 
     public function configure(): void
     {
@@ -63,7 +76,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
             $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute) . '/index';
         }
         $this->permissions = Session::get($this->permissionSessionKey, []);
-
+        $this->initialQueryString = $this->captureOriginalQueryFromReferer();
         $this->setPrimaryKey('id');
         $this->setTableAttributes([
             'class' => 'data-table',
@@ -111,14 +124,39 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public function viewData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
+        $route = $this->customRoute
+            ? str_replace('/', '.', $this->customRoute) . '.Detail'
+            : $this->baseRoute . '.Detail';
+
         return $this->redirectDetail($id, 'View', $route);
     }
 
     public function editData($id)
     {
-        $route = !empty($this->customRoute) ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
+        $route = $this->customRoute
+            ? str_replace('/', '.', $this->customRoute) . '.Detail'
+            : $this->baseRoute . '.Detail';
         return $this->redirectDetail($id, 'Edit', $route);
+    }
+
+    /**
+     * Redirect to a .Detail route with action, objectId, AND
+     * preserve the entire current query string.
+     */
+    private function redirectDetail(string $id, string $action, string $routeName)
+    {
+        // 1) build the named‐route URL
+        $url = route($routeName, [
+            'action'   => encryptWithSessionKey($action),
+            'objectId' => encryptWithSessionKey($id),
+        ]);
+
+        // 2) grab raw query string, e.g. "TYPE=C&foo=bar"
+        if (! empty($this->initialQueryString)) {
+            $url .= '?' . $this->initialQueryString;
+        }
+        // 3) redirect to the fully assembled URL
+        return redirect()->to($url);
     }
 
     public function SelectObject($id)
@@ -126,13 +164,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->object = $this->model::findOrFail($id);
     }
 
-    private function redirectDetail($id, $action, $route)
-    {
-        return redirect()->route($route, [
-            'action' => encryptWithSessionKey($action),
-            'objectId' => encryptWithSessionKey($id),
-        ]);
-    }
 
     public function Disable()
     {

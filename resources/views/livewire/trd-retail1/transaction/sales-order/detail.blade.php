@@ -71,6 +71,12 @@
                                 <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
                                     :action="$actionValue" required="false" enabled="false" />
                             </div>
+                            {{-- <div>
+                                <div class="row">
+                                        <x-ui-dropdown-select label='{{ $this->trans("payment") }}' clickEvent="" model="inputs.payment_term_id" :options="$payments" :action="$actionValue" onChanged="saveCheck" />
+                                    </div>
+                                </div>
+                            </div> --}}
                         </x-ui-card>
                     </div>
                     <div class="col-md-12">
