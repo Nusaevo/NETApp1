@@ -32,6 +32,13 @@ class BaseModel extends Model
         static::saving(function ($model) {
             $model->sanitizeAttributes();
         });
+        static::creating(function ($model) {
+            $model->sanitizeAttributes();
+        });
+
+        static::updating(function ($model) {
+            $model->sanitizeAttributes();
+        });
         static::retrieved(function ($model) {
             $attributes = $model->getAllColumns();
 

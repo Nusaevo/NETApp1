@@ -57,6 +57,7 @@ class Detail extends BaseComponent
     public $wh_code='';
     public $rules  = [
         'inputs.tr_date' => 'required',
+        'inputs.payment_term_id' => 'required',
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
         'wh_code' => 'required',
@@ -78,16 +79,11 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
+        $this->payments = $this->masterService->getPaymentTerm();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->partners = $this->masterService->getSuppliers();
 
         $this->materials = $this->masterService->getMaterials();
-        $this->kategoriOptions = $this->masterService->getMatlCategoryData();
-        $this->brandOptions =   $this->masterService->getMatlBrandData();
-        $this->typeOptions =   $this->masterService->getMatlTypeData();
-        $this->warehouseOptions = $this->masterService->getWarehouseData();
-        $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
-        $this->uomOptions = $this->masterService->getMatlUOMData();
         $this->kategoriOptions = $this->masterService->getMatlCategoryData();
         $this->brandOptions =   $this->masterService->getMatlBrandData();
         $this->typeOptions =   $this->masterService->getMatlTypeData();
@@ -114,10 +110,8 @@ class Detail extends BaseComponent
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date']  = date('Y-m-d');
         $this->inputs['tr_type']  = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        $this->inputs['curr_code'] = "USD";
-        $this->inputs['wh_code'] = 18;
-        $this->inputs['wh_id'] = 18;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_RUPIAH_ID;
+        $this->inputs['curr_code'] = "IDR";
     }
 
     public function render()
@@ -143,7 +137,11 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner ? $partner->code : null;
         }
-
+        if (!isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
+            $this->masterService = new MasterService();
+            $paymentTerm = $this->masterService->getPaymentTermById($this->inputs['payment_term_id']);
+            $this->inputs['payment_term'] = $paymentTerm ?? "";
+        }
         // Persiapkan array detail untuk disimpan.
         // Contoh: Update urutan (tr_seq), tambahkan info warehouse dan material.
         $itemsToSave = [];

@@ -26,13 +26,13 @@
                     <div class="logo-container">
                         <img src="{{ asset('customs/logos/TrdRetail1.png') }}" alt="Logo"
                             style="
-              width: 50mm;        /* lebar logo 30 mm */
-              height: auto;       /* ketinggian mengikuti rasio */
-              max-height: 50mm;   /* batas tinggi 15 mm */
-              object-fit: contain;
-              display: block;
-              margin: 0 auto 4px;
-            ">
+                            width: 50mm;        /* lebar logo 30 mm */
+                            height: auto;       /* ketinggian mengikuti rasio */
+                            max-height: 50mm;   /* batas tinggi 15 mm */
+                            object-fit: contain;
+                            display: block;
+                            margin: 0 auto 4px;
+                            ">
                     </div>
 
                     {{-- Info Toko --}}
@@ -54,7 +54,8 @@
                         </tr>
                         <tr>
                             <td class="top-border" style="text-align:left; padding-top:4px;">
-                                Tanggal: <b>{{ $this->object->tr_date }}</b>
+                                Tanggal: <b>{{ $this->object->tr_date }}</b> <br>
+                                Pembayaran: <b>{{ $this->object->payment_term }}</b>
                             </td>
                         </tr>
                     </table>

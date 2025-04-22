@@ -184,4 +184,15 @@ class MasterService extends BaseService
         })->toArray();
         return $payments;
     }
+    public function getPaymentTermById($id)
+    {
+        $data = $this->mainConnection
+            ->table('config_consts')
+            ->select('str2')
+            ->where('id', $id)
+            ->whereNull('deleted_at')
+            ->first();
+
+        return $data ? $data->str2 : null;
+    }
 }
