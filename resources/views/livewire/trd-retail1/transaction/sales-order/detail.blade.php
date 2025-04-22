@@ -131,8 +131,8 @@
                                                             type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                                                     </td>
                                                     <td style="text-align: center;">
-                                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label=""
-                                                            type="text" enabled="false" />
+                                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
+                                                            type="number" enabled="false" />
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
@@ -256,6 +256,9 @@
                     <x-ui-footer>
                         @include('layout.customs.transaction-form-footer')
                         <div>
+                            <x-ui-button :action="$actionValue" clickEvent="{{ route($this->appCode.'.Transaction.SalesOrder.PrintPdf',
+                            ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($object->id)]) }}"
+                                cssClass="btn-primary" type="Route" loading="true" button-name="Print" iconPath="print.svg" />
                             <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
                                 cssClass="btn-primary" iconPath="save.svg" />
                         </div>
