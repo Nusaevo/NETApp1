@@ -14,7 +14,11 @@ class OrderHdr extends BaseModel
 {
     use SoftDeletes;
 
-    protected $fillable = ['tr_id', 'tr_type', 'tr_date', 'reff_code', 'partner_id', 'partner_code', 'sales_id', 'sales_code', 'deliv_by', 'payment_term_id', 'payment_term', 'curr_id', 'curr_code', 'curr_rate', 'status_code', 'print_settings', 'print_remarks'];
+    protected $fillable = [
+        'tr_id', 'tr_type', 'tr_date', 'reff_code', 'partner_id', 'partner_code',
+        'sales_id', 'sales_code', 'deliv_by', 'payment_term_id', 'payment_term',
+        'curr_id', 'curr_code', 'curr_rate', 'status_code', 'print_settings', 'print_remarks'
+    ];
 
     /* ======================================================
      *                     BOOT METHOD
@@ -23,9 +27,9 @@ class OrderHdr extends BaseModel
     {
         parent::boot();
 
-        // Cascade deletes for related records
+        // Cascade deletes untuk record terkait
         static::deleting(function ($orderHdr) {
-            // Delete DelivHdr and DelivDtl
+            // Hapus DelivHdr dan detail-nya
             $delivHdr = $orderHdr->DelivHdr;
             if ($delivHdr) {
                 foreach ($delivHdr->DelivDtl as $delivDtl) {
@@ -34,7 +38,7 @@ class OrderHdr extends BaseModel
                 $delivHdr->delete();
             }
 
-            // Delete BillingHdr and BillingDtl
+            // Hapus BillingHdr dan detail-nya
             $billingHdr = $orderHdr->BillingHdr;
             if ($billingHdr) {
                 foreach ($billingHdr->BillingDtl as $billingDtl) {
@@ -43,13 +47,13 @@ class OrderHdr extends BaseModel
                 $billingHdr->delete();
             }
 
-            // Delete OrderDtl
+            // Hapus OrderDtl
             foreach ($orderHdr->OrderDtl as $orderDtl) {
                 $orderDtl->delete();
             }
         });
 
-        // Example: format goldprice_curr on retrieval
+        // Contoh: format goldprice_curr saat retrieval
         static::retrieved(function ($model) {
             if (array_key_exists('goldprice_curr', $model->attributes)) {
                 $model->goldprice_curr = numberFormat($model->attributes['goldprice_curr'], 2);
@@ -67,7 +71,9 @@ class OrderHdr extends BaseModel
 
     public function OrderDtl()
     {
-        return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+        return $this->hasMany(OrderDtl::class, 'tr_id', 'tr_id')
+                    ->where('tr_type', $this->tr_type)
+                    ->orderBy('tr_seq');
     }
 
     public function Materials()
@@ -75,25 +81,25 @@ class OrderHdr extends BaseModel
         return $this->hasManyThrough(
             Material::class,
             OrderDtl::class,
-            'tr_id', // FK on OrderDtl
-            'id', // FK on Material
-            'tr_id', // Local key on OrderHdr
-            'matl_id', // Local key on OrderDtl
+            'tr_id',    // FK pada OrderDtl
+            'id',       // FK pada Material
+            'tr_id',    // Local key pada OrderHdr
+            'matl_id'   // Local key pada OrderDtl
         )->where('order_dtls.tr_type', $this->tr_type);
     }
 
     public function DelivHdr()
     {
-        // Decides the related DelivHdr type based on $this->tr_type
         $values = $this->getTrTypeValues($this->tr_type);
-        return $this->hasOne(DelivHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['delivTrType']);
+        return $this->hasOne(DelivHdr::class, 'tr_id', 'tr_id')
+                    ->where('tr_type', $values['delivTrType']);
     }
 
     public function BillingHdr()
     {
-        // Decides the related BillingHdr type based on $this->tr_type
         $values = $this->getTrTypeValues($this->tr_type);
-        return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')->where('tr_type', $values['billingTrType']);
+        return $this->hasOne(BillingHdr::class, 'tr_id', 'tr_id')
+                    ->where('tr_type', $values['billingTrType']);
     }
 
     /* ======================================================
@@ -116,7 +122,7 @@ class OrderHdr extends BaseModel
     }
 
     /* ======================================================
-     *         EXAMPLE HELPER / BUSINESS LOGIC CHECKS
+     *         HELPER / BUSINESS LOGIC CHECKS
      * ====================================================== */
     public function isOrderCompleted(): bool
     {
@@ -126,31 +132,24 @@ class OrderHdr extends BaseModel
     /* ======================================================
      *             PRIVATE HELPER METHODS
      * ====================================================== */
-
     /**
-     * Decide Deliv & Billing tr_type based on $trType.
-     * E.g. if $trType='PO', we might say DelivHdr has 'PD' and BillingHdr has 'APB'.
+     * Tentukan nilai tr_type untuk Delivery, Billing, dan Payment.
      *
      * @param  string $trType
-     * @return array  [ 'delivTrType' => 'PD', 'billingTrType' => 'APB' ]
+     * @return array Contoh: ['delivTrType' => 'PD', 'billingTrType' => 'APB', 'paymentTrType' => 'APP']
      */
     private function getTrTypeValues($trType)
     {
-        /* AR / AP Payment
-         - Customer/Vendor level
-         - Payment Channel level: Bank, CASH, etc.
-         - TrType: ARP, APP */
-
         if ($trType === 'PO') {
             return [
-                'delivTrType' => 'PD',
+                'delivTrType'   => 'PD',
                 'billingTrType' => 'APB',
                 'paymentTrType' => 'APP',
             ];
         } else {
-            // For 'SO' or other
+            // Untuk 'SO' atau tipe lainnya
             return [
-                'delivTrType' => 'SD',
+                'delivTrType'   => 'SD',
                 'billingTrType' => 'ARB',
                 'paymentTrType' => 'ARP',
             ];
@@ -158,13 +157,12 @@ class OrderHdr extends BaseModel
     }
 
     /**
-     * Generate tr_id if this is a new record.
+     * Generate tr_id jika record baru.
      *
      * @param string $trType
      */
     private function generateTransactionId($trType)
     {
-        // Example: If 'PO', use 'PURCHORDER_LASTID'. If 'SO', use 'SALESORDER_LASTID'
         $configCode = $trType === 'PO' ? 'PURCHORDER_LASTID' : 'SALESORDER_LASTID';
 
         if ($this->tr_id === null || $this->tr_id == 0) {
@@ -173,7 +171,6 @@ class OrderHdr extends BaseModel
                 $stepCnt = $configSnum->step_cnt;
                 $proposedTrId = $configSnum->last_cnt + $stepCnt;
 
-                // If we exceed wrap_high, wrap to wrap_low
                 if ($proposedTrId > $configSnum->wrap_high) {
                     $proposedTrId = $configSnum->wrap_low;
                 }
@@ -191,8 +188,10 @@ class OrderHdr extends BaseModel
     {
         if ($this->tr_type == 'PO') {
             foreach ($this->OrderDtl as $orderDtl) {
-                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)->where('tr_type', 'SO')->where('tr_id', '!=', $this->tr_id)->first();
-
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
+                    ->where('tr_type', 'SO')
+                    ->where('tr_id', '!=', $this->tr_id)
+                    ->first();
                 if ($relatedOrderDtl) {
                     return false;
                 }
@@ -201,8 +200,10 @@ class OrderHdr extends BaseModel
 
         if ($this->tr_type == 'SO') {
             foreach ($this->OrderDtl as $orderDtl) {
-                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)->where('tr_type', 'BB')->where('tr_id', '!=', $this->tr_id)->first();
-
+                $relatedOrderDtl = OrderDtl::where('matl_id', $orderDtl->matl_id)
+                    ->where('tr_type', 'BB')
+                    ->where('tr_id', '!=', $this->tr_id)
+                    ->first();
                 if ($relatedOrderDtl) {
                     return false;
                 }
@@ -212,110 +213,115 @@ class OrderHdr extends BaseModel
     }
 
     /* ======================================================
-     *               MAIN SAVE METHODS (REFACTORED)
+     *      SAVE ORDER (HEADER & DETAIL BERSAMA)
      * ====================================================== */
-
     /**
-     * Save or update the OrderHdr (header).
-     * Optionally create DelivHdr & BillingHdr if $createBillingDelivery = true.
+     * Simpan atau update seluruh order (header dan detail) sekaligus.
      *
      * @param  string $trType
-     * @param  array  $inputs
-     * @param  bool   $createBillingDelivery
+     * @param  array  $inputs           Data header (misalnya dari Livewire)
+     * @param  array  $inputDetails     Data detail (array of detail)
+     * @param  bool   $createBillingDelivery  Jika true, otomatis buat DelivDtl, BillingDtl & PaymentDtl.
      * @return $this
      * @throws \Exception
      */
-    public function saveOrderHeader($trType, array $inputs, bool $createBillingDelivery = false)
+    public function saveOrder(string $trType, array $inputs, array $inputDetails, bool $createBillingDelivery = false)
     {
-        // 1. Fill the header data
+        // --- Simpan/update HEADER ---
         $this->fill($inputs);
-
-        // 2. Generate the transaction ID if this is new
         $this->generateTransactionId($trType);
 
-        // 3. If new record, set status to OPEN
         if ($this->isNew()) {
             $this->status_code = Status::OPEN;
         }
 
-        // 4. Save the OrderHdr
         $this->save();
-        // 5. If needed, create both Delivery & Billing headers in one step
+
+        // --- Optional: Buat Header Delivery, Billing, & Payment ---
         if ($createBillingDelivery) {
             $this->createDeliveryAndBillingHeader($trType, $inputs);
+        }
+
+        // --- Sinkronisasi & Simpan DETAIL ---
+        $existingDetails = OrderDtl::where('trhdr_id', $this->id)
+            ->where('tr_type', $trType)
+            ->get()
+            ->keyBy('tr_seq')
+            ->toArray();
+
+        $inputDetailsKeyed = collect($inputDetails)->keyBy('tr_seq')->toArray();
+        $itemsToDelete = array_diff_key($existingDetails, $inputDetailsKeyed);
+
+        foreach ($itemsToDelete as $tr_seq => $detail) {
+            $orderDtl = OrderDtl::find($detail['id']);
+            if ($orderDtl) {
+                $orderDtl->forceDelete();
+            }
+        }
+
+        $trTypeValues = $this->getTrTypeValues($trType);
+
+        foreach ($inputDetails as $index => $detail) {
+            $detail['tr_seq'] = $index + 1;
+            $detail['tr_id'] = $this->tr_id;
+            $detail['trhdr_id'] = $this->id;
+            $detail['tr_type'] = $trType;
+
+            if (isset($detail['qty'])) {
+                $detail['qty_reff'] = $detail['qty'];
+            }
+
+            $orderDtl = OrderDtl::firstOrNew([
+                'tr_id' => $detail['tr_id'],
+                'tr_seq' => $detail['tr_seq'],
+            ]);
+
+            $orderDtl->fill($detail);
+
+            if ($orderDtl->isNew()) {
+                $orderDtl->status_code = Status::OPEN;
+            }
+
+            $orderDtl->save();
+
+            if ($createBillingDelivery) {
+                $this->createDeliveryAndBillingDetail(
+                    $orderDtl,
+                    $detail,
+                    $trTypeValues['delivTrType'],
+                    $trTypeValues['billingTrType'],
+                    $trTypeValues['paymentTrType']
+                );
+            }
         }
 
         return $this;
     }
 
     /**
-     * Save or update order details (OrderDtl).
-     * Optionally create DelivDtl & BillingDtl if $createBillingDelivery = true.
-     *
-     * @param  string $trType
-     * @param  array  $inputDetails          Array of detail data from Livewire
-     * @param  bool   $createBillingDelivery If true, create DelivDtl & BillingDtl for each detail
-     * @return void
-     * @throws \Exception
-     */
-    public function saveOrderDetails($trType, array $inputDetails, bool $createBillingDelivery = false)
-    {
-        $values = $this->getTrTypeValues($trType);
-
-        foreach ($inputDetails as $detailData) {
-            // 1) Create/Update the OrderDtl record
-            // Identify the record by (tr_id, tr_seq)
-            $orderDtl = OrderDtl::firstOrNew([
-                'tr_id' => $detailData['tr_id'],
-                'tr_seq' => $detailData['tr_seq'],
-            ]);
-
-            // Force the relation fields
-            $detailData['trhdr_id'] = $this->id;
-            $detailData['tr_type'] = $trType;
-
-            // If your logic copies qty -> qty_reff
-            if (isset($detailData['qty'])) {
-                $detailData['qty_reff'] = $detailData['qty'];
-            }
-
-            // Fill & save
-            $orderDtl->fill($detailData);
-            if ($orderDtl->isNew()) {
-                $orderDtl->status_code = Status::OPEN;
-            }
-            $orderDtl->save();
-            // 2) If $createBillingDelivery is true, do Delivery & Billing in ONE method
-            if ($createBillingDelivery) {
-                $this->createDeliveryAndBillingDetail($orderDtl, $detailData, $values['delivTrType'], $values['billingTrType'], $values['paymentTrType']);
-            }
-        }
-    }
-    /**
-     * Create or update both DelivHdr and BillingHdr for this OrderHdr in one pass.
+     * Create atau update header Delivery, Billing, dan Payment.
      *
      * @param  string $trType  e.g. 'PO', 'SO'
-     * @param  array  $inputs  e.g. from Livewire (includes deliv_by, partner_id, etc.)
+     * @param  array  $inputs  Data header dari form
      * @return void
      */
     private function createDeliveryAndBillingHeader($trType, array $inputs)
     {
-        // 1) Decide the transaction types for Delivery & Billing
         $values = $this->getTrTypeValues($trType);
 
-        // 2) Create or update DelivHdr
+        // --- DelivHdr ---
         $delivHdr = DelivHdr::firstOrNew([
-            'tr_id' => $this->tr_id,
+            'tr_id'   => $this->tr_id,
             'tr_type' => $values['delivTrType'],
         ]);
 
         $delivHdr->fill([
-            'tr_id' => $this->tr_id,
-            'tr_type' => $values['delivTrType'],
-            'tr_date' => $this->tr_date,
-            'partner_id' => $this->partner_id,
+            'tr_id'        => $this->tr_id,
+            'tr_type'      => $values['delivTrType'],
+            'tr_date'      => $this->tr_date,
+            'partner_id'   => $this->partner_id,
             'partner_code' => $this->partner_code,
-            'deliv_by' => $inputs['deliv_by'] ?? '',
+            'deliv_by'     => $inputs['deliv_by'] ?? '',
         ]);
 
         if ($delivHdr->isNew()) {
@@ -323,17 +329,17 @@ class OrderHdr extends BaseModel
         }
         $delivHdr->save();
 
-        // 3) Create or update BillingHdr
+        // --- BillingHdr ---
         $billingHdr = BillingHdr::firstOrNew([
-            'tr_id' => $this->tr_id,
+            'tr_id'   => $this->tr_id,
             'tr_type' => $values['billingTrType'],
         ]);
 
         $billingHdr->fill([
-            'tr_id' => $this->tr_id,
-            'tr_type' => $values['billingTrType'],
-            'tr_date' => $this->tr_date,
-            'partner_id' => $this->partner_id,
+            'tr_id'        => $this->tr_id,
+            'tr_type'      => $values['billingTrType'],
+            'tr_date'      => $this->tr_date,
+            'partner_id'   => $this->partner_id,
             'partner_code' => $this->partner_code,
             'payment_term_id' => $this->payment_term_id,
             'payment_term' => '',
@@ -345,26 +351,27 @@ class OrderHdr extends BaseModel
         }
         $billingHdr->save();
 
+        // --- PaymentHdr ---
         $paymentHdr = PaymentHdr::firstOrNew([
-            'tr_id' => $this->tr_id,
+            'tr_id'   => $this->tr_id,
             'tr_type' => $values['paymentTrType'],
         ]);
 
         $paymentHdr->fill([
-            'tr_id' => $this->tr_id,
-            'tr_type' => $values['paymentTrType'],
-            'tr_date' => $this->tr_date,
-            'partner_id' => $this->partner_id,
+            'tr_id'        => $this->tr_id,
+            'tr_type'      => $values['paymentTrType'],
+            'tr_date'      => $this->tr_date,
+            'partner_id'   => $this->partner_id,
             'partner_code' => $this->partner_code,
-            'bank_id' => $inputs['bank_id'] ?? 0,
-            'bank_code' => $inputs['bank_code'] ?? '',
-            'bank_reff' => $inputs['bank_reff'] ?? '',
-            'bank_due' => $inputs['bank_due'] ?? '1900-01-01',
-            'bank_rcv' => $inputs['bank_rcv'] ?? 0,
-            'bank_rcv_base' => $inputs['bank_rcv_base'] ?? 0,
-            'bank_note' => $inputs['bank_note'] ?? '',
-            'curr_id' => $this->curr_id,
-            'curr_rate' => $this->curr_rate,
+            'bank_id'      => $inputs['bank_id'] ?? 0,
+            'bank_code'    => $inputs['bank_code'] ?? '',
+            'bank_reff'    => $inputs['bank_reff'] ?? '',
+            'bank_due'     => $inputs['bank_due'] ?? '1900-01-01',
+            'bank_rcv'     => $inputs['bank_rcv'] ?? 0,
+            'bank_rcv_base'=> $inputs['bank_rcv_base'] ?? 0,
+            'bank_note'    => $inputs['bank_note'] ?? '',
+            'curr_id'      => $this->curr_id,
+            'curr_rate'    => $this->curr_rate,
         ]);
 
         if ($paymentHdr->isNew()) {
@@ -374,100 +381,116 @@ class OrderHdr extends BaseModel
     }
 
     /**
-     * Create or update both DelivDtl and BillingDtl for an OrderDtl in one pass.
+     * Create atau update detail Delivery, Billing, dan Payment untuk sebuah OrderDtl.
      *
-     * @param  OrderDtl $orderDtl       The OrderDtl we just saved or updated.
-     * @param  array    $detailData     Additional data (e.g., 'wh_id') from Livewire.
-     * @param  string   $delivTrType    Transaction type for Delivery (e.g., 'PD', 'SD').
-     * @param  string   $billingTrType  Transaction type for Billing (e.g., 'APB', 'ARB').
+     * Untuk delivery dan billing detail, trhdr_id diambil dari header yang bersangkutan,
+     * begitu pula dengan payment detail.
+     *
+     * @param  OrderDtl $orderDtl       OrderDtl yang baru disimpan/diupdate.
+     * @param  array    $detailData     Data tambahan (misalnya 'wh_id') dari form.
+     * @param  string   $delivTrType    Tipe transaksi untuk Delivery (misalnya 'PD', 'SD').
+     * @param  string   $billingTrType  Tipe transaksi untuk Billing (misalnya 'APB', 'ARB').
+     * @param  string   $paymentTrType  Tipe transaksi untuk Payment.
      * @return void
      */
     private function createDeliveryAndBillingDetail($orderDtl, array $detailData, $delivTrType, $billingTrType, $paymentTrType)
     {
-        // 1) Create or update DelivDtl
+        // Ambil header terkait berdasarkan tr_id dan tr_type-nya
+        $delivHdr = DelivHdr::where('tr_id', $this->tr_id)
+            ->where('tr_type', $delivTrType)
+            ->first();
+
+        $billingHdr = BillingHdr::where('tr_id', $this->tr_id)
+            ->where('tr_type', $billingTrType)
+            ->first();
+
+        $paymentHdr = PaymentHdr::where('tr_id', $this->tr_id)
+            ->where('tr_type', $paymentTrType)
+            ->first();
+
+        // --- DelivDtl ---
         $delivDtl = DelivDtl::firstOrNew([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'tr_type' => $delivTrType,
+            'trhdr_id' => $delivHdr->id, // gunakan ID header Delivery
+            'tr_seq'   => $orderDtl->tr_seq,
+            'tr_type'  => $delivTrType,
         ]);
 
         $delivDtl->fill([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type' => $delivTrType,
-            'tr_id' => $this->tr_id, // or $orderDtl->tr_id if your logic differs
-            'tr_seq' => $orderDtl->tr_seq,
-            'reffdtl_id' => $orderDtl->id,
-            'reffhdrtr_type' => $this->tr_type, // The original transaction type from OrderHdr
-            'reffhdrtr_id' => $this->tr_id, // or $orderDtl->tr_id
+            'trhdr_id'      => $delivHdr->id,
+            'tr_type'       => $delivTrType,
+            'tr_id'         => $this->tr_id,
+            'tr_seq'        => $orderDtl->tr_seq,
+            'reffdtl_id'    => $orderDtl->id,
+            'reffhdrtr_type'=> $this->tr_type,
+            'reffhdrtr_id'  => $this->tr_id,
             'reffdtltr_seq' => $orderDtl->tr_seq,
-            'matl_id' => $orderDtl->matl_id,
-            'matl_code' => $orderDtl->matl_code,
-            'matl_descr' => $orderDtl->matl_descr,
-            'matl_uom' => $orderDtl->matl_uom,
-            'wh_id' => $detailData['wh_id'] ?? '',
-            'wh_code' => $detailData['wh_code'] ?? '',
-            'qty' => $orderDtl->qty,
-            'qty_reff' => $orderDtl->qty_reff,
+            'matl_id'       => $orderDtl->matl_id,
+            'matl_code'     => $orderDtl->matl_code,
+            'matl_descr'    => $orderDtl->matl_descr,
+            'matl_uom'      => $orderDtl->matl_uom,
+            'wh_id'         => $detailData['wh_id'] ?? '',
+            'wh_code'       => $detailData['wh_code'] ?? '',
+            'qty'           => $orderDtl->qty,
+            'qty_reff'      => $orderDtl->qty_reff,
         ]);
 
         if ($delivDtl->isNew()) {
-            $delivDtl->status_code = Status::OPEN; // or whatever status you want
+            $delivDtl->status_code = Status::OPEN;
         }
         $delivDtl->save();
 
-        // 2) Create or update BillingDtl,
-        //    referencing the newly created $delivDtl->id if needed
+        // --- BillingDtl ---
         $billingDtl = BillingDtl::firstOrNew([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'tr_type' => $billingTrType,
+            'trhdr_id' => $billingHdr->id, // gunakan ID header Billing
+            'tr_seq'   => $orderDtl->tr_seq,
+            'tr_type'  => $billingTrType,
         ]);
 
         $billingDtl->fill([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type' => $billingTrType,
-            'tr_id' => $orderDtl->tr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'dlvdtl_id' => $delivDtl->id, // link to DelivDtl
-            'dlvhdrtr_type' => $delivDtl->tr_type, // or $this->tr_type
-            'dlvhdrtr_id' => $delivDtl->tr_id,
-            'dlvdtltr_seq' => $delivDtl->tr_seq,
-            'matl_id' => $orderDtl->matl_id,
-            'matl_code' => $orderDtl->matl_code,
-            'matl_uom' => $orderDtl->matl_uom,
-            'descr' => '',
-            'qty' => $orderDtl->qty,
-            'qty_base' => $orderDtl->qty,
-            'price' => $orderDtl->price ?? 0,
-            'price_base' => $orderDtl->price ?? 0,
-            'amt' => $orderDtl->amt ?? 0,
-            'amt_reff' => $orderDtl->amt ?? 0,
+            'trhdr_id'      => $billingHdr->id,
+            'tr_type'       => $billingTrType,
+            'tr_id'         => $orderDtl->tr_id,
+            'tr_seq'        => $orderDtl->tr_seq,
+            'dlvdtl_id'     => $delivDtl->id,
+            'dlvhdrtr_type' => $delivDtl->tr_type,
+            'dlvhdrtr_id'   => $delivDtl->tr_id,
+            'dlvdtltr_seq'  => $delivDtl->tr_seq,
+            'matl_id'       => $orderDtl->matl_id,
+            'matl_code'     => $orderDtl->matl_code,
+            'matl_uom'      => $orderDtl->matl_uom,
+            'descr'         => '',
+            'qty'           => $orderDtl->qty,
+            'qty_base'      => $orderDtl->qty,
+            'price'         => $orderDtl->price ?? 0,
+            'price_base'    => $orderDtl->price ?? 0,
+            'amt'           => $orderDtl->amt ?? 0,
+            'amt_reff'      => $orderDtl->amt ?? 0,
         ]);
 
         if ($billingDtl->isNew()) {
             $billingDtl->status_code = Status::OPEN;
         }
-
         $billingDtl->save();
 
+        // --- PaymentDtl ---
         $paymentDtl = PaymentDtl::firstOrNew([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'tr_type' => $paymentTrType,
+            'trhdr_id' => $paymentHdr->id, // gunakan ID header Payment
+            'tr_seq'   => $orderDtl->tr_seq,
+            'tr_type'  => $paymentTrType,
         ]);
 
         $paymentDtl->fill([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type' => $paymentTrType,
-            'tr_id' => $orderDtl->tr_id,
-            'tr_seq' => $orderDtl->tr_seq,
-            'billdtl_id' => $billingDtl->id,
-            'billhdrtr_type' => $billingDtl->tr_type,
-            'billhdrtr_id' => $billingDtl->tr_id,
+            'trhdr_id'      => $paymentHdr->id,
+            'tr_type'       => $paymentTrType,
+            'tr_id'         => $orderDtl->tr_id,
+            'tr_seq'        => $orderDtl->tr_seq,
+            'billdtl_id'    => $billingDtl->id,
+            'billhdrtr_type'=> $billingDtl->tr_type,
+            'billhdrtr_id'  => $billingDtl->tr_id,
             'billdtltr_seq' => $billingDtl->tr_seq,
-            'amt' => $billingDtl->amt,
-            'amt_base' => $billingDtl->amt,
-            'status_code' => Status::OPEN,
+            'amt'           => $billingDtl->amt,
+            'amt_base'      => $billingDtl->amt,
+            'status_code'   => Status::OPEN,
         ]);
         $paymentDtl->save();
     }

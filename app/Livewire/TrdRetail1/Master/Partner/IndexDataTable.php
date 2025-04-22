@@ -49,6 +49,8 @@ class IndexDataTable extends BaseDataTableComponent
                 }),
             Column::make($this->trans('name'), 'name')->searchable()->sortable(),
             Column::make($this->trans('address'), 'address')->searchable()->sortable(),
+            Column::make($this->trans('phone'), 'phone')->searchable()->sortable(),
+            Column::make($this->trans('email'), 'email')->searchable()->sortable(),
 
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
@@ -82,7 +84,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->options([
                     '' => 'All', // Opsi untuk semua grup
                     'V' => 'Supplier',
-                    'C' => 'Customer',
+                    'C' => 'Pelanggan',
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $builder->where('grp', $value);

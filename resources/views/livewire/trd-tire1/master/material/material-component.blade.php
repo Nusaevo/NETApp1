@@ -3,7 +3,7 @@
         use App\Models\TrdTIre1\Master\Material;
     @endphp
 
-    <x-ui-page-card
+    <x-ui-page-card isForm="true"
         title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->code ? ' (#' . $this->object->code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 

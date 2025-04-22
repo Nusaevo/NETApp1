@@ -54,6 +54,7 @@ class Material extends BaseModel
             'allowInsert' => false,
         ];
     }
+
     public static function getExcelTemplateConfig(array $data = []): array
     {
         return [
@@ -74,6 +75,7 @@ class Material extends BaseModel
      */
     public static function validateExcelUpload($dataTable, $audit, $param)
     {
+
         $errors = [];
         $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
 
@@ -81,13 +83,22 @@ class Material extends BaseModel
 
         // Validate Headers
         $actualHeaders = $dataTable[0] ?? [];
-        if ($expectedHeaders !== $actualHeaders) {
-            $audit->updateAuditTrail(100, 'Template salah: Header tidak sesuai dengan template.', Status::ERROR);
-            $templateConfig['data'] = array_slice($dataTable, 1);
+        $missing = array_diff($expectedHeaders, $actualHeaders);
+
+        if (! empty($missing)) {
+            // Audit and upload the entire file for review
+            $audit->updateAuditTrail(
+                100,
+                'Template salah: kolom header berikut tidak ditemukan — ' . implode(', ', $missing),
+                Status::ERROR
+            );
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
+
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
             return [
-                'success' => false,
+                'success'   => false,
                 'dataTable' => $dataTable,
             ];
         }
@@ -101,7 +112,8 @@ class Material extends BaseModel
                 // Skip header row
                 if (count($dataTable) === 1 || empty(array_filter($dataTable[1] ?? []))) {
                     $audit->updateAuditTrail(100, 'Error: Data tidak ditemukan.', Status::ERROR);
-                    $templateConfig['data'] = array_slice($dataTable, 1);
+                    $templateConfig['headers'] = $dataTable[0] ?? [];
+                    $templateConfig['data']    = array_slice($dataTable, 1);
                     Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
                     return [
@@ -110,6 +122,17 @@ class Material extends BaseModel
                     ];
                 }
                 continue;
+            }
+
+            $allBlank = true;
+            foreach ($row as $cell) {
+                if (trim((string)$cell) !== '') {
+                    $allBlank = false;
+                    break;
+                }
+            }
+            if ($allBlank) {
+                continue;  // skip this row entirely
             }
 
             $status = '';
@@ -210,7 +233,9 @@ class Material extends BaseModel
 
         // Jika terdapat error, unggah hasil validasi
         if (!empty($errors)) {
-            $templateConfig['data'] = array_slice($dataTable, 1);
+
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
         }
 
@@ -275,6 +300,16 @@ class Material extends BaseModel
 
                 $status  = 'Success';
                 $message = '';
+                $allBlank = true;
+                foreach ($row as $cell) {
+                    if (trim((string)$cell) !== '') {
+                        $allBlank = false;
+                        break;
+                    }
+                }
+                if ($allBlank) {
+                    continue;  // skip this row entirely
+                }
 
                 if ($param === 'Create') {
                     $category     = $row[$headerIndex['Kategori*']]   ?? '';
@@ -293,7 +328,11 @@ class Material extends BaseModel
                     $stock        = !empty($stockRaw) ? convertFormattedNumber($stockRaw) : 0;
 
                     $materialCode = Material::generateMaterialCode($category);
-                    $name         = Material::generateName($category, $brand, $type, $colorCode);
+                    $name = '';
+                    $generated = Material::generateName($category, $brand, $type, $colorCode, $colorName);
+                    if ($generated !== '') {
+                        $name = $generated;
+                    }
 
                     $validUOMs = ConfigConst::where('const_group', 'MMATL_UOM')->pluck('str1')->toArray();
                     if (!in_array($uom, $validUOMs)) {
@@ -329,7 +368,7 @@ class Material extends BaseModel
                             'uom'     => $uom,
                         ]);
 
-                        $tag = Material::generateTag($material->code, $material->MatlUom, $brand, $type, $material->specs);
+                        $tag = Material::generateTag($material->name, $material->code, $material->MatlUom, $brand, $type, $material->specs);
                         $material->update(['tag' => $tag]);
 
                         $material->MatlUom()->create([
@@ -399,6 +438,7 @@ class Material extends BaseModel
                         ]);
 
                         $tag = Material::generateTag(
+                            $material->name,
                             $material->code,
                             $material->MatlUom,
                             $material->brand,
@@ -508,7 +548,8 @@ class Material extends BaseModel
                 }
             }
 
-            $templateConfig['data'] = array_slice($dataTable, 1);
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
 
             $audit->updateAuditTrail(100, 'Upload and processing completed successfully.', Status::SUCCESS);
@@ -516,7 +557,8 @@ class Material extends BaseModel
         } catch (\Exception $e) {
             DB::rollback();
             $audit->updateAuditTrail(100, 'Processing failed: ' . $e->getMessage(), Status::ERROR);
-            $templateConfig['data'] = array_slice($dataTable, 1);
+            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
             throw $e;
         }
@@ -573,16 +615,38 @@ class Material extends BaseModel
         return $this->DefaultUom?->qty_oh ?? 0;
     }
 
-    public static function generateTag($code, $matlUoms, $brand, $classCode, $specs)
+    public static function generateTag($name, $code, $matlUoms, $brand, $classCode, $specs)
     {
         $barcode = optional($matlUoms->first())->barcode ?? '';
-        return trim(implode(' ', array_filter([$code, $barcode, $brand, $classCode, $specs['color_code'] ?? '', $specs['color_name'] ?? ''])));
+        return trim(implode(' ', array_filter([$name, $code, $barcode, $brand, $classCode, $specs['color_code'] ?? '', $specs['color_name'] ?? ''])));
     }
 
-    public static function generateName($category, $brand, $type, $colorCode)
-    {
+    public static function generateName(
+        $category,
+        $brand,
+        $type,
+        $colorCode,
+        $colorName
+    ) {
         $masterService = new MasterService();
-        $category = $masterService->getMatlCategoryString($category);
-        return $category . ' ' . $brand . ' ' . $type . ' (' . $colorCode . ')';
+        $data = $masterService->getMatlCategoryDetail($category);
+
+        // hanya generate kalau num1 == 1
+        if ((int) $data->num1 === 1) {
+            // bangun string dulu
+            $raw = sprintf(
+                'Benang %s %s %s %s',
+                $brand,
+                $type,
+                $colorCode,
+                $colorName
+            );
+
+            // kembalikan versi UPPERCASE
+            return strtoupper($raw);
+        }
+
+        return '';
     }
+
 }

@@ -35,4 +35,31 @@ return [
         'barcode_validation' => 'Failed to print label, please scan the label first.',
         'save_material_input' => 'Please save material before printing.',
     ],
+
+    // Additional translations from blade files
+    'class_code' => 'Type',
+    'create' => 'Create',
+    'edit' => 'Edit',
+    'add' => 'Add',
+    'actions' => 'Actions',
+
+    // Image related
+    'images' => 'Images',
+    'no_images_captured' => 'No Images Captured',
+
+    // Section titles
+    'main_information' => 'Main Information',
+    'general_information' => 'General Information',
+
+    // UOM List Component
+    'uom_list' => 'UOM List',
+    'base_uom' => 'Base UOM',
+    'reff_uom' => 'Reff UOM',
+    'reff_factor' => 'Reff Factor',
+    'base_factor' => 'Base Factor',
+    'buying_price_idr' => 'Buying Price (IDR)',
+    'selling_price_idr' => 'Selling Price (IDR)',
+    'save_uom' => 'Save UOM',
+    'get_code' => 'Get Code',
+    'add_item' => 'Add Item',
 ];

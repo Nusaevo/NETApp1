@@ -7,7 +7,7 @@
             <x-ui-button clickEvent="" type="Back" button-name="Back" />
         </div>
 
-        <x-ui-page-card title="{{ $this->trans($actionValue) }} {!! $menuName !!}"
+        <x-ui-page-card isForm="true" title="{{ $this->trans($actionValue) }} {!! $menuName !!}"
             status="{{ $this->trans($status) }}">
 
             @if ($actionValue === 'Create')

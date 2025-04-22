@@ -49,15 +49,25 @@ class ConfigConst extends BaseModel
 
                 if (isset($appMapping[$model->const_group])) {
                     $description = $appMapping[$model->const_group];
-
-                    ConfigSnum::create([
-                        'code' => "MMATL_" . $model->str1 . "_LASTID",
-                        'last_cnt' => 0,
-                        'wrap_low' => 1,
-                        'wrap_high' => 99999999,
-                        'step_cnt' => 1,
-                        'descr' => $description . " " . $model->str1
-                    ]);
+                    if($appCode == 'TrdRetail1') {
+                        ConfigSnum::create([
+                            'code' => "MMATL_" . $model->str1 . "_LASTID",
+                            'last_cnt' => 0,
+                            'wrap_low' => 1000,
+                            'wrap_high' => 99999999,
+                            'step_cnt' => 1,
+                            'descr' => $description . " " . $model->str1
+                        ]);
+                    }else{
+                        ConfigSnum::create([
+                            'code' => "MMATL_" . $model->str1 . "_LASTID",
+                            'last_cnt' => 0,
+                            'wrap_low' => 1,
+                            'wrap_high' => 99999999,
+                            'step_cnt' => 1,
+                            'descr' => $description . " " . $model->str1
+                        ]);
+                    }
                 }
             } else {
                 \Log::warning("App code not found or invalid in session for ConfigConst creation.");

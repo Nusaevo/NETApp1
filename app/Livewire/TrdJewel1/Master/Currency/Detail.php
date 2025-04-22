@@ -39,7 +39,7 @@ class Detail extends BaseComponent
         {
             $this->object = GoldPriceLog::find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
-            $this->inputs['log_date'] = dateFormat($this->object->log_date, 'd-m-Y');
+            $this->inputs['log_date'] = dateFormat($this->object->log_date, 'Y-m-d');
         }
         $this->permissions['delete'] = false;
     }
@@ -52,7 +52,7 @@ class Detail extends BaseComponent
         $this->currencies = $this->currencyData['currencies'];
         $defaultCurrency = $this->currencyData['defaultCurrency'];
         $this->inputs['curr_id'] = $defaultCurrency['value'];
-        $this->inputs['log_date']  = date('d-m-Y');
+        $this->inputs['log_date']  = date('Y-m-d');
         $this->object = new GoldPriceLog();
     }
 

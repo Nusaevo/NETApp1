@@ -36,9 +36,6 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make('currency', "curr_rate")
-                ->hideIf(true)
-                ->sortable(),
             Column::make($this->trans("tr_id"), "tr_id")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
@@ -61,13 +58,11 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans("matl_code"), 'id')
                 ->format(function ($value, $row) {
-                    // Manually load OrderDtl using a query
                     $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
                         ->where('tr_type', $row->tr_type)
                         ->orderBy('id')
                         ->get();
 
-                    // Generate links if data is available
                     $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
                     $links = $matlCodes->map(function ($code, $id) {
                         return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
@@ -94,11 +89,10 @@ class IndexDataTable extends BaseDataTableComponent
                         return 'N/A';
                     }
 
-
-                        foreach ($orderDetails as $detail) {
-                            $totalAmt += $detail->amt;
-                        }
-                        return rupiah($totalAmt);
+                    foreach ($orderDetails as $detail) {
+                        $totalAmt += $detail->amt;
+                    }
+                    return rupiah($totalAmt);
                 })
                 ->sortable(),
 
@@ -107,24 +101,11 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return Status::getStatusString($value);
                 }),
-            // Column::make($this->trans("created_date"), "created_at")
-            //     ->searchable()
-            //     ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
-                        'row' => $row,
-                        'custom_actions' => [
-                            // [
-                            //     'label' => 'Print',
-                            //     'route' => route('TrdRetail1.Transaction.PurchaseOrder.PrintPdf', [
-                            //         'action' => encryptWithSessionKey('Edit'),
-                            //         'objectId' => encryptWithSessionKey($row->id)
-                            //     ]),
-                            //     'icon' => 'bi bi-printer'
-                            // ],
-                        ],
+                        'custom_actions' => [],
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,

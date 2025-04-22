@@ -265,25 +265,6 @@
             window.print();
         }
     </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            let hasChanges = false;
-
-            // Tampilkan alert sebelum meninggalkan halaman (refresh, close tab, dll)
-            window.addEventListener('beforeunload', function(e) {
-                if (hasChanges) {
-                    e.preventDefault();
-                    e.returnValue = 'You have unsaved changes. Do you really want to leave?';
-                }
-            });
-
-            // Tangkap event dari Livewire saat ada perubahan
-            Livewire.on('form-changed', function(data) {
-                hasChanges = data.hasChanges;
-                console.log('[Livewire] Form changed status:', hasChanges);
-            });
-        });
-    </script>
 
     @livewireScripts
 </body>

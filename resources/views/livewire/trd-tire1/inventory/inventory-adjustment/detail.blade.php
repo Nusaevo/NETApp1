@@ -2,7 +2,7 @@
     <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
-    <x-ui-page-card
+    <x-ui-page-card isForm="true"
         title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_ids ? ' (#' . $this->object->tr_id . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 

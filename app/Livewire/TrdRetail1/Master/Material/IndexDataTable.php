@@ -4,22 +4,21 @@ namespace App\Livewire\TrdRetail1\Master\Material;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter};
+use App\Models\TrdRetail1\Master\MatlUom;
 use App\Models\TrdRetail1\Master\Material;
-use App\Models\Util\{GenericExport, GenericExcelExport};
+use App\Models\Util\GenericExcelExport;
 use App\Services\TrdRetail1\Master\MasterService;
 use Illuminate\Database\Eloquent\Builder;
-use PhpOffice\PhpSpreadsheet\{Spreadsheet, Writer\Xlsx, Style\Protection};
-use Illuminate\Support\Facades\{File, Http, DB};
-use App\Models\Base\Attachment;
-use Exception;
 use App\Enums\Status;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    protected $model = Material::class;
+    protected $model = MatlUom::class;
 
-    protected $masterService;
-    public $materialCategories;
+    protected MasterService $masterService;
+
+    protected array $defaultSorts = [];
+    public array $materialCategories;
     protected $listeners = ['refreshTable' => '$refresh', 'deleteMaterial'];
 
     public function mount(): void
@@ -27,232 +26,181 @@ class IndexDataTable extends BaseDataTableComponent
         $this->customRoute = '';
         $this->masterService = new MasterService();
         $this->materialCategories = $this->masterService->getMatlCategoryData();
-
-        // Disable default search
         $this->setSearchDisabled();
-        $this->setDefaultSort('created_at', 'desc');
+        $this->setDefaultSort('Material.code', 'asc');
     }
 
-    /**
-     * ==================================================
-     *  BUILDER:
-     *   - Always start with an empty query using whereRaw('1=0')
-     * ==================================================
-     */
     public function builder(): Builder
     {
-        return Material::query()
-            ->with(['IvtBal','MatlUom'])
-            ->select('materials.*')
-            ->whereRaw('1=0'); // Start with an empty query by default
+        $query = MatlUom::query()
+            ->with('Material')
+            ->join('materials', 'materials.id', '=', 'matl_uoms.matl_id')
+            ->select('matl_uoms.*')
+            ->whereRaw('1=0');
+        return $query;
     }
 
-    /**
-     * ==================================================
-     *  DATA COLUMNS: Define table columns
-     * ==================================================
-     */
+
     public function columns(): array
     {
         return [
-            Column::make('No', 'seq')->sortable(),
-
-            Column::make('Code', 'code')->sortable()->collapseOnTablet(),
-            Column::make('Merk', 'brand')
-                ->sortable()
-                ->collapseOnTablet(),
-
-            Column::make('Jenis', 'class_code')
-                ->sortable()
-                ->collapseOnTablet(),
-
-            Column::make('Tag', 'tag')
-                ->sortable()
-                ->collapseOnTablet()
-                ->hideIf(true),
-            Column::make('Color Code', 'specs->color_code')->format(fn($value, $row) => $row['specs->color_code'] ?? '')->sortable(),
-
-            Column::make('Color Name', 'specs->color_name')->format(fn($value, $row) => $row['specs->color_name'] ?? '')->sortable(),
-
-            Column::make('Photo', 'id')
+            Column::make($this->trans('no'), 'Material.seq')
+            ->sortable(),
+            Column::make($this->trans('code'), 'Material.code')
+            ->format(function ($value, $row) {
+                return '<a href="' .
+                    route($this->appCode . '.Master.Material.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->Material->id),
+                    ]) .
+                    '">' .
+                    $row->Material->code .
+                    '</a>';
+            })
+            ->html()->sortable(
+                fn(Builder $query, string $direction) =>
+                    // karena kita sudah join ke materials di builder()
+                    $query->orderBy('materials.code', $direction)
+            ),
+            Column::make($this->trans('name'), 'Material.name')->sortable(),
+            // Column::make($this->trans('brand'), 'Material.brand')->sortable(),
+            Column::make($this->trans('photo'), 'Material.id')
                 ->format(function ($value, $row) {
-                    $firstAttachment = $row->Attachment->first();
-                    $imageUrl = $firstAttachment ? $firstAttachment->getUrl() : null;
-                    return $imageUrl
+                    $attachment = $row->Material->Attachment->first();
+                    $url = $attachment?->getUrl();
+                    return $url
                         ? view('components.ui-image', [
-                            'src' => $imageUrl,
-                            'alt' => 'Photo',
+                            'src' => $url,
+                            'alt' => $this->trans('photo'),
                             'width' => '50px',
                             'height' => '50px',
                         ])
-                        : '<span>No Image</span>';
+                        : '<span>' . $this->trans('no_image') . '</span>';
                 })
                 ->html(),
 
-            Column::make('UOM', 'id')->format(fn($value, $row) => $row->uom ?? '')->sortable()->collapseOnTablet(),
+            Column::make($this->trans('selling_price'), 'selling_price')->label(fn($row) => rupiah($row->selling_price))->sortable(),
 
-            Column::make('Selling Price', 'id')->label(fn($row) => rupiah($row->DefaultUom->selling_price ?? 0))->sortable()->collapseOnTablet(),
-            Column::make('Buying Price', 'id')->label(fn($row) => rupiah($row->DefaultUom->buying_price ?? 0))->sortable()->collapseOnTablet(),
-            Column::make('stock', 'stock')
-            ->label(function ($row) {
-                return $row->stock;
-            })
-            ->sortable()->collapseOnTablet(),
-            BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
-                return $value === null;
-            }),
-            // Column::make($this->trans('created_date'), 'created_at')->sortable()->collapseOnTablet(),
-            Column::make('Action', 'id')->format(function ($value, $row, $column) {
-                return view('layout.customs.data-table-action', [
-                    'row' => $row,
-                    'custom_actions' => [],
-                    'enable_this_row' => true,
-                    'allow_details' => false,
-                    'allow_edit' => true,
-                    'allow_disable' => false,
-                    'allow_delete' => false,
-                    'permissions' => $this->permissions,
-                ]);
-            }),
+            Column::make($this->trans('buying_price'), 'buying_price')->label(fn($row) => rupiah($row->buying_price))->sortable(),
+
+            Column::make($this->trans('stock'), 'qty_oh')->label(fn($row) => $row->qty_oh)->sortable(),
+
+            Column::make($this->trans('uom'), 'matl_uom'),
+
+            BooleanColumn::make($this->trans('status'), 'Material.deleted_at')->setCallback(fn($value) => $value === null),
+            Column::make($this->trans('action'), 'id')
+            ->format(fn($value, $matlUom) => view('layout.customs.data-table-action', [
+                'row'    => $matlUom->Material,
+                'custom_actions'  => [],
+                'enable_this_row' => true,
+                'allow_details'   => false,
+                'allow_edit'      => true,
+                'allow_disable'   => false,
+                'allow_delete'    => false,
+                'permissions'     => $this->permissions,
+            ])),
+
         ];
     }
 
-    /**
-     * ==================================================
-     *  FILTERS: Add filtering logic for multiple filters
-     * ==================================================
-     */
     public function filters(): array
     {
-        $kategoriOptions = array_merge(['' => 'Select Category'], collect($this->materialCategories)->pluck('label', 'value')->toArray());
+        $kategoriOptions = ['' => $this->trans('select_category')] + collect($this->materialCategories)->pluck('label', 'value')->toArray();
 
-        $brandOptions = array_merge(['' => 'Select Brand'], Material::distinct('brand')->pluck('brand', 'brand')->toArray());
+        $brandOptions = ['' => $this->trans('select_brand')] + Material::distinct('brand')->pluck('brand', 'brand')->toArray();
 
-        $typeOptions = array_merge(['' => 'Select Type'], Material::distinct('class_code')->pluck('class_code', 'class_code')->toArray());
+        $typeOptions = ['' => $this->trans('select_type')] + Material::distinct('class_code')->pluck('class_code', 'class_code')->toArray();
 
         return [
-            // Category Filter
-            // MultiSelectFilter::make('Tags')
-            // ->options(
-            //     Tag::query()
-            //         ->orderBy('name')
-            //         ->get()
-            //         ->keyBy('id')
-            //         ->map(fn($tag) => $tag->name)
-            //         ->toArray()
-            // )->filter(function(Builder $builder, array $values) {
-            //     $builder->whereHas('tags', fn($query) => $query->whereIn('tags.id', $values));
-            // })
-            // ->setFilterPillValues([
-            //     '3' => 'Tag 1',
-            // ]),
-            $this->createTextFilter('Kode Barang', 'code', 'Cari Barang', function (Builder $builder, string $value) {
-                if ($this->isFirstFilterApplied($builder)) {
-                    $builder->getQuery()->wheres = [];
+            // CODE
+            $this->createTextFilter($this->trans('product'), 'tag', "Cari Produk", function (Builder $q, string $v) {
+                if ($this->isFirstFilterApplied($q)) {
+                    $q->getQuery()->wheres = [];
                 }
-                $builder->where('code', 'ILIKE', "%{$value}%");
+                $q->whereHas('Material', fn(Builder $m) => $m->where('tag', 'ILIKE', "%{$v}%"));
             }),
 
-
-            SelectFilter::make('Category', 'category')
+            // CATEGORY
+            SelectFilter::make($this->trans('category_label'), 'category')
                 ->options($kategoriOptions)
-                ->filter(function (Builder $query, string $value) {
-                    if ($value !== '') {
-                        if ($this->isFirstFilterApplied($query)) {
-                            $query->getQuery()->wheres = [];
-                        }
-                        $query->where('category', $value);
+                ->filter(function (Builder $q, string $v) {
+                    if ($this->isFirstFilterApplied($q)) {
+                        $q->getQuery()->wheres = [];
+                    }
+                    if ($v !== '') {
+                        $q->whereHas('Material', fn(Builder $m) => $m->where('category', $v));
                     }
                 })
                 ->setWireLive(true),
 
-            // Brand Filter
-            SelectFilter::make('Brand', 'brand')
+            // BRAND
+            SelectFilter::make($this->trans('brand_label'), 'brand')
                 ->options($brandOptions)
-                ->filter(function (Builder $query, string $value) {
-                    if ($value !== '') {
-                        if ($this->isFirstFilterApplied($query)) {
-                            $query->getQuery()->wheres = [];
-                        }
-                        $query->where('brand', $value);
+                ->filter(function (Builder $q, string $v) {
+                    if ($this->isFirstFilterApplied($q)) {
+                        $q->getQuery()->wheres = [];
+                    }
+                    if ($v !== '') {
+                        $q->whereHas('Material', fn(Builder $m) => $m->where('brand', $v));
                     }
                 })
                 ->setWireLive(true),
 
-            // Type Filter
-            SelectFilter::make('Type', 'class_code')
-                ->options($typeOptions)
-                ->filter(function (Builder $query, string $value) {
-                    if ($value !== '') {
-                        if ($this->isFirstFilterApplied($query)) {
-                            $query->getQuery()->wheres = [];
-                        }
-                        $query->where('class_code', $value);
-                    }
-                })
-                ->setWireLive(true),
-
-            SelectFilter::make('Stock', 'stock_filter')
+            // CLASS_CODE / TYPE
+            $this->createTextFilter($this->trans('type_label'), 'class_code', $this->trans('class_code'), function (Builder $q, string $v) {
+                if ($this->isFirstFilterApplied($q)) {
+                    $q->getQuery()->wheres = [];
+                }
+                $q->whereHas('Material', fn(Builder $m) => $m->where('class_code', 'ILIKE', "%{$v}%"));
+            }),
+            // STOCK
+            SelectFilter::make($this->trans('stock_label'), 'qty_oh')
                 ->options([
-                    'all' => 'All',
-                    'above_0' => 'Available',
-                    'below_0' => 'Out of Stock',
+                    'all' => $this->trans('all'),
+                    'above_0' => $this->trans('available'),
+                    'below_0' => $this->trans('out_of_stock'),
                 ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value === 'above_0') {
-                        $builder->whereHas('ivtBals', function ($query) {
-                            $query->havingRaw('SUM(qty_oh) > 0');
-                        });
-                    } elseif ($value === 'below_0') {
-                        $builder->whereDoesntHave('ivtBals')
-                            ->orWhereHas('ivtBals', function ($query) {
-                                $query->havingRaw('SUM(qty_oh) <= 0');
-                            });
+                ->filter(function (Builder $q, string $v) {
+                    if ($this->isFirstFilterApplied($q)) {
+                        $q->getQuery()->wheres = [];
+                    }
+                    if ($v === 'above_0') {
+                        $q->where('qty_oh', '>', 0);
+                    } elseif ($v === 'below_0') {
+                        $q->where('qty_oh', '<=', 0);
                     }
                 }),
 
-            SelectFilter::make('Status', 'status_filter')
+            // STATUS
+            SelectFilter::make($this->trans('status_label'), 'status_filter')
                 ->options([
-                    'active' => 'Active',
-                    'deleted' => 'Non Active',
+                    'active' => $this->trans('active'),
+                    'deleted' => $this->trans('non_active'),
                 ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value === 'active') {
-                        $builder->whereNull('deleted_at');
-                    } elseif ($value === 'deleted') {
-                        $builder->withTrashed()->whereNotNull('deleted_at');
+                ->filter(function (Builder $q, string $v) {
+                    if ($v === 'active') {
+                        $q->whereHas('Material', fn(Builder $m) => $m->whereNull('deleted_at'));
+                    } elseif ($v === 'deleted') {
+                        $q->whereHas('Material', fn(Builder $m) => $m->withTrashed()->whereNotNull('deleted_at'));
                     }
                 }),
         ];
     }
 
-    /**
-     * ==================================================
-     *  HELPER: Check if this is the first applied filter
-     * ==================================================
-     */
     protected function isFirstFilterApplied(Builder $query): bool
     {
         // Check if the query has only one where condition (whereRaw('1=0'))
         return count($query->getQuery()->wheres) === 1 && $query->getQuery()->wheres[0]['type'] === 'raw';
     }
 
-    /**
-     * ==================================================
-     *  BULK ACTIONS: Optional bulk operations
-     * ==================================================
-     */
     public function bulkActions(): array
     {
         return [
             'deleteSelected' => 'Delete Selected',
             'downloadCreateTemplate' => 'Download Create Template',
-            'exportExcel' => 'Export Excel',
         ];
     }
-    /**
-     * Generate and download an Excel template for creating materials.
-     */
+
     public function downloadCreateTemplate()
     {
         $sheets = [Material::getCreateTemplateConfig()];
@@ -260,62 +208,20 @@ class IndexDataTable extends BaseDataTableComponent
 
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
-   /**
-     * Generate and download an Excel template for updating materials.
-     */
-    public function exportExcel()
-    {
-        $selectedIds = $this->getSelected();
-        $materials = Material::whereIn('id', $selectedIds)->get();
-        $data = $materials
-            ->map(function ($material, $index) {
-                $specs = $material->specs;
-
-                return [$specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->DefaultUom->barcode ?? '', $material->name ?? ''];
-            })
-            ->toArray();
-
-        $sheets = [Material::getExcelTemplateConfig($data)];
-        $filename = 'Material_Data_' . now()->format('Y-m-d') . '.xlsx';
-
-        return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
-    }
-    /**
-     * Generate and download an Excel template for updating materials.
-     */
-    public function downloadUpdateTemplate()
-    {
-        $selectedIds = $this->getSelected();
-        $materials = Material::whereIn('id', $selectedIds)->get();
-        $data = $materials
-            ->map(function ($material, $index) {
-                $specs = $material->specs;
-
-                return [$material->seq, $specs['color_code'] ?? '', $specs['color_name'] ?? '', $material->DefaultUom->matl_uom ?? '', $material->selling_price ?? '', $material->stock ?? '', $material->code ?? '', $material->DefaultUom->barcode ?? '', $material->name ?? '', $material->deleted_at ? 'Yes' : 'No', $material->remarks ?? '', $material->version_number ?? ''];
-            })
-            ->toArray();
-
-        $sheets = [Material::getUpdateTemplateConfig($data)];
-        $filename = 'Material_Update_Template_' . now()->format('Y-m-d') . '.xlsx';
-
-        return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
-    }
 
     public function deleteSelected()
     {
-        $selectedIds = $this->getSelected() ?? [];
-
-        if (empty($selectedIds)) {
-            $this->dispatch('error', 'No materials selected.');
+        $ids = $this->getSelected() ?? [];
+        if (empty($ids)) {
+            $this->dispatch('error', $this->trans('no_materials_selected'));
             return;
         }
-        $ids = implode(',', $selectedIds);
         $this->dispatch('open-confirm-dialog', [
             'title' => 'Confirm Delete',
-            'message' => 'Are you sure you want to delete this?',
+            'message' => $this->trans('delete_confirm'),
             'icon' => 'warning',
             'confirmMethod' => 'deleteMaterial',
-            'confirmParams' => implode(',', (array) $selectedIds),
+            'confirmParams' => implode(',', $ids),
             'confirmButtonText' => 'Yes, delete it!',
         ]);
     }
@@ -326,7 +232,8 @@ class IndexDataTable extends BaseDataTableComponent
         Material::whereIn('id', $idsArray)->update(['status_code' => Status::NONACTIVE]);
         Material::whereIn('id', $idsArray)->delete();
         $this->dispatch('refreshTable');
-        $message = count($idsArray) > 1 ? 'Selected materials deleted successfully.' : 'Material deleted successfully.';
+
+        $message = count($idsArray) > 1 ? $this->trans('delete_success_multiple') : $this->trans('delete_success_single');
         $this->dispatch('success', $message);
     }
 }

@@ -38,6 +38,8 @@ class Partner extends BaseModel
         'address',
         'city',
         'country',
+        'phone',
+        'email',
         'postal_code',
         'contact_person',
         'collect_sched',

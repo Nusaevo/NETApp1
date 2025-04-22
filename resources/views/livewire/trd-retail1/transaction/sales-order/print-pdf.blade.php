@@ -25,6 +25,13 @@
                                 <td colspan="6">
                                     <table class="tbl" style="width: 100%; text-align: center; margin-top: 10px;">
                                         <tr>
+                                        <td style="width: 20%; text-align: left; vertical-align: middle;">
+                                            <div style="text-align: left;">
+                                                <img src="{{ asset('customs/logos/TrdRetail1.png') }}" alt="Logo" style="width: 140px; height: 60px; margin-bottom: 5px;">
+                                            </div>
+                                        </td>
+                                    </tr>
+                                        <tr>
                                             <td>
                                                 <b> Knit And Cro </b><br>
                                                 08888052888<br>

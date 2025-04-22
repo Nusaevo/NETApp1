@@ -15,6 +15,9 @@ class SidebarMenu extends Component
     {
         $this->baseRoute = $this->getBaseRoute();
         $this->menus = $this->generateMenu(Auth::user()->code);
+        if (count($this->menus) <= 1) {
+            abort(403, 'Anda tidak memiliki izin akses. Mohon hubungi administrator.');
+        }
     }
 
     private function getBaseRoute()
