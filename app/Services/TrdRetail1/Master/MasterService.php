@@ -172,5 +172,16 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+    public function getPaymentTerm()
+    {
+        $data = $this->getConfigData('MPAYMENT_TERMS');
 
+        $payments = $data->map(function ($item) {
+            return [
+                'label' => $item->str1 . " - " . $item->str2,
+                'value' => $item->id,
+            ];
+        })->toArray();
+        return $payments;
+    }
 }

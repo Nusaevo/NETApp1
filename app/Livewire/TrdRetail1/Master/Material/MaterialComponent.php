@@ -154,6 +154,7 @@ class MaterialComponent extends BaseComponent
             $specs = $this->object->specs ?? [];
             $this->materials['color_code'] = $specs['color_code'] ?? '';
             $this->materials['color_name'] = $specs['color_name'] ?? '';
+            $this->materials['size'] = $specs['size'] ?? '';
             $this->materials['stock'] = $this->object->Stock;
             foreach ($attachments as $attachment) {
                 $this->capturedImages[] = [
@@ -200,6 +201,7 @@ class MaterialComponent extends BaseComponent
         $this->materials['specs'] = [
             'color_code' => $this->materials['color_code'] ?? '',
             'color_name' => $this->materials['color_name'] ?? '',
+            'size' => $this->materials['size'] ?? '',
         ];
 
         // 4. Buat tag & generateName (sesuai logika internal Anda)

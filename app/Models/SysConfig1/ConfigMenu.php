@@ -125,22 +125,43 @@ class ConfigMenu extends SysConfig1BaseModel
     //     return implode('/', $segments);
     // }
 
-    /**
-     * Get the full path based on request segments, action value, and additional parameters.
-     *
-     * @param string      $menuLink        e.g. "TrdRetail1/Master/Partner?TYPE=C&foo=bar"
-     * @param string|null $actionValue     e.g. "Edit"
-     * @param string|null $additionalParam not used here
-     * @return string                      e.g. "TrdRetail1/Master/Partner?TYPE=C&foo=bar"
-     */
-    public static function getFullPathLink($menuLink, $actionValue = null, $additionalParam = null)
-    {
-        [$path, $query] = array_pad(explode('?', $menuLink, 2), 2, '');
-        $segments = explode('/', $path);
-        if (in_array($actionValue, ['Create', 'Edit', 'View'], true) && count($segments) > 0) {
-            array_pop($segments);
-        }
-        $newPath = implode('/', $segments);
-        return $newPath . ($query !== '' ? '?' . $query : '');
+  /**
+ * Get the full path based on request segments, action value, and additional parameters,
+ * but remove any "table-filter" query parameter.
+ *
+ * @param string      $menuLink        e.g. "TrdRetail1/Master/Partner?TYPE=C&foo=bar&table-filter=xyz"
+ * @param string|null $actionValue     e.g. "Edit"
+ * @param string|null $additionalParam not used here
+ * @return string                      e.g. "TrdRetail1/Master/Partner?TYPE=C&foo=bar"
+ */
+public static function getFullPathLink($menuLink, $actionValue = null, $additionalParam = null)
+{
+    // 1) Split off the path and query string
+    [$path, $query] = array_pad(explode('?', $menuLink, 2), 2, '');
+
+    // 2) Pop the last path segment for Create/Edit/View actions
+    $segments = explode('/', $path);
+    if (in_array($actionValue, ['Create', 'Edit', 'View'], true) && count($segments) > 0) {
+        array_pop($segments);
     }
+    $newPath = implode('/', $segments);
+
+    // 3) If there was a query string, parse it
+    if ($query !== '') {
+        parse_str($query, $allParams);
+
+        // 4) Build a filtered array without "table-filter"
+        $filteredParams = array_filter($allParams, function($value, $key) {
+            return $key !== 'table-filters';
+        }, ARRAY_FILTER_USE_BOTH);
+
+        // 5) Re‑append the remaining params, if any
+        if (! empty($filteredParams)) {
+            return $newPath . '?' . http_build_query($filteredParams);
+        }
+    }
+
+    return $newPath;
+}
+
 }

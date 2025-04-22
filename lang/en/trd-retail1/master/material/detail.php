@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'size' => 'Size',
     'photo' => 'Photo',
     'category' => 'Category',
     'code' => 'Item Code',

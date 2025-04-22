@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'size' => 'Ukuran',
     'photo' => 'Foto',
     'category' => 'Kategori',
     'code' => 'Kode Barang',
