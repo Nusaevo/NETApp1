@@ -40,7 +40,6 @@ class IndexDataTable extends BaseDataTableComponent
         return $query;
     }
 
-
     public function columns(): array
     {
         return [
@@ -196,7 +195,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'deleteSelected' => 'Delete Selected',
+            'deleteSelected' => 'Disable Selected',
             'downloadCreateTemplate' => 'Download Create Template',
         ];
     }
