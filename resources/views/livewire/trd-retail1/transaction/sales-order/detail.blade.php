@@ -131,16 +131,12 @@
                                                             type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                                                     </td>
                                                     <td style="text-align: center;">
-                                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
+                                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label=""
                                                             type="text" enabled="false" />
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                                             cssClass="btn-danger text-danger" iconPath="delete.svg" />
-                                                      @if ($actionValue === 'Edit')
-                                                      <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="Retur" loading="true" :action="$actionValue"
-                                                            cssClass="btn-secondary"/>
-                                                      @endif
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -180,7 +176,6 @@
                                                     <th class="min-w-100px">Code</th>
                                                     <th class="min-w-100px">Image</th>
                                                     <th class="min-w-100px">Name</th>
-                                                    <th class="min-w-100px">Warna</th>
                                                 </x-slot>
 
                                                 <x-slot name="rows">
@@ -205,9 +200,6 @@
                                                                     @endif
                                                                 </td>
                                                                 <td>{{ $material->name }}</td>
-                                                                <td style="text-align: center;">
-                                                                    {{ $material->specs['color_name'] }}
-                                                                </td>
                                                             </tr>
                                                         @endforeach
                                                     @endif
