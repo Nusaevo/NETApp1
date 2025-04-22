@@ -130,8 +130,8 @@
                                                             type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                                                     </td>
                                                     <td style="text-align: center;">
-                                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label=""
-                                                            type="text" enabled="false" />
+                                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
+                                                        type="number" enabled="false" />
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"

@@ -56,26 +56,20 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            // Column::make($this->trans("matl_code"), 'id')
-            //     ->format(function ($value, $row) {
-            //         // Manually load OrderDtl using a query
-            //         $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
-            //             ->where('tr_type', $row->tr_type)
-            //             ->orderBy('id')
-            //             ->get();
+             Column::make($this->trans('matl_code'), 'id')
+                ->format(function ($value, $row) {
+                    // Ambil orderDtl
+                    $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
+                        ->where('tr_type', $row->tr_type)
+                        ->orderBy('id')
+                        ->get();
 
-            //         // Generate links if data is available
-            //         $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
-            //         $links = $matlCodes->map(function ($code, $id) {
-            //             return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
-            //                 'action' => encryptWithSessionKey('Edit'),
-            //                 'objectId' => encryptWithSessionKey($id)
-            //             ]) . '">' . $code . '</a>';
-            //         });
+                    // Ambil cuma matl_code
+                    $matlCodes = $orderDtl->pluck('matl_code');
 
-            //         return $links->implode(', ');
-            //     })
-            //     ->html(),
+                    // Gabungkan pakai koma
+                    return $matlCodes->implode(', ');
+                }),
             Column::make($this->trans("qty"), "total_qty")
                 ->label(function ($row) {
                     return $row->total_qty;
@@ -96,14 +90,14 @@ class IndexDataTable extends BaseDataTableComponent
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [
-                            [
-                                'label' => 'Print',
-                                'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($row->id)
-                                ]),
-                                'icon' => 'bi bi-printer'
-                            ],
+                            // [
+                            //     'label' => 'Print',
+                            //     'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
+                            //         'action' => encryptWithSessionKey('Edit'),
+                            //         'objectId' => encryptWithSessionKey($row->id)
+                            //     ]),
+                            //     'icon' => 'bi bi-printer'
+                            // ],
                         ],
                         'enable_this_row' => true,
                         'allow_details' => false,
