@@ -30,7 +30,7 @@
                                                         width="200px" height="200px" />
                                                     <div class="image-close-button">
                                                         <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'"
-                                                            class="btn btn-link" name="x" :action="$actionValue"/>
+                                                            class="btn btn-link" name="x" :action="$actionValue" />
                                                     </div>
                                                 </div>
                                             @empty
@@ -40,8 +40,7 @@
                                             @endforelse
                                         </div>
                                         <div class="button-container">
-                                            <x-ui-image-button
-                                                hideStorageButton="false"></x-ui-image-button>
+                                            <x-ui-image-button hideStorageButton="false"></x-ui-image-button>
                                         </div>
                                         <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'"
                                             onOpened="openStorageDialog" onClosed="closeStorageDialog">
@@ -69,25 +68,38 @@
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand"
                                     type="text" :action="$actionValue" required="true" enabled="true"
-                                    onChanged="generateName" capslockMode="true"/>
+                                    onChanged="generateName" capslockMode="true" />
                                 <x-ui-text-field label="{{ $this->trans('class_code') }}" model="materials.class_code"
                                     type="text" :action="$actionValue" required="false" enabled="true"
-                                    onChanged="generateName" capslockMode="true"/>
+                                    onChanged="generateName" capslockMode="true" />
                             </div>
 
                             <div class="row">
-                                <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq" type="number"
-                                    :action="$actionValue" required="true" enabled="true" />
-                                <x-ui-text-field label="{{ $this->trans('color_code') }}" model="materials.color_code"
-                                    type="text" :action="$actionValue" required="false" enabled="true"
-                                    onChanged="generateName" capslockMode="true" />
+                                <div class="col-md-1">
+                                    <x-ui-text-field label="{{ $this->trans('seq') }}" model="materials.seq"
+                                        type="number" :action="$actionValue" required="true" enabled="true" />
+                                </div>
+                                <div class="col-md-11">
 
-                                <x-ui-text-field label="{{ $this->trans('color_name') }}" model="materials.color_name"
-                                    type="text" :action="$actionValue" required="false" enabled="true" capslockMode="true"/>
+                                    <div class="row">
+                                        <x-ui-text-field label="{{ $this->trans('color_code') }}"
+                                            model="materials.color_code" type="text" :action="$actionValue"
+                                            required="false" enabled="true" onChanged="generateName"
+                                            capslockMode="true" />
+                                        <x-ui-text-field label="{{ $this->trans('color_name') }}"
+                                            model="materials.color_name" type="text" :action="$actionValue"
+                                            required="false" enabled="true" capslockMode="true" />
+
+                                        <x-ui-text-field label="{{ $this->trans('size') }}" model="materials.size"
+                                            type="text" :action="$customActionValue" />
+                                    </div>
+                                </div>
+
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('name') }}" model="materials.name"
-                                    type="text" capslockMode="true" :action="$actionValue" required="true" enabled="true" />
+                                    type="text" capslockMode="true" :action="$actionValue" required="true"
+                                    enabled="true" />
                             </div>
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('descr') }}" model="materials.descr"
@@ -133,9 +145,9 @@
                             <th style="text-align: center; width: 100px;">{{ $this->trans('reff_factor') }}</th>
                             <th style="text-align: center; width: 10px;">{{ $this->trans('base_factor') }}</th>
                             <th style="text-align: center; width: 150px;">{{ $this->trans('barcode') }}</th>
-                            @if($actionValue == 'Edit')
-                            <th style="text-align: center; width: 150px;">{{ $this->trans('buying_price') }}
-                            </th>
+                            @if ($actionValue == 'Edit')
+                                <th style="text-align: center; width: 150px;">{{ $this->trans('buying_price') }}
+                                </th>
                             @endif
                             <th style="text-align: center; width: 150px;">{{ $this->trans('selling_price') }}
                             </th>
@@ -167,7 +179,7 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.barcode"
                                             type="text" required="false" enabled="true" :action="$actionValue" />
                                     </td>
-                                    @if($actionValue == 'Edit')
+                                    @if ($actionValue == 'Edit')
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.buying_price"
                                                 type="number" required="false" :action="$actionValue" />
@@ -195,7 +207,7 @@
                         @endif
                         <x-slot name="button">
                             <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="{{ $this->trans('add') }}" :action="$actionValue"/>
+                                button-name="{{ $this->trans('add') }}" :action="$actionValue" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>

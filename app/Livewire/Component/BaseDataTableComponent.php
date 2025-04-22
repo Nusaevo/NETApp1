@@ -3,7 +3,7 @@
 namespace App\Livewire\Component;
 
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
-use App\Models\SysConfig1\{ConfigRight,ConfigMenu};
+use App\Models\SysConfig1\{ConfigRight, ConfigMenu};
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Exception;
 use App\Enums\Status;
@@ -13,7 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Util\GenericExport;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Illuminate\Support\Facades\Session;
-
+use Illuminate\Support\Arr;
 abstract class BaseDataTableComponent extends DataTableComponent
 {
     public $object;
@@ -42,8 +42,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
     private function captureOriginalQueryFromReferer(): ?string
     {
         // 1) get the Referer (or use url()->previous())
-        $referer = request()->headers->get('referer')
-                 ?: url()->previous();
+        $referer = request()->headers->get('referer') ?: url()->previous();
 
         // 2) if we got something, parse out the "foo=bar&baz=qux" part
         if ($referer) {
@@ -52,7 +51,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
         return null;
     }
-
 
     public function configure(): void
     {
@@ -121,41 +119,39 @@ abstract class BaseDataTableComponent extends DataTableComponent
         return Str::endsWith($route, '.Detail') ? Str::replaceLast('.Detail', '', $route) : $route;
     }
 
-
     public function viewData($id)
     {
-        $route = $this->customRoute
-            ? str_replace('/', '.', $this->customRoute) . '.Detail'
-            : $this->baseRoute . '.Detail';
+        $route = $this->customRoute ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
 
         return $this->redirectDetail($id, 'View', $route);
     }
 
     public function editData($id)
     {
-        $route = $this->customRoute
-            ? str_replace('/', '.', $this->customRoute) . '.Detail'
-            : $this->baseRoute . '.Detail';
+        $route = $this->customRoute ? str_replace('/', '.', $this->customRoute) . '.Detail' : $this->baseRoute . '.Detail';
         return $this->redirectDetail($id, 'Edit', $route);
     }
-
-    /**
-     * Redirect to a .Detail route with action, objectId, AND
-     * preserve the entire current query string.
-     */
     private function redirectDetail(string $id, string $action, string $routeName)
     {
-        // 1) build the named‐route URL
+        // 1) build the named‑route URL
         $url = route($routeName, [
-            'action'   => encryptWithSessionKey($action),
+            'action' => encryptWithSessionKey($action),
             'objectId' => encryptWithSessionKey($id),
         ]);
 
-        // 2) grab raw query string, e.g. "TYPE=C&foo=bar"
-        if (! empty($this->initialQueryString)) {
-            $url .= '?' . $this->initialQueryString;
+        // 2) parse our stored QS into an array
+        if (!empty($this->initialQueryString)) {
+            parse_str($this->initialQueryString, $allParams);
+
+            // 3) create a *new* filtered array without 'table-filter'
+            $filtered = Arr::except($allParams, ['table-filters']);
+
+            // 4) if there are any left, re‑append them
+            if (!empty($filtered)) {
+                $url .= '?' . http_build_query($filtered);
+            }
         }
-        // 3) redirect to the fully assembled URL
+
         return redirect()->to($url);
     }
 
@@ -163,7 +159,6 @@ abstract class BaseDataTableComponent extends DataTableComponent
     {
         $this->object = $this->model::findOrFail($id);
     }
-
 
     public function Disable()
     {
@@ -248,6 +243,4 @@ abstract class BaseDataTableComponent extends DataTableComponent
     //     // Return the Excel download response
     //     return Excel::download(new GenericExport($data), $filename);
     // }
-
 }
-

@@ -25,7 +25,6 @@ class Detail extends BaseComponent
 
 
     public $warehouses;
-    public $payments;
     public $deletedItems = [];
     public $newItems = [];
     public $trType = "SO";
@@ -53,6 +52,7 @@ class Detail extends BaseComponent
 
     public $warehouseOptions = [];
     public $uomOptions = [];
+    public $payments;
 
     public $materials;
     public $wh_code='';
@@ -79,6 +79,7 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
+        $this->payments = $this->masterService->getPaymentTerm();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->partners = $this->masterService->getCustomers();
 
