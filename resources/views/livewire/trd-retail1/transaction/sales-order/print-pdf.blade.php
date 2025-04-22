@@ -1,133 +1,134 @@
 <div>
-    <div>
-        <x-ui-button click-event="" type="Back" button-name="Back" />
-    </div>
-    {{-- <link rel="stylesheet" href="{{ asset('/customs/css/smallinvoice.css') }}"> --}}
-    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/trdretail1/smallinvoice.css') }}">
-    <div class="card">
-        <div class="card-body">
-            <div class="container mb-5 mt-3">
-                <div class="row d-flex align-items-baseline">
-                    <div class="col-xl-9">
-                        <p style="color: #7e8d9f;font-size: 20px;">Nota Penjualan >> <strong>No:
-                                {{ $this->object->tr_id }}</strong></p>
-                    </div>
-                    <div class="col-xl-3 float-end">
-                        <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark"
-                            onclick="print()"><i class="fas fa-print text-primary"></i> Print</a>
-                    </div>
-                    <hr>
-                </div>
-                <div id="print">
-                    <div class="invoice-box">
-                        <table>
-                            <tr class="top">
-                                <td colspan="6">
-                                    <table class="tbl" style="width: 100%; text-align: center; margin-top: 10px;">
-                                        <tr>
-                                        <td style="width: 20%; text-align: center; vertical-align: middle;">
-                                            <div style="text-align: center;">
-                                                <img src="{{ asset('customs/logos/TrdRetail1.png') }}" alt="Logo" style="width: 140px; height: 60px; margin-bottom: 5px;">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                        <tr>
-                                            <td>
-                                                <b> Knit And Cro </b><br>
-                                                08888052888<br>
-                                                Ruko Pluit Village No 59 <br>
-                                                Jakara
-                                            </td>
-                                        </tr>
-                                        <tr class="top_border" style="text-align: left;">
-                                            <td>
-                                                Tanggal : <b>{{ $this->object->tr_date }}</b><br>
-                                            </td>
-                                        </tr>
-                                        <tr class="top_border">
-                                            <td></td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            <table class='tbl'>
-                                @php
-                                    $grand_total = 0;
-                                @endphp
+    <x-ui-button click-event="" type="Back" button-name="Back" />
 
-                                @foreach ($object->OrderDtl as $key => $item)
-                                    @if ($item->qty != 0)
-                                        <tr>
-                                            <td colspan="4"><b>{{ $item->Material->name }}</b></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="item left">{{ qty($item->qty) }} {{ $item->matl_uom }}</td>
-                                            <td class="item left">@Rp. {{ number_format($item->price, 0, ',', '.') }}
-                                            </td>
-                                            <td class="item right">Rp.
-                                                {{ number_format($item->price * $item->qty, 0, ',', '.') }}</td>
-                                        </tr>
-                                        @php
-                                            $grand_total += $item->price * $item->qty;
-                                        @endphp
-                                    @endif
-                                @endforeach
-                            </table>
+    <!-- load CSS invoice -->
+    <link rel="stylesheet" href="{{ asset('customs/css/TrdRetail1/smallinvoice.css') }}">
 
-                            <!-- Bagian Total -->
-                            <table class="tbl">
-                                <tr class="top_border">
-                                    <td class="right"><b>Total:</b></td>
-                                    <td class="right"><b>Rp. {{ number_format($grand_total, 0, ',', '.') }}</b></td>
-                                </tr>
-                            </table>
-                            <table class="tbl" style="width: 100%; text-align: center; margin-top: 10px;">
-                            <tr>
-                                <td colspan="2" style="text-align: left;">
-                                    {{ $this->object->Partner->name }}
-                                    {{ $this->object->Partner->phone ? ' - '.$this->object->Partner->phone : '' }}
-                                </td>
+    <div class="card border-0">
+      <div class="card-body p-0">
 
-                            </tr>
-                            <tr>
-                                <td colspan="2">
-                                    <b>---------- Terima Kasih ----------</b>
-                                </td>
-                            </tr>
-                        </table>
-                        </table>
-
-                    </div>
-                </div>
-            </div>
+        {{-- Header Nota --}}
+        <div style="padding:0 4px; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+          <p style="margin:0; font-size:10px; color:#7e8d9f;">
+            Nota Penjualan » <strong>No: {{ $this->object->tr_id }}</strong>
+          </p>
+          <button onclick="printInvoice()" style="background:none; border:none; padding:0; cursor:pointer;">
+            <i class="fas fa-print text-primary"></i> Print
+          </button>
         </div>
-    </div>
-    <script type="text/javascript">
-        function print() {
-            var page = document.getElementById("print");
-            var newWin = window.open('', 'Print-Window');
-            newWin.document.open();
-            newWin.document.write(
-                '<html > <link rel="stylesheet" href="{{ asset('customs/css/trdretail1/smallinvoice.css') }}" ><body onload="window.print()" style="max-height:72mm;">' +
-                page.innerHTML + '</body></html>');
-            newWin.document.close();
-            setTimeout(function() {
-                newWin.close();
-            }, 10);
-        }
 
-        // window.addEventListener('load', function() {
-        //     function printPage() {
-        //         var page = document.getElementById("print");
-        //         var newWin = window.open('', 'Print-Window');
-        //         newWin.document.open();
-        //         newWin.document.write('<html><link rel="stylesheet" href="/customs/css/smallinvoice.css"><body style="max-height:72mm;">' + page.innerHTML + '</body></html>');
-        //         newWin.document.close();
-        //         setTimeout(function() {
-        //             newWin.print();
-        //             newWin.close();
-        //         }, 10);
-        //     }
-        //     printPage();
-        // });
+        {{-- Area cetak --}}
+        <div id="print">
+          <div class="invoice-box">
+
+            {{-- Logo --}}
+            <div class="logo-container">
+              <img src="{{ asset('customs/logos/TrdRetail1.png') }}" alt="Logo"  style="
+              width: 30mm;        /* lebar logo 30 mm */
+              height: auto;       /* ketinggian mengikuti rasio */
+              max-height: 15mm;   /* batas tinggi 15 mm */
+              object-fit: contain;
+              display: block;
+              margin: 0 auto 4px;
+            ">
+            </div>
+
+            {{-- Info Toko --}}
+            <table>
+              <tr>
+                <td style="text-align:center; padding-bottom:4px;">
+                  <b>Knit And Cro</b><br>
+                  08888052888<br>
+                  Ruko Pluit Village No 59<br>
+                  Jakarta
+                </td>
+              </tr>
+              <tr>
+                <td class="top-border" style="text-align:left; padding-top:4px;">
+                  Tanggal: <b>{{ $this->object->tr_date }}</b>
+                </td>
+              </tr>
+            </table>
+
+            {{-- Detail Barang --}}
+            <table style="margin-top:4px;">
+              @php $grand_total = 0; @endphp
+              @foreach($object->OrderDtl as $item)
+                @continue(!$item->qty)
+                <tr>
+                  <td colspan="3" style="padding-top:4px;"><b>{{ $item->Material->name }}</b></td>
+                </tr>
+                <tr>
+                  <td>{{ qty($item->qty) }} {{ $item->matl_uom }}</td>
+                  <td>Rp. {{ number_format($item->price,0,',','.') }}</td>
+                  <td style="text-align:right;">
+                    Rp. {{ number_format($item->price * $item->qty,0,',','.') }}
+                  </td>
+                </tr>
+                @php $grand_total += $item->price * $item->qty; @endphp
+              @endforeach
+            </table>
+
+            {{-- Total --}}
+            <table style="margin-top:4px;">
+              <tr>
+                <td style="text-align:right; border-top:1px solid #000; padding-top:4px;">
+                  <b>Total:</b>
+                </td>
+                <td style="text-align:right; border-top:1px solid #000; padding-top:4px;">
+                  <b>Rp. {{ number_format($grand_total,0,',','.') }}</b>
+                </td>
+              </tr>
+            </table>
+
+            {{-- Footer --}}
+            <table style="width:100%; text-align:center; margin-top:6px;">
+              <tr>
+                <td style="text-align:left; padding-bottom:4px;">
+                  {{ $this->object->Partner->name }}
+                  @if($this->object->Partner->phone) - {{ $this->object->Partner->phone }} @endif
+                </td>
+              </tr>
+              <tr>
+                <td><b>— Terima Kasih —</b></td>
+              </tr>
+            </table>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script>
+    function printInvoice() {
+      // Ambil konten nota
+      const content = document.getElementById('print').innerHTML;
+
+      // Ambil semua <link rel="stylesheet"> dan <style> dari halaman utama
+      const styles = Array.from(
+        document.querySelectorAll('link[rel="stylesheet"], style')
+      ).map(node => node.outerHTML).join('');
+
+      // Buka window baru
+      const printWindow = window.open('', 'Print-Window', 'width=300,height=600');
+
+      // Tulis HTML lengkap termasuk styles
+      printWindow.document.open();
+      printWindow.document.write(`
+        <html>
+          <head>
+            ${styles}
+            <style>
+              @page { size:80mm auto; margin:2mm; }
+              body { margin:0; padding:0; }
+            </style>
+          </head>
+          <body onload="window.focus(); window.print(); window.close();">
+            ${content}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
     </script>
