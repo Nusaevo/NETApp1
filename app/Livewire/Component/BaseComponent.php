@@ -56,7 +56,6 @@ class BaseComponent extends Component
         try {
             $this->additionalParam = $additionalParam;
             $this->appCode = Session::get('app_code', '');
-
             $this->setActionAndObject($action, $objectId);
             $this->setActionValue($action, $actionValue);
             $this->setObjectIdValue($objectId, $objectIdValue);
@@ -200,7 +199,6 @@ class BaseComponent extends Component
 
         // Gabungkan path + query jika ada
         $fullUrl = $queryString ? $path . '?' . $queryString : $path;
-
         $menu_link = ConfigMenu::getFullPathLink($fullUrl, $this->actionValue, $this->additionalParam);
         $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
         $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute);

@@ -406,7 +406,6 @@ class Material extends BaseModel
                             'qty_oh'       => $stock,
                         ]);
 
-                        if ($stock > 0) {
                             $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
                                 ->where('str1', IvtBal::$defaultWhCode ?? '')
                                 ->first();
@@ -427,7 +426,6 @@ class Material extends BaseModel
                                 'matl_uom'  => $uom,
                                 'qty'       => $stock
                             ];
-                        }
                     }
                 } else if ($param === 'Update') {
                     $no           = $row[$headerIndex['No']]          ?? '';

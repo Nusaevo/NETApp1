@@ -16,8 +16,9 @@ class Detail extends BaseComponent
     public $inputs = [];
     public $partnerTypes = [];
     protected $masterService;
+    public $type;
 
-    public $rules  = [
+    public $rules = [
         'inputs.grp' => 'required|string|min:1|max:50',
         'inputs.name' => 'required|string|min:1|max:50',
         // 'inputs.code' => [
@@ -28,9 +29,8 @@ class Detail extends BaseComponent
         // ],
     ];
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
+        'changeStatus' => 'changeStatus',
     ];
-
 
     #endregion
 
@@ -38,29 +38,44 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
-        $this->customValidationAttributes  = [
-            'inputs'                => 'Input',
-            'inputs.grp'           => $this->trans('partner_type'),
-            'inputs.code'           => $this->trans('partner_code'),
-            'inputs.name'      => $this->trans('name'),
-            'inputs.address'      => $this->trans('address'),
-            'inputs.city'      => $this->trans('city'),
-            'inputs.country'      => $this->trans('country'),
-            'inputs.postal_code'      => $this->trans('postal_code'),
-            'inputs.contact_person'      => $this->trans('contact_person'),
-            'inputs.ring_size'      => $this->trans('ring_size'),
-            'inputs.partner_ring_size'      => $this->trans('partner_ring_size'),
+        $this->type = request()->query('TYPE');
+        $this->customValidationAttributes = [
+            'inputs' => 'Input',
+            'inputs.grp' => $this->trans('partner_type'),
+            'inputs.code' => $this->trans('partner_code'),
+            'inputs.name' => $this->trans('name'),
+            'inputs.address' => $this->trans('address'),
+            'inputs.city' => $this->trans('city'),
+            'inputs.country' => $this->trans('country'),
+            'inputs.postal_code' => $this->trans('postal_code'),
+            'inputs.contact_person' => $this->trans('contact_person'),
+            'inputs.ring_size' => $this->trans('ring_size'),
+            'inputs.partner_ring_size' => $this->trans('partner_ring_size'),
         ];
 
         $this->masterService = new MasterService();
-        $this->partnerTypes = $this->masterService->getPartnerTypes();
-        if($this->isEditOrView())
-        {
+        // Fetch everything…
+        $allTypes = $this->masterService->getPartnerTypes();
+        // e.g. [
+        //   ['label'=>'C - Customer','value'=>'C'],
+        //   ['label'=>'V - Supplier','value'=>'V']
+        // ]
+
+        if (!empty($this->type)) {
+            $this->partnerTypes = collect($allTypes)
+                ->where('value', $this->type) // pick only those with matching value
+                ->values() // reindex 0,1,...
+                ->all();
+        } else {
+            $this->partnerTypes = $allTypes;
+        }
+
+        if ($this->isEditOrView()) {
             $this->object = Partner::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
         }
 
-        $this->inputs['option'] = "";
+        $this->inputs['option'] = '';
     }
 
     public function onReset()
@@ -68,7 +83,6 @@ class Detail extends BaseComponent
         $this->reset('inputs');
         $this->object = new Partner();
         $this->inputs = populateArrayFromModel($this->object);
-
     }
 
     public function render()
@@ -95,8 +109,7 @@ class Detail extends BaseComponent
         //     $this->inputs['code'] = $this->generateNewCode($this->inputs['name']);
         // }
         $initialCode = strtoupper(substr($this->inputs['name'], 0, 1));
-        if(!$this->object->isNew())
-        {
+        if (!$this->object->isNew()) {
             if (isset($this->inputs['code']) && $initialCode !== strtoupper(substr($this->inputs['code'], 0, 1))) {
                 $errorMessage = 'Kode awal dari nama tidak sesuai dengan kode produk.';
                 $this->addError('inputs.name', $errorMessage);
@@ -121,5 +134,4 @@ class Detail extends BaseComponent
     #region Component Events
 
     #endregion
-
 }
