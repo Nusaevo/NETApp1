@@ -76,8 +76,6 @@
                     <div class="col-md-12">
                         <x-ui-card title="Order Items">
                             <div>
-                                <x-ui-card>
-
                                     <!-- Tambahkan kolom Warehouse -->
                                         <x-ui-dropdown-select
                                             label="Lokasi"
@@ -95,7 +93,6 @@
                                             <th style="width: 120px; text-align: center;">Amount</th>
                                             <th style="width: 70px; text-align: center;">Actions</th>
                                         </x-slot>
-
                                         <x-slot name="rows">
                                             @foreach ($input_details as $key => $input_detail)
                                                 <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
@@ -133,7 +130,7 @@
                                                             type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                                                     </td>
                                                     <td style="text-align: center;">
-                                                        <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
+                                                        <x-ui-text-field model="input_details.{{ $key }}.amt_idr" label=""
                                                             type="text" enabled="false" />
                                                     </td>
                                                     <td style="text-align: center;">
@@ -182,7 +179,6 @@
                                                     <th class="min-w-100px">Code</th>
                                                     <th class="min-w-100px">Image</th>
                                                     <th class="min-w-100px">Name</th>
-                                                    <th class="min-w-100px">Warna</th>
                                                 </x-slot>
 
                                                 <x-slot name="rows">
@@ -207,9 +203,6 @@
                                                                     @endif
                                                                 </td>
                                                                 <td>{{ $material->name }}</td>
-                                                                <td style="text-align: center;">
-                                                                    {{ $material->specs['color_name'] }}
-                                                                </td>
                                                             </tr>
                                                         @endforeach
                                                     @endif
@@ -223,7 +216,6 @@
 
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                </x-ui-card>
 
                             </div>
 

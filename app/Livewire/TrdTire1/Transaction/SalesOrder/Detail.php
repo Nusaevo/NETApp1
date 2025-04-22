@@ -285,6 +285,7 @@ class Detail extends BaseComponent
                     $this->input_details[$key]['price']       = $matlUom->selling_price;
                     $this->input_details[$key]['matl_uom']    = $material->uom;
                     $this->input_details[$key]['matl_descr']  = $material->name;
+                    $this->input_details[$key]['disc_pct'] = 0.00; // Default 0%
                     $this->updateItemAmount($key);
                 } else {
                     $this->dispatch('error', __('generic.error.material_uom_not_found'));
@@ -460,6 +461,9 @@ class Detail extends BaseComponent
                     $detail['trhdr_id']  = $this->object->id;
                     $detail['tr_type']   = $this->object->tr_type;
 
+                    // Pastikan disc_pct disimpan dalam format desimal
+                    $detail['disc_pct'] = isset($detail['disc_pct']) ? round((float)$detail['disc_pct'], 2) : 0;
+
                     // Ambil data material untuk mengisi matl_code dan satuan (uom)
                     $material = Material::find($detail['matl_id']);
                     if ($material) {
@@ -542,6 +546,44 @@ class Detail extends BaseComponent
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+
+    public function deleteTransaction()
+    {
+        try {
+            // 1) Pastikan object ada dan memang tercatat di DB
+            if (!$this->object || is_null($this->object->id) ||
+                !OrderHdr::where('id', $this->object->id)->exists()) {
+                throw new \Exception(__('Data header tidak ditemukan'));
+            }
+
+            DB::beginTransaction();
+
+            // 2) Hapus detail jika ada
+            $detailsExist = OrderDtl::where('trhdr_id', $this->object->id)
+                ->where('tr_type', $this->object->tr_type)
+                ->exists();
+
+            if ($detailsExist) {
+                OrderDtl::where('trhdr_id', $this->object->id)
+                    ->where('tr_type', $this->object->tr_type)
+                    ->forceDelete();
+            }
+
+            // 3) Hapus header
+            $this->object->forceDelete();
+
+            DB::commit();
+
+            $this->dispatch('success', __('Data berhasil terhapus'));
+            return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('error', __('generic.error.delete', [
+                'message' => $e->getMessage()
+            ]));
+        }
     }
 
     /*

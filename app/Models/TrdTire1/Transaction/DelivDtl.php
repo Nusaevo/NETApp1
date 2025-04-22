@@ -228,8 +228,8 @@ class DelivDtl extends BaseModel
                     'batch_code' => $delivDtl->batch_code,
                     'tr_date'    => $header ? $header->tr_date : null,
                     'qty'        => $delivDtl->qty,
-                    'price'      => $delivDtl->OrderDtl->price ?? 0,
-                    'amt'        => $delivDtl->OrderDtl->amt ?? 0,
+                    'price'      => $orderDtl ? $orderDtl->price * (1 - ($orderDtl->disc_pct / 100)) : 0,
+                    'amt'        => $delivDtl->qty * ($orderDtl ? $orderDtl->price * (1 - ($orderDtl->disc_pct / 100)) : 0),
                     'tr_desc'    => $delivDtl->matl_descr,
                 ]
             );

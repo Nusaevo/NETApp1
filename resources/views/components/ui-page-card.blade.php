@@ -1,5 +1,5 @@
 <div>
-    <div id="page-card" class="container-xxl mb-5">
+    <div id="page-card" class="container-xXxl mb-5">
         <div class="d-flex justify-content-between align-items-center mb-3">
             {{-- Title --}}
             @if (!empty($title))
