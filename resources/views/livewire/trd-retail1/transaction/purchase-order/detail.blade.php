@@ -136,10 +136,6 @@
                                                     <td style="text-align: center;">
                                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                                             cssClass="btn-danger text-danger" iconPath="delete.svg" />
-                                                      @if ($actionValue === 'Edit')
-                                                      <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="Retur" loading="true" :action="$actionValue"
-                                                            cssClass="btn-secondary"/>
-                                                      @endif
                                                     </td>
                                                 </tr>
                                             @endforeach

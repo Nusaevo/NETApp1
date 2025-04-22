@@ -30,7 +30,7 @@
                                                         width="200px" height="200px" />
                                                     <div class="image-close-button">
                                                         <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'"
-                                                            class="btn btn-link" name="x" />
+                                                            class="btn btn-link" name="x" :action="$actionValue"/>
                                                     </div>
                                                 </div>
                                             @empty
@@ -40,7 +40,7 @@
                                             @endforelse
                                         </div>
                                         <div class="button-container">
-                                            <x-ui-image-button :action="$customActionValue"
+                                            <x-ui-image-button
                                                 hideStorageButton="false"></x-ui-image-button>
                                         </div>
                                         <x-ui-dialog-box id="storageDialogBox" :width="'2000px'" :height="'2000px'"
@@ -133,8 +133,10 @@
                             <th style="text-align: center; width: 100px;">{{ $this->trans('reff_factor') }}</th>
                             <th style="text-align: center; width: 10px;">{{ $this->trans('base_factor') }}</th>
                             <th style="text-align: center; width: 150px;">{{ $this->trans('barcode') }}</th>
+                            @if($actionValue == 'Edit')
                             <th style="text-align: center; width: 150px;">{{ $this->trans('buying_price') }}
                             </th>
+                            @endif
                             <th style="text-align: center; width: 150px;">{{ $this->trans('selling_price') }}
                             </th>
                             <th style="text-align: center; width: 150px;">{{ $this->trans('stock') }}</th>
@@ -165,10 +167,12 @@
                                         <x-ui-text-field model="input_details.{{ $key }}.barcode"
                                             type="text" required="false" enabled="true" :action="$actionValue" />
                                     </td>
-                                    <td style="text-align: center;">
-                                        <x-ui-text-field model="input_details.{{ $key }}.buying_price"
-                                            type="number" required="false" enabled="false" :action="$actionValue" />
-                                    </td>
+                                    @if($actionValue == 'Edit')
+                                        <td style="text-align: center;">
+                                            <x-ui-text-field model="input_details.{{ $key }}.buying_price"
+                                                type="number" required="false" :action="$actionValue" />
+                                        </td>
+                                    @endif
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.selling_price"
                                             type="number" required="false" :action="$actionValue" />
@@ -191,7 +195,7 @@
                         @endif
                         <x-slot name="button">
                             <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="{{ $this->trans('add') }}" />
+                                button-name="{{ $this->trans('add') }}" :action="$actionValue"/>
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>
