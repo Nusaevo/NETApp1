@@ -156,11 +156,9 @@
             <p class="fs-5 text-danger fw-semibold mb-4">{{ $errorMessage }}</p>
 
             {{-- Back to Home hanya kalau bukan 403 --}}
-            @if ($errorCode !== 403)
-                <a href="{{ url('/') }}" class="btn btn-primary me-2">
-                    <i class="bi bi-house-door-fill me-1"></i> Back to Home
-                </a>
-            @endif
+            <a href="{{ url('/') }}" class="btn btn-primary me-2">
+                <i class="bi bi-house-door-fill me-1"></i> Back to Home
+            </a>
 
             {{-- Link khusus 422 --}}
             @if ($errorCode === 422)

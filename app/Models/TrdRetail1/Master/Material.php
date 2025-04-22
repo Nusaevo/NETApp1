@@ -22,6 +22,29 @@ class Material extends BaseModel
     protected static function boot()
     {
         parent::boot();
+        static::saving(function (Material $m) {
+            $specs = $m->specs ?: [];
+
+            if (isset($specs['color_code'])) {
+                $specs['color_code'] = strtoupper(str_replace(' ', '', $specs['color_code']));
+            }
+
+            if (isset($specs['color_name'])) {
+                $specs['color_name'] = strtoupper($specs['color_name']);
+            }
+
+            $m->specs = $specs;
+
+            if ($m->brand) {
+                $m->brand = strtoupper($m->brand);
+            }
+            if ($m->class_code) {
+                $m->class_code = strtoupper($m->class_code);
+            }
+            if ($m->name) {
+                $m->name = strtoupper($m->name);
+            }
+        });
     }
 
     protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'taxable', 'uom', 'remarks', 'tag'];
@@ -359,7 +382,7 @@ class Material extends BaseModel
                             'brand'      => $brand,
                             'seq'        => $no,
                             'class_code' => $type,
-                            'type_code'  => 'P',
+                            'type_code'  => '',
                             'specs'      => [
                                 'color_code' => $colorCode,
                                 'color_name' => $colorName
