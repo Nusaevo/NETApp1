@@ -253,7 +253,17 @@ class MaterialComponent extends BaseComponent
             $this->materials['class_code'] ?? '',
             $this->materials['specs'],
         );
-        $this->generateName(); // method apa pun yang Anda punya
+        $this->generateName();
+        $query = Material::where('name', $this->materials['name'])
+        ->where('category', $this->materials['category']);
+        if ($this->object->id) {
+            $query->where('id', '!=', $this->object->id);
+        }
+
+        if ($query->exists()) {
+            $this->dispatch('error', 'Nama material dengan kategori ini sudah ada.');
+            return;
+        }
 
         // 5. Isi model Material dengan data input
         $this->object->fill($this->materials);
