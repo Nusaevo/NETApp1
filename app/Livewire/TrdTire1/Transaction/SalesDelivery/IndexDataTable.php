@@ -227,6 +227,9 @@ class IndexDataTable extends BaseDataTableComponent
                     $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
                         ->where('matl_uom', $delivDtl->matl_uom)
                         ->first();
+                    if ($matlUom) {
+                        $matlUom->increment('qty_fgi', $delivDtl->qty);
+                    }
                     $delivDtl->forceDelete(); // Permanently delete DelivDtl
                 }
                 // Permanently delete DelivHdr
