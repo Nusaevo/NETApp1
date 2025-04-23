@@ -130,24 +130,6 @@ class IndexDataTable extends BaseDataTableComponent
             ->filter(fn(Builder $b, string $v) => $b->where('grp', $v));
     }
 
-    // dua filter berikut selalu tampil apa pun TYPE‑nya
-    $filters[] = SelectFilter::make('Stock', 'stock_filter')
-        ->options([
-            'all'     => 'All',
-            'above_0' => 'Available',
-            'below_0' => 'Out of Stock',
-        ])
-        ->filter(function (Builder $b, string $v) {
-            if ($v === 'above_0') {
-                $b->whereHas('IvtBal', fn($q) => $q->where('qty_oh', '>', 0));
-            } elseif ($v === 'below_0') {
-                $b->where(fn($q) =>
-                    $q->whereDoesntHave('IvtBal')
-                      ->orWhereHas('IvtBal', fn($q2) => $q2->where('qty_oh', '<=', 0))
-                );
-            }
-        });
-
     $filters[] = SelectFilter::make('Status', 'status_filter')
         ->options([
             'active'  => 'Active',
