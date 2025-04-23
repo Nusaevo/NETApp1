@@ -371,7 +371,7 @@ class Detail extends BaseComponent
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
-                $material = Material::find($detail->matl_id);
+                $material = Material::withTrashed()->find($detail->matl_id);
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
                 $this->updateItemAmount($key);
