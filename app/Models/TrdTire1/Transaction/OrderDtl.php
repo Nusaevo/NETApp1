@@ -42,26 +42,34 @@ class OrderDtl extends BaseModel
             $price = $orderDtl->price;
             $discPct = $orderDtl->disc_pct / 100;
             $taxPct = $orderDtl->OrderHdr->tax_pct / 100;
-            $priceDisc = $price * (1 - $discPct);
 
-            // Calculate DPP based on tax flag
+            // Calculate amt
+            $orderDtl->amt = $qty * $price * (1 - $discPct);
+
+            // Calculate amt_tax based on tax flag
             if ($orderDtl->OrderHdr->tax_flag === 'I') {
-                $orderDtl->dpp = $priceDisc / (1 + $taxPct);
+                $orderDtl->amt_tax = $orderDtl->amt;
             } elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
-                $orderDtl->dpp = $priceDisc;
-            } else {
-                $orderDtl->dpp = $priceDisc;
+                $orderDtl->amt_tax = round($orderDtl->amt * (1 + $taxPct), 2);
+            } else { // tax_flag === 'N'
+                $orderDtl->amt_tax = $orderDtl->amt;
             }
 
-            // Calculate amt and amt_tax
-            $orderDtl->amt = $priceDisc * $qty;
-            $orderDtl->amt_tax = round($orderDtl->amt * (1 + $taxPct), 2); // Include tax in the total amount
+            // Calculate DPP based on tax flag
+            $priceDisc = $price * (1 - $discPct);
+            if ($orderDtl->OrderHdr->tax_flag === 'I') {
+                $orderDtl->dpp = round($priceDisc / (1 + $taxPct), 2); // Round to 2 decimal places
+            } elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
+                $orderDtl->dpp = round($priceDisc, 2); // Round to 2 decimal places
+            } else {
+                $orderDtl->dpp = round($priceDisc, 2); // Round to 2 decimal places
+            }
 
             // price_base = base_factor yang ada di MatlUom
             $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
                 ->where('matl_uom', $orderDtl->matl_uom)
                 ->first();
-            $orderDtl->price_base = $matlUom->base_factor;
+            // $orderDtl->price_base = $matlUom->base_factor;
             // $orderDtl->qty_base = $qty * $matlUom->base_factor;
             $orderDtl->qty_uom = $matlUom->matl_uom;
             if ($matlUom) {
