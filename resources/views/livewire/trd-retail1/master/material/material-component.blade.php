@@ -67,7 +67,7 @@
 
                             <div class="row">
                                 <x-ui-text-field label="{{ $this->trans('brand') }}" model="materials.brand"
-                                    type="text" :action="$actionValue" required="true" enabled="true"
+                                    type="text" :action="$actionValue" required="false" enabled="true"
                                     onChanged="generateName" capslockMode="true" />
                                 <x-ui-text-field label="{{ $this->trans('class_code') }}" model="materials.class_code"
                                     type="text" :action="$actionValue" required="false" enabled="true"

@@ -72,7 +72,7 @@ class Material extends BaseModel
     {
         return [
             'name' => 'Material_Create_Template',
-            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'UOM*', 'No', 'Kode Warna', 'Nama Warna', 'Ukuran', 'Nama Barang', 'Harga Beli', 'Harga Jual*', 'Stock', 'Keterangan', 'Kode Barcode', 'Status', 'Message'],
+            'headers' => ['Kategori*', 'Merk', 'Jenis', 'UOM*', 'No', 'Kode Warna', 'Nama Warna', 'Ukuran', 'Nama Barang', 'Harga Beli', 'Harga Jual*', 'Stock', 'Keterangan', 'Kode Barcode', 'Status', 'Message'],
             'data' => $data,
             'protectedColumns' => [],
             'allowInsert' => true,
@@ -189,8 +189,8 @@ class Material extends BaseModel
             if ($param === 'Create') {
                 // Validation for Create template
                 $category    = $row[$headerIndex['Kategori*']]   ?? null; // Kategori*
-                $brand       = $row[$headerIndex['Merk*']]       ?? null; // Merk*
-                $type        = $row[$headerIndex['Jenis*']]      ?? null; // Jenis*
+                $brand       = $row[$headerIndex['Merk']]       ?? null; // Merk*
+                $type        = $row[$headerIndex['Jenis']]      ?? null; // Jenis*
                 $no          = $row[$headerIndex['No']]          ?? null; // No
                 $colorCode   = $row[$headerIndex['Kode Warna']]  ?? null; // Kode Warna
                 $colorName   = $row[$headerIndex['Nama Warna']]  ?? null; // Nama Warna
@@ -204,12 +204,12 @@ class Material extends BaseModel
                 if (empty($category)) {
                     $message .= 'Kategori* tidak boleh kosong. ';
                 }
-                if (empty($brand)) {
-                    $message .= 'Merk* tidak boleh kosong. ';
-                }
-                if (empty($type)) {
-                    $message .= 'Jenis* tidak boleh kosong. ';
-                }
+                // if (empty($brand)) {
+                //     $message .= 'Merk* tidak boleh kosong. ';
+                // }
+                // if (empty($type)) {
+                //     $message .= 'Jenis* tidak boleh kosong. ';
+                // }
 
                 if (empty($uom)) {
                     $message .= 'UOM tidak boleh kosong. ';
@@ -352,8 +352,8 @@ class Material extends BaseModel
 
                 if ($param === 'Create') {
                     $category     = $row[$headerIndex['Kategori*']]   ?? '';
-                    $brand        = $row[$headerIndex['Merk*']]       ?? '';
-                    $type         = $row[$headerIndex['Jenis*']]      ?? '';
+                    $brand        = $row[$headerIndex['Merk']]       ?? '';
+                    $type         = $row[$headerIndex['Jenis']]      ?? '';
                     $no           = $row[$headerIndex['No']]          ?? '';
                     $colorCode    = $row[$headerIndex['Kode Warna']]  ?? '';
                     $colorName    = $row[$headerIndex['Nama Warna']]  ?? '';
