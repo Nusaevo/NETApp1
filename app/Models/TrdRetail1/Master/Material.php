@@ -237,7 +237,14 @@ class Material extends BaseModel
                 $existingMaterial = Material::where('category', $category)->where('name', $name)->first();
 
                 if ($existingMaterial) {
-                    $message .= 'Material dengan Kategori dan Nama barang ni sudah ada di database. ';
+                    $message .= 'Material dengan Kategori dan Nama barang sama sudah ada di file database. ';
+                }
+
+                static $existingNamesInExcel = [];
+                $key = strtoupper(trim($category)) . '|' . strtoupper(trim($name));
+
+                if (isset($existingNamesInExcel[$key])) {
+                    $message .= 'Material dengan Kategori dan Nama barang sama sudah ada di file Excel. ';
                 }
             } elseif ($param === 'Update') {
                 // Validasi Template Update
