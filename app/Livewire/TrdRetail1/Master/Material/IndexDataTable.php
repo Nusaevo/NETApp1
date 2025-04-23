@@ -32,7 +32,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        $query = MatlUom::query()
+        $query = MatlUom::withTrashed()
             ->with('Material')
             ->join('materials', 'materials.id', '=', 'matl_uoms.matl_id')
             ->select('matl_uoms.*')
@@ -86,7 +86,7 @@ class IndexDataTable extends BaseDataTableComponent
 
             Column::make($this->trans('uom'), 'matl_uom'),
 
-            BooleanColumn::make($this->trans('status'), 'Material.deleted_at')->setCallback(fn($value) => $value === null),
+            BooleanColumn::make($this->trans('status'), 'deleted_at')->setCallback(fn($value) => $value === null),
             Column::make($this->trans('action'), 'id')
             ->format(fn($value, $matlUom) => view('layout.customs.data-table-action', [
                 'row'    => $matlUom->Material,
@@ -227,12 +227,28 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function deleteMaterial($data)
     {
-        $idsArray = explode(',', $data);
-        Material::whereIn('id', $idsArray)->update(['status_code' => Status::NONACTIVE]);
-        Material::whereIn('id', $idsArray)->delete();
-        $this->dispatch('refreshTable');
+        $uomIds = explode(',', $data);
 
-        $message = count($idsArray) > 1 ? $this->trans('delete_success_multiple') : $this->trans('delete_success_single');
+        // Fetch related material IDs before deletion
+        $uoms = MatlUom::whereIn('id', $uomIds)->get();
+        $materialIds = $uoms->pluck('matl_id')->unique();
+
+        // Delete UOM records
+        MatlUom::whereIn('id', $uomIds)->delete();
+
+        // For each affected material, delete if it has no more UOMs
+        foreach ($materialIds as $matlId) {
+            $hasUoms = MatlUom::where('matl_id', $matlId)->exists();
+            if (! $hasUoms) {
+                Material::where('id', $matlId)->delete();
+            }
+        }
+
+        // Refresh table and notify
+        $this->dispatch('refreshTable');
+        $message = count($uomIds) > 1
+            ? $this->trans('delete_success_multiple')
+            : $this->trans('delete_success_single');
         $this->dispatch('success', $message);
     }
 }

@@ -23,6 +23,7 @@ class Material extends BaseModel
     {
         parent::boot();
         $saving = function (Material $m) {
+            //— handle specs & uppercase attrs seperti sebelumnya —
             $specs = $m->specs ?: [];
             if (is_string($specs)) {
                 $specs = json_decode($specs, true);
@@ -30,22 +31,36 @@ class Material extends BaseModel
             if (isset($specs['color_code'])) {
                 $specs['color_code'] = strtoupper(str_replace(' ', '', $specs['color_code']));
             }
-
             if (isset($specs['color_name'])) {
                 $specs['color_name'] = strtoupper($specs['color_name']);
             }
-            $m->specs = $specs;
+            if (isset($specs['size'])) {
+                $specs['size'] = strtoupper($specs['size']);
+            }
             foreach (['brand', 'class_code', 'name'] as $attr) {
                 if ($m->{$attr}) {
                     $m->{$attr} = strtoupper($m->{$attr});
                 }
             }
+            $m->specs = json_encode($specs);
+
+            //— baru: restore UOM kalau material di-activate ulang —
+            $original = $m->getOriginal('status_code');
+            $current  = $m->status_code;
+            if ($original === Status::NONACTIVE && $current === Status::ACTIVE) {
+                $m->MatlUom()->withTrashed()->restore();
+                $m->MatlUom()->update(['status_code' => Status::ACTIVE]);
+            }
         };
 
         static::creating($saving);
         static::updating($saving);
-        static::updating($saving);
+        static::saving($saving);
 
+        static::deleting(function(Material $m) {
+            $m->MatlUom()->update(['status_code' => Status::NONACTIVE]);
+            $m->MatlUom()->delete();
+        });
     }
 
     protected $fillable = ['code', 'seq', 'name', 'descr', 'type_code', 'class_code', 'category', 'remarks', 'brand', 'dimension', 'wgt', 'qty_min', 'specs', 'taxable', 'uom', 'remarks', 'tag'];

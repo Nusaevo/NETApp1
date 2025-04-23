@@ -194,12 +194,31 @@
                                             type="number" required="false" enabled="false" :action="$actionValue" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-button clickEvent="deleteItem({{ $key }})"
-                                            cssClass="btn-danger" iconPath="delete.svg" button-name=""
-                                            :action="$actionValue" />
-                                        <x-ui-button button-name="" click-event="printBarcode({{ $key }})"
-                                            :action="$actionValue" cssClass="btn-secondary" iconPath="print.svg" />
+                                        @php
+                                            $uom = $input_detail;
+                                            $isActive = empty($uom['deleted_at']);
+                                        @endphp
+                                           @if ($actionValue === 'Edit')
+                                           <!-- Toggle Active/Inactive Button -->
+                                           <x-ui-button
+                                               clickEvent="toggleUomStatus({{ $key }})"
+                                               cssClass="btn-sm {{ $isActive ? 'btn-danger' : 'btn-success' }}"
+                                               iconPath="{{ $isActive ? 'disable.svg' : 'enable.svg' }}"
+                                               button-name="{{ $isActive ? __('Non Active') : __('Activate') }}"
+                                               :action="$actionValue"
+                                           />
+
+                                           <!-- Print Barcode Button -->
+                                           <x-ui-button
+                                               clickEvent="printBarcode({{ $key }})"
+                                               cssClass="btn-secondary btn-sm ml-2"
+                                               iconPath="print.svg"
+                                               button-name="{{ __('Print') }}"
+                                               :action="$actionValue"
+                                           />
+                                           @endif
                                     </td>
+
                                 </tr>
                             @endforeach
                         </x-slot>
