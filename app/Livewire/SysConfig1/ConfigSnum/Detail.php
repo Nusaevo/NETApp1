@@ -26,6 +26,7 @@ class Detail extends BaseComponent
 
     protected $listeners = [
         'applicationChanged' => 'onApplicationChanged',
+        'changeStatus'  => 'changeStatus',
     ];
     #endregion
 
@@ -85,6 +86,11 @@ class Detail extends BaseComponent
         }
         $this->object->save();
     }
+    public function changeStatus()
+    {
+        $this->change();
+    }
+
     #endregion
 
     #region Component Events

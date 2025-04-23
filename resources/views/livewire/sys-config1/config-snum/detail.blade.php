@@ -79,6 +79,8 @@
                             placeHolder="Enter a description (optional)"
                         />
                     </div>
+                    <x-ui-text-field label="Description" model="inputs.descr" type="textarea" :action="$actionValue"
+                    placeHolder="Enter Description (e.g., Application's information)" visible="true" />
                 </x-ui-card>
             </div>
         </x-ui-tab-view-content>
