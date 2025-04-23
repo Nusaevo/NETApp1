@@ -72,7 +72,7 @@ class Material extends BaseModel
     {
         return [
             'name' => 'Material_Create_Template',
-            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'No', 'Kode Warna', 'Nama Warna', 'UOM*', 'Harga Beli', 'Harga Jual*', 'Keterangan', 'Kode Barcode', 'Stock', 'Status', 'Message'],
+            'headers' => ['Kategori*', 'Merk*', 'Jenis*', 'UOM*', 'No', 'Kode Warna', 'Nama Warna', 'Ukuran', 'Nama Barang', 'Harga Beli', 'Harga Jual*', 'Stock', 'Keterangan', 'Kode Barcode', 'Status', 'Message'],
             'data' => $data,
             'protectedColumns' => [],
             'allowInsert' => true,
@@ -364,13 +364,16 @@ class Material extends BaseModel
                     $remarks      = $row[$headerIndex['Keterangan']]  ?? '';
                     $barcode      = $row[$headerIndex['Kode Barcode']]?? '';
                     $stockRaw     = $row[$headerIndex['Stock']]       ?? '';
+                    $size     = $row[$headerIndex['Ukuran']]       ?? '';
+                    $materialName     = $row[$headerIndex['Nama Barang']]       ?? '';
                     $stock        = !empty($stockRaw) ? convertFormattedNumber($stockRaw) : 0;
 
                     $materialCode = Material::generateMaterialCode($category);
-                    $name = '';
                     $generated = Material::generateName($category, $brand, $type, $colorCode, $colorName);
                     if ($generated !== '') {
                         $name = $generated;
+                    }else{
+                        $name = strtoupper($materialName);
                     }
 
                     $validUOMs = ConfigConst::where('const_group', 'MMATL_UOM')->pluck('str1')->toArray();
@@ -402,7 +405,7 @@ class Material extends BaseModel
                             'specs'      => [
                                 'color_code' => $colorCode,
                                 'color_name' => $colorName,
-                                'size' => '',
+                                'size' =>   $size,
                             ],
                             'remarks' => $remarks,
                             'uom'     => $uom,
