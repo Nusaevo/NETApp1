@@ -198,6 +198,14 @@ class Material extends BaseModel
                 $buyingPrice = $row[$headerIndex['Harga Beli']] ?? null; // Harga Beli
                 $sellingPrice= $row[$headerIndex['Harga Jual*']] ?? null; // Harga Jual*
                 $stock       = $row[$headerIndex['Stock']]       ?? null; // Stock
+                $materialName     = $row[$headerIndex['Nama Barang']]       ?? '';
+                $generated = Material::generateName($category, $brand, $type, $colorCode, $colorName);
+                $name='';
+                if ($generated !== '') {
+                    $name = $generated;
+                }else{
+                    $name = strtoupper($materialName);
+                }
                 // if (empty($no)) {
                 //     $message .= 'Kolom No* tidak boleh kosong. ';
                 // }
@@ -225,16 +233,8 @@ class Material extends BaseModel
                 if (!empty($stock) && (!is_numeric($stock) || $stock < 0)) {
                     $message .= 'Stock harus berupa angka non-negatif. ';
                 }
-                // Buat key berdasarkan kombinasi Kategori, Merk, Jenis, dan Color Code
-                $combinationKey = trim($category) . '_' . trim($brand) . '_' . trim($type) . '_' . trim($colorCode);
-                if (isset($combinationTracker[$combinationKey])) {
-                    $message .= 'Duplikat dalam file: kombinasi Kategori, Merk, Jenis, dan Kode Warna sudah ada. ';
-                } else {
-                    $combinationTracker[$combinationKey] = $index; // Tandai kombinasi sebagai sudah ada
-                }
-
                 // Cek duplikasi dalam database berdasarkan Kategori, Merk, Jenis, dan Color Code di JSONB (specs->color_code)
-                $existingMaterial = Material::where('category', $category)->where('brand', $brand)->where('class_code', $type)->whereJsonContains('specs->color_code', $colorCode)->first();
+                $existingMaterial = Material::where('category', $category)->where('name', $name)->first();
 
                 if ($existingMaterial) {
                     $message .= 'Material dengan kombinasi Kategori, Merk, Jenis, dan Kode Warna sudah ada di database. ';
@@ -354,7 +354,7 @@ class Material extends BaseModel
                     $category     = $row[$headerIndex['Kategori*']]   ?? '';
                     $brand        = $row[$headerIndex['Merk']]       ?? '';
                     $type         = $row[$headerIndex['Jenis']]      ?? '';
-                    $no           = $row[$headerIndex['No']]          ?? '';
+                    $no           = $row[$headerIndex['No']]          ?? 0;
                     $colorCode    = $row[$headerIndex['Kode Warna']]  ?? '';
                     $colorName    = $row[$headerIndex['Nama Warna']]  ?? '';
                     $uom          = $row[$headerIndex['UOM*']]        ?? '';
