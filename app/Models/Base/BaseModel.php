@@ -79,6 +79,7 @@ class BaseModel extends Model
     {
         // Check if the `status_code` column exists in the current table
         if (Schema::connection($this->getConnectionName())->hasColumn($this->getTable(), 'status_code')) {
+
             $statusCode = $this->attributes['status_code'] ?? null;
 
             if ($statusCode) {

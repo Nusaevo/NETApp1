@@ -8,6 +8,7 @@ use App\Models\TrdRetail1\Master\{Material, MatlUom};
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\Base\Attachment;
 use App\Services\TrdRetail1\Master\MasterService;
+use App\Enums\Status;
 use Livewire\WithFileUploads;
 use Exception;
 
@@ -145,11 +146,8 @@ class MaterialComponent extends BaseComponent
     protected function loadMaterial($objectId)
     {
         $this->object = Material::withTrashed()->find($objectId);
-
         if ($this->object) {
-            $this->object_uoms = $this->object->DefaultUom;
             $this->materials = populateArrayFromModel($this->object);
-            $this->matl_uoms = populateArrayFromModel($this->object_uoms);
             $attachments = $this->object->Attachment;
             $specs = $this->object->specs ?? [];
             $this->materials['color_code'] = $specs['color_code'] ?? '';
@@ -169,7 +167,7 @@ class MaterialComponent extends BaseComponent
     protected function loadUomDetails()
     {
         if (!empty($this->objectIdValue)) {
-            $uoms = MatlUom::where('matl_id', $this->objectIdValue)->get();
+            $uoms = MatlUom::withTrashed()->where('matl_id', $this->objectIdValue)->get();
             $this->input_details = $uoms
                 ->map(function ($uom) {
                     return [
@@ -182,6 +180,7 @@ class MaterialComponent extends BaseComponent
                         'selling_price' => $uom->selling_price,
                         'buying_price' => $uom->buying_price,
                         'qty_oh' => $uom->qty_oh,
+                        'deleted_at' => $uom->deleted_at,
                     ];
                 })
                 ->toArray();
@@ -195,6 +194,46 @@ class MaterialComponent extends BaseComponent
     #endregion
 
     #region CRUD Methods
+    public function toggleUomStatus($index)
+    {
+        // ambil data detail di index
+        if (!isset($this->input_details[$index])) {
+            $this->dispatch('error', 'UOM item tidak ditemukan.');
+            return;
+        }
+
+        $detail = $this->input_details[$index];
+        $uom = MatlUom::withTrashed()->find($detail['id']);
+        if (!$uom) {
+            $this->dispatch('error', 'UOM record tidak ada.');
+            return;
+        }
+
+        if ($uom->trashed()) {
+            $parent = Material::withTrashed()->find($uom->matl_id);
+            if (!$parent || $parent->trashed()) {
+                $this->dispatch('error', 'Material induk masih non-aktif. Silakan aktifkan material terlebih dahulu.');
+                return;
+            }
+
+            // restore UOM setelah material oke
+            $uom->restore();
+            $uom->status_code = Status::ACTIVE;
+            $uom->save();
+            $this->dispatch('success', 'UOM berhasil di-aktifkan.');
+        }
+         else {
+            // soft‑delete
+            $uom->status_code = Status::NONACTIVE;
+            $uom->save();
+            $uom->delete();
+            $this->dispatch('success', 'UOM berhasil di‑non‑aktifkan.');
+        }
+
+        // reload detail agar view ter‑update
+        $this->loadUomDetails();
+    }
+
     public function onValidateAndSave()
     {
         // 3. Siapkan data specs, dsb. (terserah logika Anda)
@@ -398,6 +437,7 @@ class MaterialComponent extends BaseComponent
     public function changeStatus()
     {
         $this->change();
+        $this->loadUomDetails();
     }
 
     // UomListComponent methods
