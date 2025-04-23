@@ -32,37 +32,31 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        $query = MatlUom::withTrashed()
-            ->with('Material')
-            ->join('materials', 'materials.id', '=', 'matl_uoms.matl_id')
-            ->select('matl_uoms.*')
-            ->whereRaw('1=0');
+        $query = MatlUom::withTrashed()->with('Material')->join('materials', 'materials.id', '=', 'matl_uoms.matl_id')->select('matl_uoms.*')->whereRaw('1=0');
         return $query;
     }
 
     public function columns(): array
     {
-        return [
-            Column::make($this->trans('no'), 'Material.seq')
-            ->sortable(),
+        $columns = [
+            Column::make($this->trans('no'), 'Material.seq')->sortable(),
+
             Column::make($this->trans('code'), 'Material.code')
-            ->format(function ($value, $row) {
-                return '<a href="' .
-                    route($this->appCode . '.Master.Material.Detail', [
-                        'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->Material->id),
-                    ]) .
-                    '">' .
-                    $row->Material->code .
-                    '</a>';
-            })
-            ->html()->sortable(
-                fn(Builder $query, string $direction) =>
-                    // karena kita sudah join ke materials di builder()
-                    $query->orderBy('materials.code', $direction)
-            ),
+                ->format(function ($value, $row) {
+                    return '<a href="' .
+                        route($this->appCode . '.Master.Material.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->Material->id),
+                        ]) .
+                        '">' .
+                        $row->Material->code .
+                        '</a>';
+                })
+                ->html()
+                ->sortable(fn(Builder $query, string $direction) => $query->orderBy('materials.code', $direction)),
+
             Column::make($this->trans('name'), 'Material.name')->sortable(),
-            // Column::make($this->trans('brand'), 'Material.brand')->sortable(),
+
             Column::make($this->trans('photo'), 'Material.id')
                 ->format(function ($value, $row) {
                     $attachment = $row->Material->Attachment->first();
@@ -79,27 +73,32 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
 
             Column::make($this->trans('selling_price'), 'selling_price')->label(fn($row) => rupiah($row->selling_price))->sortable(),
-
-            Column::make($this->trans('buying_price'), 'buying_price')->label(fn($row) => rupiah($row->buying_price))->sortable(),
-
-            Column::make($this->trans('stock'), 'qty_oh')->label(fn($row) => $row->qty_oh)->sortable(),
-
-            Column::make($this->trans('uom'), 'matl_uom'),
-
-            BooleanColumn::make($this->trans('status'), 'deleted_at')->setCallback(fn($value) => $value === null),
-            Column::make($this->trans('action'), 'id')
-            ->format(fn($value, $matlUom) => view('layout.customs.data-table-action', [
-                'row'    => $matlUom->Material,
-                'custom_actions'  => [],
-                'enable_this_row' => true,
-                'allow_details'   => false,
-                'allow_edit'      => true,
-                'allow_disable'   => false,
-                'allow_delete'    => false,
-                'permissions'     => $this->permissions,
-            ])),
-
         ];
+
+        if ($this->permissions['update']) {
+            $columns[] = Column::make($this->trans('buying_price'), 'buying_price')->label(fn($row) => rupiah($row->buying_price))->sortable();
+        }
+
+        $columns[] = Column::make($this->trans('stock'), 'qty_oh')->label(fn($row) => $row->qty_oh)->sortable();
+
+        $columns[] = Column::make($this->trans('uom'), 'matl_uom');
+
+        $columns[] = BooleanColumn::make($this->trans('status'), 'deleted_at')->setCallback(fn($value) => $value === null);
+
+        $columns[] = Column::make($this->trans('action'), 'id')->format(
+            fn($value, $matlUom) => view('layout.customs.data-table-action', [
+                'row' => $matlUom->Material,
+                'custom_actions' => [],
+                'enable_this_row' => true,
+                'allow_details' => false,
+                'allow_edit' => true,
+                'allow_disable' => false,
+                'allow_delete' => false,
+                'permissions' => $this->permissions,
+            ]),
+        );
+
+        return $columns;
     }
 
     public function filters(): array
@@ -112,7 +111,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         return [
             // CODE
-            $this->createTextFilter($this->trans('product'), 'tag', "Cari Produk", function (Builder $q, string $v) {
+            $this->createTextFilter($this->trans('product'), 'tag', 'Cari Produk', function (Builder $q, string $v) {
                 if ($this->isFirstFilterApplied($q)) {
                     $q->getQuery()->wheres = [];
                 }
@@ -239,16 +238,14 @@ class IndexDataTable extends BaseDataTableComponent
         // For each affected material, delete if it has no more UOMs
         foreach ($materialIds as $matlId) {
             $hasUoms = MatlUom::where('matl_id', $matlId)->exists();
-            if (! $hasUoms) {
+            if (!$hasUoms) {
                 Material::where('id', $matlId)->delete();
             }
         }
 
         // Refresh table and notify
         $this->dispatch('refreshTable');
-        $message = count($uomIds) > 1
-            ? $this->trans('delete_success_multiple')
-            : $this->trans('delete_success_single');
+        $message = count($uomIds) > 1 ? $this->trans('delete_success_multiple') : $this->trans('delete_success_single');
         $this->dispatch('success', $message);
     }
 }

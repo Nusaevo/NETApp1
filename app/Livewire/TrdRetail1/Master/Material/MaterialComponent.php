@@ -236,6 +236,7 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
+        $this->materials['color_code'] = strtoupper(str_replace(' ', '', $this->materials['color_code']));
         // 3. Siapkan data specs, dsb. (terserah logika Anda)
         $this->materials['specs'] = [
             'color_code' => $this->materials['color_code'] ?? '',
@@ -252,7 +253,7 @@ class MaterialComponent extends BaseComponent
             $this->materials['class_code'] ?? '',
             $this->materials['specs'],
         );
-        // $this->generateName(); // method apa pun yang Anda punya
+        $this->generateName(); // method apa pun yang Anda punya
 
         // 5. Isi model Material dengan data input
         $this->object->fill($this->materials);
@@ -268,7 +269,7 @@ class MaterialComponent extends BaseComponent
         // 8. Jika Material masih baru (artinya baru saja disimpan) -> Buat MatlUom
         //    (Jika TIDAK baru, artinya UOM sudah dicek, tidak perlu bikin lagi)
         foreach ($this->input_details as $key => $detail) {
-            $matlUom = MatlUom::updateOrCreate(
+            $matlUom = MatlUom::withTrashed()->updateOrCreate(
                 ['matl_id' => $this->object->id, 'matl_uom' => $detail['matl_uom']],
                 [
                     'reff_uom'     => $detail['reff_uom'],

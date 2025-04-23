@@ -137,7 +137,7 @@
                     </div>
                 </div>
                 <x-ui-card>
-                    <x-ui-table id="Table" title="{{ $this->trans('uom_list') }}">
+                    <x-ui-table id="Table" title="{!! $this->trans('uom_list') !!}">
                         <x-slot name="headers">
                             <th style="text-align: center; width: 10px;">{{ $this->trans('seq') }}</th>
                             <th style="text-align: center; width: 100px;">{{ $this->trans('base_uom') }}</th>
