@@ -64,7 +64,9 @@ class Detail extends BaseComponent
         'wh_code' => 'required',
         'input_details.*.matl_uom' => 'required',
     ];
-
+    protected $messages = [
+        'input_details.*.qty.min'            => 'Isi Qty',
+    ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
@@ -164,7 +166,7 @@ class Detail extends BaseComponent
             $detail['wh_id'] = $configConst ? $configConst->id : null;
 
             // Ambil data material untuk mendapatkan material code.
-            $material = Material::find($detail['matl_id'] ?? null);
+            $material = Material::withTrashed()->find($detail['matl_id'] ?? null);
             $detail['matl_code'] = $material ? $material->code : null;
 
             // Jika diperlukan, tambahkan atau ubah field lain di detail.

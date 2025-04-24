@@ -22,6 +22,7 @@ class Detail extends BaseComponent
     public $partners = [];
     public $partnerSearchText = '';
     public $selectedPartners = [];
+    public $isPrint = true;
 
 
     public $warehouses;
@@ -65,7 +66,9 @@ class Detail extends BaseComponent
         'wh_code' => 'required',
         'input_details.*.matl_uom' => 'required',
     ];
-
+    protected $messages = [
+        'input_details.*.qty.min'            => 'Isi Qty',
+    ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
@@ -140,10 +143,12 @@ class Detail extends BaseComponent
             throw new Exception('Harap isi Customer terlebih dahulu');
         }
 
-        if (!isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
+        if (!isNullOrEmptyNumber($this->inputs['payment_term_id'] && $this->inputs['payment_term_id'] > 0)) {
             $this->masterService = new MasterService();
             $paymentTerm = $this->masterService->getPaymentTermById($this->inputs['payment_term_id']);
             $this->inputs['payment_term'] = $paymentTerm ?? "";
+        } else {
+            throw new Exception('Harap isi Pembayaran terlebih dahulu');
         }
         // Persiapkan array detail untuk disimpan.
         // Contoh: Update urutan (tr_seq), tambahkan info warehouse dan material.
@@ -162,7 +167,7 @@ class Detail extends BaseComponent
             $detail['wh_id'] = $configConst ? $configConst->id : null;
 
             // Ambil data material untuk mendapatkan material code.
-            $material = Material::find($detail['matl_id'] ?? null);
+            $material = Material::withTrashed()->find($detail['matl_id'] ?? null);
             $detail['matl_code'] = $material ? $material->code : null;
 
             // Jika diperlukan, tambahkan atau ubah field lain di detail.
@@ -185,8 +190,21 @@ class Detail extends BaseComponent
                 'objectId' => encryptWithSessionKey($this->object->id),
             ]);
         }
+        if($this->isPrint) {
+            return redirect()->route(
+                $this->appCode . '.Transaction.SalesOrder.PrintPdf',
+                [
+                    'action'   => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id),
+                ]
+            );
+        }
     }
-
+    public function SaveAndPrint()
+    {
+        $this->isPrint = true;
+        $this->Save();
+    }
 
     public function delete()
     {
@@ -215,6 +233,7 @@ class Detail extends BaseComponent
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
+
     #endregion
 
     #region Component Events

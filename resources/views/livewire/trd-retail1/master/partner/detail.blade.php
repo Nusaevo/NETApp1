@@ -22,27 +22,27 @@
                             <x-ui-text-field label="{{ $this->trans('partner_code') }}" model="inputs.code"
                                 type="code" :action="$actionValue" required="true" enabled="false" />
                             <x-ui-dropdown-select label="{{ $this->trans('partner_type') }}" clickEvent=""
-                                model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" />
+                                model="inputs.grp" :options="$partnerTypes" required="true" :action="$actionValue" capslockMode="true" />
                         </div>
                         <x-ui-text-field label="{{ $this->trans('name') }}" model="inputs.name" type="text"
-                            :action="$actionValue" required="true" placeHolder="Enter Name" />
+                            :action="$actionValue" required="true" placeHolder="Enter Name" capslockMode="true"/>
                         <x-ui-text-field label="{{ $this->trans('address') }}" model="inputs.address" type="textarea"
-                            :action="$actionValue" height="100px" />
+                            :action="$actionValue" height="100px" capslockMode="true"/>
                         <div class="row">
                             <x-ui-text-field label="{{ $this->trans('city') }}" model="inputs.city" type="text"
-                                :action="$actionValue" />
+                                :action="$actionValue" capslockMode="true"/>
                             <x-ui-text-field label="{{ $this->trans('country') }}" model="inputs.country" type="text"
-                                :action="$actionValue" />
+                                :action="$actionValue" capslockMode="true"/>
                             <x-ui-text-field label="{{ $this->trans('postal_code') }}" model="inputs.postal_code"
-                                type="text" :action="$actionValue" />
+                                type="text" :action="$actionValue"capslockMode="true" />
                         </div>
                         <div class="row">
                             <x-ui-text-field label="{{ $this->trans('contact_person') }}" model="inputs.contact_person"
-                                type="text" :action="$actionValue" span="HalfWidth" />
+                                type="text" :action="$actionValue" span="HalfWidth" capslockMode="true"/>
                             <x-ui-text-field label="{{ $this->trans('phone') }}" model="inputs.phone" type="text"
-                                :action="$actionValue" span="HalfWidth" />
+                                :action="$actionValue" span="HalfWidth" capslockMode="true"/>
                             <x-ui-text-field label="{{ $this->trans('email') }}" model="inputs.email" type="text"
-                                :action="$actionValue" span="HalfWidth" />
+                                :action="$actionValue" span="HalfWidth" capslockMode="true"/>
                         </div>
 
                     </x-ui-card>
