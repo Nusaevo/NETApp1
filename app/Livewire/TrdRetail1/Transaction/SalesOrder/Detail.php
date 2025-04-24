@@ -58,12 +58,14 @@ class Detail extends BaseComponent
     public $wh_code='';
     public $rules  = [
         'inputs.tr_date' => 'required',
+        'inputs.partner_id' => 'required',
         'inputs.payment_term_id' => 'required',
-        'input_details.*.qty' => 'required',
+        'input_details.*.qty' => 'required|numeric|min:1',
         'input_details.*.matl_id' => 'required',
         'wh_code' => 'required',
         'input_details.*.matl_uom' => 'required',
     ];
+
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
         'delete' => 'delete',
@@ -128,16 +130,16 @@ class Detail extends BaseComponent
         // Jika mode edit dan order sudah completed, tampilkan peringatan dan hentikan proses.
         if ($this->actionValue === 'Edit') {
             if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa di edit, karena status sudah Completed');
-                return;
+                throw new Exception('Nota ini tidak bisa di edit, karena status sudah Completed');
             }
         }
-
-        // Update partner_code berdasarkan partner_id jika diperlukan.
-        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
+        if (!isNullOrEmptyNumber($this->inputs['partner_id']) && $this->inputs['partner_id'] > 0) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner ? $partner->code : null;
+        } else {
+            throw new Exception('Harap isi Customer terlebih dahulu');
         }
+
         if (!isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
             $this->masterService = new MasterService();
             $paymentTerm = $this->masterService->getPaymentTermById($this->inputs['payment_term_id']);

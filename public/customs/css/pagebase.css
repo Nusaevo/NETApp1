@@ -745,7 +745,9 @@ div[wire\:loading].loading-overlay {
 .btn-danger {
     padding: 5px !important;
 }
-
+.btn-success {
+    padding: 5px !important;
+}
 
 .select2-container--bootstrap5 .select2-selection--single {
     height: 1.35rem; /* Adjust the height as needed */

@@ -388,16 +388,6 @@ class Material extends BaseModel
                         $message .= 'UOM tidak ditemukan. ';
                     }
 
-                    $existingMaterial = Material::where('category', $category)
-                        ->where('brand', $brand)
-                        ->where('class_code', $type)
-                        ->whereJsonContains('specs->color_code', $colorCode)
-                        ->first();
-
-                    if ($existingMaterial) {
-                        $message .= 'Material sudah ada di database. ';
-                    }
-
                     if (!empty($message)) {
                         $status = 'Error';
                     } else {

@@ -15,7 +15,6 @@ use App\Models\TrdRetail1\Inventories\IvtLog;
 class OrderDtl extends BaseModel
 {
     use SoftDeletes;
-
     protected static function boot()
     {
         parent::boot();
