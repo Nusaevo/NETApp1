@@ -37,7 +37,7 @@ class MaterialListComponent extends DetailComponent
     public $warehouseOptions = [];
     public $uomOptions = [];
 
-    public $wh_code='';
+    public $wh_code = '';
     protected $rules = [
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
@@ -66,8 +66,8 @@ class MaterialListComponent extends DetailComponent
         $this->masterService = new MasterService();
         $this->materials = $this->masterService->getMaterials();
         $this->kategoriOptions = $this->masterService->getMatlCategoryData();
-        $this->brandOptions =   $this->masterService->getMatlBrandData();
-        $this->typeOptions =   $this->masterService->getMatlTypeData();
+        $this->brandOptions = $this->masterService->getMatlBrandData();
+        $this->typeOptions = $this->masterService->getMatlTypeData();
         $this->warehouseOptions = $this->masterService->getWarehouseData();
         $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
         $this->uomOptions = $this->masterService->getMatlUOMData();
@@ -80,13 +80,12 @@ class MaterialListComponent extends DetailComponent
 
     public function addItem()
     {
-                $this->input_details[] = [
-                    'matl_id' => null,
-                    'qty' => null,
-                    'price' => 0.0
-                ];
-                $this->dispatch('success', __('generic.string.add_item'));
-
+        $this->input_details[] = [
+            'matl_id' => null,
+            'qty' => null,
+            'price' => 0.0,
+        ];
+        $this->dispatch('success', __('generic.string.add_item'));
     }
     public function onMaterialChanged($key, $matl_id)
     {
@@ -121,9 +120,7 @@ class MaterialListComponent extends DetailComponent
         $materialId = $this->input_details[$key]['matl_id'] ?? null;
 
         if ($materialId) {
-            $matlUom = MatlUom::where('matl_id', $materialId)
-                ->where('matl_uom', $uomId)
-                ->first();
+            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uomId)->first();
 
             if ($matlUom) {
                 $this->input_details[$key]['price'] = $matlUom->selling_price;
@@ -202,14 +199,8 @@ class MaterialListComponent extends DetailComponent
         // 1) Validate the input details
         $this->validate();
         // 2) Retrieve existing details from the database
-        $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)
-            ->where('tr_type', $this->object->tr_type)
-            ->get()
-            ->keyBy('tr_seq')
-            ->toArray();
-        $inputDetailsKeyed = collect($this->input_details)
-            ->keyBy('tr_seq')
-            ->toArray();
+        $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)->where('tr_type', $this->object->tr_type)->get()->keyBy('tr_seq')->toArray();
+        $inputDetailsKeyed = collect($this->input_details)->keyBy('tr_seq')->toArray();
         // 3) Determine which items to delete (items in DB but not in $this->input_details)
         $itemsToDelete = array_diff_key($existingDetails, $inputDetailsKeyed);
         foreach ($itemsToDelete as $tr_seq => $detail) {
@@ -227,23 +218,22 @@ class MaterialListComponent extends DetailComponent
             $detail['tr_id'] = $this->object->tr_id;
             $detail['wh_code'] = $this->wh_code;
             $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
-            ->where('str1', $detail['wh_code'] ?? '')
-            ->first();
+                ->where('str1', $detail['wh_code'] ?? '')
+                ->first();
 
             $detail['wh_id'] = $configConst ? $configConst->id : null;
             $material = Material::find($detail['matl_id'] ?? null);
             $detail['matl_code'] = $material ? $material->code : null;
-            $itemsToSave[]    = $detail;
+            $itemsToSave[] = $detail;
         }
         // 5) Save or update items.
         //    Pass `true` for $createBillingDelivery if you want DelivDtl & BillingDtl created right away.
         $this->object->saveOrderDetails(
             $this->object->tr_type,
             $itemsToSave,
-            true  // or false if you do NOT want to create DelivDtl & BillingDtl now
+            true, // or false if you do NOT want to create DelivDtl & BillingDtl now
         );
     }
-
 
     public function render()
     {
@@ -270,9 +260,7 @@ class MaterialListComponent extends DetailComponent
         if (!empty($this->searchTerm)) {
             $searchTermUpper = strtoupper($this->searchTerm);
             $query->where(function ($query) use ($searchTermUpper) {
-                $query
-                    ->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                    ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
+                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
             });
         }
 
@@ -322,7 +310,7 @@ class MaterialListComponent extends DetailComponent
             $this->input_details[] = [
                 'matl_id' => $matl_id,
                 'qty' => null,
-                'price' => 0.0
+                'price' => 0.0,
             ];
             $this->onMaterialChanged($key, $matl_id);
         }

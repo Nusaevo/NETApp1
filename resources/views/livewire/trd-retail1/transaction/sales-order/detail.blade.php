@@ -79,7 +79,13 @@
                     <x-ui-card title="Order Items">
                         <div>
                             <!-- Tambahkan kolom Warehouse -->
-                            <x-ui-dropdown-select label="Lokasi" model="wh_code" :options="$warehouseOptions" />
+
+                            <div class="row">
+                                <x-ui-dropdown-select label="Lokasi" model="wh_code" :options="$warehouseOptions" />
+                                    <x-ui-text-field label="Klik di sini dan scan barcode" model="barcode" type="barcode" required="false" placeHolder="" span="Half" style="flex-grow: 1;" onChanged="scanBarcode" />
+
+                            </div>
+
                             <x-ui-table id="Table">
                                 <x-slot name="headers">
                                     <th style="width: 50px; text-align: center;">No</th>

@@ -24,11 +24,10 @@ class Detail extends BaseComponent
     public $selectedPartners = [];
     public $isPrint = true;
 
-
     public $warehouses;
     public $deletedItems = [];
     public $newItems = [];
-    public $trType = "SO";
+    public $trType = 'SO';
 
     public $matl_action = 'Create';
     public $matl_objectId = null;
@@ -36,9 +35,9 @@ class Detail extends BaseComponent
 
     public $returnIds = [];
     public $currencyRate = 0;
-
+    public $barcode = '';
     protected $masterService;
-    public $isPanelEnabled = "true";
+    public $isPanelEnabled = 'true';
     public $total_amount = 0;
     public $materialList = [];
     public $searchTerm = '';
@@ -56,8 +55,8 @@ class Detail extends BaseComponent
     public $payments;
 
     public $materials;
-    public $wh_code='';
-    public $rules  = [
+    public $wh_code = '';
+    public $rules = [
         'inputs.tr_date' => 'required',
         'inputs.partner_id' => 'required',
         'inputs.payment_term_id' => 'required',
@@ -67,21 +66,21 @@ class Detail extends BaseComponent
         'input_details.*.matl_uom' => 'required',
     ];
     protected $messages = [
-        'input_details.*.qty.min'            => 'Isi Qty',
+        'input_details.*.qty.min' => 'Isi Qty',
     ];
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
-        'delete' => 'delete',
+        'changeStatus' => 'changeStatus',
+        'delete' => 'delete'
     ];
     #endregion
 
     #region Populate Data methods
     protected function onPreRender()
     {
-        $this->customValidationAttributes  = [
-            'inputs.tr_date'      => $this->trans('tr_date'),
-            'inputs.partner_id'      => $this->trans('supplier'),
-            'inputs.wh_code'      => $this->trans('warehouse'),
+        $this->customValidationAttributes = [
+            'inputs.tr_date' => $this->trans('tr_date'),
+            'inputs.partner_id' => $this->trans('supplier'),
+            'inputs.wh_code' => $this->trans('warehouse'),
         ];
 
         $this->masterService = new MasterService();
@@ -91,21 +90,20 @@ class Detail extends BaseComponent
 
         $this->materials = $this->masterService->getMaterials();
         $this->kategoriOptions = $this->masterService->getMatlCategoryData();
-        $this->brandOptions =   $this->masterService->getMatlBrandData();
-        $this->typeOptions =   $this->masterService->getMatlTypeData();
+        $this->brandOptions = $this->masterService->getMatlBrandData();
+        $this->typeOptions = $this->masterService->getMatlTypeData();
         $this->warehouseOptions = $this->masterService->getWarehouseData();
         $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
         $this->uomOptions = $this->masterService->getMatlUOMData();
-        if($this->isEditOrView())
-        {
+        if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
-            $this->inputs['partner_name'] = $this->object->Partner->code." - ".$this->object->Partner->name;
+            $this->inputs['partner_name'] = $this->object->Partner->code . ' - ' . $this->object->Partner->name;
             $this->loadDetails();
         }
-        if(!empty($this->input_details)) {
-            $this->isPanelEnabled = "false";
+        if (!empty($this->input_details)) {
+            $this->isPanelEnabled = 'false';
         }
     }
 
@@ -114,10 +112,10 @@ class Detail extends BaseComponent
         $this->reset('inputs');
         $this->object = new OrderHdr();
         $this->inputs = populateArrayFromModel($this->object);
-        $this->inputs['tr_date']  = date('Y-m-d');
-        $this->inputs['tr_type']  = $this->trType;
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['tr_type'] = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_RUPIAH_ID;
-        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_code'] = 'IDR';
     }
 
     public function render()
@@ -146,7 +144,7 @@ class Detail extends BaseComponent
         if (!isNullOrEmptyNumber($this->inputs['payment_term_id'] && $this->inputs['payment_term_id'] > 0)) {
             $this->masterService = new MasterService();
             $paymentTerm = $this->masterService->getPaymentTermById($this->inputs['payment_term_id']);
-            $this->inputs['payment_term'] = $paymentTerm ?? "";
+            $this->inputs['payment_term'] = $paymentTerm ?? '';
         } else {
             throw new Exception('Harap isi Pembayaran terlebih dahulu');
         }
@@ -154,11 +152,11 @@ class Detail extends BaseComponent
         // Contoh: Update urutan (tr_seq), tambahkan info warehouse dan material.
         $itemsToSave = [];
         foreach ($this->input_details as $index => $detail) {
-            $detail['tr_seq'] = $index + 1;          // Pastikan urutan detail tersimpan dengan benar.
-            $detail['tr_id'] = $this->object->tr_id;   // Gunakan tr_id yang sudah di-generate.
-            $detail['trhdr_id'] = $this->object->id;    // Header ID pada OrderHdr.
+            $detail['tr_seq'] = $index + 1; // Pastikan urutan detail tersimpan dengan benar.
+            $detail['tr_id'] = $this->object->tr_id; // Gunakan tr_id yang sudah di-generate.
+            $detail['trhdr_id'] = $this->object->id; // Header ID pada OrderHdr.
             $detail['tr_type'] = $this->trType;
-            $detail['wh_code'] = $this->wh_code;        // Misalnya warehouse code disediakan dari properti komponen.
+            $detail['wh_code'] = $this->wh_code; // Misalnya warehouse code disediakan dari properti komponen.
 
             // Cari konfigurasi warehouse jika diperlukan.
             $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
@@ -176,30 +174,60 @@ class Detail extends BaseComponent
 
         // Simpan header dan detail secara terpadu menggunakan method saveOrder.
         // Parameter: tipe transaksi, data header, data detail, dan flag untuk membuat header delivery/billing/payment.
-        $this->object->saveOrder(
-            $this->trType,
-            $this->inputs,
-            $itemsToSave,
-            true
-        );
+        $this->object->saveOrder($this->trType, $this->inputs, $itemsToSave, true);
 
         // Redirect bila aksi adalah Create, atau lakukan tindakan lanjutan sesuai kebutuhan.
         if ($this->actionValue === 'Create') {
             return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
-                'action'   => encryptWithSessionKey('Edit'),
+                'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id),
             ]);
         }
-        if($this->isPrint) {
-            return redirect()->route(
-                $this->appCode . '.Transaction.SalesOrder.PrintPdf',
-                [
-                    'action'   => encryptWithSessionKey('Edit'),
-                    'objectId' => encryptWithSessionKey($this->object->id),
-                ]
-            );
+        if ($this->isPrint) {
+            return redirect()->route($this->appCode . '.Transaction.SalesOrder.PrintPdf', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id),
+            ]);
         }
     }
+    public function scanBarcode()
+    {
+        $cleanBarcode = trim($this->barcode);
+        $uom = MatlUom::where('barcode', $cleanBarcode)->first();
+
+        if (! $uom) {
+            $this->dispatch('error', 'Kode batang tidak ditemukan, mohon scan ulang!');
+        } else {
+            // Cari index yang match
+            $index = collect($this->input_details)->search(function ($d) use ($uom) {
+                return ($d['matl_id'] ?? null) === $uom->matl_id && ($d['matl_uom'] ?? null) === $uom->matl_uom;
+            });
+
+            if ($index !== false) {
+                // Kalau sudah ada, tambah qty-nya
+                $this->input_details[$index]['qty'] += 1;
+                $this->updateItemAmount($index);
+                $this->dispatch('success', 'Qty berhasil ditambah untuk item ini.');
+            } else {
+                // Kalau belum ada, tambahkan item baru
+                $newIndex = count($this->input_details);
+                $this->addItem();
+
+                $this->onMaterialChanged($newIndex, $uom->matl_id);
+                $this->onUomChanged($newIndex, $uom->matl_uom);
+
+                $this->input_details[$newIndex]['qty'] = 1;
+                $this->updateItemAmount($newIndex);
+
+                $this->dispatch('success', 'Item berhasil ditambahkan melalui scan barcode.');
+            }
+        }
+
+        // Clear input scanner dan kembalikan fokus
+        $this->dispatch('barcode-processed');
+        $this->barcode = '';
+    }
+
     public function SaveAndPrint()
     {
         $this->isPrint = true;
@@ -221,7 +249,7 @@ class Detail extends BaseComponent
 
             //$this->updateVersionNumber();
             if (isset($this->object->status_code)) {
-                $this->object->status_code =  Status::NONACTIVE;
+                $this->object->status_code = Status::NONACTIVE;
             }
             $this->object->save();
             $this->object->delete();
@@ -248,14 +276,13 @@ class Detail extends BaseComponent
     {
         if (!empty($this->partnerSearchText)) {
             $searchTerm = strtoupper($this->partnerSearchText);
-            $this->customers = Partner::where('grp',Partner::SUPPLIER)
-            ->where(function ($query) use ($searchTerm) {
-                 $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
-                       ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
-            })
-            ->get();
-        }else{
-            $this->dispatch('error', "Mohon isi kode atau nama supplier");
+            $this->customers = Partner::where('grp', Partner::SUPPLIER)
+                ->where(function ($query) use ($searchTerm) {
+                    $query->whereRaw('UPPER(code) LIKE ?', ["%{$searchTerm}%"])->orWhereRaw('UPPER(name) LIKE ?', ["%{$searchTerm}%"]);
+                })
+                ->get();
+        } else {
+            $this->dispatch('error', 'Mohon isi kode atau nama supplier');
         }
     }
 
@@ -270,7 +297,6 @@ class Detail extends BaseComponent
             $this->selectedPartners[] = $partnerId;
         }
     }
-
 
     // public function confirmSelection()
     // {
@@ -296,7 +322,7 @@ class Detail extends BaseComponent
         $this->input_details[] = [
             'matl_id' => null,
             'qty' => null,
-            'price' => 0.0
+            'price' => 0.0,
         ];
     }
     public function onMaterialChanged($key, $matl_id)
@@ -332,9 +358,7 @@ class Detail extends BaseComponent
         $materialId = $this->input_details[$key]['matl_id'] ?? null;
 
         if ($materialId) {
-            $matlUom = MatlUom::where('matl_id', $materialId)
-                ->where('matl_uom', $uomId)
-                ->first();
+            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uomId)->first();
 
             if ($matlUom) {
                 $this->input_details[$key]['price'] = $matlUom->selling_price;
@@ -374,7 +398,6 @@ class Detail extends BaseComponent
     public function deleteItem($index)
     {
         try {
-
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
 
@@ -415,9 +438,7 @@ class Detail extends BaseComponent
         if (!empty($this->searchTerm)) {
             $searchTermUpper = strtoupper($this->searchTerm);
             $query->where(function ($query) use ($searchTermUpper) {
-                $query
-                    ->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                    ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
+                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
             });
         }
 
@@ -467,7 +488,7 @@ class Detail extends BaseComponent
             $this->input_details[] = [
                 'matl_id' => $matl_id,
                 'qty' => null,
-                'price' => 0.0
+                'price' => 0.0,
             ];
             $this->onMaterialChanged($key, $matl_id);
         }
