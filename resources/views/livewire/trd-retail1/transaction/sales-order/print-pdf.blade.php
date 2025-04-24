@@ -130,83 +130,76 @@
         });
     </script>
     <style>
-        @page {
-            size: 80mm auto;
-            margin: 2mm;
-        }
+    @page { size: 80mm auto; margin: 2mm; }
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            print-color-adjust: exact;
-        }
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  print-color-adjust: exact;
+}
 
-        #print {
-            width: 80mm;
-            margin: 0 auto;
-            padding-top: 0;
-        }
+#print {
+  width: 80mm;
+  margin: 0 auto;
+  padding-top: 0;
+}
 
-        .invoice-box {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 1mm 2mm 0 1mm;
-            font-size: 3mm;
-            line-height: 1.3;
-        }
+.invoice-box {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1mm 2mm 0 1mm;
+  font-size: 3mm;
+  line-height: 1.3;
+}
 
-        .invoice-box table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+.invoice-box table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-        .invoice-box td,
-        .invoice-box th {
-            padding: 0.5mm 0.75mm;
-            vertical-align: top;
-        }
+.invoice-box td,
+.invoice-box th {
+  padding: 0.5mm 0.75mm;
+  vertical-align: top;
+}
 
-        .logo-container {
-            text-align: center;
-            margin-bottom: 1mm;
-        }
+.logo-container {
+  text-align: center;
+  margin-bottom: 1mm;
+}
 
-        .logo-container img {
-            max-width: 60mm;
-            max-height: 20mm;
-            object-fit: contain;
-        }
+.logo-container img {
+  max-width: 60mm;
+  max-height: 20mm;
+  object-fit: contain;
+}
 
-        .top-border {
-            border-top: 1px solid #000;
-            padding-top: 1mm;
-        }
+.top-border {
+  border-top: 1px solid #000;
+  padding-top: 1mm;
+}
 
-        @media print {
+@media print {
+  body, #print, .invoice-box {
+    width: 80mm !important;
+    margin: 0;
+    padding: 0;
+    left: -10mm !important;
+  }
+  .invoice-box {
+    padding: 1mm 2mm 0 1mm !important;
+  }
+}
+/* store header below the logo */
+ .store-info {
+    text-align: center;
+    padding-bottom: 4px;
+    font-size: 12px !important;  /* adjust as needed */
+    line-height: 1.2;
+    font-weight: bold;
+  }
 
-            body,
-            #print,
-            .invoice-box {
-                width: 80mm !important;
-                margin: 0;
-                padding: 0;
-            }
-
-            .invoice-box {
-                padding: 1mm 10mm 0 1mm !important;
-            }
-        }
-
-        /* store header below the logo */
-        .store-info {
-            text-align: center;
-            padding-bottom: 4px;
-            font-size: 12px !important;
-            /* adjust as needed */
-            line-height: 1.2;
-            font-weight: bold;
-        }
     </style>
 </div>
