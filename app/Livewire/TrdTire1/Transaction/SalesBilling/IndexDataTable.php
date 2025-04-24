@@ -26,7 +26,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return BillingHdr::with(['Partner'])
             ->where('billing_hdrs.tr_type', 'ARB')
-            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT]);
+            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::SHIP]);
 
     }
 

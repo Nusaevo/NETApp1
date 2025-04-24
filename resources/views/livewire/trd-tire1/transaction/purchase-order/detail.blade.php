@@ -188,8 +188,8 @@
                                     type="text" />
                             </td>
                             <td style="text-align: center;">
-                                <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
-                                    type="text" />
+                                <x-ui-text-field model="total_dpp" label="" :action="$actionValue"
+                                    enabled="false" type="text" :value="number_format($total_dpp, 2)" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_amount" label="" :action="$actionValue"

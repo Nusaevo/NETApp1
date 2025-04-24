@@ -60,7 +60,7 @@ class MaterialComponent extends BaseComponent
         'input_details.*.reff_uom' => 'required|string|max:50',
         'input_details.*.reff_factor' => 'required|numeric|min:1',
         'input_details.*.base_factor' => 'required|numeric|min:1',
-        'input_details.*.barcode' => 'nullable|string|max:50',
+        'input_details.*.barcode' => 'nullable',
         'input_details.*.selling_price' => 'nullable|numeric|min:0',
     ];
 
@@ -236,67 +236,92 @@ class MaterialComponent extends BaseComponent
 
     public function onValidateAndSave()
     {
+        // 0. Cek duplikat di input_details
+        $barcodes = array_column($this->input_details, 'barcode');
+        $dupes   = array_filter(array_count_values($barcodes), fn($c) => $c > 1);
+        if (!empty($dupes)) {
+            $dupVal = array_key_first($dupes);
+            throw new Exception("Barcode “{$dupVal}” tidak boleh sama dan dipakai 2 x.");
+        }
+
+        // 1. Cek duplikat di DB untuk Material lain, dan laporkan kode material-nya
+        foreach ($this->input_details as $detail) {
+            if($detail['barcode'] == '') {
+                continue;
+            }
+            $existingUom = MatlUom::where('barcode', $detail['barcode'])
+                ->where('matl_id', '!=', $this->object->id)
+                ->first();
+
+            if ($existingUom) {
+                $existingMat = Material::find($existingUom->matl_id);
+                $matCode     = $existingMat->code ?? $existingUom->matl_id;
+                throw new Exception(
+                    "Barcode “{$detail['barcode']}” sudah terdaftar pada material kode “{$matCode}”."
+                );
+            }
+        }
+
+        // 2. Normalisasi color_code
         $this->materials['color_code'] = strtoupper(str_replace(' ', '', $this->materials['color_code']));
-        // 3. Siapkan data specs, dsb. (terserah logika Anda)
+
+        // 3. Siapkan data specs
         $this->materials['specs'] = [
             'color_code' => $this->materials['color_code'] ?? '',
             'color_name' => $this->materials['color_name'] ?? '',
-            'size' => $this->materials['size'] ?? '',
+            'size'       => $this->materials['size'] ?? '',
         ];
 
-        // 4. Buat tag & generateName (sesuai logika internal Anda)
+        // 4. Generate tag & name
         $this->materials['tag'] = Material::generateTag(
-            $this->materials['name'] ?? '',
-            $this->materials['code'] ?? '',
-            $this->object->MatlUom, // atau null, tergantung implementasi
-            $this->materials['brand'] ?? '',
+            $this->materials['name']       ?? '',
+            $this->materials['code']       ?? '',
+            $this->object->MatlUom         ?? null,
+            $this->materials['brand']      ?? '',
             $this->materials['class_code'] ?? '',
-            $this->materials['specs'],
+            $this->materials['specs']
         );
         $this->generateName();
+
+        // 5. Validasi nama material unik per kategori
         $query = Material::where('name', $this->materials['name'])
-        ->where('category', $this->materials['category']);
+            ->where('category', $this->materials['category']);
         if ($this->object->id) {
             $query->where('id', '!=', $this->object->id);
         }
-
         if ($query->exists()) {
-            $this->dispatch('error', 'Nama material dengan kategori ini sudah ada.');
-            return;
+            throw new Exception("Nama material dengan kategori ini sudah ada.");
         }
 
-        // 5. Isi model Material dengan data input
+        // 6. Isi model & (jika baru) validasi kode material
         $this->object->fill($this->materials);
-
-        // 6. Jika baru, pastikan kode material valid (misal unique)
         if ($this->object->isNew()) {
             $this->validateMaterialCode();
         }
 
-        // 7. Simpan Material agar mendapatkan ID (jika baru), atau update (jika lama)
+        // 7. Simpan Material
         $this->object->save();
 
-        // 8. Jika Material masih baru (artinya baru saja disimpan) -> Buat MatlUom
-        //    (Jika TIDAK baru, artinya UOM sudah dicek, tidak perlu bikin lagi)
+        // 8. Simpan/update MatlUom
         foreach ($this->input_details as $key => $detail) {
             $matlUom = MatlUom::withTrashed()->updateOrCreate(
                 ['matl_id' => $this->object->id, 'matl_uom' => $detail['matl_uom']],
                 [
-                    'reff_uom'     => $detail['reff_uom'],
-                    'reff_factor'  => $detail['reff_factor'] ?? 1,
-                    'base_factor'  => $detail['base_factor'] ?? 1,
-                    'barcode'      => $detail['barcode'],
-                    'selling_price'=> $detail['selling_price'],
-                    'buying_price' => $detail['buying_price'] ?? 0,
+                    'reff_uom'      => $detail['reff_uom'],
+                    'reff_factor'   => $detail['reff_factor']  ?? 1,
+                    'base_factor'   => $detail['base_factor']  ?? 1,
+                    'barcode'       => $detail['barcode'],
+                    'selling_price' => $detail['selling_price'],
+                    'buying_price'  => $detail['buying_price'] ?? 0,
                 ]
             );
             $this->input_details[$key]['id'] = $matlUom->id;
         }
 
-
         // 9. Simpan attachment (jika ada)
         $this->saveAttachment();
     }
+
 
     private function validateMaterialCode()
     {

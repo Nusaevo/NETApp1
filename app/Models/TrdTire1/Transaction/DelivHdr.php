@@ -14,7 +14,7 @@ class DelivHdr extends BaseModel
 {
     use SoftDeletes;
 
-    protected $table = 'deliv_hdrs'; 
+    protected $table = 'deliv_hdrs';
     protected $primaryKey = 'id';
     public $timestamps = true;
     protected $fillable = [
@@ -69,10 +69,20 @@ class DelivHdr extends BaseModel
             $billingHdr->tr_date = $delivHdr->tr_date;
             $billingHdr->partner_id = $delivHdr->partner_id;
             $billingHdr->partner_code = $delivHdr->partner_code;
-            // $billingHdr->payment_term_id = $delivHdr->OrderHdr->payment_term_id;
-            // $billingHdr->payment_term = $delivHdr->OrderHdr->payment_term;
-            // $billingHdr->payment_due_days = $delivHdr->OrderHdr->payment_due_days;
             $billingHdr->tr_type = $delivHdr->tr_type == 'SD' ? 'ARB' : 'APB';
+
+            // Retrieve payment_term_id, payment_term, and calculate payment_due_days from OrderHdr
+            // $orderHdr = $delivHdr->OrderHdr;
+            // if ($orderHdr) {
+            //     $billingHdr->payment_term_id = $orderHdr->payment_term_id;
+            //     $billingHdr->payment_term = $orderHdr->payment_term;
+
+            //     // Calculate payment_due_days
+            //     if ($orderHdr->tr_date && $orderHdr->payment_term_id) {
+            //         $billingHdr->payment_due_days = $orderHdr->tr_date->addDays($orderHdr->payment_term_id);
+            //     }
+            // }
+
             $billingHdr->save();
         });
 

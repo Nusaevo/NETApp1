@@ -125,7 +125,7 @@
                                                             type="number" :action="$actionValue" enabled="true" onChanged="updateItemAmount({{ $key }})"/>
                                                     </td>
 
-                                                    <td style="text-align: center;">
+                                                    <td style="text-align: center;"  class="d-flex flex-column">
                                                         <x-ui-text-field model="input_details.{{ $key }}.qty" label="" enabled="true"
                                                             type="number" required="true" onChanged="updateItemAmount({{ $key }})" />
                                                     </td>

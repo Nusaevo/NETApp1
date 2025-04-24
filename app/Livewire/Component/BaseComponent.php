@@ -37,6 +37,7 @@ class BaseComponent extends Component
     public $isComponent = false;
     public bool $hasChanges = false;
 
+    public $versionNumber = 1;
     protected $versionSessionKey = 'session_version_number';
     protected $permissionSessionKey = 'session_permissions';
     public function updated($propertyName)
@@ -70,31 +71,10 @@ class BaseComponent extends Component
             throw $e;
         }
         if (!$this->isComponent) {
-            Session::forget($this->versionSessionKey);
-            $this->initializeVersionNumber();
+            $this->versionNumber = $this->object->version_number ?? 1;
         }
     }
 
-    protected function initializeVersionNumber()
-    {
-        if (in_array($this->actionValue, ['Edit', 'View'])) {
-            $currentVersion = Session::get($this->versionSessionKey);
-
-            if (is_null($currentVersion) && isset($this->object->version_number)) {
-                Session::put($this->versionSessionKey, $this->object->version_number);
-            }
-        }
-    }
-
-    protected function updateSharedVersionNumber($increment = true)
-    {
-        if (in_array($this->actionValue, ['Edit', 'View'])) {
-            $currentVersion = Session::get($this->versionSessionKey, 1);
-            $newVersion = $increment ? $currentVersion + 1 : max($currentVersion - 1, 1);
-
-            Session::put($this->versionSessionKey, $newVersion);
-        }
-    }
 
     private function setActionAndObject($action, $objectId)
     {
@@ -285,7 +265,7 @@ class BaseComponent extends Component
             }
             $this->dispatch('success', __('generic.string.save'));
         } catch (QueryException | PDOException | Exception $e) {
-            $this->updateSharedVersionNumber(false);
+            $this->rollbackVersionNumber();
             Log::error("Method Save : " . $e->getMessage());
             $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
         }
@@ -309,6 +289,7 @@ class BaseComponent extends Component
                 $this->onReset();
             }
         } catch (QueryException | PDOException | Exception $e) {
+            $this->rollbackVersionNumber();
             Log::error("Method SaveWithoutNotification : " . $e->getMessage());
 
             if ($this->isEditOrView()) {
@@ -344,7 +325,7 @@ class BaseComponent extends Component
             $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
             Log::error("Method Change : " . $e->getMessage());
-            $this->updateSharedVersionNumber(false);
+            $this->rollbackVersionNumber();
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
 
@@ -353,17 +334,25 @@ class BaseComponent extends Component
 
     protected function updateVersionNumber()
     {
-        if ($this->isComponent) {
+        if ($this->isComponent || $this->actionValue !== 'Edit' || !isset($this->object->id)) {
             return;
         }
-        if ($this->actionValue === 'Edit' && isset($this->object->id)) {
-            $sessionVersion = Session::get($this->versionSessionKey);
 
-            if ($this->object->version_number != $sessionVersion) {
-                throw new Exception("This object has already been updated by another user. Please refresh the page and try again.");
-            }
+        if ($this->object->version_number !== $this->versionNumber) {
+            throw new Exception(
+                "This object has already been updated by another user. Please refresh the page and try again."
+            );
+        }
 
-            $this->updateSharedVersionNumber(true);
+        $this->versionNumber++;
+    }
+
+    protected function rollbackVersionNumber()
+    {
+        if ($this->actionValue === 'Edit') {
+            // Roll back on error
+            $this->versionNumber = max($this->versionNumber - 1, 1);
+            $this->object->version_number = $this->versionNumber;
         }
     }
 

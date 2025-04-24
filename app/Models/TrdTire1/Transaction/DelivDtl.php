@@ -47,159 +47,112 @@ class DelivDtl extends BaseModel
 
         // Event saving: sebelum data disimpan, jalankan semua operasi dalam satu transaksi
         static::saving(function ($delivDtl) {
-            // Pastikan batch_code sudah terisi sesuai logic sebelumnya
-            if (empty($delivDtl->batch_code)) {
-                $delivDtl->batch_code = date('ymd');
-            }
-
-            $oldMatlId  = $delivDtl->getOriginal('matl_id');
-            $oldMatlUom = $delivDtl->getOriginal('matl_uom');
-            $oldQty     = (float) $delivDtl->getOriginal('qty', 0);
-
-            $newMatlId  = $delivDtl->matl_id;
-            $newMatlUom = $delivDtl->matl_uom;
-            $newQty     = (float) $delivDtl->qty;
-
-            $combinationChanged = $oldMatlId != $newMatlId || $oldMatlUom != $newMatlUom;
-
-            // Jika kombinasi material atau uom berubah, lakukan adjustment untuk record lama
-            if ($combinationChanged && $oldQty != 0) {
-                // Ambil record IvtBal untuk kombinasi lama dengan batch_code
-                $oldIvtBal = IvtBal::where([
-                    'matl_id'    => $oldMatlId,
-                    'matl_uom'   => $oldMatlUom,
-                    'wh_id'      => $delivDtl->wh_id,
-                    'batch_code' => $delivDtl->batch_code,
-                ])->first();
-
-                if ($oldIvtBal) {
-                    $delta = $delivDtl->tr_type === 'PD' ? -$oldQty : $oldQty;
-                    $oldIvtBal->increment('qty_oh', $delta);
-
-                    IvtLog::removeIvtLogIfExists($delivDtl->trhdr_id, $delivDtl->tr_type, $delivDtl->tr_seq);
+            DB::transaction(function () use ($delivDtl) {
+                // Generate batch code jika kosong
+                if (empty($delivDtl->batch_code)) {
+                    $delivDtl->batch_code = date('ymd');
                 }
 
-                $oldMatlUomRec = MatlUom::where([
-                    'matl_id'  => $oldMatlId,
-                    'matl_uom' => $oldMatlUom,
-                ])->first();
+                $oldMatlId = $delivDtl->getOriginal('matl_id');
+                $oldMatlUom = $delivDtl->getOriginal('matl_uom');
+                $oldQty = (float) $delivDtl->getOriginal('qty', 0);
+                $newQty = (float) $delivDtl->qty;
 
-                if ($oldMatlUomRec) {
-                    if ($delivDtl->tr_type == 'PD') {
-                    } elseif ($delivDtl->tr_type == 'SD') {
-                        $oldMatlUomRec->decrement('qty_fgi', $oldQty);
+                // Handle perubahan material/uom
+                if ($oldMatlId != $delivDtl->matl_id || $oldMatlUom != $delivDtl->matl_uom) {
+                    // Rollback stok lama untuk PD
+                    if ($delivDtl->tr_type === 'PD' && $oldQty != 0) {
+                        $oldIvtBal = IvtBal::where([
+                            'matl_id' => $oldMatlId,
+                            'matl_uom' => $oldMatlUom,
+                            'wh_id' => $delivDtl->wh_id,
+                            'batch_code' => $delivDtl->batch_code,
+                        ])->first();
+
+                        if ($oldIvtBal) {
+                            $oldIvtBal->increment('qty_oh', $oldQty);
+                        }
+
+                        $oldMatlUomRec = MatlUom::where([
+                            'matl_id' => $oldMatlId,
+                            'matl_uom' => $oldMatlUom,
+                        ])->first();
+
+                        if ($oldMatlUomRec) {
+                            $oldMatlUomRec->increment('qty_fgr', $oldQty);
+                            $oldMatlUomRec->decrement('qty_oh', $oldQty);
+                        }
                     }
-                    MatlUom::recalcMatlUomQtyOh($oldMatlId, $oldMatlUom);
-                    MatlUom::recalcMatlUomQtyFgr($oldMatlId, $oldMatlUom);
                 }
-            }
 
-            $delta = $combinationChanged ? $newQty : $newQty - $oldQty;
+                // Hitung delta berdasarkan tipe transaksi
+                $delta = $newQty - ($delivDtl->exists ? $oldQty : 0);
 
-            if ($delta != 0) {
-                $ivtBal = IvtBal::firstOrCreate(
-                    [
-                        'matl_id'    => $newMatlId,
-                        'matl_uom'   => $newMatlUom,
-                        'wh_id'      => $delivDtl->wh_id,
-                        'wh_code'    => $delivDtl->wh_code,
-                        'batch_code' => $delivDtl->batch_code,
-                    ],
-                    [
-                        'matl_code'  => $delivDtl->matl_code,
-                        'matl_descr' => $delivDtl->matl_descr,
-                        'qty_oh'     => 0,
-                    ]
-                );
-
-                // Adjustment disesuaikan dengan tipe transaksi
-                $adjustment = $delivDtl->tr_type == 'PD' ? $delta : -$delta;
-                $ivtBal->increment('qty_oh', $adjustment);
-
-                // Kurangi qty_fgr jika transaksi adalah PD
+                // Handle PD (Goods Receipt)
                 if ($delivDtl->tr_type === 'PD') {
-                    $matlUomRec = MatlUom::where([
-                        'matl_id'  => $newMatlId,
-                        'matl_uom' => $newMatlUom,
-                    ])->first();
+                    $ivtBal = IvtBal::firstOrCreate(
+                        [
+                            'matl_id' => $delivDtl->matl_id,
+                            'matl_uom' => $delivDtl->matl_uom,
+                            'wh_id' => $delivDtl->wh_id,
+                            'batch_code' => $delivDtl->batch_code,
+                        ],
+                        ['qty_oh' => 0]
+                    );
 
-                    if ($matlUomRec) {
-                        $matlUomRec->decrement('qty_fgr', $delta);
-                    }
-                }
+                    $ivtBal->increment('qty_oh', $delta);
+                    $delivDtl->ivt_id = $ivtBal->id;
 
-                // Kurangi qty_fgi jika transaksi adalah SD
-                if ($delta != 0 && $delivDtl->tr_type === 'SD') {
+                    // Update MatlUom
                     $matlUomRec = MatlUom::where([
-                        'matl_id'  => $delivDtl->matl_id,
+                        'matl_id' => $delivDtl->matl_id,
                         'matl_uom' => $delivDtl->matl_uom,
                     ])->first();
 
                     if ($matlUomRec) {
-                        $matlUomRec->decrement('qty_fgi', $delta); // Ensure this is applied only once
+                        $matlUomRec->decrement('qty_fgr', $delta);
+                        $matlUomRec->increment('qty_oh', $delta);
                     }
                 }
+                // Handle SD (Goods Issue)
+                elseif ($delivDtl->tr_type === 'SD') {
+                    // Buat atau ambil IvtBal
+                    $ivtBal = IvtBal::firstOrCreate(
+                        [
+                            'matl_id'    => $delivDtl->matl_id,
+                            'matl_uom'   => $delivDtl->matl_uom,
+                            'wh_id'      => $delivDtl->wh_id,
+                            'batch_code' => $delivDtl->batch_code,
+                        ],
+                        ['qty_oh' => 0]  // default kalau baru dibuat
+                    );
 
-                // Simpan id IvtBal ke DelivDtl
-                $delivDtl->ivt_id = $ivtBal->id;
-                // Simpan data secara quiet untuk menghindari pemicu event kembali
-                $delivDtl->saveQuietly();
+                    // Assign ivt_id agar tidak null
+                    $delivDtl->ivt_id = $ivtBal->id;
 
-                // Recalculate stok pada MatlUom untuk kombinasi baru
-                MatlUom::recalcMatlUomQtyOh($newMatlId, $newMatlUom);
 
-                // Update atau buat log transaksi
-                IvtLog::updateOrCreate(
-                    [
-                        'trhdr_id' => $delivDtl->trhdr_id,
-                        'tr_type'  => $delivDtl->tr_type,
-                        'tr_seq'   => $delivDtl->tr_seq,
-                    ],
-                    [
-                        'tr_id'      => $delivDtl->tr_id,
-                        'trdtl_id'   => $delivDtl->id,
-                        'ivt_id'     => $delivDtl->ivt_id,
-                        'matl_id'    => $newMatlId,
-                        'matl_code'  => $delivDtl->matl_code,
-                        'matl_uom'   => $newMatlUom,
-                        'wh_id'      => $delivDtl->wh_id,
-                        'wh_code'    => $delivDtl->wh_code,
-                        'batch_code' => $delivDtl->batch_code ?? '',
-                        'tr_date'    => date('Y-m-d'),
-                        'qty'        => $newQty,
-                        'price'      => $delivDtl->OrderDtl->price ?? 0,
-                        'amt'        =>  $delivDtl->OrderDtl->amt ?? 0,
-                        'tr_desc'    => $delivDtl->matl_descr,
-                    ]
-                );
-            }
+                    // Update qty_fgi di MatlUom
+                    if ($delta != 0) {
+                        $matlUomRec = MatlUom::where([
+                            'matl_id'  => $delivDtl->matl_id,
+                            'matl_uom' => $delivDtl->matl_uom,
+                            ])->first();
 
-            // Jika relasi OrderDtl telah ter-load, update nilai qty_reff
-            if ($delivDtl->relationLoaded('OrderDtl') && $delivDtl->OrderDtl && $delta != 0) {
-                $delivDtl->OrderDtl->increment('qty_reff', $delta);
-            }
-
-            // Khusus untuk tipe PD, pastikan field qty_fgr direkalkulasi ulang
-            if ($delivDtl->tr_type === 'PD') {
-                $matlUomRec = MatlUom::where([
-                    'matl_id'  => $delivDtl->matl_id,
-                    'matl_uom' => $delivDtl->matl_uom,
-                ])->first();
-
-                if ($matlUomRec) {
-                    // Calculate the difference between the new and old quantities
-                    $oldQty = (float) $delivDtl->getOriginal('qty', 0);
-                    $newQty = (float) $delivDtl->qty;
-                    $deltaQty = $newQty - $oldQty;
-
-                    // Adjust qty_fgr based on the delta
-                    if ($deltaQty > 0) {
-                        $matlUomRec->decrement('qty_fgr', $deltaQty);
-                    } elseif ($deltaQty < 0) {
-                        $matlUomRec->increment('qty_fgr', abs($deltaQty));
-                    }
+                            if ($matlUomRec) {
+                                $matlUomRec->decrement('qty_fgi', $delta); // Ensure this is applied only once
+                            }
+                        }
+                        // Kurangi stok on-hand
+                        if ($delta > 0) {
+                            $ivtBal->decrement('qty_oh', $delta);
+                        }
                 }
-            }
+
+                // Update OrderDtl
+                if ($delivDtl->OrderDtl && $delta != 0) {
+                    $delivDtl->OrderDtl->increment('qty_reff', $delta);
+                }
+            });
         });
 
         // Event saved: setelah data tersimpan, update IvtLog dan BillingDtl di dalam transaksi
@@ -261,68 +214,56 @@ class DelivDtl extends BaseModel
         });
 
         static::deleting(function ($delivDtl) {
-            $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
-            if ($warehouse) {
-                $delivDtl->wh_id = $warehouse->id;
-            }
-
-            $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                ->where('wh_id', $delivDtl->wh_id)
-                ->where('batch_code', $delivDtl->batch_code)
-                ->lockForUpdate()
-                ->first();
-
-            $qtyChange = (float)$delivDtl->qty;
-            if ($delivDtl->tr_type === 'PD') {
-                $qtyChange = -$qtyChange;
-            } elseif ($delivDtl->tr_type === 'SD') {
-                // Tidak ada perubahan qty untuk tipe SD
-            }
-
-            if ($existingBal) {
-                $newQty = $existingBal->qty_oh + $qtyChange;
-                $existingBal->update(['qty_oh' => $newQty]);
-            }
-
-            // Hapus data pada ivtLog
-            IvtLog::where([
-                'trhdr_id' => $delivDtl->trhdr_id,
-                'tr_type'  => $delivDtl->tr_type,
-                'tr_seq'   => $delivDtl->tr_seq,
-            ])->delete();
-
-            // Kembalikan nilai qty_reff pada OrderDtl jika relasi ada
-            if ($delivDtl->relationLoaded('OrderDtl') && $delivDtl->OrderDtl) {
-                $delivDtl->OrderDtl->decrement('qty_reff', $delivDtl->qty);
-            }
-
-            // Tambahkan logika untuk memastikan relasi OrderDtl dimuat jika belum
-            if (!$delivDtl->relationLoaded('OrderDtl')) {
-                $orderDtl = $delivDtl->OrderDtl;
-                if ($orderDtl) {
-                    $orderDtl->decrement('qty_reff', $delivDtl->qty);
-                }
-            }
-
-            // Kembalikan nilai qty_oh dan qty_fgr pada MatlUom jika relasi ada
-            $matlUomRec = MatlUom::where([
-                'matl_id'  => $delivDtl->matl_id,
-                'matl_uom' => $delivDtl->matl_uom,
-            ])->first();
-
-            if ($matlUomRec) {
+            DB::transaction(function () use ($delivDtl) {
+                // Handle PD (Goods Receipt)
                 if ($delivDtl->tr_type === 'PD') {
-                    // Restore qty_fgr by the quantity being deleted
-                    $matlUomRec->increment('qty_fgr', $delivDtl->qty);
-                } elseif ($delivDtl->tr_type === 'SD') {
-                    $matlUomRec->increment('qty_fgi', $delivDtl->qty); // Ensure this is applied only once
-                }
-                MatlUom::recalcMatlUomQtyOh($delivDtl->matl_id, $delivDtl->matl_uom);
-            }
+                    $ivtBal = IvtBal::where([
+                        'matl_id' => $delivDtl->matl_id,
+                        'matl_uom' => $delivDtl->matl_uom,
+                        'wh_id' => $delivDtl->wh_id,
+                        'batch_code' => $delivDtl->batch_code,
+                    ])->first();
 
-            BillingDtl::where('trhdr_id', $delivDtl->trhdr_id)
-                ->where('tr_seq', $delivDtl->tr_seq)
-                ->forceDelete();
+                    if ($ivtBal) {
+                        $ivtBal->decrement('qty_oh', $delivDtl->qty);
+                    }
+
+                    $matlUomRec = MatlUom::where([
+                        'matl_id' => $delivDtl->matl_id,
+                        'matl_uom' => $delivDtl->matl_uom,
+                    ])->first();
+
+                    if ($matlUomRec) {
+                        $matlUomRec->increment('qty_fgr', $delivDtl->qty);
+                        $matlUomRec->decrement('qty_oh', $delivDtl->qty);
+                    }
+                }
+                // Handle SD (Goods Issue)
+                elseif ($delivDtl->tr_type === 'SD') {
+                    $matlUomRec = MatlUom::where([
+                        'matl_id' => $delivDtl->matl_id,
+                        'matl_uom' => $delivDtl->matl_uom,
+                    ])->first();
+
+                    if ($matlUomRec) {
+                        // $matlUomRec->increment('qty_fgi', $delivDtl->qty);
+                    }
+                }
+
+                // Rollback OrderDtl
+                if ($delivDtl->OrderDtl) {
+                    $delivDtl->OrderDtl->decrement('qty_reff', $delivDtl->qty);
+                }
+
+                // Hapus log dan billing
+                IvtLog::where([
+                    'trhdr_id' => $delivDtl->trhdr_id,
+                    'tr_type' => $delivDtl->tr_type,
+                    'tr_seq' => $delivDtl->tr_seq,
+                ])->delete();
+
+                BillingDtl::where('dlvdtl_id', $delivDtl->id)->forceDelete();
+            });
         });
     }
 

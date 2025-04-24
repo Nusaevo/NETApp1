@@ -11,10 +11,9 @@
     <div class="input-group">
         <div class="{{ $containerClass }}">
             @if (isset($type) && $type === 'textarea')
-                <textarea
-                    style="{{ isset($height) && $height !== '' ? 'height: ' . $height . ';' : 'min-height: 80px;' }}"
-                     wire:model.lazy="{{ $model }}" id="{{ $id }}"
-                    rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
+                <textarea style="{{ isset($height) && $height !== '' ? 'height: ' . $height . ';' : 'min-height: 80px;' }}"
+                    wire:model.lazy="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}"
+                    class="form-control form-control-lg @error($model) is-invalid @enderror"
                     @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif @if (isset($required) && $required === 'true') required @endif
                     placeholder="{{ isset($label) ? $label : '' }}"
                     @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif autocomplete="off"
@@ -77,30 +76,19 @@
                     @if (isset($required) && $required === 'true') required @endif accept=".pdf, .doc, .docx"
                     @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'barcode')
-                <input x-data="{
-                    initBarcode() {
-                        let barcodeInput = this.$refs.inputField;
+            <input wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="off" wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />
+
+                <script>
+                    document.addEventListener('livewire:load', function() {
+                        var barcodeInput = document.getElementById('{{ $model }}');
                         if (barcodeInput) {
                             window.addEventListener('barcode-processed', function() {
                                 barcodeInput.value = '';
                                 barcodeInput.focus();
                             });
-                            barcodeInput.addEventListener('keydown', function(event) {
-                                if (event.key === 'Enter') {
-                                    event.preventDefault();
-                                    if (barcodeInput.value !== '') {
-                                        Livewire.dispatch('scanBarcode', barcodeInput.value);
-                                    }
-                                }
-                            });
                         }
-                    }
-                }" x-init="initBarcode()" wire:model.lazy="{{ $model }}"
-                    id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
-                    @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
-                    @if (isset($required) && $required === 'true') required @endif placeholder="{{ isset($label) ? $label : '' }}"
-                    autocomplete="off" @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif
-                    x-ref="inputField">
+                    });
+                </script>
             @elseif(isset($type) && $type === 'date')
                 <input x-data="{
                     initDatepicker() {
@@ -112,7 +100,7 @@
                                 changeYear: true,
                                 showButtonPanel: true,
                                 beforeShow: function(input, inst) {
-                                    setTimeout(function(){
+                                    setTimeout(function() {
                                         $('.ui-datepicker').css('z-index', 99999999999999);
                                     }, 0);
                                 }

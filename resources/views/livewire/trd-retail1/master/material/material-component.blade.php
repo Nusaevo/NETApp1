@@ -204,16 +204,14 @@
                                                clickEvent="toggleUomStatus({{ $key }})"
                                                cssClass="btn-sm {{ $isActive ? 'btn-danger' : 'btn-success' }}"
                                                iconPath="{{ $isActive ? 'disable.svg' : 'enable.svg' }}"
-                                               button-name="{{ $isActive ? __('Non Active') : __('Activate') }}"
+                                               button-name=""
                                                :action="$actionValue"
                                            />
-
-                                           <!-- Print Barcode Button -->
                                            <x-ui-button
                                                clickEvent="printBarcode({{ $key }})"
                                                cssClass="btn-secondary btn-sm ml-2"
                                                iconPath="print.svg"
-                                               button-name="{{ __('Print') }}"
+                                               button-name=""
                                                :action="$actionValue"
                                            />
                                            @endif

@@ -57,11 +57,15 @@ class Detail extends BaseComponent
     public $wh_code='';
     public $rules  = [
         'inputs.tr_date' => 'required',
+        'inputs.partner_id' => 'required',
         'inputs.payment_term_id' => 'required',
-        'input_details.*.qty' => 'required',
+        'input_details.*.qty' => 'required|numeric|min:1',
         'input_details.*.matl_id' => 'required',
         'wh_code' => 'required',
         'input_details.*.matl_uom' => 'required',
+    ];
+    protected $messages = [
+        'input_details.*.qty.min'            => 'Isi Qty',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -73,6 +77,7 @@ class Detail extends BaseComponent
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
+            'input_details.*.qty'      => "Qty",
             'inputs.tr_date'      => $this->trans('tr_date'),
             'inputs.partner_id'      => $this->trans('supplier'),
             'inputs.wh_code'      => $this->trans('warehouse'),
@@ -127,15 +132,17 @@ class Detail extends BaseComponent
         // Jika mode edit dan order sudah completed, tampilkan peringatan dan hentikan proses.
         if ($this->actionValue === 'Edit') {
             if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa di edit, karena status sudah Completed');
-                return;
+                throw new Exception('Nota ini tidak bisa di edit, karena status sudah Completed');
             }
         }
 
         // Update partner_code berdasarkan partner_id jika diperlukan.
-        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
+        if (!isNullOrEmptyNumber($this->inputs['partner_id']) && $this->inputs['partner_id'] > 0) {
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner ? $partner->code : null;
+        } else {
+            $this->addError('partner_id', 'Supplier tidak ditemukan');
+            throw new Exception('Harap isi Supplier terlebih dahulu');
         }
         if (!isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
             $this->masterService = new MasterService();
@@ -159,7 +166,7 @@ class Detail extends BaseComponent
             $detail['wh_id'] = $configConst ? $configConst->id : null;
 
             // Ambil data material untuk mendapatkan material code.
-            $material = Material::find($detail['matl_id'] ?? null);
+            $material = Material::withTrashed()->find($detail['matl_id'] ?? null);
             $detail['matl_code'] = $material ? $material->code : null;
 
             // Jika diperlukan, tambahkan atau ubah field lain di detail.
@@ -370,7 +377,7 @@ class Detail extends BaseComponent
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
-                $material = Material::withTrashed()->find($matl_id);
+                $material = Material::withTrashed()->find($detail->matl_id);
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
                 $this->updateItemAmount($key);
