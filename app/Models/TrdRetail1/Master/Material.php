@@ -671,7 +671,13 @@ class Material extends BaseModel
 
         // hanya generate kalau num1 == 1
         if ((int) $data->num1 === 1) {
-            // bangun string dulu
+            // Convert semua input ke UPPERCASE dulu
+            $brand = strtoupper($brand);
+            $type = strtoupper($type);
+            $colorCode = strtoupper(str_replace(' ', '', $colorCode)); // hapus spasi juga
+            $colorName = strtoupper($colorName);
+
+            // Bangun string
             $raw = sprintf(
                 'Benang %s %s %s %s',
                 $brand,
@@ -680,11 +686,11 @@ class Material extends BaseModel
                 $colorName
             );
 
-            // kembalikan versi UPPERCASE
-            return strtoupper($raw);
+            return $raw;
         }
 
         return '';
     }
+
 
 }
