@@ -1,5 +1,5 @@
 <div>
-    <x-ui-card>
+    <x-ui-card title="Return Items" >
 
         <!-- Tambahkan kolom Warehouse -->
             <x-ui-dropdown-select
@@ -101,7 +101,6 @@
                         <th class="min-w-100px">Code</th>
                         <th class="min-w-100px">Image</th>
                         <th class="min-w-100px">Name</th>
-                        <th class="min-w-100px">Warna</th>
                     </x-slot>
 
                     <x-slot name="rows">
@@ -126,9 +125,6 @@
                                         @endif
                                     </td>
                                     <td>{{ $material->name }}</td>
-                                    <td style="text-align: center;">
-                                        {{ $material->specs['color_name'] }}
-                                    </td>
                                 </tr>
                             @endforeach
                         @endif
@@ -143,9 +139,4 @@
             </x-slot>
         </x-ui-dialog-box>
     </x-ui-card>
-
-    <x-ui-footer>
-        <x-ui-button clickEvent="SaveItem" button-name="Save Item" loading="true" :action="$actionValue"
-            cssClass="btn-primary" iconPath="save.svg" />
-    </x-ui-footer>
 </div>

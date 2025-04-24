@@ -6,12 +6,12 @@ use App\Livewire\Component\DetailComponent;
 use App\Models\TrdJewel1\Master\MatlUom;
 use App\Models\TrdRetail1\Master\Material;
 use App\Services\TrdRetail1\Master\MasterService;
-use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl, ReturnHdr, ReturnDtl};
 use App\Models\SysConfig1\ConfigConst;
 use Exception;
 
 use Livewire\Attributes\Modelable;
-class MaterialListComponent extends DetailComponent
+class ReturnListComponent extends DetailComponent
 {
     public $materials;
     protected $masterService;
@@ -72,11 +72,27 @@ class MaterialListComponent extends DetailComponent
         $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
         $this->uomOptions = $this->masterService->getMatlUOMData();
         if (!empty($this->objectIdValue)) {
-            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->inputs = populateArrayFromModel($this->object);
-            $this->loadDetails();
+            $orderHdr = OrderHdr::find($this->objectIdValue);
+            if (! $orderHdr) {
+                throw new Exception("Order not found");
+            }
+
+            // 2. Ambil tr_id dari OrderHdr (dengan tr_type = 'SO')
+            $trId = $orderHdr->tr_id;
+
+            // 3. Cari ReturnHdr (OrderHdr) dengan tr_type = 'SR' dan tr_id yang sama
+            $this->object = OrderHdr::where('tr_type', 'SR')
+                ->where('tr_id', $trId)
+                ->first();
+
+            if ($this->object) {
+                // simpan ID header retur untuk load detail
+                $this->trhdr_id = $this->object->id;
+                $this->loadDetails();
+            }
         }
     }
+
 
     public function addItem()
     {
@@ -177,7 +193,10 @@ class MaterialListComponent extends DetailComponent
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
+            $this->object_detail = ReturnDtl::where('trhdr_id', $this->trhdr_id)
+            ->where('tr_type', 'SR')
+            ->orderBy('tr_seq')
+            ->get();
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
@@ -190,50 +209,6 @@ class MaterialListComponent extends DetailComponent
         $this->Save();
     }
 
-    public function onValidateAndSave()
-    {
-        if (empty($this->objectIdValue)) {
-            $this->dispatch('error', __('generic.error.save', ['message' => 'Tolong save Header terlebih dahulu']));
-            return;
-        }
-        // 1) Validate the input details
-        $this->validate();
-        // 2) Retrieve existing details from the database
-        $existingDetails = OrderDtl::where('trhdr_id', $this->objectIdValue)->where('tr_type', $this->object->tr_type)->get()->keyBy('tr_seq')->toArray();
-        $inputDetailsKeyed = collect($this->input_details)->keyBy('tr_seq')->toArray();
-        // 3) Determine which items to delete (items in DB but not in $this->input_details)
-        $itemsToDelete = array_diff_key($existingDetails, $inputDetailsKeyed);
-        foreach ($itemsToDelete as $tr_seq => $detail) {
-            $orderDtl = OrderDtl::find($detail['id']);
-            if ($orderDtl) {
-                $orderDtl->forceDelete();
-            }
-        }
-
-        // 4) Build the array of items to save.
-        //    We must assign tr_seq = $index + 1 so they're saved in the correct sequence.
-        $itemsToSave = [];
-        foreach ($this->input_details as $index => $detail) {
-            $detail['tr_seq'] = $index + 1;
-            $detail['tr_id'] = $this->object->tr_id;
-            $detail['wh_code'] = $this->wh_code;
-            $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
-                ->where('str1', $detail['wh_code'] ?? '')
-                ->first();
-
-            $detail['wh_id'] = $configConst ? $configConst->id : null;
-            $material = Material::find($detail['matl_id'] ?? null);
-            $detail['matl_code'] = $material ? $material->code : null;
-            $itemsToSave[] = $detail;
-        }
-        // 5) Save or update items.
-        //    Pass `true` for $createBillingDelivery if you want DelivDtl & BillingDtl created right away.
-        $this->object->saveOrderDetails(
-            $this->object->tr_type,
-            $itemsToSave,
-            true, // or false if you do NOT want to create DelivDtl & BillingDtl now
-        );
-    }
 
     public function render()
     {

@@ -240,9 +240,12 @@
 
 
                     {{-- <div class="col-md-12">
-                        <livewire:trd-retail1.transaction.sales-order.material-list-component
-                         wire:model="return_details"
+                        <livewire:trd-retail1.transaction.sales-order.return-list-component
+                        wire:model="return_details"
+                        :action-value="$actionValue"
+                        :object-id="$objectId"
                     /> --}}
+
                 </div>
                 <x-ui-footer>
                     @include('layout.customs.transaction-form-footer')
