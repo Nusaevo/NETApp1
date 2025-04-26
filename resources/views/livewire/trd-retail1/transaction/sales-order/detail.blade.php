@@ -238,8 +238,8 @@
                         </x-ui-card>
                     </x-ui-card>
 
-
-                    {{-- <div class="col-md-12">
+{{--
+                    <div class="col-md-12">
                         <livewire:trd-retail1.transaction.sales-order.return-list-component
                         wire:model="return_details"
                         :action-value="$actionValue"
