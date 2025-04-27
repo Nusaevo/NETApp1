@@ -86,7 +86,7 @@ class Detail extends BaseComponent
             $this->isPanelEnabled = "false";
             // Populate inputs array
             $this->inputs = populateArrayFromModel($this->object);
-            $this->inputs['status_code_text'] = $this->object->status_Code_text;
+            // $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
 
@@ -225,10 +225,10 @@ class Detail extends BaseComponent
             $this->inputs['wh_id'] = $warehouse->id;
         }
 
-        if (!$this->object) {
-            $this->object = new DelivHdr();
-            $this->object->status_code = Status::OPEN; // Set status_code to OPEN when creating
+        if ($this->object->isNew()) {
+            $this->object->status_code = Status::OPEN;
         }
+
 
         $this->object->fill($this->inputs);
         $this->object->save();

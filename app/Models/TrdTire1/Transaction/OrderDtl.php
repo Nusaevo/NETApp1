@@ -69,17 +69,7 @@ class OrderDtl extends BaseModel
             $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
                 ->where('matl_uom', $orderDtl->matl_uom)
                 ->first();
-            // $orderDtl->price_base = $matlUom->base_factor;
-            // $orderDtl->qty_base = $qty * $matlUom->base_factor;
             $orderDtl->qty_uom = $matlUom->matl_uom;
-            if ($matlUom) {
-                if ($orderDtl->tr_type === 'SO') {
-                    $matlUom->qty_fgi = $qty;
-                } elseif ($orderDtl->tr_type === 'PO') {
-                    $matlUom->qty_fgr = $qty;
-                }
-            }
-            $matlUom->save();
 
             // Create BillingDtl and DelivDtl if payment term is CASH
             $orderHdr = $orderDtl->OrderHdr;
@@ -111,6 +101,30 @@ class OrderDtl extends BaseModel
                 ]);
             }
         });
+
+        static::saved(function ($orderDtl) {
+            $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
+                ->where('matl_uom', $orderDtl->matl_uom)
+                ->first();
+
+            if ($matlUom) {
+                // Calculate oldQty and newQty
+                $oldQty = (float) $orderDtl->getOriginal('qty', 0);
+                $newQty = (float) $orderDtl->qty;
+                $delta = $newQty - ($orderDtl->exists ? $oldQty : 0);
+
+                // Adjust qty_fgi or qty_fgr based on delta
+                if ($delta !== 0) {
+                    if ($orderDtl->tr_type === 'SO') {
+                        $matlUom->qty_fgi += $delta;
+                    } elseif ($orderDtl->tr_type === 'PO') {
+                        $matlUom->qty_fgr += $delta;
+                    }
+                    $matlUom->save();
+                }
+            }
+        });
+
         static::deleting(function ($orderDtl) {
             try {
                 $delivDtls = DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
@@ -143,9 +157,9 @@ class OrderDtl extends BaseModel
                     ->where('matl_uom', $orderDtl->matl_uom)
                     ->first();
 
-                if ($matlUom) {
-                    $matlUom->decrement('qty_fgr', $orderDtl->qty);
-                }
+                // if ($matlUom) {
+                //     $matlUom->decrement('qty_fgr', $orderDtl->qty);
+                // }
 
                 DB::commit();
             } catch (\Exception $e) {
