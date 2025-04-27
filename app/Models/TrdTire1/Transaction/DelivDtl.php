@@ -146,8 +146,9 @@ class DelivDtl extends BaseModel
                         if ($delta > 0) {
                             $ivtBal->decrement('qty_oh', $delta);
                         }
-                }
+                    
 
+                }
                 // Update OrderDtl
                 if ($delivDtl->OrderDtl && $delta != 0) {
                     $delivDtl->OrderDtl->increment('qty_reff', $delta);
