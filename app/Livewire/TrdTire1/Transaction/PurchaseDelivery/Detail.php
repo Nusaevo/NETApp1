@@ -167,13 +167,12 @@ class Detail extends BaseComponent
 
     public function onPurchaseOrderChanged($value)
     {
-        $this->input_details = []; // Clear existing items
-        $this->inputs['reffhdrtr_code'] = $value; // Update the purchase order code
+        $this->input_details = [];
+        $this->inputs['reffhdrtr_code'] = $value;
 
         if ($value) {
-            $this->loadPurchaseOrderDetails($value); // Reload details for the new purchase order
+            $this->loadPurchaseOrderDetails($value);
 
-            // Load supplier data based on the selected purchase order
             $orderHeader = OrderHdr::where('tr_code', $value)->first();
             if ($orderHeader && $orderHeader->partner) {
                 $this->inputs['partner_id'] = $orderHeader->partner->id;
@@ -187,7 +186,7 @@ class Detail extends BaseComponent
 
     public function loadPurchaseOrderDetails($reffhdrtr_code)
     {
-        $this->input_details = []; // Ensure input_details is cleared
+        $this->input_details = []; 
         $orderDetails = OrderDtl::where('tr_code', $reffhdrtr_code)->get();
 
         foreach ($orderDetails as $detail) {
@@ -241,8 +240,7 @@ class Detail extends BaseComponent
             }
         }
         if (!empty($errorItems)) {
-            $this->dispatch('error', 'Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
-            return;
+            throw new Exception( 'Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
         }
 
         $existingDetails = DelivDtl::where('trhdr_id', $this->object->id)
@@ -250,6 +248,7 @@ class Detail extends BaseComponent
             ->get()
             ->keyBy('tr_seq');
 
+        // dd($this->input_details);
         foreach ($this->input_details as $key => $detail) {
             $tr_seq = $key + 1;
             $orderDtl = OrderDtl::find($detail['order_id']);
@@ -279,6 +278,7 @@ class Detail extends BaseComponent
                 'wh_code'         => $this->inputs['wh_code'],
                 'wh_id'           => $this->inputs['wh_id'],
             ]);
+            // dd($detail['matl_id']);
             $detailRecord->save();
         }
         $existingDetails->each(function ($item) {

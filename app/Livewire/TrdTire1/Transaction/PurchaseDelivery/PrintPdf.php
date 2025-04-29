@@ -27,7 +27,6 @@ class PrintPdf extends BaseComponent
             $this->orders = OrderHdr::with(['OrderDtl', 'Partner']) // Fetch required relations
                 ->whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$this->masa])
                 ->where('tr_type', 'SO')
-                ->whereIn('status_code', [Status::PRINT, Status::OPEN])
                 ->whereNull('deleted_at')
                 ->get();
         }

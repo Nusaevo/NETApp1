@@ -71,17 +71,26 @@ class DelivHdr extends BaseModel
             $billingHdr->partner_code = $delivHdr->partner_code;
             $billingHdr->tr_type = $delivHdr->tr_type == 'SD' ? 'ARB' : 'APB';
 
-            // Retrieve payment_term_id, payment_term, and calculate payment_due_days from OrderHdr
-            // $orderHdr = $delivHdr->OrderHdr;
-            // if ($orderHdr) {
-            //     $billingHdr->payment_term_id = $orderHdr->payment_term_id;
-            //     $billingHdr->payment_term = $orderHdr->payment_term;
-
-            //     // Calculate payment_due_days
-            //     if ($orderHdr->tr_date && $orderHdr->payment_term_id) {
-            //         $billingHdr->payment_due_days = $orderHdr->tr_date->addDays($orderHdr->payment_term_id);
-            //     }
-            // }
+            if ($delivHdr->tr_type == 'SD') {
+                $orderHdr = $delivHdr->OrderHdr;
+                if ($orderHdr) {
+                    $billingHdr->payment_term_id = $orderHdr->payment_term_id;
+                    $billingHdr->payment_term = $orderHdr->payment_term;
+                    $billingHdr->payment_due_days = $orderHdr->payment_due_days;
+                }
+            } else if ($delivHdr->tr_type == 'PD') {
+                $delivDtl = DelivDtl::where('trhdr_id', $delivHdr->id)
+                    ->where('tr_type', 'PD')
+                    ->first();
+                if ($delivDtl && $delivDtl->reffhdrtr_code) {
+                    $orderHdr = OrderHdr::where('tr_code', $delivDtl->reffhdrtr_code)->first();
+                    if ($orderHdr) {
+                        $billingHdr->payment_term_id = $orderHdr->payment_term_id;
+                        $billingHdr->payment_term = $orderHdr->payment_term;
+                        $billingHdr->payment_due_days = $orderHdr->payment_due_days;
+                    }
+                }
+            }
 
             $billingHdr->save();
         });

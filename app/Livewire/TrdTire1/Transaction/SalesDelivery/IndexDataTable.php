@@ -201,6 +201,7 @@ class IndexDataTable extends BaseDataTableComponent
 
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
             $this->dispatch('submitDeliveryDate');
+
         }
     }
 

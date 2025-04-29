@@ -37,7 +37,7 @@ class BillingDtl extends BaseModel
         'price_base',
         'amt',
         'amt_reff',
-        'status_code'
+        'status_code',
     ];
 
     public function scopeGetByOrderHdr($query, $id, $trType)

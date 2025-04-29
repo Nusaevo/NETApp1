@@ -8,9 +8,9 @@ use App\Enums\TrdTire1\Status;
 
 class PrintPdf extends BaseComponent
 {
-    public $orderIds; // Ubah nama properti untuk menyimpan ID
+    public $orderIds;
     public $printDate;
-    public $orders = []; // Properti untuk menyimpan data order
+    public $orders = [];
 
     protected function onPreRender()
     {
@@ -20,23 +20,18 @@ class PrintPdf extends BaseComponent
                 return;
             }
 
-            $this->printDate = $this->additionalParam; // Use the selected print_date
+            $this->printDate = $this->additionalParam;
 
-            // Filter orders based on print_date and other conditions
             $this->orderIds = OrderHdr::where('print_date', $this->printDate)
                 ->where('tr_type', 'SO')
-                ->whereIn('status_code', [Status::PRINT, Status::OPEN])
                 ->whereNull('deleted_at')
                 ->pluck('id')
                 ->toArray();
 
-            $this->orders = OrderHdr::with(['OrderDtl', 'Partner']) // Fetch required relations
+            $this->orders = OrderHdr::with(['OrderDtl', 'Partner'])
                 ->whereIn('id', $this->orderIds)
                 ->get();
 
-                // dd($this->orders);
-            // $this->object->status_code = Status::PRINT;
-            // $this->object->save();
         }
     }
 

@@ -29,7 +29,7 @@
 
                     <div id="print">
                         <div class="invoice-box"
-                            style="max-width: 800px; margin: auto; padding: 20px; border: 1px solid #eee;">
+                            style="max-width: 800px; margin: auto; padding: 20px;">
                             <!-- Header -->
                             <table width="100%" style="margin-bottom: 10px;">
                                 <tr>
@@ -148,22 +148,9 @@
         </div>
     </body>
 
-    <script type="text/javascript">
+    <script>
         function printInvoice() {
-            var page = document.getElementById("print");
-            var newWin = window.open('', 'Print-Window');
-            newWin.document.open();
-            newWin.document.write(
-                '<html>' +
-                '<link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}">' +
-                '<body onload="window.print()">' +
-                page.innerHTML +
-                '</body></html>'
-            );
-            newWin.document.close();
-            setTimeout(function() {
-                newWin.close();
-            }, 10);
+            window.print();
         }
     </script>
 </div>

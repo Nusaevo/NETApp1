@@ -10,6 +10,7 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -73,26 +74,10 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
-            // Column::make($this->trans("amt"), "total_amt_in_idr")
-            //     ->label(function ($row) {
-            //         $totalAmt = 0;
-
-            //         $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-
-            //         if ($orderDetails->isEmpty()) {
-            //             return 'N/A';
-            //         }
-            //     })
-            //     ->sortable(),
-
-            // Column::make($this->trans('status'), "status_code")
-            //     ->sortable()
-            //     ->format(function ($value, $row, Column $column) {
-            //         return Status::getStatusString($value);
-            //     }),
-            // Column::make($this->trans("created_date"), "created_at")
-            //     ->searchable()
-            //     ->sortable(),
+            BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
+                }),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -123,21 +108,6 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            // $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
-            //     $builder->whereExists(function ($query) use ($value) {
-            //         $query->select(DB::raw(1))
-            //             ->from('order_dtls')
-            //             ->whereRaw('order_dtls.tr_code = order_hdrs.tr_code')
-            //             ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-            //             ->where('order_dtls.tr_type', 'PO');
-            //     });
-            // }),
-            // $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
-            //     $builder->whereHas('Partner', function ($query) use ($value) {
-            //         $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-            //     });
-            // }),
-            // New filters
             DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where('order_hdrs.tr_date', '=', $value);
             }),
@@ -149,20 +119,23 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
-            // SelectFilter::make('Status', 'status_code')
-            //     ->options([
-            //         Status::OPEN => 'Open',
-            //         Status::COMPLETED => 'Selesai',
-            //         '' => 'Semua',
-            //     ])->filter(function ($builder, $value) {
-            //         if ($value === Status::ACTIVE) {
-            //             $builder->where('order_hdrs.status_code', Status::ACTIVE);
-            //         } else if ($value === Status::COMPLETED) {
-            //             $builder->where('order_hdrs.status_code', Status::COMPLETED);
-            //         } else if ($value === '') {
-            //             $builder->withTrashed();
-            //         }
-            //     }),
+            SelectFilter::make('Status', 'status_code')
+                ->options([
+                    Status::OPEN => 'Open',
+                    Status::PRINT => 'Print',
+                    Status::SHIP => 'Ship',
+                    Status::CANCEL => 'Cancel',
+                ])->filter(function ($builder, $value) {
+                    if ($value === Status::ACTIVE) {
+                        $builder->where('order_hdrs.status_code', Status::ACTIVE);
+                    } else if ($value === Status::PRINT) {
+                        $builder->where('order_hdrs.status_code', Status::PRINT);
+                    } else if ($value === Status::SHIP) {
+                        $builder->where('order_hdrs.status_code', Status::SHIP);
+                    } else if ($value === Status::CANCEL) {
+                        $builder->where('order_hdrs.status_code', Status::CANCEL);
+                    }
+                }),
             // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
             //     $builder->where('order_hdrs.tr_date', '>=', $value);
             // }),

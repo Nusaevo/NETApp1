@@ -58,7 +58,6 @@ class Detail extends BaseComponent
         'inputs.tr_code' => 'required',
         'inputs.partner_name' => 'required',
         'inputs.tax_flag' => 'required',
-        'inputs.payment_term_id' => 'required',
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
     ];
@@ -416,7 +415,6 @@ class Detail extends BaseComponent
             'inputs.tr_code' => 'required',
             'inputs.partner_id' => 'required',
             'inputs.tax_flag' => 'required',
-            'inputs.payment_term_id' => 'required',
             'input_details.*.qty' => 'required',
             'input_details.*.matl_id' => 'required',
         ]);

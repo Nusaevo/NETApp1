@@ -105,7 +105,9 @@ class BankListComponent extends DetailComponent
 
     public function SaveBank()
     {
-        $this->Save();
+        $this->validate();
+        $this->onValidateAndSave(); 
+        $this->dispatch('success', __('Bank saved successfully!'));
     }
 
     protected function onValidateAndSave()
