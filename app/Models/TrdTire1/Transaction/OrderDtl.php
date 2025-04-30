@@ -113,6 +113,7 @@ class OrderDtl extends BaseModel
                 $newQty = (float) $orderDtl->qty;
                 $delta = $newQty - ($orderDtl->exists ? $oldQty : 0);
 
+
                 // Adjust qty_fgi or qty_fgr based on delta
                 if ($delta !== 0) {
                     if ($orderDtl->tr_type === 'SO') {
@@ -152,14 +153,19 @@ class OrderDtl extends BaseModel
                     ->where('tr_seq', $orderDtl->tr_seq)
                     ->forceDelete();
 
-                // Decrement qty_fgr in MatlUom
+                // Restore qty_fgr or qty_fgi in MatlUom
                 $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
                     ->where('matl_uom', $orderDtl->matl_uom)
                     ->first();
 
-                // if ($matlUom) {
-                //     $matlUom->decrement('qty_fgr', $orderDtl->qty);
-                // }
+                if ($matlUom) {
+                    if ($orderDtl->tr_type === 'PO') {
+                        $matlUom->qty_fgr -= $orderDtl->qty;
+                    } elseif ($orderDtl->tr_type === 'SO') {
+                        $matlUom->qty_fgi -= $orderDtl->qty;
+                    }
+                    $matlUom->save();
+                }
 
                 DB::commit();
             } catch (\Exception $e) {

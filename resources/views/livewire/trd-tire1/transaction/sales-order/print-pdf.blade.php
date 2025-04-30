@@ -106,7 +106,7 @@
                                                 {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
                                                 @if ($loop->last)
                                                     <p
-                                                        style="border: 1px solid #000; text-align: right; font-weight: bold; margin-left: -6px; margin-right: -6px; margin-top: 10px; margin-bottom: -5.7px; padding: 2px;">
+                                                        style="border: 1px solid #000000; text-align: right; font-weight: bold; margin-left: -6px; margin-right: -6px; margin-top: 10px; margin-bottom: -8px; padding: 2px;">
                                                         TOTAL:
                                                     </p>
                                                 @endif

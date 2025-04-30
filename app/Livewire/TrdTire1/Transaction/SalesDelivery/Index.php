@@ -90,12 +90,10 @@ class Index extends BaseComponent
         DB::commit();
 
         $this->dispatch('close-modal-delivery-date');
-        $this->dispatch('showAlert', [
-            'type' => 'success',
-            'message' => 'Tanggal pengiriman berhasil disimpan'
-        ]);
+        $this->dispatch('success', ['Barang berhasil dikirim']);
 
         $this->dispatch('refreshDatatable');
+        $this->dispatch('refreshPage');
     }
 
     public function onPrerender()

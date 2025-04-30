@@ -118,7 +118,9 @@ class ContactListComponent extends DetailComponent
 
     public function SaveContact()
     {
-        $this->Save();
+        $this->validate();
+        $this->onValidateAndSave();
+        $this->dispatch('success', __('Contact saved successfully!'));
     }
 
     protected function onValidateAndSave()
