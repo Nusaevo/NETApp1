@@ -29,49 +29,60 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderDtl::query()
-            ->with(['OrderHdr', 'OrderHdr.Partner'])
+            ->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward']) // Tambahkan relasi ke SalesReward
             ->where('order_dtls.tr_type', 'SO')
             ->select('order_dtls.*')
-            ->join('order_hdrs','order_dtls.trhdr_id','=','order_hdrs.id');
-
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id');
     }
 
     public function columns(): array
     {
         return [
-            Column::make('Partner', 'orderHdr.Partner.name')
+            Column::make('Nama Pembeli', 'orderHdr.Partner.name')
+                ->label(fn($row) => $row->orderHdr->Partner ? $row->orderHdr->Partner->name . ' - ' . $row->orderHdr->Partner->city : '')
                 ->sortable()
                 ->format(fn($value, $row) => $row->orderHdr->Partner->name ?? ''),
-            Column::make('No. Nota','orderHdr.tr_code')
+            Column::make('No. Nota', 'orderHdr.tr_code')
                 ->sortable()
-                ->format(fn($value,$row) =>
+                ->format(fn($value, $row) =>
                     $row->orderHdr
-                      ? '<a href="'.route($this->appCode.'.Transaction.SalesOrder.Detail',[
-                             'action'=>encryptWithSessionKey('Edit'),
-                             'objectId'=>encryptWithSessionKey($row->orderHdr->id)
-                         ]).'">'.$row->orderHdr->tr_code.'</a>'
-                      : ''
+                        ? '<a href="'.route($this->appCode.'.Transaction.SalesOrder.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->orderHdr->id)
+                        ]).'">'.$row->orderHdr->tr_code.'</a>'
+                        : ''
                 )->html(),
 
-
-            Column::make('Kode barang','matl_code')
+            Column::make('Kode barang', 'matl_code')
                 ->sortable(),
-            Column::make('Nama barang','matl_descr')
+            Column::make('Nama barang', 'matl_descr')
                 ->sortable(),
-
-            Column::make('Qty','qty')
+            Column::make('Qty', 'qty')
                 ->sortable(),
 
-            Column::make('DPP','dpp')
-                ->label(fn($row)=> rupiah($row->dpp))
-                ->sortable(),
-            Column::make('No Nota GT','gt_tr_code')
-                ->label(fn($row)=> ($row->gt_tr_code))
-                ->sortable(),
-            Column::make('Tgl Proses GT','gt_process_date')
+            // Kolom point reward
+            Column::make('Point', 'id')
+                ->label(function ($row) {
+                    if ($row->SalesReward && $row->SalesReward->qty > 0) {
+                        return round(($row->qty / $row->SalesReward->qty) * $row->SalesReward->reward, 2);
+                    }
+                    return 0;
+                })
                 ->sortable(),
 
-
+            Column::make('No Nota GT', 'gt_tr_code')
+                ->label(fn($row) => ($row->gt_tr_code))
+                ->sortable(),
+            Column::make('Custommer Point', 'gt_partner_code')
+                ->label(fn($row) => $row->gt_partner_code ? $row->gt_partner_code . ' - ' . ($row->orderHdr->Partner->city ?? '') : '')
+                ->sortable(),
+            Column::make('Tgl Proses GT', 'gt_process_date')
+                ->sortable(),
+            Column::make('CID Point', 'gt_partner_code')
+                ->sortable(),
+            Column::make('CID Note', 'orderHdr.partner_code')
+                ->label(fn($row) => $row->orderHdr->partner_code ?? '')
+                ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -85,7 +96,6 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-
         ];
     }
 
@@ -99,12 +109,6 @@ class IndexDataTable extends BaseDataTableComponent
             ->toArray();
 
         return [
-            SelectFilter::make('Nomor Faktur Pajak Terakhir')
-                ->options([$configDetails['last_cnt'] => $configDetails['last_cnt']])
-                ->filter(function (Builder $builder, string $value) {}),
-            SelectFilter::make('Batas Nomor Faktur')
-                ->options([$configDetails['wrap_high'] => $configDetails['wrap_high']])
-                ->filter(function (Builder $builder, string $value) {}),
             // SelectFilter::make('Tanggal Proses')
             //     ->options($printDates)
             //     ->filter(function (Builder $builder, string $value) {
