@@ -24,6 +24,7 @@ class SalesReward extends BaseModel
         'reward',
         'beg_date',
         'end_date',
+        'brand',
     ];
 
 }

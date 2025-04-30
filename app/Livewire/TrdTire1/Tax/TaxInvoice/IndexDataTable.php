@@ -10,8 +10,8 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Models\SysConfig1\Configsnum;
-use Illuminate\Support\Carbon; // Add this line
+use App\Models\SysConfig1\ConfigSnum;
+use Illuminate\Support\Carbon;
 
 class IndexDataTable extends BaseDataTableComponent
 {

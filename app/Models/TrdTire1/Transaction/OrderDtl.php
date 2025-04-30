@@ -5,6 +5,7 @@ namespace App\Models\TrdTire1\Transaction;
 use App\Models\TrdTire1\Master\Material;
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Inventories\IvtBal;
+use App\Models\TrdTire1\Master\SalesReward;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdTire1\Master\MatlUom;
@@ -184,6 +185,10 @@ class OrderDtl extends BaseModel
     public function OrderHdr()
     {
         return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+    }
+    public function SalesReward()
+    {
+        return $this->belongsTo(SalesReward::class, 'matl_id', 'matl_id');
     }
     // public function OrderDtl()
     // {

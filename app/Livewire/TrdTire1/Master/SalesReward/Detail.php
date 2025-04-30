@@ -140,18 +140,6 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        // Validasi data header dan detail
-        // $this->validate([
-        //     'inputs.code'               => 'required',
-        //     'inputs.descrs'             => 'required',
-        //     'inputs.beg_date'           => 'required|date',
-        //     'inputs.end_date'           => 'required|date',
-        //     'input_details.*.matl_id'   => 'required',
-        //     'input_details.*.qty'       => 'required|numeric',
-        //     'input_details.*.reward'    => 'required|numeric',
-        //     'input_details.*.grp'       => 'required',
-        // ]);
-
         $headerCode = $this->inputs['code'];
 
         // Ambil seluruh record yang sudah tersimpan berdasarkan code header
@@ -160,13 +148,10 @@ class Detail extends BaseComponent
 
         $submittedIds = [];
 
-        // Iterasi setiap item detail dari input form
         foreach ($this->input_details as $detail) {
-            // Cek apakah record detail sudah ada, misalnya via id
             if (isset($detail['id'])) {
                 $salesReward = SalesReward::find($detail['id']);
             } else {
-                // Jika tidak ada id, coba cari berdasarkan kombinasi code dan matl_id
                 $salesReward = SalesReward::where('code', $headerCode)
                     ->where('matl_id', $detail['matl_id'])
                     ->first();
@@ -176,13 +161,14 @@ class Detail extends BaseComponent
                 }
             }
 
-            // Set data header yang sama untuk setiap record
+            // Set data header
             $salesReward->code     = $headerCode;
             $salesReward->descrs   = $this->inputs['descrs'];
             $salesReward->beg_date = $this->inputs['beg_date'];
             $salesReward->end_date = $this->inputs['end_date'];
+            $salesReward->brand    = $this->filterBrand; // Simpan nilai filterBrand ke kolom brand
 
-            // Set data detail spesifik item
+            // Set data detail
             $salesReward->matl_id = $detail['matl_id'];
             $material = Material::find($detail['matl_id']);
             $salesReward->matl_code = $material ? $material->code : null;
@@ -190,14 +176,10 @@ class Detail extends BaseComponent
             $salesReward->reward = $detail['reward'];
             $salesReward->grp    = $detail['grp'];
 
-            // Simpan record (insert atau update)
             $salesReward->save();
-
-            // Simpan id record yang diproses
             $submittedIds[] = $salesReward->id;
         }
 
-        // Hapus record yang sudah ada di database tapi tidak ada di input form (jika ada penghapusan detail)
         $idsToDelete = array_diff($existingIds, $submittedIds);
         if (!empty($idsToDelete)) {
             SalesReward::destroy($idsToDelete);
@@ -348,5 +330,10 @@ class Detail extends BaseComponent
         }
 
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+
+    public function onFilterBrandChanged($value)
+    {
+        $this->filterBrand = $value;
     }
 }
