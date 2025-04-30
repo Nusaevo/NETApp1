@@ -94,8 +94,9 @@ class Detail extends BaseComponent
     #endregion
 
     #region Component Events
-    public function applicationChanged($applicationId)
+    public function applicationChanged()
     {
+        $applicationId = $this->selectedApplication;
         // Find the application by its ID
         $this->application = ConfigAppl::find($applicationId);
         $this->selectedApplication = $applicationId;
