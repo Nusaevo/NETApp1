@@ -154,8 +154,11 @@ class Material extends BaseModel
         // 3. BATCH GENERATE NAMA & DETEKSI DUPLIKAT (dengan pelacakan baris error)
         $masterService  = new MasterService();
         $generatedNames = [];
-
         foreach (array_slice($dataTable, 1) as $idx => $row) {
+            if ($idx === 0 || empty(array_filter($row, fn($c) => trim((string)$c) !== ''))) {
+                continue;
+            }
+
             // Hitung nomor baris Excel (header = 1, data pertama = 2)
             $rowNum = $idx + 2;
             $cat       = $row[$headerIndex['Kategori*']]  ?? null;
@@ -299,7 +302,6 @@ class Material extends BaseModel
             $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
         }
-
         $audit->updateAuditTrail(
             100,
             empty($errors)
