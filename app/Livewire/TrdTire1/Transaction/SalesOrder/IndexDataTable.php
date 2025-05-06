@@ -74,9 +74,15 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
-            BooleanColumn::make($this->trans("Status"), "deleted_at")
-                ->setCallback(function ($value) {
-                    return $value === null;
+            Column::make($this->trans("Status"), "status_code")
+                ->format(function ($value, $row) {
+                    $statusMap = [
+                        Status::OPEN => 'Open',
+                        Status::PRINT => 'Print',
+                        Status::SHIP => 'Ship',
+                        Status::CANCEL => 'Cancel',
+                    ];
+                    return $statusMap[$value] ?? 'Unknown';
                 }),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
@@ -121,19 +127,15 @@ class IndexDataTable extends BaseDataTableComponent
             }),
             SelectFilter::make('Status', 'status_code')
                 ->options([
+                    '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
                     Status::OPEN => 'Open',
                     Status::PRINT => 'Print',
                     Status::SHIP => 'Ship',
                     Status::CANCEL => 'Cancel',
-                ])->filter(function ($builder, $value) {
-                    if ($value === Status::ACTIVE) {
-                        $builder->where('order_hdrs.status_code', Status::ACTIVE);
-                    } else if ($value === Status::PRINT) {
-                        $builder->where('order_hdrs.status_code', Status::PRINT);
-                    } else if ($value === Status::SHIP) {
-                        $builder->where('order_hdrs.status_code', Status::SHIP);
-                    } else if ($value === Status::CANCEL) {
-                        $builder->where('order_hdrs.status_code', Status::CANCEL);
+                ])
+                ->filter(function ($builder, $value) {
+                    if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
+                        $builder->where('order_hdrs.status_code', $value);
                     }
                 }),
             // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {

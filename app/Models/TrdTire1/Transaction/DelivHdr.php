@@ -9,6 +9,8 @@ use App\Enums\Constant;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 use App\Models\TrdTire1\Master\MatlUom;
+use App\Models\TrdTire1\Master\PartnerBal;
+use App\Models\TrdTire1\Master\PartnerLog;
 
 class DelivHdr extends BaseModel
 {
@@ -93,6 +95,35 @@ class DelivHdr extends BaseModel
             }
 
             $billingHdr->save();
+
+            // Tambahkan logika untuk PartnerBal dan PartnerLog
+            if ($delivHdr->tr_type == 'SD') {
+                // Create or update PartnerBal
+                $partnerBal = PartnerBal::firstOrNew(['partner_id' => $delivHdr->partner_id]);
+                $partnerBal->amt_adv = $partnerBal->amt_adv + $billingHdr->amt;
+                $partnerBal->partner_code = $delivHdr->partner_code; // Simpan partner_code
+                $partnerBal->save();
+
+                // Ambil data dari payment_dtl
+                $paymentDtl = PaymentDtl::where('trhdr_id', $billingHdr->id)->first();
+
+                // Create PartnerLog
+                PartnerLog::create([
+                    'trhdr_id' => $billingHdr->id,
+                    'tr_type' => $billingHdr->tr_type,
+                    'tr_code' => $billingHdr->tr_code,
+                    'tr_seq' => $paymentDtl->tr_seq ?? 0, // Ambil tr_seq dari payment_dtl, default 0 jika null
+                    'trdtl_id' => $paymentDtl->id ?? 0, // Ambil id dari payment_dtl, default 0 jika null
+                    'partner_id' => $partnerBal->partner_id,
+                    'partner_code' => $delivHdr->partner_code,
+                    'tr_date' => $billingHdr->tr_date,
+                    // 'tr_amt' => $billingHdr->amt,
+                    'curr_id' => null, // Update sesuai kebutuhan
+                    'curr_rate' => null, // Update sesuai kebutuhan
+                    // 'tr_descr' => 'Keterangan transaksi', // Update sesuai kebutuhan
+                    'amt' => $billingHdr->amt, // Sesuai dengan sign proses dalam base curr
+                ]);
+            }
         });
 
         // Hook untuk menghapus relasi saat header dihapus

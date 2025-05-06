@@ -321,25 +321,11 @@ class IndexDataTable extends BaseDataTableComponent
 
         if (count($this->getSelected()) > 0) {
             $orders = OrderHdr::whereIn('id', $this->getSelected())->get(['id', 'print_remarks']);
-            $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-            $deletedRemarks = [];
 
             foreach ($orders as $order) {
                 if ($order->print_remarks) {
-                    $deletedRemarks[] = $order->print_remarks;
                     // Simpan nomor yang dihapus agar bisa digunakan kembali
                     $this->deletedRemarks[] = $order->print_remarks;
-                }
-            }
-
-            if ($config && !empty($deletedRemarks)) {
-                // Jika nomor tertinggi yang dihapus sama dengan last_cnt, perbarui last_cnt
-                $maxDeletedRemark = max($deletedRemarks);
-                if ($maxDeletedRemark == $config->last_cnt) {
-                    $newLastCnt = min($deletedRemarks) - $config->step_cnt;
-                    // Pastikan tidak menjadi nilai negatif
-                    $config->last_cnt = ($newLastCnt < 0) ? 0 : $newLastCnt;
-                    $config->save();
                 }
             }
 

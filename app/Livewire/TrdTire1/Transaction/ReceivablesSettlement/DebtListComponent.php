@@ -209,4 +209,9 @@ class DebtListComponent extends DetailComponent
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
+
+    public function isEditOrView()
+    {
+        return in_array($this->actionValue, ['Edit', 'View']);
+    }
 }

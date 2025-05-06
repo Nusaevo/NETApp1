@@ -6,6 +6,7 @@ use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr};
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 use App\Services\TrdTire1\Master\MasterService;
 use Livewire\Attributes\On;
 
@@ -25,8 +26,9 @@ class Index extends BaseComponent
     public function openDeliveryDateModal($orderIds, $selectedItems)
     {
         $this->selectedOrderIds = $orderIds;
-        $this->selectedItems = $selectedItems;
-        $this->deliveryDate = '';
+        $this->selectedItems    = $selectedItems;
+        // ubah dari '' menjadi tanggal hari ini:
+        $this->tr_date          = Carbon::now()->format('Y-m-d');
         $this->dispatch('open-modal-delivery-date');
     }
 

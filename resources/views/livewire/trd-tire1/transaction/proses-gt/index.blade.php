@@ -18,7 +18,10 @@
                     <x-ui-text-field label="Nomor Nota GT" model="gt_tr_code" type="text" :action="$actionValue"
                         required="true" enabled="true" clickEvent="setNotaGT" buttonName="Set Nota GT" />
                     <x-ui-dropdown-select label="Customer Point" model="gt_partner_code" :options="$partners"
-                        required="true" :action="$actionValue" />
+                        required="true" />
+                </div>
+                <div class="row">
+                    <x-ui-button clickEvent="fillCustomerPoint" button-name="Customer Nota" cssClass="btn-secondary" />
                 </div>
                 {{-- <x-ui-table id="selectedItemsTable" padding="0px" margin="0px" class="mt-3">
                     <x-slot name="headers">

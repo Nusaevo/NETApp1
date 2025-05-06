@@ -62,7 +62,7 @@ class Index extends BaseComponent
 
         // Extract the last sequence number or start from 0
         $sequence = $lastSequence ? (int)substr($lastSequence, -4) : 0;
-        $sequence++; 
+        $sequence++;
 
         // Format GT number
         $this->gt_tr_code = $year . $month . str_pad($sequence, 4, '0', STR_PAD_LEFT);
@@ -156,6 +156,26 @@ class Index extends BaseComponent
         } catch (\Exception $e) {
             Log::error("Gagal panggil update_gt_process_date: " . $e->getMessage());
             return -1;
+        }
+    }
+
+    public function fillCustomerPoint()
+    {
+        if (!empty($this->selectedOrderIds)) {
+            // dd($this->selectedOrderIds);
+            // Ambil partner dari nota pertama yang dipilih
+            $order = OrderDtl::with('OrderHdr.Partner')
+                ->where('id', $this->selectedOrderIds[0])
+                ->first();
+
+            if ($order && $order->OrderHdr && $order->OrderHdr->Partner) {
+                $this->gt_partner_code = $order->OrderHdr->Partner->code; // Set dropdown value
+                $this->dispatch('success', 'Customer Point berhasil diisi.');
+            } else {
+                $this->dispatch('error', 'Partner tidak ditemukan untuk nota yang dipilih.');
+            }
+        } else {
+            $this->dispatch('error', 'Tidak ada nota yang dipilih.');
         }
     }
 
