@@ -79,6 +79,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Tgl Proses GT', 'gt_process_date')
                 ->sortable(),
             Column::make('CID Point', 'gt_partner_code')
+                ->label(fn($row) => $row->gt_partner_code ? ($row->orderHdr->Partner->code ?? '') : '') // Show code only if gt_partner_code is filled
                 ->sortable(),
             Column::make('CID Note', 'orderHdr.partner_code')
                 ->label(fn($row) => $row->orderHdr->partner_code ?? '')
@@ -109,15 +110,6 @@ class IndexDataTable extends BaseDataTableComponent
             ->toArray();
 
         return [
-            // SelectFilter::make('Tanggal Proses')
-            //     ->options($printDates)
-            //     ->filter(function (Builder $builder, string $value) {
-            //         $this->filters['print_date'] = $value; // Add this line
-            //         $builder->where('print_date', $value);
-            //     }),
-            // DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '=', $value);
-            // }),
             TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
@@ -151,7 +143,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'setNotaGT' => 'Nomor Nota Baru',
+            'prosesNotadanPoint' => 'No Nota dan Point',
+            'prosesNota' => 'Proses Nota',
+            // 'setNotaGT' => 'Nomor Nota Baru',
         ];
     }
     public function getConfigDetails()
@@ -195,5 +189,27 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Dispatch a success message
         $this->dispatch('success', 'Nomor Nota GT berhasil diatur.');
+    }
+
+    public function prosesNotadanPoint()
+    {
+        if (count($this->getSelected()) > 0) {
+            $selectedItems = OrderDtl::whereIn('id', $this->getSelected())
+                ->with('OrderHdr')
+                ->get()
+                ->map(function ($order) {
+                    return [
+                        'nomor_nota' => $order->OrderHdr->tr_code ?? '',
+                    ];
+                })
+                ->toArray();
+
+            $this->dispatch('openProsesDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
+        }
+    }
+
+    public function prosesNota()
+    {
+        $this->dispatch('open-modal-proses-nota'); // Dispatch event to open the modal
     }
 }
