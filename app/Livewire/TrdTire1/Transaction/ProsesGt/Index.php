@@ -3,6 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\ProsesGt;
 
 use App\Livewire\Component\BaseComponent;
+use App\Models\TrdTire1\Master\SalesReward;
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Models\TrdTire1\Transaction\OrderDtl;
 use App\Models\TrdTire1\Master\Partner;
@@ -20,10 +21,18 @@ class Index extends BaseComponent
     public $partners = [];
     public $start_date;
     public $end_date;
+    public $sr_code;
+    public $sr_codes = [];
 
     protected $listeners = [
         'openProsesDateModal',
+
     ];
+    public function handleSrCodeChanged($value)
+    {
+    // sama dengan updatedSrCode
+    $this->updatedSrCode($value);
+    }
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
@@ -37,6 +46,17 @@ class Index extends BaseComponent
                     'label' => $partner->name . ' - ' . $partner->city,
                     'value' => $partner->code,
                     'id' => $partner->id
+                ];
+            })
+            ->toArray();
+
+        // Fetch SR Codes
+        $this->sr_codes = SalesReward::select('code', 'descrs') // Ambil code dan descrs
+            ->get()
+            ->map(function ($sr) {
+                return [
+                    'label' => $sr->code . ' - ' . $sr->descrs, // Gabungkan code dan descrs
+                    'value' => $sr->code, // Tetap gunakan code sebagai value
                 ];
             })
             ->toArray();
@@ -71,25 +91,31 @@ class Index extends BaseComponent
     public function submitProsesGT()
     {
         $this->validate([
-            'gt_tr_code' => 'required',
-            'gt_partner_code' => 'required',
+            'gt_tr_code' => 'nullable', // Allow null values
+            'gt_partner_code' => 'nullable', // Allow null values
         ]);
 
         DB::beginTransaction();
 
         try {
-            $partner = Partner::where('code', $this->gt_partner_code)->first();
-            if (!$partner) {
-                throw new \Exception('Partner tidak ditemukan');
+            $partner = null;
+            if (!empty($this->gt_partner_code)) {
+                $partner = Partner::where('code', $this->gt_partner_code)->first();
+                if (!$partner) {
+                    throw new \Exception('Partner tidak ditemukan');
+                }
             }
+
+            // Determine gt_process_date based on the presence of gt_tr_code and gt_partner_code
+            $gtProcessDate = ($this->gt_tr_code || $this->gt_partner_code) ? now() : null;
 
             // Update OrderDtl
             OrderDtl::whereIn('id', $this->selectedOrderIds)
                 ->update([
-                    'gt_tr_code' => $this->gt_tr_code,
-                    'gt_partner_code' => $partner->name,
-                    'gt_partner_id' => $partner->id,
-                    'gt_process_date' => now(),
+                    'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
+                    'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
+                    'gt_partner_id' => $partner ? $partner->id : null, // Set null if no partner
+                    'gt_process_date' => $gtProcessDate, // Set null if both fields are null
                 ]);
 
             DB::commit();
@@ -112,16 +138,17 @@ class Index extends BaseComponent
         DB::beginTransaction();
 
         try {
-            // Call the update function
             $result = $this->callUpdateGTProcessDateByAppCode(
                 $this->appCode,     // app code
-                'IRC_2025',         // SR code
+                $this->sr_code,     // SR code (from dropdown)
                 $this->start_date,  // begin date
-                $this->end_date     // end date
+                now()->toDateString()    // ← ganti end_date jadi today
             );
+            // dd($result);
 
             if ($result >= 0) {
                 DB::commit();
+                // dd("Final result: $result");
                 $this->dispatch('close-modal-proses-nota');
                 $this->dispatch('success', ["Berhasil update: $result baris."]);
             } else {
@@ -151,8 +178,8 @@ class Index extends BaseComponent
                 SELECT update_gt_process_date(?, ?, ?)
             ", [$srCode, $beginDate, $endDate]);
 
+            // dd($result);
             return $result->update_gt_process_date ?? 0;
-
         } catch (\Exception $e) {
             Log::error("Gagal panggil update_gt_process_date: " . $e->getMessage());
             return -1;
@@ -162,17 +189,20 @@ class Index extends BaseComponent
     public function fillCustomerPoint()
     {
         if (!empty($this->selectedOrderIds)) {
-            // dd($this->selectedOrderIds);
-            // Ambil partner dari nota pertama yang dipilih
-            $order = OrderDtl::with('OrderHdr.Partner')
-                ->where('id', $this->selectedOrderIds[0])
-                ->first();
+            // Ambil data OrderDtl berdasarkan ID yang dipilih
+            $orderDtl = OrderDtl::where('id', $this->selectedOrderIds[0])->first();
 
-            if ($order && $order->OrderHdr && $order->OrderHdr->Partner) {
-                $this->gt_partner_code = $order->OrderHdr->Partner->code; // Set dropdown value
-                $this->dispatch('success', 'Customer Point berhasil diisi.');
+            if ($orderDtl && $orderDtl->trhdr_id) {
+                // Ambil data OrderHdr menggunakan trhdr_id
+                $orderHdr = OrderHdr::with('Partner')->where('id', $orderDtl->trhdr_id)->first();
+
+                if ($orderHdr && $orderHdr->Partner) {
+                    $this->gt_partner_code = $orderHdr->Partner->code; // Isi dengan code partner
+                } else {
+                    $this->dispatch('error', 'Partner tidak ditemukan untuk OrderHdr yang dipilih.');
+                }
             } else {
-                $this->dispatch('error', 'Partner tidak ditemukan untuk nota yang dipilih.');
+                $this->dispatch('error', 'OrderDtl atau trhdr_id tidak ditemukan.');
             }
         } else {
             $this->dispatch('error', 'Tidak ada nota yang dipilih.');

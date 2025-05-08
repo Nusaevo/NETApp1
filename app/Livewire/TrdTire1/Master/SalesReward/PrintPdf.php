@@ -44,7 +44,7 @@ class PrintPdf extends BaseComponent
         $this->object->beg_date = date('Y-m-d', strtotime($this->object->beg_date));
         $this->object->end_date = date('Y-m-d', strtotime($this->object->end_date));
 
-        SalesReward::where('code', $this->object->code)->update(['status_code' => Status::PRINT]);
+        // SalesReward::where('code', $this->object->code)->update(['status_code' => Status::PRINT]);
     }
 
 

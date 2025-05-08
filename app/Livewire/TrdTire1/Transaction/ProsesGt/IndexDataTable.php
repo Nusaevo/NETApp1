@@ -103,11 +103,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         $configDetails = $this->getConfigDetails();
-        $printDates = OrderHdr::select('print_date')
+        $processDates = OrderDtl::select('gt_process_date')
             ->distinct()
-            ->whereNotNull('print_date')
-            ->pluck('print_date', 'print_date')
+            ->orderBy('gt_process_date', 'asc')
+            ->pluck('gt_process_date', 'gt_process_date')
             ->toArray();
+
+        $processDates = ['' => 'Blank'] + $processDates;
 
         return [
             TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
@@ -118,28 +120,20 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
-            // SelectFilter::make('Status', 'status_code')
-            //     ->options([
-            //         Status::OPEN => 'Open',
-            //         Status::COMPLETED => 'Selesai',
-            //         '' => 'Semua',
-            //     ])->filter(function ($builder, $value) {
-            //         if ($value === Status::ACTIVE) {
-            //             $builder->where('order_hdrs.status_code', Status::ACTIVE);
-            //         } else if ($value === Status::COMPLETED) {
-            //             $builder->where('order_hdrs.status_code', Status::COMPLETED);
-            //         } else if ($value === '') {
-            //             $builder->withTrashed();
-            //         }
-            //     }),
-            // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '>=', $value);
-            // }),
-            // DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '<=', $value);
-            // }),
+            SelectFilter::make('Tanggal Proses')
+                ->options($processDates)
+                ->filter(function (Builder $builder, $value) {
+                    if (is_null($value)) {
+                        // Filter untuk nilai kosong (NULL)
+                        $builder->whereNull('order_dtls.gt_process_date');
+                    } else {
+                        // Filter untuk nilai tertentu
+                        $builder->where('order_dtls.gt_process_date', $value);
+                    }
+                }),
         ];
     }
+
     public function bulkActions(): array
     {
         return [

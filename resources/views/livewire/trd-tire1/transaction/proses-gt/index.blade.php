@@ -14,27 +14,20 @@
         </x-slot>
         <x-slot name="body">
             <div class="form-group">
-                <div class="row">
-                    <x-ui-text-field label="Nomor Nota GT" model="gt_tr_code" type="text" :action="$actionValue"
-                        required="true" enabled="true" clickEvent="setNotaGT" buttonName="Set Nota GT" />
-                    <x-ui-dropdown-select label="Customer Point" model="gt_partner_code" :options="$partners"
-                        required="true" />
+                <div class="row ">
+                    <div class="col">
+                        <x-ui-text-field label="Nomor Nota GT" model="gt_tr_code" type="text" :action="$actionValue"
+                            required="true" enabled="true" clickEvent="setNotaGT" buttonName="Set Nota GT" />
+                    </div>
+                    <div class="col">
+                        <x-ui-dropdown-select label="Customer Point" model="gt_partner_code" :options="$partners"
+                            required="true" />
+                    </div>
+                    <div class="col-auto">
+                        <x-ui-button clickEvent="fillCustomerPoint" button-name="Customer Nota"
+                            cssClass="btn-secondary btn-sm" />
+                    </div>
                 </div>
-                <div class="row">
-                    <x-ui-button clickEvent="fillCustomerPoint" button-name="Customer Nota" cssClass="btn-secondary" />
-                </div>
-                {{-- <x-ui-table id="selectedItemsTable" padding="0px" margin="0px" class="mt-3">
-                    <x-slot name="headers">
-                        <th>No. Nota</th>
-                    </x-slot>
-                    <x-slot name="rows">
-                        @foreach ($selectedItems as $item)
-                            <tr>
-                                <td>{{ $item['nomor_nota'] }}</td>
-                            </tr>
-                        @endforeach
-                    </x-slot>
-                </x-ui-table> --}}
             </div>
         </x-slot>
         <x-slot name="footer">
@@ -48,12 +41,9 @@
         <x-slot name="body">
             <div class="form-group">
                 <div class="row">
-                    <div class="col-md-6">
-                        <x-ui-text-field label="Tanggal Nota Awal" model="start_date" type="date" required="true" />
-                    </div>
-                    <div class="col-md-6">
-                        <x-ui-text-field label="Tanggal Nota Akhir" model="end_date" type="date" required="true" />
-                    </div>
+                    <x-ui-dropdown-select label="SR Code" model="sr_code" :options="$sr_codes" required="true" />
+                    <x-ui-text-field label="Tanggal Nota Awal" model="start_date" type="date" required="true" />
+                    <x-ui-text-field label="Tanggal Nota Akhir" model="end_date" type="date" required="true" />
                 </div>
             </div>
         </x-slot>
