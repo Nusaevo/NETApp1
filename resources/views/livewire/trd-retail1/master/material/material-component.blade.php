@@ -236,8 +236,7 @@
             @if (!$isComponent && $actionValue == 'Edit')
                 @include('layout.customs.buttons.disable')
             @endif
-            <x-ui-button clickEvent="Save" button-name="{{ $this->trans('save') }}" loading="true"
-                :action="$customActionValue" cssClass="btn-primary" iconPath="save.svg" />
+            @include('layout.customs.buttons.save')
             @if ($isComponent)
                 <x-ui-button clickEvent="addPurchaseOrder" button-name="{{ $this->trans('add_item') }}"
                     loading="true" :action="$actionValue" cssClass="btn-primary" iconPath="add.svg" />
