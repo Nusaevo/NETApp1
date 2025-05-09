@@ -11,7 +11,7 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Models\SysConfig1\Configsnum;
+use App\Models\SysConfig1\ConfigSnum;
 
 class IndexDataTable extends BaseDataTableComponent
 {
