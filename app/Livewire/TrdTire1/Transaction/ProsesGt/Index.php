@@ -124,7 +124,7 @@ class Index extends BaseComponent
                 ->update([
                     'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
                     'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
-                    'gt_partner_id' => $partner ? $partner->id : null, // Set null if no partner
+                    'gt_partner_id' => $partner ? $partner->id : 0, // Set null if no partner
                     'gt_process_date' => $gtProcessDate, // Set null if both fields are null
                 ]);
 
