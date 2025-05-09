@@ -1,92 +1,133 @@
 <div>
+    <!-- Tombol Back -->
     <div>
-        <div>
-            <x-ui-button clickEvent="" type="Back" button-name="Back" />
-        </div>
+        <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
 
+    <!-- Include CSS Invoice -->
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
-    <body>
-        <div class="card">
-            <div class="card-body">
-                <div class="container mb-5 mt-3">
-                    <h3 class="text-left">Proses Nota Gajah Tunggal GT RADIAL per Customer</h3>
-                    <p class="text-left">Tanggal Proses: {{ \Carbon\Carbon::now()->format('d-M-Y') }}</p>
+    <div class="card">
+        <div class="card-body">
+            <div class="container mb-5 mt-3">
+                <!-- Header Report -->
+                <div class="row d-flex align-items-baseline">
+                    <div class="col-xl-9">
+                        <p style="color: #7e8d9f; font-size: 20px;">
+                            PROSES NOTA GAJAH TUNGGAL GT RADIAL
+                        </p>
+                    </div>
+                    <div class="col-xl-3 float-end">
+                        <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark"
+                            onclick="printInvoice()">
+                            <i class="fas fa-print text-primary"></i> Print
+                        </a>
+                    </div>
+                    <hr>
+                </div>
 
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-                        <thead>
-                            <tr>
-                                <th style="border: 1px solid #000; padding: 8px;">Nama Pelanggan</th>
-                                <th style="border: 1px solid #000; padding: 8px;">No. Nota</th>
-                                <th style="border: 1px solid #000; padding: 8px;">Kode Brg.</th>
-                                <th style="border: 1px solid #000; padding: 8px;">Nama Barang</th>
-                                <th style="border: 1px solid #000; padding: 8px;">T. Ban</th>
-                                <th style="border: 1px solid #000; padding: 8px;">Point</th>
-                                <th style="border: 1px solid #000; padding: 8px;">T. Point</th>
-                                <th style="border: 1px solid #000; padding: 8px;">Nota GT</th>
-                                <th style="border: 1px solid #000; padding: 8px;">Customer Point</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($orders as $order)
-                                @foreach ($order->OrderDtl as $OrderDtl)
+                <!-- Content -->
+                <div id="print">
+                    <div class="invoice-box page" style="max-width: 2480px; margin: auto; padding: 20px;">
+                        <h3 class="text-left" style="text-decoration: underline;">Proses Nota Gajah Tunggal GT RADIAL
+                            per Customer</h3>
+                        <p class="text-left">Tanggal Proses:
+                            {{ \Carbon\Carbon::parse($selectedProcessDate)->format('d-M-Y') }}</p>
+
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                            <thead>
+                                <tr style="border-bottom:1px solid #000;">
+                                    <th>
+                                        <h6>Nama Pelanggan</h1>
+                                    </th>
+                                    <th>
+                                        <h6>No. Nota</h1>
+                                    </th>
+                                    <th>
+                                        <h6>Kode Brg.</h1>
+                                    </th>
+                                    <th>
+                                        <h6>Nama Barang</h1>
+                                    </th>
+                                    <th>
+                                        <h6>T. Ban</h1>
+                                    </th>
+                                    <th>
+                                        <h6>Point</h1>
+                                    </th>
+                                    <th>
+                                        <h6>T. Point</h1>
+                                    </th>
+                                    <th>
+                                        <h6>Nota GT</h1>
+                                    </th>
+                                    <th>
+                                        <h6>Customer Point</h1>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!empty($orders) && count($orders) > 0)
+                                    @php
+                                        $previousTrhdId = null; // Variabel untuk menyimpan trhd_id sebelumnya
+                                    @endphp
+                                    @foreach ($orders as $order)
+                                        @foreach ($order->OrderDtl as $detail)
+                                            <tr
+                                                @if ($loop->last && !$loop->parent->last) style="border-bottom: 1px solid #000;" @endif>
+                                                <td style="padding: 8px;">
+                                                    {{ $order->Partner->name ?? 'N/A' }}
+                                                </td>
+                                                <td style="padding: 8px;">
+                                                    {{ $order->tr_code ?? '-' }}
+                                                </td>
+                                                <td style="padding: 8px;">
+                                                    {{ $detail->matl_code }}
+                                                </td>
+                                                <td style="padding: 8px;">
+                                                    {{ $detail->matl_descr }}
+                                                </td>
+                                                <td style="padding: 8px; text-align: center;">
+                                                    {{ ceil($detail->qty) }}
+                                                </td>
+                                                <td style="padding: 8px; text-align: center;">
+                                                    {{ $detail->SalesReward->reward ?? 0 }}
+                                                </td>
+                                                <td style="padding: 8px; text-align: center;">
+                                                    {{ round(($detail->qty / ($detail->SalesReward->qty ?? 1)) * ($detail->SalesReward->reward ?? 0), 2) }}
+                                                </td>
+                                                <td style="padding: 8px;">
+                                                    {{ $detail->gt_tr_code ?? '-' }}
+                                                </td>
+                                                <td style="padding: 8px;">
+                                                    {{ $order->Partner->city ?? 'N/A' }}
+                                                </td>
+                                            </tr>
+                                            @php
+                                                $previousTrhdId = $order->id; // Perbarui trhd_id setelah setiap iterasi
+                                            @endphp
+                                        @endforeach
+                                    @endforeach
+                                @else
                                     <tr>
-                                        <td style="border: 1px solid #000; padding: 8px;">
-                                            {{ $order->Partner->name ?? 'N/A' }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px;">
-                                            {{ $order->tr_code }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px;">
-                                            {{ $OrderDtl->matl_code }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px;">
-                                            {{ $OrderDtl->matl_descr }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;">
-                                            {{ ceil($OrderDtl->qty) }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;">
-                                            {{ $OrderDtl->SalesReward->reward ?? 0 }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px; text-align: center;">
-                                            {{ round(($OrderDtl->qty / ($OrderDtl->SalesReward->qty ?? 1)) * ($OrderDtl->SalesReward->reward ?? 0), 2) }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px;">
-                                            {{ $OrderDtl->gt_tr_code ?? '-' }}
-                                        </td>
-                                        <td style="border: 1px solid #000; padding: 8px;">
-                                            {{ $order->Partner->city ?? 'N/A' }}
+                                        <td colspan="9"
+                                            style="text-align: center; border: 1px solid #000; padding: 8px;">
+                                            Tidak ada data untuk ditampilkan.
                                         </td>
                                     </tr>
-                                @endforeach
-                            @endforeach
-                        </tbody>
-                    </table>
-
-                    <p class="text-end mt-3">Tanggal Cetak: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</p>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </body>
+    </div>
 
-    <script type="text/javascript">
+    <!-- Script untuk Print -->
+    <script>
         function printInvoice() {
-            var page = document.getElementById("print");
-            var newWin = window.open('', 'Print-Window');
-            newWin.document.open();
-            newWin.document.write(
-                '<html>' +
-                '<link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}" >' +
-                '<body onload="window.print()">' +
-                page.innerHTML +
-                '</body></html>'
-            );
-            newWin.document.close();
-            setTimeout(function() {
-                newWin.close();
-            }, 10);
+            window.print();
         }
     </script>
 </div>

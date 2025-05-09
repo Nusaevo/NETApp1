@@ -114,11 +114,12 @@ class IndexDataTable extends BaseDataTableComponent
         $configDetails = $this->getConfigDetails();
         $processDates = OrderDtl::select('gt_process_date')
             ->distinct()
-            ->orderBy('gt_process_date', 'asc')
+            ->whereNotNull('gt_process_date')
             ->pluck('gt_process_date', 'gt_process_date')
             ->toArray();
 
-        $processDates = ['' => 'All'] + $processDates;
+        // Add "Not Selected" option for print_date
+        $processDates = ['' => 'Not Selected'] + $processDates;
 
         // Ambil data SalesReward untuk filter
         $salesRewards = SalesReward::select('code', 'descrs')
@@ -130,15 +131,14 @@ class IndexDataTable extends BaseDataTableComponent
 
         return [
             SelectFilter::make('Tanggal Proses', 'gt_process_date')
-                ->options($processDates)
-                ->filter(function (Builder $query, $value) {
-                    if ($this->isFirstFilterApplied($query)) {
-                        $query->getQuery()->wheres = []; // Hapus kondisi whereRaw('1=0')
-                    }
-                    if ($value !== '') {
-                        $query->where('order_dtls.gt_process_date', $value);
-                    }
-                }),
+            ->options($processDates)
+            ->filter(function (Builder $builder, string $value) {
+                if ($value) {
+                    // simpan ke state persis seperti TaxInvoice
+                    $this->filters['gt_process_date'] = $value;
+                    $builder->where('order_dtls.gt_process_date', $value);
+                }
+            }),
             SelectFilter::make('Sales Reward')
                 ->options($salesRewards)
                 ->filter(function (Builder $builder, $value) {
@@ -226,25 +226,33 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cetakNota()
     {
-        // Ambil semua data tanpa filter
-        $orderIds = OrderDtl::pluck('id')->toArray();
+        $selectedProcessDate = $this->filters['gt_process_date'] ?? null;
 
-        if (empty($orderIds)) {
-            $this->dispatch('error', 'Tidak ada data untuk dicetak.');
-            return;
+        if ($selectedProcessDate) {
+            $orderIds = OrderDtl::where('gt_process_date', $selectedProcessDate)
+                ->where('tr_type', 'SO')
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($orderIds)) {
+                logger()->info('No data found for the selected process date.', ['gt_process_date' => $selectedProcessDate]);
+                $this->dispatch('error', 'Tidak ada data untuk dicetak.');
+                return;
+            }
+
+            return redirect()->route('TrdTire1.Transaction.ProsesGt.PrintPdf', [
+                'action' => encryptWithSessionKey('Print'),
+                'objectId' => encryptWithSessionKey(json_encode($orderIds)),
+                'additionalParam' => $selectedProcessDate,
+            ]);
         }
 
-        // dd($orderIds);
-        // Redirect ke halaman cetak dengan parameter yang diperlukan
-        return redirect()->route('TrdTire1.Transaction.ProsesGt.PrintPdf', [
-            'action' => encryptWithSessionKey('Print'),
-            'objectId' => encryptWithSessionKey(json_encode($orderIds)),
-        ]);
+        $this->dispatch('error', 'Tanggal proses belum dipilih.');
     }
 
-    protected function isFirstFilterApplied(Builder $query): bool
-    {
-        // Check if the query has only one where condition (whereRaw('1=0'))
-        return count($query->getQuery()->wheres) === 1 && $query->getQuery()->wheres[0]['type'] === 'raw';
-    }
+    // protected function isFirstFilterApplied(Builder $query): bool
+    // {
+    //     // Check if the query has only one where condition (whereRaw('1=0'))
+    //     return count($query->getQuery()->wheres) === 1 && $query->getQuery()->wheres[0]['type'] === 'raw';
+    // }
 }

@@ -4,23 +4,38 @@ namespace App\Livewire\TrdTire1\Transaction\ProsesGt;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\OrderDtl;
+use App\Models\TrdTire1\Transaction\OrderHdr;
 
 class PrintPdf extends BaseComponent
 {
-    public $orders;
+    public $orderIds;
+    public $selectedProcessDate;
+    public $orders = [];
 
-    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    protected function onPreRender()
     {
-        $orderIds = json_decode($objectId, true) ?? [];
-        $this->orders = OrderDtl::with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward'])
-            ->whereIn('id', $orderIds)
+        // --- HILANGKAN pengecekan isEditOrView() ---
+        if (empty($this->objectIdValue)) {
+            $this->dispatch('error', 'Invalid object ID');
+            return;
+        }
+
+        // Ambil tanggal proses dari parameter
+        $this->selectedProcessDate = $this->additionalParam;
+
+        // Ambil OrderHdr beserta OrderDtl yang gt_process_date = selectedProcessDate
+        $this->orders = OrderHdr::with([
+                'OrderDtl' => fn($q) => $q->where('gt_process_date', $this->selectedProcessDate),
+                'Partner'
+            ])
+            ->whereHas('OrderDtl', fn($q) => $q->where('gt_process_date', $this->selectedProcessDate))
             ->get();
     }
 
     public function render()
     {
-        return view('livewire.trd-tire1.transaction.proses-gt.print-pdf', [
-            'orders' => $this->orders,
-        ]);
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
     }
 }
+
