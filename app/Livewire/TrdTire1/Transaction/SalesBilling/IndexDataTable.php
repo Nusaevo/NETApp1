@@ -213,7 +213,9 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Redirect to print view
             return redirect()->route('TrdTire1.Transaction.SalesBilling.PrintPdf', [
-                'orderIds' => encryptWithSessionKey($selectedOrderIds)
+                // 'orderIds' => encryptWithSessionKey($selectedOrderIds),
+                'action' => encryptWithSessionKey('Print'),
+                'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
             ]);
         }
     }
