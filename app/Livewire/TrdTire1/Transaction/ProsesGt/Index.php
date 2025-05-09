@@ -11,6 +11,7 @@ use App\Models\SysConfig1\ConfigAppl;
 // use App\Models\ConfigAppl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class Index extends BaseComponent
 {
@@ -26,13 +27,9 @@ class Index extends BaseComponent
 
     protected $listeners = [
         'openProsesDateModal',
-
+        'refreshTable' => 'render',
+        'onSrCodeChanged',
     ];
-    public function handleSrCodeChanged($value)
-    {
-    // sama dengan updatedSrCode
-    $this->updatedSrCode($value);
-    }
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
@@ -60,6 +57,19 @@ class Index extends BaseComponent
                 ];
             })
             ->toArray();
+    }
+    public function onSrCodeChanged($value)
+    {
+        $salesReward = SalesReward::where('code', $value)->first();
+
+        if ($salesReward) {
+            $this->start_date = $salesReward->beg_date;
+            $this->end_date = $salesReward->end_date;
+        } else {
+            $this->start_date = null;
+            $this->end_date = null;
+            $this->dispatch('error', 'Sales Reward tidak ditemukan.');
+        }
     }
 
     public function openProsesDateModal($orderIds, $selectedItems)
@@ -121,7 +131,7 @@ class Index extends BaseComponent
             DB::commit();
             $this->dispatch('close-modal-proses-gt');
             $this->dispatch('success', ['Proses GT berhasil disimpan']);
-            $this->dispatch('refreshDatatable');
+            $this->dispatch('refreshTable');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->dispatch('error', ['Terjadi kesalahan saat menyimpan data: ' . $e->getMessage()]);
@@ -135,6 +145,29 @@ class Index extends BaseComponent
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
+        // Ambil data SalesReward berdasarkan sr_code
+        $salesReward = SalesReward::where('code', $this->sr_code)->first();
+
+        if (!$salesReward) {
+            $this->dispatch('error', 'Sales Reward tidak ditemukan.');
+            return;
+        }
+
+        // Pastikan beg_date dan end_date adalah objek Carbon
+        $begDate = Carbon::parse($salesReward->beg_date);
+        $endDate = Carbon::parse($salesReward->end_date);
+
+        // Validasi tambahan untuk start_date dan end_date
+        if ($this->start_date < $begDate) {
+            $this->dispatch('error', 'Tanggal Nota Awal tidak boleh kurang dari tanggal awal Sales Reward: ' . $begDate->format('Y-m-d') . '.');
+            return;
+        }
+
+        if ($this->end_date > $endDate) {
+            $this->dispatch('error', 'Tanggal Nota Akhir tidak boleh melebihi tanggal akhir Sales Reward: ' . $endDate->format('Y-m-d') . '.');
+            return;
+        }
+
         DB::beginTransaction();
 
         try {
@@ -144,13 +177,12 @@ class Index extends BaseComponent
                 $this->start_date,  // begin date
                 now()->toDateString()    // ← ganti end_date jadi today
             );
-            // dd($result);
 
             if ($result >= 0) {
                 DB::commit();
-                // dd("Final result: $result");
                 $this->dispatch('close-modal-proses-nota');
                 $this->dispatch('success', ["Berhasil update: $result baris."]);
+                $this->dispatch('refreshTable');
             } else {
                 throw new \Exception("Terjadi kesalahan saat update.");
             }
