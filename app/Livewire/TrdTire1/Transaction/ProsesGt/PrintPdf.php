@@ -3,7 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\ProsesGt;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\OrderHdr;
+use App\Models\TrdTire1\Transaction\OrderDtl;
 
 class PrintPdf extends BaseComponent
 {
@@ -11,13 +11,16 @@ class PrintPdf extends BaseComponent
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
-        $this->orders = json_decode($objectId, true) ?? [];
+        $orderIds = json_decode($objectId, true) ?? [];
+        $this->orders = OrderDtl::with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward'])
+            ->whereIn('id', $orderIds)
+            ->get();
     }
 
     public function render()
     {
-        return view('livewire.trd-tire1.tax.tax-invoice.print-pdf', [
-            'orders' => OrderHdr::whereIn('id', array_column($this->orders, 'id'))->get()
+        return view('livewire.trd-tire1.transaction.proses-gt.print-pdf', [
+            'orders' => $this->orders,
         ]);
     }
 }

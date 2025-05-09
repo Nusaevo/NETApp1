@@ -3,6 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\ProsesGt;
 
 use App\Livewire\Component\BaseDataTableComponent;
+use App\Models\TrdTire1\Master\SalesReward;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
@@ -18,21 +19,29 @@ class IndexDataTable extends BaseDataTableComponent
     public $selectedItems = [];
     public $deletedRemarks = [];
     public $filters = [];
-
+    protected $listeners = [
+        'refreshTable' => 'render',
+        'onSrCodeChanged',
+    ];
     protected $model = OrderDtl::class;
     public function mount(): void
     {
         $this->setSearchDisabled();
         $this->setDefaultSort('orderHdr.tr_date', 'desc');
+        // dd(request()->query('table-filters'));
+
     }
 
     public function builder(): Builder
     {
-        return OrderDtl::query()
-            ->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward']) // Tambahkan relasi ke SalesReward
+        $query = OrderDtl::query()
+            ->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward'])
             ->where('order_dtls.tr_type', 'SO')
             ->select('order_dtls.*')
             ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id');
+            // ->whereRaw('1=0'); // Default: Tidak menampilkan data
+
+        return $query;
     }
 
     public function columns(): array
@@ -109,26 +118,34 @@ class IndexDataTable extends BaseDataTableComponent
             ->pluck('gt_process_date', 'gt_process_date')
             ->toArray();
 
-        $processDates = ['' => 'Blank'] + $processDates;
+        $processDates = ['' => 'All'] + $processDates;
+
+        // Ambil data SalesReward untuk filter
+        $salesRewards = SalesReward::select('code', 'descrs')
+            ->orderBy('code', 'asc')
+            ->pluck('descrs', 'code')
+            ->toArray();
+
+        $salesRewards = ['' => 'All'] + $salesRewards;
 
         return [
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            TextFilter::make('Custommer')->filter(function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
-            SelectFilter::make('Tanggal Proses')
+            SelectFilter::make('Tanggal Proses', 'gt_process_date')
                 ->options($processDates)
+                ->filter(function (Builder $query, $value) {
+                    if ($this->isFirstFilterApplied($query)) {
+                        $query->getQuery()->wheres = []; // Hapus kondisi whereRaw('1=0')
+                    }
+                    if ($value !== '') {
+                        $query->where('order_dtls.gt_process_date', $value);
+                    }
+                }),
+            SelectFilter::make('Sales Reward')
+                ->options($salesRewards)
                 ->filter(function (Builder $builder, $value) {
-                    if (is_null($value)) {
-                        // Filter untuk nilai kosong (NULL)
-                        $builder->whereNull('order_dtls.gt_process_date');
-                    } else {
-                        // Filter untuk nilai tertentu
-                        $builder->where('order_dtls.gt_process_date', $value);
+                    if (!empty($value)) {
+                        $builder->whereHas('SalesReward', function ($query) use ($value) {
+                            $query->where('code', $value);
+                        });
                     }
                 }),
         ];
@@ -139,7 +156,7 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'prosesNotadanPoint' => 'No Nota dan Point',
             'prosesNota' => 'Proses Nota',
-            // 'setNotaGT' => 'Nomor Nota Baru',
+            'cetakNota' => 'Cetak Nota',
         ];
     }
     public function getConfigDetails()
@@ -205,5 +222,29 @@ class IndexDataTable extends BaseDataTableComponent
     public function prosesNota()
     {
         $this->dispatch('open-modal-proses-nota'); // Dispatch event to open the modal
+    }
+
+    public function cetakNota()
+    {
+        // Ambil semua data tanpa filter
+        $orderIds = OrderDtl::pluck('id')->toArray();
+
+        if (empty($orderIds)) {
+            $this->dispatch('error', 'Tidak ada data untuk dicetak.');
+            return;
+        }
+
+        // dd($orderIds);
+        // Redirect ke halaman cetak dengan parameter yang diperlukan
+        return redirect()->route('TrdTire1.Transaction.ProsesGt.PrintPdf', [
+            'action' => encryptWithSessionKey('Print'),
+            'objectId' => encryptWithSessionKey(json_encode($orderIds)),
+        ]);
+    }
+
+    protected function isFirstFilterApplied(Builder $query): bool
+    {
+        // Check if the query has only one where condition (whereRaw('1=0'))
+        return count($query->getQuery()->wheres) === 1 && $query->getQuery()->wheres[0]['type'] === 'raw';
     }
 }

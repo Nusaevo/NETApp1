@@ -42,6 +42,7 @@
             <div class="form-group">
                 <div class="row">
                     <x-ui-dropdown-select label="SR Code" model="sr_code" :options="$sr_codes" required="true" />
+                        {{-- onChanged="onSrCodeChanged" /> --}}
                     <x-ui-text-field label="Tanggal Nota Awal" model="start_date" type="date" required="true" />
                     <x-ui-text-field label="Tanggal Nota Akhir" model="end_date" type="date" required="true" />
                 </div>
@@ -80,6 +81,11 @@
             // Listener untuk menutup modal Proses Nota
             Livewire.on('close-modal-proses-nota', event => {
                 $('#modalProsesNota').modal('hide');
+            });
+
+            // Listener untuk perubahan sr_code
+            document.querySelector('[wire\\:model="sr_code"]').addEventListener('change', function() {
+                Livewire.emit('onSrCodeChanged', this.value);
             });
         });
     </script>

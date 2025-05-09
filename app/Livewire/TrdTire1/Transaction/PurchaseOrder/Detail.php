@@ -426,8 +426,6 @@ class Detail extends BaseComponent
             }
         }
 
-
-
         try {
             // Begin transaction
             DB::beginTransaction();
