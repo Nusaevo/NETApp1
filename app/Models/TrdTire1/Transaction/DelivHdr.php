@@ -9,6 +9,8 @@ use App\Enums\Constant;
 use App\Enums\Status;
 use Illuminate\Support\Facades\DB;
 use App\Models\TrdTire1\Master\MatlUom;
+use App\Models\TrdTire1\Master\PartnerBal;
+use App\Models\TrdTire1\Master\PartnerLog;
 
 class DelivHdr extends BaseModel
 {
@@ -71,19 +73,57 @@ class DelivHdr extends BaseModel
             $billingHdr->partner_code = $delivHdr->partner_code;
             $billingHdr->tr_type = $delivHdr->tr_type == 'SD' ? 'ARB' : 'APB';
 
-            // Retrieve payment_term_id, payment_term, and calculate payment_due_days from OrderHdr
-            // $orderHdr = $delivHdr->OrderHdr;
-            // if ($orderHdr) {
-            //     $billingHdr->payment_term_id = $orderHdr->payment_term_id;
-            //     $billingHdr->payment_term = $orderHdr->payment_term;
-
-            //     // Calculate payment_due_days
-            //     if ($orderHdr->tr_date && $orderHdr->payment_term_id) {
-            //         $billingHdr->payment_due_days = $orderHdr->tr_date->addDays($orderHdr->payment_term_id);
-            //     }
-            // }
+            if ($delivHdr->tr_type == 'SD') {
+                $orderHdr = $delivHdr->OrderHdr;
+                if ($orderHdr) {
+                    $billingHdr->payment_term_id = $orderHdr->payment_term_id;
+                    $billingHdr->payment_term = $orderHdr->payment_term;
+                    $billingHdr->payment_due_days = $orderHdr->payment_due_days;
+                }
+            } else if ($delivHdr->tr_type == 'PD') {
+                $delivDtl = DelivDtl::where('trhdr_id', $delivHdr->id)
+                    ->where('tr_type', 'PD')
+                    ->first();
+                if ($delivDtl && $delivDtl->reffhdrtr_code) {
+                    $orderHdr = OrderHdr::where('tr_code', $delivDtl->reffhdrtr_code)->first();
+                    if ($orderHdr) {
+                        $billingHdr->payment_term_id = $orderHdr->payment_term_id;
+                        $billingHdr->payment_term = $orderHdr->payment_term;
+                        $billingHdr->payment_due_days = $orderHdr->payment_due_days;
+                    }
+                }
+            }
 
             $billingHdr->save();
+
+            // Tambahkan logika untuk PartnerBal dan PartnerLog
+            if ($delivHdr->tr_type == 'SD') {
+                // Create or update PartnerBal
+                $partnerBal = PartnerBal::firstOrNew(['partner_id' => $delivHdr->partner_id]);
+                $partnerBal->amt_adv = $partnerBal->amt_adv + $billingHdr->amt;
+                $partnerBal->partner_code = $delivHdr->partner_code; // Simpan partner_code
+                $partnerBal->save();
+
+                // Ambil data dari payment_dtl
+                $paymentDtl = PaymentDtl::where('trhdr_id', $billingHdr->id)->first();
+
+                // Create PartnerLog
+                PartnerLog::create([
+                    'trhdr_id' => $billingHdr->id,
+                    'tr_type' => $billingHdr->tr_type,
+                    'tr_code' => $billingHdr->tr_code,
+                    'tr_seq' => $paymentDtl->tr_seq ?? 0, // Ambil tr_seq dari payment_dtl, default 0 jika null
+                    'trdtl_id' => $paymentDtl->id ?? 0, // Ambil id dari payment_dtl, default 0 jika null
+                    'partner_id' => $partnerBal->partner_id,
+                    'partner_code' => $delivHdr->partner_code,
+                    'tr_date' => $billingHdr->tr_date,
+                    // 'tr_amt' => $billingHdr->amt,
+                    'curr_id' => null, // Update sesuai kebutuhan
+                    'curr_rate' => null, // Update sesuai kebutuhan
+                    // 'tr_descr' => 'Keterangan transaksi', // Update sesuai kebutuhan
+                    'amt' => $billingHdr->amt, // Sesuai dengan sign proses dalam base curr
+                ]);
+            }
         });
 
         // Hook untuk menghapus relasi saat header dihapus

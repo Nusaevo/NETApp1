@@ -105,8 +105,9 @@ class NpwpListComponent extends DetailComponent
 
     public function SaveNPWP()
     {
-        // dd($this->input_details);
-        $this->Save();
+        $this->validate(); // Validate input details
+        $this->onValidateAndSave(); // Save the data
+        $this->dispatch('success', __('NPWP saved successfully!'));
     }
 
     protected function onValidateAndSave()

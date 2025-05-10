@@ -3,6 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\ProsesGt;
 
 use App\Livewire\Component\BaseDataTableComponent;
+use App\Models\TrdTire1\Master\SalesReward;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
@@ -10,171 +11,93 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Models\SysConfig1\Configsnum; // Add this line
+use App\Models\SysConfig1\ConfigSnum;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    public $print_date; // Add this line
-    public $selectedItems = []; // Add this line
-    public $deletedRemarks = []; // Add this line
-    public $filters = []; // Add this line
-
-    protected $model = OrderHdr::class;
+    public $print_date;
+    public $selectedItems = [];
+    public $deletedRemarks = [];
+    public $filters = [];
+    protected $listeners = [
+        'refreshTable' => 'render',
+        'onSrCodeChanged',
+    ];
+    protected $model = OrderDtl::class;
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_date', 'desc');
-        $this->setDefaultSort('tr_code', 'desc');
+        $this->setDefaultSort('orderHdr.tr_date', 'desc');
+        // dd(request()->query('table-filters'));
+
     }
 
     public function builder(): Builder
     {
-        return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN])
-            ->where('order_hdrs.tax_doc_flag', 1);
+        $query = OrderDtl::query()
+            ->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward'])
+            ->where('order_dtls.tr_type', 'SO')
+            ->select('order_dtls.*')
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id');
+            // ->whereRaw('1=0'); // Default: Tidak menampilkan data
+
+        return $query;
     }
+
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("tr_type"), "tr_type")
-                ->hideIf(true)
-                ->sortable(),
-            Column::make('currency', "curr_rate")
-                ->hideIf(true)
-                ->sortable(),
-            Column::make($this->trans("tr_code"), "tr_code")
-                ->format(function ($value, $row) {
-                    if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
+            Column::make('Nama Pembeli', 'orderHdr.Partner.name')
+                ->label(fn($row) => $row->orderHdr->Partner ? $row->orderHdr->Partner->name . ' - ' . $row->orderHdr->Partner->city : '')
+                ->sortable()
+                ->format(fn($value, $row) => $row->orderHdr->Partner->name ?? ''),
+            Column::make('No. Nota', 'orderHdr.tr_code')
+                ->sortable()
+                ->format(fn($value, $row) =>
+                    $row->orderHdr
+                        ? '<a href="'.route($this->appCode.'.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->id)
-                        ]) . '">' . $row->tr_code . '</a>';
-                    } else {
-                        return '';
-                    }
-                })
-                ->html(),
-            Column::make($this->trans("supplier"), "partner_id")
-                ->format(function ($value, $row) {
-                    if ($row->Partner && $row->Partner->name) {
-                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->partner_id)
-                        ]) . '">' . $row->Partner->name . '</a>';
-                    } else {
-                        return '';
-                    }
-                })
-                ->html(),
-            Column::make($this->trans('amt'), 'total_amt')
-                ->label(function ($row) {
-                    return rupiah($row->total_amt);
-                })
-                ->sortable(),
-            Column::make($this->trans('dpp'), 'dpp')
-                ->label(function ($row) {
-                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-                    $dpp = $orderDetails->sum('dpp');
-                    return rupiah($dpp);
-                })
-                ->sortable(),
-            Column::make($this->trans('amt_tax'), 'amt_tax')
-                ->label(function ($row) {
-                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-                    $amtTax = $orderDetails->sum('amt_tax');
-                    return rupiah($amtTax);
-                })
-                ->sortable(),
-            Column::make($this->trans("No Faktur"), "print_remarks")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Tgl Proses"), "print_date")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans('npwp_code'), 'npwp_code')
-                ->label(function ($row) {
-                    return $row->npwp_code;
-                })
-                ->sortable(),
-            Column::make($this->trans('npwp_name'), 'npwp_name')
-                ->label(function ($row) {
-                    return $row->npwp_name;
-                })
-                ->sortable(),
-            Column::make($this->trans('npwp_address'), 'npwp_addr')
-                ->label(function ($row) {
-                    return $row->npwp_addr;
-                })
-                ->sortable(),
-            Column::make($this->trans("npwp_code21"), "npwp_code")
-                ->format(function ($value, $row) {
-                    if ($row->PartnerDetail && $row->PartnerDetail->npwp_code) {
-                        return $row->PartnerDetail->npwp_code;
-                    } else {
-                        return '';
-                    }
-                })
-                ->hideIf(true)
-                ->html(),
-            Column::make($this->trans("npwp_name21"), "npwp_name")
-                ->format(function ($value, $row) {
-                    if ($row->PartnerDetail && $row->PartnerDetail->npwp_name) {
-                        return $row->PartnerDetail->npwp_name;
-                    } else {
-                        return '';
-                    }
-                })
-                ->hideIf(true)
-                ->html(),
-            Column::make($this->trans("npwp_addr21"), "npwp_addr")
-                ->format(function ($value, $row) {
-                    if ($row->PartnerDetail && $row->PartnerDetail->npwp_addr) {
-                        return $row->PartnerDetail->npwp_addr;
-                    } else {
-                        return '';
-                    }
-                })
-                ->hideIf(true)
-                ->html(),
-            // Column::make($this->trans("amt"), "total_amt_in_idr")
-            //     ->label(function ($row) {
-            //         $totalAmt = 0;
+                            'objectId' => encryptWithSessionKey($row->orderHdr->id)
+                        ]).'">'.$row->orderHdr->tr_code.'</a>'
+                        : ''
+                )->html(),
 
-            //         $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
+            Column::make('Kode barang', 'matl_code')
+                ->sortable(),
+            Column::make('Nama barang', 'matl_descr')
+                ->sortable(),
+            Column::make('Qty', 'qty')
+                ->sortable(),
 
-            //         if ($orderDetails->isEmpty()) {
-            //             return 'N/A';
-            //         }
-            //     })
-            //     ->sortable(),
+            // Kolom point reward
+            Column::make('Point', 'id')
+                ->label(function ($row) {
+                    if ($row->SalesReward && $row->SalesReward->qty > 0) {
+                        return round(($row->qty / $row->SalesReward->qty) * $row->SalesReward->reward, 2);
+                    }
+                    return 0;
+                })
+                ->sortable(),
 
-            // Column::make($this->trans('status'), "status_code")
-            //     ->sortable()
-            //     ->format(function ($value, $row, Column $column) {
-            //         return Status::getStatusString($value);
-            //     }),
-            // Column::make($this->trans("created_date"), "created_at")
-            //     ->searchable()
-            //     ->sortable(),
+            Column::make('No Nota GT', 'gt_tr_code')
+                ->label(fn($row) => ($row->gt_tr_code))
+                ->sortable(),
+            Column::make('Custommer Point', 'gt_partner_code')
+                ->label(fn($row) => $row->gt_partner_code ? $row->gt_partner_code . ' - ' . ($row->orderHdr->Partner->city ?? '') : '')
+                ->sortable(),
+            Column::make('Tgl Proses GT', 'gt_process_date')
+                ->sortable(),
+            Column::make('CID Point', 'gt_partner_code')
+                ->label(fn($row) => $row->gt_partner_code ? ($row->orderHdr->Partner->code ?? '') : '') // Show code only if gt_partner_code is filled
+                ->sortable(),
+            Column::make('CID Note', 'orderHdr.partner_code')
+                ->label(fn($row) => $row->orderHdr->partner_code ?? '')
+                ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
-                        'row' => $row,
-                        'custom_actions' => [
-                            // [
-                            //     'label' => 'Print',
-                            //     'route' => route('TrdTire1.Procurement.PurchaseOrder.PrintPdf', [
-                            //         'action' => encryptWithSessionKey('Edit'),
-                            //         'objectId' => encryptWithSessionKey($row->id)
-                            //     ]),
-                            //     'icon' => 'bi bi-printer'
-                            // ],
-                        ],
+                        'custom_actions' => [],
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,
@@ -183,230 +106,59 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-
         ];
     }
 
     public function filters(): array
     {
         $configDetails = $this->getConfigDetails();
-        $printDates = OrderHdr::select('print_date')
+        $processDates = OrderDtl::select('gt_process_date')
             ->distinct()
-            ->whereNotNull('print_date')
-            ->pluck('print_date', 'print_date')
+            ->whereNotNull('gt_process_date')
+            ->pluck('gt_process_date', 'gt_process_date')
             ->toArray();
 
+        // Add "Not Selected" option for print_date
+        $processDates = ['' => 'Not Selected'] + $processDates;
+
+        // Ambil data SalesReward untuk filter
+        $salesRewards = SalesReward::select('code', 'descrs')
+            ->orderBy('code', 'asc')
+            ->pluck('descrs', 'code')
+            ->toArray();
+
+        $salesRewards = ['' => 'All'] + $salesRewards;
+
         return [
-            SelectFilter::make('Nomor Faktur Pajak Terakhir')
-                ->options([$configDetails['last_cnt'] => $configDetails['last_cnt']])
-                ->filter(function (Builder $builder, string $value) {}),
-            SelectFilter::make('Batas Nomor Faktur')
-                ->options([$configDetails['wrap_high'] => $configDetails['wrap_high']])
-                ->filter(function (Builder $builder, string $value) {}),
-            SelectFilter::make('Tanggal Proses')
-                ->options($printDates)
-                ->filter(function (Builder $builder, string $value) {
-                    $this->filters['print_date'] = $value; // Add this line
-                    $builder->where('print_date', $value);
+            SelectFilter::make('Tanggal Proses', 'gt_process_date')
+            ->options($processDates)
+            ->filter(function (Builder $builder, string $value) {
+                if ($value) {
+                    // simpan ke state persis seperti TaxInvoice
+                    $this->filters['gt_process_date'] = $value;
+                    $builder->where('order_dtls.gt_process_date', $value);
+                }
+            }),
+            SelectFilter::make('Sales Reward')
+                ->options($salesRewards)
+                ->filter(function (Builder $builder, $value) {
+                    if (!empty($value)) {
+                        $builder->whereHas('SalesReward', function ($query) use ($value) {
+                            $query->where('code', $value);
+                        });
+                    }
                 }),
-            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '=', $value);
-            }),
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            TextFilter::make('Custommer')->filter(function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
-            // SelectFilter::make('Status', 'status_code')
-            //     ->options([
-            //         Status::OPEN => 'Open',
-            //         Status::COMPLETED => 'Selesai',
-            //         '' => 'Semua',
-            //     ])->filter(function ($builder, $value) {
-            //         if ($value === Status::ACTIVE) {
-            //             $builder->where('order_hdrs.status_code', Status::ACTIVE);
-            //         } else if ($value === Status::COMPLETED) {
-            //             $builder->where('order_hdrs.status_code', Status::COMPLETED);
-            //         } else if ($value === '') {
-            //             $builder->withTrashed();
-            //         }
-            //     }),
-            // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '>=', $value);
-            // }),
-            // DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '<=', $value);
-            // }),
         ];
     }
+
     public function bulkActions(): array
     {
         return [
-            'setProsesDate' => 'Proses Nota Baru',
-            'nomorFaktur' => 'Set Nomor Faktur',
-            'deleteNomorFaktur' => 'Hapus Nomor Faktur',
-            'changeNomorFaktur' => 'Ubah Nomor Faktur',
-            'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
+            'prosesNotadanPoint' => 'No Nota dan Point',
+            'prosesNota' => 'Proses Nota',
+            'cetakNota' => 'Cetak Nota',
         ];
     }
-
-    public function setProsesDate()
-    {
-        // Update all print_date to current date if it is '1900-01-01'
-        OrderHdr::where('print_date', '1900-01-01')
-            ->update(['print_date' => now()]);
-
-        $this->dispatch('success', 'Tanggal proses berhasil disimpan');
-    }
-
-    public function nomorFaktur()
-    {
-        if (count($this->getSelected()) > 0) {
-            $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-            if ($config) {
-                $lastId = (int) $config->last_cnt;
-                $stepCnt = (int) $config->step_cnt;
-                $wrapHigh = (int) $config->wrap_high;
-                $maxAssigned = $lastId; // Variabel untuk menyimpan nomor faktur tertinggi yang telah dipakai
-
-                $selectedOrderIds = $this->getSelected();
-                foreach ($selectedOrderIds as $orderId) {
-                    do {
-                        if (!empty($this->deletedRemarks)) {
-                            // Urutkan deletedRemarks sehingga nomor terkecil digunakan terlebih dahulu
-                            sort($this->deletedRemarks);
-                            $newId = array_shift($this->deletedRemarks);
-                        } else {
-                            $newId = $lastId + $stepCnt;
-                            if ($newId > $wrapHigh) {
-                                $newId = 1; // Reset ke 1 jika melebihi batas
-                            }
-                            $lastId = $newId;
-                        }
-                    } while (OrderHdr::where('print_remarks', $newId)->exists());
-
-                    // Update nomor faktur pada order yang bersangkutan
-                    OrderHdr::where('id', $orderId)->update(['print_remarks' => $newId]);
-
-                    // Perbarui nomor faktur tertinggi yang telah dipakai
-                    if ($newId > $maxAssigned) {
-                        $maxAssigned = $newId;
-                    }
-                }
-
-                // Update last_cnt berdasarkan nomor faktur tertinggi yang baru diset
-                $config->last_cnt = $maxAssigned;
-                $config->save();
-
-                // Kosongkan deletedRemarks setelah digunakan
-                $this->deletedRemarks = [];
-                $this->clearSelected();
-                $this->dispatch('success', 'Nomor faktur berhasil disimpan');
-            } else {
-                $this->dispatch('showAlert', [
-                    'type' => 'error',
-                    'message' => 'Konfigurasi SO_FPAJAK_LASTID tidak ditemukan'
-                ]);
-            }
-        }
-    }
-
-
-    public function deleteNomorFaktur()
-    {
-        if (count($this->getSelected()) > 0) {
-            $orders = OrderHdr::whereIn('id', $this->getSelected())->get(['id', 'print_remarks']);
-            $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-            $deletedRemarks = [];
-
-            foreach ($orders as $order) {
-                if ($order->print_remarks) {
-                    $deletedRemarks[] = $order->print_remarks;
-                    // Simpan nomor yang dihapus agar bisa digunakan kembali
-                    $this->deletedRemarks[] = $order->print_remarks;
-                }
-            }
-
-            if ($config && !empty($deletedRemarks)) {
-                // Jika nomor tertinggi yang dihapus sama dengan last_cnt, perbarui last_cnt
-                $maxDeletedRemark = max($deletedRemarks);
-                if ($maxDeletedRemark == $config->last_cnt) {
-                    $newLastCnt = min($deletedRemarks) - $config->step_cnt;
-                    // Pastikan tidak menjadi nilai negatif
-                    $config->last_cnt = ($newLastCnt < 0) ? 0 : $newLastCnt;
-                    $config->save();
-                }
-            }
-
-            // Hapus nomor faktur pada order yang dipilih
-            OrderHdr::whereIn('id', $this->getSelected())->update(['print_remarks' => null]);
-
-            $this->clearSelected();
-            $this->dispatch('success', 'Nomor faktur berhasil dihapus');
-        }
-    }
-
-    public function changeNomorFaktur()
-    {
-        if (count($this->getSelected()) > 0) {
-            $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-            if ($config) {
-                $lastId   = (int) $config->last_cnt;
-                $stepCnt  = (int) $config->step_cnt;
-                $wrapHigh = (int) $config->wrap_high;
-                $maxAssigned = $lastId; // Menyimpan nomor faktur tertinggi yang telah dipakai
-
-                $selectedOrderIds = $this->getSelected();
-                foreach ($selectedOrderIds as $orderId) {
-                    do {
-                        if (!empty($this->deletedRemarks)) {
-                            // Urutkan agar nomor terkecil dipakai terlebih dahulu
-                            sort($this->deletedRemarks);
-                            $newId = array_shift($this->deletedRemarks);
-                        } else {
-                            $newId = $lastId + $stepCnt;
-                            if ($newId > $wrapHigh) {
-                                $newId = 1; // Reset ke 1 jika melebihi batas
-                            }
-                            $lastId = $newId;
-                        }
-                    } while (OrderHdr::where('print_remarks', $newId)->exists());
-
-                    // Jika order sudah memiliki nomor, simpan sebagai reusable
-                    $order = OrderHdr::find($orderId);
-                    if ($order->print_remarks) {
-                        $this->deletedRemarks[] = $order->print_remarks;
-                    }
-
-                    OrderHdr::where('id', $orderId)->update(['print_remarks' => $newId]);
-
-                    // Update maxAssigned jika nomor baru lebih tinggi
-                    if ($newId > $maxAssigned) {
-                        $maxAssigned = $newId;
-                    }
-                }
-
-                // Update konfigurasi last_cnt sesuai dengan nomor faktur tertinggi yang telah dipakai
-                $config->last_cnt = $maxAssigned;
-                $config->save();
-
-                // Kosongkan reusable deletedRemarks setelah dipakai
-                $this->deletedRemarks = [];
-                $this->clearSelected();
-                $this->dispatch('success', 'Nomor faktur berhasil diubah');
-            } else {
-                $this->dispatch('showAlert', [
-                    'type' => 'error',
-                    'message' => 'Konfigurasi SO_FPAJAK_LASTID tidak ditemukan'
-                ]);
-            }
-        }
-    }
-
-
     public function getConfigDetails()
     {
         $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
@@ -422,16 +174,85 @@ class IndexDataTable extends BaseDataTableComponent
         ];
     }
 
-    public function cetakProsesDate()
+    public function setNotaGT()
     {
-        $selectedPrintDate = $this->filters['print_date'] ?? null;
-        if ($selectedPrintDate) {
-            $orders = OrderHdr::where('print_date', $selectedPrintDate)->get();
-            $orderIds = $orders->pluck('id')->toArray(); // Add this line
-            return redirect()->route('TrdTire1.Tax.TaxInvoice.PrintPdf', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey(json_encode($orderIds)), // Modify this line
-            ]);
+        // Get the current year and month
+        $year = now()->format('y'); // Two-digit year
+        $month = now()->format('m'); // Two-digit month
+
+        // Get the last sequence number for the current month
+        $lastSequence = OrderDtl::whereNotNull('gt_tr_code')
+            ->where('gt_tr_code', 'like', $year . $month . '%')
+            ->orderBy('gt_tr_code', 'desc')
+            ->value('gt_tr_code');
+
+        // Extract the last sequence number or start from 0
+        $sequence = $lastSequence ? (int)substr($lastSequence, -4) : 0;
+
+        // Iterate over selected items and assign GT numbers
+        foreach ($this->getSelected() as $id) {
+            $sequence++; // Increment the sequence number
+            $gtTrCode = $year . $month . str_pad($sequence, 4, '0', STR_PAD_LEFT); // Format GT number
+
+            // Update the record with the generated GT number
+            OrderDtl::where('id', $id)->update(['gt_tr_code' => $gtTrCode]);
+        }
+
+        // Dispatch a success message
+        $this->dispatch('success', 'Nomor Nota GT berhasil diatur.');
+    }
+
+    public function prosesNotadanPoint()
+    {
+        if (count($this->getSelected()) > 0) {
+            $selectedItems = OrderDtl::whereIn('id', $this->getSelected())
+                ->with('OrderHdr')
+                ->get()
+                ->map(function ($order) {
+                    return [
+                        'nomor_nota' => $order->OrderHdr->tr_code ?? '',
+                    ];
+                })
+                ->toArray();
+
+            $this->dispatch('openProsesDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
         }
     }
+
+    public function prosesNota()
+    {
+        $this->dispatch('open-modal-proses-nota'); // Dispatch event to open the modal
+    }
+
+    public function cetakNota()
+    {
+        $selectedProcessDate = $this->filters['gt_process_date'] ?? null;
+
+        if ($selectedProcessDate) {
+            $orderIds = OrderDtl::where('gt_process_date', $selectedProcessDate)
+                ->where('tr_type', 'SO')
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($orderIds)) {
+                logger()->info('No data found for the selected process date.', ['gt_process_date' => $selectedProcessDate]);
+                $this->dispatch('error', 'Tidak ada data untuk dicetak.');
+                return;
+            }
+
+            return redirect()->route('TrdTire1.Transaction.ProsesGt.PrintPdf', [
+                'action' => encryptWithSessionKey('Print'),
+                'objectId' => encryptWithSessionKey(json_encode($orderIds)),
+                'additionalParam' => $selectedProcessDate,
+            ]);
+        }
+
+        $this->dispatch('error', 'Tanggal proses belum dipilih.');
+    }
+
+    // protected function isFirstFilterApplied(Builder $query): bool
+    // {
+    //     // Check if the query has only one where condition (whereRaw('1=0'))
+    //     return count($query->getQuery()->wheres) === 1 && $query->getQuery()->wheres[0]['type'] === 'raw';
+    // }
 }

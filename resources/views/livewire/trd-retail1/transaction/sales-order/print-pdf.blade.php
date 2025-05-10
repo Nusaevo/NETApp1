@@ -75,7 +75,7 @@
                             @foreach ($object->OrderDtl as $item)
                                 @continue(!$item->qty)
                                 <tr>
-                                    <td colspan="3" style="padding-top:4px;"><b>{{ $item->Material->code }} {{ $item->Material->name }}</b></td>
+                                    <td colspan="3" style="padding-top:4px;"><b>{{ $item->Material->code }} - {{ $item->Material->name }}</b></td>
                                 </tr>
                                 <tr>
                                     <td>{{ qty($item->qty) }} {{ $item->matl_uom }}</td>

@@ -26,7 +26,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return BillingHdr::with(['Partner'])
             ->where('billing_hdrs.tr_type', 'ARB')
-            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::SHIP]);
+            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN]);
 
     }
 
@@ -213,7 +213,9 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Redirect to print view
             return redirect()->route('TrdTire1.Transaction.SalesBilling.PrintPdf', [
-                'orderIds' => encryptWithSessionKey($selectedOrderIds)
+                // 'orderIds' => encryptWithSessionKey($selectedOrderIds),
+                'action' => encryptWithSessionKey('Print'),
+                'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
             ]);
         }
     }

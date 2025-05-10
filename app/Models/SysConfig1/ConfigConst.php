@@ -28,6 +28,55 @@ class ConfigConst extends BaseModel
         'num2',
         'note1',
     ];
+    public $labels = [
+        // Geographical
+        'GEO_CONTINENTS'    => 'Benua',
+        'GEO_COUNTRIES'     => 'Negara',
+        'GEO_COUNTRYL2'     => 'Provinsi / States',
+        'GEO_COUNTRYL3'     => 'Kabupaten / Kotamadya / County',
+        'GEO_COUNTRYL4'     => 'Kecamatan',
+        'GEO_COUNTRYL5'     => 'Kelurahan',
+
+        // People
+        'PPL_GENDERS'       => 'Gender di Indonesia',
+
+        // Masters
+        'MASTER_STATUS'         => 'Status di semua Masters',
+        'MACCOUNT_CLASSES'      => 'CoA - Klasifikasi utama',
+        'MPARTNER_TYPES'        => 'Type di Master Partners',
+        'MMATL_UOM'             => 'Unit of Measure di Materials',
+        'MMATL_CATEGL1'         => 'Kategori 1',
+        'MMATL_CATEGL2'         => 'Kategori 2',
+        'MMATL_CATEGL3'         => 'Kategori 3',
+        'MMATL_JEWEL_GIACOLORS'  => 'Material - Jewel - GIA Color Scale',
+        'MMATL_JEWEL_GIACLARITY' => 'Material - Jewel - GIA Clarity Scale',
+        'MMATL_JEWEL_GIACUT'     => 'Material - Jewel - GIA Cut Scale',
+        'MMATL_JEWEL_GEMSTONES'  => 'Material - Jewel - Gemstone Types',
+        'MMATL_JEWEL_GEMCOLORS'  => 'Material - Jewel - Gemstone Colours',
+        'MMATL_JEWEL_GEMSHAPES'  => 'Material - Jewel - Gemstone Shapes',
+        'MMATL_JEWEL_GOLDPURITY' => 'Material - Jewel - Gold Purity',
+        'MMATL_JEWEL_COMPONENTS' => 'Material - Jewel - Components/Bahan',
+        'MMATL_PATTERN'         => 'Kode Pattern pada TrdTire',
+        'MMATL_JENIS'           => 'Kode Jenis pada TrdTire',
+        'MMATL_MERK'            => 'Kode Merk',
+        'MMATL_TYPE'            => 'Tipe Material',
+        'MWAREHOUSE_LOCL1'      => 'Gudang - Lokasi',
+        'MWAREHOUSE_LOCL2'      => 'Gudang - Gedung/Area',
+        'MPAYMENT_TERMS'        => 'Payment Terms',
+        'MCURRENCY_CODE'        => 'Currency Codes',
+
+        // Transactions
+        'TRX_STATUS'            => 'Status di semua Transactions',
+        'TRX_NJ_REMARK'         => 'Catatan Pada Nota Jual',
+        'TRX_SALES_TYPE'        => 'Sales Type TrdTire',
+        'TRX_INV_TYPE'          => 'Tipe Transaksi Inventory',
+        'TRX_SO_TAX'            => 'PPN',
+        'TRX_PAYMENT_TYPE'      => 'Payment Type',
+        'TRX_PAYMENT_SRCS'      => 'Jenis Pembayaran',
+
+        // Systems
+        'BASE_CURRENCY'         => 'Base Currency',
+    ];
 
     protected static $serialNumberMappings = [
         'TrdJewel1' => [

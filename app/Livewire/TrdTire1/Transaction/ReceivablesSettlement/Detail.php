@@ -260,7 +260,7 @@ class Detail extends BaseComponent
         if (!empty($this->inputs['payment_term_id'])) {
             $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
             $this->inputs['payment_term'] = $paymentTerm->str1;
-            $this->inputs['payment_due_days'] = $paymentTerm->num1; // Save payment_due_days from num1
+            $this->inputs['payment_due_days'] = $paymentTerm->num1;
         }
 
         $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'DebtSettlement_LASTID');
@@ -474,4 +474,10 @@ class Detail extends BaseComponent
     //     $this->total_dpp = $dpp;
     // }
     #endregion
+
+    public function isEditOrView()
+    {
+        return in_array($this->actionValue, ['Edit', 'View']);
+    }
+
 }

@@ -19,7 +19,7 @@
                         <label for="deliveryDate">Tanggal Kirim</label>
                         <input label="Tanggal Kirim" type="date"
                             class="form-control @error('tr_date') is-invalid @enderror" id="deliveryDate"
-                            wire:model="tr_date">
+                            wire:model="tr_date" :value="old('tr_date', now() -> format('Y-m-d'))">
                         @error('tr_date')
                             <div class="invalid-feedback">
                                 {{ $message }}

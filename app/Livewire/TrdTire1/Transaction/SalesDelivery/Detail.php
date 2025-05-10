@@ -49,15 +49,9 @@ class Detail extends BaseComponent
 
 
     public $rules  = [
-        'inputs.tr_date' => 'nullable',
         'inputs.send_to' => 'required',
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
-        'inputs.tax_payer' => 'nullable',
-        'inputs.payment_terms' => 'nullable',
-        'inputs.tax' => 'nullable',
-        'inputs.due_date' => 'nullable',
-        'inputs.cust_reff' => 'nullable',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',

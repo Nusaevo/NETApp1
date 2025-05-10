@@ -84,7 +84,6 @@ class DelivDtl extends BaseModel
                         }
                     }
                 }
-
                 // Hitung delta berdasarkan tipe transaksi
                 $delta = $newQty - ($delivDtl->exists ? $oldQty : 0);
 
@@ -97,7 +96,7 @@ class DelivDtl extends BaseModel
                             'wh_id' => $delivDtl->wh_id,
                             'batch_code' => $delivDtl->batch_code,
                         ],
-                        ['qty_oh' => 0]
+                        // ['qty_oh' => 0]
                     );
 
                     $ivtBal->increment('qty_oh', $delta);
@@ -130,7 +129,6 @@ class DelivDtl extends BaseModel
                     // Assign ivt_id agar tidak null
                     $delivDtl->ivt_id = $ivtBal->id;
 
-
                     // Update qty_fgi di MatlUom
                     if ($delta != 0) {
                         $matlUomRec = MatlUom::where([
@@ -147,7 +145,6 @@ class DelivDtl extends BaseModel
                             $ivtBal->decrement('qty_oh', $delta);
                         }
                 }
-
                 // Update OrderDtl
                 if ($delivDtl->OrderDtl && $delta != 0) {
                     $delivDtl->OrderDtl->increment('qty_reff', $delta);
@@ -215,7 +212,6 @@ class DelivDtl extends BaseModel
 
         static::deleting(function ($delivDtl) {
             DB::transaction(function () use ($delivDtl) {
-                // Handle PD (Goods Receipt)
                 if ($delivDtl->tr_type === 'PD') {
                     $ivtBal = IvtBal::where([
                         'matl_id' => $delivDtl->matl_id,

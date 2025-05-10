@@ -111,10 +111,13 @@
 
             <x-slot name="button">
                 <div class="row">
+                    <x-ui-text-field-search label="Merk" model="filterBrand" :options="$brandOptions" onChanged="" />
                     <x-ui-text-field label="Kode Program" model="inputs.code" type="text" :action="$actionValue"
                         required="true" />
                     <x-ui-text-field label="Nama Program" model="inputs.descrs" type="text" :action="$actionValue"
                         required="true" />
+                </div>
+                <div class="row">
                     <x-ui-text-field label="Periode Awal" model="inputs.beg_date" type="date" :action="$actionValue"
                         required="true" />
                     <x-ui-text-field label="Periode AKhir" model="inputs.end_date" type="date" :action="$actionValue"
@@ -129,15 +132,15 @@
             onOpened="openItemDialogBox" onClosed="closeItemDialogBox">
             <x-slot name="body">
                 <div class="row">
-                    <x-ui-text-field type="text" label="Search Code/Nama" model="searchTerm"
-                        :action="$actionValue" enabled="true" clickEvent="" buttonName="" />
+                    <x-ui-text-field type="text" label="Search Code/Nama" model="searchTerm" :action="$actionValue"
+                        enabled="true" clickEvent="" buttonName="" />
                     <!-- Table -->
                     <x-ui-text-field-search label="Category" model="filterCategory" :options="$kategoriOptions" onChanged="" />
-                </div>
-                <div class="row">
-                    <x-ui-text-field-search label="Merk" model="filterBrand" :options="$brandOptions" onChanged="" />
                     <x-ui-text-field-search label="Type" model="filterType" :options="$typeOptions" onChanged="" />
                 </div>
+                {{-- <div class="row">
+                    <x-ui-text-field-search label="Merk" model="filterBrand" :options="$brandOptions" onChanged="" />
+                </div> --}}
 
                 <x-ui-button clickEvent="searchMaterials" cssClass="btn btn-primary" button-name="Search" />
                 <div class="row mt-2">

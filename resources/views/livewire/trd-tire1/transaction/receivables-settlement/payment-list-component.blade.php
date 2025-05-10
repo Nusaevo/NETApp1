@@ -48,7 +48,6 @@
                         <div class="row">
                             <div class="col-md-6">
                                 @if (isset($activePaymentItemKey))
-                                    <!-- Tambahkan wire:change untuk trigger perubahan tipe -->
                                     <x-ui-dropdown-select label="{{ $this->trans('pay_type_code') }}"
                                         model="input_payments.{{ $activePaymentItemKey }}.pay_type_code"
                                         :options="$PaymentType" required="true" :action="$actionValue"

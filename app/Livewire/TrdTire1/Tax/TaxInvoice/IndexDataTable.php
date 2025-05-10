@@ -10,8 +10,8 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Models\SysConfig1\Configsnum;
-use Illuminate\Support\Carbon; // Add this line
+use App\Models\SysConfig1\ConfigSnum;
+use Illuminate\Support\Carbon;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -32,7 +32,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN])
+            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
             ->where('order_hdrs.tax_doc_flag', 1);
     }
     public function columns(): array
@@ -321,25 +321,11 @@ class IndexDataTable extends BaseDataTableComponent
 
         if (count($this->getSelected()) > 0) {
             $orders = OrderHdr::whereIn('id', $this->getSelected())->get(['id', 'print_remarks']);
-            $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-            $deletedRemarks = [];
 
             foreach ($orders as $order) {
                 if ($order->print_remarks) {
-                    $deletedRemarks[] = $order->print_remarks;
                     // Simpan nomor yang dihapus agar bisa digunakan kembali
                     $this->deletedRemarks[] = $order->print_remarks;
-                }
-            }
-
-            if ($config && !empty($deletedRemarks)) {
-                // Jika nomor tertinggi yang dihapus sama dengan last_cnt, perbarui last_cnt
-                $maxDeletedRemark = max($deletedRemarks);
-                if ($maxDeletedRemark == $config->last_cnt) {
-                    $newLastCnt = min($deletedRemarks) - $config->step_cnt;
-                    // Pastikan tidak menjadi nilai negatif
-                    $config->last_cnt = ($newLastCnt < 0) ? 0 : $newLastCnt;
-                    $config->save();
                 }
             }
 
@@ -431,17 +417,16 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cetakProsesDate()
     {
-        $selectedPrintDate = $this->filters['print_date'] ?? null; // Ensure print_date is set
+        $selectedPrintDate = $this->filters['print_date'] ?? null;
         if ($selectedPrintDate) {
             $orderIds = OrderHdr::where('print_date', $selectedPrintDate)
                 ->where('tr_type', 'SO')
-                ->whereIn('status_code', [Status::PRINT, Status::OPEN])
                 ->pluck('id')
                 ->toArray();
             return redirect()->route('TrdTire1.Tax.TaxInvoice.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey(json_encode($orderIds)),
-                'additionalParam' => $selectedPrintDate, // Pass selected print_date
+                'additionalParam' => $selectedPrintDate,
             ]);
         }
         $this->dispatch('error', 'Tanggal proses belum dipilih.');
@@ -449,21 +434,19 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cetakLaporanPenjualan()
     {
-        $selectedMasa = $this->filters['masa'] ?? null; // Ensure 'masa' filter is set
+        $selectedMasa = $this->filters['masa'] ?? null;
         if ($selectedMasa) {
             $orderIds = OrderHdr::whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$selectedMasa])
                 ->where('tr_type', 'SO')
-                ->whereIn('status_code', [Status::PRINT, Status::OPEN])
                 ->pluck('id')
                 ->toArray();
 
             return redirect()->route('TrdTire1.Transaction.PurchaseDelivery.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey(json_encode($orderIds)),
-                'additionalParam' => $selectedMasa, // Pass selected 'masa'
+                'additionalParam' => $selectedMasa,
             ]);
         }
-
         $this->dispatch('error', 'Masa belum dipilih.');
     }
 }

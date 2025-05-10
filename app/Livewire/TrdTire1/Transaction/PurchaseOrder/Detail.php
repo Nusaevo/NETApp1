@@ -11,6 +11,8 @@ use App\Services\TrdTire1\Master\MasterService;
 use Illuminate\Support\Facades\{Session, DB};
 use Exception;
 
+use function PHPUnit\Framework\throwException;
+
 class Detail extends BaseComponent
 {
     // Header properties
@@ -56,7 +58,6 @@ class Detail extends BaseComponent
         'inputs.tr_code' => 'required',
         'inputs.partner_name' => 'required',
         'inputs.tax_flag' => 'required',
-        'inputs.payment_term_id' => 'required',
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
     ];
@@ -414,7 +415,6 @@ class Detail extends BaseComponent
             'inputs.tr_code' => 'required',
             'inputs.partner_id' => 'required',
             'inputs.tax_flag' => 'required',
-            'inputs.payment_term_id' => 'required',
             'input_details.*.qty' => 'required',
             'input_details.*.matl_id' => 'required',
         ]);
@@ -422,8 +422,7 @@ class Detail extends BaseComponent
         // Check if order can be edited
         foreach ($this->input_details as $key => $detail) {
             if (isset($detail['qty_reff']) && $detail['qty'] < $detail['qty_reff']) {
-                $this->dispatch('error', __('Qty tidak boleh kurang dari Qty Reff pada item ke-' . ($key + 1)));
-                return;
+                throw new Exception('Qty tidak boleh kurang dari Qty Reff pada item ke-' . ($key + 1));
             }
         }
 

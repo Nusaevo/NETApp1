@@ -98,18 +98,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Merk', 'brand_filter')
-                ->options($this->materialBrand)
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value !== '') {
-                        $builder->where('brand', '=', $value);
-                    }
-                }),
             SelectFilter::make('Kategori', 'kategori_filter')
                 ->options($this->materialCategory)
                 ->filter(function (Builder $builder, string $value) {
                     if ($value !== '') {
                         $builder->where('category', '=', $value);
+                    }
+                }),
+            SelectFilter::make('Merk', 'brand_filter')
+                ->options($this->materialBrand)
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('brand', '=', $value);
                     }
                 }),
             // Filter pencarian berdasarkan field tag dengan LIKE

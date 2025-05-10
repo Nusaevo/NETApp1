@@ -104,128 +104,151 @@ class Material extends BaseModel
             'allowInsert' => true,
         ];
     }
-    /**
-     * Validate uploaded Excel data based on template rules.
-     *
-     * @param array $dataTable Data from uploaded Excel, including headers.
-     * @param ConfigAudit $audit Audit object for logging.
-     * @param string $param 'Create' or 'Update' to identify the template type.
-     * @return array Validation result and updated data table.
-     */
     public static function validateExcelUpload($dataTable, $audit, $param)
     {
-
         $errors = [];
-        $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
+        // Ambil config template (Create / Update)
+        $templateConfig = $param === 'Create'
+            ? self::getCreateTemplateConfig()
+            : self::getUpdateTemplateConfig();
 
         $expectedHeaders = $templateConfig['headers'];
+        $actualHeaders   = $dataTable[0] ?? [];
 
-        // Validate Headers
-        $actualHeaders = $dataTable[0] ?? [];
+        // 1. VALIDASI HEADER
         $missing = array_diff($expectedHeaders, $actualHeaders);
-
-        if (! empty($missing)) {
-            // Audit and upload the entire file for review
+        if (!empty($missing)) {
             $audit->updateAuditTrail(
                 100,
                 'Template salah: kolom header berikut tidak ditemukan — ' . implode(', ', $missing),
                 Status::ERROR
             );
-            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['headers'] = $actualHeaders;
             $templateConfig['data']    = array_slice($dataTable, 1);
-
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
-
             return [
                 'success'   => false,
                 'dataTable' => $dataTable,
             ];
         }
 
-        // Ensure Status and Message columns exist
-        $statusIndex = array_search('Status', $dataTable[0]);
-        $messageIndex = array_search('Message', $dataTable[0]);
+        // Pastikan kolom Status & Message ada
+        $statusIndex  = array_search('Status',  $actualHeaders);
+        $messageIndex = array_search('Message', $actualHeaders);
 
-        foreach ($dataTable as $index => $row) {
-            if ($index === 0) {
-                // Skip header row
-                if (count($dataTable) === 1 || empty(array_filter($dataTable[1] ?? []))) {
-                    $audit->updateAuditTrail(100, 'Error: Data tidak ditemukan.', Status::ERROR);
-                    $templateConfig['headers'] = $dataTable[0] ?? [];
-                    $templateConfig['data']    = array_slice($dataTable, 1);
-                    Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
+        // 2. CEK DATA KOSONG TOTAL (hanya header atau baris pertama blank)
+        if (count($dataTable) === 1 || empty(array_filter($dataTable[1] ?? []))) {
+            $audit->updateAuditTrail(100, 'Error: Data tidak ditemukan.', Status::ERROR);
+            $templateConfig['headers'] = $actualHeaders;
+            $templateConfig['data']    = array_slice($dataTable, 1);
+            Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
+            return [
+                'success'   => false,
+                'dataTable' => $dataTable,
+            ];
+        }
 
-                    return [
-                        'success' => false,
-                        'dataTable' => $dataTable,
-                    ];
-                }
+        // Siapkan index kolom untuk akses cepat
+        $headerIndex = array_flip($actualHeaders);
+
+        // 3. BATCH GENERATE NAMA & DETEKSI DUPLIKAT (dengan pelacakan baris error)
+        $masterService  = new MasterService();
+        $generatedNames = [];
+        foreach (array_slice($dataTable, 1) as $idx => $row) {
+            if ($idx === 0 || empty(array_filter($row, fn($c) => trim((string)$c) !== ''))) {
                 continue;
             }
 
-            $allBlank = true;
-            foreach ($row as $cell) {
-                if (trim((string)$cell) !== '') {
-                    $allBlank = false;
-                    break;
+            // Hitung nomor baris Excel (header = 1, data pertama = 2)
+            $rowNum = $idx + 2;
+            $cat       = $row[$headerIndex['Kategori*']]  ?? null;
+            $brand     = $row[$headerIndex['Merk']]       ?? '';
+            $type      = $row[$headerIndex['Jenis']]      ?? '';
+            $colorCode = $row[$headerIndex['Kode Warna']] ?? '';
+            $colorName = $row[$headerIndex['Nama Warna']] ?? '';
+
+            try {
+                $catDetail = $masterService->getMatlCategoryDetail($cat);
+                if (empty($catDetail) || is_string($catDetail)) {
+                    // Jika error atau tidak ditemukan, lempar exception dengan pesan yang jelas
+                    $errorMsg = is_string($catDetail)
+                        ? $catDetail
+                        : 'Kategori tidak ditemukan';
+                    throw new \Exception($errorMsg);
                 }
-            }
-            if ($allBlank) {
-                continue;  // skip this row entirely
-            }
-
-            $status = '';
-            $message = '';
-
-            // Common validation for `No*`
-            $no = $row[0] ?? null;
-            if (empty($no)) {
-                $status = 'Error';
-                $message .= 'Kolom No* tidak boleh kosong. ';
+            } catch (\Throwable $e) {
+                // Catat error baris ke $errors dan set nama ter-generate null
+                $errors[]       = "Row {$rowNum}: {$e->getMessage()}.";
+                $generatedNames[] = null;
+                continue;
             }
 
-            $headerIndex = array_flip($actualHeaders);
-            $validUOMs = ConfigConst::where('const_group', 'MMATL_UOM')->pluck('str1')->toArray();
+            // Jika valid, generate nama atau gunakan Nama Barang
+            $gen = Material::generateName($cat, $brand, $type, $colorCode, $colorName);
+            if ($gen !== '') {
+                $generatedNames[] = $gen;
+            } else {
+                $generatedNames[] = strtoupper($row[$headerIndex['Nama Barang']] ?? '');
+            }
+        }
+
+        // Hitung duplikat
+        $validNames = array_filter($generatedNames, fn($n) => $n !== null);
+        $counts     = array_count_values($validNames);
+        $dupNames   = array_keys(array_filter($counts, fn($c) => $c > 1));
+
+        // Ambil daftar UOM valid satu kali
+        $validUOMs = ConfigConst::where('const_group', 'MMATL_UOM')->pluck('str1')->toArray();
+
+        // 4. LOOP VALIDASI TIAP BARIS
+        foreach ($dataTable as $i => $row) {
+            // Skip header atau baris kosong
+            if ($i === 0 || empty(array_filter($row, fn($c) => trim((string)$c) !== ''))) {
+                continue;
+            }
+
+            $message  = '';
+            $status   = '';
+            $cat      = $row[$headerIndex['Kategori*']] ?? '';
+            $name     = $generatedNames[$i - 1] ?? null;
+            $catDetail = $masterService->getMatlCategoryDetail($cat);
+
+            // Tangani error kategori jika string
+            if (is_string($catDetail)) {
+                $message .= "Error kategori: {$catDetail}. ";
+                $catDetail = null;
+            }
+
+            // a) Kategori ada?
+            if (empty($catDetail)) {
+                $message .= 'Kategori tidak ditemukan. ';
+            }
+
+            // b) Duplikat nama?
+            if ($name !== null && in_array($name, $dupNames)) {
+                $message .= "Duplikasi nama barang: {$name}. ";
+            }
+
             if ($param === 'Create') {
-                // Validation for Create template
-                $category    = $row[$headerIndex['Kategori*']]   ?? null; // Kategori*
-                $brand       = $row[$headerIndex['Merk']]       ?? null; // Merk*
-                $type        = $row[$headerIndex['Jenis']]      ?? null; // Jenis*
-                $no          = $row[$headerIndex['No']]          ?? null; // No
-                $colorCode   = $row[$headerIndex['Kode Warna']]  ?? null; // Kode Warna
-                $colorName   = $row[$headerIndex['Nama Warna']]  ?? null; // Nama Warna
-                $uom         = $row[$headerIndex['UOM*']]        ?? null; // UOM*
-                $buyingPrice = $row[$headerIndex['Harga Beli']] ?? null; // Harga Beli
-                $sellingPrice= $row[$headerIndex['Harga Jual*']] ?? null; // Harga Jual*
-                $stock       = $row[$headerIndex['Stock']]       ?? null; // Stock
-                $materialName     = $row[$headerIndex['Nama Barang']]       ?? '';
-                $generated = Material::generateName($category, $brand, $type, $colorCode, $colorName);
-                $name='';
-                if ($generated !== '') {
-                    $name = $generated;
-                }else{
-                    $name = strtoupper($materialName);
+                // Validasi fields Create
+                $no           = $row[$headerIndex['No']]           ?? null;
+                $uom          = $row[$headerIndex['UOM*']]         ?? null;
+                $sellingPrice = $row[$headerIndex['Harga Jual*']]  ?? null;
+                $stock        = $row[$headerIndex['Stock']]        ?? null;
+
+                if (empty($no)) {
+                    $message .= 'Kolom No* tidak boleh kosong. ';
                 }
-                // if (empty($no)) {
-                //     $message .= 'Kolom No* tidak boleh kosong. ';
-                // }
-                if (empty($category)) {
+                if (empty($cat)) {
                     $message .= 'Kategori* tidak boleh kosong. ';
                 }
-                // if (empty($brand)) {
-                //     $message .= 'Merk* tidak boleh kosong. ';
-                // }
-                // if (empty($type)) {
-                //     $message .= 'Jenis* tidak boleh kosong. ';
-                // }
-
                 if (empty($uom)) {
                     $message .= 'UOM tidak boleh kosong. ';
                 } elseif (!in_array($uom, $validUOMs)) {
                     $message .= 'UOM tidak ditemukan. ';
                 }
-                if (!isValidNumeric($sellingPrice)) {
-                    $message .= 'Harga jual harus berupa angka positif. ';
+                if (!is_numeric($sellingPrice) || $sellingPrice <= 0) {
+                    $message .= 'Harga jual harus angka positif. ';
                 }
                 if (empty($sellingPrice)) {
                     $message .= 'Harga jual* tidak boleh kosong. ';
@@ -233,25 +256,22 @@ class Material extends BaseModel
                 if (!empty($stock) && (!is_numeric($stock) || $stock < 0)) {
                     $message .= 'Stock harus berupa angka non-negatif. ';
                 }
-                // Cek duplikasi dalam database berdasarkan Kategori, Merk, Jenis, dan Color Code di JSONB (specs->color_code)
-                $existingMaterial = Material::where('category', $category)->where('name', $name)->first();
 
-                if ($existingMaterial) {
-                    $message .= 'Material dengan Kategori dan Nama barang sama sudah ada di file database. ';
+                // Cek duplikasi di DB
+                if ($name !== null) {
+                    $exists = Material::where('category', $cat)
+                                      ->where('name', $name)
+                                      ->first();
+                    if ($exists) {
+                        $message .= 'Material dengan Kategori dan Nama barang sama sudah ada di database. ';
+                    }
                 }
-
-                static $existingNamesInExcel = [];
-                $key = strtoupper(trim($category)) . '|' . strtoupper(trim($name));
-
-                if (isset($existingNamesInExcel[$key])) {
-                    $message .= 'Material dengan Kategori dan Nama barang sama sudah ada di file Excel. ';
-                }
-            } elseif ($param === 'Update') {
-                // Validasi Template Update
-                $no           = $row[$headerIndex['No']]          ?? null;
-                $materialCode = $row[$headerIndex['Kode Barang']] ?? null;
-                $version      = $row[$headerIndex['Version']]     ?? null;
-                $uom          = $row[$headerIndex['UOM*']]        ?? null;
+            } else {
+                // Validasi fields Update
+                $no           = $row[$headerIndex['No']]           ?? null;
+                $materialCode = $row[$headerIndex['Kode Barang']]  ?? null;
+                $version      = $row[$headerIndex['Version']]      ?? null;
+                $uom          = $row[$headerIndex['UOM*']]         ?? null;
 
                 if (empty($no)) {
                     $message .= 'Kolom No* tidak boleh kosong. ';
@@ -268,31 +288,34 @@ class Material extends BaseModel
             }
 
             if (!empty($message)) {
-                $status = 'Error';
-                $errors[] = "Row $index: $message";
+                $status   = 'Error';
+                $errors[] = "Row {$i}: {$message}";
             }
 
-            // Update Status and Message columns
-            $dataTable[$index][$statusIndex] = $status;
-            $dataTable[$index][$messageIndex] = $message;
+            $dataTable[$i][$statusIndex]  = $status;
+            $dataTable[$i][$messageIndex] = trim($message);
         }
 
-        // Jika terdapat error, unggah hasil validasi
+        // 5. UPLOAD ATTACHMENT & UPDATE AUDIT TRAIL
         if (!empty($errors)) {
-
-            $templateConfig['headers'] = $dataTable[0] ?? [];
+            $templateConfig['headers'] = $actualHeaders;
             $templateConfig['data']    = array_slice($dataTable, 1);
             Attachment::uploadExcelAttachment($templateConfig, $audit->id, 'ConfigAudit');
         }
-
-        // Update Audit Trail
-        $audit->updateAuditTrail(100, empty($errors) ? 'Validasi selesai tanpa kesalahan.' : 'Validasi selesai dengan kesalahan.', empty($errors) ? Status::SUCCESS : Status::ERROR);
+        $audit->updateAuditTrail(
+            100,
+            empty($errors)
+                ? 'Validasi selesai tanpa kesalahan.'
+                : 'Validasi selesai dengan kesalahan.',
+            empty($errors) ? Status::SUCCESS : Status::ERROR
+        );
 
         return [
-            'success' => empty($errors),
+            'success'   => empty($errors),
             'dataTable' => $dataTable,
         ];
     }
+
 
     public static function generateMaterialCode($category)
     {

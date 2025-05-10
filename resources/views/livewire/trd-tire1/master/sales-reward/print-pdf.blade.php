@@ -53,7 +53,7 @@
                                     <tr>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: center;">No</th>
                                         <th style="border: 1px solid #000; padding: 8px;">KODE BARANG</th>
-                                        <th style="border: 1px solid #000; padding: 8px;">NAMA BARANG</th>
+                                        <th style="border: 1px solid #000; padding: 8px;">NAMA PROGRAM</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: center;">GROUP</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: center;">QTY</th>
                                         <th style="border: 1px solid #000; padding: 8px; text-align: right;">REWARD</th>

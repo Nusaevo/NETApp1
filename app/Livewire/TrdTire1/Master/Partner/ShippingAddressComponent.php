@@ -114,7 +114,9 @@ class ShippingAddressComponent extends DetailComponent
                 'address' => $this->inputs['address'] . ' - ' . $this->inputs['city'],
             ];
         }
-        $this->Save();
+        $this->validate();
+        $this->onValidateAndSave();
+        $this->dispatch('success', __('Shipping Address saved successfully!'));
     }
 
     protected function onValidateAndSave()

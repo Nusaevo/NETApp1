@@ -5,6 +5,7 @@ namespace App\Models\TrdTire1\Transaction;
 use App\Models\TrdTire1\Master\Material;
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Inventories\IvtBal;
+use App\Models\TrdTire1\Master\SalesReward;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdTire1\Master\MatlUom;
@@ -69,17 +70,7 @@ class OrderDtl extends BaseModel
             $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
                 ->where('matl_uom', $orderDtl->matl_uom)
                 ->first();
-            // $orderDtl->price_base = $matlUom->base_factor;
-            // $orderDtl->qty_base = $qty * $matlUom->base_factor;
             $orderDtl->qty_uom = $matlUom->matl_uom;
-            if ($matlUom) {
-                if ($orderDtl->tr_type === 'SO') {
-                    $matlUom->qty_fgi = $qty;
-                } elseif ($orderDtl->tr_type === 'PO') {
-                    $matlUom->qty_fgr = $qty;
-                }
-            }
-            $matlUom->save();
 
             // Create BillingDtl and DelivDtl if payment term is CASH
             $orderHdr = $orderDtl->OrderHdr;
@@ -111,6 +102,31 @@ class OrderDtl extends BaseModel
                 ]);
             }
         });
+
+        static::saved(function ($orderDtl) {
+            $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
+                ->where('matl_uom', $orderDtl->matl_uom)
+                ->first();
+
+            if ($matlUom) {
+                // Calculate oldQty and newQty
+                $oldQty = (float) $orderDtl->getOriginal('qty', 0);
+                $newQty = (float) $orderDtl->qty;
+                $delta = $newQty - ($orderDtl->exists ? $oldQty : 0);
+
+
+                // Adjust qty_fgi or qty_fgr based on delta
+                if ($delta !== 0) {
+                    if ($orderDtl->tr_type === 'SO') {
+                        $matlUom->qty_fgi += $delta;
+                    } elseif ($orderDtl->tr_type === 'PO') {
+                        $matlUom->qty_fgr += $delta;
+                    }
+                    $matlUom->save();
+                }
+            }
+        });
+
         static::deleting(function ($orderDtl) {
             try {
                 $delivDtls = DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
@@ -138,13 +154,18 @@ class OrderDtl extends BaseModel
                     ->where('tr_seq', $orderDtl->tr_seq)
                     ->forceDelete();
 
-                // Decrement qty_fgr in MatlUom
+                // Restore qty_fgr or qty_fgi in MatlUom
                 $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
                     ->where('matl_uom', $orderDtl->matl_uom)
                     ->first();
 
                 if ($matlUom) {
-                    $matlUom->decrement('qty_fgr', $orderDtl->qty);
+                    if ($orderDtl->tr_type === 'PO') {
+                        $matlUom->qty_fgr -= $orderDtl->qty;
+                    } elseif ($orderDtl->tr_type === 'SO') {
+                        $matlUom->qty_fgi -= $orderDtl->qty;
+                    }
+                    $matlUom->save();
                 }
 
                 DB::commit();
@@ -164,6 +185,10 @@ class OrderDtl extends BaseModel
     public function OrderHdr()
     {
         return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+    }
+    public function SalesReward()
+    {
+        return $this->belongsTo(SalesReward::class, 'matl_id', 'matl_id');
     }
     // public function OrderDtl()
     // {

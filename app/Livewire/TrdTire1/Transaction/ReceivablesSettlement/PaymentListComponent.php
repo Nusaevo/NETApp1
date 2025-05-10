@@ -71,6 +71,11 @@ class PaymentListComponent extends DetailComponent
         }
     }
 
+    protected function isEditOrView()
+    {
+        return in_array($this->actionValue, ['Edit', 'View']);
+    }
+
 
     public function addItem()
     {
