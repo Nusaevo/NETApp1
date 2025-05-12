@@ -149,7 +149,13 @@ class Material extends BaseModel
         }
 
         // Siapkan index kolom untuk akses cepat
-        $headerIndex = array_flip($actualHeaders);
+        $headerIndex = [];
+        foreach ($actualHeaders as $index => $header) {
+            // Convert any non-string/non-int values to string to avoid array_flip error
+            if ($header !== null && $header !== '') {
+                $headerIndex[$header] = $index;
+            }
+        }
 
         // 3. BATCH GENERATE NAMA & DETEKSI DUPLIKAT (dengan pelacakan baris error)
         $masterService  = new MasterService();
@@ -358,7 +364,13 @@ class Material extends BaseModel
         $templateConfig = $param === 'Create' ? self::getCreateTemplateConfig() : self::getUpdateTemplateConfig();
 
         DB::beginTransaction();
-        $headerIndex = array_flip($dataTable[0]);
+        // Ensure we only flip valid string/integer values
+        $headerIndex = [];
+        foreach ($dataTable[0] as $index => $header) {
+            if ($header !== null && $header !== '') {
+                $headerIndex[$header] = $index;
+            }
+        }
         try {
             $ivtDetails = [];
 
