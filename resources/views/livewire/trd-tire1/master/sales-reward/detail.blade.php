@@ -194,8 +194,7 @@
                 'objectId' => encryptWithSessionKey($inputs['code']), // Pass the correct code
             ]) }}"
             cssClass="btn-primary" type="Route" loading="true" button-name="Cetak" iconPath="print.svg" />
-        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue" cssClass="btn-primary"
-            iconPath="save.svg" />
+            @include('layout.customs.buttons.save')
     </x-ui-footer>
     <br>
 </div>

@@ -177,8 +177,7 @@
         </x-ui-tab-view-content>
 
         <x-ui-footer>
-            <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
-                cssClass="btn-primary" iconPath="save.svg" />
+            @include('layout.customs.buttons.save')
         </x-ui-footer>
     </x-ui-page-card>
 </div>

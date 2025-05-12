@@ -179,8 +179,7 @@
                     <x-ui-footer>
                         <x-ui-button clickEvent="deleteTransaction" button-name="Delete" loading="true" :action="$actionValue"
                             cssClass="btn-danger" iconPath="delete.svg" />
-                        <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
-                            cssClass="btn-primary" iconPath="save.svg" />
+                        @include('layout.customs.buttons.save')
                     </x-ui-footer>
                 </div>
                 <x-ui-table id="SummaryTable">

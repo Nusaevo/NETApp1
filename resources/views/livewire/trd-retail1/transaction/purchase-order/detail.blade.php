@@ -220,8 +220,7 @@
                     <x-ui-footer>
                         @include('layout.customs.transaction-form-footer')
                         <div>
-                            <x-ui-button clickEvent="Save" button-name="Save" loading="true" :action="$actionValue"
-                                cssClass="btn-primary" iconPath="save.svg" />
+                            @include('layout.customs.buttons.save')
                         </div>
                     </x-ui-footer>
                 </div>
