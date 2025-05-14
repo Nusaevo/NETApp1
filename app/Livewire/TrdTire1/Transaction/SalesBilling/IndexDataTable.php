@@ -218,6 +218,8 @@ class IndexDataTable extends BaseDataTableComponent
                 'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
             ]);
         }
+        $this->dispatch('error', 'Nota belum dipilih.');
+
     }
 
 }

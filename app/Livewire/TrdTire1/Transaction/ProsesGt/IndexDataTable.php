@@ -112,7 +112,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         $configDetails = $this->getConfigDetails();
-        $processDates = OrderDtl::select('gt_process_date')
+        $processDates = OrderDtl::select(DB::raw('DATE(gt_process_date) as gt_process_date')) // Format hanya tanggal
             ->distinct()
             ->whereNotNull('gt_process_date')
             ->pluck('gt_process_date', 'gt_process_date')
@@ -127,18 +127,18 @@ class IndexDataTable extends BaseDataTableComponent
             ->pluck('descrs', 'code')
             ->toArray();
 
-        $salesRewards = ['' => 'All'] + $salesRewards;
+        $salesRewards = ['' => 'Not Selected'] + $salesRewards;
 
         return [
             SelectFilter::make('Tanggal Proses', 'gt_process_date')
-            ->options($processDates)
-            ->filter(function (Builder $builder, string $value) {
-                if ($value) {
-                    // simpan ke state persis seperti TaxInvoice
-                    $this->filters['gt_process_date'] = $value;
-                    $builder->where('order_dtls.gt_process_date', $value);
-                }
-            }),
+                ->options($processDates)
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value) {
+                        // simpan ke state persis seperti TaxInvoice
+                        $this->filters['gt_process_date'] = $value;
+                        $builder->whereDate('order_dtls.gt_process_date', $value); // Gunakan whereDate untuk mencocokkan hanya tanggal
+                    }
+                }),
             SelectFilter::make('Sales Reward')
                 ->options($salesRewards)
                 ->filter(function (Builder $builder, $value) {

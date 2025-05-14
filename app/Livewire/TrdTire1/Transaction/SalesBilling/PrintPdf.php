@@ -13,6 +13,7 @@ class PrintPdf extends BaseComponent
 
     protected function onPreRender()
     {
+        // dd($this->objectIdValue);
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {
                 $this->dispatch('error', 'Invalid object ID');
@@ -22,36 +23,21 @@ class PrintPdf extends BaseComponent
             // Decode the encrypted order IDs
             $this->selectedOrderIds = json_decode(decryptWithSessionKey($this->objectIdValue), true);
 
-            // Ambil data dari BillingHdr dan relasi terkait
-            $this->orders = BillingHdr::with(['Partner', 'OrderDtl'])
+            // Fetch data with the same filters and relations as in IndexDataTable
+            $this->orders = BillingHdr::with(['Partner'])
                 ->whereIn('id', $this->selectedOrderIds)
+                ->where('billing_hdrs.tr_type', 'ARB')
+                ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN])
                 ->get();
 
-            // Update status ke PRINT
+            // Update status to PRINT
             BillingHdr::whereIn('id', $this->selectedOrderIds)->update(['status_code' => Status::PRINT]);
         }
     }
-
-    protected function onLoadForEdit()
-    {
-    }
-
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
     }
 
-    protected function onPopulateDropdowns()
-    {
-
-    }
-
-    protected function onReset()
-    {
-    }
-
-    public function onValidateAndSave()
-    {
-    }
 }

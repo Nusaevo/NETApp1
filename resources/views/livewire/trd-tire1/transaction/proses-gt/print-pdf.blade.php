@@ -78,8 +78,8 @@
                                                 <td style="padding: 8px;">
                                                     {{ $order->Partner->name }} - {{ $order->Partner->city }}
                                                 </td>
-                                                <td style="padding: 8px;">
-                                                    {{ $order->tr_code ?? '-' }}
+                                                <td style="padding: 8px; text-align: left;">
+                                                    {{ $order->tr_code }}
                                                 </td>
                                                 <td style="padding: 8px;">
                                                     {{ $detail->matl_code }}

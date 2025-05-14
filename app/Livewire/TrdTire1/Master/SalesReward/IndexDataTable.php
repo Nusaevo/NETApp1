@@ -26,13 +26,34 @@ class IndexDataTable extends BaseDataTableComponent
         return SalesReward::query()
             ->whereIn('status_code', [Status::ACTIVE, Status::PRINT]);
     }
+    // public function configure(): void
+    // {
+    //     $this->setPrimaryKey('id')                                   // ● Wajib: set primary key
+    //          ->setThAttributes(function (Column $column) {
+    //              if ($column->getField() === 'code') {
+    //                  return ['class' => 'w-120px text-center'];
+    //              }
+    //              return [];
+    //          })
+    //          ->setTdAttributes(function (Column $column) {
+    //              if ($column->getField() === 'code') {
+    //                  return [
+    //                      'style' => 'width:80px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;',
+    //                      'class' => 'w-500px text-center',
+    //                  ];
+    //              }
+    //              return [];
+    //          });
+    // }
+
 
     public function columns(): array
     {
         return [
-            Column::make($this->trans("Kode Program"), "code")
+            Column::make("Kode Program", "code")
+                ->sortable()
                 ->searchable()
-                ->sortable(),
+                ->attributes(fn() => ['class' => 'w-80px text-center']),
             Column::make($this->trans("Nama Program"), "descrs")
                 ->searchable()
                 ->sortable(),
