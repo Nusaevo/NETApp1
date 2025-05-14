@@ -28,7 +28,6 @@ class Index extends BaseComponent
     protected $listeners = [
         'openProsesDateModal',
         'refreshTable' => 'render',
-        'onSrCodeChanged',
     ];
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
@@ -58,19 +57,20 @@ class Index extends BaseComponent
             })
             ->toArray();
     }
-    public function onSrCodeChanged($value)
+    public function onSrCodeChanged()
     {
-        $salesReward = SalesReward::where('code', $value)->first();
+        // sekarang $this->sr_code sudah berisi value terbaru
+        $salesReward = SalesReward::where('code', $this->sr_code)->first();
 
         if ($salesReward) {
-            $this->start_date = $salesReward->beg_date;
-            $this->end_date = $salesReward->end_date;
+            $this->start_date = Carbon::parse($salesReward->beg_date)->format('Y-m-d');
+            $this->end_date   = Carbon::parse($salesReward->end_date)->format('Y-m-d');
         } else {
-            $this->start_date = null;
-            $this->end_date = null;
+            $this->start_date = $this->end_date = null;
             $this->dispatch('error', 'Sales Reward tidak ditemukan.');
         }
     }
+
 
     public function openProsesDateModal($orderIds, $selectedItems)
     {
@@ -124,7 +124,7 @@ class Index extends BaseComponent
                 ->update([
                     'gt_tr_code' => $this->gt_tr_code ?: '', // Set null if empty
                     'gt_partner_code' => $partner ? $partner->name : '', // Set null if no partner
-                    'gt_partner_id' => $partner ? $partner->id : null, // Set null if no partner
+                    'gt_partner_id' => $partner ? $partner->id : 0, // Set null if no partner
                     'gt_process_date' => $gtProcessDate, // Set null if both fields are null
                 ]);
 
@@ -140,33 +140,41 @@ class Index extends BaseComponent
 
     public function submitProsesNota()
     {
-        $this->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
-
-        // Ambil data SalesReward berdasarkan sr_code
+        // Ambil data SalesReward (atau SalesOrder) berdasarkan sr_code
         $salesReward = SalesReward::where('code', $this->sr_code)->first();
-
         if (!$salesReward) {
             $this->dispatch('error', 'Sales Reward tidak ditemukan.');
             return;
         }
 
-        // Pastikan beg_date dan end_date adalah objek Carbon
-        $begDate = Carbon::parse($salesReward->beg_date);
-        $endDate = Carbon::parse($salesReward->end_date);
+        // Parsing ke Carbon untuk perbandingan
+        $begDate = Carbon::parse($salesReward->beg_date)->format('Y-m-d');
+        $endDate = Carbon::parse($salesReward->end_date)->format('Y-m-d');
 
-        // Validasi tambahan untuk start_date dan end_date
-        if ($this->start_date < $begDate) {
-            $this->dispatch('error', 'Tanggal Nota Awal tidak boleh kurang dari tanggal awal Sales Reward: ' . $begDate->format('Y-m-d') . '.');
-            return;
-        }
-
-        if ($this->end_date > $endDate) {
-            $this->dispatch('error', 'Tanggal Nota Akhir tidak boleh melebihi tanggal akhir Sales Reward: ' . $endDate->format('Y-m-d') . '.');
-            return;
-        }
+        // Validasi dengan Closure
+        $this->validate([
+            'start_date' => [
+                'required',
+                'date',
+                // harus >= beg_date
+                function ($attribute, $value, $fail) use ($begDate) {
+                    if ($value < $begDate) {
+                        $fail("Tanggal Nota Awal tidak boleh kurang dari {$begDate}.");
+                    }
+                },
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after_or_equal:start_date',
+                // harus <= end_date
+                function ($attribute, $value, $fail) use ($endDate) {
+                    if ($value > $endDate) {
+                        $fail("Tanggal Nota Akhir tidak boleh melebihi {$endDate}.");
+                    }
+                },
+            ],
+        ]);
 
         DB::beginTransaction();
 
