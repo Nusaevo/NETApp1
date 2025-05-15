@@ -30,6 +30,7 @@ class OrderDtl extends BaseModel
         'amt',
         'disc_pct',
         'dpp',
+        'ppn',
         'price_uom',
         'amt_tax',
 
@@ -59,11 +60,14 @@ class OrderDtl extends BaseModel
             // Calculate DPP based on tax flag
             $priceDisc = $price * (1 - $discPct);
             if ($orderDtl->OrderHdr->tax_flag === 'I') {
-                $orderDtl->dpp = round($priceDisc / (1 + $taxPct), 2); // Round to 2 decimal places
+                $orderDtl->dpp = round($priceDisc / (1 + $taxPct), 2);
+                $orderDtl->ppn = round($orderDtl->dpp * $taxPct / 100, 2);
             } elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
-                $orderDtl->dpp = round($priceDisc, 2); // Round to 2 decimal places
+                $orderDtl->dpp = round($priceDisc, 2);
+                $orderDtl->ppn = round($orderDtl->dpp * $taxPct / 100, 2);
             } else {
-                $orderDtl->dpp = round($priceDisc, 2); // Round to 2 decimal places
+                $orderDtl->dpp = round($priceDisc, 2);
+                $orderDtl->ppn = 0;
             }
 
             // price_base = base_factor yang ada di MatlUom
