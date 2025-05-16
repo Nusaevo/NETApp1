@@ -94,32 +94,52 @@ class Index extends BaseComponent
                 SELECT
                     CASE
                         WHEN r.brand = 'GT RADIAL' THEN
-                            CASE WHEN (p.partner_chars->>'GT')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER GTR' END
+                            CASE WHEN (p.partner_chars->>'GT')::bool
+                                THEN p.name || ' - ' || p.city
+                                ELSE '_CUSTOMER GTR'
+                            END
                         WHEN r.brand = 'GAJAH TUNGGAL' THEN
-                            CASE WHEN (p.partner_chars->>'GT')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER GTL' END
+                            CASE WHEN (p.partner_chars->>'GT')::bool
+                                THEN p.name || ' - ' || p.city
+                                ELSE '_CUSTOMER GTL'
+                            END
                         WHEN r.brand = 'ZENEOS' THEN
-                            CASE WHEN (p.partner_chars->>'ZN')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER ZN' END
+                            CASE WHEN (p.partner_chars->>'ZN')::bool
+                                THEN p.name || ' - ' || p.city
+                                ELSE '_CUSTOMER ZN'
+                            END
                         WHEN r.brand = 'IRC' THEN
-                            CASE WHEN (p.partner_chars->>'IRC')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER IRC' END
+                            CASE WHEN (p.partner_chars->>'IRC')::bool
+                                THEN p.name || ' - ' || p.city
+                                ELSE '_CUSTOMER IRC'
+                            END
                         ELSE ''
                     END AS customer,
                     r.grp,
                     SUM(TRUNC(d.qty / r.qty) * r.reward)::int AS point
                 FROM order_hdrs h
-                JOIN order_dtls d ON d.tr_code = h.tr_code AND d.tr_type = h.tr_type AND d.qty = d.qty_reff
+                JOIN order_dtls d
+                  ON d.tr_code = h.tr_code
+                 AND d.tr_type = h.tr_type
+                 AND d.qty = d.qty_reff
                 JOIN materials m ON m.code = d.matl_code
                 JOIN partners p ON p.code = h.partner_code
-                JOIN sales_rewards r ON r.matl_code = d.matl_code AND r.code = '{$code}'
+                JOIN sales_rewards r
+                  ON r.matl_code = d.matl_code
+                 AND r.code = '{$code}'
                 WHERE h.tr_type = 'SO'
                   AND h.status_code <> 'X'
                   AND h.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
                 GROUP BY 1, r.grp
                 ORDER BY 1, 2
-                \$ct\$,
+                \$ct\$::text,
 
                 \$key\$
-                SELECT DISTINCT grp FROM sales_rewards WHERE code = '{$code}' ORDER BY grp
-                \$key\$
+                SELECT DISTINCT grp
+                FROM sales_rewards
+                WHERE code = '{$code}'
+                ORDER BY grp
+                \$key\$::text
             ) AS ct(customer text, $cols)
         ";
 
