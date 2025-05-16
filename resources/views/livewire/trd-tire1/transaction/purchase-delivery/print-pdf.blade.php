@@ -42,6 +42,7 @@
                                         <th>Qty</th>
                                         <th>Harga</th>
                                         <th>DPP</th>
+                                        <th>DPP Lain2</th>
                                         <th>PPN</th>
                                         <th>JUMLAH</th>
                                     </tr>
@@ -60,8 +61,9 @@
                                         @endphp
                                         @foreach ($order->OrderDtl as $index => $detail)
                                             @php
-                                                $dpp = $detail->qty * $detail->price;
-                                                $ppn = $dpp * 0.1;
+                                                $dpp = $detail->dpp;
+                                                $ppn = $detail->ppn;
+                                                $dpp2 = $detail->dpp * 11 / 12;
                                                 $jumlah = $dpp + $ppn;
                                                 $totalDpp += $dpp;
                                                 $totalPpn += $ppn;
@@ -81,6 +83,7 @@
                                                 <td style="text-align: center">{{ $detail->qty }}</td>
                                                 <td>{{ number_format($detail->price, 0, ',', '.') }}</td>
                                                 <td>{{ number_format($dpp, 0, ',', '.') }}</td>
+                                                <td>{{ number_format($dpp2, 0, ',', '.') }}</td>
                                                 <td>{{ number_format($ppn, 0, ',', '.') }}</td>
                                                 <td>{{ number_format($jumlah, 0, ',', '.') }}</td>
                                             </tr>

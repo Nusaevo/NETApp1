@@ -45,9 +45,9 @@
                                         <th>Nama Barang</th>
                                         <th>Qty</th>
                                         <th>Harga Pcs</th>
-                                        <th>Amt</th>
+                                        <th>Dpp</th>
                                         <th>PPN</th>
-                                        <th>Amt + PPN</th>
+                                        <th>Dpp + PPN</th>
                                         <th>Amt Nota</th>
                                         <th>Hitung PPN</th>
                                     </tr>
@@ -60,10 +60,11 @@
                                         @endphp
                                         @foreach ($order->OrderDtl as $index => $detail)
                                             @php
-                                                $amt = $detail->qty * $detail->price;
-                                                $ppn = $amt * 0.1;
-                                                $totalAmt += $amt;
-                                                $totalPpn += $ppn;
+                                                // $amt = $detail->qty * $detail->price;
+                                                $dpp = $detail->dpp;
+                                                $ppn = $detail->ppn ?? 0;
+                                                $totalAmt = $detail->amt;
+                                                $totalPpn = $detail->amt * 11 / 100;
                                             @endphp
                                             <tr style="font-weight: normal;">
                                                 @if ($index === 0)
@@ -81,9 +82,9 @@
                                                 <td>{{ $detail->matl_descr }}</td>
                                                 <td style="text-align: center">{{ $detail->qty }}</td>
                                                 <td>{{ number_format($detail->price, 0, ',', '.') }}</td>
-                                                <td>{{ number_format($amt, 0, ',', '.') }}</td>
+                                                <td>{{ number_format($dpp, 0, ',', '.') }}</td>
                                                 <td>{{ number_format($ppn, 0, ',', '.') }}</td>
-                                                <td>{{ number_format($amt + $ppn, 0, ',', '.') }}</td>
+                                                <td>{{ number_format($dpp + $ppn, 0, ',', '.') }}</td>
                                                 <td>{{ number_format($totalAmt, 0, ',', '.') }}</td>
                                                 <!-- Tampilkan total Amt Nota -->
                                                 <td>{{ number_format($totalPpn, 0, ',', '.') }}</td>
