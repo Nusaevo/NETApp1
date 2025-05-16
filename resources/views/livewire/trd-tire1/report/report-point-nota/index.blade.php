@@ -46,7 +46,7 @@
                                     DATA PENJUALAN GT RADIAL per Customer
                                 </h3>
                                 <p style="text-align:left; margin-bottom:0;">
-                                    <strong>{{ $category }}</strong>
+                                    <strong>Kode Program : {{ $category }}</strong>
                                 </p>
                                 <p style="text-align:left; margin-bottom:20px;">
                                     Periode:

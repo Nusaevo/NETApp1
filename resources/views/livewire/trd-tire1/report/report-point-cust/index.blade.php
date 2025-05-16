@@ -53,98 +53,78 @@
                                     {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
                                     s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
                                 </p>
-                                <table style="width:100%; border-collapse:collapse;">
+                                @php
+                                    // Ambil kolom dinamis dari hasil crosstab
+                                    $columns = [];
+                                    if (count($results)) {
+                                        $columns = array_keys((array)$results[0]);
+                                        // kolom pertama biasanya 'customer', sisanya adalah grup
+                                        $groupColumns = array_filter($columns, fn($col) => $col !== 'customer');
+                                    } else {
+                                        $groupColumns = [];
+                                    }
+                                    // Hitung total per kolom
+                                    // $totals = [];
+                                    // foreach ($groupColumns as $col) {
+                                    //     $totals[$col] = array_sum(array_map(fn($row) => (int)($row->$col ?? 0), $results));
+                                    // }
+                                    // $grandTotal = array_sum($totals);
+
+                                    // Pisahkan nama dan kota customer
+                                    function splitCustomer($customer) {
+                                        // Jika customer kosong, return kosong
+                                        // if (!$customer) return ['name' => '', 'city' => ''];
+                                        // // Jika customer diawali dengan '_CUSTOMER', tampilkan di kolom nama saja
+                                        // if (strpos($customer, '_CUSTOMER') === 0) {
+                                        //     return ['name' => $customer, 'city' => ''];
+                                        // }
+                                        // // Debug: jika customer tidak ada ' - ', tampilkan semua di name
+                                        // if (strpos($customer, ' - ') === false) {
+                                        //     return ['name' => $customer, 'city' => ''];
+                                        // }
+                                        $parts = explode(' - ', $customer, 2);
+                                        return [
+                                            'name' => $parts[0] ?? $customer,
+                                            'city' => $parts[1] ?? '',
+                                        ];
+                                    }
+                                @endphp
+                                {{-- Debug: tampilkan isi customer --}}
+                                {{-- <pre>
+                                    @foreach ($results as $row)
+                                        {{ $row->customer ?? '' }}
+                                    @endforeach
+                                </pre> --}}
+                                <table style="width:100%; border-collapse:collapse;" border="1">
                                     <thead>
-                                        {{-- baris grup header --}}
                                         <tr>
-                                            <th colspan="3"
-                                                style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000; border-left:1px solid #000; border-top: 1px solid #000;">
-                                                Nama / Alamat Pelanggan
-                                            </th>
-                                            <th colspan="1"
-                                                style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;">
-                                            </th>
-                                            <th colspan="1"
-                                                style="text-align:center; padding:4px 8px; border-right:1px dashed #000; border-top: 1px solid #000;">
-                                            </th>
-                                            <th colspan="1"
-                                                style="text-align:center; padding:4px 8px; border-right:1px solid #000; border-top: 1px solid #000;">
-                                            </th>
+                                            <th rowspan="2">Custommer</th>
+                                            @foreach ($groupColumns as $col)
+                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px;" rowspan="2">
+                                                    {{ $col }}
+                                                </th>
+                                            @endforeach
+                                            {{-- <th rowspan="2" style="text-align:center; padding:4px 8px; min-width:60px;">Total</th> --}}
                                         </tr>
-                                        {{-- baris sub-header --}}
-                                        <tr>
-                                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-left:1px solid #000;">
-                                                No. Nota
-                                            </th>
-                                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000;">
-                                                Kode Brg.
-                                            </th>
-                                            <th style="text-align:left; padding:4px 8px; border-bottom:1px solid #000;">
-                                                Nama Barang
-                                            </th>
-                                            <th
-                                                style="text-align:center; padding:4px 8px; border-bottom:1px solid #000;
-                       border-left:1px dashed #000; border-right:1px dashed #000;">
-                                                Total Ban
-                                            </th>
-                                            <th
-                                                style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000;">
-                                                Point
-                                            </th>
-                                            <th
-                                                style="text-align:center; padding:4px 8px; border-bottom:1px solid #000; border-right:1px solid #000;">
-                                                Total Point
-                                            </th>
-                                        </tr>
+                                        {{-- Baris kedua header kosong karena header customer sudah dipecah --}}
                                     </thead>
                                     <tbody>
-                                        @php $no = 1; @endphp
-                                        @foreach ($results as $group)
-                                            {{-- Detail per nota --}}
-                                            @foreach ($group['details'] as $row)
-                                                <tr>
-                                                    <td style="padding:4px 8px; border-left:1px solid #000;">
-                                                        {{ $row->no_nota }}</td>
-                                                    <td
-                                                        style="padding:4px 8px; text-align:left;">
-                                                        {{ $row->kode_brg }}</td>
-                                                    <td style="padding:4px 8px;">
-                                                        {{ $row->nama_barang }}</td>
-                                                    <td
-                                                        style="padding:4px 8px; text-align:center; border-left:1px dashed #000; border-right:1px dashed #000;">
-                                                        {{ (fmod($row->total_ban, 1) == 0) ? number_format($row->total_ban, 0) : number_format($row->total_ban, 2) }}
-                                                    </td>
-                                                    <td
-                                                        style="padding:4px 8px; text-align:center; border-right:1px dashed #000;">
-                                                        {{ (fmod($row->point, 1) == 0) ? number_format($row->point, 0) : number_format($row->point, 2) }}
-                                                    </td>
-                                                    <td
-                                                        style="padding:4px 8px; border-right:1px solid #000; text-align:center;">
-                                                        {{ (fmod($row->total_point, 1) == 0) ? number_format($row->total_point, 0) : number_format($row->total_point, 2) }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                            {{-- Summary per customer --}}
+                                        @foreach ($results as $row)
+                                            @php
+                                                $rowTotal = 0;
+                                                $customer = $row->customer ?? '';
+                                            @endphp
                                             <tr>
-                                                <td colspan="2"
-                                                    style="padding:6px 8px; font-weight:bold; border-left:1px solid #000; text-align:left;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
-                                                    {{ $no++ }}
-                                                    {{ $group['details'][0]->no_nota ?? '-' }}
-                                                    {{-- partner_code --}}
-                                                    {{-- Spacer untuk customer ke kanan --}}
-                                                    <span style="display:inline-block; min-width: 200px;"></span>
-                                                    <span style="float:right;">{{ $group['customer'] }}</span>
-                                                </td>
-                                                <td style={{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}"></td>
-                                                <td
-                                                    style="padding:6px 8px; font-weight:bold; text-align:center; border-right:1px dashed #000; border-left:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
-                                                    {{ (fmod($group['total_ban'], 1) == 0) ? number_format($group['total_ban'], 0) : number_format($group['total_ban'], 2) }}
-                                                </td>
-                                                <td style= border-right:1px dashed #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}"></td>
-                                                <td
-                                                    style="padding:6px 8px; font-weight:bold; text-align:center; border-right:1px solid #000;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
-                                                    {{ (fmod($group['total_point'], 1) == 0) ? number_format($group['total_point'], 0) : number_format($group['total_point'], 2) }}
-                                                </td>
+                                                <td style="padding:4px 8px;">{{ $customer }}</td>
+                                                @foreach ($groupColumns as $col)
+                                                    @php
+                                                        $val = (int)($row->$col ?? 0);
+                                                        $rowTotal += $val;
+                                                    @endphp
+                                                    <td style="text-align:center; padding:4px 8px;">
+                                                        {{ $val ? $val : '' }}
+                                                    </td>
+                                                @endforeach
                                             </tr>
                                         @endforeach
                                     </tbody>

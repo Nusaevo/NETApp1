@@ -71,61 +71,66 @@ class Index extends BaseComponent
 
         $this->resetErrorBag();
 
-        $bindings = [
-            'sr_code' => $this->category,
-        ];
-        $whereDate = '';
-        if (!empty($this->startCode)) {
-            $whereDate .= " AND oh.tr_date >= :start_date";
-            $bindings['start_date'] = $this->startCode;
-        }
-        if (!empty($this->endCode)) {
-            $whereDate .= " AND oh.tr_date <= :end_date";
-            $bindings['end_date'] = $this->endCode;
+        // 1. Get dynamic columns for crosstab
+        $code = addslashes($this->category);
+        $startDate = addslashes($this->startCode);
+        $endDate = addslashes($this->endCode ?: $this->startCode);
+
+        $colQuery = "SELECT string_agg(DISTINCT format('\"%s\" int', grp), ', ') AS cols FROM sales_rewards WHERE code = '{$code}'";
+        $colResult = DB::connection(Session::get('app_code'))->selectOne($colQuery);
+        // dd($colResult);
+        $cols = $colResult ? $colResult->cols : '';
+
+        if (!$cols) {
+            $this->dispatch('warning', 'Tidak ada grup pada sales reward ini.');
+            $this->results = [];
+            return;
         }
 
-        $query = "
-            SELECT
-                oh.tr_code AS no_nota,
-                od.matl_code AS kode_brg,
-                od.matl_descr AS nama_barang,
-                p.name AS nama_pelanggan,
-                p.city AS kota_pelanggan,
-                od.qty AS total_ban,
-                sr.reward AS point,
-                (od.qty * sr.reward) AS total_point
-            FROM order_dtls od
-            JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.deleted_at IS NULL
-            JOIN partners p ON p.id = oh.partner_id
-            JOIN materials m ON m.id = od.matl_id
-            LEFT JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
-            WHERE od.tr_type = 'SO'
-                AND od.deleted_at IS NULL
-                $whereDate
-                AND sr.code IS NOT NULL
-            ORDER BY p.name, oh.tr_code, od.matl_code
+        // 2. Build crosstab query (inject parameter directly)
+        $crosstab = "
+            SELECT * FROM crosstab(
+                \$ct\$
+                SELECT
+                    CASE
+                        WHEN r.brand = 'GT RADIAL' THEN
+                            CASE WHEN (p.partner_chars->>'GT')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER GTR' END
+                        WHEN r.brand = 'GAJAH TUNGGAL' THEN
+                            CASE WHEN (p.partner_chars->>'GT')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER GTL' END
+                        WHEN r.brand = 'ZENEOS' THEN
+                            CASE WHEN (p.partner_chars->>'ZN')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER ZN' END
+                        WHEN r.brand = 'IRC' THEN
+                            CASE WHEN (p.partner_chars->>'IRC')::bool THEN p.name || ' - ' || p.city ELSE '_CUSTOMER IRC' END
+                        ELSE ''
+                    END AS customer,
+                    r.grp,
+                    SUM(TRUNC(d.qty / r.qty) * r.reward)::int AS point
+                FROM order_hdrs h
+                JOIN order_dtls d ON d.tr_code = h.tr_code AND d.tr_type = h.tr_type AND d.qty = d.qty_reff
+                JOIN materials m ON m.code = d.matl_code
+                JOIN partners p ON p.code = h.partner_code
+                JOIN sales_rewards r ON r.matl_code = d.matl_code AND r.code = '{$code}'
+                WHERE h.tr_type = 'SO'
+                  AND h.status_code <> 'X'
+                  AND h.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
+                GROUP BY 1, r.grp
+                ORDER BY 1, 2
+                \$ct\$,
+
+                \$key\$
+                SELECT DISTINCT grp FROM sales_rewards WHERE code = '{$code}' ORDER BY grp
+                \$key\$
+            ) AS ct(customer text, $cols)
         ";
 
-        $rows = DB::connection(Session::get('app_code'))->select($query, $bindings);
+        // 3. Execute crosstab query (no bindings)
+        $rows = DB::connection(Session::get('app_code'))->select($crosstab);
 
-        // Grouping per customer
-        $grouped = [];
-        foreach ($rows as $row) {
-            $customerKey = $row->nama_pelanggan . ' - ' . $row->kota_pelanggan;
-            if (!isset($grouped[$customerKey])) {
-                $grouped[$customerKey] = [
-                    'customer' => $customerKey,
-                    'details' => [],
-                    'total_ban' => 0,
-                    'total_point' => 0,
-                ];
-            }
-            $grouped[$customerKey]['details'][] = $row;
-            $grouped[$customerKey]['total_ban'] += $row->total_ban;
-            $grouped[$customerKey]['total_point'] += $row->total_point;
-        }
 
-        $this->results = array_values($grouped);
+        // 4. Assign results
+        $this->results = $rows;
+        // dd($this->results);
+        // dd($this->results);
     }
 
     public function resetFilters()
