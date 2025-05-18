@@ -422,6 +422,12 @@ class PaymentListComponent extends DetailComponent
         $this->dispatch('success', __('Data Payment berhasil disimpan.'));
     }
 
+    public function Save()
+    {
+        if ($this->object) {
+            $this->object->save();
+        }
+    }
 
     public function render()
     {
