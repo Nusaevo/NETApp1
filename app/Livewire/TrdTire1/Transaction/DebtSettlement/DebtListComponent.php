@@ -204,6 +204,27 @@ class DebtListComponent extends DetailComponent
         }
     }
 
+    /**
+     * Save the PaymentHdr object if it exists.
+     * You can expand this logic as needed.
+     */
+    public function Save()
+    {
+        if ($this->object) {
+            $this->object->save();
+        }
+    }
+
+    /**
+     * Determine if the current action is Edit or View.
+     * You may adjust the logic as needed based on your application's conventions.
+     */
+    private function isEditOrView()
+    {
+        // Assuming $this->action is set to 'Edit' or 'View' for those actions
+        return in_array($this->action, ['Edit', 'View']);
+    }
+
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
