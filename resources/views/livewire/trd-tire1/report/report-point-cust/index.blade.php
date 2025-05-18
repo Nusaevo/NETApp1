@@ -95,12 +95,12 @@
                                         {{ $row->customer ?? '' }}
                                     @endforeach
                                 </pre> --}}
-                                <table style="width:100%; border-collapse:collapse;" border="1">
+                                <table style="width:100%;">
                                     <thead>
                                         <tr>
-                                            <th rowspan="2">Custommer</th>
+                                            <th rowspan="2" style="border: 1px solid #000">Custommer</th>
                                             @foreach ($groupColumns as $col)
-                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px;" rowspan="2">
+                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000" rowspan="2">
                                                     {{ $col }}
                                                 </th>
                                             @endforeach
@@ -115,13 +115,13 @@
                                                 $customer = $row->customer ?? '';
                                             @endphp
                                             <tr>
-                                                <td style="padding:4px 8px;">{{ $customer }}</td>
+                                                <td style="padding:4px 8px; border: 1px solid #000">{{ $customer }}</td>
                                                 @foreach ($groupColumns as $col)
                                                     @php
                                                         $val = (int)($row->$col ?? 0);
                                                         $rowTotal += $val;
                                                     @endphp
-                                                    <td style="text-align:center; padding:4px 8px;">
+                                                    <td style="text-align:center; padding:4px 8px; border: 1px solid #000">
                                                         {{ $val ? $val : '' }}
                                                     </td>
                                                 @endforeach
