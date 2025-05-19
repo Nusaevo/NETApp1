@@ -104,11 +104,20 @@
                                                     {{ $col }}
                                                 </th>
                                             @endforeach
-                                            {{-- <th rowspan="2" style="text-align:center; padding:4px 8px; min-width:60px;">Total</th> --}}
+                                            <th rowspan="2" style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000">Total</th>
                                         </tr>
                                         {{-- Baris kedua header kosong karena header customer sudah dipecah --}}
                                     </thead>
                                     <tbody>
+                                        @php
+                                            // Hitung total per kolom untuk footer
+                                            $colTotals = [];
+                                            $grandTotal = 0;
+                                            foreach ($groupColumns as $col) {
+                                                $colTotals[$col] = array_sum(array_map(fn($row) => (int)($row->$col ?? 0), $results));
+                                                $grandTotal += $colTotals[$col];
+                                            }
+                                        @endphp
                                         @foreach ($results as $row)
                                             @php
                                                 $rowTotal = 0;
@@ -125,8 +134,22 @@
                                                         {{ $val ? $val : '' }}
                                                     </td>
                                                 @endforeach
+                                                <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold;">
+                                                    {{ $rowTotal ? $rowTotal : '' }}
+                                                </td>
                                             </tr>
                                         @endforeach
+                                        <tr>
+                                            <td style="padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">Total</td>
+                                            @foreach ($groupColumns as $col)
+                                                <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
+                                                    {{ $colTotals[$col] ? $colTotals[$col] : '' }}
+                                                </td>
+                                            @endforeach
+                                            <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
+                                                {{ $grandTotal ? $grandTotal : '' }}
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>

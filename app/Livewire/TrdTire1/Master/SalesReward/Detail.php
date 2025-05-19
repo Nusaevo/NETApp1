@@ -142,23 +142,17 @@ class Detail extends BaseComponent
     {
         $headerCode = $this->inputs['code'];
 
-        // Ambil seluruh record yang sudah tersimpan berdasarkan code header
-        $existingRecords = SalesReward::where('code', $headerCode)->get();
-        $existingIds = $existingRecords->pluck('id')->toArray();
-
-        $submittedIds = [];
-
         foreach ($this->input_details as $detail) {
-            if (isset($detail['id'])) {
+            if (isset($detail['id']) && $detail['id']) {
+                // Update jika ada id
                 $salesReward = SalesReward::find($detail['id']);
-            } else {
-                $salesReward = SalesReward::where('code', $headerCode)
-                    ->where('matl_id', $detail['matl_id'])
-                    ->first();
-
                 if (!$salesReward) {
+                    // Jika id tidak ditemukan, buat baru
                     $salesReward = new SalesReward();
                 }
+            } else {
+                // Create baru
+                $salesReward = new SalesReward();
             }
 
             // Set data header
@@ -166,7 +160,7 @@ class Detail extends BaseComponent
             $salesReward->descrs   = $this->inputs['descrs'];
             $salesReward->beg_date = $this->inputs['beg_date'];
             $salesReward->end_date = $this->inputs['end_date'];
-            $salesReward->brand    = $this->filterBrand; // Simpan nilai filterBrand ke kolom brand
+            $salesReward->brand    = $this->filterBrand;
 
             // Set data detail
             $salesReward->matl_id = $detail['matl_id'];
@@ -177,12 +171,6 @@ class Detail extends BaseComponent
             $salesReward->grp    = $detail['grp'];
 
             $salesReward->save();
-            $submittedIds[] = $salesReward->id;
-        }
-
-        $idsToDelete = array_diff($existingIds, $submittedIds);
-        if (!empty($idsToDelete)) {
-            SalesReward::destroy($idsToDelete);
         }
 
         $this->dispatch('success', 'Data Sales Reward berhasil disimpan.');

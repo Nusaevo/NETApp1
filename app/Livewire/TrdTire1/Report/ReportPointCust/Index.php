@@ -28,10 +28,22 @@ class Index extends BaseComponent
     {
         // Ambil code dari sales_rewards untuk dropdown Merk
         $this->codeSalesreward = SalesReward::query()
-            ->selectRaw('code as value, code as label')
+            ->selectRaw('DISTINCT code, beg_date, end_date')
             ->whereNull('deleted_at')
             ->orderBy('code')
             ->get()
+            ->map(function ($item) {
+                // Label bisa diganti sesuai kebutuhan, misal: code (periode)
+                $label = $item->code;
+                if ($item->beg_date && $item->end_date) {
+                }
+                return [
+                    'value' => $item->code,
+                    'label' => $label,
+                    'beg_date' => $item->beg_date,
+                    'end_date' => $item->end_date,
+                ];
+            })
             ->toArray();
 
         $this->masterService = new MasterService();
