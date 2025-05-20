@@ -104,8 +104,8 @@ class IndexDataTable extends BaseDataTableComponent
             SelectFilter::make($this->trans("Sales type"), 'sales_type')
                 ->options([
                     ''          => 'Semua',
-                    '0'    => 'Motor',
-                    '1' => 'Mobil',
+                    'O'    => 'Motor',
+                    'I' => 'Mobil',
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value !== '') {

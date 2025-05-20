@@ -440,8 +440,19 @@ class Detail extends BaseComponent
             if (!empty($this->inputs['payment_term_id'])) {
                 $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
                 $this->inputs['payment_term'] = $paymentTerm->str1;
-                $this->inputs['payment_due_days'] = $paymentTerm->num1;
+                // $this->inputs['payment_due_days'] = $paymentTerm->num1; // Hapus baris ini
             }
+
+            // Hitung payment_due_days berdasarkan tr_date dan due_date
+            if (!empty($this->inputs['tr_date']) && !empty($this->inputs['due_date'])) {
+                $trDate = \Carbon\Carbon::parse($this->inputs['tr_date']);
+                $dueDate = \Carbon\Carbon::parse($this->inputs['due_date']);
+                $this->inputs['payment_due_days'] = $trDate->diffInDays($dueDate, false);
+            } else {
+                $this->inputs['payment_due_days'] = null;
+            }
+            // Jangan simpan due_date ke model
+            unset($this->inputs['due_date']);
 
             // Save order header
             $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');

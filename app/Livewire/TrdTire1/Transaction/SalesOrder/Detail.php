@@ -418,9 +418,20 @@ class Detail extends BaseComponent
                 $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
                 if ($paymentTerm) {
                     $this->inputs['payment_term'] = $paymentTerm->str1;
-                    $this->inputs['payment_due_days'] = $paymentTerm->num1;
+                    // $this->inputs['payment_due_days'] = $paymentTerm->num1; // Hapus baris ini
                 }
             }
+
+            // Hitung payment_due_days berdasarkan tr_date dan due_date
+            if (!empty($this->inputs['tr_date']) && !empty($this->inputs['due_date'])) {
+                $trDate = \Carbon\Carbon::parse($this->inputs['tr_date']);
+                $dueDate = \Carbon\Carbon::parse($this->inputs['due_date']);
+                $this->inputs['payment_due_days'] = $trDate->diffInDays($dueDate, false);
+            } else {
+                $this->inputs['payment_due_days'] = null;
+            }
+            // Jangan simpan due_date ke model
+            unset($this->inputs['due_date']);
 
             // Jika NPWP dinonaktifkan, kosongkan npwp_code
             if ($this->payer === "false") {
@@ -428,7 +439,6 @@ class Detail extends BaseComponent
             }
 
             // Simpan data header menggunakan method yang sudah ada
-            // Pastikan method saveOrderHeader() tersedia pada model atau komponen Anda
             $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
 
             // Simpan detail order jika ada input item
