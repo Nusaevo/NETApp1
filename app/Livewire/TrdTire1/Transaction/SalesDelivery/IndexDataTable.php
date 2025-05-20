@@ -122,11 +122,11 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make($this->trans("sales_type"), 'sales_type')
+            SelectFilter::make($this->trans("Tipe Penjualan"), 'sales_type')
                 ->options([
                     ''          => 'Semua',
-                    '0'    => 'Motor',
-                    '1' => 'Mobil',
+                    'O'    => 'Motor',
+                    'I' => 'Mobil',
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value !== '') {
