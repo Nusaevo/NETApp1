@@ -110,16 +110,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
-                $builder->whereExists(function ($query) use ($value) {
-                    $query->select(DB::raw(1))
-                        ->from('order_dtls')
-                        ->whereRaw('order_dtls.tr_code = order_hdrs.tr_code')
-                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('order_dtls.tr_type', 'PO');
-                });
+            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
+                $builder->where('order_hdrs.tr_date', '=', $value);
             }),
-            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Custommer', 'name', 'Cari Customer', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });

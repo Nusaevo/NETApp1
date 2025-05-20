@@ -28,15 +28,13 @@ class Index extends BaseComponent
     {
         // Ambil code unik dari sales_rewards untuk dropdown Merk (distinct code, beg_date, end_date)
         $this->codeSalesreward = SalesReward::query()
-            ->selectRaw('DISTINCT code, beg_date, end_date')
+            ->selectRaw('DISTINCT code, descrs, beg_date, end_date')
             ->whereNull('deleted_at')
             ->orderBy('code')
             ->get()
             ->map(function ($item) {
-                // Label bisa diganti sesuai kebutuhan, misal: code (periode)
-                $label = $item->code;
-                if ($item->beg_date && $item->end_date) {
-                }
+                // Label: code - descrs
+                $label = $item->code . ' - ' . ($item->descrs ?? '');
                 return [
                     'value' => $item->code,
                     'label' => $label,
