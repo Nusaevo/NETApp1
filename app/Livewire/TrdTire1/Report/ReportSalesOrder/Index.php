@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Report\ReportPointCust;
+namespace App\Livewire\TrdTire1\Report\ReportSalesOrder;
 
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session};
