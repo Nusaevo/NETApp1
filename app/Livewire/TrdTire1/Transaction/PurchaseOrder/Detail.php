@@ -207,6 +207,12 @@ class Detail extends BaseComponent
             $this->inputs['tr_code'] = $this->object->tr_code;
             $this->inputs['partner_name'] = $this->object->partner->code;
             $this->inputs['textareasupplier'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
+            // Hitung due_date berdasarkan tr_date dan payment_due_days
+            $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+            $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+            $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+                ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+                : ($trDate ? $trDate->format('Y-m-d') : null);
             $this->onPartnerChanged();
             $this->loadDetails();
         } else {
