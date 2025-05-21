@@ -17,7 +17,7 @@
                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
-                            <x-ui-text-field type="int" label="" clickEvent=""
+                            <x-ui-dropdown-select type="int" label="" clickEvent=""
                                 model="input_details.{{ $key }}.biilhdrtr_code" :options="$codeBill"
                                 required="true" :action="$actionValue"
                                 onChanged="onCodeChanged({{ $key }}, $event.target.value)"
