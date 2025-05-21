@@ -107,7 +107,7 @@ class DebtListComponent extends DetailComponent
 
             foreach ($this->object_detail as $key => $detail) {
                 $amtbill = 0;
-                $biilhdrtr_code = null;
+                $billhdrtr_code = null;
                 $tr_date = null;
 
                 // Cari BillingDtl dan BillingHdr terkait
@@ -118,27 +118,27 @@ class DebtListComponent extends DetailComponent
                         // Cari BillingHdr berdasarkan billingDtl->trhdr_id
                         $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
                         if ($billingHdr) {
-                            $biilhdrtr_code = $billingHdr->id; // <-- gunakan ID, bukan tr_code
+                            $billhdrtr_code = $billingHdr->id; // <-- gunakan ID, bukan tr_code
                             $tr_date = $billingHdr->tr_date;
                         }
                     }
                 }
 
                 // Fallback jika tidak ada BillingDtl/BillingHdr, gunakan data dari PaymentDtl
-                if (!$biilhdrtr_code) {
+                if (!$billhdrtr_code) {
                     // Coba cari BillingHdr berdasarkan tr_code yang tersimpan di PaymentDtl
-                    if (!empty($detail->biilhdrtr_code)) {
-                        $billingHdr = BillingHdr::where('tr_code', $detail->biilhdrtr_code)->first();
-                        $biilhdrtr_code = $billingHdr ? $billingHdr->id : null;
+                    if (!empty($detail->billhdrtr_code)) {
+                        $billingHdr = BillingHdr::where('tr_code', $detail->billhdrtr_code)->first();
+                        $billhdrtr_code = $billingHdr ? $billingHdr->id : null;
                         $tr_date = $billingHdr ? $billingHdr->tr_date : ($detail->tr_date ?? null);
                     } else {
-                        $biilhdrtr_code = null;
+                        $billhdrtr_code = null;
                         $tr_date = $detail->tr_date ?? null;
                     }
                 }
 
                 $this->input_details[$key] = [
-                    'biilhdrtr_code' => $biilhdrtr_code,
+                    'billhdrtr_code' => $billhdrtr_code,
                     'tr_date'        => $tr_date,
                     'amtbill'        => $amtbill,
                     'amt'            => $detail->amt ?? null,
@@ -177,7 +177,7 @@ class DebtListComponent extends DetailComponent
             $tr_seq = $key + 1;
 
             // Ambil billing header berdasarkan input (yang berisi ID BillingHdr)
-            $billingHdr = BillingHdr::find($detail['biilhdrtr_code']);
+            $billingHdr = BillingHdr::find($detail['billhdrtr_code']);
 
             if ($billingHdr) {
                 // Ambil data PaymentHdr dari database untuk mendapatkan tr_type dan tr_code
@@ -193,8 +193,8 @@ class DebtListComponent extends DetailComponent
                         'tr_type'        => $tr_type,
                         'tr_code'        => $tr_code,
                         'amt'            => $detail['amt'], // Input dari user
-                        // Simpan tr_code dari billingHdr ke kolom biilhdrtr_code
-                        'biilhdrtr_code' => $billingHdr->tr_code,
+                        // Simpan tr_code dari billingHdr ke kolom billhdrtr_code
+                        'billhdrtr_code' => $billingHdr->tr_code,
                         'billdtl_id'     => $billingDtl ? $billingDtl->id : null,
                         'billhdrtr_type' => $billingHdr->tr_type,
                         'billdtltr_seq'  => $billingDtl ? $billingDtl->tr_seq : null,

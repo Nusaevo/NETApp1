@@ -18,7 +18,7 @@
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
                             <x-ui-dropdown-select type="int" label="" clickEvent=""
-                                model="input_details.{{ $key }}.biilhdrtr_code" :options="$codeBill"
+                                model="input_details.{{ $key }}.billhdrtr_code" :options="$codeBill"
                                 required="true" :action="$actionValue"
                                 onChanged="onCodeChanged({{ $key }}, $event.target.value)"
                                 :enabled="true" />
