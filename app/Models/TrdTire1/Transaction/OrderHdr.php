@@ -27,7 +27,6 @@ class OrderHdr extends BaseModel
         'payment_due_days',
         'tr_date',
         'print_date',
-        'cust_reff',
         'curr_rate',
         'note',
         'sales_type',
