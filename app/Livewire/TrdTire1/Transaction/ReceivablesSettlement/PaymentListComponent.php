@@ -311,7 +311,7 @@ class PaymentListComponent extends DetailComponent
     public function SaveItem()
     {
         $this->onValidateAndSave(); // <-- panggil proses simpan detail PaymentSrc
-        return redirect()->route('TrdTire1.Transaction.DebtSettlement.Detail', [
+        return redirect()->route('TrdTire1.Transaction.ReceivablesSettlement.Detail', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($this->object->id)
         ]);
