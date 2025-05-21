@@ -225,6 +225,12 @@ class Detail extends BaseComponent
             $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
             $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr;
             $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
+            // Hitung due_date berdasarkan tr_date dan payment_due_days
+            $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+            $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+            $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+                ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+                : ($trDate ? $trDate->format('Y-m-d') : null);
             $this->onPartnerChanged();
             $this->loadDetails();
         } else {
