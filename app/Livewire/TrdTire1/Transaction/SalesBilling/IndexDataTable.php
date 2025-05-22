@@ -101,36 +101,24 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make($this->trans("sales_type"), 'sales_type')
+            SelectFilter::make($this->trans("Sales type"), 'sales_type')
                 ->options([
                     ''          => 'Semua',
-                    '0'    => 'Motor',
-                    '1' => 'Mobil',
+                    'O'    => 'Motor',
+                    'I' => 'Mobil',
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value !== '') {
-                        $builder->where('sales_type', $value);
-                    }
-                }),
-            SelectFilter::make($this->trans("shipping status"))
-                ->options([
-                    ''  => 'Semua',
-                    '1' => 'Terkirim',
-                    '0' => 'Belum Terkirim',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value === '1') {
-                        $builder->whereHas('DelivHdr', function ($query) {
-                            $query->where('tr_type', 'SD');
-                        });
-                    } elseif ($value === '0') {
-                        $builder->whereDoesntHave('DelivHdr', function ($query) {
-                            $query->where('tr_type', 'SD');
+                        $builder->whereExists(function ($query) use ($value) {
+                            $query->select(DB::raw(1))
+                                ->from('order_hdrs')
+                                ->whereRaw('order_hdrs.tr_code = billing_hdrs.tr_code')
+                                ->where('order_hdrs.sales_type', $value);
                         });
                     }
                 }),
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('tr_code', 'like', '%' . strtoupper($value) . '%');
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
             $this->createTextFilter($this->trans("supplier"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
@@ -218,6 +206,8 @@ class IndexDataTable extends BaseDataTableComponent
                 'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
             ]);
         }
+        $this->dispatch('error', 'Nota belum dipilih.');
+
     }
 
 }

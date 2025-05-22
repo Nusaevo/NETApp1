@@ -76,10 +76,10 @@
                                             <tr
                                                 @if ($loop->last && !$loop->parent->last) style="border-bottom: 1px solid #000;" @endif>
                                                 <td style="padding: 8px;">
-                                                    {{ $order->Partner->name ?? 'N/A' }}
+                                                    {{ $order->Partner->name }} - {{ $order->Partner->city }}
                                                 </td>
-                                                <td style="padding: 8px;">
-                                                    {{ $order->tr_code ?? '-' }}
+                                                <td style="padding: 8px; text-align: left;">
+                                                    {{ $order->tr_code }}
                                                 </td>
                                                 <td style="padding: 8px;">
                                                     {{ $detail->matl_code }}
@@ -91,16 +91,18 @@
                                                     {{ ceil($detail->qty) }}
                                                 </td>
                                                 <td style="padding: 8px; text-align: center;">
-                                                    {{ $detail->SalesReward->reward ?? 0 }}
+                                                    {{-- Point calculation --}}
+                                                    {{ $detail->SalesReward ? round($detail->SalesReward->reward / $detail->SalesReward->qty, 2) : 0 }}
                                                 </td>
                                                 <td style="padding: 8px; text-align: center;">
-                                                    {{ round(($detail->qty / ($detail->SalesReward->qty ?? 1)) * ($detail->SalesReward->reward ?? 0), 2) }}
+                                                    {{-- T. Point calculation --}}
+                                                    {{ $detail->SalesReward ? round(($detail->qty / $detail->SalesReward->qty) * $detail->SalesReward->reward, 2) : 0 }}
                                                 </td>
                                                 <td style="padding: 8px;">
                                                     {{ $detail->gt_tr_code ?? '-' }}
                                                 </td>
                                                 <td style="padding: 8px;">
-                                                    {{ $order->Partner->city ?? 'N/A' }}
+                                                    {{ $order->Partner->name }} - {{ $order->Partner->city }}
                                                 </td>
                                             </tr>
                                             @php

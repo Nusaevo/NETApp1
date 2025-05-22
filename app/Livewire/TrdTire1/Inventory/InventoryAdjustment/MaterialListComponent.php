@@ -561,4 +561,8 @@ class MaterialListComponent extends DetailComponent
             'filteredMaterials' => $this->materials,
         ]);
     }
+
+    public function isEditOrView() {
+        return $this->actionValue === 'Edit' || $this->actionValue === 'View';
+    }
 }

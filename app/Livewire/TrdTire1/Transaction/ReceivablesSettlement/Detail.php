@@ -263,9 +263,9 @@ class Detail extends BaseComponent
             $this->inputs['payment_due_days'] = $paymentTerm->num1;
         }
 
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'DebtSettlement_LASTID');
+        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'ReceivablesSettlement_LASTID');
         if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.DebtSettlement.Detail', [
+            return redirect()->route($this->appCode . '.Transaction.ReceivablesSettlement.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);

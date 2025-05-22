@@ -144,7 +144,6 @@ class PaymentListComponent extends DetailComponent
             $this->input_details[$key]['bank_reff'] = $bankNote;
         }
 
-        $this->dispatch('success', __('Payment type has been confirmed and updated for item ' . ($key + 1)));
         $this->dispatch('closePaymentDialogBox');
         $this->activePaymentItemKey = null;
     }
@@ -291,9 +290,11 @@ class PaymentListComponent extends DetailComponent
                             break;
                         case 'CASH':
                             $this->input_payments[$key]['amt_tunai'] = $detail->amt;
+                            $this->input_payments[$key]['bank_reff'] = $detail->bank_note;
                             break;
                         case 'ADV':
                             $this->input_payments[$key]['amt_advance'] = $detail->amt;
+                            $this->input_payments[$key]['bank_reff'] = $detail->bank_note;
                             break;
                     }
                     $this->input_details[$key] = $this->input_payments[$key];
@@ -309,7 +310,7 @@ class PaymentListComponent extends DetailComponent
 
     public function SaveItem()
     {
-        $this->Save();
+        $this->onValidateAndSave(); // <-- panggil proses simpan detail PaymentSrc
         return redirect()->route('TrdTire1.Transaction.DebtSettlement.Detail', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($this->object->id)
@@ -422,6 +423,12 @@ class PaymentListComponent extends DetailComponent
         $this->dispatch('success', __('Data Payment berhasil disimpan.'));
     }
 
+    public function Save()
+    {
+        if ($this->object) {
+            $this->object->save();
+        }
+    }
 
     public function render()
     {

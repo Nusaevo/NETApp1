@@ -117,10 +117,10 @@ class IndexDataTable extends BaseDataTableComponent
             DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where('order_hdrs.tr_date', '=', $value);
             }),
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            TextFilter::make('Custommer')->filter(function (Builder $builder, string $value) {
+            $this->createTextFilter('Custommer', 'name', 'Cari Customer', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });

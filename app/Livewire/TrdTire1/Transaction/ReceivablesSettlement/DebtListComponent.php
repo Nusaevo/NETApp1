@@ -52,19 +52,15 @@ class DebtListComponent extends DetailComponent
         $this->materials = $this->masterService->getMaterials();
         $this->codeBill = $this->masterService->getBillCode();
 
-        if ($this->isEditOrView()) {
-            if (empty($this->objectIdValue)) {
-                $this->dispatch('error', 'Invalid object ID');
-                return;
-            }
-            if (!empty($this->objectIdValue)) {
-                $this->object = PaymentHdr::withTrashed()->find($this->objectIdValue);
-                if (!$this->object) {
-                    $this->dispatch('error', 'Object not found');
-                    return;
-                }
+        // Selalu tampilkan detail PaymentDtl jika objectIdValue tersedia
+        if (!empty($this->objectIdValue)) {
+            $this->object = PaymentHdr::withTrashed()->find($this->objectIdValue);
+            if ($this->object) {
                 $this->inputs = populateArrayFromModel($this->object);
-                $this->loadDetails(); // Load details when editing
+                $this->loadDetails(); // Load details regardless of action
+            } else {
+                $this->dispatch('error', 'Object not found');
+                return;
             }
         }
     }
@@ -110,20 +106,64 @@ class DebtListComponent extends DetailComponent
                 ->get();
 
             foreach ($this->object_detail as $key => $detail) {
+                $amtbill = 0;
+                $billhdrtr_code = null;
+                $tr_date = null;
+
+                // Cari BillingDtl dan BillingHdr terkait
+                if ($detail->billdtl_id) {
+                    $billingDtl = BillingDtl::find($detail->billdtl_id);
+                    if ($billingDtl) {
+                        $amtbill = $billingDtl->amt;
+                        // Cari BillingHdr berdasarkan billingDtl->trhdr_id
+                        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
+                        if ($billingHdr) {
+                            $billhdrtr_code = $billingHdr->id; // <-- gunakan ID, bukan tr_code
+                            $tr_date = $billingHdr->tr_date;
+                        }
+                    }
+                }
+
+                // Fallback jika tidak ada BillingDtl/BillingHdr, gunakan data dari PaymentDtl
+                if (!$billhdrtr_code) {
+                    // Coba cari BillingHdr berdasarkan tr_code yang tersimpan di PaymentDtl
+                    if (!empty($detail->billhdrtr_code)) {
+                        $billingHdr = BillingHdr::where('tr_code', $detail->billhdrtr_code)->first();
+                        $billhdrtr_code = $billingHdr ? $billingHdr->id : null;
+                        $tr_date = $billingHdr ? $billingHdr->tr_date : ($detail->tr_date ?? null);
+                    } else {
+                        $billhdrtr_code = null;
+                        $tr_date = $detail->tr_date ?? null;
+                    }
+                }
+
                 $this->input_details[$key] = [
-                    'biilhdrtr_code' => $detail->biilhdrtr_code,
-                    'amt'             => $detail->amt,
-                    'tr_date'         => $detail->tr_date,
+                    'billhdrtr_code' => $billhdrtr_code,
+                    'tr_date'        => $tr_date,
+                    'amtbill'        => $amtbill,
+                    'amt'            => $detail->amt ?? null,
                     // tambahkan field lain sesuai kebutuhan
                 ];
             }
+            // dd($this->input_details); // Uncomment untuk debug seluruh array
         }
     }
 
     public function SaveItem()
     {
-        $this->Save();
-        return redirect()->route('TrdTire1.Transaction.DebtSettlement.Detail', [
+        // Pastikan object selalu diisi jika objectIdValue ada
+        if (!$this->object && $this->objectIdValue) {
+            $this->object = PaymentHdr::find($this->objectIdValue);
+        }
+
+        $this->onValidateAndSave();
+
+        if (!$this->object || !$this->object->id) {
+            $this->dispatch('error', 'Payment header belum disimpan atau tidak ditemukan.');
+            return;
+        }
+
+        return redirect()->route('TrdTire1.Transaction.ReceivablesSettlement.Detail', [
             'action' => encryptWithSessionKey('Edit'),
             'objectId' => encryptWithSessionKey($this->object->id)
         ]);
@@ -137,7 +177,7 @@ class DebtListComponent extends DetailComponent
             $tr_seq = $key + 1;
 
             // Ambil billing header berdasarkan input (yang berisi ID BillingHdr)
-            $billingHdr = BillingHdr::find($detail['biilhdrtr_code']);
+            $billingHdr = BillingHdr::find($detail['billhdrtr_code']);
 
             if ($billingHdr) {
                 // Ambil data PaymentHdr dari database untuk mendapatkan tr_type dan tr_code
@@ -145,7 +185,7 @@ class DebtListComponent extends DetailComponent
                 $tr_type = $paymentHdr ? $paymentHdr->tr_type : null;
                 $tr_code = $paymentHdr ? $paymentHdr->tr_code : null;
 
-                if ($tr_type && $tr_code) {
+                if ($tr_type && $tr_code && $this->objectIdValue && $tr_seq) {
                     // Ambil billing detail berdasarkan billing header
                     $billingDtl = BillingDtl::where('trhdr_id', $billingHdr->id)->first();
 
@@ -153,31 +193,36 @@ class DebtListComponent extends DetailComponent
                         'tr_type'        => $tr_type,
                         'tr_code'        => $tr_code,
                         'amt'            => $detail['amt'], // Input dari user
-                        // Simpan tr_code dari billingHdr ke kolom biilhdrtr_code
-                        'biilhdrtr_code' => $billingHdr->tr_code,
+                        // Simpan tr_code dari billingHdr ke kolom billhdrtr_code
+                        'billhdrtr_code' => $billingHdr->tr_code,
                         'billdtl_id'     => $billingDtl ? $billingDtl->id : null,
                         'billhdrtr_type' => $billingHdr->tr_type,
                         'billdtltr_seq'  => $billingDtl ? $billingDtl->tr_seq : null,
                     ];
 
-                    PaymentDtl::updateOrCreate(
+                    // Debug log (bisa diganti dengan logger jika perlu)
+                    // \Log::info('Saving PaymentDtl', ['key' => $key, 'trhdr_id' => $this->objectIdValue, 'tr_seq' => $tr_seq, 'data' => $data]);
+
+                    $paymentDtl = PaymentDtl::updateOrCreate(
                         [
                             'trhdr_id' => $this->objectIdValue,
                             'tr_seq'   => $tr_seq,
                         ],
                         $data
                     );
+
+                    // Jika gagal simpan, tampilkan error
+                    if (!$paymentDtl) {
+                        $this->dispatch('error', 'Gagal menyimpan PaymentDtl.');
+                    }
                 } else {
-                    $this->dispatch('error', __('Payment header not found.'));
+                    $this->dispatch('error', __('Payment header not found or data tidak lengkap.'));
                 }
-            } else {
-                $this->dispatch('error', __('Billing header not found.'));
             }
         }
 
         $this->dispatch('success', __('Data Payment berhasil disimpan.'));
     }
-
 
     public function onCodeChanged($key, $billHdrId)
     {
@@ -204,14 +249,30 @@ class DebtListComponent extends DetailComponent
         }
     }
 
+    /**
+     * Save the PaymentHdr object if it exists.
+     * You can expand this logic as needed.
+     */
+    public function Save()
+    {
+        if ($this->object) {
+            $this->object->save();
+        }
+    }
+
+    /**
+     * Determine if the current action is Edit or View.
+     * You may adjust the logic as needed based on your application's conventions.
+     */
+    private function isEditOrView()
+    {
+        // Assuming $this->action is set to 'Edit' or 'View' for those actions
+        return in_array($this->action, ['Edit', 'View']);
+    }
+
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute);
-    }
-
-    public function isEditOrView()
-    {
-        return in_array($this->actionValue, ['Edit', 'View']);
     }
 }

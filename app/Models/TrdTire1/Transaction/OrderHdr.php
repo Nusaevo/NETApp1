@@ -27,8 +27,6 @@ class OrderHdr extends BaseModel
         'payment_due_days',
         'tr_date',
         'print_date',
-        'due_date',
-        'cust_reff',
         'curr_rate',
         'note',
         'sales_type',
@@ -90,7 +88,11 @@ class OrderHdr extends BaseModel
 
     public function saveOrderHeader($appCode, $trType, $inputs, $configCode)
     {
-        $this->fill($inputs);
+        // Jangan isi due_date dari $inputs
+        $inputsFiltered = $inputs;
+        unset($inputsFiltered['due_date']);
+
+        $this->fill($inputsFiltered);
         $this->tr_type = $trType; // Pastikan tr_type terisi
 
         // Set partner_code berdasarkan partner_id
@@ -111,7 +113,7 @@ class OrderHdr extends BaseModel
         // Set default status jika baru
         if ($this->isNew()) {
             $this->status_code = Status::OPEN;
-            $this->print_date = '1900-01-01'; // Set default value for print_date
+            $this->print_date = null; // Set default value for print_date
         }
 
         // Simpan header
@@ -131,18 +133,18 @@ class OrderHdr extends BaseModel
 
         if ($tax_doc_flag) {
             switch ($sales_type) {
-                case 0:
+                case 'O':
                     return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
-                case 1:
+                case 'I':
                     return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
         } else {
             switch ($sales_type) {
-                case 0: // MOTOR tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
+                case 'O': // MOTOR tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
                     return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
-                case 1: // MOBIL tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
+                case 'I': // MOBIL tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
                     return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
@@ -178,7 +180,7 @@ class OrderHdr extends BaseModel
             ->orderBy('id', 'desc')
             ->first();
 
-        if ($sales_type == 0) {
+        if ($sales_type == 'O') {
             if ($tax_doc_flag) {
                 $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter;
@@ -186,7 +188,7 @@ class OrderHdr extends BaseModel
                 $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter;
             }
-        } elseif ($sales_type == 1) {
+        } elseif ($sales_type == 'I') {
             // MOBIL
             if ($tax_doc_flag) {
                 $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';

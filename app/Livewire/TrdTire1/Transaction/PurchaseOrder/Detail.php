@@ -207,6 +207,12 @@ class Detail extends BaseComponent
             $this->inputs['tr_code'] = $this->object->tr_code;
             $this->inputs['partner_name'] = $this->object->partner->code;
             $this->inputs['textareasupplier'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
+            // Hitung due_date berdasarkan tr_date dan payment_due_days
+            $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+            $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+            $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+                ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+                : ($trDate ? $trDate->format('Y-m-d') : null);
             $this->onPartnerChanged();
             $this->loadDetails();
         } else {
@@ -440,8 +446,19 @@ class Detail extends BaseComponent
             if (!empty($this->inputs['payment_term_id'])) {
                 $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
                 $this->inputs['payment_term'] = $paymentTerm->str1;
-                $this->inputs['payment_due_days'] = $paymentTerm->num1;
+                // $this->inputs['payment_due_days'] = $paymentTerm->num1; // Hapus baris ini
             }
+
+            // Hitung payment_due_days berdasarkan tr_date dan due_date
+            if (!empty($this->inputs['tr_date']) && !empty($this->inputs['due_date'])) {
+                $trDate = \Carbon\Carbon::parse($this->inputs['tr_date']);
+                $dueDate = \Carbon\Carbon::parse($this->inputs['due_date']);
+                $this->inputs['payment_due_days'] = $trDate->diffInDays($dueDate, false);
+            } else {
+                $this->inputs['payment_due_days'] = null;
+            }
+            // Jangan simpan due_date ke model
+            unset($this->inputs['due_date']);
 
             // Save order header
             $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');

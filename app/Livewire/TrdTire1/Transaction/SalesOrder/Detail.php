@@ -225,6 +225,12 @@ class Detail extends BaseComponent
             $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
             $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr;
             $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
+            // Hitung due_date berdasarkan tr_date dan payment_due_days
+            $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+            $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+            $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+                ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+                : ($trDate ? $trDate->format('Y-m-d') : null);
             $this->onPartnerChanged();
             $this->loadDetails();
         } else {
@@ -418,9 +424,20 @@ class Detail extends BaseComponent
                 $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
                 if ($paymentTerm) {
                     $this->inputs['payment_term'] = $paymentTerm->str1;
-                    $this->inputs['payment_due_days'] = $paymentTerm->num1;
+                    // $this->inputs['payment_due_days'] = $paymentTerm->num1; // Hapus baris ini
                 }
             }
+
+            // Hitung payment_due_days berdasarkan tr_date dan due_date
+            if (!empty($this->inputs['tr_date']) && !empty($this->inputs['due_date'])) {
+                $trDate = \Carbon\Carbon::parse($this->inputs['tr_date']);
+                $dueDate = \Carbon\Carbon::parse($this->inputs['due_date']);
+                $this->inputs['payment_due_days'] = $trDate->diffInDays($dueDate, false);
+            } else {
+                $this->inputs['payment_due_days'] = null;
+            }
+            // Jangan simpan due_date ke model
+            unset($this->inputs['due_date']);
 
             // Jika NPWP dinonaktifkan, kosongkan npwp_code
             if ($this->payer === "false") {
@@ -428,7 +445,6 @@ class Detail extends BaseComponent
             }
 
             // Simpan data header menggunakan method yang sudah ada
-            // Pastikan method saveOrderHeader() tersedia pada model atau komponen Anda
             $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
 
             // Simpan detail order jika ada input item
