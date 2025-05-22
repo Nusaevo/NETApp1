@@ -291,11 +291,6 @@ class BaseComponent extends Component
         } catch (QueryException | PDOException | Exception $e) {
             $this->rollbackVersionNumber();
             Log::error("Method SaveWithoutNotification : " . $e->getMessage());
-
-            if ($this->isEditOrView()) {
-                $this->updateSharedVersionNumber(false);
-            }
-
             dd($e->getMessage());
         }
     }
