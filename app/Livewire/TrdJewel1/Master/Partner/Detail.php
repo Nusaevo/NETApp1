@@ -88,7 +88,6 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-        dd($this->inputs['grp']);
         // if (isset($this->inputs['code'])) {
         //     $existingPartner = Partner::where('code', $this->inputs['code'])
         //                               ->where('id', '!=', $this->object->id ?? null)
