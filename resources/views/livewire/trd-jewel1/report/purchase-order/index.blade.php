@@ -51,8 +51,8 @@
 
                             <td>
                                 @if(!empty($res->category2))
-                                <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $res->category) }}
-                                    {{ $masterService->GetMatlCategory2String($this->appCode, $res->category2) }}</strong>
+                                <strong>{{ $masterService->GetMatlCategory1String( $res->category) }}
+                                    {{ $masterService->GetMatlCategory2String( $res->category2) }}</strong>
                                 @endif
 
                                 @if(!empty($res->material_gold))
@@ -60,7 +60,7 @@
                                 @endif
 
                                 @if(!empty($res->material_carat))
-                                <br>{{ $masterService->GetMatlJewelPurityString($this->appCode, $res->material_carat) }}
+                                <br>{{ $masterService->GetMatlJewelPurityString( $res->material_carat) }}
                                 @endif
 
                                 @if(!empty($res->material_descr))

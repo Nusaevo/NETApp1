@@ -49,7 +49,7 @@
                                             <!-- Kolom untuk logo Wijaya Mas dan detail kontak -->
                                             <td style="width: 60%; text-align: center; vertical-align: middle;">
                                                 <div style="text-align: center; display: inline-block;">
-                                                    <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 100px; height: auto; margin-bottom: 5px;">
+                                                    <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 180px; height: auto; margin-bottom: 5px;">
                                                     <ul style="list-style: none; margin: 0; padding: 0; line-height: 1;">
                                                         <li style="font-size: 8px;">Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
                                                         <li style="font-size: 8px;">+62.216683859</li>
@@ -80,11 +80,11 @@
                                         </td>
                                         <td style="width: 50%;">
                                             <p style="margin: 0; padding: 0;">Kode Barang : <strong>{{ $OrderDtl->matl_code }}</strong></p>
-                                            <p style="margin: 0; padding: 0;"> <strong>{{ $masterService->GetMatlCategory1String($this->appCode, $OrderDtl->Material->jwl_category1) }}
-                                                    {{ $masterService->GetMatlCategory2String($this->appCode, $OrderDtl->Material->jwl_category2) }}</strong></p>
+                                            <p style="margin: 0; padding: 0;"> <strong>{{ $masterService->GetMatlCategory1String( $OrderDtl->Material->jwl_category1) }}
+                                                    {{ $masterService->GetMatlCategory2String($OrderDtl->Material->jwl_category2) }}</strong></p>
 
                                             <p style="margin: 0; padding: 0;">Berat : {{ $OrderDtl->Material->jwl_wgt_gold }} Gram</p>
-                                            <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($this->appCode, $OrderDtl->Material->jwl_carat) }}</p>
+                                            <p style="margin: 0; padding: 0;">Kemurnian : {{ $masterService->GetMatlJewelPurityString( $OrderDtl->Material->jwl_carat) }}</p>
                                             <p style="margin: 0; padding: 0;">Bahan : {{ $OrderDtl->Material->descr }}</p>
                                         </td>
                                     </tr>
