@@ -27,26 +27,26 @@
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                         type="code" :action="$actionValue" required="true" clickEvent="getTransactionCode"
-                                        buttonName="Nomor" enabled="true" :buttonEnabled="$isPanelEnabled" />
+                                        buttonName="Nomor Baru" enabled="true" :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field type="text" label="Custommer" model="inputs.partner_name"
+                                    <x-ui-text-field type="text" label="Customer" model="inputs.partner_name"
                                         required="true" :action="$actionValue" enabled="false"
-                                        clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
-                                    <x-ui-dialog-box id="partnerDialogBox" title="Search Custommer" width="600px"
+                                        clickEvent="openPartnerDialogBox" buttonName="Cari" :buttonEnabled="$isPanelEnabled" />
+                                    <x-ui-dialog-box id="partnerDialogBox" title="Cari Customer" width="600px"
                                         height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
                                         <x-slot name="body">
-                                            <x-ui-text-field type="text" label="Search Code/Nama Custommer"
+                                            <x-ui-text-field type="text" label="Cari Code/Nama Customer"
                                                 model="partnerSearchText" required="true" :action="$actionValue"
-                                                enabled="true" clickEvent="searchPartners" buttonName="Search" />
+                                                enabled="true" clickEvent="searchPartners" buttonName="Cari" />
                                             <!-- Table -->
                                             <x-ui-table id="partnersTable" padding="0px" margin="0px">
                                                 <x-slot name="headers">
-                                                    <th class="min-w-100px">Code</th>
-                                                    <th class="min-w-100px">Name</th>
-                                                    <th class="min-w-100px">Address</th>
+                                                    <th class="min-w-100px">Kode</th>
+                                                    <th class="min-w-100px">Nama</th>
+                                                    <th class="min-w-100px">Alamat</th>
                                                 </x-slot>
                                                 <x-slot name="rows">
                                                     @if (empty($suppliers))
@@ -74,7 +74,7 @@
                                                 </x-slot>
                                                 <x-slot name="footer">
                                                     <x-ui-button clickEvent="confirmSelection"
-                                                        button-name="Confirm Selection" loading="true"
+                                                        button-name="Pilih" loading="true"
                                                         :action="$actionValue" cssClass="btn-primary" />
                                                 </x-slot>
                                             </x-ui-table>
@@ -88,7 +88,7 @@
                                         :action="$actionValue" onChanged="onTaxPayerChanged" :enabled="$payer" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('Detail Custommer') }}"
+                                    <x-ui-text-field label="{{ $this->trans('Detail Customer') }}"
                                         model="inputs.textareacustommer" type="textarea" :action="$actionValue"
                                         required="false" enabled="false" />
                                     <x-ui-text-field label="{{ $this->trans('Alamat kirim') }}"
@@ -116,17 +116,17 @@
                 </div>
                 <br>
                 <div class="col-md-12">
-                    <x-ui-card title="Order Items">
+                    <x-ui-card title="Item Barang">
                         <x-ui-table id="Table">
                             <!-- Define table headers -->
                             <x-slot name="headers">
                                 <th style="width: 50px; text-align: center;">No</th>
-                                <th style="width: 150px; text-align: center;">Code</th>
+                                <th style="width: 150px; text-align: center;">Kode</th>
                                 <th style="width: 150px; text-align: center;">Harga Satuan</th>
                                 <th style="width: 50px; text-align: center;">Quantity</th>
                                 <th style="width: 90px; text-align: center;">Disc (%)</th>
                                 <th style="width: 150px; text-align: center;">Amount</th>
-                                <th style="width: 70px; text-align: center;">Actions</th>
+                                <th style="width: 70px; text-align: center;">Aksi</th>
                             </x-slot>
 
                             <!-- Define table rows -->
@@ -143,7 +143,7 @@
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" enabled="false" type="number" />
+                                                label="" :action="$actionValue" enabled="true" type="number" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
@@ -172,7 +172,7 @@
 
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                    button-name="Add" />
+                                    button-name="Tambah" />
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>
@@ -185,10 +185,10 @@
                 <x-ui-table id="SummaryTable">
                     <x-slot name="headers">
                         <th style="width: 150px; text-align: center;">Total Discount</th>
-                        <th style="width: 150px; text-align: center;">PPN</th>
                         <th style="width: 150px; text-align: center;">DPP</th>
+                        <th style="width: 150px; text-align: center;">PPN</th>
                         <th style="width: 150px; text-align: center;">Total Amount</th>
-                        <th style="width: 150px; text-align: center;">Version</th>
+                        <th style="width: 150px; text-align: center;">Versi</th>
                     </x-slot>
                     <x-slot name="rows">
                         <tr>
@@ -197,12 +197,12 @@
                                     enabled="false" type="text" />
                             </td>
                             <td style="text-align: center;">
+                                <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
+                                    type="text" />
+                            <td style="text-align: center;">
                                 <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
                                     type="text" />
                             </td>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
-                                    type="text" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_amount" label="" :action="$actionValue"

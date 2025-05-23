@@ -10,9 +10,9 @@
             title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->code ? ' (' . $this->object->code . ' - ' . $this->object->name . ')' : '' }}"
             status="{{ $this->trans($status) }}">
             @if ($actionValue === 'Create')
-                <x-ui-tab-view id="myTab" tabs="general,contact,bank,npwp,alamat_kirim"></x-ui-tab-view>
+                <x-ui-tab-view id="myTab" tabs="general,kontak,bank,npwp,alamat_kirim"></x-ui-tab-view>
             @else
-                <x-ui-tab-view id="myTab" tabs="general,contact,bank,npwp,alamat_kirim,transactions"></x-ui-tab-view>
+                <x-ui-tab-view id="myTab" tabs="general,kontak,bank,npwp,alamat_kirim"></x-ui-tab-view>
             @endif
             <x-ui-tab-view-content id="myTabContent" class="tab-content">
                 <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
@@ -62,12 +62,17 @@
 
                         <!-- Right Section -->
                         <div class="col-md-4">
-                            <x-ui-card title="Point">
-                                <x-ui-option label="Multiple Options Checklist" model="inputs.partner_chars"
-                                    :options="['IRC' => 'Poin IRC', 'GT' => 'Poin GT', 'ZN' => 'Poin ZN']" required="false" layout="horizontal"
-                                    type="checkbox" visible="true" :enabled="$partnerCharsDisabled" />
+                            <x-ui-card>
+                                <x-ui-option label="Point" model="inputs.partner_chars" :options="['IRC' => 'Poin IRC', 'GT' => 'Poin GT', 'ZN' => 'Poin ZN']"
+                                    required="false" layout="horizontal" type="checkbox" visible="true"
+                                    :enabled="$partnerCharsDisabled" />
+                                    <br>
+                                <x-ui-text-field label="{{ $this->trans('amt_limit') }}" model="inputs.amt_limit"
+                                    type="number" :action="$actionValue" />
+                                <x-ui-text-field label="{{ $this->trans('note_partner') }}" model="inputs.note"
+                                    type="textarea" :action="$actionValue" />
                             </x-ui-card>
-                            <x-ui-card title="Credit">
+                            {{-- <x-ui-card>
                                 <x-ui-padding>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('amt_limit') }}"
@@ -75,14 +80,14 @@
                                     </div>
                                 </x-ui-padding>
                             </x-ui-card>
-                            <x-ui-card title="Description">
+                            <x-ui-card>
                                 <x-ui-padding>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('note_partner') }}" model="inputs.note"
                                             type="textarea" :action="$actionValue" />
                                     </div>
                                 </x-ui-padding>
-                            </x-ui-card>
+                            </x-ui-card> --}}
                         </div>
                         <x-ui-footer>
                             @if (
@@ -102,7 +107,7 @@
 
                     </div>
                 </div>
-                <div class="tab-pane fade show" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                <div class="tab-pane fade show" id="kontak" role="tabpanel" aria-labelledby="contact-tab">
                     @livewire($currentRoute . '.contact-list-component', ['action' => $action, 'objectId' => $objectId])
                 </div>
                 <div class="tab-pane fade show" id="npwp" role="tabpanel" aria-labelledby="npwp-tab">

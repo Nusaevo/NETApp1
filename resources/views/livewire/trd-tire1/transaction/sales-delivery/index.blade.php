@@ -28,7 +28,7 @@
                     </div>
                     <div class="col-md-6">
                         <label tyope="hidden" for=""></label>
-                        <x-ui-dropdown-select label="{{ $this->trans('wh_code') }}" model="inputs.wh_code"
+                        <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code"
                             :options="$warehouses" required="true" :action="$actionValue" />
                     </div>
                 </div>

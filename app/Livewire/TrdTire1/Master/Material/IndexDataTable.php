@@ -113,7 +113,7 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 }),
             // Filter pencarian berdasarkan field tag dengan LIKE
-            $this->createTextFilter('Barang', 'tag', 'Cari Barang', function (Builder $builder, string $value) {
+            $this->createTextFilter('Nama Barang', 'tag', 'Nama Barang', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tag)'), 'like', '%' . strtoupper($value) . '%');
             }),
             // Filter status

@@ -54,7 +54,7 @@
     </x-ui-card>
     <x-ui-footer>
         <div>
-            <x-ui-button clickEvent="SaveContact" button-name="Save Contact" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="SaveContact" button-name="Save" loading="true" :action="$actionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
         </div>
     </x-ui-footer>
