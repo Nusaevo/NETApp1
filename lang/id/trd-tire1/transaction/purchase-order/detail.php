@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'tr_code' => 'Kode Transaksi',
+    'tr_code' => 'Nomor Transaksi',
     'custommer' => 'Pelanggan',
     'payment_terms' => 'Termin Pembayaran',
     'ship_to' => 'Kirim Ke',
@@ -34,6 +34,7 @@ return [
     'selling_price' => 'Harga Jual (IDR)',
     'amount' => 'Jumlah',
     'btnAdd' => 'Tambah',
+    'note' => 'Catatan',
     'totalPrice' => 'Total Harga',
     'message' => [
         'product_added' => 'Produk berhasil ditambahkan',

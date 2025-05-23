@@ -50,7 +50,9 @@ class IndexDataTable extends BaseDataTableComponent
                     ]) . '">' . $row->tr_code . '</a>';
                 })
                 ->html(),
-
+            Column::make($this->trans("Tanggal Surat Jalan"), "tr_date")
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("supplier"), "partner_id")
                 ->format(function ($value, $row) {
                     return $row->Partner ?
@@ -61,18 +63,18 @@ class IndexDataTable extends BaseDataTableComponent
                         '<span class="text-muted">Nama tidak tersedia</span>';
                 })
                 ->html(),
-            Column::make($this->trans('qty'), 'total_qty')
+            Column::make($this->trans('Kode Barang'), 'total_item')
+                    ->label(function ($row) {
+                        $lastDetail = DelivDtl::where('trhdr_id', $row->id)
+                            ->orderBy('tr_seq', 'desc')
+                            ->first();
+                        return $lastDetail ? $lastDetail->tr_seq : 0;
+                    })
+                    ->sortable(),
+            Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
                     $totalQty = DelivDtl::where('trhdr_id', $row->id)->sum('qty');
                     return $totalQty;
-                })
-                ->sortable(),
-            Column::make($this->trans('total_item'), 'total_item')
-                ->label(function ($row) {
-                    $lastDetail = DelivDtl::where('trhdr_id', $row->id)
-                        ->orderBy('tr_seq', 'desc')
-                        ->first();
-                    return $lastDetail ? $lastDetail->tr_seq : 0;
                 })
                 ->sortable(),
             // Column::make($this->trans("amt"), "total_amt_in_idr")
@@ -125,6 +127,17 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            DateFilter::make('Tanggal Terima Barang')->filter(function (Builder $builder, string $value) {
+                $builder->where('deliv_hdrs.tr_date', '=', $value);
+            }),
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
             $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
@@ -133,20 +146,6 @@ class IndexDataTable extends BaseDataTableComponent
                         ->where(DB::raw('UPPER(deliv_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
                         ->where('deliv_dtls.tr_type', 'PD');
                 });
-            }),
-            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
-            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-                $builder->where('deliv_hdrs.tr_date', '>=', $value);
-            }),
-            DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-                $builder->where('deliv_hdrs.tr_date', '<=', $value);
             }),
         ];
     }

@@ -19,7 +19,7 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
-                                        :action="$actionValue" required="true" enabled="false" />
+                                        :action="$actionValue" required="true" enabled="true" />
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                         type="text" :action="$actionValue" required="true" :enabled="$isPanelEnabled"
                                         capslockMode="true" />
@@ -53,10 +53,10 @@
                                     <!-- Define table headers -->
                                     <x-slot name="headers">
                                         <th style="width: 50px; text-align: center;">No</th>
-                                        <th style="width: 150px; text-align: center;">Code</th>
+                                        <th style="width: 150px; text-align: center;">Kode</th>
                                         <th style="width: 150px; text-align: center;">Qty Belum Dikirim</th>
                                         <th style="width: 50px; text-align: center;">Quantity</th>
-                                        <th style="width: 70px; text-align: center;">Actions</th>
+                                        <th style="width: 70px; text-align: center;">Aksi</th>
                                     </x-slot>
 
                                     <!-- Define table rows -->
@@ -94,16 +94,16 @@
 
                                     <x-slot name="button">
                                         <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                            button-name="Add" :enabled="isset($inputs['reffhdrtr_code']) && $inputs['reffhdrtr_code'] ? true : false" />
+                                            button-name="Tambah" :enabled="isset($inputs['reffhdrtr_code']) && $inputs['reffhdrtr_code'] ? true : false" />
                                     </x-slot>
                                 </x-ui-table>
                             </x-ui-card>
 
                             <!-- Footer with Save button -->
                             <x-ui-footer>
-                                <x-ui-button clickEvent="Delete" button-name="Delete" loading="true" :action="$actionValue"
-                                    cssClass="btn-danger" iconPath="delete.svg" />
-                                    @include('layout.customs.buttons.save')
+                                @include('layout.customs.buttons.delete')
+                                @include('layout.customs.buttons.save')
+
                             </x-ui-footer>
                         </div>
                     </div>

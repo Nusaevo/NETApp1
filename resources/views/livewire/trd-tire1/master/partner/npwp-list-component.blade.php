@@ -45,7 +45,7 @@
 
     <x-ui-footer>
         <div>
-            <x-ui-button clickEvent="SaveNPWP" button-name="Save NPWP" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="SaveNPWP" button-name="Save" loading="true" :action="$actionValue"
                 cssClass="btn-primary" iconPath="save.svg" />
         </div>
     </x-ui-footer>

@@ -74,13 +74,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            $this->createTextFilter('Partner', 'code', 'Cari Kode Partner', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            $this->createTextFilter('Nama', 'name', 'Cari Nama', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            SelectFilter::make('Group', 'grp')
+            SelectFilter::make('Kategori', 'grp')
                 ->options([
                     '' => 'All', // Opsi untuk semua grup
                     'V' => 'Supplier',
@@ -91,6 +85,12 @@ class IndexDataTable extends BaseDataTableComponent
                 ])->filter(function (Builder $builder, string $value) {
                     $builder->where('grp', $value);
                 }),
+            $this->createTextFilter('Kode Partner', 'code', 'Cari Kode Partner', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter('Nama Partner', 'name', 'Cari Nama Partner', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             SelectFilter::make('Status', 'status_filter')
                 ->options([
                     'active' => 'Active',

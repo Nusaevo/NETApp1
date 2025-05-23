@@ -67,6 +67,7 @@ class Detail extends BaseComponent
         'changeStatus' => 'changeStatus',
         'delete' => 'delete',
         'updateAmount' => 'updateAmount',
+        'onSalesTypeChanged' => 'onSalesTypeChanged', // tambahkan listener baru
     ];
 
     /**
@@ -198,6 +199,11 @@ class Detail extends BaseComponent
         $this->paymentTerms = $this->masterService->getPaymentTerm();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->materials = $this->masterService->getMaterials();
+
+        // Tambahkan filter material jika sales_type sudah terisi
+        if (!empty($this->inputs['sales_type'])) {
+            $this->onSalesTypeChanged();
+        }
 
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -751,6 +757,42 @@ class Detail extends BaseComponent
 
         // Recalculate DPP and PPN
         $this->calculateDPPandPPN($this->inputs['tax_flag'] ?? '');
+    }
+
+    /**
+     * Handle sales_type change and filter materials accordingly
+     */
+    public function onSalesTypeChanged()
+    {
+        $salesType = $this->inputs['sales_type'] ?? null;
+        if (!$salesType) {
+            $this->materials = [];
+            return;
+        }
+
+        // Ambil data material lengkap dari database
+        $allMaterials = Material::all();
+        $filtered = [];
+
+        foreach ($allMaterials as $material) {
+            $category = $material->category ?? null;
+            if (!$category) continue;
+
+            $categoryNorm = trim(strtoupper($category));
+            $config = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+                ->whereRaw('UPPER(TRIM(str2)) = ?', [$categoryNorm])
+                ->first();
+
+            if ($config && $config->str1 === $salesType) {
+                $filtered[] = [
+                    'label' => $material->code . ' - ' . $material->name,
+                    'value' => $material->id,
+                ];
+            }
+        }
+
+        $this->materials = $filtered;
+        $this->input_details = [];
     }
 
     /**
