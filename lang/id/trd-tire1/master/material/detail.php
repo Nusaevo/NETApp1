@@ -1,11 +1,11 @@
 <?php
 
 return [
-    'type_code' => 'Tipe Produk',
-    'class_code' => 'Jenis Produk',
+    'type_code' => 'Tipe Barang',
+    'class_code' => 'Jenis Barang',
     'category' => 'Kategori',
     'brand' => 'Merk',
-    'search_product' => 'Cari Produk',
+    'search_product' => 'Cari Barang',
     'size' => 'Size',
     'stock' => 'Stok',
     'pattern' => 'Pattern',
@@ -20,7 +20,7 @@ return [
     'point' => 'Point',
     'dimension' => 'Ukuran',
     'side_materials' => 'Bahan',
-    'product' => 'Produk',
+    'product' => 'Barang',
     'category1' => 'Kategori',
     'jenis' => 'Jenis',
     'merek' => 'Merek',

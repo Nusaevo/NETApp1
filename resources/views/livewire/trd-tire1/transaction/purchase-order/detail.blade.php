@@ -18,8 +18,8 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-option model="inputs.sales_type" :options="['O' => 'MOTOR', 'I' => 'MOBIL']" type="radio"
-                                        layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                    <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
+                                        layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" onChanged="onSalesTypeChanged"/>
                                     {{-- <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                     type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                     onChanged="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" /> --}}
@@ -27,7 +27,7 @@
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                         type="code" :action="$actionValue" required="false"
-                                        clickEvent="getTransactionCode" buttonName="Nomor" enabled="true"
+                                        clickEvent="getTransactionCode" buttonName="Nomor Baru" enabled="true"
                                         :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
@@ -40,19 +40,19 @@
                                 <div class="row">
                                     <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
                                         required="true" :action="$actionValue" enabled="false"
-                                        clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
-                                    <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
+                                        clickEvent="openPartnerDialogBox" buttonName="Cari" :buttonEnabled="$isPanelEnabled" />
+                                    <x-ui-dialog-box id="partnerDialogBox" title="Cari Supplier" width="600px"
                                         height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
                                         <x-slot name="body">
-                                            <x-ui-text-field type="text" label="Search Code/Nama Supplier"
+                                            <x-ui-text-field type="text" label="Cari Code/Nama Supplier"
                                                 model="partnerSearchText" required="true" :action="$actionValue"
-                                                enabled="true" clickEvent="searchPartners" buttonName="Search" />
+                                                enabled="true" clickEvent="searchPartners" buttonName="Cari" />
                                             <!-- Table -->
                                             <x-ui-table id="partnersTable" padding="0px" margin="0px">
                                                 <x-slot name="headers">
-                                                    <th class="min-w-100px">Code</th>
-                                                    <th class="min-w-100px">Name</th>
-                                                    <th class="min-w-100px">Address</th>
+                                                    <th class="min-w-100px">Kode</th>
+                                                    <th class="min-w-100px">Nama</th>
+                                                    <th class="min-w-100px">Alamat</th>
                                                 </x-slot>
                                                 <x-slot name="rows">
                                                     @if (empty($suppliers))
@@ -80,7 +80,7 @@
                                                 </x-slot>
                                                 <x-slot name="footer">
                                                     <x-ui-button clickEvent="confirmSelection"
-                                                        button-name="Confirm Selection" loading="true"
+                                                        button-name="Pilih" loading="true"
                                                         :action="$actionValue" cssClass="btn-primary" />
                                                 </x-slot>
                                             </x-ui-table>
@@ -103,17 +103,17 @@
                 </div>
                 <br>
                 <div class="col-md-12">
-                    <x-ui-card title="Order Items">
+                    <x-ui-card title="Item Barang">
                         <x-ui-table id="Table">
                             <!-- Define table headers -->
                             <x-slot name="headers">
                                 <th style="width: 50px; text-align: center;">No</th>
-                                <th style="width: 150px; text-align: center;">Code</th>
+                                <th style="width: 150px; text-align: center;">Nama Barang</th>
                                 <th style="width: 150px; text-align: center;">Harga Satuan</th>
                                 <th style="width: 50px; text-align: center;">Quantity</th>
                                 <th style="width: 90px; text-align: center;">Disc (%)</th>
-                                <th style="width: 150px; text-align: center;">Amount</th>
-                                <th style="width: 70px; text-align: center;">Actions</th>
+                                <th style="width: 150px; text-align: center;">Jumlah</th>
+                                <th style="width: 70px; text-align: center;">Aksi</th>
                             </x-slot>
 
                             <!-- Define table rows -->
@@ -130,7 +130,7 @@
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" enabled="false" type="number" />
+                                                label="" :action="$actionValue" enabled="true" type="number" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
@@ -158,12 +158,12 @@
                             </x-slot>
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                    button-name="Add" />
+                                    button-name="Tambah" />
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>
                     <x-ui-footer>
-                        <x-ui-button clickEvent="deleteTransaction" button-name="Delete" loading="true" :action="$actionValue"
+                        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true" :action="$actionValue"
                             cssClass="btn-danger" iconPath="delete.svg" />
                             @include('layout.customs.buttons.save')
                     </x-ui-footer>
@@ -171,10 +171,10 @@
                 <x-ui-table id="SummaryTable">
                     <x-slot name="headers">
                         <th style="width: 150px; text-align: center;">Total Discount</th>
-                        <th style="width: 150px; text-align: center;">PPN</th>
                         <th style="width: 150px; text-align: center;">DPP</th>
+                        <th style="width: 150px; text-align: center;">PPN</th>
                         <th style="width: 150px; text-align: center;">Total Amount</th>
-                        <th style="width: 150px; text-align: center;">Version</th>
+                        <th style="width: 150px; text-align: center;">Versi</th>
                     </x-slot>
                     <x-slot name="rows">
                         <tr>
@@ -183,12 +183,12 @@
                                     enabled="false" type="text" />
                             </td>
                             <td style="text-align: center;">
-                                <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
-                                    type="text" />
-                            </td>
-                            <td style="text-align: center;">
                                 <x-ui-text-field model="total_dpp" label="" :action="$actionValue"
                                     enabled="false" type="text" :value="number_format($total_dpp, 2)" />
+                            </td>
+                            <td style="text-align: center;">
+                                <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
+                                    type="text" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_amount" label="" :action="$actionValue"

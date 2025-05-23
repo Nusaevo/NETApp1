@@ -2,7 +2,7 @@
 
 return [
     'tr_code' => 'Nomor Nota',
-    'date' => 'Tanggal',
+    'date' => 'Tanggal Terima Barang',
     'supplier' => 'Supplier',
     'created_date' => 'Tgl dibuat',
     'status' => 'Status',

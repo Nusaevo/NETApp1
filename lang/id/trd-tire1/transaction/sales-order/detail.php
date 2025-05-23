@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'tr_code' => 'Kode Transaksi',
+    'tr_code' => 'Nomor Transaksi',
     'custommer' => 'Pelanggan',
     'ship_to' => 'Kirim Ke',
     'tax_payer' => 'Wajib Pajak',

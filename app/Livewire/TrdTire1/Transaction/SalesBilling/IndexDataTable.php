@@ -33,7 +33,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("tr_code"), "tr_code")
+            Column::make($this->trans("Nomor Nota"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
                         return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
@@ -45,8 +45,25 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans("date"), "tr_date")
+            Column::make($this->trans("Tanggal Nota"), "tr_date")
                 ->searchable()
+                ->sortable(),
+            Column::make($this->trans("Customer"), "partner_id")
+                ->format(function ($value, $row) {
+                    if ($row->Partner && $row->Partner->name) {
+                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->partner_id)
+                        ]) . '">' . $row->Partner->name . '</a>';
+                    } else {
+                        return '';
+                    }
+                })
+                ->html(),
+            Column::make($this->trans('Total Uang'), 'total_amt')
+                ->label(function ($row) {
+                    return rupiah($row->total_amt, false);
+                })
                 ->sortable(),
             Column::make($this->trans("Tgl. Kirim"), "tr_date")
                 ->label(function ($row) {
@@ -62,69 +79,29 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('currency', "curr_rate")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("supplier"), "partner_id")
-                ->format(function ($value, $row) {
-                    if ($row->Partner && $row->Partner->name) {
-                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->partner_id)
-                        ]) . '">' . $row->Partner->name . '</a>';
-                    } else {
-                        return '';
-                    }
-                })
-                ->html(),
-            Column::make($this->trans('amt'), 'total_amt')
-                ->label(function ($row) {
-                    return rupiah($row->total_amt);
-                })
-                ->sortable(),
             Column::make($this->trans("Tanggal Tagih"), "print_date")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans('action'), 'id')
-                ->format(function ($value, $row, Column $column) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
-                    ]);
-                }),
+            Column::make( 'id')
+                ->hideIf(true)
+                // ->format(function ($value, $row, Column $column) {
+                //     return view('layout.customs.data-table-action', [
+                //         'row' => $row,
+                //         'custom_actions' => [],
+                //         'enable_this_row' => true,
+                //         'allow_details' => false,
+                //         'allow_edit' => true,
+                //         'allow_disable' => false,
+                //         'allow_delete' => false,
+                //         'permissions' => $this->permissions
+                //     ]);
+                // }),
         ];
     }
 
     public function filters(): array
     {
         return [
-            SelectFilter::make($this->trans("Sales type"), 'sales_type')
-                ->options([
-                    ''          => 'Semua',
-                    'O'    => 'Motor',
-                    'I' => 'Mobil',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value !== '') {
-                        $builder->whereExists(function ($query) use ($value) {
-                            $query->select(DB::raw(1))
-                                ->from('order_hdrs')
-                                ->whereRaw('order_hdrs.tr_code = billing_hdrs.tr_code')
-                                ->where('order_hdrs.sales_type', $value);
-                        });
-                    }
-                }),
-            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
-            }),
-            $this->createTextFilter($this->trans("supplier"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
             DateFilter::make('Tanggal Awal')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '>=', $value);
@@ -133,6 +110,30 @@ class IndexDataTable extends BaseDataTableComponent
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '<=', $value);
                 }),
+                $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+                }),
+                $this->createTextFilter($this->trans("Customer"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
+                    $builder->whereHas('Partner', function ($query) use ($value) {
+                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                    });
+                }),
+                SelectFilter::make($this->trans("Sales type"), 'sales_type')
+                    ->options([
+                        ''          => 'Semua',
+                        'O'    => 'Motor',
+                        'I' => 'Mobil',
+                    ])
+                    ->filter(function (Builder $builder, string $value) {
+                        if ($value !== '') {
+                            $builder->whereExists(function ($query) use ($value) {
+                                $query->select(DB::raw(1))
+                                    ->from('order_hdrs')
+                                    ->whereRaw('order_hdrs.tr_code = billing_hdrs.tr_code')
+                                    ->where('order_hdrs.sales_type', $value);
+                            });
+                        }
+                    }),
         ];
     }
 

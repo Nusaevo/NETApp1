@@ -52,7 +52,7 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans("supplier"), "partner_id")
+            Column::make($this->trans("Customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
                         return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
@@ -64,14 +64,18 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans('qty'), 'total_qty')
+            Column::make('Kode Barang', 'orderdtl_count')
+                ->label(function ($row) {
+                    return $row->OrderDtl ? $row->OrderDtl->count() : 0;
+                }),
+            Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
                     return $row->total_qty;
                 })
                 ->sortable(),
             Column::make($this->trans('amt'), 'total_amt')
                 ->label(function ($row) {
-                    return rupiah($row->total_amt);
+                    return rupiah($row->total_amt, false);
                 })
                 ->sortable(),
             Column::make($this->trans("Status"), "status_code")
@@ -120,7 +124,7 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            $this->createTextFilter('Custommer', 'name', 'Cari Customer', function (Builder $builder, string $value) {
+            $this->createTextFilter('Customer', 'name', 'Cari Customer', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });

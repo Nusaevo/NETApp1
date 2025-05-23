@@ -36,7 +36,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
+            Column::make($this->trans("Tanggal Nota"), "tr_date")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")
@@ -69,7 +69,7 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans('qty'))
+            Column::make($this->trans('Total Barang'))
                 ->label(function ($row) {
                     return $row->total_qty;
                 })
@@ -103,25 +103,43 @@ class IndexDataTable extends BaseDataTableComponent
                     return $delivery ? 'Terkirim' : 'Belum';
                 })
                 ->sortable(),
-            Column::make($this->trans('action'), 'id')
-                ->format(function ($value, $row, Column $column) {
-                    return view('layout.customs.data-table-action', [
-                        'row' => $row,
-                        'custom_actions' => [],
-                        'enable_this_row' => true,
-                        'allow_details' => false,
-                        'allow_edit' => true,
-                        'allow_disable' => false,
-                        'allow_delete' => false,
-                        'permissions' => $this->permissions
-                    ]);
-                }),
+            Column::make($this->trans(''), 'id')
+                ->hideIf(true),
+                // ->format(function ($value, $row, Column $column) {
+                //     return view('layout.customs.data-table-action', [
+                //         'row' => $row,
+                //         'custom_actions' => [],
+                //         'enable_this_row' => false,
+                //         'allow_details' => false,
+                //         'allow_edit' => false,
+                //         'allow_disable' => false,
+                //         'allow_delete' => false,
+                //         'permissions' => $this->permissions
+                //     ]);
+                // }),
         ];
     }
 
     public function filters(): array
     {
         return [
+            DateFilter::make('Tanggal Nota Awal')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('tr_date', '>=', $value);
+                }),
+            DateFilter::make('Tanggal Nota Akhir')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('tr_date', '<=', $value);
+                }),
+
+            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+                $builder->where('tr_code', 'like', '%' . strtoupper($value) . '%');
+            }),
+            $this->createTextFilter($this->trans("supplier"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
             SelectFilter::make($this->trans("Tipe Penjualan"), 'sales_type')
                 ->options([
                     ''          => 'Semua',
@@ -149,22 +167,6 @@ class IndexDataTable extends BaseDataTableComponent
                             $query->where('tr_type', 'SD');
                         });
                     }
-                }),
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('tr_code', 'like', '%' . strtoupper($value) . '%');
-            }),
-            $this->createTextFilter($this->trans("supplier"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
-            DateFilter::make('Tanggal Awal')
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('tr_date', '>=', $value);
-                }),
-            DateFilter::make('Tanggal Akhir')
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('tr_date', '<=', $value);
                 }),
         ];
     }
