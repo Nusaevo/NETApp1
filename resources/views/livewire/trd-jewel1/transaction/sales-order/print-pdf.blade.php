@@ -17,7 +17,7 @@
             <div class="card-body">
                 <div class="row d-flex align-items-baseline">
                     <div class="col-xl-9">
-                        <p style="color: #7e8d9f; font-size: 20px;">Nota >> <strong>No: {{ $this->object->tr_id }}</strong></p>
+                        <p style="color: #7e8d9f; font-size: 24px;">Nota >> <strong>No: {{ $this->object->tr_id }}</strong></p>
                     </div>
                     <div class="col-xl-3 float-end">
                         <button type="button" class="btn btn-light text-capitalize border-0" onclick="printInvoice()">
@@ -50,10 +50,10 @@
                                             <td style="width: 60%; text-align: center; vertical-align: middle;">
                                                 <div style="text-align: center; display: inline-block;">
                                                     <img src="{{ asset('customs/logos/WijayaMas.png') }}" alt="Logo Wijaya Mas" style="width: 180px; height: auto; margin-bottom: 5px;">
-                                                    <ul style="list-style: none; margin: 0; padding: 0; line-height: 1;">
-                                                        <li style="font-size: 8px;">Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
-                                                        <li style="font-size: 8px;">+62.216683859</li>
-                                                        <li style="font-size: 8px;">wijayamas28@yahoo.com</li>
+                                                    <ul style="list-style: none; margin: 0; padding: 0; line-height: 1.2;">
+                                                        <li style="font-size: 10px;">Ruko Pluit Village No.59, Jl Pluit Indah Raya, Jakarta 14440</li>
+                                                        <li style="font-size: 10px;">+62.216683859</li>
+                                                        <li style="font-size: 10px;">wijayamas28@yahoo.com</li>
                                                     </ul>
                                                 </div>
                                             </td>
