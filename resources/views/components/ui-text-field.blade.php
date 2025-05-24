@@ -137,7 +137,6 @@
                                 if (input.value.trim() === '') {
                                     input.value = '0';
                                 }
-                                $wire.set('{{ $model }}', input.inputmask.unmaskedvalue().replace(',', '.'));
                             });
                         }
                     }
