@@ -29,36 +29,6 @@ class BaseModel extends Model
     protected static function boot()
     {
         parent::boot();
-        static::saving(function ($model) {
-            $model->sanitizeAttributes();
-        });
-        static::creating(function ($model) {
-            $model->sanitizeAttributes();
-        });
-
-        static::updating(function ($model) {
-            $model->sanitizeAttributes();
-        });
-        static::retrieved(function ($model) {
-            $attributes = $model->getAllColumns();
-
-            foreach ($attributes as $attribute) {
-                $value = $model->getAllColumnValues($attribute);
-                if (is_numeric($value) && strpos($value, '.') !== false) {
-                    $decimalPart = explode('.', $value)[1];
-                    if ((int)$decimalPart === 0) {
-                        $value = (int)$value;
-                    }
-                }
-
-                if (is_string($value) && isJsonFormat($value)) {
-                    $value = json_decode($value, true);
-                }
-
-                $model->{$attribute} = $value;
-            }
-        });
-
         self::bootUpdatesCreatedByAndUpdatedAt();
     }
 
@@ -130,39 +100,6 @@ class BaseModel extends Model
                 return $proposedTrId;
             }
             // }
-        }
-    }
-
-    /**
-     * Fill the model with sanitized attributes.
-     *
-     * - Dates: Sanitized via `sanitizeDate`
-     * - Numeric strings: Properly formatted (`.` and `,` swapped)
-     * - Strings: Trimmed whitespace
-     * - Arrays: JSON-encoded
-     *
-     * @param array $attributes
-     */
-        /**
-     * Sanitize model attributes before saving.
-     */
-    protected function sanitizeAttributes()
-    {
-        foreach ($this->attributes as $key => $value) {
-            if (isDateAttribute($key, $value)) {
-                // Sanitize Date
-                $this->attributes[$key] = $this->sanitizeDate($value);
-            } elseif (isFormattedNumeric($value)) {
-                // Format Numeric Strings (e.g., "1.000,50" => "1000.50")
-                $this->attributes[$key] = str_replace('.', '', $value);
-                $this->attributes[$key] = str_replace(',', '.', $this->attributes[$key]);
-            } elseif (is_array($value)) {
-                // Encode Arrays as JSON
-                $this->attributes[$key] = json_encode($value);
-            } elseif (is_string($value)) {
-                // Trim Strings
-                $this->attributes[$key] = trim($value);
-            }
         }
     }
 

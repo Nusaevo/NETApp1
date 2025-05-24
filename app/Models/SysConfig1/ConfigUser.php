@@ -15,30 +15,9 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     // use SpatieLogsActivity;
     // use HasRoles;
     use SoftDeletes;
-    use BaseTrait;
-
-    protected static function boot()
+    use BaseTrait;    protected static function boot()
     {
         parent::boot();
-        static::saving(function ($model) {
-            $model->sanitizeAttributes();
-        });
-        static::retrieved(function ($model) {
-            $attributes = $model->getAllColumns();
-
-            foreach ($attributes as $attribute) {
-                $value = $model->getAllColumnValues($attribute);
-                if (is_numeric($value) && strpos($value, '.') !== false) {
-                    $decimalPart = explode('.', $value)[1];
-                    if ((int) $decimalPart === 0) {
-                        $value = (int) $value;
-                    }
-                }
-
-                $model->{$attribute} = $value;
-            }
-        });
-
         self::bootUpdatesCreatedByAndUpdatedAt();
     }
     /**
@@ -46,9 +25,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
      *
      * @var array
      */
-    protected $fillable = ['code', 'password', 'name', 'dept', 'phone', 'email', 'status_code'];
-
-    /**
+    protected $fillable = ['code', 'password', 'name', 'dept', 'phone', 'email', 'status_code'];    /**
      * The attributes that should be hidden for arrays.
      *
      * @var array
@@ -65,41 +42,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         if (array_key_exists($attribute, $this->attributes)) {
             return $this->attributes[$attribute];
         }
-        return null;
-    }
-
-    /**
-     * Fill the model with sanitized attributes.
-     *
-     * - Dates: Sanitized via `sanitizeDate`
-     * - Numeric strings: Properly formatted (`.` and `,` swapped)
-     * - Strings: Trimmed whitespace
-     * - Arrays: JSON-encoded
-     *
-     * @param array $attributes
-     */
-        /**
-     * Sanitize model attributes before saving.
-     */
-    protected function sanitizeAttributes()
-    {
-        foreach ($this->attributes as $key => $value) {
-            if (isDateAttribute($key, $value)) {
-                // Sanitize Date
-                $this->attributes[$key] = $this->sanitizeDate($value);
-            } elseif (isFormattedNumeric($value)) {
-                // Format Numeric Strings (e.g., "1.000,50" => "1000.50")
-                $this->attributes[$key] = str_replace('.', '', $value);
-                $this->attributes[$key] = str_replace(',', '.', $this->attributes[$key]);
-            } elseif (is_array($value)) {
-                // Encode Arrays as JSON
-                $this->attributes[$key] = json_encode($value);
-            } elseif (is_string($value)) {
-                // Trim Strings
-                $this->attributes[$key] = trim($value);
-            }
-        }
-    }
+        return null;    }
 
 
     public function isDuplicateCode()

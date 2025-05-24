@@ -240,3 +240,35 @@ function terbilang($nilai)
     }
     return $hasil;
 }
+
+if (!function_exists('sanitizeModelAttributes')) {
+    /**
+     * Sanitize model attributes before saving.
+     *
+     * - Dates: Sanitized via `sanitizeDate`
+     * - Numeric strings: Properly formatted (`.` and `,` swapped)
+     * - Strings: Trimmed whitespace
+     * - Arrays: JSON-encoded
+     *
+     * @param array $attributes Reference to model attributes array
+     */
+    function sanitizeModelAttributes(&$attributes)
+    {
+        foreach ($attributes as $key => $value) {
+            if (isDateAttribute($key, $value)) {
+                // Sanitize Date
+                $attributes[$key] = sanitizeDate($value);
+            } elseif (isFormattedNumeric($value)) {
+                $attributes[$key] = str_replace('.', '', $value);
+                $attributes[$key] = str_replace(',', '.', $attributes[$key]);
+
+            } elseif (is_array($value)) {
+                // Encode Arrays as JSON
+                $attributes[$key] = json_encode($value);
+            } elseif (is_string($value)) {
+                // Trim Strings
+                $attributes[$key] = trim($value);
+            }
+        }
+    }
+}
