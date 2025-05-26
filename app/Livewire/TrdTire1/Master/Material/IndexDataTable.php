@@ -98,6 +98,27 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            SelectFilter::make('Tipe Penjualan', 'sales_type_filter')
+                ->options([
+                    '' => 'Semua',
+                    'O' => 'Mobil',
+                    'I' => 'Motor',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        // Ambil semua category yang str1-nya sama dengan $value
+                        $categories = \App\Models\SysConfig1\ConfigConst::where('const_group', 'MMATL_CATEGORY')
+                            ->where('str1', $value)
+                            ->pluck('str2')
+                            ->toArray();
+                        if (!empty($categories)) {
+                            $builder->whereIn('category', $categories);
+                        } else {
+                            // Jika tidak ada category yang cocok, hasilkan kosong
+                            $builder->whereRaw('1=0');
+                        }
+                    }
+                }),
             SelectFilter::make('Kategori', 'kategori_filter')
                 ->options($this->materialCategory)
                 ->filter(function (Builder $builder, string $value) {

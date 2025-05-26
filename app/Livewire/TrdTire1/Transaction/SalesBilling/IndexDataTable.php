@@ -48,6 +48,14 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Tanggal Nota"), "tr_date")
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("Tgl. Kirim"), "tr_date")
+                ->label(function ($row) {
+                    $delivery = DelivHdr::where('tr_type', 'SD')
+                        ->where('tr_code', $row->tr_code)
+                        ->first();
+                    return $delivery ? $delivery->tr_date : '';
+                })
+                ->sortable(),
             Column::make($this->trans("Customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
@@ -65,14 +73,7 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->total_amt, false);
                 })
                 ->sortable(),
-            Column::make($this->trans("Tgl. Kirim"), "tr_date")
-                ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery ? $delivery->tr_date : '';
-                })
-                ->sortable(),
+
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
@@ -82,6 +83,10 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Tanggal Tagih"), "print_date")
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("Status"), "status_code")
+                    ->label(function ($row) {
+                        return $row->status_code;
+                    }),
             Column::make( 'id')
                 ->hideIf(true)
                 // ->format(function ($value, $row, Column $column) {
@@ -102,16 +107,16 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Awal')
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            DateFilter::make('Tanggal Nota Awal')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '>=', $value);
                 }),
-            DateFilter::make('Tanggal Akhir')
+            DateFilter::make('Tanggal Nota Akhir')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '<=', $value);
-                }),
-                $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
                 }),
                 $this->createTextFilter($this->trans("Customer"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
                     $builder->whereHas('Partner', function ($query) use ($value) {
