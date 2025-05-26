@@ -57,10 +57,10 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Nama Program"), "descrs")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("matl_code"), "matl_code")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("grp"), "grp")
+            Column::make($this->trans("Group"), "grp")
+                    ->searchable()
+                    ->sortable(),
+            Column::make($this->trans("Kode Barang"), "matl_code")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("qty"), "qty")

@@ -3,6 +3,7 @@
 namespace App\Livewire\TrdTire1\Master\Partner;
 
 use App\Livewire\Component\BaseDataTableComponent;
+use App\Models\SysConfig1\ConfigConst;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\TrdTire1\Master\Partner;
 use App\Services\SysConfig1\ConfigService;
@@ -73,17 +74,20 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function filters(): array
     {
+        // Ambil opsi kategori dari config const MPARTNER_TYPE
+        $kategoriOptions = ConfigConst::where('const_group', 'MPARTNER_TYPE')
+            ->orderBy('seq')
+            ->pluck('str2', 'str1')
+            ->toArray();
+        $kategoriOptions = ['' => 'All'] + $kategoriOptions;
+
         return [
             SelectFilter::make('Kategori', 'grp')
-                ->options([
-                    '' => 'All', // Opsi untuk semua grup
-                    'V' => 'Supplier',
-                    'C' => 'Customer',
-                    'I' => 'Asuransi',
-                    'B' => 'Bank',
-                    'A' => 'Agen'
-                ])->filter(function (Builder $builder, string $value) {
-                    $builder->where('grp', $value);
+                ->options($kategoriOptions)
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('grp', $value);
+                    }
                 }),
             $this->createTextFilter('Kode Partner', 'code', 'Cari Kode Partner', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');

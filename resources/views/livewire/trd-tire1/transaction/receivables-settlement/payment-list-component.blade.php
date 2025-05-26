@@ -16,7 +16,7 @@
                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
-                            <x-ui-dropdown-select label="{{ $this->trans('tr_type') }}"
+                            <x-ui-dropdown-select
                                 model="input_details.{{ $key }}.pay_type_code" :options="$PaymentType"
                                 required="true" :action="$actionValue" enabled="false" />
                         </td>
@@ -29,8 +29,8 @@
                                 :action="$actionValue" enabled="false" type="number" />
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="Set" loading="true" :action="$actionValue"
-                                cssClass="btn-secondary text-light" />
+                            <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
+                                cssClass="btn-secondary text-light" iconPath="edit.svg" />
                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                 cssClass="btn-danger text-danger" iconPath="delete.svg" />
                         </td>
@@ -48,7 +48,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 @if (isset($activePaymentItemKey))
-                                    <x-ui-dropdown-select label="{{ $this->trans('pay_type_code') }}"
+                                    <x-ui-dropdown-select label="{{ $this->trans('Tipe Pembayaran') }}"
                                         model="input_payments.{{ $activePaymentItemKey }}.pay_type_code"
                                         :options="$PaymentType" required="true" :action="$actionValue"
                                         onChanged="onPaymentTypeChange" />
@@ -59,13 +59,13 @@
                         <!-- Row untuk tipe CASH (Tunai) -->
                         @if ($isCash === 'true')
                             <div class="row" title="Tunai">
-                                <div class="col-md-3">
+                                {{-- <div class="col-md-3">
                                     <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_note"
                                         label="Tunai" :action="$actionValue" type="text" :enabled="$isCash" />
-                                </div>
+                                </div> --}}
                                 <div class="col-md-3">
                                     <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.amt_tunai"
-                                        label="Amount" :action="$actionValue" type="number" :enabled="$isCash" />
+                                        label="Total Uang" :action="$actionValue" type="number" :enabled="$isCash" />
                                 </div>
                             </div>
                         @endif
@@ -74,7 +74,7 @@
                             <div class="row" title="bank">
                                 <div class="col-md-3">
                                     <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.amt_giro"
-                                        label="Nilai Giro" :action="$actionValue" type="number" :enabled="$isGiro" />
+                                        label="Nilai" :action="$actionValue" type="number" :enabled="$isGiro" />
                                 </div>
                                 <div class="col-md-3">
                                     <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_reff_giro"
@@ -83,11 +83,11 @@
                                 <div class="col-md-3">
                                     <x-ui-text-field
                                         model="input_payments.{{ $activePaymentItemKey }}.bank_reff_no_giro"
-                                        label="Nomor Giro" :action="$actionValue" type="text" :enabled="$isGiro" />
+                                        label="Nomor" :action="$actionValue" type="text" :enabled="$isGiro" />
                                 </div>
                                 <div class="col-md-3">
                                     <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_date_giro"
-                                        label="Tanggal Jatuh Tempo" :action="$actionValue" type="date"
+                                        label="Tanggal" :action="$actionValue" type="date"
                                         :enabled="$isGiro" />
                                 </div>
                             </div>
@@ -98,7 +98,7 @@
                             <div class="row" title="Transfer">
                                 <div class="col-md-3">
                                     <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.amt_trf"
-                                        label="Transfer" :action="$actionValue" type="number" :enabled="$isTrf" />
+                                        label="Total Transfer" :action="$actionValue" type="number" :enabled="$isTrf" />
                                 </div>
                                 <div class="col-md-3">
                                     <x-ui-text-field
@@ -108,7 +108,7 @@
                                 <div class="col-md-3">
                                     <x-ui-text-field
                                         model="input_payments.{{ $activePaymentItemKey }}.bank_reff_no_transfer"
-                                        label="Nomor Reff" :action="$actionValue" type="number" :enabled="$isTrf" />
+                                        label="Nomor Reff" :action="$actionValue" type="text" :enabled="$isTrf" />
                                 </div>
                                 <div class="col-md-3">
                                     <x-ui-text-field

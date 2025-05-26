@@ -18,15 +18,15 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
+                                    <x-ui-text-field type="text" label="Customer" model="inputs.partner_name"
                                         required="true" :action="$actionValue" enabled="false"
                                         clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
-                                    <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
+                                    <x-ui-dialog-box id="partnerDialogBox" title="Cari Customer" width="600px"
                                         height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
                                         <x-slot name="body">
-                                            <x-ui-text-field type="text" label="Search Code/Nama Supplier"
+                                            <x-ui-text-field type="text" label="Cari Code/Nama Customer"
                                                 model="partnerSearchText" required="true" :action="$actionValue"
-                                                enabled="true" clickEvent="searchPartners" buttonName="Search" />
+                                                enabled="true" clickEvent="searchPartners" buttonName="Cari" />
                                             <!-- Table -->
                                             <x-ui-table id="partnersTable" padding="0px" margin="0px">
                                                 <x-slot name="headers">
@@ -35,24 +35,24 @@
                                                     <th class="min-w-100px">Address</th>
                                                 </x-slot>
                                                 <x-slot name="rows">
-                                                    @if (empty($suppliers))
+                                                    @if (empty($Customers))
                                                         <tr>
                                                             <td colspan="4" class="text-center text-muted">No Data
                                                                 Found</td>
                                                         </tr>
                                                     @else
-                                                        @foreach ($suppliers as $key => $supplier)
-                                                            <tr wire:key="row-{{ $key }}-supplier">
+                                                        @foreach ($Customers as $key => $Customer)
+                                                            <tr wire:key="row-{{ $key }}-Customer">
                                                                 <td>
                                                                     <x-ui-option label="" required="false"
                                                                         layout="horizontal" enabled="true"
                                                                         type="checkbox" visible="true" :options="[
-                                                                            $supplier['id'] => $supplier['code'],
+                                                                            $Customer['id'] => $Customer['code'],
                                                                         ]"
-                                                                        onChanged="selectPartner({{ $supplier['id'] }})" />
+                                                                        onChanged="selectPartner({{ $Customer['id'] }})" />
                                                                 </td>
-                                                                <td>{{ $supplier['name'] }}</td>
-                                                                <td>{{ $supplier['address'] }}</td>
+                                                                <td>{{ $Customer['name'] }}</td>
+                                                                <td>{{ $Customer['address'] }}</td>
                                                             </tr>
                                                         @endforeach
                                                     @endif
@@ -82,13 +82,13 @@
             </div>
             <br>
             <div class="col-md-12">
-                <x-ui-card title="Pembayaran">
-                    @livewire($currentRoute . '.payment-list-component', ['action' => $action, 'objectId' => $objectId])
+                <x-ui-card title="Nota">
+                    @livewire($currentRoute . '.debt-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
             </div>
             <div class="col-md-12">
-                <x-ui-card title="Hutang">
-                    @livewire($currentRoute . '.debt-list-component', ['action' => $action, 'objectId' => $objectId])
+                <x-ui-card title="Pembayaran">
+                    @livewire($currentRoute . '.payment-list-component', ['action' => $action, 'objectId' => $objectId])
                 </x-ui-card>
             </div>
         </x-ui-tab-view-content>
