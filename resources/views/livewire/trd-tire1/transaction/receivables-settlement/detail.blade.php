@@ -35,13 +35,13 @@
                                                     <th class="min-w-100px">Address</th>
                                                 </x-slot>
                                                 <x-slot name="rows">
-                                                    @if (empty($Customers))
+                                                    @if (empty($suppliers))
                                                         <tr>
                                                             <td colspan="4" class="text-center text-muted">No Data
                                                                 Found</td>
                                                         </tr>
                                                     @else
-                                                        @foreach ($Customers as $key => $Customer)
+                                                        @foreach ($suppliers as $key => $Customer)
                                                             <tr wire:key="row-{{ $key }}-Customer">
                                                                 <td>
                                                                     <x-ui-option label="" required="false"
