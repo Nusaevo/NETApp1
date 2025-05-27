@@ -110,44 +110,70 @@
                                     </thead>
                                     <tbody>
                                         @php
-                                            // Hitung total per kolom untuk footer
+                                            // Hitung total per kolom untuk footer (hanya point)
                                             $colTotals = [];
                                             $grandTotal = 0;
                                             foreach ($groupColumns as $col) {
-                                                $colTotals[$col] = array_sum(array_map(fn($row) => (int)($row->$col ?? 0), $results));
+                                                $colTotals[$col] = array_sum(array_map(function($row) use ($col) {
+                                                    $val = $row->$col ?? '';
+                                                    $parts = explode('|', $val);
+                                                    return isset($parts[1]) ? (int)$parts[1] : 0;
+                                                }, $results));
                                                 $grandTotal += $colTotals[$col];
                                             }
                                         @endphp
                                         @foreach ($results as $row)
                                             @php
-                                                $rowTotal = 0;
+                                                $rowTotalQty = 0;
+                                                $rowTotalPoint = 0;
                                                 $customer = $row->customer ?? '';
                                             @endphp
                                             <tr>
                                                 <td style="padding:4px 8px; border: 1px solid #000">{{ $customer }}</td>
                                                 @foreach ($groupColumns as $col)
                                                     @php
-                                                        $val = (int)($row->$col ?? 0);
-                                                        $rowTotal += $val;
+                                                        $val = $row->$col ?? '';
+                                                        $parts = explode('|', $val);
+                                                        $qty = isset($parts[0]) ? (int)$parts[0] : 0;
+                                                        $point = isset($parts[1]) ? (int)$parts[1] : 0;
+                                                        $rowTotalQty += $qty;
+                                                        $rowTotalPoint += $point;
                                                     @endphp
                                                     <td style="text-align:center; padding:4px 8px; border: 1px solid #000">
-                                                        {{ $val ? $val : '' }}
+                                                        {{ $qty ? $qty : '' }}<br>
+                                                        <span style="font-size:11px;color:#888;">{{ $point ? $point : '' }}</span>
                                                     </td>
                                                 @endforeach
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold;">
-                                                    {{ $rowTotal ? $rowTotal : '' }}
+                                                    {{ $rowTotalQty ? $rowTotalQty : '' }}<br>
+                                                    <span style="font-size:11px;color:#888;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span>
                                                 </td>
                                             </tr>
                                         @endforeach
+                                        @php
+                                            // Hitung total qty per kolom dan grand total qty
+                                            $colTotalsQty = [];
+                                            $grandTotalQty = 0;
+                                            foreach ($groupColumns as $col) {
+                                                $colTotalsQty[$col] = array_sum(array_map(function($row) use ($col) {
+                                                    $val = $row->$col ?? '';
+                                                    $parts = explode('|', $val);
+                                                    return isset($parts[0]) ? (int)$parts[0] : 0;
+                                                }, $results));
+                                                $grandTotalQty += $colTotalsQty[$col];
+                                            }
+                                        @endphp
                                         <tr>
                                             <td style="padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">Total</td>
                                             @foreach ($groupColumns as $col)
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
-                                                    {{ $colTotals[$col] ? $colTotals[$col] : '' }}
+                                                    {{ $colTotalsQty[$col] ? $colTotalsQty[$col] : '' }}<br>
+                                                    <span style="font-size:11px;color:#888;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span>
                                                 </td>
                                             @endforeach
                                             <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
-                                                {{ $grandTotal ? $grandTotal : '' }}
+                                                {{ $grandTotalQty ? $grandTotalQty : '' }}<br>
+                                                <span style="font-size:11px;color:#888;">{{ $grandTotal ? $grandTotal : '' }}</span>
                                             </td>
                                         </tr>
                                     </tbody>
