@@ -20,7 +20,7 @@
                                 <div class="row">
                                     <div class="row">
                                         <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
-                                            layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" onChanged="onSalesTypeChanged"/>
+                                            layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"/>
                                         <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                             type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />

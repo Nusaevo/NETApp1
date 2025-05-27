@@ -196,38 +196,38 @@ class Detail extends BaseComponent
     /**
      * Handle sales_type change and filter materials accordingly
      */
-    public function onSalesTypeChanged()
-    {
-        $salesType = $this->inputs['sales_type'] ?? null;
-        if (!$salesType) {
-            $this->materials = [];
-            return;
-        }
+    // public function onSalesTypeChanged()
+    // {
+    //     $salesType = $this->inputs['sales_type'] ?? null;
+    //     if (!$salesType) {
+    //         $this->materials = [];
+    //         return;
+    //     }
 
-        // Ambil data material lengkap dari database
-        $allMaterials = Material::all();
-        $filtered = [];
+    //     // Ambil data material lengkap dari database
+    //     $allMaterials = Material::all();
+    //     $filtered = [];
 
-        foreach ($allMaterials as $material) {
-            $category = $material->category ?? null;
-            if (!$category) continue;
+    //     foreach ($allMaterials as $material) {
+    //         $category = $material->category ?? null;
+    //         if (!$category) continue;
 
-            $categoryNorm = trim(strtoupper($category));
-            $config = ConfigConst::where('const_group', 'MMATL_CATEGORY')
-                ->whereRaw('UPPER(TRIM(str2)) = ?', [$categoryNorm])
-                ->first();
+    //         $categoryNorm = trim(strtoupper($category));
+    //         $config = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+    //             ->whereRaw('UPPER(TRIM(str2)) = ?', [$categoryNorm])
+    //             ->first();
 
-            if ($config && $config->str1 === $salesType) {
-                $filtered[] = [
-                    'label' => $material->code . ' - ' . $material->name,
-                    'value' => $material->id,
-                ];
-            }
-        }
+    //         if ($config && $config->str1 === $salesType) {
+    //             $filtered[] = [
+    //                 'label' => $material->code . ' - ' . $material->name,
+    //                 'value' => $material->id,
+    //             ];
+    //         }
+    //     }
 
-        $this->materials = $filtered;
-        $this->input_details = [];
-    }
+    //     $this->materials = $filtered;
+    //     $this->input_details = [];
+    // }
 
     /*
      * Proses inisialisasi data pada render (pre-render).
@@ -251,9 +251,9 @@ class Detail extends BaseComponent
         // $this->materials = $this->masterService->getMaterials(); // hapus baris ini
 
         // Tambahkan filter material jika sales_type sudah terisi
-        if (!empty($this->inputs['sales_type'])) {
-            $this->onSalesTypeChanged();
-        }
+        // if (!empty($this->inputs['sales_type'])) {
+        //     $this->onSalesTypeChanged();
+        // }
 
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {

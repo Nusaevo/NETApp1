@@ -37,7 +37,45 @@
             <div>
                 <br>
                 <link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}">
-                <div class="card">
+                <style>
+                    @media print {
+                        body {
+                            background: #fff !important;
+                        }
+                        #print .card {
+                            box-shadow: none !important;
+                            border: none !important;
+                        }
+                        #print .container {
+                            margin: 0 auto !important;
+                            padding: 0 !important;
+                        }
+                        #print table {
+                            margin-left: auto !important;
+                            margin-right: auto !important;
+                        }
+                        #print th, #print td {
+                            padding: 2px 4px !important;
+                            font-size: 11px !important;
+                        }
+                        #print th {
+                            background: #f9f9f9 !important;
+                        }
+                        /* Padding top hanya di halaman pertama */
+                        #print .print-page {
+                            page-break-after: always;
+                            padding-top: 30px;
+                        }
+                        #print .print-page:not(:first-child) {
+                            padding-top: 0 !important;
+                        }
+                        /* Hilangkan margin/padding default print */
+                        @page {
+                            margin: 10mm 10mm 10mm 10mm;
+                        }
+                    }
+                </style>
+                <div class="card print-page">
                     <div class="card-body">
                         <div class="container mb-5 mt-3">
                             <div style="max-width:2480px; margin:auto; padding:20px;">
@@ -141,12 +179,12 @@
                                                     @endphp
                                                     <td style="text-align:center; padding:4px 8px; border: 1px solid #000">
                                                         {{ $qty ? $qty : '' }}<br>
-                                                        <span style="font-size:11px;color:#888;">{{ $point ? $point : '' }}</span>
+                                                        <span style="font-size:11px;color:#000;">{{ $point ? $point : '' }}</span>
                                                     </td>
                                                 @endforeach
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold;">
                                                     {{ $rowTotalQty ? $rowTotalQty : '' }}<br>
-                                                    <span style="font-size:11px;color:#888;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span>
+                                                    <span style="font-size:11px;color:#000;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -168,12 +206,12 @@
                                             @foreach ($groupColumns as $col)
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
                                                     {{ $colTotalsQty[$col] ? $colTotalsQty[$col] : '' }}<br>
-                                                    <span style="font-size:11px;color:#888;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span>
+                                                    <span style="font-size:11px;color:#000;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span>
                                                 </td>
                                             @endforeach
                                             <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
                                                 {{ $grandTotalQty ? $grandTotalQty : '' }}<br>
-                                                <span style="font-size:11px;color:#888;">{{ $grandTotal ? $grandTotal : '' }}</span>
+                                                <span style="font-size:11px;color:#000;">{{ $grandTotal ? $grandTotal : '' }}</span>
                                             </td>
                                         </tr>
                                     </tbody>
