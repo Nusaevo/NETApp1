@@ -65,6 +65,7 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete'        => 'delete',
         'updateAmount'  => 'updateAmount',
+        'onSalesTypeChanged' => 'onSalesTypeChanged', // tambahkan listener baru
     ];
 
     /*
@@ -72,6 +73,11 @@ class Detail extends BaseComponent
      */
     public function getTransactionCode()
     {
+        // Tambahkan pengecekan sales_type
+        if (empty($this->inputs['sales_type'])) {
+            $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
+            return;
+        }
         if (!isset($this->inputs['sales_type']) || !isset($this->trType)) {
             $this->dispatch('warning', 'Tipe Kendaraan dan Jenis Transaksi harus diisi');
             return;
@@ -187,6 +193,42 @@ class Detail extends BaseComponent
         }
     }
 
+    /**
+     * Handle sales_type change and filter materials accordingly
+     */
+    public function onSalesTypeChanged()
+    {
+        $salesType = $this->inputs['sales_type'] ?? null;
+        if (!$salesType) {
+            $this->materials = [];
+            return;
+        }
+
+        // Ambil data material lengkap dari database
+        $allMaterials = Material::all();
+        $filtered = [];
+
+        foreach ($allMaterials as $material) {
+            $category = $material->category ?? null;
+            if (!$category) continue;
+
+            $categoryNorm = trim(strtoupper($category));
+            $config = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+                ->whereRaw('UPPER(TRIM(str2)) = ?', [$categoryNorm])
+                ->first();
+
+            if ($config && $config->str1 === $salesType) {
+                $filtered[] = [
+                    'label' => $material->code . ' - ' . $material->name,
+                    'value' => $material->id,
+                ];
+            }
+        }
+
+        $this->materials = $filtered;
+        $this->input_details = [];
+    }
+
     /*
      * Proses inisialisasi data pada render (pre-render).
      * Bila mode edit/view, load data header (OrderHdr) dan detail (OrderDtl).
@@ -206,7 +248,12 @@ class Detail extends BaseComponent
         $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
         $this->warehouses = $this->masterService->getWarehouse();
-        $this->materials = $this->masterService->getMaterials();
+        // $this->materials = $this->masterService->getMaterials(); // hapus baris ini
+
+        // Tambahkan filter material jika sales_type sudah terisi
+        if (!empty($this->inputs['sales_type'])) {
+            $this->onSalesTypeChanged();
+        }
 
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {

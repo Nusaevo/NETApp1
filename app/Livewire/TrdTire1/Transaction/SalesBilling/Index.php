@@ -8,6 +8,7 @@ use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr, Bil
 use Illuminate\Support\Facades\DB;
 use App\Services\TrdTire1\Master\MasterService;
 use Livewire\Attributes\On;
+use App\Enums\TrdTire1\Status;
 
 class Index extends BaseComponent
 {
@@ -41,7 +42,10 @@ class Index extends BaseComponent
         $selectedOrders = BillingHdr::whereIn('id', $this->selectedOrderIds)->get();
 
         foreach ($selectedOrders as $order) {
-            $order->update(['print_date' => $this->tr_date]);
+            $order->update([
+                'print_date' => $this->tr_date,
+                'status_code' => Status::PAID, // gunakan constant status
+            ]);
         }
 
         DB::commit();
