@@ -63,14 +63,13 @@ class IndexDataTable extends BaseDataTableComponent
                         '<span class="text-muted">Nama tidak tersedia</span>';
                 })
                 ->html(),
-            Column::make($this->trans('Kode Barang'), 'total_item')
-                    ->label(function ($row) {
-                        $lastDetail = DelivDtl::where('trhdr_id', $row->id)
-                            ->orderBy('tr_seq', 'desc')
-                            ->first();
-                        return $lastDetail ? $lastDetail->tr_seq : 0;
-                    })
-                    ->sortable(),
+            Column::make($this->trans('Kode Barang'), 'kode_barang')
+                ->label(function ($row) {
+                    // Ambil semua kode barang dari DelivDtl, pisahkan dengan koma
+                    $matlCodes = DelivDtl::where('trhdr_id', $row->id)->pluck('matl_code');
+                    return $matlCodes->isNotEmpty() ? $matlCodes->implode(', ') : '-';
+                })
+                ->sortable(),
             Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
                     $totalQty = DelivDtl::where('trhdr_id', $row->id)->sum('qty');

@@ -96,4 +96,13 @@ class PaymentHdr extends BaseModel
             ->where('tr_type', $trType);
     }
     #endregion
+
+    /**
+     * Check if the order is completed.
+     * You can adjust the logic as needed.
+     */
+    public function isOrderCompleted()
+    {
+        return $this->status_code == Status::COMPLETED;
+    }
 }

@@ -60,9 +60,13 @@ class IndexDataTable extends BaseDataTableComponent
                     ]) . '">' . $row->Partner->name . '</a>';
                 })
                 ->html(),
-            Column::make('Kode Barang', 'orderdtl_count')
+            Column::make('Kode Barang', 'orderdtl_codes')
                 ->label(function ($row) {
-                    return $row->OrderDtl ? $row->OrderDtl->count() : 0;
+                    // Ambil semua kode barang dari OrderDtl, pisahkan dengan koma
+                    if ($row->OrderDtl && $row->OrderDtl->count() > 0) {
+                        return $row->OrderDtl->pluck('matl_code')->implode(', ');
+                    }
+                    return '-';
                 }),
             Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
@@ -123,6 +127,12 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
+            // Filter kode barang (matl_code) pada OrderDtl
+            $this->createTextFilter('Kode Barang', 'matl_code', 'Cari Kode Barang', function (Builder $builder, string $value) {
+                $builder->whereHas('OrderDtl', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(matl_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
             SelectFilter::make('Status', 'status_code')

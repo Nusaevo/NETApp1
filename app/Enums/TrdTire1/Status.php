@@ -8,7 +8,10 @@ class Status
     const PRINT = 'P';
     const CANCEL = 'x';
     const SHIP = 'S';
+    const PAID = 'R';
     const ACTIVE = 'A';
+    const COMPLETED = 'CMPLT';
+
 
     /**
      * Get the full status string from the abbreviation.
@@ -24,6 +27,9 @@ class Status
             self::CANCEL => 'CANCEL',
             self::SHIP => 'SHIP',
             self::ACTIVE => 'ACTIVE',
+            self::PAID => 'PAID',
+            self::COMPLETED => 'COMPLETED',
+
         ];
 
         return $statuses[$abbreviation] ?? 'Unknown Status';

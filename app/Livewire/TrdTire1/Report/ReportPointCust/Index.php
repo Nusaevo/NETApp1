@@ -86,9 +86,9 @@ class Index extends BaseComponent
         $startDate = addslashes($this->startCode);
         $endDate = addslashes($this->endCode ?: $this->startCode);
 
-        $colQuery = "SELECT string_agg(DISTINCT format('\"%s\" int', grp), ', ') AS cols FROM sales_rewards WHERE code = '{$code}'";
+        // Change column type to text for crosstab
+        $colQuery = "SELECT string_agg(DISTINCT format('\"%s\" text', grp), ', ') AS cols FROM sales_rewards WHERE code = '{$code}'";
         $colResult = DB::connection(Session::get('app_code'))->selectOne($colQuery);
-        // dd($colResult);
         $cols = $colResult ? $colResult->cols : '';
 
         if (!$cols) {
@@ -126,7 +126,7 @@ class Index extends BaseComponent
                         ELSE ''
                     END AS customer,
                     r.grp,
-                    SUM(TRUNC(d.qty / r.qty) * r.reward)::int AS point
+                    SUM(d.qty)::int || '|' || SUM(TRUNC(d.qty / r.qty) * r.reward)::int AS point
                 FROM order_hdrs h
                 JOIN order_dtls d
                   ON d.tr_code = h.tr_code

@@ -24,9 +24,9 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return BillingHdr::with(['Partner'])
+        return BillingHdr::with(['Partner', 'OrderHdr']) // tambahkan eager load OrderHdr
             ->where('billing_hdrs.tr_type', 'ARB')
-            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN]);
+            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID]);
 
     }
 
@@ -48,6 +48,29 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Tanggal Nota"), "tr_date")
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("Tgl. Kirim"), "tr_date")
+                ->label(function ($row) {
+                    $delivery = DelivHdr::where('tr_type', 'SD')
+                        ->where('tr_code', $row->tr_code)
+                        ->first();
+                    return $delivery ? $delivery->tr_date : '';
+                })
+                ->sortable(),
+            Column::make($this->trans("Due Date"), "tr_date")
+                ->label(function ($row) {
+                    // Gunakan tr_date dan payment_due_days dari relasi OrderHdr
+                    $orderTrDate = $row->OrderHdr ? $row->OrderHdr->tr_date : null;
+                    $paymentDueDays = $row->OrderHdr && $row->OrderHdr->payment_due_days !== null
+                        ? (int)$row->OrderHdr->payment_due_days
+                        : 0;
+                    if ($orderTrDate) {
+                        $dueDate = \Carbon\Carbon::parse($orderTrDate)->addDays($paymentDueDays);
+                        return $dueDate->format('Y-m-d');
+                    }
+                    return '-';
+                })
+                ->searchable()
+                ->sortable(),
             Column::make($this->trans("Customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
@@ -62,17 +85,11 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans('Total Uang'), 'total_amt')
                 ->label(function ($row) {
-                    return rupiah($row->total_amt, false);
+                    // Ambil total_amt dari relasi OrderHdr
+                    return $row->OrderHdr ? rupiah($row->OrderHdr->total_amt, false) : '-';
                 })
                 ->sortable(),
-            Column::make($this->trans("Tgl. Kirim"), "tr_date")
-                ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery ? $delivery->tr_date : '';
-                })
-                ->sortable(),
+
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
@@ -82,6 +99,19 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Tanggal Tagih"), "print_date")
                 ->searchable()
                 ->sortable(),
+            Column::make($this->trans("Status"), "status_code")
+                ->format(function ($value, $row) {
+                    $statusMap = [
+                        Status::OPEN   => 'Open',
+                        Status::PRINT  => 'Print',
+                        Status::SHIP   => 'Ship',
+                        Status::CANCEL => 'Cancel',
+                        Status::ACTIVE => 'Active',
+                        Status::PAID   => 'Paid',
+                    ];
+                    return $statusMap[$value] ?? 'Unknown';
+
+                }),
             Column::make( 'id')
                 ->hideIf(true)
                 // ->format(function ($value, $row, Column $column) {
@@ -102,16 +132,16 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Awal')
+            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            DateFilter::make('Tanggal Nota Awal')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '>=', $value);
                 }),
-            DateFilter::make('Tanggal Akhir')
+            DateFilter::make('Tanggal Nota Akhir')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '<=', $value);
-                }),
-                $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
-                    $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
                 }),
                 $this->createTextFilter($this->trans("Customer"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
                     $builder->whereHas('Partner', function ($query) use ($value) {
