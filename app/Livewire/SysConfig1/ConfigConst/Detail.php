@@ -102,8 +102,8 @@ class Detail extends BaseComponent
     public function applicationChanged()
     {
         // Find the application by its ID
-        $this->application = ConfigAppl::find($applicationId);
-        $this->selectedApplication = $applicationId;
+        $this->application = ConfigAppl::find($this->selectedApplication);
+        $this->selectedApplication = $this->selectedApplication;
 
         if ($this->application) {
             $this->object->setConnection($this->application->code);
