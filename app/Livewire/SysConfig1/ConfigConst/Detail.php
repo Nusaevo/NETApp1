@@ -87,6 +87,9 @@ class Detail extends BaseComponent
         $this->object->fill($this->inputs);
         if ($this->isEditOrView()) {
             $this->object->setConnection($this->application->code);
+        }else{
+            $this->application = ConfigAppl::find($this->selectedApplication);
+            $this->object->setConnection( $this->application->code);
         }
         $this->object->save();
     }
@@ -103,7 +106,6 @@ class Detail extends BaseComponent
     {
         // Find the application by its ID
         $this->application = ConfigAppl::find($this->selectedApplication);
-        $this->selectedApplication = $this->selectedApplication;
 
         if ($this->application) {
             $this->object->setConnection($this->application->code);
