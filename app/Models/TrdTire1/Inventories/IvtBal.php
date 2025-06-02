@@ -39,6 +39,8 @@ class IvtBal extends BaseModel
         'wh_code',
         'batch_code',
         'qty_oh',
+        'qty_fgr',
+        'qty_fgi'
     ];
 
 

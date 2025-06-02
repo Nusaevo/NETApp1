@@ -8,6 +8,7 @@ use App\Models\TrdTire1\Master\{Partner, Material, MatlUom};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
+use App\Services\TrdTire1\OrderService;
 use Illuminate\Support\Facades\{Session, DB};
 use Exception;
 
@@ -52,6 +53,7 @@ class Detail extends BaseComponent
     public $materials;
     public $deletedItems = [];
     protected $masterService;
+    protected $orderService;
 
     // Validation rules for header and details
     public $rules = [
@@ -60,6 +62,7 @@ class Detail extends BaseComponent
         'inputs.tax_flag' => 'required',
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
+        'input_details.*.disc_pct' => 'nullable|numeric|min:0|max:100',
     ];
 
     // Event listeners
@@ -279,6 +282,7 @@ class Detail extends BaseComponent
                     $this->input_details[$key]['price'] = $matlUom->selling_price;
                     $this->input_details[$key]['matl_uom'] = $material->uom;
                     $this->input_details[$key]['matl_descr'] = $material->name;
+                    $this->input_details[$key]['disc_pct'] = 0.00; // Default 0%
                     $this->updateItemAmount($key);
                 } else {
                     $this->dispatch('error', __('generic.error.material_uom_not_found'));
@@ -296,7 +300,14 @@ class Detail extends BaseComponent
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+
+            // Konversi diskon dari format koma ke titik
             $discountPercent = $this->input_details[$key]['disc_pct'] ?? 0;
+            if (is_string($discountPercent)) {
+                $discountPercent = str_replace(',', '.', $discountPercent);
+            }
+            $discountPercent = (float)$discountPercent;
+
             $discountAmount = $amount * ($discountPercent / 100);
             $this->input_details[$key]['amt'] = $amount - $discountAmount;
         } else {
@@ -397,11 +408,22 @@ class Detail extends BaseComponent
                 ->get();
 
             foreach ($objectDetails as $key => $detail) {
-                $this->input_details[$key] = populateArrayFromModel($detail);
+                // Ambil array aslinya (misalnya ['disc_pct' => 555.00000, ...])
+                $arr = populateArrayFromModel($detail);
+
+                // Jika disc_pct ada, bagi 10 supaya kelihatan 55.5
+                if (isset($arr['disc_pct']) && is_numeric($arr['disc_pct'])) {
+                    $arr['disc_pct'] = $arr['disc_pct'] / 10;
+                }
+
+                $this->input_details[$key] = $arr;
+
+                // Hitung ulang amount dengan disc_pct yang sudah di‐scale down
                 $this->updateItemAmount($key);
             }
         }
     }
+
 
     /**
      * Handle payment term change and update due date
@@ -422,140 +444,150 @@ class Detail extends BaseComponent
      */
     public function onValidateAndSave()
     {
-        // Validate inputs
-        $this->validate([
-            'inputs.tr_code' => 'required',
-            'inputs.partner_id' => 'required',
-            'inputs.tax_flag' => 'required',
-            'input_details.*.qty' => 'required',
-            'input_details.*.matl_id' => 'required',
-        ]);
-
-        // Check if order can be edited
-        foreach ($this->input_details as $key => $detail) {
-            if (isset($detail['qty_reff']) && $detail['qty'] < $detail['qty_reff']) {
-                throw new Exception('Qty tidak boleh kurang dari Qty Reff pada item ke-' . ($key + 1));
-            }
+        if (!$this->orderService) {
+            $this->orderService = app(OrderService::class);
         }
 
-        try {
-            // Begin transaction
-            DB::beginTransaction();
+        // Pastikan input_details ada dan array
+        if (!isset($this->input_details) || !is_array($this->input_details)) {
+            $this->input_details = [];
+        }
 
-            // Set partner code
-            if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-                $partner = Partner::find($this->inputs['partner_id']);
-                $this->inputs['partner_code'] = $partner->code;
-            }
-
-            // Set payment term
-            if (!empty($this->inputs['payment_term_id'])) {
-                $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
-                $this->inputs['payment_term'] = $paymentTerm->str1;
-                // $this->inputs['payment_due_days'] = $paymentTerm->num1; // Hapus baris ini
-            }
-
-            // Hitung payment_due_days berdasarkan tr_date dan due_date
-            if (!empty($this->inputs['tr_date']) && !empty($this->inputs['due_date'])) {
-                $trDate = \Carbon\Carbon::parse($this->inputs['tr_date']);
-                $dueDate = \Carbon\Carbon::parse($this->inputs['due_date']);
-                $this->inputs['payment_due_days'] = $trDate->diffInDays($dueDate, false);
-            } else {
-                $this->inputs['payment_due_days'] = null;
-            }
-            // Jangan simpan due_date ke model
-            unset($this->inputs['due_date']);
-
-            // Save order header
-            $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
-
-            // Save order details if available
-            if (!empty($this->input_details)) {
-                // Get existing details for comparison
-                $existingDetails = OrderDtl::where('trhdr_id', $this->object->id)
-                    ->where('tr_type', $this->object->tr_type)
-                    ->get()
-                    ->keyBy('tr_seq')
-                    ->toArray();
-
-                // Delete removed items
-                $itemsToDelete = array_diff_key($existingDetails, array_flip(array_keys($this->input_details)));
-                foreach ($itemsToDelete as $tr_seq => $detail) {
-                    $orderDtl = OrderDtl::find($detail['id']);
-                    if ($orderDtl) {
-                        $orderDtl->forceDelete();
-                    }
+        // Konversi diskon dari format koma ke titik sebelum validasi
+        foreach ($this->input_details as &$detail) {
+            if (isset($detail['disc_pct']) && is_string($detail['disc_pct'])) {
+                // Hapus semua spasi dan karakter non-numerik kecuali koma dan titik
+                $discPct = preg_replace('/[^0-9,.]/', '', $detail['disc_pct']);
+                // Jika ada koma, ganti dengan titik
+                $discPct = str_replace(',', '.', $discPct);
+                // Pastikan hanya ada satu titik desimal
+                $parts = explode('.', $discPct);
+                if (count($parts) > 2) {
+                    $discPct = $parts[0] . '.' . implode('', array_slice($parts, 1));
                 }
+                $detail['disc_pct'] = (float)$discPct;
+            }
+            // Sesuaikan dengan tipe kolom numeric(15,5)
+            $detail['disc_pct'] = round((float)$detail['disc_pct'], 5);
+        }
+        unset($detail);
 
-                // Save or update each detail item
-                foreach ($this->input_details as $key => $detail) {
-                    $tr_seq = $key + 1;
-                    $orderDtl = OrderDtl::firstOrNew([
-                        'tr_code' => $this->object->tr_code,
-                        'tr_seq' => $tr_seq,
-                    ]);
+        // apply validation including detail rules
+        $validated = $this->validate($this->rules);
 
-                    $detail['tr_code'] = $this->object->tr_code;
-                    $detail['trhdr_id'] = $this->object->id;
-                    $detail['tr_type'] = $this->object->tr_type;
-                    $detail['qty_reff'] = $detail['qty_reff'] ?? '0';
+        try {
+            if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
+                $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
+                return;
+            }
 
-                    // Get material data
+            // Prepare data
+            $headerData = $validated['inputs'];
+            $detailData = $validated['input_details'] ?? [];
+
+            // Lengkapi data detail sebelum simpan
+            foreach ($detailData as $i => &$detail) {
+                // Pastikan field material terisi
+                if (!isset($detail['matl_code']) || !isset($detail['matl_descr']) || !isset($detail['matl_uom'])) {
                     $material = Material::find($detail['matl_id']);
                     if ($material) {
                         $detail['matl_code'] = $material->code;
+                        $detail['matl_descr'] = $material->name;
                         $detail['matl_uom'] = $material->uom;
-                        $detail['price_uom'] = $material->uom;
                     }
+                }
 
-                    // Calculate amt_tax based on tax_pct
-                    $taxPct = (float)($this->inputs['tax_pct'] ?? 0);
-                    $detail['amt_tax'] = round(($detail['amt'] ?? 0) * ($taxPct / 100), 2);
+                // Ambil selling_price dari matl_uoms
+                $matlUom = MatlUom::where('matl_id', $detail['matl_id'])
+                    ->where('matl_uom', $detail['matl_uom'])
+                    ->first();
 
-                    $orderDtl->fill($detail);
-                    $orderDtl->save();
+                if ($matlUom) {
+                    $detail['price'] = $matlUom->selling_price;
+                    $detail['price_uom'] = $detail['matl_uom'];
+                } else {
+                    $detail['price'] = 0;
+                    $detail['price_uom'] = $detail['matl_uom'] ?? 'PCS';
+                }
+
+                // Hitung amount dan tax
+                $qty = $detail['qty'] ?? 0;
+                $price = $detail['price'] ?? 0;
+                $discPct = $detail['disc_pct'] / 100;
+                $detail['amt'] = $qty * $price * (1 - $discPct);
+
+                // Hitung DPP dan PPN berdasarkan tax_flag
+                $taxFlag = $headerData['tax_flag'] ?? 'N';
+                $taxPct = ($headerData['tax_pct'] ?? 0) / 100;
+
+                if ($taxFlag === 'I') {
+                    // Include tax
+                    $detail['dpp'] = $detail['amt'] / (1 + $taxPct);
+                    $detail['ppn'] = $detail['amt'] - $detail['dpp'];
+                } elseif ($taxFlag === 'E') {
+                    // Exclude tax
+                    $detail['dpp'] = $detail['amt'];
+                    $detail['ppn'] = $detail['amt'] * $taxPct;
+                } else {
+                    // No tax
+                    $detail['dpp'] = $detail['amt'];
+                    $detail['ppn'] = 0;
+                }
+
+                // Set amt_tax
+                $detail['amt_tax'] = $detail['dpp'] + $detail['ppn'];
+
+                // Set field transaksi
+                $detail['tr_type'] = $this->trType;
+                $detail['tr_seq'] = $i + 1;
+            }
+            unset($detail); // break reference
+
+            // Pastikan field penting terisi
+            $headerData['tr_type']           = $headerData['tr_type']           ?? $this->trType;
+            $headerData['tr_date']           = $headerData['tr_date']           ?? date('Y-m-d');
+            $headerData['partner_code']      = $headerData['partner_code']      ?? ($this->inputs['partner_code'] ?? null);
+            $headerData['partner_id']        = $headerData['partner_id']        ?? ($this->inputs['partner_id'] ?? null);
+            $headerData['payment_term_id']   = $headerData['payment_term_id']   ?? ($this->inputs['payment_term_id'] ?? null);
+            $headerData['payment_term']      = $headerData['payment_term']      ?? ($this->inputs['payment_term'] ?? null);
+            $headerData['ship_to_name']      = $headerData['ship_to_name']      ?? ($this->inputs['ship_to_name'] ?? null);
+            $headerData['sales_type']        = $headerData['sales_type']        ?? ($this->inputs['sales_type'] ?? null);
+            $headerData['tax_doc_flag']      = $headerData['tax_doc_flag']      ?? ($this->inputs['tax_doc_flag'] ?? null);
+            $headerData['tax_flag']          = $headerData['tax_flag']          ?? ($this->inputs['tax_flag'] ?? 'N');
+            $headerData['tax_pct']           = $headerData['tax_pct']           ?? ($this->inputs['tax_pct'] ?? null);
+            $headerData['npwp_code']         = $headerData['npwp_code']         ?? ($this->inputs['npwp_code'] ?? null);
+            $headerData['npwp_name']         = $headerData['npwp_name']         ?? ($this->inputs['npwp_name'] ?? null);
+            $headerData['npwp_addr']         = $headerData['npwp_addr']         ?? ($this->inputs['npwp_addr'] ?? null);
+            $headerData['ship_to_addr']      = $headerData['ship_to_addr']      ?? ($this->inputs['ship_to_addr'] ?? null);
+            $headerData['total_amt']         = $headerData['total_amt']         ?? $this->total_amount;
+            $headerData['total_amt_tax']     = $headerData['total_amt_tax']     ?? $this->total_tax;
+            $headerData['payment_due_days']  = $headerData['payment_due_days']  ?? ($this->inputs['payment_due_days'] ?? null);
+            $headerData['cust_reff']         = $headerData['cust_reff']         ?? ($this->inputs['cust_reff'] ?? null);
+
+            // Jika payment_term_id ada, ambil payment_term dan payment_due_days dari master
+            if (!empty($headerData['payment_term_id'])) {
+                $paymentTerm = ConfigConst::find($headerData['payment_term_id']);
+                if ($paymentTerm) {
+                    $headerData['payment_term'] = $paymentTerm->str1;
+                    $headerData['payment_due_days'] = $paymentTerm->num1;
                 }
             }
 
-            // Calculate total amount from all details
-            $totalAmt = 0;
-            foreach ($this->input_details as $detail) {
-                $qty = $detail['qty'] ?? 0;
-                $price = $detail['price'] ?? 0;
-                $disc_pct = $detail['disc_pct'] ?? 0;
-                $amount = $qty * $price;
-                $discount = $amount * ($disc_pct / 100);
-                $totalAmt += ($amount - $discount);
-            }
-
-            // Update total_amt and total_amt_tax
-            $this->object->total_amt = round($totalAmt, 2);
-
-            // Calculate total_amt_tax based on tax flag
-            if ($this->object->tax_flag === 'I') {
-                $this->object->total_amt_tax = $this->object->total_amt;
-            } elseif ($this->object->tax_flag === 'E') {
-                $taxPct = ($this->object->tax_pct ?? 0) / 100;
-                $this->object->total_amt_tax = round($this->object->total_amt * (1 + $taxPct), 2);
-            } else {
-                $this->object->total_amt_tax = $this->object->total_amt;
-            }
-
-            $this->object->save();
-
-            // Commit transaction
-            DB::commit();
-
-            // Redirect if in create mode
             if ($this->actionValue === 'Create') {
-                return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
-                    'action' => encryptWithSessionKey('Edit'),
-                    'objectId' => encryptWithSessionKey($this->object->id)
-                ]);
+                $order = $this->orderService->addOrder($headerData, $detailData);
+                $this->dispatch('success', 'Purchase Order berhasil disimpan.');
+                return redirect()->route(
+                    $this->appCode . '.Transaction.PurchaseOrder.Detail',
+                    [
+                        'action'   => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($order->id),
+                    ]
+                );
             }
 
+            $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+            $this->dispatch('success', 'Purchase Order berhasil diperbarui.');
         } catch (Exception $e) {
-            DB::rollBack();
             $this->dispatch('error', 'Gagal menyimpan: ' . $e->getMessage());
         }
     }
