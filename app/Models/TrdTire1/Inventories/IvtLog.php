@@ -31,13 +31,14 @@ class IvtLog extends BaseModel
         'tr_date',
         'qty',
         'price',
-        'amt',
+        'tr_amt',
         'tr_desc',
         'price_cogs',
         'amt_cogs',
         'qty_running',
         'amt_running',
         'process_flag',
+        'tr_qty'
     ];
     public function scopeGetActiveData()
     {

@@ -141,7 +141,8 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" enabled="true"
-                                                onChanged="updateItemAmount({{ $key }})" />
+                                                onChanged="updateItemAmount({{ $key }})"
+                                                :value="isset($input_details[$key]['disc_pct']) ? number_format((float)$input_details[$key]['disc_pct']/10, 1, '.', '') : ''" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"

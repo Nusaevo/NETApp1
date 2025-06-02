@@ -20,15 +20,17 @@
                                 <div class="row">
                                     <div class="row">
                                         <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
-                                            layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"/>
+                                            layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
+                                            onChanged="onSalesTypeChanged" />
                                         <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                             type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                            type="code" :action="$actionValue" required="true" clickEvent="getTransactionCode"
-                                            buttonName="Nomor Baru" enabled="true" :buttonEnabled="$isPanelEnabled" />
+                                            type="code" :action="$actionValue" required="true"
+                                            clickEvent="getTransactionCode" buttonName="Nomor Baru" enabled="true"
+                                            :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     </div>
@@ -37,7 +39,8 @@
                                             required="true" :action="$actionValue" enabled="false"
                                             clickEvent="openPartnerDialogBox" buttonName="Cari" :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-dialog-box id="partnerDialogBox" title="Cari Customer" width="600px"
-                                            height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
+                                            height="400px" onOpened="openPartnerDialogBox"
+                                            onClosed="closePartnerDialogBox">
                                             <x-slot name="body">
                                                 <x-ui-text-field type="text" label="Cari Code/Nama Customer"
                                                     model="partnerSearchText" required="true" :action="$actionValue"
@@ -52,7 +55,8 @@
                                                     <x-slot name="rows">
                                                         @if (empty($suppliers))
                                                             <tr>
-                                                                <td colspan="4" class="text-center text-muted">No Data
+                                                                <td colspan="4" class="text-center text-muted">No
+                                                                    Data
                                                                     Found</td>
                                                             </tr>
                                                         @else
@@ -74,9 +78,8 @@
                                                         @endif
                                                     </x-slot>
                                                     <x-slot name="footer">
-                                                        <x-ui-button clickEvent="confirmSelection"
-                                                            button-name="Pilih" loading="true"
-                                                            :action="$actionValue" cssClass="btn-primary" />
+                                                        <x-ui-button clickEvent="confirmSelection" button-name="Pilih"
+                                                            loading="true" :action="$actionValue" cssClass="btn-primary" />
                                                     </x-slot>
                                                 </x-ui-table>
                                             </x-slot>
@@ -85,8 +88,9 @@
                                             model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
                                             required="false" :action="$actionValue" onChanged="onShipToChanged" />
                                         <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
-                                            model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions" required="false"
-                                            :action="$actionValue" onChanged="onTaxPayerChanged" :enabled="$payer" />
+                                            model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions"
+                                            required="false" :action="$actionValue" onChanged="onTaxPayerChanged"
+                                            :enabled="$payer" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('Detail Customer') }}"
@@ -101,15 +105,17 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}"
-                                            model="inputs.tax_flag" :options="$SOTax" required="true" :action="$actionValue"
-                                            onChanged="onSOTaxChange" />
+                                            model="inputs.tax_flag" :options="$SOTax" required="true"
+                                            :action="$actionValue" onChanged="onSOTaxChange" />
                                         <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
                                             model="inputs.payment_term_id" :options="$paymentTerms" required="true"
                                             :action="$actionValue" onChanged="onPaymentTermChanged" :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
-                                            type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
-                                            type="text" :action="$actionValue" required="false" />
+                                        <x-ui-text-field label="{{ $this->trans('due_date') }}"
+                                            model="inputs.due_date" type="date" :action="$actionValue" required="true"
+                                            :enabled="$isPanelEnabled" />
+                                        <x-ui-text-field label="{{ $this->trans('cust_reff') }}"
+                                            model="inputs.cust_reff" type="text" :action="$actionValue"
+                                            required="false" />
                                     </div>
                                 </div>
                             </x-ui-padding>
@@ -156,7 +162,11 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" enabled="true"
-                                                onChanged="updateItemAmount({{ $key }})" />
+                                                onChanged="updateItemAmount({{ $key }})"
+                                                type="text"
+                                                pattern="[0-9]*[.,]?[0-9]*"
+                                                inputmode="decimal"
+                                                :value="isset($input_details[$key]['disc_pct']) ? number_format((float)$input_details[$key]['disc_pct']/10, 1, '.', '') : ''" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
@@ -179,8 +189,8 @@
                         </x-ui-table>
                     </x-ui-card>
                     <x-ui-footer>
-                        <x-ui-button clickEvent="deleteTransaction" button-name="Delete" loading="true" :action="$actionValue"
-                            cssClass="btn-danger" iconPath="delete.svg" />
+                        <x-ui-button clickEvent="deleteTransaction" button-name="Delete" loading="true"
+                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" />
                         @include('layout.customs.buttons.save')
                     </x-ui-footer>
                 </div>

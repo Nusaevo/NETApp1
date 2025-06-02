@@ -33,7 +33,6 @@ class OrderDtl extends BaseModel
         'ppn',
         'price_uom',
         'amt_tax',
-
     ];
 
     protected static function boot()
@@ -45,7 +44,7 @@ class OrderDtl extends BaseModel
             $discPct = $orderDtl->disc_pct / 100;
             $taxPct = $orderDtl->OrderHdr->tax_pct / 100;
 
-            // Calculate amt
+            // Calculate amt with discount
             $orderDtl->amt = $qty * $price * (1 - $discPct);
 
             // Calculate amt_tax based on tax flag
