@@ -25,43 +25,18 @@ class DeliveryService
             // Simpan header
             $delivHdr = $this->saveHeader($headerData);
 
-            // Simpan detail dan update inventory
-            $delivDetails = [];
-            foreach ($detailData as $detail) {
-                // Set field wajib dari header
+            // Set header ID ke detail data
+            foreach ($detailData as &$detail) {
                 $detail['trhdr_id'] = $delivHdr->id;
                 $detail['tr_code'] = $delivHdr->tr_code;
                 $detail['tr_type'] = $delivHdr->tr_type;
-
-                // Simpan detail
-                $delivDetail = DelivDtl::create($detail);
-                $delivDetails[] = $delivDetail;
-
-                // Siapkan data untuk delReservation
-                $delivDetailRsv = $delivDetail->toArray();
-
-                // Sesuaikan tr_type untuk delReservation
-                if ($delivDetail->tr_type === 'PD') {
-                    $delivDetailRsv['tr_type'] = 'PO';
-                } else if ($delivDetail->tr_type === 'SD') {
-                    $delivDetailRsv['tr_type'] = 'SO';
-                }
-
-                // Hapus reservasi order
-                $this->inventoryService->delReservation($headerData, $delivDetailRsv);
-
-                // Tambah stok onhand
-                $this->inventoryService->addOnhand($delivHdr, $delivDetail);
-
-                // Update qty_reff di OrderDtl
-                if ($delivDetail->reffdtl_id) {
-                    $this->orderService->updQtyReff('+', $delivDetail->qty, $delivDetail->reffdtl_id);
-                }
             }
+            unset($detail);
+
+            $this->saveDetail($headerData, $detailData);
 
             return [
-                'header' => $delivHdr,
-                'details' => $delivDetails
+                'header' => $delivHdr
             ];
         });
     }
@@ -76,14 +51,12 @@ class DeliveryService
             $delivHdr = $this->saveHeader($headerData, $delivId);
 
             // Delete existing details
-            $this->deleteDetail($delivHdr);
+            $this->deleteDetail($delivHdr, $detailData);
 
-            // Save new details
-            $delivDetails = $this->saveDetail($delivHdr, $detailData);
+            $this->saveDetail($headerData, $detailData);
 
             return [
                 'header' => $delivHdr,
-                'details' => $delivDetails
             ];
         });
     }
@@ -93,24 +66,21 @@ class DeliveryService
         return DB::transaction(function () use ($delivId) {
             $delivHdr = DelivHdr::findOrFail($delivId);
 
-            $this->deleteDetail($delivHdr);
-            return $this->deleteHeader($delivId);
+            // Delete details first
+            $this->deleteDetail($delivHdr, []);
 
+            return $this->deleteHeader($delivId);
         });
     }
 
     // Region Delivery Header Methods
-    private function saveHeader(array $data, int $delivId = null): DelivHdr
+    private function saveHeader(array $headerData, int $delivId = null): DelivHdr
     {
-        // Hapus field yang tidak ada di tabel
-        // unset($data['wh_code']);
-        // unset($data['wh_id']);
-
         if ($delivId) {
             $delivHdr = DelivHdr::findOrFail($delivId);
-            $delivHdr->update($data);
+            $delivHdr->update($headerData);
         } else {
-            $delivHdr = DelivHdr::create($data);
+            $delivHdr = DelivHdr::create($headerData);
         }
 
         return $delivHdr;
@@ -123,41 +93,48 @@ class DeliveryService
     }
 
     // Region Delivery Detail Methods
-    private function saveDetail(DelivHdr $delivHdr, array $details): array
+    private function saveDetail(array $headerData, array $detailData): void
     {
-        $savedDetails = [];
-        foreach ($details as $detail) {
-            // Set field wajib dari header
-            $detail['trhdr_id'] = $delivHdr->id;
-            $detail['tr_code'] = $delivHdr->tr_code;
-            $detail['tr_type'] = $delivHdr->tr_type;
-            // $detail['tr_qty'] = $detail['qty']; // Tambahkan tr_qty sama dengan qty
+        foreach ($detailData as $detail) {
+            // Simpan detail
+            $delivDetail = new DelivDtl($detail);
+            $delivDetail->save();
 
-            $savedDetail = DelivDtl::create($detail);
-            $savedDetails[] = $savedDetail;
+            // Siapkan data untuk delReservation
+            $delivDetailRsv = $delivDetail->toArray();
 
-            // Update inventory
-            $this->inventoryService->addOnhand($delivHdr, $savedDetail);
+            // Sesuaikan tr_type untuk delReservation
+            if ($delivDetail->tr_type === 'PD') {
+                $delivDetailRsv['tr_type'] = 'PO';
+            } else if ($delivDetail->tr_type === 'SD') {
+                $delivDetailRsv['tr_type'] = 'SO';
+            }
+
+            // Hapus reservasi order
+            $this->inventoryService->delReservation($headerData, $delivDetailRsv);
+
+            // Tambah stok onhand
+            $this->inventoryService->addOnhand($headerData, $delivDetail);
+
+            // Update qty_reff di OrderDtl
+            if ($delivDetail->reffdtl_id) {
+                $this->orderService->updQtyReff('+', $delivDetail->qty, $delivDetail->reffdtl_id);
+            }
         }
-
-        return $savedDetails;
     }
 
-    private function deleteDetail(DelivHdr $delivHdr): void
+    private function deleteDetail(DelivHdr $headerData, array $detailData): void
     {
         // Get existing details
-        $existingDetails = DelivDtl::where('trhdr_id', $delivHdr->id)->get();
+        $existingDetails = DelivDtl::where('trhdr_id', $headerData->id)->get();
 
         // Delete onhand and reservation for each detail
         foreach ($existingDetails as $detail) {
-            $this->inventoryService->delOnhand($delivHdr, $detail);
-            if ($detail->reffdtl_id) {
-                $this->orderService->updQtyReff('-', $detail->qty, $detail->reffdtl_id);
-            }
+            $this->inventoryService->delOnhand($headerData, $detail);
+            $this->inventoryService->addReservation($headerData->toArray(), $detail->toArray());
+            $this->orderService->updQtyReff('-', $detail->qty, $detail->reffdtl_id);
+            $detail->forceDelete();
         }
-
-        // Delete the details
-        DelivDtl::where('trhdr_id', $delivHdr->id)->forceDelete();
     }
 
     #endregion
