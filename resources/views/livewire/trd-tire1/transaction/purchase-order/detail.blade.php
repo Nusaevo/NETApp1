@@ -19,7 +19,8 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
-                                        layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled" onChanged="onSalesTypeChanged"/>
+                                        layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        onChanged="onSalesTypeChanged" />
                                     {{-- <x-ui-option model="inputs.tax_invoice" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                     type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                     onChanged="onTaxInvoiceChanged" :checked="$inputs['tax_invoice']" /> --}}
@@ -79,9 +80,8 @@
                                                     @endif
                                                 </x-slot>
                                                 <x-slot name="footer">
-                                                    <x-ui-button clickEvent="confirmSelection"
-                                                        button-name="Pilih" loading="true"
-                                                        :action="$actionValue" cssClass="btn-primary" />
+                                                    <x-ui-button clickEvent="confirmSelection" button-name="Pilih"
+                                                        loading="true" :action="$actionValue" cssClass="btn-primary" />
                                                 </x-slot>
                                             </x-ui-table>
                                         </x-slot>
@@ -142,7 +142,14 @@
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" enabled="true"
                                                 onChanged="updateItemAmount({{ $key }})"
-                                                :value="isset($input_details[$key]['disc_pct']) ? number_format((float)$input_details[$key]['disc_pct']/10, 1, '.', '') : ''" />
+                                                :value="isset($input_details[$key]['disc_pct'])
+                                                    ? number_format(
+                                                        (float) $input_details[$key]['disc_pct'] / 10,
+                                                        1,
+                                                        '.',
+                                                        '',
+                                                    )
+                                                    : ''" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
@@ -164,9 +171,9 @@
                         </x-ui-table>
                     </x-ui-card>
                     <x-ui-footer>
-                        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true" :action="$actionValue"
-                            cssClass="btn-danger" iconPath="delete.svg" />
-                            @include('layout.customs.buttons.save')
+                        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
+                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" />
+                        @include('layout.customs.buttons.save')
                     </x-ui-footer>
                 </div>
                 <x-ui-table id="SummaryTable">
@@ -181,19 +188,19 @@
                         <tr>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_discount" label="" :action="$actionValue"
-                                    enabled="false" type="text" />
+                                    enabled="false" type="text" :value="number_format((float)$total_discount, 2, ',', '.')" />
                             </td>
                             <td style="text-align: center;">
-                                <x-ui-text-field model="total_dpp" label="" :action="$actionValue"
-                                    enabled="false" type="text" :value="number_format($total_dpp, 2)" />
+                                <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
+                                    type="text" :value="$total_dpp" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
-                                    type="text" />
+                                    type="text" :value="$total_tax" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_amount" label="" :action="$actionValue"
-                                    enabled="false" type="text" />
+                                    enabled="false" type="text" :value="'Rp ' . number_format($total_amount, 2, ',', '.')" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="versionNumber" label="" :action="$actionValue"
@@ -202,6 +209,7 @@
                         </tr>
                     </x-slot>
                 </x-ui-table>
+
         </x-ui-tab-view-content>
         {{-- <x-ui-footer> --}}
         {{-- @if ($actionValue === 'Edit')

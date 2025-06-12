@@ -3,12 +3,14 @@
 namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, OrderHdr, OrderDtl};
 use App\Models\TrdTire1\Master\{Partner, Material, MatlUom};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
+use App\Services\TrdTire1\InventoryService;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Services\TrdTire1\OrderService;
+use App\Services\TrdTire1\DeliveryService;
 use Illuminate\Support\Facades\{Session, DB};
 use Exception;
 
@@ -137,8 +139,8 @@ class Detail extends BaseComponent
                 $ppn = 0;
             }
 
-            $this->total_dpp = round($dpp, 2);
-            $this->total_tax = round($ppn, 2);
+            $this->total_dpp = number_format((float)$dpp, 2, ',', '.');
+            $this->total_tax = number_format((float)$ppn, 2, ',', '.');
 
             $this->dispatch('updateDPP', $this->total_dpp);
         } catch (Exception $e) {
@@ -248,7 +250,6 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
         $this->inputs['curr_code'] = "USD";
         $this->inputs['send_to'] = "Pelanggan";
-        $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = 0;
     }
 
@@ -314,7 +315,8 @@ class Detail extends BaseComponent
             $this->input_details[$key]['amt'] = 0;
         }
 
-        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
+        // Pastikan amt_idr juga menyimpan nilai numerik (sama dengan amt)
+        $this->input_details[$key]['amt_idr'] = $this->input_details[$key]['amt'];
         $this->recalculateTotals();
     }
 
@@ -436,6 +438,90 @@ class Detail extends BaseComponent
                 $dueDays = $paymentTerm->num1;
                 $this->inputs['due_date'] = date('Y-m-d', strtotime("+$dueDays days"));
             }
+        }
+    }
+
+    /**
+     * Create delivery header and details automatically for CASH payment terms
+     */
+    private function createDeliveryHdr()
+    {
+        try {
+            // Generate delivery code dengan format CASH + tr_code PO
+            $poTrCode = $this->object->tr_code ?? '';
+            if (empty($poTrCode)) {
+                throw new Exception('Kode transaksi PO tidak ditemukan');
+            }
+            $delivCode = 'CASH' . ' - ' . $poTrCode;
+
+            // Ambil data OrderDtl dari database
+            $orderDetails = OrderDtl::where('trhdr_id', $this->object->id)
+                ->where('tr_type', 'PO')
+                ->orderBy('tr_seq')
+                ->get();
+
+            if ($orderDetails->isEmpty()) {
+                throw new Exception('Tidak ada data detail PO yang valid');
+            }
+
+            // Prepare header data dengan nilai default
+            $headerData = [
+                'tr_code' => $delivCode,
+                'tr_date' => $this->inputs['tr_date'] ?? date('Y-m-d'),
+                'reff_date' => $this->inputs['reff_date'] ?? date('Y-m-d'),
+                'tr_type' => 'PD',
+                'partner_id' => $this->inputs['partner_id'] ?? null,
+                'partner_code' => $this->inputs['partner_code'] ?? null,
+                'wh_id' => $this->inputs['wh_id'] ?? 0,
+                'wh_code' => $this->inputs['wh_code'] ?? '',
+                'reffhdrtr_code' => $this->object->tr_code,
+                'status_code' => 'OPEN',
+                'tax_invoice' => $this->inputs['tax_invoice'] ?? null,
+                'send_to' => $this->inputs['send_to'] ?? 'Supplier',
+                'curr_id' => $this->inputs['curr_id'] ?? 1,
+                'curr_code' => $this->inputs['curr_code'] ?? 'USD'
+            ];
+
+            // Prepare detail data dengan pengecekan null
+            $detailData = [];
+            foreach ($orderDetails as $key => $orderDetail) {
+                // Pastikan data material lengkap
+                $material = Material::find($orderDetail->matl_id);
+                if (!$material) {
+                    continue; // Skip jika material tidak ditemukan
+                }
+
+                $detailData[] = [
+                    'tr_seq' => $key + 1,
+                    'matl_id' => $orderDetail->matl_id,
+                    'matl_code' => $material->code,
+                    'matl_descr' => $material->name,
+                    'matl_uom' => $material->uom,
+                    'qty' => $orderDetail->qty ?? 0,
+                    'wh_id' => $this->inputs['wh_id'] ?? 0,
+                    'wh_code' => $this->inputs['wh_code'] ?? '',
+                    'reffdtl_id' => $orderDetail->id,
+                    'reffhdrtr_type' => 'PO',
+                    'reffhdrtr_code' => $this->object->tr_code,
+                    'reffdtltr_seq' => $orderDetail->tr_seq
+                ];
+            }
+
+            // Validasi data sebelum proses
+            if (empty($detailData)) {
+                throw new Exception('Tidak ada data detail yang valid untuk dibuat delivery. Pastikan semua item memiliki data material yang lengkap.');
+            }
+
+            // Create delivery using delivery service
+            $deliveryService = app(DeliveryService::class);
+            $result = $deliveryService->addDelivery($headerData, $detailData);
+
+            $this->dispatch('success', 'Purchase Delivery berhasil dibuat otomatis dengan kode: ' . $delivCode);
+            return $result;
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal membuat Purchase Delivery: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -562,31 +648,61 @@ class Detail extends BaseComponent
             $headerData['total_amt']         = $headerData['total_amt']         ?? $this->total_amount;
             $headerData['total_amt_tax']     = $headerData['total_amt_tax']     ?? $this->total_tax;
             $headerData['payment_due_days']  = $headerData['payment_due_days']  ?? ($this->inputs['payment_due_days'] ?? null);
-            $headerData['cust_reff']         = $headerData['cust_reff']         ?? ($this->inputs['cust_reff'] ?? null);
+            $headerData['note']              = $headerData['note']              ?? ($this->inputs['note'] ?? null);
 
-            // Jika payment_term_id ada, ambil payment_term dan payment_due_days dari master
-            if (!empty($headerData['payment_term_id'])) {
-                $paymentTerm = ConfigConst::find($headerData['payment_term_id']);
-                if ($paymentTerm) {
-                    $headerData['payment_term'] = $paymentTerm->str1;
-                    $headerData['payment_due_days'] = $paymentTerm->num1;
+            // Mulai transaction
+            DB::beginTransaction();
+            try {
+                // Jika payment_term_id ada, ambil payment_term dan payment_due_days dari master
+                if (!empty($headerData['payment_term_id'])) {
+                    $paymentTerm = ConfigConst::find($headerData['payment_term_id']);
+                    if ($paymentTerm) {
+                        $headerData['payment_term'] = $paymentTerm->str1;
+                        $headerData['payment_due_days'] = $paymentTerm->num1;
+
+                        // Jika payment term adalah CASH, buat delivery otomatis
+                        if ($paymentTerm->str2 === 'CASH') {
+                            if ($this->actionValue === 'Create') {
+                                $order = $this->orderService->addOrder($headerData, $detailData);
+                                $this->object = $order;
+                                $this->createDeliveryHdr();
+                            } else {
+                                $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+                                $this->createDeliveryHdr();
+                            }
+                            DB::commit();
+                            $this->dispatch('success', 'Purchase Order dan Delivery berhasil disimpan.');
+                            return redirect()->route(
+                                $this->appCode . '.Transaction.PurchaseOrder.Detail',
+                                [
+                                    'action'   => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($this->object->id),
+                                ]
+                            );
+                        }
+                    }
                 }
-            }
 
-            if ($this->actionValue === 'Create') {
-                $order = $this->orderService->addOrder($headerData, $detailData);
-                $this->dispatch('success', 'Purchase Order berhasil disimpan.');
-                return redirect()->route(
-                    $this->appCode . '.Transaction.PurchaseOrder.Detail',
-                    [
-                        'action'   => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($order->id),
-                    ]
-                );
-            }
+                if ($this->actionValue === 'Create') {
+                    $order = $this->orderService->addOrder($headerData, $detailData);
+                    DB::commit();
+                    $this->dispatch('success', 'Purchase Order berhasil disimpan.');
+                    return redirect()->route(
+                        $this->appCode . '.Transaction.PurchaseOrder.Detail',
+                        [
+                            'action'   => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($order->id),
+                        ]
+                    );
+                }
 
-            $this->orderService->modOrder($this->object->id, $headerData, $detailData);
-            $this->dispatch('success', 'Purchase Order berhasil diperbarui.');
+                $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+                DB::commit();
+                $this->dispatch('success', 'Purchase Order berhasil diperbarui.');
+            } catch (Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menyimpan: ' . $e->getMessage());
         }
@@ -784,8 +900,8 @@ class Detail extends BaseComponent
      */
     public function updateAmount($data)
     {
-        $this->total_amount = $data['total_amount'];
-        $this->total_discount = $data['total_discount'];
+        $this->total_amount = (float)$data['total_amount'];
+        $this->total_discount = (float)$data['total_discount'];
 
         // Recalculate DPP and PPN
         $this->calculateDPPandPPN($this->inputs['tax_flag'] ?? '');

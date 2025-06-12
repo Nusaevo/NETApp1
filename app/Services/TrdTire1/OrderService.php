@@ -8,6 +8,7 @@ use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Inventories\IvtLog;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use phpDocumentor\Reflection\PseudoTypes\Numeric_;
 
 class OrderService
 {
@@ -21,29 +22,9 @@ class OrderService
     public function addOrder(array $headerData, array $detailData): OrderHdr
     {
         return DB::transaction(function () use ($headerData, $detailData) {
-            // Save header and get OrderHdr instance
             $order = $this->saveHeader($headerData);
 
-            // Save all details
-            $savedDetails = $this->saveDetails($order, $detailData);
-
-            // Create inventory reservation
-            foreach ($savedDetails as $detail) {
-                $detailArray = $detail->toArray();
-                $detailArray['tr_amt'] = $detailArray['amt'] ?? 0;
-                $detailArray['tr_qty'] = $detailArray['qty'] ?? 0;
-
-                $this->inventoryService->addReservation([
-                    'id' => $order->id,
-                    'tr_type' => $order->tr_type,
-                    'tr_code' => $order->tr_code,
-                    'wh_id' => $order->wh_id,
-                    'wh_code' => $order->wh_code,
-                    'tr_date' => $order->tr_date,
-                    'tr_desc' => $order->tr_desc,
-                    'process_flag' => $order->process_flag
-                ], $detailArray);
-            }
+            $this->saveDetails($order, $detailData);
 
             return $order;
         });
@@ -55,38 +36,14 @@ class OrderService
             // Get existing order
             $order = OrderHdr::findOrFail($orderId);
 
-            // Cancel existing inventory reservations
-            $existingDetails = OrderDtl::where('trhdr_id', $orderId)->get();
-            foreach ($existingDetails as $detail) {
-                $ivtLog = IvtLog::where('trdtl_id', $detail->id)->first();
-                if ($ivtLog) {
-                    $this->inventoryService->delReservation($ivtLog->id);
-                }
-            }
-
             // Update header
             $order = $this->saveHeader($headerData, $orderId);
 
-            // Update detail
-            $savedDetails = $this->saveDetails($order, $detailData);
+            // Delete existing details
+            $this->deleteDetails($order);
 
-            // Create new inventory reservations
-            foreach ($savedDetails as $detail) {
-                $detailArray = $detail->toArray();
-                $detailArray['tr_amt'] = $detailArray['amt'] ?? 0;
-                $detailArray['tr_qty'] = $detailArray['qty'] ?? 0;
-
-                $this->inventoryService->addReservation([
-                    'id' => $order->id,
-                    'tr_type' => $order->tr_type,
-                    'tr_code' => $order->tr_code,
-                    'wh_id' => $order->wh_id,
-                    'wh_code' => $order->wh_code,
-                    'tr_date' => $order->tr_date,
-                    'tr_desc' => $order->tr_desc,
-                    'process_flag' => $order->process_flag
-                ], $detailArray);
-            }
+            // Save new details
+            $this->saveDetails($order, $detailData);
 
             return $order;
         });
@@ -96,15 +53,6 @@ class OrderService
     {
         return DB::transaction(function () use ($orderId) {
             $order = OrderHdr::findOrFail($orderId);
-
-            // Cancel inventory reservations
-            $existingDetails = OrderDtl::where('trhdr_id', $orderId)->get();
-            foreach ($existingDetails as $detail) {
-                $ivtLog = IvtLog::where('trdtl_id', $detail->id)->first();
-                if ($ivtLog) {
-                    $this->inventoryService->delReservation($ivtLog->id);
-                }
-            }
 
             $this->deleteDetails($order);
             return $this->deleteHeader($orderId);
@@ -131,9 +79,6 @@ class OrderService
 
     private function saveDetails(OrderHdr $order, array $details): array
     {
-        // Hapus semua detail yang ada terlebih dahulu
-        $this->deleteDetails($order);
-
         $savedDetails = [];
         foreach ($details as $detail) {
             // Set field wajib dari header
@@ -147,7 +92,26 @@ class OrderService
                 $detail['disc_pct'] = 0;
             }
 
-            $savedDetails[] = OrderDtl::create($detail);
+            $savedDetail = OrderDtl::create($detail);
+            $savedDetails[] = $savedDetail;
+
+            // Add inventory reservation
+            $detailArray = $savedDetail->toArray();
+            $detailArray['tr_amt'] = $detailArray['amt'] ?? 0;
+            $detailArray['tr_qty'] = $detailArray['qty'] ?? 0;
+
+            // Siapkan headerData untuk addReservation
+            $headerData = [
+                'id' => $order->id,
+                'tr_type' => $order->tr_type,
+                'tr_code' => $order->tr_code,
+                'tr_date' => $order->tr_date,
+                'tr_desc' => 'RESERVASI ' . $order->tr_type . ' ' . $order->tr_code,
+                'process_flag' => $order->process_flag ?? '',
+                'reff_id' => $order->reff_id ?? null
+            ];
+
+            $this->inventoryService->addReservation($headerData, $detailArray);
         }
 
         return $savedDetails;
@@ -155,7 +119,32 @@ class OrderService
 
     private function deleteDetails(OrderHdr $order): void
     {
-        // Hapus semua detail yang terkait dengan order ini
+        // Get existing details
+        $existingDetails = OrderDtl::where('trhdr_id', $order->id)->get();
+
+        // Delete inventory reservations first
+        foreach ($existingDetails as $detail) {
+            $ivtLog = IvtLog::where('trdtl_id', $detail->id)->first();
+            if ($ivtLog) {
+                $this->inventoryService->delReservation($ivtLog->id, $ivtLog->matl_id, $ivtLog->wh_id, $ivtLog->batch_code);
+            }
+        }
+
+        // Then delete the details
         OrderDtl::where('trhdr_id', $order->id)->forceDelete();
+    }
+
+    public function updQtyReff(string $mode, float $qtyDeliv, int $delivDtlId)
+    {
+        // Update qty_reff di OrderDtl
+        $orderDtl = OrderDtl::find($delivDtlId);
+        if ($orderDtl) {
+            if ($mode === '+') {
+                $orderDtl->qty_reff += $qtyDeliv;
+            } else if ($mode === '-') {
+                $orderDtl->qty_reff -=$qtyDeliv;
+            }
+            $orderDtl->save();
+        }
     }
 }
