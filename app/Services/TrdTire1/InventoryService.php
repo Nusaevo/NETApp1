@@ -146,7 +146,7 @@ class InventoryService
         }
     }
 
-    public function addOnhand($headerData, $detailData): void
+    public function addOnhand(array $headerData, DelivDtl $detailData): void
     {
         // Update ivtBal untuk delivery (berdasarkan matl_id, wh_id, dan batch_code)
         $ivtBal = IvtBal::where([
@@ -163,32 +163,14 @@ class InventoryService
             ]);
         }
 
-        switch ($headerData->tr_type) {
+        switch ($headerData['tr_type']) {
             case 'PD': // Purchase Delivery: Tambah OH, Kurangi FGR
                 $ivtBal->qty_oh = ($ivtBal->qty_oh ?? 0) + ($detailData->qty);
                 $trQty = $detailData->qty;
-                // Update qty_reff di OrderDtl
-                // if ($detailData->reffdtl_id) {
-                //     $orderDtl = OrderDtl::find($detailData->reffdtl_id);
-                //     if ($orderDtl) {
-                //         // Untuk PD, qty_reff bertambah
-                //         $orderDtl->qty_reff = ($orderDtl->qty_reff ?? 0) + $detailData->qty;
-                //         $orderDtl->save();
-                //     }
-                // }
                 break;
             case 'SD': // Sales Delivery: Kurangi OH, Kurangi FGI
                 $ivtBal->qty_oh = ($ivtBal->qty_oh ?? 0) - ($detailData->qty);
                 $trQty = -$detailData->qty;
-                // Update qty_reff di OrderDtl
-                // if ($detailData->reffdtl_id) {
-                //     $orderDtl = OrderDtl::find($detailData->reffdtl_id);
-                //     if ($orderDtl) {
-                //         // Untuk SD, qty_reff berkurang
-                //         $orderDtl->qty_reff = ($orderDtl->qty_reff ?? 0) - $detailData->qty;
-                //         $orderDtl->save();
-                //     }
-                // }
                 break;
         }
         $ivtBal->save();
@@ -218,7 +200,7 @@ class InventoryService
             'wh_id' => $detailData->wh_id,
             'wh_code' => $detailData->wh_code,
             'batch_code' => $detailData->batch_code,
-            'tr_date' => $headerData->tr_date,
+            'tr_date' => $headerData['tr_date'],
             'qty' => $detailData->qty,
             'price' => $price,
             'tr_amt' => $trAmt,
@@ -228,7 +210,7 @@ class InventoryService
             'amt_cogs' => 0,
             'qty_running' => 0,
             'amt_running' => 0,
-            'process_flag' => $headerData->process_flag ?? ''
+            'process_flag' => $headerData['process_flag'] ?? ''
         ];
         // Selalu buat log baru untuk delivery
         IvtLog::create($logData);
