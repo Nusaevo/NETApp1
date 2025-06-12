@@ -105,78 +105,6 @@ class OrderDtl extends BaseModel
                 ]);
             }
         });
-
-        static::saved(function ($orderDtl) {
-            $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
-                ->where('matl_uom', $orderDtl->matl_uom)
-                ->first();
-
-            if ($matlUom) {
-                // Calculate oldQty and newQty
-                $oldQty = (float) $orderDtl->getOriginal('qty', 0);
-                $newQty = (float) $orderDtl->qty;
-                $delta = $newQty - ($orderDtl->exists ? $oldQty : 0);
-
-
-                // Adjust qty_fgi or qty_fgr based on delta
-                if ($delta !== 0) {
-                    if ($orderDtl->tr_type === 'SO') {
-                        $matlUom->qty_fgi += $delta;
-                    } elseif ($orderDtl->tr_type === 'PO') {
-                        $matlUom->qty_fgr += $delta;
-                    }
-                    $matlUom->save();
-                }
-            }
-        });
-
-        static::deleting(function ($orderDtl) {
-            try {
-                $delivDtls = DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
-                    ->where('tr_seq', $orderDtl->tr_seq)
-                    ->get();
-
-                foreach ($delivDtls as $delivDtl) {
-                    $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-                        ->where('wh_id', $delivDtl->wh_code)
-                        ->first();
-                    $qtyChange = (float)$delivDtl->qty;
-                    if ($delivDtl->tr_type === 'SO') {
-                        $qtyChange = -$qtyChange;
-                    }
-                    if ($existingBal) {
-                        $existingBalQty = $existingBal->qty_oh;
-                        $newQty = $existingBalQty + $qtyChange;
-                        $existingBal->qty_oh = $newQty;
-                        $existingBal->save();
-                    }
-                    $delivDtl->forceDelete();
-                }
-
-                BillingDtl::where('trhdr_id', $orderDtl->trhdr_id)
-                    ->where('tr_seq', $orderDtl->tr_seq)
-                    ->forceDelete();
-
-                // Restore qty_fgr or qty_fgi in MatlUom
-                $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
-                    ->where('matl_uom', $orderDtl->matl_uom)
-                    ->first();
-
-                if ($matlUom) {
-                    if ($orderDtl->tr_type === 'PO') {
-                        $matlUom->qty_fgr -= $orderDtl->qty;
-                    } elseif ($orderDtl->tr_type === 'SO') {
-                        $matlUom->qty_fgi -= $orderDtl->qty;
-                    }
-                    $matlUom->save();
-                }
-
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
-        });
     }
 
     #region Relations
@@ -189,15 +117,11 @@ class OrderDtl extends BaseModel
     {
         return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
+
     public function SalesReward()
     {
         return $this->belongsTo(SalesReward::class, 'matl_id', 'matl_id');
     }
-    // public function OrderDtl()
-    // {
-    //     return $this->hasMany(OrderDtl::class);  // pastikan nama model dan foreign key sesuai
-    // }
-
     #endregion
 
     public function scopeGetByOrderHdr($query, $id, $trType)

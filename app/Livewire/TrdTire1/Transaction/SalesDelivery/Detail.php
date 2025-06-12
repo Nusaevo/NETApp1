@@ -3,11 +3,13 @@
 namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl, DelivHdr, DelivDtl};
 use App\Models\TrdTire1\Master\{Partner, Material};
+use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
+use App\Services\TrdTire1\InventoryService;
 use Illuminate\Support\Facades\{Session};
 use Exception;
 
@@ -32,7 +34,7 @@ class Detail extends BaseComponent
     public $total_tax;
     public $total_dpp;
     public $total_discount;
-    public $trType = "PO";
+    public $trType = "SD"; // Set trType menjadi SD untuk Sales Delivery
     public $versionNumber = "0.0";
 
     public $matl_action = 'Create';
@@ -52,6 +54,9 @@ class Detail extends BaseComponent
         'inputs.send_to' => 'required',
         'inputs.tr_code' => 'required',
         'inputs.partner_id' => 'required',
+        'input_details' => 'required|array|min:1', // Validasi agar ada minimal 1 detail
+        'input_details.*.matl_id' => 'required',
+        'input_details.*.qty' => 'required|numeric|min:1',
     ];
     protected $listeners = [
         'changeStatus'  => 'changeStatus',
@@ -217,23 +222,100 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        if ($this->actionValue == 'Edit') {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
-            }
-        }
+        $this->validate(); // Jalankan validasi
 
-        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $partner = Partner::find($this->inputs['partner_id']);
-            $this->inputs['partner_code'] = $partner->code;
-        }
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
-        if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
+        try {
+            if ($this->actionValue == 'Edit') {
+                // Cek jika object sudah ada dan statusnya Completed
+                $existingDeliv = DelivHdr::find($this->objectIdValue);
+                if ($existingDeliv && $existingDeliv->status_code == Status::COMPLETED) {
+                    $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                    return;
+                }
+            }
+
+            if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
+                $partner = Partner::find($this->inputs['partner_id']);
+                $this->inputs['partner_code'] = $partner->code;
+            }
+
+             // Update info warehouse (pastikan wh_id dan wh_code ada di inputs atau dapat dicari)
+             $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first(); // Asumsi wh_code dari input
+             if ($warehouse) {
+                 $this->inputs['wh_id'] = $warehouse->id; // Set wh_id
+             } else {
+                 // Handle jika warehouse tidak ditemukan, mungkin beri error atau default
+                 $this->dispatch('error', 'Warehouse tidak ditemukan.');
+                 return;
+             }
+
+            // Siapkan data header untuk service
+            $headerData = array_merge($this->inputs, [
+                'tr_type' => $this->trType, // Pastikan tr_type adalah SD
+                'status_code' => Status::OPEN, // Set status awal
             ]);
+
+            // Siapkan data detail untuk service
+            $detailData = [];
+            foreach ($this->input_details as $key => $detail) {
+                 $material = Material::find($detail['matl_id']);
+                // Validasi tambahan per item jika diperlukan, misal cek stok
+                 if (!$material) {
+                     $this->dispatch('error', 'Material dengan ID ' . $detail['matl_id'] . ' tidak ditemukan.');
+                     return;
+                 }
+
+                // Cek stok sebelum membuat delivery
+                $ivtBal = IvtBal::where([
+                    'matl_id' => $detail['matl_id'],
+                    'wh_id' => $this->inputs['wh_id'],
+                    'batch_code' => $detail['batch_code'] ?? ''
+                ])->first();
+
+                if (!$ivtBal || ($ivtBal->qty_oh ?? 0) < $detail['qty']) {
+                    $this->dispatch('error', "Stok tidak mencukupi untuk material {$material->code}");
+                    return;
+                }
+
+                $detailData[] = [
+                    'tr_seq' => $key + 1,
+                    'matl_id' => $detail['matl_id'],
+                    'matl_code' => $material->code,
+                    'matl_descr' => $detail['matl_descr'] ?? $material->descr,
+                    'matl_uom' => $detail['matl_uom'] ?? $material->uom,
+                    'qty' => $detail['qty'],
+                    'wh_id' => $this->inputs['wh_id'],
+                    'wh_code' => $this->inputs['wh_code'],
+                    'reffdtl_id' => $detail['order_id'] ?? null,
+                    'reffhdrtr_type' => $detail['reffhdrtr_type'] ?? 'SO',
+                    'reffhdrtr_code' => $detail['reffhdrtr_code'] ?? ($this->inputs['reffhdrtr_code'] ?? null),
+                    'reffdtltr_seq' => $detail['reffdtltr_seq'] ?? ($detail['order_seq'] ?? null),
+                    'batch_code' => $detail['batch_code'] ?? date('ymd'),
+                ];
+            }
+
+            // Panggil service untuk memproses sales delivery
+            $inventoryService = app(InventoryService::class);
+            $result = $inventoryService->processDelivery($headerData, $detailData);
+
+            // Update object dengan hasil dari service
+            $this->object = $result['header'];
+
+            $this->dispatch('success', 'Data Sales Delivery berhasil disimpan');
+
+            // Redirect ke halaman edit dengan objectId baru jika aksi Create
+            if ($this->actionValue == 'Create') {
+                 return redirect()->route(str_replace('.Detail', '', $this->baseRoute) . '.Detail', [
+                     'action' => encryptWithSessionKey('Edit'),
+                     'objectId' => encryptWithSessionKey($this->object->id)
+                 ]);
+             } else {
+                // Tetap di halaman edit/view jika aksi bukan Create
+                 $this->dispatch('success', 'Perubahan Sales Delivery berhasil disimpan');
+             }
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal menyimpan data Sales Delivery: ' . $e->getMessage());
         }
     }
 
@@ -320,4 +402,23 @@ class Detail extends BaseComponent
     //     $this->total_dpp = $dpp;
     // }
     #endregion
+
+    // Method yang mungkin perlu disesuaikan jika object_detail berubah tipe
+    // protected function loadDetails()
+    // {
+    //     if (!empty($this->object)) {
+    //         // Asumsi object sekarang adalah DelivHdr
+    //         $this->object_detail = DelivDtl::GetByDelivHdr($this->object->id, $this->object->tr_type)
+    //             ->orderBy('tr_seq')
+    //             ->get();
+    //
+    //         foreach ($this->object_detail as $key => $detail) {
+    //             $this->input_details[$key] = populateArrayFromModel($detail);
+    //             // Logika tambahan untuk mengisi field dari OrderDtl jika relevan
+    //             // $this->input_details[$key]['order_id'] = $detail->reffdtl_id; // Jika reffdtl_id adalah OrderDtl ID
+    //             // $this->input_details[$key]['qty_order'] = ?; // Bagaimana mendapatkan qty_order dari SO jika diperlukan?
+    //         }
+    //     }
+    // }
+
 }
