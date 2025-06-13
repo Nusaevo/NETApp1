@@ -41,48 +41,40 @@ class DeliveryService
         });
     }
 
-    public function modDelivery(int $delivId, array $headerData, array $detailData): array
+    public function modDelivery(int $delivId, array $headerData, array $detailData): DelivHdr
     {
         return DB::transaction(function () use ($delivId, $headerData, $detailData) {
-            // Get existing delivery
-            $delivHdr = DelivHdr::findOrFail($delivId);
+            // Set ID ke headerData
+            $headerData['id'] = $delivId;
 
             // Update header
-            $delivHdr = $this->saveHeader($headerData, $delivId);
+            $delivHdr = $this->saveHeader($headerData);
 
-            // Delete existing details
-            $this->deleteDetail($delivHdr, $detailData);
+            // Hapus detail lama
+            $this->deleteDetail($delivId);
 
+            // Simpan detail baru
             $this->saveDetail($headerData, $detailData);
 
-            return [
-                'header' => $delivHdr,
-            ];
+            return $delivHdr;
         });
     }
 
-    public function delDelivery(int $delivId): bool
+    public function delDelivery(int $delivId)
     {
-        return DB::transaction(function () use ($delivId) {
-            $delivHdr = DelivHdr::findOrFail($delivId);
-
-            // Delete details first
-            $this->deleteDetail($delivHdr, []);
-
-            return $this->deleteHeader($delivId);
-        });
+        $this->deleteDetail($delivId);
+        $this->deleteHeader($delivId);
     }
 
     // Region Delivery Header Methods
-    private function saveHeader(array $headerData, int $delivId = null): DelivHdr
+    private function saveHeader(array $headerData): DelivHdr
     {
-        if ($delivId) {
-            $delivHdr = DelivHdr::findOrFail($delivId);
+        if (isset($headerData['id'])) {
+            $delivHdr = DelivHdr::findOrFail($headerData['id']);
             $delivHdr->update($headerData);
         } else {
             $delivHdr = DelivHdr::create($headerData);
         }
-
         return $delivHdr;
     }
 
@@ -102,16 +94,19 @@ class DeliveryService
 
             // Siapkan data untuk delReservation
             $delivDetailRsv = $delivDetail->toArray();
+            $headerDataRsv = $headerData;
 
             // Sesuaikan tr_type untuk delReservation
             if ($delivDetail->tr_type === 'PD') {
                 $delivDetailRsv['tr_type'] = 'PO';
+                $headerDataRsv['tr_type'] = 'PO';
             } else if ($delivDetail->tr_type === 'SD') {
                 $delivDetailRsv['tr_type'] = 'SO';
+                $headerDataRsv['tr_type'] = 'SO';
             }
 
             // Hapus reservasi order
-            $this->inventoryService->delReservation($headerData, $delivDetailRsv);
+            $this->inventoryService->addReservation('-', $headerDataRsv, $delivDetailRsv);
 
             // Tambah stok onhand
             $this->inventoryService->addOnhand($headerData, $delivDetail);
@@ -123,18 +118,22 @@ class DeliveryService
         }
     }
 
-    private function deleteDetail(DelivHdr $headerData, array $detailData): void
+    private function deleteDetail(int $trHdrId): void
     {
         // Get existing details
-        $existingDetails = DelivDtl::where('trhdr_id', $headerData->id)->get();
+        $existingDetails = DelivDtl::where('trhdr_id', $trHdrId)->get();
 
         // Delete onhand and reservation for each detail
         foreach ($existingDetails as $detail) {
-            $this->inventoryService->delOnhand($headerData, $detail);
-            $this->inventoryService->addReservation($headerData->toArray(), $detail->toArray());
-            $this->orderService->updQtyReff('-', $detail->qty, $detail->reffdtl_id);
+            // Update qty_reff di OrderDtl
+            if ($detail->reffdtl_id) {
+                $this->orderService->updQtyReff('-', $detail->qty, $detail->reffdtl_id);
+            }
             $detail->forceDelete();
         }
+
+        // Hapus log inventory
+        $this->inventoryService->delIvtLog($trHdrId);
     }
 
     #endregion
