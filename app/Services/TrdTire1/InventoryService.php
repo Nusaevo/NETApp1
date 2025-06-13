@@ -12,8 +12,34 @@ class InventoryService
 {
     #region Reservation Methods
 
-    public function addReservation(array $headerData, array $detailData): IvtLog
+    public function addReservation(string $mode, array $headerData, array $detailData)
     {
+        // Hitung price dan amount
+        $price = 0;
+        $trAmt = 0;
+        $trQty = 0;
+        $qty = $detailData['qty'] ?? 0;
+
+        if (isset($detailData['reffdtl_id'])) {
+            // Case Delivery: Ambil data dari OrderDtl
+            $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
+            if (!$orderDtl) {
+                throw new Exception('Order detail not found for reffdtl_id: ' . $detailData['reffdtl_id']);
+            }
+            $price = $orderDtl->price * (1 - ($orderDtl->disc_pct / 100));
+        } else {
+            // Case Order: Gunakan data langsung dari detailData
+            $price = $detailData['price'] * (1 - ($detailData['disc_pct'] / 100));
+        }
+
+        if ($mode === '+') {
+            $trAmt = $price * $qty;
+            $trQty = $qty;
+        } else if ($mode === '-'){
+            $trAmt = $price * -$qty;
+            $trQty = -$qty;
+        }
+
         // Buat atau update IvtBal untuk order (hanya berdasarkan matl_id)
         $ivtBal = IvtBal::where([
             'matl_id' => $detailData['matl_id'],
@@ -24,6 +50,8 @@ class InventoryService
         if (!$ivtBal) {
             $ivtBal = new IvtBal([
                 'matl_id' => $detailData['matl_id'],
+                'matl_code' => $detailData['matl_code'] ?? '',
+                'matl_uom' => $detailData['matl_uom'] ?? '',
                 'wh_id' => 0,
                 'batch_code' => '',
                 'qty_oh' => 0,
@@ -32,30 +60,44 @@ class InventoryService
             ]);
         }
 
-        // Update qty berdasarkan tr_type
-        switch ($headerData['tr_type']) {
-            case 'SO': // Sales Order: Tambah FGI
-                $ivtBal->qty_fgi = ($ivtBal->qty_fgi ?? 0) + ($detailData['tr_qty']);
-                break;
-            case 'PO': // Purchase Order: Tambah FGR
-                $ivtBal->qty_fgr = ($ivtBal->qty_fgr ?? 0) + ($detailData['tr_qty']);
-                break;
+        // dibungkus mode + dan -
+        if ($headerData) {
+            if ($mode === '+') {
+                switch ($headerData['tr_type']) {
+                    case 'SO': // Sales Order: Tambah FGI
+                        $ivtBal->qty_fgi = ($ivtBal->qty_fgi ?? 0) + ($detailData['qty']);
+                        break;
+                    case 'PO': // Purchase Order: Tambah FGR
+                        $ivtBal->qty_fgr = ($ivtBal->qty_fgr ?? 0) + ($detailData['qty']);
+                        break;
+                }
+            } else if ($mode === '-') {
+                switch ($headerData['tr_type']) {
+                    case 'SO': // Sales Order: Tambah FGI
+                        $ivtBal->qty_fgi = ($ivtBal->qty_fgi ?? 0) - ($detailData['qty']);
+                        break;
+                    case 'PO': // Purchase Order: Tambah FGR
+                        $ivtBal->qty_fgr = ($ivtBal->qty_fgr ?? 0) - ($detailData['qty']);
+                        break;
+                }
+            }
+            $ivtBal->save();
         }
-        $ivtBal->save();
 
-        // Hitung price dan amount
-        $price = $detailData['price'] ?? 0;
-        $discPct = ($detailData['disc_pct'] ?? 0) / 100;
-        $qty = $detailData['qty'] ?? 0;
-        $trAmt = $price * $qty * (1 - $discPct);
+        // Tentukan tr_type untuk log
+        $trType = $headerData['tr_type'];
+        // Tambah R hanya jika ini adalah reservasi dari delivery
+        if (isset($detailData['reffdtl_id'])) {
+            $trType .= 'R';
+        }
 
         // Siapkan data log
         $logData = [
             'trhdr_id' => $detailData['trhdr_id'],
-            'tr_type' => $headerData['tr_type'],
+            'tr_type' => $trType,
             'tr_code' => $detailData['tr_code'],
             'tr_seq' => $detailData['tr_seq'] ?? 0,
-            'trdtl_id' => $detailData['id'],
+            'trdtl_id' => $detailData['id'] ?? 0,
             'ivt_id' => $ivtBal->id,
             'matl_id' => $detailData['matl_id'],
             'matl_code' => $detailData['matl_code'] ?? '',
@@ -68,7 +110,7 @@ class InventoryService
             'qty' => $qty,
             'price' => $price,
             'tr_amt' => $trAmt,
-            'tr_qty' => $detailData['tr_qty'] ?? 0,
+            'tr_qty' => $trQty,
             'tr_desc' => 'RESERVASI ' . $headerData['tr_type'] . ' ' . $detailData['tr_code'],
             'price_cogs' => 0,
             'amt_cogs' => 0,
@@ -78,73 +120,9 @@ class InventoryService
         ];
 
         // Simpan log inventory
-        return $this->saveIvtLog($logData);
+        IvtLog::create($logData);
     }
 
-    public function delReservation(array $headerData, array $detailData): void
-    {
-        // Update ivtBal yang sudah ada
-        $ivtBal = IvtBal::where([
-            'matl_id' => $detailData['matl_id'],
-            'wh_id' => 0,
-            'batch_code' => '',
-        ])->first();
-
-        if ($ivtBal) {
-            switch ($detailData['tr_type']) {
-                case 'SO': // Sales Order: Kurangi FGI
-                    $ivtBal->qty_fgi = ($ivtBal->qty_fgi) - ($detailData['qty']);
-                    break;
-                case 'PO': // Purchase Order: Kurangi FGR
-                    $ivtBal->qty_fgr = ($ivtBal->qty_fgr) - ($detailData['qty']);
-                    break;
-            }
-            $ivtBal->save();
-
-            // Ambil data OrderDtl untuk mendapatkan disc_pct
-            $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
-            $discPct = $orderDtl ? $orderDtl->disc_pct : 0;
-
-            // Ambil price dari MatlUom berdasarkan matl_id
-            $matlUom = MatlUom::where('matl_id', $detailData['matl_id'])->first();
-            $price = $matlUom ? $matlUom->selling_price : 0;
-
-            // Hitung price setelah diskon
-            $price = $price * (1 - ($discPct / 100));
-            $trAmt = $price * $detailData['qty'];
-
-            // Siapkan data log
-            $logData = [
-                'trhdr_id' => $detailData['trhdr_id'],
-                'tr_type' => $detailData['tr_type'],
-                'tr_code' => $detailData['tr_code'],
-                'tr_seq' => $detailData['tr_seq'] ?? 0,
-                'trdtl_id' => $detailData['id'],
-                'ivt_id' => $ivtBal->id,
-                'matl_id' => $detailData['matl_id'],
-                'matl_code' => $detailData['matl_code'] ?? '',
-                'matl_uom' => $detailData['matl_uom'] ?? '',
-                'wh_id' => 0,
-                'wh_code' => '',
-                'batch_code' => '',
-                'reff_id' => 0,
-                'tr_date' => $headerData['tr_date'],
-                'qty' => $detailData['qty'],
-                'price' => $price,
-                'tr_amt' => $trAmt,
-                'tr_qty' => -$detailData['qty'],
-                'tr_desc' => 'DELIV RESERVASI ' . $detailData['tr_type'] . ' ' . $detailData['tr_code'],
-                'price_cogs' => 0,
-                'amt_cogs' => 0,
-                'qty_running' => 0,
-                'amt_running' => 0,
-                'process_flag' => $headerData['process_flag'] ?? ''
-            ];
-
-            // Simpan log inventory
-            $this->saveIvtLog($logData);
-        }
-    }
 
     public function addOnhand(array $headerData, DelivDtl $detailData): void
     {
@@ -158,7 +136,9 @@ class InventoryService
         if (!$ivtBal) {
             $ivtBal = new IvtBal([
                 'matl_id' => $detailData->matl_id,
+                'wh_code' => $detailData->wh_code,
                 'wh_id' => $detailData->wh_id,
+                'matl_uom' => $detailData->matl_uom,
                 'batch_code' => $detailData->batch_code
             ]);
         }
@@ -189,7 +169,7 @@ class InventoryService
 
         $logData = [
             'trhdr_id' => $detailData->trhdr_id,
-            'tr_type' => $detailData->tr_type,
+            'tr_type' => $detailData->tr_type . 'R', // Selalu tambah R untuk onhand delivery
             'tr_code' => $detailData->tr_code,
             'tr_seq' => $detailData->tr_seq,
             'trdtl_id' => $detailData->id,
@@ -215,63 +195,35 @@ class InventoryService
         // Selalu buat log baru untuk delivery
         IvtLog::create($logData);
     }
-
-    public function delOnhand(DelivHdr $headerData, DelivDtl $detailData): void
+    public function delIvtLog(int $trHdrId)
     {
-        $ivtBal = IvtBal::where([
-            'matl_id' => $detailData->matl_id,
-            'wh_id' => $detailData->wh_id,
-            'batch_code' => $detailData->batch_code
-        ])->first();
+        // Hapus semua log inventory terkait trHdrId
+        $logs = IvtLog::where('trhdr_id', $trHdrId)->get();
+        foreach ($logs as $log) {
+            // Hapus log inventory
+            $log->delete();
 
-        if ($ivtBal) {
-            switch ($headerData->tr_type) {
-                case 'PD': // Purchase Delivery: Kurangi OH, Tambah FGR
-                    $ivtBal->qty_oh = ($ivtBal->qty_oh) - ($detailData->qty);
-                    $ivtBal->qty_fgr = ($ivtBal->qty_fgr) + ($detailData->qty);
-                    break;
-                case 'SD': // Sales Delivery: Tambah OH, Tambah FGI
-                    $ivtBal->qty_oh = ($ivtBal->qty_oh) + ($detailData->qty);
-                    $ivtBal->qty_fgi = ($ivtBal->qty_fgi) + ($detailData->qty);
-                    break;
+            // Update IvtBal jika perlu
+            $ivtBal = IvtBal::find($log->ivt_id);
+            if ($ivtBal) {
+                switch ($log->tr_type) {
+                    case 'SO': // Sales Order: Kurangi FGI
+                        $ivtBal->qty_fgi -= $log->tr_qty;
+                        break;
+                    case 'PO': // Purchase Order: Kurangi FGR
+                        $ivtBal->qty_fgr -= $log->tr_qty;
+                        break;
+                    case 'SD': // Sales Delivery: Kurangi QOH
+                        $ivtBal->qty_oh -= $log->tr_qty;
+                        break;
+                    case 'PD': // Purchase Delivery: Kurangi QOH
+                        $ivtBal->qty_oh -= $log->tr_qty;
+                        break;
+                }
+                $ivtBal->save();
             }
-            $ivtBal->save();
-
-            // Siapkan data log untuk penghapusan
-            $logData = [
-                'trhdr_id' => $detailData->trhdr_id,
-                'tr_type' => $detailData->tr_type,
-                'tr_code' => $detailData->tr_code,
-                'tr_seq' => $detailData->tr_seq,
-                'trdtl_id' => $detailData->id,
-                'ivt_id' => $ivtBal->id,
-                'matl_id' => $detailData->matl_id,
-                'matl_code' => $detailData->matl_code,
-                'matl_uom' => $detailData->matl_uom,
-                'wh_id' => $detailData->wh_id,
-                'wh_code' => $detailData->wh_code,
-                'batch_code' => $detailData->batch_code,
-                'tr_date' => $headerData->tr_date,
-                'qty' => -$detailData->qty, // Negatif karena penghapusan
-                'price' => $detailData->price ?? 0,
-                'tr_amt' => -($detailData->amt ?? 0), // Negatif karena penghapusan
-                'tr_qty' => -$detailData->qty, // Negatif karena penghapusan
-                'tr_desc' => 'HAPUS DELIVERY ' . $detailData->tr_type . ' ' . $detailData->tr_code,
-                'price_cogs' => 0,
-                'amt_cogs' => 0,
-                'qty_running' => 0,
-                'amt_running' => 0,
-                'process_flag' => $headerData->process_flag ?? ''
-            ];
-
-            // Simpan log penghapusan
-            $this->saveIvtLog($logData);
         }
-    }
 
-    private function saveIvtLog(array $logData): IvtLog
-    {
-        return IvtLog::create($logData);
     }
     #endregion
 }

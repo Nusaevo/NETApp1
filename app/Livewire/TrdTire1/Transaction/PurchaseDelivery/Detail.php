@@ -97,6 +97,7 @@ class Detail extends BaseComponent
                 if ($delivDtl) {
                     $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
                     $this->inputs['qty'] = $delivDtl->qty;
+                    $this->inputs['wh_code'] = $delivDtl->wh_code;
                 }
             }
 

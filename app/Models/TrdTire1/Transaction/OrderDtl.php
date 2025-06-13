@@ -42,15 +42,19 @@ class OrderDtl extends BaseModel
             $qty = $orderDtl->qty;
             $price = $orderDtl->price;
             $discPct = $orderDtl->disc_pct / 100;
-            $taxPct = $orderDtl->OrderHdr->tax_pct / 100;
+
+            // Ambil tax_pct dari OrderHdr jika ada, jika tidak gunakan default 0
+            $orderHdr = $orderDtl->OrderHdr;
+            $taxPct = $orderHdr ? ($orderHdr->tax_pct / 100) : 0;
+            $taxFlag = $orderHdr ? $orderHdr->tax_flag : 'N';
 
             // Calculate amt with discount
             $orderDtl->amt = $qty * $price * (1 - $discPct);
 
             // Calculate amt_tax based on tax flag
-            if ($orderDtl->OrderHdr->tax_flag === 'I') {
+            if ($taxFlag === 'I') {
                 $orderDtl->amt_tax = $orderDtl->amt;
-            } elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
+            } elseif ($taxFlag === 'E') {
                 $orderDtl->amt_tax = round($orderDtl->amt * (1 + $taxPct), 2);
             } else { // tax_flag === 'N'
                 $orderDtl->amt_tax = $orderDtl->amt;
@@ -58,10 +62,10 @@ class OrderDtl extends BaseModel
 
             // Calculate DPP based on tax flag
             $priceDisc = $price * (1 - $discPct);
-            if ($orderDtl->OrderHdr->tax_flag === 'I') {
+            if ($taxFlag === 'I') {
                 $orderDtl->dpp = round($priceDisc / (1 + $taxPct), 2);
                 $orderDtl->ppn = round($orderDtl->dpp * $taxPct / 100, 2);
-            } elseif ($orderDtl->OrderHdr->tax_flag === 'E') {
+            } elseif ($taxFlag === 'E') {
                 $orderDtl->dpp = round($priceDisc, 2);
                 $orderDtl->ppn = round($orderDtl->dpp * $taxPct / 100, 2);
             } else {
@@ -76,7 +80,6 @@ class OrderDtl extends BaseModel
             $orderDtl->qty_uom = $matlUom->matl_uom;
 
             // Create BillingDtl and DelivDtl if payment term is CASH
-            $orderHdr = $orderDtl->OrderHdr;
             if ($orderHdr && $orderHdr->payment_term === 'CASH') {
                 BillingDtl::create([
                     'trhdr_id' => $orderDtl->trhdr_id,
