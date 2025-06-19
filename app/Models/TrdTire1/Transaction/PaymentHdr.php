@@ -105,4 +105,37 @@ class PaymentHdr extends BaseModel
     {
         return $this->status_code == Status::COMPLETED;
     }
+
+    public static function generateTransactionId($tr_type, $tax_doc_flag)
+    {
+        // Cari transaksi terakhir berdasarkan tr_type dan tr_code
+        $lastTransaction = self::where('tr_type', $tr_type)
+            ->whereRaw('tr_code ~ \'^[0-9]+$\'') // Pastikan tr_code hanya berisi angka
+            ->orderByRaw('CAST(tr_code AS INTEGER) DESC')
+            ->first();
+
+        // Jika tidak ada transaksi sebelumnya, mulai dari 0001
+        if (!$lastTransaction) {
+            return "0001";
+        }
+
+        // Ambil sequence number dari kode terakhir
+        $lastSequence = (int) $lastTransaction->tr_code;
+
+        // Increment sequence
+        $newSequence = $lastSequence + 1;
+
+        // Format sequence dengan leading zeros
+        $formattedSequence = str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+
+        // Verifikasi bahwa sequence baru belum digunakan
+        while (self::where('tr_type', $tr_type)
+               ->where('tr_code', $formattedSequence)
+               ->exists()) {
+            $newSequence++;
+            $formattedSequence = str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+        }
+
+        return $formattedSequence;
+    }
 }

@@ -4,10 +4,8 @@ namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl}; // Update import
-use App\Models\SysConfig1\ConfigRight;
-use App\Models\TrdTire1\Master\GoldPriceLog;
-use App\Enums\Status;
+use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl};
+use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +23,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return PaymentHdr::with(['PaymentDtl', 'Partner']) // Update builder
             ->where('payment_hdrs.tr_type', 'APP')
-            ->where('payment_hdrs.status_code', Status::OPEN);
+            ->where('payment_hdrs.status_code', Status::OPEN, Status::ACTIVE);
     }
     public function columns(): array
     {

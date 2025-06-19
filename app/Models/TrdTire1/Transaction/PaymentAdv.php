@@ -7,7 +7,7 @@ use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class PaymentDtl extends BaseModel
+class PaymentAdv extends BaseModel
 {
     use SoftDeletes;
 
@@ -21,12 +21,14 @@ class PaymentDtl extends BaseModel
         'tr_type',
         'tr_code',
         'tr_seq',
-        'billhdrtr_type',
-        'billhdrtr_code',
-        'billhdrtr_id',
+        'adv_type_id',
+        'adv_type_code',
+        'partnerbal_id',
+        'reff_id',
+        'reff_type',
+        'reff_code',
         'amt',
         'amt_base',
-        'status_code'
     ];
 
     #region Relations

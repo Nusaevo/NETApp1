@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
+use App\Services\TrdTire1\DeliveryService;
+use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -212,41 +214,37 @@ class IndexDataTable extends BaseDataTableComponent
         $selectedOrderIds = $this->getSelected();
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
+            try {
+                // Ambil tr_code dari OrderHdr yang terpilih
+                $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
+                    ->pluck('tr_code')
+                    ->toArray();
 
-            // Ambil tr_code dari OrderHdr yang terpilih
-            $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
-                ->pluck('tr_code')
-                ->toArray();
+                // Hapus DelivHdr dengan tr_code yang sesuai
+                $delivHdrs = DelivHdr::where('tr_type', 'SD')
+                    ->whereIn('tr_code', $selectedTrCodes)
+                    ->get();
 
-            // Hapus DelivDtl dengan trhdr_id yang sesuai dengan DelivHdr yang akan dihapus
-            $delivHdrs = DelivHdr::where('tr_type', 'SD')
-                ->whereIn('tr_code', $selectedTrCodes)
-                ->get();
-
-            foreach ($delivHdrs as $delivHdr) {
-                $delivDtls = DelivDtl::where('trhdr_id', $delivHdr->id)->get();
-                foreach ($delivDtls as $delivDtl) {
-                    // Adjust qty_fgi in MatlUom
-                    $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
-                        ->where('matl_uom', $delivDtl->matl_uom)
-                        ->first();
-                    if ($matlUom) {
-                        $matlUom->increment('qty_fgi', $delivDtl->qty);
-                    }
-                    $delivDtl->forceDelete(); // Permanently delete DelivDtl
+                // Gunakan DeliveryService untuk menghapus delivery
+                $deliveryService = app(DeliveryService::class);
+                foreach ($delivHdrs as $delivHdr) {
+                    $deliveryService->delDelivery($delivHdr->id);
                 }
-                // Permanently delete DelivHdr
-                $delivHdr->forceDelete();
+
+                // Update status OrderHdr kembali ke PRINT
+                OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::PRINT]);
+
+                DB::commit();
+
+                $this->clearSelected();
+                $this->dispatch('showAlert', [
+                    'type' => 'success',
+                    'message' => 'Tanggal pengiriman berhasil dibatalkan'
+                ]);
+            } catch (Exception $e) {
+                DB::rollBack();
+                $this->dispatch('error', 'Gagal membatalkan pengiriman: ' . $e->getMessage());
             }
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);
-
-            DB::commit();
-
-            $this->clearSelected();
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Tanggal pengiriman berhasil dibatalkan'
-            ]);
         }
     }
 
