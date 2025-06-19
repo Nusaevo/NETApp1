@@ -118,7 +118,7 @@ class DelivDtl extends BaseModel
      */
     public function Material()
     {
-        return $this->belongsTo(Material::class, 'matl_id');
+        return $this->belongsTo(Material::class, 'matl_id', 'id');
     }
 
     /**
@@ -126,18 +126,19 @@ class DelivDtl extends BaseModel
      */
     public function DelivHdr()
     {
-        if ($this->tr_type) {
-            return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')
-                ->where('tr_type', $this->tr_type);
-        }
-        return null;
+        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id');
     }
 
     public function OrderDtl()
     {
-        return $this->belongsTo(OrderDtl::class, 'reffdtl_id', 'id')
-            ->where('tr_type', $this->reffhdrtr_type);
+        return $this->belongsTo(OrderDtl::class, 'reffdtl_id', 'id');
+    }
+
+    public function IvtBal()
+    {
+        return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')->where('wh_id', $this->wh_id);
     }
 
     #endregion
 }
+

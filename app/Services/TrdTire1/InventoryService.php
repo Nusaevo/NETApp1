@@ -37,7 +37,7 @@ class InventoryService
             $trQty = $qty;
         } else if ($mode === '-'){
             $trAmt = $price * -$qty;
-            $trQty = -$qty;
+            $trQty = $qty;
         }
 
         // Buat atau update IvtBal untuk order (hanya berdasarkan matl_id)
@@ -86,9 +86,16 @@ class InventoryService
 
         // Tentukan tr_type untuk log
         $trType = $headerData['tr_type'];
-        // Tambah R hanya jika ini adalah reservasi dari delivery
-        if (isset($detailData['reffdtl_id'])) {
+        // Tambah R untuk semua reservasi (baik order maupun delivery)
+        if ($mode === '+') {
             $trType .= 'R';
+        } else if ($mode === '-') {
+            // Untuk delivery, ubah POR menjadi PDR
+            if ($trType === 'PO') {
+                $trType = 'PDR';
+            } else if ($trType === 'SO') {
+                $trType = 'SOR';
+            }
         }
 
         // Siapkan data log
@@ -107,7 +114,7 @@ class InventoryService
             'batch_code' => '',
             'reff_id' => $headerData['reff_id'] ?? null,
             'tr_date' => $headerData['tr_date'],
-            'qty' => $qty,
+            'qty' => $mode === '+' ? $qty : -$qty,
             'price' => $price,
             'tr_amt' => $trAmt,
             'tr_qty' => $trQty,
@@ -136,10 +143,14 @@ class InventoryService
         if (!$ivtBal) {
             $ivtBal = new IvtBal([
                 'matl_id' => $detailData->matl_id,
+                'matl_code' => $detailData->matl_code,
                 'wh_code' => $detailData->wh_code,
                 'wh_id' => $detailData->wh_id,
                 'matl_uom' => $detailData->matl_uom,
-                'batch_code' => $detailData->batch_code
+                'batch_code' => $detailData->batch_code,
+                'qty_oh' => 0,
+                'qty_fgr' => 0,
+                'qty_fgi' => 0
             ]);
         }
 
@@ -150,7 +161,7 @@ class InventoryService
                 break;
             case 'SD': // Sales Delivery: Kurangi OH, Kurangi FGI
                 $ivtBal->qty_oh = ($ivtBal->qty_oh ?? 0) - ($detailData->qty);
-                $trQty = -$detailData->qty;
+                $trQty = $detailData->qty;
                 break;
         }
         $ivtBal->save();
@@ -167,9 +178,10 @@ class InventoryService
         $price = $price * (1 - ($discPct / 100));
         $trAmt = $price * $detailData->qty;
 
+        // Siapkan data log
         $logData = [
             'trhdr_id' => $detailData->trhdr_id,
-            'tr_type' => $detailData->tr_type . 'R', // Selalu tambah R untuk onhand delivery
+            'tr_type' => $detailData->tr_type,
             'tr_code' => $detailData->tr_code,
             'tr_seq' => $detailData->tr_seq,
             'trdtl_id' => $detailData->id,
@@ -180,8 +192,9 @@ class InventoryService
             'wh_id' => $detailData->wh_id,
             'wh_code' => $detailData->wh_code,
             'batch_code' => $detailData->batch_code,
+            'reff_id' => $headerData['reff_id'] ?? null,
             'tr_date' => $headerData['tr_date'],
-            'qty' => $detailData->qty,
+            'qty' => $headerData['tr_type'] === 'PD' ? $detailData->qty : -$detailData->qty,
             'price' => $price,
             'tr_amt' => $trAmt,
             'tr_qty' => $trQty,
@@ -192,7 +205,8 @@ class InventoryService
             'amt_running' => 0,
             'process_flag' => $headerData['process_flag'] ?? ''
         ];
-        // Selalu buat log baru untuk delivery
+
+        // Simpan log inventory
         IvtLog::create($logData);
     }
     public function delIvtLog(int $trHdrId)

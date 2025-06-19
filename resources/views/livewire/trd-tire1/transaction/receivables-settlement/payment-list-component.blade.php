@@ -8,39 +8,34 @@
                 <th style="width: 150px; text-align: center;">Keterangan</th>
                 <th style="width: 150px; text-align: center;">Amount</th>
                 <th style="width: 70px; text-align: center;">Actions</th>
-            </x-slot>
-
-            <!-- Define table rows -->
+            </x-slot>            <!-- Define table rows -->
             <x-slot name="rows">
-                @foreach ($input_details as $key => $input_detail)
-                    <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
+                @foreach ($input_payments as $key => $input_payment)
+                    <tr wire:key="list{{ $input_payment['id'] ?? $key }}">
                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                         <td>
                             <x-ui-dropdown-select
-                                model="input_details.{{ $key }}.pay_type_code" :options="$PaymentType"
+                                model="input_payments.{{ $key }}.pay_type_code" :options="$PaymentType"
                                 required="true" :action="$actionValue" enabled="false" />
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-text-field model="input_details.{{ $key }}.bank_reff" label=""
+                            <x-ui-text-field model="input_payments.{{ $key }}.bank_reff" label=""
                                 :action="$actionValue" enabled="false" type="text" />
                         </td>
                         <td style="text-align: center;">
-                            <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
-                                :action="$actionValue" enabled="false" type="number" />
-                        </td>
+                            <x-ui-text-field model="input_payments.{{ $key }}.amt" label=""
+                                :action="$actionValue" enabled="false" type="number" />                        </td>
                         <td style="text-align: center;">
                             <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                 cssClass="btn-secondary text-light" iconPath="edit.svg" />
-                            <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
+                            <x-ui-button :clickEvent="'deletePaymentItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
                                 cssClass="btn-danger text-danger" iconPath="delete.svg" />
                         </td>
                     </tr>
                 @endforeach
-            </x-slot>
-
-            <x-slot name="button">
+            </x-slot>            <x-slot name="button">
                 <!-- Tombol untuk menambah item -->
-                <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
+                <x-ui-button clickEvent="addPaymentItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
 
                 <x-ui-dialog-box id="PaymentDialogBox" title="Set Payment" width="600px" height="400px"
                     onOpened="openPaymentDialogBox" onClosed="closePaymentDialogBox">

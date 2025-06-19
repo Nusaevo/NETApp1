@@ -255,9 +255,12 @@ class Detail extends BaseComponent
 
             // Persiapkan data untuk service
             $headerData = array_merge($this->inputs, [
-                'id' => $this->object->id,
                 'status_code' => $this->object->status_code
             ]);
+
+            if ($this->actionValue === 'Edit') {
+                $headerData['id'] = $this->object->id;
+            }
 
             $detailData = [];
             foreach ($this->input_details as $key => $detail) {
@@ -285,16 +288,29 @@ class Detail extends BaseComponent
 
             // Panggil service untuk memproses purchase delivery
             $deliveryService = app(DeliveryService::class);
-            $result = $deliveryService->addDelivery($headerData, $detailData);
 
-            // Update object dengan hasil dari service
-            $this->object = $result['header'];
-            $this->loadDetails();
+            if ($this->actionValue === 'Create') {
+                $result = $deliveryService->addDelivery($headerData, $detailData);
+                $this->object = $result['header'];
+            } else {
+                $deliveryService->modDelivery($this->object->id, $headerData, $detailData);
+            }
 
-            $this->dispatch('success', 'Data berhasil disimpan');
-            return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+            DB::commit();
+
+            $this->dispatch('success', 'Purchase Delivery berhasil ' .
+                ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
+
+            return redirect()->route(
+                $this->appCode . '.Transaction.PurchaseDelivery.Detail',
+                [
+                    'action'   => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id),
+                ]
+            );
 
         } catch (Exception $e) {
+            DB::rollBack();
             $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
     }

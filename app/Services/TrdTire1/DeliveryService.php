@@ -43,21 +43,37 @@ class DeliveryService
 
     public function modDelivery(int $delivId, array $headerData, array $detailData): DelivHdr
     {
-        return DB::transaction(function () use ($delivId, $headerData, $detailData) {
-            // Set ID ke headerData
-            $headerData['id'] = $delivId;
+        DB::beginTransaction();
+        try {
+            // Cek apakah delivery header ada
+            $delivHdr = DelivHdr::find($delivId);
+            if (!$delivHdr) {
+                throw new Exception('Delivery header tidak ditemukan');
+            }
 
             // Update header
-            $delivHdr = $this->saveHeader($headerData);
+            $delivHdr->update($headerData);
 
             // Hapus detail lama
             $this->deleteDetail($delivId);
 
+            // Set header ID ke detail data
+            foreach ($detailData as &$detail) {
+                $detail['trhdr_id'] = $delivHdr->id;
+                $detail['tr_code'] = $delivHdr->tr_code;
+                $detail['tr_type'] = $delivHdr->tr_type;
+            }
+            unset($detail);
+
             // Simpan detail baru
             $this->saveDetail($headerData, $detailData);
 
+            DB::commit();
             return $delivHdr;
-        });
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function delDelivery(int $delivId)
@@ -70,18 +86,21 @@ class DeliveryService
     private function saveHeader(array $headerData): DelivHdr
     {
         if (isset($headerData['id'])) {
-            $delivHdr = DelivHdr::findOrFail($headerData['id']);
+            $delivHdr = DelivHdr::find($headerData['id']);
+            if (!$delivHdr) {
+                throw new Exception('Delivery header tidak ditemukan');
+            }
             $delivHdr->update($headerData);
+            return $delivHdr;
         } else {
-            $delivHdr = DelivHdr::create($headerData);
+            return DelivHdr::create($headerData);
         }
-        return $delivHdr;
     }
 
     private function deleteHeader(int $delivId): bool
     {
         $delivHdr = DelivHdr::findOrFail($delivId);
-        return (bool) $delivHdr->delete();
+        return (bool) $delivHdr->forceDelete();
     }
 
     // Region Delivery Detail Methods
