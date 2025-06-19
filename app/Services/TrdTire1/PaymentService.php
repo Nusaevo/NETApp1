@@ -2,9 +2,10 @@
 
 namespace App\Services\TrdTire1;
 
-use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl};
+use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl, PaymentAdv};
 use App\Models\TrdTire1\Master\Partner;
 use App\Models\SysConfig1\ConfigConst;
+use App\Models\TrdTire1\Master\PartnerBal;
 use Illuminate\Support\Facades\{DB, Log};
 use Exception;
 
@@ -200,29 +201,54 @@ class PaymentService
         }
 
         foreach ($advanceData as $adv) {
+            // Selalu ambil partner_id dan partner_code dari PaymentHdr berdasarkan id header
+            $paymentHdr = null;
+            if (isset($headerData['id'])) {
+                $paymentHdr = PaymentHdr::find($headerData['id']);
+            }
+            if (!$paymentHdr) {
+                throw new \Exception('PaymentHdr tidak ditemukan untuk simpan advance');
+            }
+            $partner_id = $paymentHdr->partner_id;
+            $partner_code = $paymentHdr->partner_code;
+            // Pastikan partnerbal_id tidak null
+            $partnerBal = PartnerBal::where('partner_id', $partner_id)->first();
+            if (!$partnerBal) {
+                $partnerBal = PartnerBal::create([
+                    'partner_id' => $partner_id,
+                    'partner_code' => $partner_code,
+                    'amt_bal' => 0,
+                    'amt_adv' => 0,
+                ]);
+            }
             $payAdv = [
                 'trhdr_id'      => $headerData['id'] ?? null,
                 'tr_type'       => ($headerData['tr_type'] ?? '') . 'A',
                 'tr_code'       => $headerData['tr_code'] ?? null,
                 'tr_seq'        => $adv['tr_seq'] ?? 1,
-                'adv_type_id'   => ConfigConst::where('const_group', 'ADV_TYPE_CODE')
-                                        ->where('str1', 'ARADVPAY')
-                                        ->value('id'),
-                'adv_type_code' => ($headerData['tr_type'] ?? '') . 'ADVPAY',
-                'partnerbal_id' => $adv['partnerbal_id'] ?? null,
-                'reff_id'       => $adv['reff_id'] ?? null,
-                'reff_type'     => $adv['reff_type'] ?? null,
+                'adv_type_id'   => $adv['adv_type_id'] ?? '',
+                'adv_type_code' => $adv['adv_type_code'] ?? null,
+                'partnerbal_id' => $partnerBal->id,
+                'partner_id'    => $partner_id,
+                'partner_code'  => $partner_code,
+                'reff_id'       => $headerData['id'] ?? null,
+                'reff_type'     => $headerData['tr_type'] ?? null,
                 'reff_code'     => $adv['reff_code'] ?? null,
                 'amt'           => $adv['amt'] ?? 0,
                 'amt_base'      => $adv['amt_base'] ?? 0,
             ];
 
-            // Simpan ke tabel PaymentSrc (atau model advance yang sesuai)
-            $paymentAdv = new PaymentSrc($payAdv);
+            $paymentAdv = new PaymentAdv($payAdv);
             $paymentAdv->save();
 
-            // Update saldo partner untuk advance
+            $payAdv['id'] = $headerData['id'] ?? null;
+            $payAdv['total_amt'] = $payAdv['amt'] ?? 0;
+            $payAdv['tr_date'] = $paymentHdr->tr_date ?? now();
             $this->partnerBalanceService->updPartnerBalance('-', $payAdv);
+
+            // Tambahkan lebih bayar ke kolom amt_adv pada PartnerBal
+            $partnerBal->amt_adv = ($partnerBal->amt_adv ?? 0) + ($payAdv['amt'] ?? 0);
+            $partnerBal->save();
         }
     }
 
