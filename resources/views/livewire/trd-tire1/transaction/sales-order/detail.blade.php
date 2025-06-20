@@ -162,11 +162,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" enabled="true"
-                                                onChanged="updateItemAmount({{ $key }})"
-                                                type="text"
-                                                pattern="[0-9]*[.,]?[0-9]*"
-                                                inputmode="decimal"
-                                                :value="isset($input_details[$key]['disc_pct']) ? number_format((float)$input_details[$key]['disc_pct']/10, 1, '.', '') : ''" />
+                                                onChanged="updateItemAmount({{ $key }})" type="number" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"

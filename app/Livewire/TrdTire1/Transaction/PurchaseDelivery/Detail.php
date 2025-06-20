@@ -12,6 +12,7 @@ use App\Services\TrdTire1\InventoryService;
 use Exception;
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Inventories\IvtBalUnit;
+use App\Services\TrdTire1\BillingService;
 use Illuminate\Support\Facades\DB;
 use App\Services\TrdTire1\DeliveryService;
 
@@ -264,25 +265,30 @@ class Detail extends BaseComponent
 
             $detailData = [];
             foreach ($this->input_details as $key => $detail) {
-                $orderDtl = OrderDtl::find($detail['order_id']);
+                // dd($detail);
+                $orderDtl = OrderDtl::find($detail['reffdtl_id']);
                 $material = Material::find($detail['matl_id']);
-                $orderHdr = $orderDtl ? $orderDtl->OrderHdr : null;
+                $orderHdr = OrderHdr::find($detail['reffhdrtr_id']);
 
+                // dd($headerData);
                 $detailData[] = [
+                    'trhdr_id' => $headerData['id'],
+                    'tr_code' => $headerData['tr_code'],
+                    'tr_type' => $headerData['tr_type'],
                     'tr_seq' => $key + 1,
                     'matl_id' => $detail['matl_id'],
                     'matl_code' => $material->code,
                     'matl_descr' => $detail['matl_descr'],
                     'matl_uom' => $detail['matl_uom'],
                     'qty' => $detail['qty'],
-                    'wh_id' => $this->inputs['wh_id'],
-                    'wh_code' => $this->inputs['wh_code'],
+                    'wh_id' => $detail['wh_id'],
+                    'wh_code' => $detail['wh_code'],
                     'reffdtl_id' => $orderDtl->id ?? null,
-                    'reffhdrtr_id' => $orderHdr ? $orderHdr->id : null,
-                    'reffhdrtr_type' => $orderDtl ? $orderDtl->OrderHdr->tr_type : null,
-                    'reffhdrtr_code' => $orderDtl ? $orderDtl->OrderHdr->tr_code : null,
-                    'reffdtltr_seq' => $orderDtl->tr_seq ?? null,
-                    'batch_code' => $detail['batch_code'] ?? ''
+                    'reffhdrtr_id' => $orderHdr->id,
+                    'reffhdrtr_type' => $orderHdr->tr_type,
+                    'reffhdrtr_code' => $orderHdr->tr_code,
+                    'reffdtltr_seq' => $orderDtl->tr_seq,
+                    'batch_code' => date('ymd', strtotime($orderHdr->tr_date)),
                 ];
             }
 
@@ -292,10 +298,15 @@ class Detail extends BaseComponent
             if ($this->actionValue === 'Create') {
                 $result = $deliveryService->addDelivery($headerData, $detailData);
                 $this->object = $result['header'];
+                // dd($this->object);
+                // Tambahkan pembuatan BillingHdr
+                // app(BillingService::class)->addBilling($headerData, $detailData);
             } else {
+                // dd($detailData, $headerData);
                 $deliveryService->modDelivery($this->object->id, $headerData, $detailData);
             }
 
+            // dd($this->object);
             DB::commit();
 
             $this->dispatch('success', 'Purchase Delivery berhasil ' .
@@ -311,7 +322,8 @@ class Detail extends BaseComponent
 
         } catch (Exception $e) {
             DB::rollBack();
-            $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
+            throw new Exception('Gagal menyimpan Purchase Delivery: ' . $e->getMessage());
+            // $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
     }
 

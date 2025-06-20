@@ -8,6 +8,7 @@ use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
+use App\Services\TrdTire1\BillingService;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Services\TrdTire1\InventoryService;
 use App\Services\TrdTire1\DeliveryService;
@@ -312,6 +313,8 @@ class Detail extends BaseComponent
             if ($this->actionValue === 'Create') {
                 $result = $this->deliveryService->addDelivery($headerData, $detailData);
                 $this->object = $result['header'];
+                // Tambahkan pembuatan BillingHdr
+                app(BillingService::class)->addBilling($headerData, $detailData);
             } else {
                 $this->deliveryService->modDelivery($this->object->id, $headerData, $detailData);
             }

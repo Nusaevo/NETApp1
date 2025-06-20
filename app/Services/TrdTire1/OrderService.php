@@ -57,11 +57,13 @@ class OrderService
     }
 
 
-    public function updQtyReff(string $mode, float $qtyDeliv, int $delivDtlId)
+    public function updOrderQtyReff(string $mode, float $qtyDeliv, int $orderDtlId)
     {
+        // dd($qtyDeliv, $orderDtlId);
         // Update qty_reff di OrderDtl
-        $orderDtl = OrderDtl::find($delivDtlId);
+        $orderDtl = OrderDtl::find($orderDtlId);
         if ($orderDtl) {
+            // dd($orderDtl);
             if ($mode === '+') {
                 $orderDtl->qty_reff += $qtyDeliv;
             } else if ($mode === '-') {

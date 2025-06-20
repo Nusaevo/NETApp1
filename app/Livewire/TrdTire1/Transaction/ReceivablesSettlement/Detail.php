@@ -306,6 +306,22 @@ class Detail extends BaseComponent
                 ];
             })
             ->toArray();
+
+        // Debug: tampilkan advanceOptions yang dibuat
+        Log::debug('advanceOptions created', [
+            'count' => count($this->advanceOptions),
+            'sample_options' => array_slice($this->advanceOptions, 0, 3)
+        ]);
+
+        // Jika tidak ada data advance, berikan pesan debug
+        if (empty($this->advanceOptions)) {
+            Log::warning('No advance options available - no PartnerBal records with amt_adv != 0');
+        }
+
+        // Inisialisasi input_advance jika belum ada
+        if (!isset($this->input_advance) || !is_array($this->input_advance)) {
+            $this->input_advance = [];
+        }
     }
 
     public function onReset()
@@ -1025,6 +1041,20 @@ class Detail extends BaseComponent
                 }
             }
 
+            // Tambahan: Ambil semua BillingHdr untuk partner_id terpilih dan tampilkan di input_details
+            $billingList = BillingHdr::where('partner_id', $partner->id)->get();
+            $this->input_details = [];
+            foreach ($billingList as $bill) {
+                $totalAmt = BillingDtl::where('trhdr_id', $bill->id)->sum('amt');
+                $maxAmt = isset($bill->amt_reff) ? min($totalAmt, $bill->amt_reff) : $totalAmt;
+                $this->input_details[] = [
+                    'billhdrtr_code' => $bill->id,
+                    'tr_date'        => $bill->tr_date ? \Carbon\Carbon::parse($bill->tr_date)->format('d-m-Y') : null,
+                    'amtbill'        => $totalAmt,
+                    'amt'            => $maxAmt, // amt default tidak lebih besar dari amt_reff
+                ];
+            }
+
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
         }
@@ -1143,15 +1173,35 @@ class Detail extends BaseComponent
         ];
     }
 
+    public function deleteAdvanceItem($index)
+    {
+        try {
+            if (!isset($this->input_advance[$index])) {
+                throw new Exception('Advance item not found.');
+            }
+
+            unset($this->input_advance[$index]);
+            $this->input_advance = array_values($this->input_advance);
+
+            $this->dispatch('success', 'Advance item berhasil dihapus.');
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Error menghapus advance item: ' . $e->getMessage());
+        }
+    }
+
     public function onAdvanceChanged($key, $partnerbal_id)
     {
-        $partnerBal = PartnerBal::find((int)$partnerbal_id);
-        dd($partnerBal);
-        if ($partnerBal) {
-            $this->input_advance[$key]['amt'] = $partnerBal->amt_adv;
+        $selected = collect($this->advanceOptions)->firstWhere('value', $partnerbal_id);
+
+        if ($selected) {
+            $this->input_advance[$key]['amt'] = number_format((float)$selected['amt_adv'], 0);
+            $this->input_advance[$key]['partnerbal_id'] = $selected['value'];
+            $this->dispatch('success', 'Advance amount berhasil diambil: ' . $this->input_advance[$key]['amt']);
         } else {
             $this->input_advance[$key]['amt'] = 0;
+            $this->input_advance[$key]['partnerbal_id'] = null;
+            $this->dispatch('error', 'Partner balance tidak ditemukan.');
         }
-        $this->input_advance = $this->input_advance;
+        $this->input_advance = array_values($this->input_advance);
     }
 }
