@@ -3,8 +3,8 @@
 namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PaymentDtl, PaymentSrc, BillingDtl, BillingHdr};
-use App\Models\TrdTire1\Master\{Partner, Material};
+use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PaymentDtl, PaymentSrc, BillingDtl, BillingHdr, PaymentAdv};
+use App\Models\TrdTire1\Master\{Partner, Material, PartnerBal};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\Status;
 use App\Services\TrdTire1\PaymentService;
@@ -35,11 +35,9 @@ class Detail extends BaseComponent
     public $trType = "APP";
     public $versionNumber = "0.0";
     public $object_detail;
-
     public $matl_action = 'Create';
     public $matl_objectId = null;
     public $currency = [];
-
     public $returnIds = [];
     public $currencyRate = 0;
     public $npwpOptions = [];
@@ -49,6 +47,11 @@ class Detail extends BaseComponent
     public $notaCount = 0;
     public $suratJalanCount = 0;
     public $partnerSearchText = '';
+    public $partnerOptions = [];
+    public $advanceBalance = 0;
+    public $totalPaymentAmount = 0;
+    public $totalNotaAmount = 0;
+    public $advanceOptions = [];
 
     // Properties untuk Payment List
     public $PaymentType = [];
@@ -62,6 +65,7 @@ class Detail extends BaseComponent
     // Properties untuk Debt List
     public $codeBill;
     public $input_details = [];
+    public $input_advance = [];
 
     public $rules  = [
         'inputs.partner_id' => 'required',
@@ -253,6 +257,20 @@ class Detail extends BaseComponent
             $this->loadDetails();
             $this->loadPaymentDetails();
 
+            // Hitung ulang total pembayaran dan total nota
+            $this->totalPaymentAmount = 0;
+            foreach ($this->input_payments as $payment) {
+                $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
+                $this->totalPaymentAmount += is_numeric($amtValue) ? (float)$amtValue : 0;
+            }
+            $this->totalNotaAmount = 0;
+            foreach ($this->input_details as $detail) {
+                $this->totalNotaAmount += is_numeric($detail['amt']) ? (float)$detail['amt'] : 0;
+            }
+            // Ambil lebih bayar dari PaymentAdv
+            $paymentAdv = PaymentAdv::where('trhdr_id', $this->objectIdValue)->first();
+            $this->advanceBalance = $paymentAdv ? $paymentAdv->amt : 0;
+
             // Debug the loaded data
             Log::debug('Data loaded for edit/view', [
                 'object_id' => $this->object->id,
@@ -270,6 +288,24 @@ class Detail extends BaseComponent
 
         $this->inputs['tr_date'] = Carbon::now()->format('d-m-Y');
 
+        // Tambahkan partnerOptions untuk dropdown bank_reff
+        $this->partnerOptions = Partner::orderBy('name')->get()->map(function($partner) {
+            return [
+                'label' => $partner->name,
+                'value' => $partner->name,
+            ];
+        })->toArray();
+
+        // Ambil daftar partner_bals yang amt_adv != 0 untuk dropdown Advance
+        $this->advanceOptions = PartnerBal::where('amt_adv', '!=', 0)->get()
+            ->map(function($bal) {
+                return [
+                    'label' => $bal->partner_code,
+                    'value' => $bal->id,
+                    'amt_adv' => $bal->amt_adv,
+                ];
+            })
+            ->toArray();
     }
 
     public function onReset()
@@ -697,6 +733,12 @@ class Detail extends BaseComponent
                 'total_amt' => array_sum(array_column($this->input_details, 'amt')), // tambahkan total amount
             ];
 
+            // Validasi partner wajib dipilih
+            if (empty($headerData['partner_id']) || empty($headerData['partner_code'])) {
+                $this->dispatch('error', 'Partner wajib dipilih!');
+                return;
+            }
+
             // Validasi input detail
             $hasValidDetails = false;
             foreach ($this->input_details as $detail) {
@@ -778,12 +820,25 @@ class Detail extends BaseComponent
                 Log::debug(json_encode($detailData, JSON_PRETTY_PRINT));
 
                 // Gunakan service untuk menyimpan data
+                $advanceData = [];
+                if ($this->advanceBalance > 0) {
+                    $advType = ConfigConst::where('const_group', 'ADV_TYPE_CODE')->where('str1', 'ARADVPAY')->first();
+                    $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
+                    $advanceData[] = [
+                        'tr_seq' => 1,
+                        'adv_type_id' => $advType ? $advType->id : null,
+                        'adv_type_code' => $advType ? $advType->str1 : 'ARADVPAY',
+                        'partnerbal_id' => $partnerBal ? $partnerBal->id : null,
+                        'reff_id' => $headerData['id'],
+                        'reff_type' => $headerData['tr_type'],
+                        'reff_code' => $headerData['tr_code'],
+                        'amt' => $this->advanceBalance,
+                        'amt_base' => $this->advanceBalance,
+                    ];
+                }
                 if ($this->actionValue == 'Create') {
-                    // Tambahkan parameter keempat untuk advanceData (array kosong jika tidak ada)
-                    $advanceData = [];
                     $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData);
                     $this->objectIdValue = $result['header']->id;
-                    // Update headerData dengan ID baru juga
                     $headerData['id'] = $result['header']->id;
                     Log::debug('After addPayment, updated objectIdValue and headerData', [
                         'new_id' => $this->objectIdValue,
@@ -791,9 +846,6 @@ class Detail extends BaseComponent
                     ]);
                     $this->actionValue = 'Edit';
                 } else {
-                    // Tambahkan parameter advanceData yang sekarang diperlukan
-                    $advanceData = [];
-                    // Gunakan parameter dan nama yang sudah diubah
                     $this->paymentService->modPayment($this->objectIdValue, $headerData, $detailData, $paymentData, $advanceData);
                 }
             } catch (\Exception $e) {
@@ -1019,5 +1071,87 @@ class Detail extends BaseComponent
                 }
             }
         }
+    }
+
+    // Membagi amt pembayaran ke setiap nota secara merata
+    public function payItem()
+    {
+        $totalPayment = 0;
+        foreach ($this->input_payments as $payment) {
+            if (!empty($payment['amt'])) {
+                $amtValue = str_replace('.', '', $payment['amt']);
+                $totalPayment += is_numeric($amtValue) ? (float)$amtValue : 0;
+            }
+        }
+        $notaCount = count($this->input_details);
+        if ($notaCount > 0 && $totalPayment !== null) {
+            // Buat array key asli dan data, lalu urutkan berdasarkan tr_date
+            $details = [];
+            foreach ($this->input_details as $key => $detail) {
+                $details[] = [
+                    'key' => $key,
+                    'tr_date' => isset($detail['tr_date']) ? strtotime($detail['tr_date']) : 0,
+                    'amtbill' => (isset($detail['amtbill']) && is_numeric($detail['amtbill'])) ? (float)$detail['amtbill'] : 0,
+                ];
+            }
+            usort($details, function($a, $b) {
+                return $a['tr_date'] <=> $b['tr_date'];
+            });
+
+            $remaining = $totalPayment;
+            // Reset amt semua nota
+            foreach ($this->input_details as $key => $detail) {
+                $this->input_details[$key]['amt'] = 0;
+            }
+            // Bagi pembayaran ke nota satu per satu sesuai urutan jatuh tempo
+            foreach ($details as $item) {
+                $key = $item['key'];
+                $amtbill = $item['amtbill'];
+                if ($remaining <= 0) {
+                    $this->input_details[$key]['amt'] = 0;
+                } else {
+                    $toPay = min($amtbill, $remaining);
+                    $this->input_details[$key]['amt'] = round($toPay, 2);
+                    $remaining -= $toPay;
+                }
+            }
+            // Hitung total pembayaran dan total amt nota
+            $this->totalPaymentAmount = 0;
+            foreach ($this->input_payments as $payment) {
+                $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
+                $this->totalPaymentAmount += is_numeric($amtValue) ? (float)$amtValue : 0;
+            }
+            $this->totalNotaAmount = 0;
+            foreach ($this->input_details as $detail) {
+                $this->totalNotaAmount += is_numeric($detail['amt']) ? (float)$detail['amt'] : 0;
+            }
+            $this->advanceBalance = $remaining > 0 ? round($remaining, 2) : 0;
+            $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota sesuai limit amtbill dan urutan jatuh tempo.');
+        } else {
+            $this->totalPaymentAmount = 0;
+            $this->totalNotaAmount = 0;
+            $this->advanceBalance = 0;
+            $this->dispatch('error', 'Pastikan ada pembayaran dan nota.');
+        }
+    }
+
+    public function addAdvanceItem()
+    {
+        $this->input_advance[] = [
+            'partnerbal_id' => null,
+            'amt' => 0,
+        ];
+    }
+
+    public function onAdvanceChanged($key, $partnerbal_id)
+    {
+        $partnerBal = PartnerBal::find((int)$partnerbal_id);
+        dd($partnerBal);
+        if ($partnerBal) {
+            $this->input_advance[$key]['amt'] = $partnerBal->amt_adv;
+        } else {
+            $this->input_advance[$key]['amt'] = 0;
+        }
+        $this->input_advance = $this->input_advance;
     }
 }

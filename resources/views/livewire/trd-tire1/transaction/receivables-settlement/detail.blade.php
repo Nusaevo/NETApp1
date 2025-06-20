@@ -125,6 +125,7 @@
                     </x-ui-table>
                 </x-ui-card>
             </div>
+            <br>
             <div class="col-md-12">
                 <x-ui-card title="Nota">
                     <x-ui-table id="Table">
@@ -161,7 +162,7 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
-                                            :action="$actionValue" enabled="true" />
+                                            :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
@@ -175,21 +176,72 @@
                         <x-slot name="button">
                             <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                 button-name="Add" />
+                            <x-ui-button clickEvent="payItem" cssClass="btn btn-primary" button-name="Bayar" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>
             </div>
             <br>
             <div class="col-md-12">
-                <x-ui-card title="Adavance">
-                    <div class="row">
-                        <x-ui-text-field label="Saldo lebih bayar" model="tes" type="text" :action="$actionValue"
-                            required="false" enabled="false" />
-                        <x-ui-text-field label="Pemakaian lebih bayar" model="tes" type="text"
-                            :action="$actionValue" required="true" enabled="true" />
-                        <x-ui-text-field label="Sisa lebih bayar" model="tes" type="text" :action="$actionValue"
-                            required="false" enabled="false" />
+                <x-ui-card title="Advance">
+                    <x-ui-table id="AdvanceTable">
+                        <x-slot name="headers">
+                            <th style="width: 50px; text-align: center;">No</th>
+                            <th style="width: 150px; text-align: center;">Pemakaian Advance</th>
+                            <th style="width: 150px; text-align: center;">Amt</th>
+                            <th style="width: 150px; text-align: center;">Di Pakai</th>
+                            <th style="width: 70px; text-align: center;">Actions</th>
+                        </x-slot>
+                        <x-slot name="rows">
+                            @foreach ($input_advance as $key => $advance)
+                                <tr wire:key="advance-{{ $key }}">
+                                    <td style="text-align: center;">{{ $loop->iteration }}</td>
+                                    <td>
+                                        <x-ui-dropdown-select label="" :options="$advanceOptions"
+                                            model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue" enabled="true"
+                                            onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
+                                    </td>
+                                    <td>
+                                        <x-ui-text-field model="input_advance.{{ $key }}.amt" label="" :action="$actionValue" enabled="true" type="number" />
+                                    </td>
+                                    <td>
+                                        <x-ui-button :clickEvent="'deleteAdvanceItem(' . $key . ')'" button-name="" loading="true"
+                                            :action="$actionValue" cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </x-slot>
+                        <x-slot name="button">
+                            <x-ui-button clickEvent="addAdvanceItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
+                        </x-slot>
+                    </x-ui-table>
                 </x-ui-card>
+            </div>
+            <br>
+            <div class="col-md-12">
+                <x-ui-table id="AdvanceSummaryTable">
+                    <x-slot name="headers">
+                        <th style="width: 150px; text-align: center;">Total Pembayaran</th>
+                        <th style="width: 150px; text-align: center;">Total Amt Nota</th>
+                        <th style="width: 150px; text-align: center;">lebih bayar</th>
+                    </x-slot>
+                    <x-slot name="rows">
+                        <tr>
+                            <td style="text-align: center;">
+                                <x-ui-text-field model="totalPaymentAmount" label="" :action="$actionValue"
+                                    enabled="false" type="number" />
+                            </td>
+                            <td style="text-align: center;">
+                                <x-ui-text-field model="totalNotaAmount" label="" :action="$actionValue"
+                                    enabled="false" type="number" />
+                            </td>
+                            <td style="text-align: center;">
+                                <x-ui-text-field model="advanceBalance" label="" :action="$actionValue"
+                                    enabled="false" type="number" />
+                            </td>
+                        </tr>
+                    </x-slot>
+                </x-ui-table>
             </div>
         </x-ui-tab-view-content>
     </x-ui-page-card>
@@ -199,6 +251,7 @@
         <x-ui-button clickEvent="SaveAll" button-name="Save" loading="true" :action="$actionValue"
             cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>
+    <br>
 
     <x-ui-dialog-box id="PaymentDialogBox" title="Set Payment" width="600px" height="400px"
         onOpened="openPaymentDialogBox" onClosed="closePaymentDialogBox">
@@ -229,8 +282,8 @@
                             :action="$actionValue" type="number" :enabled="$isGiro" />
                     </div>
                     <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_reff_giro"
-                            label="Bank" :action="$actionValue" type="text" :enabled="$isGiro" />
+                        <x-ui-dropdown-select model="input_payments.{{ $activePaymentItemKey }}.bank_reff_giro"
+                            label="Bank" :options="$partnerOptions" :action="$actionValue" :enabled="$isGiro" />
                     </div>
                     <div class="col-md-3">
                         <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_reff_no_giro"
