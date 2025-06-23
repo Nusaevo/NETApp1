@@ -32,7 +32,7 @@ class DelivHdr extends BaseModel
         'tr_code' => 'string',
     ];
 
-    protected $appends = ['total_qty', 'total_amt'];
+    protected $appends = ['total_qty'];
 
     #region Relations
     public function Partner()

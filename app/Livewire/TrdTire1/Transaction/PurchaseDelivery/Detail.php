@@ -191,6 +191,14 @@ class Detail extends BaseComponent
     {
         $this->input_details = [];
         $orderDetails = OrderDtl::where('tr_code', $reffhdrtr_code)->get();
+        $orderHeader = OrderHdr::where('tr_code', $reffhdrtr_code)->first();
+
+        // Cari wh_id dari ConfigConst berdasarkan wh_code di inputs
+        $wh_id = null;
+        if (!empty($this->inputs['wh_code'])) {
+            $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
+            $wh_id = $warehouse ? $warehouse->id : null;
+        }
 
         foreach ($orderDetails as $detail) {
             $qty_remaining = $detail->qty - $detail->qty_reff;
@@ -200,6 +208,10 @@ class Detail extends BaseComponent
                 'matl_descr' => $detail->matl_descr,
                 'matl_uom' => $detail->matl_uom,
                 'order_id' => $detail->id,
+                'reffdtl_id' => $detail->id,
+                'reffhdrtr_id' => $orderHeader ? $orderHeader->id : null,
+                'wh_code' => $this->inputs['wh_code'] ?? null,
+                'wh_id' => $wh_id,
             ];
         }
     }
@@ -298,12 +310,62 @@ class Detail extends BaseComponent
             if ($this->actionValue === 'Create') {
                 $result = $deliveryService->addDelivery($headerData, $detailData);
                 $this->object = $result['header'];
-                // dd($this->object);
+
+                // Update headerData dengan id dari PD yang baru
+                $headerData['id'] = $this->object->id;
+
+                // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
+                $total_amt = 0;
+                foreach ($detailData as $detail) {
+                    if (isset($detail['reffdtl_id']) && isset($detail['qty'])) {
+                        $orderDtl = OrderDtl::find($detail['reffdtl_id']);
+                        if ($orderDtl) {
+                            $price = $orderDtl->price;
+                            $disc_pct = $orderDtl->disc_pct ?? 0;
+                            $qty = $detail['qty'];
+                            $price_after_disc = $price - ($price * $disc_pct / 100);
+                            $total_amt += $price_after_disc * $qty;
+                        }
+                    }
+                }
+                $headerData['total_amt'] = $total_amt;
+
+                // Update juga trhdr_id pada setiap detail
+                foreach ($detailData as &$detail) {
+                    $detail['trhdr_id'] = $this->object->id;
+                }
+                unset($detail);
+
                 // Tambahkan pembuatan BillingHdr
-                // app(BillingService::class)->addBilling($headerData, $detailData);
+                app(BillingService::class)->addBilling($headerData, $detailData);
             } else {
                 // dd($detailData, $headerData);
                 $deliveryService->modDelivery($this->object->id, $headerData, $detailData);
+
+                // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
+                $total_amt = 0;
+                foreach ($detailData as $detail) {
+                    if (isset($detail['reffdtl_id']) && isset($detail['qty'])) {
+                        $orderDtl = OrderDtl::find($detail['reffdtl_id']);
+                        if ($orderDtl) {
+                            $price = $orderDtl->price;
+                            $disc_pct = $orderDtl->disc_pct ?? 0;
+                            $qty = $detail['qty'];
+                            $price_after_disc = $price - ($price * $disc_pct / 100);
+                            $total_amt += $price_after_disc * $qty;
+                        }
+                    }
+                }
+                $headerData['total_amt'] = $total_amt;
+
+                // Update juga trhdr_id pada setiap detail
+                foreach ($detailData as &$detail) {
+                    $detail['trhdr_id'] = $this->object->id;
+                }
+                unset($detail);
+
+                // Panggil update billing
+                app(BillingService::class)->updBilling($this->object->id, $headerData, $detailData);
             }
 
             // dd($this->object);

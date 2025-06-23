@@ -18,8 +18,22 @@ class BillingService
 
     public function addBilling(array $headerData, array $detailData)
     {
-        // Simpan header
+        if (isset($headerData['tr_type'])) {
+            if ($headerData['tr_type'] === 'PD') {
+                $headerData['tr_type'] = 'APB';
+            } elseif ($headerData['tr_type'] === 'SD') {
+                $headerData['tr_type'] = 'ARB';
+            }
+        }
+
         $billingHdr = $this->saveHeader($headerData);
+
+        // Set trhdr_id pada setiap detail
+        foreach ($detailData as &$detail) {
+            $detail['trhdr_id'] = $billingHdr->id;
+        }
+        unset($detail);
+
         $this->saveDetail($headerData, $detailData);
         return $billingHdr;
     }
@@ -27,7 +41,7 @@ class BillingService
     public function updBilling(int $billingId, array $headerData, array $detailData)
     {
         // Update header
-        $this->partnerBalanceService->delPartnerLog('-', $billingId);
+        $this->partnerBalanceService->delPartnerLog($billingId, '-');
         $billingHdr = $this->saveHeader($headerData);
         $this->deleteDetail($billingId);
         $this->saveDetail($headerData, $detailData);
@@ -62,7 +76,7 @@ class BillingService
             $billingDetail->save();
             // Update qty_reff di DelivDtl jika ada dlvdtl_id
             if (!empty($billingDetail->dlvdtl_id)) {
-                $this->deliveryService->updQtyReff('+', $billingDetail->qty, $billingDetail->dlvdtl_id);
+                $this->deliveryService->updDelivQtyReff('+', $billingDetail->qty, $billingDetail->dlvdtl_id);
             }
         }
     }
@@ -71,7 +85,7 @@ class BillingService
     {
         $billingHdr = BillingHdr::findOrFail($billingId);
         $billingHdr->delete();
-        $this->partnerBalanceService->delPartnerLog('-', $billingId);
+        $this->partnerBalanceService->delPartnerLog($billingId, '-');
     }
 
     private function deleteDetail(int $billingId)
@@ -82,7 +96,7 @@ class BillingService
         // Delete onhand and reservation for each detail
         foreach ($existingDetails as $detail) {
             if (!empty($detail->dlvdtl_id)) {
-                $this->deliveryService->updQtyReff('-', $detail->qty, $detail->dlvdtl_id);
+                $this->deliveryService->updDelivQtyReff('-', $detail->qty, $detail->dlvdtl_id);
             }
             $detail->forceDelete();
         }

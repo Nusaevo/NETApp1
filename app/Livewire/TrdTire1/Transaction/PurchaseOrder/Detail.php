@@ -64,7 +64,6 @@ class Detail extends BaseComponent
         'inputs.tax_flag' => 'required',
         'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
-        'input_details.*.disc_pct' => 'nullable|numeric|min:0|max:100',
     ];
 
     // Event listeners
@@ -141,6 +140,10 @@ class Detail extends BaseComponent
 
             $this->total_dpp = number_format((float)$dpp, 2, ',', '.');
             $this->total_tax = number_format((float)$ppn, 2, ',', '.');
+
+            // Store raw numeric values for saving
+            $this->inputs['dpp'] = (float)$dpp;
+            $this->inputs['ppn'] = (float)$ppn;
 
             $this->dispatch('updateDPP', $this->total_dpp);
         } catch (Exception $e) {
@@ -300,24 +303,79 @@ class Detail extends BaseComponent
     public function updateItemAmount($key)
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+            // Calculate basic amount with discount
+            $this->calculateItemAmount($key);
 
-            // Konversi diskon dari format koma ke titik
-            $discountPercent = $this->input_details[$key]['disc_pct'] ?? 0;
-            if (is_string($discountPercent)) {
-                $discountPercent = str_replace(',', '.', $discountPercent);
-            }
-            $discountPercent = (float)$discountPercent;
-
-            $discountAmount = $amount * ($discountPercent / 100);
-            $this->input_details[$key]['amt'] = $amount - $discountAmount;
+            // Calculate tax amounts
+            $this->calculateItemTax($key);
         } else {
-            $this->input_details[$key]['amt'] = 0;
+            $this->resetItemAmounts($key);
         }
 
         // Pastikan amt_idr juga menyimpan nilai numerik (sama dengan amt)
         $this->input_details[$key]['amt_idr'] = $this->input_details[$key]['amt'];
         $this->recalculateTotals();
+    }
+
+    /**
+     * Calculate basic amount with discount for a specific item
+     */
+    private function calculateItemAmount($key)
+    {
+        $qty = $this->input_details[$key]['qty'];
+        $price = $this->input_details[$key]['price'];
+        // disc_pct is in percentage format (e.g., 50 for 50%)
+        $discountPercent = $this->normalizeDiscountPercent($this->input_details[$key]['disc_pct'] ?? 0);
+
+        $amount = $qty * $price;
+        $discountAmount = $amount * ($discountPercent / 100);
+        $this->input_details[$key]['amt'] = $amount - $discountAmount;
+    }
+
+    /**
+     * Calculate tax amounts for a specific item
+     */
+    private function calculateItemTax($key)
+    {
+        $taxFlag = $this->inputs['tax_flag'] ?? 'N';
+        $taxValue = (float)($this->inputs['tax_value'] ?? 0);
+        $taxPctDecimal = $taxValue / 100;
+        $amount = $this->input_details[$key]['amt'];
+
+        if ($taxFlag === 'I') {
+            $this->input_details[$key]['dpp'] = $amount / (1 + $taxPctDecimal);
+            $this->input_details[$key]['ppn'] = $amount - $this->input_details[$key]['dpp'];
+        } elseif ($taxFlag === 'E') {
+            $this->input_details[$key]['dpp'] = $amount;
+            $this->input_details[$key]['ppn'] = $amount * $taxPctDecimal;
+        } else {
+            $this->input_details[$key]['dpp'] = $amount;
+            $this->input_details[$key]['ppn'] = 0;
+        }
+
+        $this->input_details[$key]['amt_tax'] = $this->input_details[$key]['dpp'] + $this->input_details[$key]['ppn'];
+    }
+
+    /**
+     * Reset all amount fields for an item to zero
+     */
+    private function resetItemAmounts($key)
+    {
+        $this->input_details[$key]['amt'] = 0;
+        $this->input_details[$key]['amt_tax'] = 0;
+        $this->input_details[$key]['dpp'] = 0;
+        $this->input_details[$key]['ppn'] = 0;
+    }
+
+    /**
+     * Normalize discount percentage (handle string format with comma)
+     */
+    private function normalizeDiscountPercent($discountPercent)
+    {
+        if (is_string($discountPercent)) {
+            $discountPercent = str_replace(',', '.', $discountPercent);
+        }
+        return (float)$discountPercent;
     }
 
     /**
@@ -349,7 +407,9 @@ class Detail extends BaseComponent
         $this->total_amount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc_pct'] ?? 0;
+            // disc_pct is in percentage format (e.g., 50 for 50%)
+            $discountPercent = $this->normalizeDiscountPercent($detail['disc_pct'] ?? 0);
+
             $amount = $qty * $price;
             $discountAmount = $amount * ($discountPercent / 100);
             return $amount - $discountAmount;
@@ -366,7 +426,9 @@ class Detail extends BaseComponent
         $this->total_discount = array_sum(array_map(function ($detail) {
             $qty = $detail['qty'] ?? 0;
             $price = $detail['price'] ?? 0;
-            $discountPercent = $detail['disc_pct'] ?? 0;
+            // disc_pct is in percentage format (e.g., 50 for 50%)
+            $discountPercent = $this->normalizeDiscountPercent($detail['disc_pct'] ?? 0);
+
             $amount = $qty * $price;
             return $amount * ($discountPercent / 100);
         }, $this->input_details));
@@ -410,22 +472,17 @@ class Detail extends BaseComponent
                 ->get();
 
             foreach ($objectDetails as $key => $detail) {
-                // Ambil array aslinya (misalnya ['disc_pct' => 555.00000, ...])
+                // Ambil array aslinya
                 $arr = populateArrayFromModel($detail);
 
-                // Jika disc_pct ada, bagi 10 supaya kelihatan 55.5
-                if (isset($arr['disc_pct']) && is_numeric($arr['disc_pct'])) {
-                    $arr['disc_pct'] = $arr['disc_pct'] / 10;
-                }
-
+                // No scaling needed - use disc_pct directly from database
                 $this->input_details[$key] = $arr;
 
-                // Hitung ulang amount dengan disc_pct yang sudah di‐scale down
+                // Hitung ulang amount dengan disc_pct dari database
                 $this->updateItemAmount($key);
             }
         }
     }
-
 
     /**
      * Handle payment term change and update due date
@@ -437,6 +494,8 @@ class Detail extends BaseComponent
             if ($paymentTerm) {
                 $dueDays = $paymentTerm->num1;
                 $this->inputs['due_date'] = date('Y-m-d', strtotime("+$dueDays days"));
+                $this->inputs['payment_term'] = $paymentTerm->str1;
+                $this->inputs['payment_due_days'] = $paymentTerm->num1;
             }
         }
     }
@@ -547,6 +606,11 @@ class Detail extends BaseComponent
             $headerData = $this->prepareHeaderData();
             $detailData = $this->prepareDetailData();
 
+            // Calculate totals from detail data
+            $totals = $this->calculateTotalsFromDetails($detailData);
+            $headerData['total_amt'] = $totals['total_amt'];
+            $headerData['total_amt_tax'] = $totals['total_amt_tax'];
+
             DB::beginTransaction();
             try {
                 // Cek payment term dan proses sesuai jenisnya
@@ -576,14 +640,8 @@ class Detail extends BaseComponent
         }
 
         foreach ($this->input_details as &$detail) {
-            if (isset($detail['disc_pct']) && is_string($detail['disc_pct'])) {
-                $discPct = preg_replace('/[^0-9,.]/', '', $detail['disc_pct']);
-                $discPct = str_replace(',', '.', $discPct);
-                $parts = explode('.', $discPct);
-                if (count($parts) > 2) {
-                    $discPct = $parts[0] . '.' . implode('', array_slice($parts, 1));
-                }
-                $detail['disc_pct'] = round((float)$discPct, 5);
+            if (isset($detail['disc_pct'])) {
+                $detail['disc_pct'] = $this->normalizeDiscountPercent($detail['disc_pct']);
             }
         }
         unset($detail);
@@ -596,20 +654,34 @@ class Detail extends BaseComponent
      */
     private function prepareHeaderData()
     {
-        
         $headerData = $this->inputs;
-
         // Set default values
         $defaults = [
             'tr_type' => $this->trType,
             'tr_date' => date('Y-m-d'),
-            'total_amt' => $this->total_amount,
-            'total_amt_tax' => $this->total_tax,
             'tax_flag' => 'N'
         ];
 
         foreach ($defaults as $key => $value) {
             $headerData[$key] = $headerData[$key] ?? $value;
+        }
+
+        // Fallback untuk partner_code
+        if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
+            $partner = Partner::find($headerData['partner_id']);
+            $headerData['partner_code'] = $partner ? $partner->code : '';
+        }
+        // Fallback untuk payment_term dan payment_due_days
+        if (!empty($headerData['payment_term_id'])) {
+            $paymentTerm = ConfigConst::find($headerData['payment_term_id']);
+            if ($paymentTerm) {
+                if (empty($headerData['payment_term'])) {
+                    $headerData['payment_term'] = $paymentTerm->str1;
+                }
+                if (empty($headerData['payment_due_days'])) {
+                    $headerData['payment_due_days'] = $paymentTerm->num1;
+                }
+            }
         }
 
         return $headerData;
@@ -639,8 +711,8 @@ class Detail extends BaseComponent
             $detail['price'] = $matlUom ? $matlUom->selling_price : 0;
             $detail['price_uom'] = $detail['matl_uom'] ?? 'PCS';
 
-            // Calculate amounts
-            $this->calculateDetailAmounts($detail, $this->inputs['tax_flag'] ?? 'N', $this->inputs['tax_pct'] ?? 0);
+            // Calculate amounts (disc_pct already in correct format)
+            $this->calculateDetailAmounts($detail, $this->inputs['tax_flag'] ?? 'N');
 
             // Set transaction fields
             $detail['tr_type'] = $this->trType;
@@ -652,23 +724,71 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Scale discount percentage for database storage
+     */
+    private function scaleDiscountForStorage($discountPercent)
+    {
+        // No scaling needed - keep original format
+        return $this->normalizeDiscountPercent($discountPercent);
+    }
+
+    /**
+     * Scale discount percentage from database format
+     */
+    private function scaleDiscountFromStorage($discountPercent)
+    {
+        // No scaling needed - keep original format
+        if (is_numeric($discountPercent)) {
+            return $discountPercent;
+        }
+        return 0;
+    }
+
+    /**
+     * Hitung total dari detail data untuk update header
+     */
+    private function calculateTotalsFromDetails($detailData)
+    {
+        $totalAmt = 0;
+        $totalAmtTax = 0;
+
+        foreach ($detailData as $detail) {
+            $totalAmt += $detail['amt'] ?? 0;
+            $totalAmtTax += $detail['amt_tax'] ?? 0;
+        }
+
+        return [
+            'total_amt' => $totalAmt,
+            'total_amt_tax' => $totalAmtTax
+        ];
+    }
+
+    /**
      * Hitung jumlah detail
      */
-    private function calculateDetailAmounts(&$detail, $taxFlag, $taxPct)
+    private function calculateDetailAmounts(&$detail, $taxFlag)
     {
+        // Calculate basic amount
         $qty = $detail['qty'] ?? 0;
         $price = $detail['price'] ?? 0;
-        $discPct = $detail['disc_pct'] / 100;
-        $detail['amt'] = $qty * $price * (1 - $discPct);
 
-        $taxPct = $taxPct / 100;
+        // disc_pct is in percentage format (e.g., 50 for 50%)
+        $discountPercent = $this->normalizeDiscountPercent($detail['disc_pct'] ?? 0);
+
+        $amount = $qty * $price;
+        $discountAmount = $amount * ($discountPercent / 100);
+        $detail['amt'] = $amount - $discountAmount;
+
+        // Calculate tax amounts
+        $taxValue = (float)($this->inputs['tax_value'] ?? 0);
+        $taxPctDecimal = $taxValue / 100;
 
         if ($taxFlag === 'I') {
-            $detail['dpp'] = $detail['amt'] / (1 + $taxPct);
+            $detail['dpp'] = $detail['amt'] / (1 + $taxPctDecimal);
             $detail['ppn'] = $detail['amt'] - $detail['dpp'];
         } elseif ($taxFlag === 'E') {
             $detail['dpp'] = $detail['amt'];
-            $detail['ppn'] = $detail['amt'] * $taxPct;
+            $detail['ppn'] = $detail['amt'] * $taxPctDecimal;
         } else {
             $detail['dpp'] = $detail['amt'];
             $detail['ppn'] = 0;
@@ -694,26 +814,17 @@ class Detail extends BaseComponent
         $headerData['payment_term'] = $paymentTerm->str1;
         $headerData['payment_due_days'] = $paymentTerm->num1;
 
-        if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
-            $this->object = $order;
-        } else {
-            $this->orderService->modOrder($this->object->id, $headerData, $detailData);
-        }
+        // Save order
+        $this->saveOrder($headerData, $detailData);
 
+        // Create delivery for CASH payment
         $this->createDeliveryHdr();
         DB::commit();
 
         $this->dispatch('success', 'Purchase Order dan Delivery berhasil ' .
             ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
 
-        return redirect()->route(
-            $this->appCode . '.Transaction.PurchaseOrder.Detail',
-            [
-                'action'   => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id),
-            ]
-        );
+        return $this->redirectToEdit();
     }
 
     /**
@@ -721,17 +832,36 @@ class Detail extends BaseComponent
      */
     private function processNormalOrder($headerData, $detailData)
     {
-        if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
-            $this->dispatch('success', 'Purchase Order berhasil disimpan.');
-            $objectId = $order->id;
-        } else {
-            $this->orderService->modOrder($this->object->id, $headerData, $detailData);
-            $this->dispatch('success', 'Purchase Order berhasil diperbarui.');
-            $objectId = $this->object->id;
-        }
+        // Save order
+        $this->saveOrder($headerData, $detailData);
 
         DB::commit();
+
+        $this->dispatch('success', 'Purchase Order berhasil ' .
+            ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
+
+        return $this->redirectToEdit();
+    }
+
+    /**
+     * Save order (create or update)
+     */
+    private function saveOrder($headerData, $detailData)
+    {
+        if ($this->actionValue === 'Create') {
+            $order = $this->orderService->addOrder($headerData, $detailData);
+            $this->object = $order;
+        } else {
+            $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+        }
+    }
+
+    /**
+     * Redirect to edit page
+     */
+    private function redirectToEdit()
+    {
+        $objectId = $this->actionValue === 'Create' ? $this->object->id : $this->object->id;
 
         return redirect()->route(
             $this->appCode . '.Transaction.PurchaseOrder.Detail',
@@ -922,6 +1052,7 @@ class Detail extends BaseComponent
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_name'] = $partner->code;
+            $this->inputs['partner_code'] = $partner->code;
             $this->inputs['textareasupplier'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
             $this->dispatch('success', "Supplier berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');

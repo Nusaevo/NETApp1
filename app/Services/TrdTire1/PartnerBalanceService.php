@@ -35,7 +35,11 @@ class PartnerBalanceService
             // $partnerBal->note = '';
         }
 
-        $partnerBal->amt_bal = ($partnerBal->amt_bal ?? 0) + $Amt;
+        // Set kolom reff_id, reff_code, amt_bal
+        $partnerBal->reff_id = $headerData['id'] ?? null;
+        $partnerBal->reff_code = $headerData['tr_code'] ?? null;
+        $partnerBal->amt_bal = $headerData['total_amt'] ?? 0;
+
         $partnerBal->save();
 
         $logData = [
@@ -48,7 +52,7 @@ class PartnerBalanceService
             'partner_id' => $headerData['partner_id'],
             'partner_code' => $headerData['partner_code'],
             'partnerbal_id' => $partnerBal->id,
-            'amt' => $Amt,
+            'amt' => $partnerBal->amt_bal,
             'tr_amt' => $headerData['total_amt'],
             'curr_id' => $headerData['curr_id'] ?? 1,
             'curr_rate' => $headerData['curr_rate'] ?? 1,
@@ -60,17 +64,17 @@ class PartnerBalanceService
 
     public function delPartnerLog(int $trHdrId)
     {
-        // Hapus semua log inventory terkait trHdrId
+        // Hapus semua log partner terkait trHdrId secara permanen
         $logs = PartnerLog::where('trhdr_id', $trHdrId)->get();
 
         foreach ($logs as $log) {
-            // Update IvtBal jika perlu
+            // Update PartnerBal jika perlu
             $partnerBal = PartnerBal::find($log->partnerbal_id);
             if ($partnerBal) {
                 $partnerBal->amt_bal = ($partnerBal->amt_bal ?? 0) - $log->amt;
                 $partnerBal->save();
             }
-            // Hapus PartnerLog
+            // Hapus log secara permanen
             $log->forceDelete();
         }
     }

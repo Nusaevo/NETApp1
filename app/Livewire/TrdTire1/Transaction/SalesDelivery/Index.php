@@ -6,6 +6,7 @@ use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr};
 use App\Models\TrdTire1\Inventories\IvtBal;
+use App\Services\TrdTire1\BillingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use App\Services\TrdTire1\Master\MasterService;
@@ -91,7 +92,8 @@ class Index extends BaseComponent
                                 $qtyShip = $ivtBalBatch->qty_oh;
                                 $qtyOrder -= $ivtBalBatch->qty_oh;
                             }
-                            $detailData[] = [
+                            if ($qtyShip > 0) {
+                                $detailData[] = [
                                     'tr_seq' => $detail->tr_seq,
                                     'matl_id' => $detail->matl_id,
                                     'matl_code' => $detail->matl_code,
@@ -108,8 +110,8 @@ class Index extends BaseComponent
                                     'ivt_id' => $ivtBalBatch->id,
                                     'batch_code' => $ivtBalBatch->batch_code,
                                 ];
-
-                            if ($qtyOrder = 0) {
+                            }
+                            if ($qtyOrder == 0) {
                                 break;
                             }
                         }
@@ -147,6 +149,35 @@ class Index extends BaseComponent
                 DB::rollBack();
                 return;
             }
+
+            // Update headerData dengan id dari SD yang baru
+            $headerData['id'] = $result['header']->id;
+
+            // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
+            $total_amt = 0;
+            foreach ($detailData as $detail) {
+                if (isset($detail['reffdtl_id']) && isset($detail['qty'])) {
+                    $orderDtl = OrderDtl::find($detail['reffdtl_id']);
+                    if ($orderDtl) {
+                        $price = $orderDtl->price;
+                        $disc_pct = $orderDtl->disc_pct ?? 0;
+                        $qty = $detail['qty'];
+                        $price_after_disc = $price - ($price * $disc_pct / 100);
+                        $total_amt += $price_after_disc * $qty;
+                    }
+                }
+            }
+            $headerData['total_amt'] = $total_amt;
+
+            // Update juga trhdr_id pada setiap detail
+            foreach ($detailData as &$detail) {
+                $detail['trhdr_id'] = $result['header']->id;
+            }
+            unset($detail);
+
+            // Tambahkan pembuatan BillingHdr
+            app(BillingService::class)->addBilling($headerData, $detailData);
+
             DB::commit();
             $this->dispatch('close-modal-delivery-date');
             $this->dispatch('success', 'Sales Delivery berhasil dibuat');

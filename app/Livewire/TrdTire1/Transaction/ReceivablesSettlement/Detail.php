@@ -377,13 +377,8 @@ class Detail extends BaseComponent
             $this->input_details[$key]['tr_date'] = $billHdr->tr_date;
             $this->input_details[$key]['billhdrtr_code'] = $billHdr->id; // Simpan id, bukan tr_code
 
-            $billingDetails = BillingDtl::where('trhdr_id', $billHdr->id)->get();
-            if ($billingDetails->isNotEmpty()) {
-                $totalAmt = $billingDetails->sum('amt');
-                $this->input_details[$key]['amtbill'] = $totalAmt;
-            } else {
-                $this->input_details[$key]['amtbill'] = 0;
-            }
+            // Ambil langsung dari total_amt pada BillingHdr
+            $this->input_details[$key]['amtbill'] = $billHdr->total_amt ?? 0;
         } else {
             $this->dispatch('error', __('Bill not found.'));
         }
@@ -405,9 +400,9 @@ class Detail extends BaseComponent
                 if ($detail->billdtl_id) {
                     $billingDtl = BillingDtl::find($detail->billdtl_id);
                     if ($billingDtl) {
-                        $amtbill = $billingDtl->amt;
                         $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
                         if ($billingHdr) {
+                            $amtbill = $billingHdr->total_amt ?? 0;
                             $billhdrtr_code = $billingHdr->id; // Simpan id BillingHdr
                             $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
                         }
@@ -420,11 +415,7 @@ class Detail extends BaseComponent
                     if ($billingHdr) {
                         $billhdrtr_code = $billingHdr->id;
                         $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
-                        // Optionally, ambil amtbill juga
-                        $billingDetails = BillingDtl::where('trhdr_id', $billingHdr->id)->get();
-                        if ($billingDetails->isNotEmpty()) {
-                            $amtbill = $billingDetails->sum('amt');
-                        }
+                        $amtbill = $billingHdr->total_amt ?? 0;
                     }
                 }
 
@@ -1045,7 +1036,7 @@ class Detail extends BaseComponent
             $billingList = BillingHdr::where('partner_id', $partner->id)->get();
             $this->input_details = [];
             foreach ($billingList as $bill) {
-                $totalAmt = BillingDtl::where('trhdr_id', $bill->id)->sum('amt');
+                $totalAmt = $bill->total_amt ?? 0;
                 $maxAmt = isset($bill->amt_reff) ? min($totalAmt, $bill->amt_reff) : $totalAmt;
                 $this->input_details[] = [
                     'billhdrtr_code' => $bill->id,
