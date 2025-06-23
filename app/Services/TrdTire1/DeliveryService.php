@@ -147,6 +147,11 @@ class DeliveryService
 
         // Delete onhand and reservation for each detail
         foreach ($existingDetails as $detail) {
+            // Kembalikan qty_fgr (reservasi) sebelum hapus detail
+            $header = DelivHdr::find($detail->trhdr_id);
+            if ($header) {
+                $this->inventoryService->addReservation('+', $header->toArray(), $detail->toArray());
+            }
             // Update qty_reff di OrderDtl
             if ($detail->reffdtl_id) {
                 $this->orderService->updOrderQtyReff('-', $detail->qty, $detail->reffdtl_id);
