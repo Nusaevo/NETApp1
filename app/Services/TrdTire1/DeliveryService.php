@@ -21,15 +21,22 @@ class DeliveryService
     #region Delivery Methods
     public function addDelivery(array $headerData, array $detailData): array
     {
-        // dd('tes');
-            // Simpan header
-            $delivHdr = $this->saveHeader($headerData);
+        // Simpan header
+        $delivHdr = $this->saveHeader($headerData);
 
-            $this->saveDetail($headerData, $detailData);
+        // Set trhdr_id, tr_code, tr_type pada setiap detail
+        foreach ($detailData as &$detail) {
+            $detail['trhdr_id'] = $delivHdr->id;
+            $detail['tr_code'] = $delivHdr->tr_code;
+            $detail['tr_type'] = $delivHdr->tr_type;
+        }
+        unset($detail);
 
-            return [
-                'header' => $delivHdr
-            ];
+        $this->saveDetail($headerData, $detailData);
+
+        return [
+            'header' => $delivHdr
+        ];
     }
 
     public function modDelivery(int $delivId, array $headerData, array $detailData): DelivHdr
@@ -48,13 +55,13 @@ class DeliveryService
             // Hapus detail lama
             $this->deleteDetail($delivId);
 
-            // Set header ID ke detail data
-            foreach ($detailData as &$detail) {
-                $detail['trhdr_id'] = $delivHdr->id;
-                $detail['tr_code'] = $delivHdr->tr_code;
-                $detail['tr_type'] = $delivHdr->tr_type;
-            }
-            unset($detail);
+            // // Set header ID ke detail data
+            // foreach ($detailData as &$detail) {
+            //     $detail['trhdr_id'] = $delivHdr->id;
+            //     $detail['tr_code'] = $delivHdr->tr_code;
+            //     $detail['tr_type'] = $delivHdr->tr_type;
+            // }
+            // unset($detail);
 
             // Simpan detail baru
             $this->saveDetail($headerData, $detailData);
