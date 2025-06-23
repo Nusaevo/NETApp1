@@ -21,24 +21,15 @@ class DeliveryService
     #region Delivery Methods
     public function addDelivery(array $headerData, array $detailData): array
     {
-        return DB::transaction(function () use ($headerData, $detailData) {
+        // dd('tes');
             // Simpan header
             $delivHdr = $this->saveHeader($headerData);
-
-            // Set header ID ke detail data
-            foreach ($detailData as &$detail) {
-                $detail['trhdr_id'] = $delivHdr->id;
-                $detail['tr_code'] = $delivHdr->tr_code;
-                $detail['tr_type'] = $delivHdr->tr_type;
-            }
-            unset($detail);
 
             $this->saveDetail($headerData, $detailData);
 
             return [
                 'header' => $delivHdr
             ];
-        });
     }
 
     public function modDelivery(int $delivId, array $headerData, array $detailData): DelivHdr
@@ -108,8 +99,12 @@ class DeliveryService
     {
         foreach ($detailData as $detail) {
             // Simpan detail
-            $delivDetail = new DelivDtl($detail);
-            $delivDetail->save();
+            // $delivDetail = new DelivDtl($detail);
+            // $delivDetail->save();
+
+            $delivDetail = DelivDtl::create($detail);
+            // dd('tes');
+            // $delivDetails[] = $delivDetail;
 
             // Siapkan data untuk delReservation
             $delivDetailRsv = $delivDetail->toArray();
@@ -123,16 +118,17 @@ class DeliveryService
                 $delivDetailRsv['tr_type'] = 'SO';
                 $headerDataRsv['tr_type'] = 'SO';
             }
-
             // Hapus reservasi order
             $this->inventoryService->addReservation('-', $headerDataRsv, $delivDetailRsv);
 
+            // dd('tes');
             // Tambah stok onhand
             $this->inventoryService->addOnhand($headerData, $delivDetail);
 
+            // dd('tes212');
             // Update qty_reff di OrderDtl
             if ($delivDetail->reffdtl_id) {
-                $this->orderService->updQtyReff('+', $delivDetail->qty, $delivDetail->reffdtl_id);
+                $this->orderService->updOrderQtyReff('+', $delivDetail->qty, $delivDetail->reffdtl_id);
             }
         }
     }
@@ -146,13 +142,27 @@ class DeliveryService
         foreach ($existingDetails as $detail) {
             // Update qty_reff di OrderDtl
             if ($detail->reffdtl_id) {
-                $this->orderService->updQtyReff('-', $detail->qty, $detail->reffdtl_id);
+                $this->orderService->updOrderQtyReff('-', $detail->qty, $detail->reffdtl_id);
             }
             $detail->forceDelete();
         }
 
         // Hapus log inventory
         $this->inventoryService->delIvtLog($trHdrId);
+    }
+
+    public function updDelivQtyReff(string $mode, float $qty, int $dlvdtl_id)
+    {
+        // Update qty_reff di DelivDtl
+        $delivDtl = DelivDtl::find($dlvdtl_id);
+        if ($delivDtl) {
+            if ($mode === '+') {
+                $delivDtl->qty_reff = ($delivDtl->qty_reff ?? 0) + $qty;
+            } else if ($mode === '-') {
+                $delivDtl->qty_reff = ($delivDtl->qty_reff ?? 0) - $qty;
+            }
+            $delivDtl->save();
+        }
     }
 
     #endregion

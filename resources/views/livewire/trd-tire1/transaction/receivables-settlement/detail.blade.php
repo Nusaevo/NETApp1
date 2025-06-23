@@ -84,7 +84,7 @@
                         <!-- Define table headers -->
                         <x-slot name="headers">
                             <th style="width: 50px; text-align: center;">No</th>
-                            <th style="width: 150px; text-align: center;">Jenis</th>
+                            <th style="width: 150px; text-align: center;">Tipe Pembayaran</th>
                             <th style="width: 150px; text-align: center;">Keterangan</th>
                             <th style="width: 150px; text-align: center;">Amount</th>
                             <th style="width: 70px; text-align: center;">Actions</th>
@@ -187,9 +187,9 @@
                     <x-ui-table id="AdvanceTable">
                         <x-slot name="headers">
                             <th style="width: 50px; text-align: center;">No</th>
-                            <th style="width: 150px; text-align: center;">Pemakaian Advance</th>
-                            <th style="width: 150px; text-align: center;">Amt</th>
-                            <th style="width: 150px; text-align: center;">Di Pakai</th>
+                            <th style="width: 200px; text-align: center;">Pemakaian Advance</th>
+                            <th style="width: 150px; text-align: center;">Amount</th>
+                            <th style="width: 150px; text-align: center;">Dipakai</th>
                             <th style="width: 70px; text-align: center;">Actions</th>
                         </x-slot>
                         <x-slot name="rows">
@@ -197,22 +197,30 @@
                                 <tr wire:key="advance-{{ $key }}">
                                     <td style="text-align: center;">{{ $loop->iteration }}</td>
                                     <td>
-                                        <x-ui-dropdown-select label="" :options="$advanceOptions"
-                                            model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue" enabled="true"
+                                        <x-ui-dropdown-select :options="$advanceOptions"
+                                            model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue"
+                                            enabled="true"
                                             onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
                                     </td>
-                                    <td>
-                                        <x-ui-text-field model="input_advance.{{ $key }}.amt" label="" :action="$actionValue" enabled="true" type="number" />
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_advance.{{ $key }}.amt" label=""
+                                            :action="$actionValue" enabled="false" type="text" />
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_advance.{{ $key }}.amt2"
+                                            label="" :action="$actionValue" enabled="true" type="text" />
                                     </td>
-                                    <td>
+                                    </td>
+                                    <td style="text-align: center;">
                                         <x-ui-button :clickEvent="'deleteAdvanceItem(' . $key . ')'" button-name="" loading="true"
-                                            :action="$actionValue" cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                                            :action="$actionValue" cssClass="btn-danger text-danger"
+                                            iconPath="delete.svg" />
                                     </td>
                                 </tr>
                             @endforeach
                         </x-slot>
                         <x-slot name="button">
-                            <x-ui-button clickEvent="addAdvanceItem" cssClass="btn btn-primary" iconPath="add.svg" button-name="Add" />
+                            <x-ui-button clickEvent="addAdvanceItem" cssClass="btn btn-primary" iconPath="add.svg"
+                                button-name="Add" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>

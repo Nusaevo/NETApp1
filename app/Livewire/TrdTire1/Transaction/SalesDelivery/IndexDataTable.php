@@ -91,10 +91,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("warehouse"), "warehouse")
                 ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
+                    $delivDtl = DelivDtl::where('tr_code', $row->tr_code)
+                        ->where('tr_type', 'SD')
                         ->first();
-                    return $delivery ? $delivery->wh_code : '';
+                    return $delivDtl ? $delivDtl->wh_code : '';
                 })
                 ->sortable(),
             Column::make($this->trans("Status"), "status")

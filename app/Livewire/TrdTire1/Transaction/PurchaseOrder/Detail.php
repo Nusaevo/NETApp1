@@ -596,6 +596,7 @@ class Detail extends BaseComponent
      */
     private function prepareHeaderData()
     {
+        
         $headerData = $this->inputs;
 
         // Set default values

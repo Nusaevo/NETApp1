@@ -19,8 +19,9 @@ class BillingService
     public function addBilling(array $headerData, array $detailData)
     {
         // Simpan header
-        $this->saveHeader($headerData);
+        $billingHdr = $this->saveHeader($headerData);
         $this->saveDetail($headerData, $detailData);
+        return $billingHdr;
     }
 
     public function updBilling(int $billingId, array $headerData, array $detailData)
@@ -40,13 +41,17 @@ class BillingService
 
     private function saveHeader(array $headerData)
     {
-        $billingHdr = BillingHdr::findOrFail($$headerData['id'] ?? null);
+        $billingHdr = null;
+        if (!empty($headerData['id'])) {
+            $billingHdr = BillingHdr::find($headerData['id']);
+        }
         if ($billingHdr) {
             $billingHdr->update($headerData);
         } else {
             $billingHdr = BillingHdr::create($headerData);
         }
         $this->partnerBalanceService->updPartnerBalance('+', $headerData);
+        return $billingHdr;
     }
 
     private function saveDetail(array $headerData, array $detailData)
@@ -55,8 +60,8 @@ class BillingService
             // Simpan detail
             $billingDetail = new BillingDtl($detail);
             $billingDetail->save();
-            // Update qty_reff di DelivDtl
-            if ($billingDetail->dlvdtl_id) {
+            // Update qty_reff di DelivDtl jika ada dlvdtl_id
+            if (!empty($billingDetail->dlvdtl_id)) {
                 $this->deliveryService->updQtyReff('+', $billingDetail->qty, $billingDetail->dlvdtl_id);
             }
         }
@@ -72,11 +77,13 @@ class BillingService
     private function deleteDetail(int $billingId)
     {
         // Get existing details
-        $existingDetails = billingDtl::where('trhdr_id', $billingId)->get();
+        $existingDetails = BillingDtl::where('trhdr_id', $billingId)->get();
 
         // Delete onhand and reservation for each detail
         foreach ($existingDetails as $detail) {
-            $this->deliveryService->updQtyReff('-', $detail->qty, $detail->dlvdtl_id);
+            if (!empty($detail->dlvdtl_id)) {
+                $this->deliveryService->updQtyReff('-', $detail->qty, $detail->dlvdtl_id);
+            }
             $detail->forceDelete();
         }
     }

@@ -141,15 +141,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" enabled="true"
-                                                onChanged="updateItemAmount({{ $key }})"
-                                                :value="isset($input_details[$key]['disc_pct'])
-                                                    ? number_format(
-                                                        (float) $input_details[$key]['disc_pct'] / 10,
-                                                        1,
-                                                        '.',
-                                                        '',
-                                                    )
-                                                    : ''" />
+                                                onChanged="updateItemAmount({{ $key }})" type="number"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
@@ -188,7 +180,7 @@
                         <tr>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_discount" label="" :action="$actionValue"
-                                    enabled="false" type="text" :value="number_format((float)$total_discount, 2, ',', '.')" />
+                                    enabled="false" type="text" :value="number_format((float) $total_discount, 2, ',', '.')" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"

@@ -12,6 +12,7 @@ use App\Services\TrdTire1\Master\MasterService;
 use App\Services\TrdTire1\DeliveryService;
 use Livewire\Attributes\On;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class Index extends BaseComponent
 {
@@ -56,65 +57,96 @@ class Index extends BaseComponent
                     'partner_id' => $order->partner_id,
                     'partner_code' => $order->partner_code,
                     'status_code' => $order->status_code,
-                    'wh_code' => $warehouse->str1,
-                    'wh_id' => $warehouse->id,
+                    'wh_code' => $warehouse ? $warehouse->str1 : null,
+                    'wh_id' => $warehouse ? $warehouse->id : null,
                     'payment_term_id' => $order->payment_term_id ?? 0,
                     'payment_term' => $order->payment_term ?? null,
                     'payment_due_days' => $order->payment_due_days ?? 0,
+                    'note' => '',
+                    'reff_date' => $this->tr_date,
                 ];
+                // dd($headerData);
 
                 // Prepare detail data
                 $detailData = [];
                 $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
                 foreach ($orderDetails as $detail) {
-                    $qtyToDeliver = $detail->qty; // Quantity needed from the order detail
 
                     // Get available stock from IvtBal for the material and warehouse, ordered by batch_code
-                    $availableBatches = IvtBal::where('matl_id', $detail->matl_id)
+                    $availableBatches = $warehouse ? IvtBal::where('matl_id', $detail->matl_id)
                         ->where('wh_id', $warehouse->id)
-                        ->where('qty_oh', '>', 0) // Only consider batches with available on-hand quantity
                         ->orderBy('batch_code')
-                        ->get();
+                        ->get() : collect();
 
-                    foreach ($availableBatches as $ivtBalBatch) {
-                        if ($qtyToDeliver <= 0) {
-                            break; // All quantity for this order detail has been allocated
-                        }
-
-                        $qtyFromThisBatch = min($qtyToDeliver, $ivtBalBatch->qty_oh);
-
-                        if ($qtyFromThisBatch > 0) {
+                    if ($availableBatches->isEmpty()) {
+                        throw new Exception(__('Tidak ada stok tersedia untuk material: ' . $detail->matl_code));
+                    } else {
+                        $qtyOrder =  $detail->qty;
+                        foreach ($availableBatches as $ivtBalBatch) {
+                            $qtyShip = 0;
+                            if  ($ivtBalBatch->qty_oh >= $qtyOrder) {
+                                $qtyShip = $qtyOrder;
+                                $qtyOrder = 0;
+                            } else {
+                                $qtyShip = $ivtBalBatch->qty_oh;
+                                $qtyOrder -= $ivtBalBatch->qty_oh;
+                            }
                             $detailData[] = [
-                                'tr_seq' => $detail->tr_seq,
-                                'matl_id' => $detail->matl_id,
-                                'matl_code' => $detail->matl_code,
-                                'matl_descr' => $detail->matl_descr,
-                                'matl_uom' => $detail->matl_uom,
-                                'qty' => $qtyFromThisBatch, // Allocated quantity for this batch
-                                'wh_id' => $warehouse->id,
-                                'wh_code' => $warehouse->str1,
-                                'reffdtl_id' => $detail->id,
-                                'reffhdrtr_type' => $detail->OrderHdr->tr_type,
-                                'reffhdrtr_code' => $order->tr_code,
-                                'reffdtltr_seq' => $detail->tr_seq,
-                                'batch_code' => $ivtBalBatch->batch_code // Specific batch code
-                            ];
-                            $qtyToDeliver -= $qtyFromThisBatch;
+                                    'tr_seq' => $detail->tr_seq,
+                                    'matl_id' => $detail->matl_id,
+                                    'matl_code' => $detail->matl_code,
+                                    'matl_descr' => $detail->matl_descr,
+                                    'matl_uom' => $detail->matl_uom,
+                                    'qty' => $qtyShip,
+                                    'wh_id' => $warehouse ? $warehouse->id : null,
+                                    'wh_code' => $warehouse ? $warehouse->str1 : null,
+                                    'reffdtl_id' => $detail->id,
+                                    'reffhdrtr_id' => $order->id,
+                                    'reffhdrtr_type' => $detail->OrderHdr->tr_type,
+                                    'reffhdrtr_code' => $order->tr_code,
+                                    'reffdtltr_seq' => $detail->tr_seq,
+                                    'ivt_id' => $ivtBalBatch->id,
+                                    'batch_code' => $ivtBalBatch->batch_code,
+                                ];
+
+                            if ($qtyOrder = 0) {
+                                break;
+                            }
+                        }
+                        if ($qtyOrder > 0) {
+                            // $this->dispatch('error', 'Stok tidak mencukupi untuk material: ' . $detail->matl_code);
+                            throw new Exception(__('Stok tidak mencukupi untuk material: ' . $detail->matl_code));
+
                         }
                     }
-
-                    // // Optional: Handle if qtyToDeliver > 0 after checking all batches (insufficient stock)
-                    // if ($qtyToDeliver > 0) {
-                    //     // Anda bisa melempar exception atau memberikan pesan error di sini
-                    //     throw new Exception('Stok tidak mencukupi untuk item ' . $detail->matl_code . ' sebanyak ' . $qtyToDeliver . ' PCS.');
-                    // }
                 }
 
-                // Create delivery using service
-                $deliveryService = app(DeliveryService::class);
-                $result = $deliveryService->addDelivery($headerData, $detailData);
-            }
+                // VALIDASI DATA sebelum kirim ke service
+                // if (!$warehouse) {
+                //     $this->dispatch('error', 'Warehouse tidak ditemukan!');
+                //     DB::rollBack();
+                //     return;
+                // }
+                // if (empty($detailData)) {
+                //     $this->dispatch('error', 'Tidak ada detail barang yang valid untuk dikirim!');
+                //     DB::rollBack();
+                //     return;
+                // }
+                // if (empty($headerData['partner_id']) || empty($headerData['tr_code'])) {
+                //     $this->dispatch('error', 'Data header tidak lengkap!');
+                //     DB::rollBack();
+                //     return;
+                // }
 
+            }
+            // Create delivery using service
+            $deliveryService = app(DeliveryService::class);
+            $result = $deliveryService->addDelivery($headerData, $detailData);
+            if (empty($result['header'])) {
+                $this->dispatch('error', 'Gagal membuat Delivery: Data header tidak valid atau ada constraint DB.');
+                DB::rollBack();
+                return;
+            }
             DB::commit();
             $this->dispatch('close-modal-delivery-date');
             $this->dispatch('success', 'Sales Delivery berhasil dibuat');

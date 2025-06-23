@@ -184,7 +184,7 @@ class InventoryService
             'tr_type' => $detailData->tr_type,
             'tr_code' => $detailData->tr_code,
             'tr_seq' => $detailData->tr_seq,
-            'trdtl_id' => $detailData->id,
+            'trdtl_id' => $detailData->id ?? null,
             'ivt_id' => $ivtBal->id,
             'matl_id' => $detailData->matl_id,
             'matl_code' => $detailData->matl_code,
