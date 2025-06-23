@@ -338,6 +338,26 @@ class Detail extends BaseComponent
 
                 // Tambahkan pembuatan BillingHdr
                 app(BillingService::class)->addBilling($headerData, $detailData);
+
+                // Tambahkan update ivt_id pada setiap DelivDtl setelah simpan
+                foreach ($detailData as $detail) {
+                    $delivDtl = DelivDtl::where([
+                        'trhdr_id' => $this->object->id,
+                        'matl_id' => $detail['matl_id'],
+                        'tr_seq' => $detail['tr_seq'],
+                    ])->first();
+                    if ($delivDtl) {
+                        $ivtBal = IvtBal::where([
+                            'matl_id' => $delivDtl->matl_id,
+                            'wh_id' => $delivDtl->wh_id,
+                            'batch_code' => $delivDtl->batch_code,
+                        ])->first();
+                        if ($ivtBal) {
+                            $delivDtl->ivt_id = $ivtBal->id;
+                            $delivDtl->save();
+                        }
+                    }
+                }
             } else {
                 // dd($detailData, $headerData);
                 $deliveryService->modDelivery($this->object->id, $headerData, $detailData);
@@ -366,6 +386,26 @@ class Detail extends BaseComponent
 
                 // Panggil update billing
                 app(BillingService::class)->updBilling($this->object->id, $headerData, $detailData);
+
+                // Tambahkan update ivt_id pada setiap DelivDtl setelah simpan
+                foreach ($detailData as $detail) {
+                    $delivDtl = DelivDtl::where([
+                        'trhdr_id' => $this->object->id,
+                        'matl_id' => $detail['matl_id'],
+                        'tr_seq' => $detail['tr_seq'],
+                    ])->first();
+                    if ($delivDtl) {
+                        $ivtBal = IvtBal::where([
+                            'matl_id' => $delivDtl->matl_id,
+                            'wh_id' => $delivDtl->wh_id,
+                            'batch_code' => $delivDtl->batch_code,
+                        ])->first();
+                        if ($ivtBal) {
+                            $delivDtl->ivt_id = $ivtBal->id;
+                            $delivDtl->save();
+                        }
+                    }
+                }
             }
 
             // dd($this->object);

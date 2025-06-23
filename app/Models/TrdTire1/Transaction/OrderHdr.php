@@ -39,7 +39,6 @@ class OrderHdr extends BaseModel
         'npwp_code',
         'total_amt',
         'total_amt_tax',
-        'cust_reff',
     ];
 
     protected $casts = [
@@ -51,10 +50,10 @@ class OrderHdr extends BaseModel
         parent::boot();
 
         // Hook untuk menghapus relasi saat header dihapus
-        static::deleting(function ($orderHdr) {
-            $orderHdr->deleteDeliveryAndBilling();
-            $orderHdr->deleteOrderDetails();
-        });
+        // static::deleting(function ($orderHdr) {
+        //     $orderHdr->deleteDeliveryAndBilling();
+        //     $orderHdr->deleteOrderDetails();
+        // });
     }
 
     #region Relasi
