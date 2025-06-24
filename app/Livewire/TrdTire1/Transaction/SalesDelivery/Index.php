@@ -93,7 +93,7 @@ class Index extends BaseComponent
                                 $qtyOrder -= $ivtBalBatch->qty_oh;
                             }
                             if ($qtyShip > 0) {
-                                $detailData[] = [
+                            $detailData[] = [
                                     'tr_seq' => $detail->tr_seq,
                                     'matl_id' => $detail->matl_id,
                                     'matl_code' => $detail->matl_code,
