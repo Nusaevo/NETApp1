@@ -296,7 +296,7 @@ class Detail extends BaseComponent
                     'wh_id' => $detail['wh_id'],
                     'wh_code' => $detail['wh_code'],
                     'reffdtl_id' => $orderDtl->id ?? null,
-                    'reffhdrtr_id' => $orderHdr->id,
+                    // 'reffhdrtr_id' => $orderHdr->id,
                     'reffhdrtr_type' => $orderHdr->tr_type,
                     'reffhdrtr_code' => $orderHdr->tr_code,
                     'reffdtltr_seq' => $orderDtl->tr_seq,
