@@ -18,22 +18,8 @@ class BillingService
 
     public function addBilling(array $headerData, array $detailData)
     {
-        if (isset($headerData['tr_type'])) {
-            if ($headerData['tr_type'] === 'PD') {
-                $headerData['tr_type'] = 'APB';
-            } elseif ($headerData['tr_type'] === 'SD') {
-                $headerData['tr_type'] = 'ARB';
-            }
-        }
-
+        // Simpan header
         $billingHdr = $this->saveHeader($headerData);
-
-        // Set trhdr_id pada setiap detail
-        foreach ($detailData as &$detail) {
-            $detail['trhdr_id'] = $billingHdr->id;
-        }
-        unset($detail);
-
         $this->saveDetail($headerData, $detailData);
         return $billingHdr;
     }
@@ -41,7 +27,7 @@ class BillingService
     public function updBilling(int $billingId, array $headerData, array $detailData)
     {
         // Update header
-        $this->partnerBalanceService->delPartnerLog($billingId, '-');
+        $this->partnerBalanceService->delPartnerLog($billingId);
         $billingHdr = $this->saveHeader($headerData);
         $this->deleteDetail($billingId);
         $this->saveDetail($headerData, $detailData);
@@ -85,7 +71,7 @@ class BillingService
     {
         $billingHdr = BillingHdr::findOrFail($billingId);
         $billingHdr->delete();
-        $this->partnerBalanceService->delPartnerLog($billingId, '-');
+        $this->partnerBalanceService->delPartnerLog($billingId);
     }
 
     private function deleteDetail(int $billingId)

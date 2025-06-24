@@ -97,12 +97,7 @@ class OrderService
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_code'] = $headerData['tr_code'];
 
-            // Pastikan disc_pct ada dan dalam format yang benar
-            if (isset($detail['disc_pct'])) {
-                $detail['disc_pct'] = (float)$detail['disc_pct'];
-            } else {
-                $detail['disc_pct'] = 0;
-            }
+
 
             // Simpan detail terlebih dahulu
             $savedDetail = OrderDtl::create($detail);

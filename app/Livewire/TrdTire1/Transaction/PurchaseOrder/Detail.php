@@ -610,7 +610,6 @@ class Detail extends BaseComponent
             $totals = $this->calculateTotalsFromDetails($detailData);
             $headerData['total_amt'] = $totals['total_amt'];
             $headerData['total_amt_tax'] = $totals['total_amt_tax'];
-
             DB::beginTransaction();
             try {
                 // Cek payment term dan proses sesuai jenisnya
@@ -628,6 +627,7 @@ class Detail extends BaseComponent
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menyimpan: ' . $e->getMessage());
         }
+            // dd($detailData);
     }
 
     /**
