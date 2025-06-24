@@ -147,23 +147,10 @@ class DeliveryService
 
         // Delete onhand and reservation for each detail
         foreach ($existingDetails as $detail) {
-            // Kembalikan reservasi sebelum hapus detail
+            // Kembalikan qty_fgr (reservasi) sebelum hapus detail
             $header = DelivHdr::find($detail->trhdr_id);
             if ($header) {
-                // Siapkan data untuk addReservation
-                $headerDataRsv = $header->toArray();
-                $detailDataRsv = $detail->toArray();
-
-                // Sesuaikan tr_type untuk addReservation
-                if ($detail->tr_type === 'PD') {
-                    $headerDataRsv['tr_type'] = 'PO';
-                    $detailDataRsv['tr_type'] = 'PO';
-                } else if ($detail->tr_type === 'SD') {
-                    $headerDataRsv['tr_type'] = 'SO';
-                    $detailDataRsv['tr_type'] = 'SO';
-                }
-
-                $this->inventoryService->addReservation('+', $headerDataRsv, $detailDataRsv);
+                $this->inventoryService->addReservation('+', $header->toArray(), $detail->toArray());
             }
             // Update qty_reff di OrderDtl
             if ($detail->reffdtl_id) {
