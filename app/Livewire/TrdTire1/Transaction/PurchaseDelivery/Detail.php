@@ -209,7 +209,7 @@ class Detail extends BaseComponent
                 'matl_uom' => $detail->matl_uom,
                 'order_id' => $detail->id,
                 'reffdtl_id' => $detail->id,
-                'reffhdrtr_id' => $orderHeader ? $orderHeader->id : null,
+                // 'reffhdrtr_id' => $orderHeader ? $orderHeader->id : null,
                 'wh_code' => $this->inputs['wh_code'] ?? null,
                 'wh_id' => $wh_id,
             ];
@@ -280,7 +280,8 @@ class Detail extends BaseComponent
                 // dd($detail);
                 $orderDtl = OrderDtl::find($detail['reffdtl_id']);
                 $material = Material::find($detail['matl_id']);
-                $orderHdr = OrderHdr::find($detail['reffhdrtr_id']);
+                // Ambil orderHdr dari orderDtl, karena reffhdrtr_id tidak tersimpan di input_details
+                $orderHdr = $orderDtl ? $orderDtl->OrderHdr : null;
 
                 // dd($headerData);
                 $detailData[] = [
