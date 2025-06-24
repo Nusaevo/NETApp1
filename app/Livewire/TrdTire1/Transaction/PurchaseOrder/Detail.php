@@ -625,9 +625,8 @@ class Detail extends BaseComponent
                 throw $e;
             }
         } catch (Exception $e) {
-            $this->dispatch('error', 'Gagal menyimpan: ' . $e->getMessage());
+            throw new Exception('Gagal menyimpan: ' . $e->getMessage());
         }
-            // dd($detailData);
     }
 
     /**
@@ -848,11 +847,21 @@ class Detail extends BaseComponent
      */
     private function saveOrder($headerData, $detailData)
     {
-        if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
-            $this->object = $order;
-        } else {
-            $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+        try {
+            if ($this->actionValue === 'Create') {
+                $order = $this->orderService->addOrder($headerData, $detailData);
+                if (!$order) {
+                    throw new Exception('Gagal membuat Purchase Order.');
+                }
+                $this->object = $order;
+            } else {
+                $result = $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+                if (!$result) {
+                    throw new Exception('Gagal mengubah Purchase Order.');
+                }
+            }
+        } catch (Exception $e) {
+            throw $e; // biar bisa rollback di caller
         }
     }
 
