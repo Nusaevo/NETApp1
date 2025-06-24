@@ -29,7 +29,6 @@ class DelivDtl extends BaseModel
         'reffhdrtr_type',
         'reffhdrtr_code',
         'reffdtltr_seq',
-        'reffhdrtr_id',
         'matl_id',
         'matl_code',
         'matl_uom',
