@@ -118,13 +118,13 @@ class OrderService
     private function deleteDetails(int $orderID): void
     {
         // Ambil semua detail lama
-        $details = OrderDtl::where('trhdr_id', $orderID)->get();
-        $header = OrderHdr::find($orderID);
-        foreach ($details as $detail) {
-            if ($header) {
-                $this->inventoryService->addReservation('-', $header->toArray(), $detail->toArray());
-            }
-        }
+        // $details = OrderDtl::where('trhdr_id', $orderID)->get();
+        // $header = OrderHdr::find($orderID);
+        // foreach ($details as $detail) {
+        //     if ($header) {
+        //         $this->inventoryService->addReservation('-', $header->toArray(), $detail->toArray());
+        //     }
+        // }
         // Then delete the details
         OrderDtl::where('trhdr_id', $orderID)->forceDelete();
         $this->inventoryService->delIvtLog($orderID);

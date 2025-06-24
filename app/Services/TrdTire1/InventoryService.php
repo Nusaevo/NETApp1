@@ -120,7 +120,7 @@ class InventoryService
             'wh_id' => 0,
             'wh_code' => '',
             'batch_code' => '',
-            'reff_id' => $headerData['reff_id'] ?? 0,
+            'reff_id' => $headerData['reff_id'] ?? null,
             'tr_date' => $headerData['tr_date'],
             'qty' => $mode === '+' ? $qty : -$qty,
             'price' => $price,
@@ -200,7 +200,7 @@ class InventoryService
             'wh_id' => $detailData->wh_id,
             'wh_code' => $detailData->wh_code,
             'batch_code' => $detailData->batch_code,
-            'reff_id' => $headerData['reff_id'] ?? 0,
+            'reff_id' => $headerData['reff_id'] ?? null,
             'tr_date' => $headerData['tr_date'],
             'qty' => $headerData['tr_type'] === 'PD' ? $detailData->qty : -$detailData->qty,
             'price' => $price,
@@ -232,31 +232,17 @@ class InventoryService
                     case 'POR': // Purchase Order Reservation: Kurangi FGR
                         $ivtBal->qty_fgr -= $log->tr_qty;
                         break;
+                    case 'SDR': // Sales Order Reservation: Kurangi FGI
+                        $ivtBal->qty_fgi += $log->tr_qty;
+                        break;
+                    case 'PDR': // Purchase Order Reservation: Kurangi FGR
+                        $ivtBal->qty_fgr += $log->tr_qty;
+                        break;
                     case 'SD': // Sales Delivery: Kembalikan OH dan FGI
                         $ivtBal->qty_oh += $log->tr_qty; // Kembalikan OH yang dikurangi
-                        // Cari IvtBal untuk reservasi (wh_id = 0, batch_code = '')
-                        $reservationBal = IvtBal::where([
-                            'matl_id' => $log->matl_id,
-                            'wh_id' => 0,
-                            'batch_code' => ''
-                        ])->first();
-                        if ($reservationBal) {
-                            $reservationBal->qty_fgi += $log->tr_qty; // Kembalikan FGI yang dikurangi
-                            $reservationBal->save();
-                        }
                         break;
                     case 'PD': // Purchase Delivery: Kembalikan OH dan FGR
                         $ivtBal->qty_oh -= $log->tr_qty; // Kurangi OH yang ditambah
-                        // Cari IvtBal untuk reservasi (wh_id = 0, batch_code = '')
-                        $reservationBal = IvtBal::where([
-                            'matl_id' => $log->matl_id,
-                            'wh_id' => 0,
-                            'batch_code' => ''
-                        ])->first();
-                        if ($reservationBal) {
-                            $reservationBal->qty_fgr += $log->tr_qty; // Kembalikan FGR yang dikurangi
-                            $reservationBal->save();
-                        }
                         break;
                 }
                 $ivtBal->save();
