@@ -176,7 +176,7 @@ class Index extends BaseComponent
             unset($detail);
 
             // Tambahkan pembuatan BillingHdr
-            app(BillingService::class)->addBilling($headerData, $detailData);
+            // app(BillingService::class)->addBilling($headerData, $detailData);
 
             DB::commit();
             $this->dispatch('close-modal-delivery-date');
