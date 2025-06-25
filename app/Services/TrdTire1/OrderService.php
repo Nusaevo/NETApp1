@@ -4,11 +4,8 @@ namespace App\Services\TrdTire1;
 
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Models\TrdTire1\Transaction\OrderDtl;
-use App\Models\TrdTire1\Master\Material;
-use App\Models\TrdTire1\Inventories\IvtLog;
 use Illuminate\Support\Facades\DB;
 use Exception;
-use phpDocumentor\Reflection\PseudoTypes\Numeric_;
 
 class OrderService
 {
@@ -21,55 +18,81 @@ class OrderService
 
     public function addOrder(array $headerData, array $detailData): OrderHdr
     {
-        // Simpan header terlebih dahulu
-        $order = $this->saveHeader($headerData);
+        DB::beginTransaction();
+        try{
+            // Simpan header terlebih dahulu
+            $order = $this->saveHeader($headerData);
 
-        // Set ID header ke headerData untuk digunakan di saveDetails
-        $headerData['id'] = $order->id;
+            // Set ID header ke headerData untuk digunakan di saveDetails
+            $headerData['id'] = $order->id;
 
-        // Simpan detail
-        $this->saveDetails($headerData, $detailData);
+            // Simpan detail
+            $this->saveDetails($headerData, $detailData);
 
-        return $order;
+            DB::commit();
+            return $order;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception('Error adding order: ' . $e->getMessage());
+        }
     }
 
-    public function modOrder(int $orderId, array $headerData, array $detailData): OrderHdr
+    public function updOrder(int $orderId, array $headerData, array $detailData): OrderHdr
     {
-        // Update header
-        $order = $this->saveHeader($headerData, $orderId);
+        DB::beginTransaction();
+        try {
+            // Update header
+            $order = $this->saveHeader($headerData, $orderId);
 
-        // Set ID header ke headerData untuk digunakan di saveDetails
-        $headerData['id'] = $order->id;
+            // Set ID header ke headerData untuk digunakan di saveDetails
+            $headerData['id'] = $order->id;
 
-        // Delete existing details
-        $this->deleteDetails($orderId);
+            // Delete existing details
+            $this->deleteDetails($orderId);
 
-        // Save new details
-        $this->saveDetails($headerData, $detailData);
+            // Save new details
+            $this->saveDetails($headerData, $detailData);
 
-        return $order;
+            DB::commit();
+            return $order;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception('Error updating order: ' . $e->getMessage());
+        }
     }
 
      public function delOrder(int $orderId)
      {
-         $this->deleteDetails($orderId);
-         $this->deleteHeader($orderId);
+         DB::beginTransaction();
+         try {
+             $this->deleteDetails($orderId);
+             $this->deleteHeader($orderId);
+             DB::commit();
+         } catch (Exception $e) {
+             DB::rollBack();
+             throw new Exception('Error deleting order: ' . $e->getMessage());
+         }
     }
 
 
     public function updOrderQtyReff(string $mode, float $qtyDeliv, int $orderDtlId)
     {
-        // dd($qtyDeliv, $orderDtlId);
-        // Update qty_reff di OrderDtl
-        $orderDtl = OrderDtl::find($orderDtlId);
-        if ($orderDtl) {
-            // dd($orderDtl);
-            if ($mode === '+') {
-                $orderDtl->qty_reff += $qtyDeliv;
-            } else if ($mode === '-') {
-                $orderDtl->qty_reff -=$qtyDeliv;
+        DB::beginTransaction();
+        try {
+            // Update qty_reff di OrderDtl
+            $orderDtl = OrderDtl::find($orderDtlId);
+            if ($orderDtl) {
+                if ($mode === '+') {
+                    $orderDtl->qty_reff += $qtyDeliv;
+                } else if ($mode === '-') {
+                    $orderDtl->qty_reff -= $qtyDeliv;
+                }
+                $orderDtl->save();
             }
-            $orderDtl->save();
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception('Error updating order quantity reference: ' . $e->getMessage());
         }
     }
 
@@ -97,8 +120,6 @@ class OrderService
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_code'] = $headerData['tr_code'];
 
-
-
             // Simpan detail terlebih dahulu
             $savedDetail = OrderDtl::create($detail);
             $savedDetails[] = $savedDetail;
@@ -112,7 +133,7 @@ class OrderService
 
     private function deleteHeader(int $orderID)
     {
-        OrderHdr::where('id', $orderID)->forceDelete();
+        OrderHdr::where('id', $orderID)->delete();
     }
 
     private function deleteDetails(int $orderID): void
@@ -126,7 +147,7 @@ class OrderService
         //     }
         // }
         // Then delete the details
-        OrderDtl::where('trhdr_id', $orderID)->forceDelete();
+        OrderDtl::where('trhdr_id', $orderID)->delete();
         $this->inventoryService->delIvtLog($orderID);
     }
 

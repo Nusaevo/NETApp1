@@ -641,7 +641,7 @@ class Detail extends BaseComponent
                 );
             }
 
-            $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+            $this->orderService->updOrder($this->object->id, $headerData, $detailData);
             $this->dispatch('success', 'Sales Order berhasil diperbarui.');
         } catch (Exception $e) {
             throw new Exception('Gagal menyimpan: ' . $e->getMessage());

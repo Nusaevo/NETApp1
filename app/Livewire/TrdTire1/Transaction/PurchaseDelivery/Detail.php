@@ -266,10 +266,16 @@ class Detail extends BaseComponent
                 throw new Exception('Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
             }
 
+            // dd($this->input_details);
+            // dd($this->inputs, $this->input_details);
             // Persiapkan data untuk service
+            $orderHdr = OrderHdr::where( 'tr_code','=',  $this->inputs['reffhdrtr_code'])->first();
             $headerData = array_merge($this->inputs, [
-                'status_code' => $this->object->status_code
+                'status_code' => $this->object->status_code,
+                'reff_code' => $orderHdr->id,
+                // 'reffhdrtr_id' => $orderHdr ? $orderHdr->id : null,
             ]);
+            // dd($headerData);
 
             if ($this->actionValue === 'Edit') {
                 $headerData['id'] = $this->object->id;
@@ -308,8 +314,10 @@ class Detail extends BaseComponent
             // Panggil service untuk memproses purchase delivery
             $deliveryService = app(DeliveryService::class);
 
+            // dd($headerData, $detailData);
             if ($this->actionValue === 'Create') {
                 $result = $deliveryService->addDelivery($headerData, $detailData);
+                // dd($result);
                 $this->object = $result['header'];
 
                 // Update headerData dengan id dari PD yang baru
@@ -338,7 +346,7 @@ class Detail extends BaseComponent
                 unset($detail);
 
                 // Tambahkan pembuatan BillingHdr
-                app(BillingService::class)->addBilling($headerData, $detailData);
+                // app(BillingService::class)->addBillingFromDelivery($headerData, $detailData);
 
                 // Tambahkan update ivt_id pada setiap DelivDtl setelah simpan
                 foreach ($detailData as $detail) {
@@ -410,7 +418,7 @@ class Detail extends BaseComponent
             }
 
             // dd($this->object);
-            DB::commit();
+            // DB::commit();
 
             $this->dispatch('success', 'Purchase Delivery berhasil ' .
                 ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
@@ -483,9 +491,9 @@ class Detail extends BaseComponent
                 return;
             }
 
-            $this->object->status_code = Status::NONACTIVE;
-            $this->object->save();
-            $this->object->delete();
+            // Panggil service untuk hapus delivery beserta detail dan inventory
+            $deliveryService = app(DeliveryService::class);
+            $deliveryService->delDelivery($this->object->id);
 
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
         } catch (Exception $e) {

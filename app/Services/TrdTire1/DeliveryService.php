@@ -11,29 +11,39 @@ class DeliveryService
 {
     protected $inventoryService;
     protected $orderService;
+    protected $bilingService;
 
-    public function __construct(InventoryService $inventoryService, OrderService $orderService)
+    public function __construct(InventoryService $inventoryService, OrderService $orderService, BillingService $billingService)
     {
         $this->inventoryService = $inventoryService;
         $this->orderService = $orderService;
+        $this->bilingService = $billingService;
     }
 
     #region Delivery Methods
     public function addDelivery(array $headerData, array $detailData): array
     {
-        // Simpan header
-        $delivHdr = $this->saveHeader($headerData);
+        // dd('tes212');
+        //  DB::beginTransaction();
+        // try {
+            $delivHdr = $this->saveHeader($headerData);
 
-        // Set trhdr_id, tr_code, tr_type pada setiap detail
-        foreach ($detailData as &$detail) {
-            $detail['trhdr_id'] = $delivHdr->id;
-            $detail['tr_code'] = $delivHdr->tr_code;
-            $detail['tr_type'] = $delivHdr->tr_type;
-        }
-        unset($detail);
+            // Set trhdr_id, tr_code, tr_type pada setiap detail
+            foreach ($detailData as &$detail) {
+                $detail['trhdr_id'] = $delivHdr->id;
+                $detail['tr_code'] = $delivHdr->tr_code;
+                $detail['tr_type'] = $delivHdr->tr_type;
+            }
+            unset($detail);
 
-        $this->saveDetail($headerData, $detailData);
+            $this->saveDetail($headerData, $detailData);
 
+            // $this->bilingService->addBillingFromDelivery($delivHdr->id);
+        //     DB::commit();
+        // } catch (Exception $e) {
+        //     DB::rollBack();
+        //     throw new Exception('Error adding delivery: ' . $e->getMessage());
+        // }
         return [
             'header' => $delivHdr
         ];
