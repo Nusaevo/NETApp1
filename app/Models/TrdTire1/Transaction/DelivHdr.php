@@ -24,6 +24,7 @@ class DelivHdr extends BaseModel
         'tr_date',
         'reff_date',
         'partner_id',
+        'reff_code',
         'partner_code',
         'tr_type',
         'note',

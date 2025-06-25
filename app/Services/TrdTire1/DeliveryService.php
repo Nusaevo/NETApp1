@@ -36,7 +36,7 @@ class DeliveryService
 
             $this->saveDetail($headerData, $detailData);
 
-            // $this->bilingService->addBillingFromDelivery($delivHdr->id);
+            app(BillingService::class)->addfromDelivery($delivHdr->id);
         //     DB::commit();
         // } catch (Exception $e) {
         //     DB::rollBack();

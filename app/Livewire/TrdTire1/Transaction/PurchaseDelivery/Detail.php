@@ -269,10 +269,10 @@ class Detail extends BaseComponent
             // dd($this->input_details);
             // dd($this->inputs, $this->input_details);
             // Persiapkan data untuk service
-            $orderHdr = OrderHdr::where( 'tr_code','=',  $this->inputs['reffhdrtr_code'])->first();
+            $orderHdr = OrderHdr::where('tr_code', $this->inputs['reffhdrtr_code'])->first();
             $headerData = array_merge($this->inputs, [
                 'status_code' => $this->object->status_code,
-                'reff_code' => $orderHdr->id,
+                'reff_code' => $orderHdr ? $orderHdr->id : null,
                 // 'reffhdrtr_id' => $orderHdr ? $orderHdr->id : null,
             ]);
             // dd($headerData);
