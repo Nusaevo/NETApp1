@@ -23,6 +23,7 @@ class BillingService
 
     public function addBilling(array $headerData, array $detailData)
     {
+        // dd($headerData, $detailData);
         // Simpan header
         $billingHdr = $this->saveHeader($headerData);
 
@@ -72,7 +73,7 @@ class BillingService
         $paymentDueDays = 0;
 
         if (!empty($delivHdr->reff_code)) {
-            $orderHdr = OrderHdr::where('tr_code', $delivHdr->reff_code)->first();
+            $orderHdr = OrderHdr::find($delivHdr->reff_code);
             if ($orderHdr) {
                 $paymentTermId = $orderHdr->payment_term_id;
                 $paymentTerm = $orderHdr->payment_term ?? '';
@@ -92,7 +93,7 @@ class BillingService
             'payment_term' => $paymentTerm,
             'payment_due_days' => $paymentDueDays,
             'curr_id' => 0,
-            'curr_code' => null,
+            'curr_code' => '',
             'curr_rate' => 1,
             'print_date' => null,
             'total_amt' => 0
@@ -132,7 +133,7 @@ class BillingService
                 'qty_base' => $delivDtl->qty,
                 'price' => $price,
                 'price_uom' => $delivDtl->matl_uom,
-                'price_base' => $price,
+                'price_base' => '',
                 'amt' => $amount,
                 'amt_reff' => $amount,
                 'status_code' => 'O' // Open status
