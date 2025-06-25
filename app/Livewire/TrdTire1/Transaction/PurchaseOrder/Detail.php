@@ -855,7 +855,7 @@ class Detail extends BaseComponent
                 }
                 $this->object = $order;
             } else {
-                $result = $this->orderService->modOrder($this->object->id, $headerData, $detailData);
+                $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
                 if (!$result) {
                     throw new Exception('Gagal mengubah Purchase Order.');
                 }
