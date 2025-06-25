@@ -70,6 +70,7 @@ class Index extends BaseComponent
 
                 // Prepare detail data
                 $detailData = [];
+                $trSeq = 0;
                 $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
                 foreach ($orderDetails as $detail) {
 
@@ -94,7 +95,7 @@ class Index extends BaseComponent
                             }
                             if ($qtyShip > 0) {
                             $detailData[] = [
-                                    'tr_seq' => $detail->tr_seq,
+                                    'tr_seq' => $trSeq += 1,
                                     'matl_id' => $detail->matl_id,
                                     'matl_code' => $detail->matl_code,
                                     'matl_descr' => $detail->matl_descr,

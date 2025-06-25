@@ -18,11 +18,10 @@ class BillingDtl extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
-        'tr_id',
         'tr_seq',
         'dlvdtl_id',
         'dlvhdrtr_type',
-        'dlvhdrtr_id',
+        'dlvhdrtr_code',
         'dlvdtltr_seq',
         'matl_id',
         'matl_code',

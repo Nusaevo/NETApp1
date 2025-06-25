@@ -10,6 +10,7 @@ class PartnerBalanceService
 {
     public function updPartnerBalance(string $mode, array $headerData)
     {
+        // dd($mode, $headerData);
         // Validasi data yang diperlukan
         if (!isset($headerData['id'])) {
             throw new \Exception('Header ID (id) is required');
@@ -35,10 +36,10 @@ class PartnerBalanceService
             // $partnerBal->note = '';
         }
 
-        // Set kolom reff_id, reff_code, amt_bal
         $partnerBal->reff_id = $headerData['id'] ?? null;
         $partnerBal->reff_code = $headerData['tr_code'] ?? null;
-        $partnerBal->amt_bal = $headerData['total_amt'] ?? 0;
+        $partnerBal->reff_type = $headerData['tr_type'] ?? null;
+        $partnerBal->amt_bal = ($partnerBal->amt_bal ?? 0) + $Amt;
 
         $partnerBal->save();
 

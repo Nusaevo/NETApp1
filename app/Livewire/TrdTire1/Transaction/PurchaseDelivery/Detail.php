@@ -369,7 +369,7 @@ class Detail extends BaseComponent
                 }
             } else {
                 // dd($detailData, $headerData);
-                $deliveryService->modDelivery($this->object->id, $headerData, $detailData);
+                $deliveryService->updDelivery($this->object->id, $headerData, $detailData);
 
                 // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
                 $total_amt = 0;
