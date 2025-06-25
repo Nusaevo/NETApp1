@@ -254,21 +254,21 @@ class BaseComponent extends Component
         $this->dispatch('form-changed', hasChanges: false);
         $this->validateForm();
 
-        // try {
-        //     DB::transaction(function () {
-        //         $this->updateVersionNumber();
+        try {
+            DB::transaction(function () {
+                $this->updateVersionNumber();
                 $this->onValidateAndSave();
-            // });
+            });
 
             if (!$this->isEditOrView() && $this->resetAfterCreate) {
                 $this->onReset();
             }
             $this->dispatch('success', __('generic.string.save'));
-        // } catch (QueryException | PDOException | Exception $e) {
-        //     $this->rollbackVersionNumber();
-        //     Log::error("Method Save : " . $e->getMessage());
-        //     $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
-        // }
+        } catch (QueryException | PDOException | Exception $e) {
+            $this->rollbackVersionNumber();
+            Log::error("Method Save : " . $e->getMessage());
+            $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
+        }
     }
 
     public function SaveWithoutNotification()
