@@ -316,7 +316,7 @@ class Detail extends BaseComponent
                 // Tambahkan pembuatan BillingHdr
                 app(BillingService::class)->addBilling($headerData, $detailData);
             } else {
-                $this->deliveryService->modDelivery($this->object->id, $headerData, $detailData);
+                $this->deliveryService->updDelivery($this->object->id, $headerData, $detailData);
             }
 
             DB::commit();

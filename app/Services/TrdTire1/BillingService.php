@@ -24,13 +24,22 @@ class BillingService
     public function addBilling(array $headerData, array $detailData)
     {
         // dd($headerData, $detailData);
+
         // Simpan header
         $billingHdr = $this->saveHeader($headerData);
 
         // Update headerData dengan ID yang baru dibuat
         $headerData['id'] = $billingHdr->id;
 
-        $this->saveDetail($headerData, $detailData);
+        // dd($headerData, $detailData);
+        // Update trhdr_id pada setiap detail dan buat array baru
+        $newDetailData = [];
+        foreach ($detailData as $detail) {
+            $detail['trhdr_id'] = $billingHdr->id;
+            $newDetailData[] = $detail;
+        }
+        // dd($newDetailData);
+        $this->saveDetail($headerData, $newDetailData);
         return $billingHdr;
     }
 
@@ -52,13 +61,10 @@ class BillingService
     public function addfromDelivery(int $deliveryId)
     {
         $delivHdr = DelivHdr::findOrFail($deliveryId);
-
         // Ambil data delivery detail
         $delivDtls = DelivDtl::where('trhdr_id', $deliveryId)->get();
-
         // Tentukan tr_type billing berdasarkan tr_type delivery
         $billingTrType = $this->getBillingTrType($delivHdr->tr_type);
-
         // Generate tr_code otomatis
         $trCode = $this->generateBillingCode($billingTrType);
 
@@ -121,6 +127,98 @@ class BillingService
                 'tr_seq' => $index + 1,
                 'dlvdtl_id' => $delivDtl->id,
                 'dlvhdrtr_type' => $delivHdr->tr_type,
+                'dlvhdrtr_code' => $delivHdr->tr_code,
+                'dlvdtltr_seq' => $delivDtl->tr_seq,
+                'matl_id' => $delivDtl->matl_id,
+                'matl_code' => $delivDtl->matl_code,
+                'matl_uom' => $delivDtl->matl_uom,
+                'descr' => $delivDtl->matl_descr ?? '',
+                'qty' => $delivDtl->qty,
+                'qty_uom' => $delivDtl->matl_uom,
+                'qty_base' => $delivDtl->qty,
+                'price' => $price,
+                'price_uom' => $delivDtl->matl_uom,
+                'price_base' => 0,
+                'amt' => $amount,
+                'amt_reff' => 0,
+            ];
+        }
+
+        // Update total amount di header
+        $headerData['total_amt'] = $totalAmount;
+
+        // Simpan billing menggunakan method yang sudah ada
+        return $this->addBilling($headerData, $detailData);
+    }
+
+    public function updFromDelivery(int $deliveryId)
+    {
+        // 1. Ambil data delivery header & detail
+        $delivHdr = DelivHdr::findOrFail($deliveryId);
+        $delivDtls = DelivDtl::where('trhdr_id', $deliveryId)->get();
+
+        // 2. Cari billing yang terkait
+        $billingHdr = BillingHdr::where('reff_code', $delivHdr->tr_code)->first();
+        if (!$billingHdr) {
+            // Jika billing belum ada, tidak melakukan update
+            return null;
+        }
+
+        // 3. Generate ulang headerData & detailData (mirip addfromDelivery)
+        $billingTrType = $this->getBillingTrType($delivHdr->tr_type);
+        $trCode = $billingHdr->tr_code; // Gunakan kode billing yang sudah ada
+        $partner = $delivHdr->Partner;
+        $partnerCode = $partner ? $partner->code : '';
+
+        // Ambil payment term dari OrderHdr berdasarkan reff_code
+        $orderHdr = null;
+        $paymentTermId = null;
+        $paymentTerm = '';
+        $paymentDueDays = 0;
+        if (!empty($delivHdr->reff_code)) {
+            $orderHdr = OrderHdr::find($delivHdr->reff_code);
+            if ($orderHdr) {
+                $paymentTermId = $orderHdr->payment_term_id;
+                $paymentTerm = $orderHdr->payment_term ?? '';
+                $paymentDueDays = $orderHdr->payment_due_days ?? 0;
+            }
+        }
+
+        $headerData = [
+            'id' => $billingHdr->id,
+            'tr_code' => $trCode,
+            'tr_type' => $billingTrType,
+            'tr_date' => $delivHdr->tr_date,
+            'reff_code' => $delivHdr->tr_code,
+            'partner_id' => $delivHdr->partner_id,
+            'partner_code' => $partnerCode,
+            'payment_term_id' => $paymentTermId,
+            'payment_term' => $paymentTerm,
+            'payment_due_days' => $paymentDueDays,
+            'curr_id' => 0,
+            'curr_code' => '',
+            'curr_rate' => 1,
+            'print_date' => null,
+            'total_amt' => 0
+        ];
+
+        $detailData = [];
+        $totalAmount = 0;
+        foreach ($delivDtls as $index => $delivDtl) {
+            $material = Material::find($delivDtl->matl_id);
+            $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
+                ->where('matl_uom', $delivDtl->matl_uom)
+                ->first();
+            $price = $matlUom ? ($matlUom->selling_price ?? 0) : 0;
+            $amount = $delivDtl->qty * $price;
+            $totalAmount += $amount;
+            $detailData[] = [
+                'trhdr_id' => $billingHdr->id,
+                'tr_type' => $billingTrType,
+                'tr_code' => $trCode,
+                'tr_seq' => $index + 1,
+                'dlvdtl_id' => $delivDtl->id,
+                'dlvhdrtr_type' => $delivHdr->tr_type,
                 'dlvhdrtr_id' => $delivHdr->id,
                 'dlvhdrtr_code' => $delivHdr->tr_code,
                 'dlvdtltr_seq' => $delivDtl->tr_seq,
@@ -135,16 +233,14 @@ class BillingService
                 'price_uom' => $delivDtl->matl_uom,
                 'price_base' => '',
                 'amt' => $amount,
-                'amt_reff' => $amount,
-                'status_code' => 'O' // Open status
+                'status_code' => 'O'
             ];
         }
-
-        // Update total amount di header
         $headerData['total_amt'] = $totalAmount;
 
-        // Simpan billing menggunakan method yang sudah ada
-        return $this->addBilling($headerData, $detailData);
+        // 4. Update billing
+        $this->updBilling($billingHdr->id, $headerData, $detailData);
+        return $billingHdr;
     }
 
     /**
@@ -191,6 +287,8 @@ class BillingService
             $billingHdr = BillingHdr::create($headerData);
         }
 
+        // Pastikan headerData ada id-nya sebelum update partner balance
+        $headerData['id'] = $billingHdr->id;
         $this->partnerBalanceService->updPartnerBalance('+', $headerData);
         return $billingHdr;
     }
@@ -198,11 +296,6 @@ class BillingService
     private function saveDetail(array $headerData, array $detailData)
     {
         foreach ($detailData as $detail) {
-            // Set trhdr_id jika belum diisi
-            if (empty($detail['trhdr_id']) && !empty($headerData['id'])) {
-                $detail['trhdr_id'] = $headerData['id'];
-            }
-
             // Simpan detail
             $billingDetail = new BillingDtl($detail);
             $billingDetail->save();

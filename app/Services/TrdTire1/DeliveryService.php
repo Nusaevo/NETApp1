@@ -47,7 +47,7 @@ class DeliveryService
         ];
     }
 
-    public function modDelivery(int $delivId, array $headerData, array $detailData): DelivHdr
+    public function updDelivery(int $delivId, array $headerData, array $detailData): DelivHdr
     {
         DB::beginTransaction();
         try {
@@ -63,16 +63,11 @@ class DeliveryService
             // Hapus detail lama
             $this->deleteDetail($delivId);
 
-            // // Set header ID ke detail data
-            // foreach ($detailData as &$detail) {
-            //     $detail['trhdr_id'] = $delivHdr->id;
-            //     $detail['tr_code'] = $delivHdr->tr_code;
-            //     $detail['tr_type'] = $delivHdr->tr_type;
-            // }
-            // unset($detail);
-
             // Simpan detail baru
             $this->saveDetail($headerData, $detailData);
+
+            // Update billing terkait
+            app(BillingService::class)->updFromDelivery($delivHdr->id);
 
             DB::commit();
             return $delivHdr;
