@@ -11,13 +11,11 @@ class DeliveryService
 {
     protected $inventoryService;
     protected $orderService;
-    protected $bilingService;
 
-    public function __construct(InventoryService $inventoryService, OrderService $orderService, BillingService $billingService)
+    public function __construct(InventoryService $inventoryService, OrderService $orderService)
     {
         $this->inventoryService = $inventoryService;
         $this->orderService = $orderService;
-        $this->bilingService = $billingService;
     }
 
     #region Delivery Methods
