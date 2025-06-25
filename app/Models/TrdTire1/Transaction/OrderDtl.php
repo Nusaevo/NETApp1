@@ -12,7 +12,7 @@ use App\Models\TrdTire1\Master\MatlUom;
 
 class OrderDtl extends BaseModel
 {
-    use SoftDeletes;
+    // use SoftDeletes;
 
     protected $table = 'order_dtls';
     protected $fillable = [
