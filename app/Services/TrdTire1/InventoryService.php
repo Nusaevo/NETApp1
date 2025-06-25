@@ -102,7 +102,7 @@ class InventoryService
             if ($trType === 'PO') {
                 $trType = 'PDR';
             } else if ($trType === 'SO') {
-                $trType = 'SOR';
+                $trType = 'SDR';
             }
         }
 
