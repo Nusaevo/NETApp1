@@ -33,8 +33,10 @@ class OrderService
             return $order;
         } catch (Exception $e) {
             DB::rollBack();
-            throw new Exception('Error adding order: ' . $e->getMessage());
+            return $order;
+            // throw new Exception('Error updating order: ' . $e->getMessage());
         }
+
     }
 
     public function updOrder(int $orderId, array $headerData, array $detailData): OrderHdr
@@ -109,6 +111,7 @@ class OrderService
     }
     private function saveDetails(array $headerData, array $detailData): array
     {
+        throw new \Exception("Terjadi kesalahan.");
         // Pastikan header sudah tersimpan dan memiliki ID
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
@@ -121,8 +124,8 @@ class OrderService
             $detail['tr_code'] = $headerData['tr_code'];
 
             // Simpan detail terlebih dahulu
-            $savedDetail = OrderDtl::create($detail);
-            $savedDetails[] = $savedDetail;
+            $savedDetaiasl = OrderDtl::create($detail);
+            $savedDetails[] = $savedDetails;
 
             // Kirim detail yang baru disimpan ke addReservation
             $this->inventoryService->addReservation('+', $headerData, $savedDetail->toArray());

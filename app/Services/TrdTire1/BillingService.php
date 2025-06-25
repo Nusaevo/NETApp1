@@ -58,6 +58,9 @@ class BillingService
         // Tentukan tr_type billing berdasarkan tr_type delivery
         $billingTrType = $this->getBillingTrType($delivHdr->tr_type);
 
+        // Generate tr_code otomatis
+        $trCode = $this->generateBillingCode($billingTrType);
+
         // Ambil partner data
         $partner = $delivHdr->Partner;
         $partnerCode = $partner ? $partner->code : '';
@@ -79,7 +82,7 @@ class BillingService
 
         // Siapkan header data untuk billing
         $headerData = [
-            'tr_code' => $delivHdr->tr_code,
+            'tr_code' => $trCode,
             'tr_type' => $billingTrType,
             'tr_date' => $delivHdr->tr_date,
             'reff_code' => $delivHdr->tr_code, // Referensi ke delivery
@@ -113,11 +116,12 @@ class BillingService
             $detailData[] = [
                 'trhdr_id' => null, // Akan diisi setelah header dibuat
                 'tr_type' => $billingTrType,
-                'tr_id' => $delivHdr->tr_code, // Gunakan tr_id untuk menyimpan tr_code
+                'tr_code' => $trCode,
                 'tr_seq' => $index + 1,
                 'dlvdtl_id' => $delivDtl->id,
                 'dlvhdrtr_type' => $delivHdr->tr_type,
                 'dlvhdrtr_id' => $delivHdr->id,
+                'dlvhdrtr_code' => $delivHdr->tr_code,
                 'dlvdtltr_seq' => $delivDtl->tr_seq,
                 'matl_id' => $delivDtl->matl_id,
                 'matl_code' => $delivDtl->matl_code,
@@ -140,6 +144,23 @@ class BillingService
 
         // Simpan billing menggunakan method yang sudah ada
         return $this->addBilling($headerData, $detailData);
+    }
+
+    /**
+     * Generate kode billing otomatis dengan format: TRTYPE + 3 digit urut
+     */
+    private function generateBillingCode(string $billingTrType): string
+    {
+        $lastBilling = BillingHdr::where('tr_type', $billingTrType)
+            ->orderByDesc('tr_code')
+            ->first();
+        if ($lastBilling && preg_match('/\d+$/', $lastBilling->tr_code, $matches)) {
+            $lastNumber = intval($matches[0]);
+        } else {
+            $lastNumber = 0;
+        }
+        $newNumber = $lastNumber + 1;
+        return $billingTrType . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
 
     /**

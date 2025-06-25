@@ -640,6 +640,18 @@ class Detail extends BaseComponent
                     ]
                 );
             }
+            // if ($this->actionValue === 'Create') {
+            //     $order = $this->orderService->addOrder($headerData, $detailData);
+            //     if (!$order) {
+            //         throw new Exception('Gagal membuat Sales Order.');
+            //     }
+            //     $this->object = $order;
+            // } else {
+            //     $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
+            //     if (!$result) {
+            //         throw new Exception('Gagal mengubah Sales Order.');
+            //     }
+            // }
 
             $this->orderService->updOrder($this->object->id, $headerData, $detailData);
             $this->dispatch('success', 'Sales Order berhasil diperbarui.');

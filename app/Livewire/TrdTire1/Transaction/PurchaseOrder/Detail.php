@@ -596,7 +596,7 @@ class Detail extends BaseComponent
         // Validasi input dan format diskon
         $this->validateAndFormatInputs();
 
-        try {
+        // try {
             if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
                 $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
                 return;
@@ -610,23 +610,23 @@ class Detail extends BaseComponent
             $totals = $this->calculateTotalsFromDetails($detailData);
             $headerData['total_amt'] = $totals['total_amt'];
             $headerData['total_amt_tax'] = $totals['total_amt_tax'];
-            DB::beginTransaction();
-            try {
+            // DB::beginTransaction();
+            // try {
                 // Cek payment term dan proses sesuai jenisnya
-                if ($this->processPaymentTerm($headerData, $detailData)) {
-                    return;
-                }
+                // if ($this->processPaymentTerm($headerData, $detailData)) {
+                //     return;
+                // }
 
                 // Proses normal untuk non-CASH payment
                 $this->processNormalOrder($headerData, $detailData);
 
-            } catch (Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
-        } catch (Exception $e) {
-            throw new Exception('Gagal menyimpan: ' . $e->getMessage());
-        }
+        //     } catch (Exception $e) {
+        //         DB::rollBack();
+        //         throw $e;
+        //     }
+        // } catch (Exception $e) {
+        //     throw new Exception('Gagal menyimpan: ' . $e->getMessage());
+        // }
     }
 
     /**
