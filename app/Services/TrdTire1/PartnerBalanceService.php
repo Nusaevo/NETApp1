@@ -38,10 +38,11 @@ class PartnerBalanceService
         $partnerBal->amt_bal = ($partnerBal->amt_bal ?? 0) + $Amt;
 
         $partnerBal->save();
+        $partnerBal->refresh();
 
         $logData = [
             'tr_date' => $headerData['tr_date'],
-            'trhdr_id' => $headerData['id'], // ID header wajib ada
+            'trhdr_id' => $headerData['id'],
             'tr_type' => $headerData['tr_type'],
             'tr_code' => $headerData['tr_code'],
             'tr_seq' => 0,
@@ -57,6 +58,7 @@ class PartnerBalanceService
         ];
         // Selalu buat log baru untuk delivery
         PartnerLog::create($logData);
+        // dd($logData);
     }
 
     public function delPartnerLog(int $trHdrId)
