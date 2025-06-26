@@ -23,6 +23,7 @@ class PartnerLog extends BaseModel
         'trdtl_id',
         'partner_id',
         'partner_code',
+        'partnerbal_id',
         'tr_date',
         'tr_amt',
         'tr_desc',
