@@ -44,7 +44,7 @@ class InventoryService
             $trAmt = $price * $qty;
             $trQty = $qty;
         } else if ($mode === '-'){
-            $trAmt = $price * -$qty;
+            $trAmt = $price * $qty;
             $trQty = $qty;
         }
 

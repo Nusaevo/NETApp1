@@ -11,8 +11,6 @@ use App\Traits\BaseTrait;
 use App\Enums\Constant;
 class ReturnHdr extends BaseModel
 {
-    use SoftDeletes;
-
     protected static function boot()
     {
         parent::boot();

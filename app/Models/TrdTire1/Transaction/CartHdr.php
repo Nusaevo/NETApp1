@@ -7,9 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 class CartHdr extends BaseModel
 {
-    use SoftDeletes;
-
-
     protected static function boot()
     {
         parent::boot();

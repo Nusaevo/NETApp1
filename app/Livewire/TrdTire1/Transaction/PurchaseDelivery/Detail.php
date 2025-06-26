@@ -269,10 +269,10 @@ class Detail extends BaseComponent
             // dd($this->input_details);
             // dd($this->inputs, $this->input_details);
             // Persiapkan data untuk service
-            $orderHdr = OrderHdr::where('tr_code', $this->inputs['reffhdrtr_code'])->first();
+            // $orderHdr = OrderHdr::where('tr_code', $this->inputs['reffhdrtr_code'])->first();
             $headerData = array_merge($this->inputs, [
                 'status_code' => $this->object->status_code,
-                'reff_code' => $orderHdr ? $orderHdr->id : null,
+                // 'reff_code' => $orderHdr ? $orderHdr->id : null,
                 // 'reffhdrtr_id' => $orderHdr ? $orderHdr->id : null,
             ]);
             // dd($headerData);
@@ -303,7 +303,7 @@ class Detail extends BaseComponent
                     'wh_id' => $detail['wh_id'],
                     'wh_code' => $detail['wh_code'],
                     'reffdtl_id' => $orderDtl->id ?? null,
-                    // 'reffhdrtr_id' => $orderHdr->id,
+                    'reffhdr_id' => $orderHdr->id,
                     'reffhdrtr_type' => $orderHdr->tr_type,
                     'reffhdrtr_code' => $orderHdr->tr_code,
                     'reffdtltr_seq' => $orderDtl->tr_seq,
@@ -370,6 +370,7 @@ class Detail extends BaseComponent
             } else {
                 // dd($detailData, $headerData);
                 $deliveryService->updDelivery($this->object->id, $headerData, $detailData);
+                
 
                 // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
                 $total_amt = 0;

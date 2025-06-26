@@ -9,8 +9,6 @@ use App\Enums\Constant;
 
 class PaymentDtl extends BaseModel
 {
-    use SoftDeletes;
-
     protected static function boot()
     {
         parent::boot();
