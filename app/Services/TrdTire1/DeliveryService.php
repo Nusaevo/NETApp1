@@ -66,8 +66,9 @@ class DeliveryService
             // Simpan detail baru
             $this->saveDetail($headerData, $detailData);
 
-            // Update billing terkait
-            app(BillingService::class)->updFromDelivery($delivHdr->id);
+            // Hapus billing lama terlebih dahulu, kemudian buat yang baru
+            // app(BillingService::class)->delFromDelivery($delivHdr->id);
+            app(BillingService::class)->updfromDelivery($delivHdr->id);
 
             DB::commit();
             return $delivHdr;
@@ -81,6 +82,7 @@ class DeliveryService
     {
         $this->deleteDetail($delivId);
         $this->deleteHeader($delivId);
+        
     }
 
     // Region Delivery Header Methods

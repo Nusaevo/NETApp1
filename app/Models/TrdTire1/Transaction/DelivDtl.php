@@ -16,7 +16,6 @@ use App\Models\TrdTire1\Transaction\{OrderDtl, BillingDtl};
 
 class DelivDtl extends BaseModel
 {
-    use SoftDeletes;
 
     protected $table = 'deliv_dtls';
 
@@ -29,6 +28,7 @@ class DelivDtl extends BaseModel
         'reffhdrtr_type',
         'reffhdrtr_code',
         'reffdtltr_seq',
+        'reffhdr_id',
         'matl_id',
         'matl_code',
         'matl_uom',

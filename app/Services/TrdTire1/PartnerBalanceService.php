@@ -35,10 +35,6 @@ class PartnerBalanceService
             $partnerBal->amt_adv = 0;
             // $partnerBal->note = '';
         }
-
-        $partnerBal->reff_id = $headerData['id'] ?? null;
-        $partnerBal->reff_code = $headerData['tr_code'] ?? null;
-        $partnerBal->reff_type = $headerData['tr_type'] ?? null;
         $partnerBal->amt_bal = ($partnerBal->amt_bal ?? 0) + $Amt;
 
         $partnerBal->save();

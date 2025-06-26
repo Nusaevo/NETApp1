@@ -9,7 +9,6 @@ use App\Enums\Constant;
 
 class PaymentSrc extends BaseModel
 {
-    use SoftDeletes;
     protected $table = 'payment_srcs';
 
     protected static function boot()

@@ -11,7 +11,6 @@ use App\Models\TrdTire1\Master\PartnerBal;
 
 class BillingHdr extends BaseModel
 {
-    use SoftDeletes;
 
     public static function getBillCode()
     {
