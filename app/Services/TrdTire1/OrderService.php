@@ -34,7 +34,7 @@ class OrderService
         // } catch (Exception $e) {
         //     DB::rollBack();
         //     return $order;
-        //     // throw new Exception('Error updating order: ' . $e->getMessage());
+            // throw new Exception('Error updating order: ' . $e->getMessage());
         // }
 
     }

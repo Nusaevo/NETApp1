@@ -34,7 +34,6 @@ class BillingDtl extends BaseModel
         'price_uom',
         'price_base',
         'amt',
-        'amt_reff',
         'status_code',
     ];
 
