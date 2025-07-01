@@ -113,8 +113,8 @@
                                         <x-ui-text-field label="{{ $this->trans('due_date') }}"
                                             model="inputs.due_date" type="date" :action="$actionValue" required="true"
                                             :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('cust_reff') }}"
-                                            model="inputs.cust_reff" type="text" :action="$actionValue"
+                                        <x-ui-text-field label="{{ $this->trans('reff_code') }}"
+                                            model="inputs.reff_code" type="text" :action="$actionValue"
                                             required="false" />
                                     </div>
                                 </div>

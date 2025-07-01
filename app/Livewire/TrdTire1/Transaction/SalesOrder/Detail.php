@@ -652,7 +652,7 @@ class Detail extends BaseComponent
             $headerData['total_amt']         = $headerData['total_amt']         ?? $this->total_amount;
             $headerData['total_amt_tax']     = $headerData['total_amt_tax']     ?? $this->total_tax;
             $headerData['payment_due_days']  = $headerData['payment_due_days']  ?? ($this->inputs['payment_due_days'] ?? null);
-            $headerData['cust_reff']  = $headerData['cust_reff']  ?? ($this->inputs['cust_reff'] ?? null);
+            $headerData['reff_code']  = $headerData['reff_code']  ?? ($this->inputs['reff_code'] ?? null);
 
             // Jika payment_term_id ada, ambil payment_term dan payment_due_days dari master
             if (!empty($headerData['payment_term_id'])) {

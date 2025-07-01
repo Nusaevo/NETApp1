@@ -666,7 +666,7 @@ class Detail extends BaseComponent
                 if (!$result) {
                     throw new \Exception('Gagal mengubah Purchase Order.');
                 }
-                $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
+                // $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
                 return $this->redirectToEdit();
             } catch (\Exception $e) {
                 $this->dispatch('error', $e->getMessage());

@@ -44,7 +44,7 @@ class OrderHdr extends BaseModel
         'npwp_code',
         'total_amt',
         'total_amt_tax',
-        'cust_reff'
+        'reff_code'
     ];
 
     protected $casts = [
