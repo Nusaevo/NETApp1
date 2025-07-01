@@ -3,15 +3,15 @@
 namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{DelivHdr, OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderHdr, OrderDtl, BillingHdr, BillingDtl};
 use App\Models\TrdTire1\Master\{Partner, Material, MatlUom};
 use App\Models\SysConfig1\ConfigConst;
-use App\Enums\Status;
+use App\Enums\TrdTire1\Status;
 use App\Services\TrdTire1\InventoryService;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Services\TrdTire1\OrderService;
 use App\Services\TrdTire1\DeliveryService;
-use Illuminate\Support\Facades\{Session, DB};
+use Illuminate\Support\Facades\{Session, DB, Log};
 use Exception;
 
 use function PHPUnit\Framework\throwException;
@@ -54,8 +54,14 @@ class Detail extends BaseComponent
     public $input_details = [];
     public $materials;
     public $deletedItems = [];
+
+    // Delivery status property - simplified
+    public $isDeliv = false;
+    public $isCheck = false;
+
     protected $masterService;
     protected $orderService;
+    protected $inventoryService;
 
     // Validation rules for header and details
     public $rules = [
@@ -73,6 +79,37 @@ class Detail extends BaseComponent
         'updateAmount' => 'updateAmount',
         'onSalesTypeChanged' => 'onSalesTypeChanged', // tambahkan listener baru
     ];
+
+    // Livewire lifecycle hooks
+    public function updated($propertyName)
+    {
+        if ($propertyName === 'input_details') {
+            $this->checkDeliveryStatus();
+        }
+    }
+
+    // Constructor untuk menginisialisasi services
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    {
+        parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);
+
+        // Inisialisasi services
+        $this->initializeServices();
+    }
+
+    /**
+     * Initialize services
+     */
+    private function initializeServices()
+    {
+        if (!$this->inventoryService) {
+            $this->inventoryService = app(InventoryService::class);
+        }
+
+        if (!$this->orderService) {
+            $this->orderService = new OrderService($this->inventoryService);
+        }
+    }
 
     /**
      * Generate transaction code based on sales_type and tax_invoice
@@ -192,6 +229,9 @@ class Detail extends BaseComponent
      */
     protected function onPreRender()
     {
+        // Pastikan services sudah diinisialisasi
+        $this->initializeServices();
+
         $this->customValidationAttributes = [
             'inputs.tax' => $this->trans('tax'),
             'inputs.tr_code' => $this->trans('tr_code'),
@@ -237,6 +277,8 @@ class Detail extends BaseComponent
         if (!empty($this->inputs['tax_flag'])) {
             $this->onSOTaxChange();
         }
+
+        $this->checkDeliveryStatus();
     }
 
     /**
@@ -254,6 +296,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_code'] = "USD";
         $this->inputs['send_to'] = "Pelanggan";
         $this->inputs['partner_id'] = 0;
+        $this->isDeliv = false;
     }
 
     /**
@@ -262,6 +305,12 @@ class Detail extends BaseComponent
     public function addItem()
     {
         try {
+            // Check if can add new item
+            if ($this->isDeliv) {
+                $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah memiliki delivery.');
+                return;
+            }
+
             $this->input_details[] = [
                 'matl_id' => null,
                 'qty' => null,
@@ -446,6 +495,12 @@ class Detail extends BaseComponent
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item tidak ditemukan.']));
             }
 
+            // Check if item is editable
+            if ($this->isDeliv) {
+                $this->dispatch('error', 'Tidak dapat menghapus item karena sudah memiliki delivery.');
+                return;
+            }
+
             // Track deleted items with IDs
             if (isset($this->input_details[$index]['id'])) {
                 $this->deletedItems[] = $this->input_details[$index]['id'];
@@ -481,6 +536,9 @@ class Detail extends BaseComponent
                 // Hitung ulang amount dengan disc_pct dari database
                 $this->updateItemAmount($key);
             }
+
+            // Check delivery status after loading details
+            $this->checkDeliveryStatus();
         }
     }
 
@@ -596,37 +654,42 @@ class Detail extends BaseComponent
         // Validasi input dan format diskon
         $this->validateAndFormatInputs();
 
-        // try {
-            if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
+        // Jika sudah ada delivery, hanya boleh update header
+        if ($this->isDeliv) {
+            // Prepare data header saja
+            $headerData = $this->prepareHeaderData();
+            $detailData = []; // Kosongkan detail agar tidak diubah
+
+            // Simpan hanya header (tanpa update detail)
+            try {
+                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
+                if (!$result) {
+                    throw new \Exception('Gagal mengubah Purchase Order.');
+                }
+                $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
+                return $this->redirectToEdit();
+            } catch (\Exception $e) {
+                $this->dispatch('error', $e->getMessage());
                 return;
             }
+        }
 
-            // Prepare data
-            $headerData = $this->prepareHeaderData();
-            $detailData = $this->prepareDetailData();
+        // Jika belum ada delivery, proses normal
+        if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
+            $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
+            return;
+        }
 
-            // Calculate totals from detail data
-            $totals = $this->calculateTotalsFromDetails($detailData);
-            $headerData['total_amt'] = $totals['total_amt'];
-            $headerData['total_amt_tax'] = $totals['total_amt_tax'];
-            // DB::beginTransaction();
-            // try {
-                // Cek payment term dan proses sesuai jenisnya
-                // if ($this->processPaymentTerm($headerData, $detailData)) {
-                //     return;
-                // }
+        // Prepare data
+        $headerData = $this->prepareHeaderData();
+        $detailData = $this->prepareDetailData();
 
-                // Proses normal untuk non-CASH payment
-                $this->processNormalOrder($headerData, $detailData);
+        // Calculate totals from detail data
+        $totals = $this->calculateTotalsFromDetails($detailData);
+        $headerData['total_amt'] = $totals['total_amt'];
+        $headerData['total_amt_tax'] = $totals['total_amt_tax'];
 
-        //     } catch (Exception $e) {
-        //         DB::rollBack();
-        //         throw $e;
-        //     }
-        // } catch (Exception $e) {
-        //     throw new Exception('Gagal menyimpan: ' . $e->getMessage());
-        // }
+        $this->processNormalOrder($headerData, $detailData);
     }
 
     /**
@@ -743,9 +806,7 @@ class Detail extends BaseComponent
         return 0;
     }
 
-    /**
-     * Hitung total dari detail data untuk update header
-     */
+
     private function calculateTotalsFromDetails($detailData)
     {
         $totalAmt = 0;
@@ -897,7 +958,10 @@ class Detail extends BaseComponent
                 return;
             }
 
-            $this->object->status_code = Status::NONACTIVE;
+            // Pastikan OrderService sudah diinisialisasi
+            $this->initializeServices();
+
+            $this->object->status_code = Status::CANCEL;
             $this->object->save();
             $this->object->delete();
 
@@ -921,33 +985,32 @@ class Detail extends BaseComponent
                 throw new \Exception(__('Data header tidak ditemukan'));
             }
 
-            DB::beginTransaction();
-
-            // 2) Hapus detail jika ada
-            $detailsExist = OrderDtl::where('trhdr_id', $this->object->id)
-                ->where('tr_type', $this->object->tr_type)
-                ->exists();
-
-            if ($detailsExist) {
-                $orderDetails = OrderDtl::where('trhdr_id', $this->object->id)
-                    ->where('tr_type', $this->object->tr_type)
-                    ->get();
-
-                foreach ($orderDetails as $detail) {
-                    $detail->forceDelete(); // Event deleting di OrderDtl akan menangani pengurangan qty_fgr
-                }
+            // 2) Validasi apakah order bisa dihapus
+            if ($this->object->isOrderCompleted()) {
+                $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena status sudah Completed');
+                return;
             }
 
-            // 3) Hapus header
-            $this->object->forceDelete();
+            if (!$this->object->isOrderEnableToDelete()) {
+                // Debug: cek qty_reff untuk memastikan validasi berjalan
+                $orderDtlWithQtyReff = OrderDtl::where('tr_code', $this->object->tr_code)
+                    ->where('qty_reff', '>', 0)
+                    ->count();
 
-            DB::commit();
+                $this->dispatch('warning', "Nota ini tidak bisa dihapus karena memiliki material yang sudah dijual. (qty_reff count: {$orderDtlWithQtyReff})");
+                return;
+            }
+
+            // 3) Pastikan OrderService sudah diinisialisasi
+            $this->initializeServices();
+
+            // 4) Gunakan OrderService untuk menghapus order
+            $this->orderService->delOrder($this->object->id);
 
             $this->dispatch('success', __('Data berhasil terhapus'));
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
 
         } catch (\Exception $e) {
-            DB::rollBack();
             $this->dispatch('error', __('generic.error.delete', [
                 'message' => $e->getMessage()
             ]));
@@ -1115,6 +1178,25 @@ class Detail extends BaseComponent
 
         $this->materials = $filtered;
         $this->input_details = [];
+    }
+
+    /**
+     * Check delivery status for all items
+     */
+    public function checkDeliveryStatus()
+    {
+        $this->isDeliv = false; // Default: field aktif (bisa diedit)
+
+        foreach ($this->input_details as $key => $detail) {
+            if (isset($detail['id']) && !empty($detail['id'])) {
+                $orderDtl = OrderDtl::find($detail['id']);
+                if ($orderDtl && $orderDtl->hasDelivery()) {
+                    $this->isDeliv = true; // Ada delivery, field nonaktif
+                    $this->dispatch('warning', 'Beberapa item sudah memiliki delivery. Detail item tidak dapat diedit.');
+                    break; // Jika ada satu item yang sudah delivery, maka semua nonaktif
+                }
+            }
+        }
     }
 
     /**

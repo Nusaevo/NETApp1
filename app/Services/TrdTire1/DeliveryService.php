@@ -80,9 +80,11 @@ class DeliveryService
 
     public function delDelivery(int $delivId)
     {
+        // Hapus billing yang terkait terlebih dahulu
+        app(BillingService::class)->delFromDelivery($delivId);
+
         $this->deleteDetail($delivId);
         $this->deleteHeader($delivId);
-        
     }
 
     // Region Delivery Header Methods

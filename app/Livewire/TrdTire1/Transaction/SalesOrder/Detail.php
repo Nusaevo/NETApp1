@@ -47,6 +47,7 @@ class Detail extends BaseComponent
     public $suratJalanCount = 0;
     public $isPanelEnabled = "false";
     public $payer = "true";
+    public $isDeliv = false; // True jika ada delivery pada salah satu detail
 
     // Detail (item) properties
     public $input_details = [];
@@ -315,20 +316,49 @@ class Detail extends BaseComponent
         $this->inputs['partner_id']= 0;
     }
 
+    /**
+     * Cek apakah item tertentu masih bisa diedit (belum ada delivery)
+     */
+    public function isItemEditable($key)
+    {
+        if (!isset($this->input_details[$key])) return true;
+        $detail = $this->input_details[$key];
+        // Jika sudah ada delivery, field tidak bisa diedit
+        return empty($detail['has_delivery']) || !$detail['has_delivery'];
+    }
+
+    /**
+     * Cek apakah tombol tambah item bisa digunakan (tidak ada item yang sudah delivered)
+     */
+    public function canAddNewItem()
+    {
+        // Jika ada satu saja item yang sudah delivered, tidak bisa tambah
+        foreach ($this->input_details as $detail) {
+            if (!empty($detail['has_delivery'])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /*
      * TAMBAH ITEM (detail) pada sales order.
      */
     public function addItem()
     {
-            try {
-                $this->input_details[] = [
-                    'matl_id'  => null,
-                    'qty'      => null,
-                ];
-                $this->dispatch('success', __('generic.string.add_item'));
-            } catch (Exception $e) {
-                $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
-            }
+        if ($this->isDeliv || !$this->canAddNewItem()) {
+            $this->dispatch('warning', 'Tidak bisa menambah item karena sudah ada pengiriman (delivery) pada salah satu item.');
+            return;
+        }
+        try {
+            $this->input_details[] = [
+                'matl_id'  => null,
+                'qty'      => null,
+            ];
+            $this->dispatch('success', __('generic.string.add_item'));
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
+        }
     }
 
     /*
@@ -433,6 +463,10 @@ class Detail extends BaseComponent
 
     public function deleteItem($index)
     {
+        if ($this->isDeliv || (isset($this->input_details[$index]['has_delivery']) && $this->input_details[$index]['has_delivery'])) {
+            $this->dispatch('warning', 'Tidak bisa menghapus item yang sudah ada pengiriman (delivery).');
+            return;
+        }
         try {
             if (!isset($this->input_details[$index])) {
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item tidak ditemukan.']));
@@ -451,24 +485,24 @@ class Detail extends BaseComponent
      */
     protected function loadDetails()
     {
+        $this->isDeliv = false;
         if (!empty($this->object)) {
             $objectDetails = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
 
             foreach ($objectDetails as $key => $detail) {
-                // Ambil array aslinya (misalnya ['disc_pct' => 555.00000, ...])
                 $arr = populateArrayFromModel($detail);
-
-                // Jika disc_pct ada, bagi 10 supaya kelihatan 55.5
                 if (isset($arr['disc_pct']) && is_numeric($arr['disc_pct'])) {
                     $arr['disc_pct'] = $arr['disc_pct'] / 10;
                 }
-
+                $arr['has_delivery'] = $detail->has_delivery ?? false;
+                $arr['is_editable'] = $detail->is_editable ?? true;
                 $this->input_details[$key] = $arr;
-
-                // Hitung ulang amount dengan disc_pct yang sudah di-scale down
                 $this->updateItemAmount($key);
+                if ($arr['has_delivery']) {
+                    $this->isDeliv = true;
+                }
             }
         }
     }
@@ -639,22 +673,20 @@ class Detail extends BaseComponent
                         'objectId' => encryptWithSessionKey($order->id),
                     ]
                 );
+            } else if ($this->actionValue === 'Edit') {
+                // Jika sudah ada delivery, update header saja, detailData dikosongkan
+                $result = $this->isDeliv
+                    ? $this->orderService->updOrder($this->object->id, $headerData, [])
+                    : $this->orderService->updOrder($this->object->id, $headerData, $detailData);
+                $this->dispatch('success', 'Sales Order berhasil diupdate.');
+                return redirect()->route(
+                    $this->appCode . '.Transaction.SalesOrder.Detail',
+                    [
+                        'action'   => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($this->object->id),
+                    ]
+                );
             }
-            // if ($this->actionValue === 'Create') {
-            //     $order = $this->orderService->addOrder($headerData, $detailData);
-            //     if (!$order) {
-            //         throw new Exception('Gagal membuat Sales Order.');
-            //     }
-            //     $this->object = $order;
-            // } else {
-            //     $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-            //     if (!$result) {
-            //         throw new Exception('Gagal mengubah Sales Order.');
-            //     }
-            // }
-
-            $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-            $this->dispatch('success', 'Sales Order berhasil diperbarui.');
         } catch (Exception $e) {
             throw new Exception('Gagal menyimpan: ' . $e->getMessage());
         }

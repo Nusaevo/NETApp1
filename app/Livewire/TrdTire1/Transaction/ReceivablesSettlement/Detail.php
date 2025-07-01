@@ -12,6 +12,7 @@ use App\Services\TrdTire1\Master\MasterService;
 use Illuminate\Support\Facades\{Session, Log, DB};
 use Exception;
 use Carbon\Carbon;
+use App\Services\TrdTire1\BillingService;
 
 class Detail extends BaseComponent
 {
@@ -393,6 +394,7 @@ class Detail extends BaseComponent
 
             foreach ($this->object_detail as $key => $detail) {
                 $amtbill = 0;
+                $billhdr_id = null;
                 $billhdrtr_code = null;
                 $tr_date  = Carbon::now()->format('d-m-Y'); // Default to current date (d-m-Y)
 
@@ -403,27 +405,50 @@ class Detail extends BaseComponent
                         $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
                         if ($billingHdr) {
                             $amtbill = $billingHdr->total_amt ?? 0;
-                            $billhdrtr_code = $billingHdr->id; // Simpan id BillingHdr
+                            $billhdr_id = $billingHdr->id;
+                            $billhdrtr_code = $billingHdr->tr_code;
                             $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
                         }
                     }
                 }
 
-                // Jika billhdrtr_code masih kosong, coba ambil dari billhdrtr_code (tr_code) di detail
-                if (!$billhdrtr_code && !empty($detail->billhdrtr_code)) {
+                // Jika billhdr_id masih kosong, coba ambil dari billhdrtr_code (tr_code) di detail
+                if (!$billhdr_id && !empty($detail->billhdrtr_code)) {
                     $billingHdr = BillingHdr::where('tr_code', $detail->billhdrtr_code)->first();
                     if ($billingHdr) {
-                        $billhdrtr_code = $billingHdr->id;
+                        $billhdr_id = $billingHdr->id;
+                        $billhdrtr_code = $billingHdr->tr_code;
                         $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
                         $amtbill = $billingHdr->total_amt ?? 0;
                     }
                 }
 
+                $amt_reff = 0;
+                if ($billhdr_id && isset($billingHdr)) {
+                    $amt_reff = BillingDtl::where('trhdr_id', $billhdr_id)
+                        ->where('tr_type', $billingHdr->tr_type)
+                        ->sum('amt_reff');
+                }
+                $outstanding_amt = ($amtbill ?? 0) - $amt_reff;
+
+                // Hitung due_date dari tr_date + payment_due_days
+                if (isset($billingHdr) && $billingHdr) {
+                    $tr_date = $billingHdr->tr_date ? \Carbon\Carbon::parse($billingHdr->tr_date) : \Carbon\Carbon::now();
+                    $payment_due_days = (int)($billingHdr->payment_due_days ?? 0);
+                    $due_date = $tr_date->copy()->addDays($payment_due_days)->format('d-m-Y');
+                } else {
+                    // Jika tidak ada billingHdr, tetap pakai Carbon
+                    $tr_date = isset($tr_date) ? \Carbon\Carbon::parse($tr_date) : \Carbon\Carbon::now();
+                    $due_date = $tr_date->format('d-m-Y');
+                }
+
                 $this->input_details[$key] = [
-                    'billhdrtr_code' => $billhdrtr_code, // Selalu id BillingHdr
-                    'tr_date'        => $tr_date,
-                    'amtbill'        => $amtbill,
-                    'amt'            => $detail->amt ?? null,
+                    'billhdr_id'      => $billhdr_id, // id BillingHdr untuk proses simpan
+                    'billhdrtr_code'  => $billhdrtr_code, // kode nota untuk tampilan
+                    'due_date'        => $due_date, // tanggal jatuh tempo
+                    'amtbill'         => $amtbill,
+                    'outstanding_amt' => $outstanding_amt,
+                    'amt'             => $detail->amt ?? null,
                 ];
             }
         }
@@ -749,7 +774,7 @@ class Detail extends BaseComponent
             // Validasi input detail
             $hasValidDetails = false;
             foreach ($this->input_details as $detail) {
-                if (!empty($detail['billhdrtr_code']) && !empty($detail['amt'])) {
+                if (!empty($detail['billhdr_id']) && !empty($detail['amt'])) {
                     $hasValidDetails = true;
                     break;
                 }
@@ -763,10 +788,10 @@ class Detail extends BaseComponent
             // Siapkan data detail
             $detailData = [];
             foreach ($this->input_details as $key => $detail) {
-                if (empty($detail['billhdrtr_code']) || empty($detail['amt'])) {
+                if (empty($detail['billhdr_id']) || empty($detail['amt'])) {
                     continue; // Skip detail yang tidak lengkap
                 }
-                $billingHdr = BillingHdr::find($detail['billhdrtr_code']); // Ambil berdasarkan id
+                $billingHdr = BillingHdr::find($detail['billhdr_id']); // Ambil berdasarkan id
                 if ($billingHdr) {
                     $detailData[] = [
                         'tr_seq' => $key + 1,
@@ -862,6 +887,13 @@ class Detail extends BaseComponent
                 ]);
                 $this->dispatch('error', 'Error saving payment: ' . $e->getMessage());
                 return;
+            }
+
+            // Tambahkan update amt_reff di BillingHdr setelah simpan detail pembayaran
+            $billhdrIds = collect($detailData)->pluck('billhdrtr_id')->unique();
+            foreach ($billhdrIds as $billhdrId) {
+                $totalPaid = PaymentDtl::where('billhdrtr_id', $billhdrId)->sum('amt');
+                BillingHdr::where('id', $billhdrId)->update(['amt_reff' => $totalPaid]);
             }
 
             $this->dispatch('disable-onbeforeunload');
@@ -1032,19 +1064,9 @@ class Detail extends BaseComponent
                 }
             }
 
-            // Tambahan: Ambil semua BillingHdr untuk partner_id terpilih dan tampilkan di input_details
-            $billingList = BillingHdr::where('partner_id', $partner->id)->get();
-            $this->input_details = [];
-            foreach ($billingList as $bill) {
-                $totalAmt = $bill->total_amt ?? 0;
-                $maxAmt = isset($bill->amt_reff) ? min($totalAmt, $bill->amt_reff) : $totalAmt;
-                $this->input_details[] = [
-                    'billhdrtr_code' => $bill->id,
-                    'tr_date'        => $bill->tr_date ? \Carbon\Carbon::parse($bill->tr_date)->format('d-m-Y') : null,
-                    'amtbill'        => $totalAmt,
-                    'amt'            => $maxAmt, // amt default tidak lebih besar dari amt_reff
-                ];
-            }
+            // Ambil data nota outstanding dari BillingService (logic di service, bukan di Livewire)
+            $billingService = app(\App\Services\TrdTire1\BillingService::class);
+            $this->input_details = $billingService->getOutstandingBillsByPartner($partner->id);
 
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
@@ -1097,6 +1119,7 @@ class Detail extends BaseComponent
     // Membagi amt pembayaran ke setiap nota secara merata
     public function payItem()
     {
+        // Hitung total pembayaran yang diinput user pada payment
         $totalPayment = 0;
         foreach ($this->input_payments as $payment) {
             if (!empty($payment['amt'])) {
@@ -1104,56 +1127,49 @@ class Detail extends BaseComponent
                 $totalPayment += is_numeric($amtValue) ? (float)$amtValue : 0;
             }
         }
-        $notaCount = count($this->input_details);
-        if ($notaCount > 0 && $totalPayment !== null) {
-            // Buat array key asli dan data, lalu urutkan berdasarkan tr_date
-            $details = [];
-            foreach ($this->input_details as $key => $detail) {
-                $details[] = [
-                    'key' => $key,
-                    'tr_date' => isset($detail['tr_date']) ? strtotime($detail['tr_date']) : 0,
-                    'amtbill' => (isset($detail['amtbill']) && is_numeric($detail['amtbill'])) ? (float)$detail['amtbill'] : 0,
-                ];
-            }
-            usort($details, function($a, $b) {
-                return $a['tr_date'] <=> $b['tr_date'];
-            });
 
-            $remaining = $totalPayment;
-            // Reset amt semua nota
-            foreach ($this->input_details as $key => $detail) {
-                $this->input_details[$key]['amt'] = 0;
-            }
-            // Bagi pembayaran ke nota satu per satu sesuai urutan jatuh tempo
-            foreach ($details as $item) {
-                $key = $item['key'];
-                $amtbill = $item['amtbill'];
-                if ($remaining <= 0) {
-                    $this->input_details[$key]['amt'] = 0;
-                } else {
-                    $toPay = min($amtbill, $remaining);
-                    $this->input_details[$key]['amt'] = round($toPay, 2);
-                    $remaining -= $toPay;
-                }
-            }
-            // Hitung total pembayaran dan total amt nota
-            $this->totalPaymentAmount = 0;
-            foreach ($this->input_payments as $payment) {
-                $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
-                $this->totalPaymentAmount += is_numeric($amtValue) ? (float)$amtValue : 0;
-            }
-            $this->totalNotaAmount = 0;
-            foreach ($this->input_details as $detail) {
-                $this->totalNotaAmount += is_numeric($detail['amt']) ? (float)$detail['amt'] : 0;
-            }
-            $this->advanceBalance = $remaining > 0 ? round($remaining, 2) : 0;
-            $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota sesuai limit amtbill dan urutan jatuh tempo.');
-        } else {
-            $this->totalPaymentAmount = 0;
-            $this->totalNotaAmount = 0;
-            $this->advanceBalance = 0;
-            $this->dispatch('error', 'Pastikan ada pembayaran dan nota.');
+        // Urutkan nota berdasarkan due_date (jika ada)
+        $details = [];
+        foreach ($this->input_details as $key => $detail) {
+            $details[] = [
+                'key' => $key,
+                'due_date' => isset($detail['due_date']) ? strtotime($detail['due_date']) : 0,
+                'outstanding_amt' => (isset($detail['outstanding_amt']) && is_numeric($detail['outstanding_amt'])) ? (float)$detail['outstanding_amt'] : 0,
+            ];
         }
+        usort($details, function($a, $b) {
+            return $a['due_date'] <=> $b['due_date'];
+        });
+
+        $remaining = $totalPayment;
+        // Reset amt semua nota
+        foreach ($this->input_details as $key => $detail) {
+            $this->input_details[$key]['amt'] = 0;
+        }
+        // Bagi pembayaran ke nota satu per satu sesuai urutan jatuh tempo
+        foreach ($details as $item) {
+            $key = $item['key'];
+            $outstanding = $item['outstanding_amt'];
+            if ($remaining <= 0) {
+                $this->input_details[$key]['amt'] = 0;
+            } else {
+                $toPay = min($outstanding, $remaining);
+                $this->input_details[$key]['amt'] = round($toPay, 2);
+                $remaining -= $toPay;
+            }
+        }
+        // Update summary footer
+        $this->totalPaymentAmount = 0;
+        foreach ($this->input_payments as $payment) {
+            $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
+            $this->totalPaymentAmount += is_numeric($amtValue) ? (float)$amtValue : 0;
+        }
+        $this->totalNotaAmount = 0;
+        foreach ($this->input_details as $detail) {
+            $this->totalNotaAmount += is_numeric($detail['amt']) ? (float)$detail['amt'] : 0;
+        }
+        $this->advanceBalance = $this->totalPaymentAmount - $this->totalNotaAmount;
+        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota sesuai outstanding dan urutan jatuh tempo.');
     }
 
     public function addAdvanceItem()

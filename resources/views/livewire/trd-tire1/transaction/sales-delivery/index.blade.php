@@ -29,7 +29,7 @@
                     <div class="col-md-6">
                         <label tyope="hidden" for=""></label>
                         <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code"
-                            :options="$warehouses" required="true" :action="$actionValue" />
+                            :options="$warehouses" required="false" :action="$actionValue" />
                     </div>
                 </div>
                 <x-ui-table id="selectedItemsTable" padding="0px" margin="0px">

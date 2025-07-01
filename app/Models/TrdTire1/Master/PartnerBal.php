@@ -38,4 +38,12 @@ class PartnerBal extends BaseModel
     {
         return $this->orderBy('code', 'asc')->get();
     }
+
+    /**
+     * Get the partner that owns the balance
+     */
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class, 'partner_id');
+    }
 }

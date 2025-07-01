@@ -49,11 +49,11 @@ class OrderService
             // Set ID header ke headerData untuk digunakan di saveDetails
             $headerData['id'] = $order->id;
 
-            // Delete existing details
-            $this->deleteDetails($orderId);
-
-            // Save new details
-            $this->saveDetails($headerData, $detailData);
+            // Hanya update detail jika $detailData tidak kosong
+            if (!empty($detailData)) {
+                $this->deleteDetails($orderId);
+                $this->saveDetails($headerData, $detailData);
+            }
 
             DB::commit();
             return $order;
@@ -76,7 +76,6 @@ class OrderService
          }
     }
 
-
     public function updOrderQtyReff(string $mode, float $qtyDeliv, int $orderDtlId)
     {
         DB::beginTransaction();
@@ -97,7 +96,6 @@ class OrderService
             throw new Exception('Error updating order quantity reference: ' . $e->getMessage());
         }
     }
-
 
     private function saveHeader(array $headerData, ?int $orderId = null): OrderHdr
     {
@@ -136,7 +134,7 @@ class OrderService
 
     private function deleteHeader(int $orderID)
     {
-        OrderHdr::where('id', $orderID)->delete();
+        OrderHdr::where('id', $orderID)->forceDelete();
     }
 
     private function deleteDetails(int $orderID): void

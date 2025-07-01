@@ -370,7 +370,7 @@ class Detail extends BaseComponent
             } else {
                 // dd($detailData, $headerData);
                 $deliveryService->updDelivery($this->object->id, $headerData, $detailData);
-                
+
 
                 // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
                 $total_amt = 0;
@@ -393,29 +393,6 @@ class Detail extends BaseComponent
                     $detail['trhdr_id'] = $this->object->id;
                 }
                 unset($detail);
-
-                // Panggil update billing
-                app(BillingService::class)->updBilling($this->object->id, $headerData, $detailData);
-
-                // Tambahkan update ivt_id pada setiap DelivDtl setelah simpan
-                foreach ($detailData as $detail) {
-                    $delivDtl = DelivDtl::where([
-                        'trhdr_id' => $this->object->id,
-                        'matl_id' => $detail['matl_id'],
-                        'tr_seq' => $detail['tr_seq'],
-                    ])->first();
-                    if ($delivDtl) {
-                        $ivtBal = IvtBal::where([
-                            'matl_id' => $delivDtl->matl_id,
-                            'wh_id' => $delivDtl->wh_id,
-                            'batch_code' => $delivDtl->batch_code,
-                        ])->first();
-                        if ($ivtBal) {
-                            $delivDtl->ivt_id = $ivtBal->id;
-                            $delivDtl->save();
-                        }
-                    }
-                }
             }
 
             // dd($this->object);

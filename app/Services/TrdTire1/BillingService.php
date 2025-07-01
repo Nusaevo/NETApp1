@@ -96,14 +96,17 @@ class BillingService
 
     public function delFromDelivery(int $deliveryId)
     {
-        // Ambil data delivery header
-        $delivHdr = DelivHdr::findOrFail($deliveryId);
+        // Cari semua billing detail yang terkait dengan delivery ini
+        $billingDtls = BillingDtl::where('dlvhdr_id', $deliveryId)->get();
 
-        // Cari billing yang terkait dengan delivery berdasarkan tr_code
-        $billingHdr = BillingHdr::where('tr_code', $delivHdr->tr_code)->first();
-        if ($billingHdr) {
-            // Hapus billing yang terkait
-            $this->delBilling($billingHdr->id);
+        if ($billingDtls->isNotEmpty()) {
+            // Ambil trhdr_id yang unik (dalam kasus ada multiple details dengan header yang sama)
+            $billingHeaderIds = $billingDtls->pluck('trhdr_id')->unique();
+
+            // Hapus semua billing header yang terkait
+            foreach ($billingHeaderIds as $billingId) {
+                $this->delBilling($billingId);
+            }
         }
     }
 
@@ -242,9 +245,7 @@ class BillingService
         }
     }
 
-    /**
-     * Generate kode billing otomatis dengan format: TRTYPE + 3 digit urut
-     */
+
     private function generateBillingCode(string $billingTrType): string
     {
         $lastBilling = BillingHdr::where('tr_type', $billingTrType)
@@ -257,5 +258,39 @@ class BillingService
         }
         $newNumber = $lastNumber + 1;
         return $billingTrType . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Ambil daftar BillingHdr yang outstanding untuk partner tertentu,
+     * hanya yang (total_amt - amt_reff) > 0
+     */
+    public function getOutstandingBillsByPartner($partnerId = null)
+    {
+        $query = BillingHdr::query();
+        if ($partnerId) {
+            $query->where('partner_id', $partnerId);
+        }
+        $query->whereNull('deleted_at');
+        $bills = $query->get();
+        $result = [];
+        foreach ($bills as $bill) {
+            // Ambil amt_reff langsung dari BillingHdr
+            $amt_reff = $bill->amt_reff ?? 0;
+            $outstanding = ($bill->total_amt ?? 0) - $amt_reff;
+            if ($outstanding > 0) {
+                // Hitung due_date
+                $tr_date = $bill->tr_date ? \Carbon\Carbon::parse($bill->tr_date) : \Carbon\Carbon::now();
+                $payment_due_days = (int)($bill->payment_due_days ?? 0);
+                $due_date = $tr_date->copy()->addDays($payment_due_days)->format('d-m-Y');
+                $result[] = [
+                    'billhdrtr_code'   => $bill->tr_code,
+                    'due_date'         => $due_date,
+                    'outstanding_amt'  => $outstanding,
+                    'amt'              => 0,
+                    'billhdr_id'       => $bill->id,
+                ];
+            }
+        }
+        return $result;
     }
 }

@@ -89,7 +89,6 @@
                             <th style="width: 150px; text-align: center;">Amount</th>
                             <th style="width: 70px; text-align: center;">Actions</th>
                         </x-slot>
-
                         <!-- Define table rows -->
                         <x-slot name="rows">
                             @foreach ($input_payments as $key => $input_payment)
@@ -142,23 +141,19 @@
                         <!-- Define table rows -->
                         <x-slot name="rows">
                             @foreach ($input_details as $key => $input_detail)
-                                <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
+                                <tr wire:key="list{{ $input_detail['billhdr_id'] ?? $key }}">
                                     <td style="text-align: center;">{{ $loop->iteration }}</td>
-                                    <td>
-                                        <x-ui-dropdown-select type="int" label="" clickEvent=""
-                                            model="input_details.{{ $key }}.billhdrtr_code"
-                                            :options="$codeBill" required="true" :action="$actionValue"
-                                            onChanged="onCodeChanged({{ $key }}, $event.target.value)"
-                                            :enabled="true" />
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
+                                            label="" :action="$actionValue" enabled="false" type="text" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_details.{{ $key }}.tr_date"
+                                        <x-ui-text-field model="input_details.{{ $key }}.due_date"
                                             label="" :action="$actionValue" enabled="false" type="date" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_details.{{ $key }}.amtbill"
-                                            label="" enabled="true" :action="$actionValue" enabled="false"
-                                            type="number" required="true" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.outstanding_amt"
+                                            label="" :action="$actionValue" enabled="false" type="number" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
@@ -174,9 +169,9 @@
                         </x-slot>
 
                         <x-slot name="button">
-                            <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="Add" />
-                            <x-ui-button clickEvent="payItem" cssClass="btn btn-primary" button-name="Bayar" />
+                            {{-- <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
+                                button-name="Add" /> --}}
+                            <x-ui-button clickEvent="payItem" cssClass="btn btn-primary" button-name="Auto Pelunasan" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>
@@ -231,7 +226,7 @@
                     <x-slot name="headers">
                         <th style="width: 150px; text-align: center;">Total Pembayaran</th>
                         <th style="width: 150px; text-align: center;">Total Amt Nota</th>
-                        <th style="width: 150px; text-align: center;">lebih bayar</th>
+                        <th style="width: 150px; text-align: center;">Lebih Bayar</th>
                     </x-slot>
                     <x-slot name="rows">
                         <tr>

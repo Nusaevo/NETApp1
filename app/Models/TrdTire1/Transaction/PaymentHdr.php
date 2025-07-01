@@ -12,6 +12,8 @@ use App\Traits\BaseTrait;
 
 class PaymentHdr extends BaseModel
 {
+    use SoftDeletes;
+
     protected $table = 'payment_hdrs';
 
     protected static function boot()
