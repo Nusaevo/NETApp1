@@ -12,6 +12,7 @@ use App\Models\TrdTire1\Master\MatlUom;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
 use App\Services\TrdTire1\DeliveryService;
 use Exception;
@@ -220,15 +221,29 @@ class IndexDataTable extends BaseDataTableComponent
                     ->pluck('tr_code')
                     ->toArray();
 
-                // Hapus DelivHdr dengan tr_code yang sesuai
+                // Validasi apakah ada delivery yang sudah dibuat
                 $delivHdrs = DelivHdr::where('tr_type', 'SD')
                     ->whereIn('tr_code', $selectedTrCodes)
                     ->get();
 
+                if ($delivHdrs->isEmpty()) {
+                    $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
+                    return;
+                }
+
                 // Gunakan DeliveryService untuk menghapus delivery
                 $deliveryService = app(DeliveryService::class);
+                $deletedCount = 0;
+
                 foreach ($delivHdrs as $delivHdr) {
-                    $deliveryService->delDelivery($delivHdr->id);
+                    try {
+                        $deliveryService->delDelivery($delivHdr->id);
+                        $deletedCount++;
+                    } catch (Exception $e) {
+                        // Log error untuk debugging
+                        Log::error('Error deleting delivery ID ' . $delivHdr->id . ': ' . $e->getMessage());
+                        throw new Exception('Gagal menghapus delivery ' . $delivHdr->tr_code . ': ' . $e->getMessage());
+                    }
                 }
 
                 // Update status OrderHdr kembali ke PRINT
@@ -239,7 +254,7 @@ class IndexDataTable extends BaseDataTableComponent
                 $this->clearSelected();
                 $this->dispatch('showAlert', [
                     'type' => 'success',
-                    'message' => 'Tanggal pengiriman berhasil dibatalkan'
+                    'message' => "Berhasil membatalkan {$deletedCount} data pengiriman"
                 ]);
             } catch (Exception $e) {
                 DB::rollBack();

@@ -9,6 +9,7 @@ use App\Models\TrdTire1\Master\SalesReward;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdTire1\Master\MatlUom;
+use Illuminate\Support\Facades\Log;
 
 class OrderDtl extends BaseModel
 {
@@ -34,6 +35,8 @@ class OrderDtl extends BaseModel
         'price_uom',
         'amt_tax',
     ];
+
+    protected $appends = ['has_delivery', 'is_editable'];
 
     protected static function boot()
     {
@@ -95,6 +98,33 @@ class OrderDtl extends BaseModel
     public function SalesReward()
     {
         return $this->belongsTo(SalesReward::class, 'matl_id', 'matl_id');
+    }
+
+    public function DelivDtl()
+    {
+        return $this->hasMany(DelivDtl::class, 'reffdtl_id', 'id');
+    }
+    #endregion
+
+    #region Delivery Status Methods
+    public function hasDelivery()
+    {
+        return $this->DelivDtl()->exists();
+    }
+
+    public function isEditable()
+    {
+        return !$this->hasDelivery();
+    }
+
+    public function getHasDeliveryAttribute()
+    {
+        return $this->hasDelivery();
+    }
+
+    public function getIsEditableAttribute()
+    {
+        return $this->isEditable();
     }
     #endregion
 
