@@ -12,7 +12,10 @@ use App\Models\TrdTire1\Master\MatlUom;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
+use App\Services\TrdTire1\DeliveryService;
+use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -31,7 +34,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::SHIP, Status::OPEN]);
+            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::SHIP, Status::OPEN, Status::ACTIVE]);
     }
     public function columns(): array
     {
@@ -89,10 +92,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("warehouse"), "warehouse")
                 ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
+                    $delivDtl = DelivDtl::where('tr_code', $row->tr_code)
+                        ->where('tr_type', 'SD')
                         ->first();
-                    return $delivery ? $delivery->wh_code : '';
+                    return $delivDtl ? $delivDtl->wh_code : '';
                 })
                 ->sortable(),
             Column::make($this->trans("Status"), "status")
@@ -212,41 +215,51 @@ class IndexDataTable extends BaseDataTableComponent
         $selectedOrderIds = $this->getSelected();
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
+            try {
+                // Ambil tr_code dari OrderHdr yang terpilih
+                $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
+                    ->pluck('tr_code')
+                    ->toArray();
 
-            // Ambil tr_code dari OrderHdr yang terpilih
-            $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
-                ->pluck('tr_code')
-                ->toArray();
+                // Validasi apakah ada delivery yang sudah dibuat
+                $delivHdrs = DelivHdr::where('tr_type', 'SD')
+                    ->whereIn('tr_code', $selectedTrCodes)
+                    ->get();
 
-            // Hapus DelivDtl dengan trhdr_id yang sesuai dengan DelivHdr yang akan dihapus
-            $delivHdrs = DelivHdr::where('tr_type', 'SD')
-                ->whereIn('tr_code', $selectedTrCodes)
-                ->get();
-
-            foreach ($delivHdrs as $delivHdr) {
-                $delivDtls = DelivDtl::where('trhdr_id', $delivHdr->id)->get();
-                foreach ($delivDtls as $delivDtl) {
-                    // Adjust qty_fgi in MatlUom
-                    $matlUom = MatlUom::where('matl_id', $delivDtl->matl_id)
-                        ->where('matl_uom', $delivDtl->matl_uom)
-                        ->first();
-                    if ($matlUom) {
-                        $matlUom->increment('qty_fgi', $delivDtl->qty);
-                    }
-                    $delivDtl->forceDelete(); // Permanently delete DelivDtl
+                if ($delivHdrs->isEmpty()) {
+                    $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
+                    return;
                 }
-                // Permanently delete DelivHdr
-                $delivHdr->forceDelete();
+
+                // Gunakan DeliveryService untuk menghapus delivery
+                $deliveryService = app(DeliveryService::class);
+                $deletedCount = 0;
+
+                foreach ($delivHdrs as $delivHdr) {
+                    try {
+                        $deliveryService->delDelivery($delivHdr->id);
+                        $deletedCount++;
+                    } catch (Exception $e) {
+                        // Log error untuk debugging
+                        Log::error('Error deleting delivery ID ' . $delivHdr->id . ': ' . $e->getMessage());
+                        throw new Exception('Gagal menghapus delivery ' . $delivHdr->tr_code . ': ' . $e->getMessage());
+                    }
+                }
+
+                // Update status OrderHdr kembali ke PRINT
+                OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::PRINT]);
+
+                DB::commit();
+
+                $this->clearSelected();
+                $this->dispatch('showAlert', [
+                    'type' => 'success',
+                    'message' => "Berhasil membatalkan {$deletedCount} data pengiriman"
+                ]);
+            } catch (Exception $e) {
+                DB::rollBack();
+                $this->dispatch('error', 'Gagal membatalkan pengiriman: ' . $e->getMessage());
             }
-            OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);
-
-            DB::commit();
-
-            $this->clearSelected();
-            $this->dispatch('showAlert', [
-                'type' => 'success',
-                'message' => 'Tanggal pengiriman berhasil dibatalkan'
-            ]);
         }
     }
 

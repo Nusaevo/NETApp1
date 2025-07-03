@@ -7,10 +7,8 @@ use App\Models\Base\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 
-class PaymentSrc extends BaseModel
+class PaymentAdv extends BaseModel
 {
-    protected $table = 'payment_srcs';
-
     protected static function boot()
     {
         parent::boot();
@@ -19,15 +17,16 @@ class PaymentSrc extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
+        'tr_code',
         'tr_seq',
-        'pay_type_id',
-        'pay_type_code',
-        'bank_id',
-        'bank_code',
-        'bank_reff',
-        'bank_duedt',
-        'bank_note',
+        'adv_type_id',
+        'adv_type_code',
+        'partnerbal_id',
+        'reff_id',
+        'reff_type',
+        'reff_code',
         'amt',
+        'amt_base',
     ];
 
     #region Relations
@@ -40,16 +39,17 @@ class PaymentSrc extends BaseModel
     {
         return $this->hasMany(PaymentHdr::class, 'trhdr_id', 'id');
     }
-    public function scopeGetByOrderHdr($query, $id, $trType)
-    {
-        return $query->where('trhdr_id', $id)
-            ->where('tr_type', $trType);
-    }
     public function paymentHdr()
     {
         return $this->belongsTo(PaymentHdr::class, 'trhdr_id', 'id');
     }
 
+
+    public function scopeGetByOrderHdr($query, $id, $trType)
+    {
+        return $query->where('trhdr_id', $id)
+            ->where('tr_type', $trType);
+    }
     #endregion
 
 

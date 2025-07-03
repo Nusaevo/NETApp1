@@ -9,8 +9,6 @@ use App\Enums\Constant;
 
 class PaymentDtl extends BaseModel
 {
-    use SoftDeletes;
-
     protected static function boot()
     {
         parent::boot();
@@ -21,14 +19,13 @@ class PaymentDtl extends BaseModel
         'tr_type',
         'tr_code',
         'tr_seq',
-        'billdtl_id',
         'billhdrtr_type',
-        'biilhdrtr_code',
-        'billdtltr_seq',
+        'billhdrtr_code',
+        'billhdr_id',
         'amt',
         'amt_base',
-        'tr_code',
-        'status_code'
+        'status_code',
+        'partnerbal_id'
     ];
 
     #region Relations

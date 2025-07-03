@@ -12,6 +12,11 @@ class PartnerBal extends BaseModel
 
     protected $fillable = [
         'partner_id',
+        'partner_code',
+        'reff_id',
+        'reff_type',
+        'reff_code',
+
     ];
 
     protected $primaryKey = 'partner_id'; // Ensure the primary key is defined
@@ -37,5 +42,13 @@ class PartnerBal extends BaseModel
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();
+    }
+
+    /**
+     * Get the partner that owns the balance
+     */
+    public function partner()
+    {
+        return $this->belongsTo(Partner::class, 'partner_id');
     }
 }

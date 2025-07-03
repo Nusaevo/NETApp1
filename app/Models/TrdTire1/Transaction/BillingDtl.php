@@ -8,8 +8,6 @@ use App\Enums\Constant;
 
 class BillingDtl extends BaseModel
 {
-    use SoftDeletes;
-
 
     protected static function boot()
     {
@@ -19,11 +17,11 @@ class BillingDtl extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
-        'tr_id',
         'tr_seq',
         'dlvdtl_id',
+        'dlvhdr_id',
         'dlvhdrtr_type',
-        'dlvhdrtr_id',
+        'dlvhdrtr_code',
         'dlvdtltr_seq',
         'matl_id',
         'matl_code',
@@ -36,7 +34,6 @@ class BillingDtl extends BaseModel
         'price_uom',
         'price_base',
         'amt',
-        'amt_reff',
         'status_code',
     ];
 

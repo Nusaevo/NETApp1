@@ -24,9 +24,8 @@ class DelivHdr extends BaseModel
         'tr_date',
         'reff_date',
         'partner_id',
+        'reff_code',
         'partner_code',
-        'wh_code',
-        'wh_id',
         'tr_type',
         'note',
     ];
@@ -34,7 +33,7 @@ class DelivHdr extends BaseModel
         'tr_code' => 'string',
     ];
 
-    protected $appends = ['total_qty', 'total_amt'];
+    protected $appends = ['total_qty'];
 
     #region Relations
     public function Partner()
@@ -62,117 +61,9 @@ class DelivHdr extends BaseModel
     protected static function boot()
     {
         parent::boot();
-        // create billingHdr when deliveryHdr is created
-        // tr type if deliveryHdr is 'SD' => 'ARB'
-        // tr type if deliveryHdr is 'PD' => 'APB'
-        static::created(function ($delivHdr) {
-            $billingHdr = new BillingHdr();
-            $billingHdr->tr_code = $delivHdr->tr_code;
-            $billingHdr->tr_date = $delivHdr->tr_date;
-            $billingHdr->partner_id = $delivHdr->partner_id;
-            $billingHdr->partner_code = $delivHdr->partner_code;
-            $billingHdr->tr_type = $delivHdr->tr_type == 'SD' ? 'ARB' : 'APB';
 
-            if ($delivHdr->tr_type == 'SD') {
-                $orderHdr = $delivHdr->OrderHdr;
-                if ($orderHdr) {
-                    $billingHdr->payment_term_id = $orderHdr->payment_term_id;
-                    $billingHdr->payment_term = $orderHdr->payment_term;
-                    $billingHdr->payment_due_days = $orderHdr->payment_due_days;
-                }
-            } else if ($delivHdr->tr_type == 'PD') {
-                $delivDtl = DelivDtl::where('trhdr_id', $delivHdr->id)
-                    ->where('tr_type', 'PD')
-                    ->first();
-                if ($delivDtl && $delivDtl->reffhdrtr_code) {
-                    $orderHdr = OrderHdr::where('tr_code', $delivDtl->reffhdrtr_code)->first();
-                    if ($orderHdr) {
-                        $billingHdr->payment_term_id = $orderHdr->payment_term_id;
-                        $billingHdr->payment_term = $orderHdr->payment_term;
-                        $billingHdr->payment_due_days = $orderHdr->payment_due_days;
-                    }
-                }
-            }
-
-            $billingHdr->save();
-
-            // Tambahkan logika untuk PartnerBal dan PartnerLog
-            if ($delivHdr->tr_type == 'SD') {
-                // Create or update PartnerBal
-                $partnerBal = PartnerBal::firstOrNew(['partner_id' => $delivHdr->partner_id]);
-                $partnerBal->amt_adv = $partnerBal->amt_adv + $billingHdr->amt;
-                $partnerBal->partner_code = $delivHdr->partner_code; // Simpan partner_code
-                $partnerBal->save();
-
-                // Ambil data dari payment_dtl
-                $paymentDtl = PaymentDtl::where('trhdr_id', $billingHdr->id)->first();
-
-                // Create PartnerLog
-                PartnerLog::create([
-                    'trhdr_id' => $billingHdr->id,
-                    'tr_type' => $billingHdr->tr_type,
-                    'tr_code' => $billingHdr->tr_code,
-                    'tr_seq' => $paymentDtl->tr_seq ?? 0, // Ambil tr_seq dari payment_dtl, default 0 jika null
-                    'trdtl_id' => $paymentDtl->id ?? 0, // Ambil id dari payment_dtl, default 0 jika null
-                    'partner_id' => $partnerBal->partner_id,
-                    'partner_code' => $delivHdr->partner_code,
-                    'tr_date' => $billingHdr->tr_date,
-                    // 'tr_amt' => $billingHdr->amt,
-                    'curr_id' => null, // Update sesuai kebutuhan
-                    'curr_rate' => null, // Update sesuai kebutuhan
-                    // 'tr_descr' => 'Keterangan transaksi', // Update sesuai kebutuhan
-                    'amt' => $billingHdr->amt, // Sesuai dengan sign proses dalam base curr
-                ]);
-            }
-        });
-
-        // Hook untuk menghapus relasi saat header dihapus
-        static::deleting(function ($orderHdr) {
-            $orderHdr->deleteDeliveryAndBilling();
-            // $orderHdr->deleteOrderDetails();
-            BillingHdr::where('tr_code', $orderHdr->tr_code)
-                ->where('tr_type', $orderHdr->tr_type == 'SD' ? 'ARB' : 'APB')
-                ->forceDelete();
-        });
     }
 
-    public function deleteDeliveryAndBilling()
-    {
-        // Delete related delivery details
-        $this->DelivDtl()->delete();
-    }
-
-    public function savePurchaseHeader($appCode, $trType, $inputs, $configCode)
-    {
-        DB::transaction(function () use ($appCode, $trType, $inputs, $configCode) {
-            $this->fill($inputs);
-            $this->tr_type = $trType;
-
-            // Set status default
-            if ($this->isNew()) {
-                $this->status_code = Status::OPEN;
-            }
-
-            // Ensure trhdr_id is filled
-            if (isset($inputs['trhdr_id'])) {
-                $this->id = $inputs['trhdr_id'];
-            }
-
-            // Save the delivery date
-            $this->tr_date = $inputs['tr_date'];
-
-            // Simpan data
-            $this->save();
-
-            // Pastikan model di-refresh dari database
-            $this->refresh();
-        });
-    }
-    public function isOrderCompleted()
-    {
-        // Logika untuk mengecek apakah order selesai
-        return $this->status == 'completed'; // Misalnya, status 'completed' menandakan order selesai
-    }
     public function getTotalQtyAttribute()
     {
         return (int) $this->OrderDtl()->sum('qty');

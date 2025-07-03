@@ -101,4 +101,13 @@ class ConfigService extends BaseService
 
         return $configConst->str2 ?? '';
     }
+
+    public function getConstIdByStr1($const_group, $str1): int
+    {
+        $configConst = ConfigConst::where('const_group', $const_group)
+            ->where('str1', $str1)
+            ->first();
+
+        return $configConst->id ?? 0;
+    }
 }

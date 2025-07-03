@@ -5,8 +5,6 @@ namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
 use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
-use App\Models\SysConfig1\ConfigRight;
-use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +24,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'PO')
-            ->where('order_hdrs.status_code', Status::OPEN);
+            ->where('order_hdrs.status_code', Status::ACTIVE, Status::OPEN);
     }
     public function columns(): array
     {

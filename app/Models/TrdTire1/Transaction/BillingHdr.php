@@ -11,35 +11,6 @@ use App\Models\TrdTire1\Master\PartnerBal;
 
 class BillingHdr extends BaseModel
 {
-    use SoftDeletes;
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::created(function ($billingHdr) {
-            // Create PartnerBal
-            $partnerBal = PartnerBal::firstOrCreate(
-                [
-                    'partner_id' => $billingHdr->partner_id,
-                ],
-            );
-
-            // Create PartnerLog
-            PartnerLog::create([
-                'trhdr_id' => $billingHdr->id,
-                'tr_type' => $billingHdr->tr_type,
-                'tr_code' => $billingHdr->tr_code,
-                // 'tr_desc' => $billingHdr->tr_desc,
-                // 'tr_seq' => 1, // Assuming sequence starts at 1
-                // 'trdtl_id' => null, // Assuming no detail ID at this point
-                'partner_id' => $billingHdr->partner_id,
-                'partner_code' => $billingHdr->partner_code,
-                'tr_date' => $billingHdr->tr_date,
-                'tr_amt' => 0, // Assuming initial amount is 0
-            ]);
-        });
-    }
 
     public static function getBillCode()
     {
@@ -61,6 +32,7 @@ class BillingHdr extends BaseModel
         'curr_rate',
         'status_code',
         'print_date',
+        'total_amt'
     ];
 
     #region Relations

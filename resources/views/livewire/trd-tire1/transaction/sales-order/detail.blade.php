@@ -20,15 +20,17 @@
                                 <div class="row">
                                     <div class="row">
                                         <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
-                                            layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"/>
+                                            layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
+                                            onChanged="onSalesTypeChanged" />
                                         <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                             type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                            type="code" :action="$actionValue" required="true" clickEvent="getTransactionCode"
-                                            buttonName="Nomor Baru" enabled="true" :buttonEnabled="$isPanelEnabled" />
+                                            type="code" :action="$actionValue" required="true"
+                                            clickEvent="getTransactionCode" buttonName="Nomor Baru" enabled="true"
+                                            :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     </div>
@@ -37,7 +39,8 @@
                                             required="true" :action="$actionValue" enabled="false"
                                             clickEvent="openPartnerDialogBox" buttonName="Cari" :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-dialog-box id="partnerDialogBox" title="Cari Customer" width="600px"
-                                            height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
+                                            height="400px" onOpened="openPartnerDialogBox"
+                                            onClosed="closePartnerDialogBox">
                                             <x-slot name="body">
                                                 <x-ui-text-field type="text" label="Cari Code/Nama Customer"
                                                     model="partnerSearchText" required="true" :action="$actionValue"
@@ -52,7 +55,8 @@
                                                     <x-slot name="rows">
                                                         @if (empty($suppliers))
                                                             <tr>
-                                                                <td colspan="4" class="text-center text-muted">No Data
+                                                                <td colspan="4" class="text-center text-muted">No
+                                                                    Data
                                                                     Found</td>
                                                             </tr>
                                                         @else
@@ -74,9 +78,8 @@
                                                         @endif
                                                     </x-slot>
                                                     <x-slot name="footer">
-                                                        <x-ui-button clickEvent="confirmSelection"
-                                                            button-name="Pilih" loading="true"
-                                                            :action="$actionValue" cssClass="btn-primary" />
+                                                        <x-ui-button clickEvent="confirmSelection" button-name="Pilih"
+                                                            loading="true" :action="$actionValue" cssClass="btn-primary" />
                                                     </x-slot>
                                                 </x-ui-table>
                                             </x-slot>
@@ -85,8 +88,9 @@
                                             model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
                                             required="false" :action="$actionValue" onChanged="onShipToChanged" />
                                         <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
-                                            model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions" required="false"
-                                            :action="$actionValue" onChanged="onTaxPayerChanged" :enabled="$payer" />
+                                            model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions"
+                                            required="false" :action="$actionValue" onChanged="onTaxPayerChanged"
+                                            :enabled="$payer" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('Detail Customer') }}"
@@ -101,15 +105,17 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}"
-                                            model="inputs.tax_flag" :options="$SOTax" required="true" :action="$actionValue"
-                                            onChanged="onSOTaxChange" />
+                                            model="inputs.tax_flag" :options="$SOTax" required="true"
+                                            :action="$actionValue" onChanged="onSOTaxChange" />
                                         <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
                                             model="inputs.payment_term_id" :options="$paymentTerms" required="true"
                                             :action="$actionValue" onChanged="onPaymentTermChanged" :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
-                                            type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('cust_reff') }}" model="inputs.cust_reff"
-                                            type="text" :action="$actionValue" required="false" />
+                                        <x-ui-text-field label="{{ $this->trans('due_date') }}"
+                                            model="inputs.due_date" type="date" :action="$actionValue" required="true"
+                                            :enabled="$isPanelEnabled" />
+                                        <x-ui-text-field label="{{ $this->trans('reff_code') }}"
+                                            model="inputs.reff_code" type="text" :action="$actionValue"
+                                            required="false" />
                                     </div>
                                 </div>
                             </x-ui-padding>
@@ -141,22 +147,24 @@
                                                 model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                                 :options="$materials" required="true" :action="$actionValue"
                                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                :enabled="true" />
+                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" enabled="true" type="number" />
+                                                label="" :action="$actionValue" type="number"
+                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
-                                                label="" enabled="true" :action="$actionValue"
-                                                onChanged="updateItemAmount({{ $key }})" type="number"
-                                                required="true" />
+                                                label="" :action="$actionValue" type="number" required="true"
+                                                onChanged="updateItemAmount({{ $key }})"
+                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
-                                                label="" :action="$actionValue" enabled="true"
-                                                onChanged="updateItemAmount({{ $key }})" />
+                                                label="" :action="$actionValue" type="number"
+                                                onChanged="updateItemAmount({{ $key }})"
+                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
@@ -166,7 +174,8 @@
                                         <td style="text-align: center;">
                                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
                                                 :action="$actionValue" cssClass="btn-danger text-danger"
-                                                iconPath="delete.svg" />
+                                                iconPath="delete.svg"
+                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
                                         </td>
                                     </tr>
                                 @endforeach
@@ -174,14 +183,16 @@
 
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                    button-name="Tambah" />
+                                    button-name="Tambah" :enabled="!$isDeliv ? 'true' : 'false'" />
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>
                     <x-ui-footer>
-                        <x-ui-button clickEvent="deleteTransaction" button-name="Delete" loading="true" :action="$actionValue"
-                            cssClass="btn-danger" iconPath="delete.svg" />
-                        @include('layout.customs.buttons.save')
+                        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
+                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
+                        {{-- @include('layout.customs.buttons.save') --}}
+                        <x-ui-button clickEvent="Save" button-name="Simpan" loading="true" :action="$actionValue"
+                            cssClass="btn-primary" iconPath="save.svg" :enabled="true"/>
                     </x-ui-footer>
                 </div>
                 <x-ui-table id="SummaryTable">

@@ -5,10 +5,15 @@ namespace App\Models\TrdTire1\Transaction;
 use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Master\Partner;
 use App\Models\TrdTire1\Master\Material;
-use App\Enums\Status;
+use App\Models\TrdTire1\Transaction\DelivHdr;
+use App\Models\TrdTire1\Transaction\DelivDtl;
+use App\Models\TrdTire1\Transaction\BillingHdr;
+use App\Models\TrdTire1\Transaction\BillingDtl;
+use App\Enums\TrdTire1\Status;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\TrdTire1\Master\PartnerDetail;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -28,6 +33,8 @@ class OrderHdr extends BaseModel
         'tr_date',
         'print_date',
         'curr_rate',
+        'curr_id',
+        'curr_code',
         'note',
         'sales_type',
         'tax_doc_flag',
@@ -39,6 +46,7 @@ class OrderHdr extends BaseModel
         'npwp_code',
         'total_amt',
         'total_amt_tax',
+        'reff_code'
     ];
 
     protected $casts = [
@@ -50,10 +58,10 @@ class OrderHdr extends BaseModel
         parent::boot();
 
         // Hook untuk menghapus relasi saat header dihapus
-        static::deleting(function ($orderHdr) {
-            $orderHdr->deleteDeliveryAndBilling();
-            $orderHdr->deleteOrderDetails();
-        });
+        // static::deleting(function ($orderHdr) {
+        //     $orderHdr->deleteDeliveryAndBilling();
+        //     $orderHdr->deleteOrderDetails();
+        // });
     }
 
     #region Relasi
@@ -246,84 +254,22 @@ class OrderHdr extends BaseModel
 
     public function isOrderCompleted()
     {
-        return $this->status == 'completed';
+        return $this->status_code == Status::COMPLETED;
     }
 
-    public function createOrUpdateDelivery()
+    public function isOrderEnableToDelete(): bool
     {
-        $deliveryHdr = DelivHdr::firstOrNew([
-            'tr_code' => $this->tr_code,
-            'tr_type' => $this->getDeliveryTrType(),
-        ]);
-
-        $deliveryHdr->fill([
-            'tr_date'      => $this->tr_date,
-            'partner_id'   => $this->partner_id,
-            'partner_code' => $this->partner_code,
-        ]);
-
-        if ($deliveryHdr->isNew()) {
-            $deliveryHdr->status_code = Status::OPEN;
+        // Cek apakah ada order detail yang sudah memiliki qty_reff > 0 (sudah diproses)
+        $orderDtlWithQtyReff = OrderDtl::where('tr_code', $this->tr_code)
+            ->where('qty_reff', '>', 0)
+            ->count();
+        if ($orderDtlWithQtyReff > 0) {
+            // $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena sudah diproses (memiliki qty_reff > 0).');
+            throw new Exception('Nota ini tidak bisa dihapus karena sudah diproses');
+            // return false;
         }
 
-        $deliveryHdr->save();
-    }
-
-    public function createDeliveryDetail($orderDtl, $inputs)
-    {
-        $deliveryDtl = DelivDtl::firstOrNew([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq'   => $orderDtl->tr_seq,
-            'tr_type'  => $this->getDeliveryTrType(),
-        ]);
-
-        $deliveryDtl->fill([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type'  => $this->getDeliveryTrType(),
-            'tr_code'  => $this->tr_code,
-            'tr_seq'   => $orderDtl->tr_seq,
-            'matl_id'  => $orderDtl->matl_id,
-            'qty'      => $orderDtl->qty,
-        ]);
-
-        $deliveryDtl->save();
-    }
-
-    public function createBillingDetail($orderDtl)
-    {
-        $billingDtl = BillingDtl::firstOrNew([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_seq'   => $orderDtl->tr_seq,
-            'tr_type'  => $this->getBillingTrType(),
-        ]);
-
-        $billingDtl->fill([
-            'trhdr_id' => $orderDtl->trhdr_id,
-            'tr_type'  => $this->getBillingTrType(),
-            'tr_code'  => $this->tr_code,
-            'tr_seq'   => $orderDtl->tr_seq,
-            'matl_id'  => $orderDtl->matl_id,
-            'qty'      => $orderDtl->qty,
-        ]);
-
-        $billingDtl->save();
-    }
-
-    private function deleteDeliveryAndBilling()
-    {
-        if ($this->DelivHdr) {
-            foreach ($this->DelivHdr->DelivDtl as $detail) {
-                $detail->forceDelete();
-            }
-            $this->DelivHdr->forceDelete();
-        }
-
-        if ($this->BillingHdr) {
-            foreach ($this->BillingHdr->BillingDtl as $detail) {
-                $detail->forceDelete();
-            }
-            $this->BillingHdr->forceDelete();
-        }
+        return true; // Tidak ada qty_reff yang terisi, bisa dihapus
     }
     #endregion
 
