@@ -12,6 +12,11 @@ class PartnerBal extends BaseModel
 
     protected $fillable = [
         'partner_id',
+        'partner_code',
+        'reff_id',
+        'reff_type',
+        'reff_code',
+
     ];
 
     protected $primaryKey = 'partner_id'; // Ensure the primary key is defined

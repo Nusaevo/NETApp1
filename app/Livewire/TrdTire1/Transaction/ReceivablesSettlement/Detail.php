@@ -425,9 +425,7 @@ class Detail extends BaseComponent
 
                 $amt_reff = 0;
                 if ($billhdr_id && isset($billingHdr)) {
-                    $amt_reff = BillingDtl::where('trhdr_id', $billhdr_id)
-                        ->where('tr_type', $billingHdr->tr_type)
-                        ->sum('amt_reff');
+                    $amt_reff = $billingHdr->amt_reff ?? 0;
                 }
                 $outstanding_amt = ($amtbill ?? 0) - $amt_reff;
 
@@ -798,7 +796,7 @@ class Detail extends BaseComponent
                         'amt' => $detail['amt'],
                         'billhdrtr_code' => $billingHdr->tr_code, // Simpan tr_code ke database
                         'billhdrtr_type' => $billingHdr->tr_type,
-                        'billhdrtr_id' => $billingHdr->id, // Simpan juga id BillingHdr
+                        'billhdr_id' => $billingHdr->id, // Simpan juga id BillingHdr
                     ];
                 } else {
                     // Jika tidak ditemukan, skip
@@ -869,16 +867,16 @@ class Detail extends BaseComponent
                     ];
                 }
                 if ($this->actionValue == 'Create') {
-                    $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData);
-                    $this->objectIdValue = $result['header']->id;
-                    $headerData['id'] = $result['header']->id;
+                    $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
+                    $this->objectIdValue = $result->id;
+                    $headerData['id'] = $result->id;
                     Log::debug('After addPayment, updated objectIdValue and headerData', [
                         'new_id' => $this->objectIdValue,
                         'headerData' => $headerData
                     ]);
                     $this->actionValue = 'Edit';
                 } else {
-                    $this->paymentService->modPayment($this->objectIdValue, $headerData, $detailData, $paymentData, $advanceData);
+                    $this->paymentService->updPayment($this->objectIdValue, $headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
                 }
             } catch (\Exception $e) {
                 Log::error('Error saving payment: ' . $e->getMessage(), [
@@ -887,13 +885,6 @@ class Detail extends BaseComponent
                 ]);
                 $this->dispatch('error', 'Error saving payment: ' . $e->getMessage());
                 return;
-            }
-
-            // Tambahkan update amt_reff di BillingHdr setelah simpan detail pembayaran
-            $billhdrIds = collect($detailData)->pluck('billhdrtr_id')->unique();
-            foreach ($billhdrIds as $billhdrId) {
-                $totalPaid = PaymentDtl::where('billhdrtr_id', $billhdrId)->sum('amt');
-                BillingHdr::where('id', $billhdrId)->update(['amt_reff' => $totalPaid]);
             }
 
             $this->dispatch('disable-onbeforeunload');

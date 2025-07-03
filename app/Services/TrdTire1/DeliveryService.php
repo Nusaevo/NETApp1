@@ -21,9 +21,8 @@ class DeliveryService
     #region Delivery Methods
     public function addDelivery(array $headerData, array $detailData): array
     {
-        // dd('tes212');
-        //  DB::beginTransaction();
-        // try {
+        DB::beginTransaction();
+        try {
             $delivHdr = $this->saveHeader($headerData);
 
             // Set trhdr_id, tr_code, tr_type pada setiap detail
@@ -37,11 +36,11 @@ class DeliveryService
             $this->saveDetail($headerData, $detailData);
 
             app(BillingService::class)->addfromDelivery($delivHdr->id);
-        //     DB::commit();
-        // } catch (Exception $e) {
-        //     DB::rollBack();
-        //     throw new Exception('Error adding delivery: ' . $e->getMessage());
-        // }
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception('Error adding delivery: ' . $e->getMessage());
+        }
         return [
             'header' => $delivHdr
         ];
@@ -69,6 +68,7 @@ class DeliveryService
             // Hapus billing lama terlebih dahulu, kemudian buat yang baru
             // app(BillingService::class)->delFromDelivery($delivHdr->id);
             app(BillingService::class)->updfromDelivery($delivHdr->id);
+            // dd($headerData, $detailData);
 
             DB::commit();
             return $delivHdr;

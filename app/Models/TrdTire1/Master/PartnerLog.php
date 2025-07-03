@@ -26,6 +26,7 @@ class PartnerLog extends BaseModel
         'partnerbal_id',
         'tr_date',
         'tr_amt',
+        'amt',
         'tr_desc',
     ];
 

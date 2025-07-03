@@ -144,7 +144,7 @@
                                                 onChanged="updateItemAmount({{ $key }})" type="number" />
                                         </td>
                                         <td style="text-align: center;">
-                                            <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
+                                            <x-ui-text-field model="input_details.{{ $key }}.amt"
                                                 label="" :action="$actionValue" type="text" enabled="false"
                                                 type="number" />
                                         </td>
@@ -183,7 +183,7 @@
                         <tr>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_discount" label="" :action="$actionValue"
-                                    enabled="false" type="text" :value="number_format((float) $total_discount, 2, ',', '.')" />
+                                    enabled="false" type="text" :value="$total_discount" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
@@ -195,7 +195,7 @@
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="total_amount" label="" :action="$actionValue"
-                                    enabled="false" type="text" :value="'Rp ' . number_format($total_amount, 2, ',', '.')" />
+                                    enabled="false" type="text" :value="$total_amount" />
                             </td>
                             <td style="text-align: center;">
                                 <x-ui-text-field model="versionNumber" label="" :action="$actionValue"

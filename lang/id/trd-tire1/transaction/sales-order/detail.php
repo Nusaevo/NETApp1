@@ -3,6 +3,7 @@
 return [
     'tr_code' => 'Nomor Transaksi',
     'custommer' => 'Pelanggan',
+    'reff_code' => 'Referensi Pelanggan',
     'ship_to' => 'Kirim Ke',
     'tax_payer' => 'Wajib Pajak',
     'payment_term' => 'Termin Pembayaran',

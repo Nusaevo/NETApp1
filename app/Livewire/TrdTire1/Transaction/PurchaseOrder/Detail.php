@@ -7,12 +7,14 @@ use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderHdr, OrderDtl, Bil
 use App\Models\TrdTire1\Master\{Partner, Material, MatlUom};
 use App\Models\SysConfig1\ConfigConst;
 use App\Enums\TrdTire1\Status;
+use App\Services\SysConfig1\ConfigService;
 use App\Services\TrdTire1\InventoryService;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Services\TrdTire1\OrderService;
 use App\Services\TrdTire1\DeliveryService;
 use Illuminate\Support\Facades\{Session, DB, Log};
 use Exception;
+use Illuminate\Support\Number;
 
 use function PHPUnit\Framework\throwException;
 
@@ -292,8 +294,9 @@ class Detail extends BaseComponent
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['due_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
-        $this->inputs['curr_code'] = "USD";
+        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
+        $this->inputs['curr_rate'] = 1.00;
         $this->inputs['send_to'] = "Pelanggan";
         $this->inputs['partner_id'] = 0;
         $this->isDeliv = false;
@@ -353,67 +356,46 @@ class Detail extends BaseComponent
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             // Calculate basic amount with discount
-            $this->calculateItemAmount($key);
+            $qty = Number::format($this->input_details[$key]['qty'], locale: 'id_ID');
+            // dd($this->input_details[$key]['qty']);
+            $price = $this->input_details[$key]['price'];
+            // disc_pct is in percentage format (e.g., 50 for 50%)
+            $discountPercent = $this->normalizeDiscountPercent($this->input_details[$key]['disc_pct'] ?? 0);
+
+            $amountGross = $qty * $price;
+            $discountAmount = $amountGross * ($discountPercent / 100);
+            $this->input_details[$key]['amt'] = $amountGross - $discountAmount;
+            $this->input_details[$key]['disc_amt'] = $discountAmount;
+
 
             // Calculate tax amounts
-            $this->calculateItemTax($key);
-        } else {
-            $this->resetItemAmounts($key);
+            $taxFlag = $this->inputs['tax_flag'];
+            $taxValue = $this->inputs['tax_pct'];
+            $taxPctDecimal = $taxValue / 100;
+            $amount = $this->input_details[$key]['amt'];
+
+            if ($taxFlag === 'I') {
+                $this->input_details[$key]['dpp'] = round($amount / (1 + $taxPctDecimal), 2);
+                $this->input_details[$key]['ppn'] = $amount - $this->input_details[$key]['dpp'];
+            } elseif ($taxFlag === 'E') {
+                $this->input_details[$key]['dpp'] = $amount;
+                $this->input_details[$key]['ppn'] = $amount * $taxPctDecimal;
+            } else {
+                $this->input_details[$key]['dpp'] = $amount;
+                $this->input_details[$key]['ppn'] = 0;
+            }
+
+            // $tesdpp = number_format((float)$this->input_details[$key]['dpp'], 5, ',', '.');
+            // dd($tesdpp, $this->input_details[$key]['dpp']);
+            $this->input_details[$key]['amt_tax'] = $this->input_details[$key]['dpp'] + $this->input_details[$key]['ppn'];
+            // $this->recalculateTotals();
+            $this->dispatch('updateAmount', [
+                'total_amount' => $this->total_amount,
+                'total_discount' => $this->total_discount,
+                'total_tax' => $this->total_tax,
+                'total_dpp' => $this->total_dpp,
+            ]);
         }
-
-        // Pastikan amt_idr juga menyimpan nilai numerik (sama dengan amt)
-        $this->input_details[$key]['amt_idr'] = $this->input_details[$key]['amt'];
-        $this->recalculateTotals();
-    }
-
-    /**
-     * Calculate basic amount with discount for a specific item
-     */
-    private function calculateItemAmount($key)
-    {
-        $qty = $this->input_details[$key]['qty'];
-        $price = $this->input_details[$key]['price'];
-        // disc_pct is in percentage format (e.g., 50 for 50%)
-        $discountPercent = $this->normalizeDiscountPercent($this->input_details[$key]['disc_pct'] ?? 0);
-
-        $amount = $qty * $price;
-        $discountAmount = $amount * ($discountPercent / 100);
-        $this->input_details[$key]['amt'] = $amount - $discountAmount;
-    }
-
-    /**
-     * Calculate tax amounts for a specific item
-     */
-    private function calculateItemTax($key)
-    {
-        $taxFlag = $this->inputs['tax_flag'] ?? 'N';
-        $taxValue = (float)($this->inputs['tax_value'] ?? 0);
-        $taxPctDecimal = $taxValue / 100;
-        $amount = $this->input_details[$key]['amt'];
-
-        if ($taxFlag === 'I') {
-            $this->input_details[$key]['dpp'] = $amount / (1 + $taxPctDecimal);
-            $this->input_details[$key]['ppn'] = $amount - $this->input_details[$key]['dpp'];
-        } elseif ($taxFlag === 'E') {
-            $this->input_details[$key]['dpp'] = $amount;
-            $this->input_details[$key]['ppn'] = $amount * $taxPctDecimal;
-        } else {
-            $this->input_details[$key]['dpp'] = $amount;
-            $this->input_details[$key]['ppn'] = 0;
-        }
-
-        $this->input_details[$key]['amt_tax'] = $this->input_details[$key]['dpp'] + $this->input_details[$key]['ppn'];
-    }
-
-    /**
-     * Reset all amount fields for an item to zero
-     */
-    private function resetItemAmounts($key)
-    {
-        $this->input_details[$key]['amt'] = 0;
-        $this->input_details[$key]['amt_tax'] = 0;
-        $this->input_details[$key]['dpp'] = 0;
-        $this->input_details[$key]['ppn'] = 0;
     }
 
     /**
@@ -427,67 +409,6 @@ class Detail extends BaseComponent
         return (float)$discountPercent;
     }
 
-    /**
-     * Recalculate all totals
-     */
-    public function recalculateTotals()
-    {
-        $this->calculateTotalAmount();
-        $this->calculateTotalDiscount();
-
-        // After recalculating amount and discount, calculate DPP and PPN
-        if (!empty($this->inputs['tax_flag'])) {
-            $this->calculateDPPandPPN($this->inputs['tax_flag']);
-        }
-
-        $this->dispatch('updateAmount', [
-            'total_amount' => $this->total_amount,
-            'total_discount' => $this->total_discount,
-            'total_tax' => $this->total_tax,
-            'total_dpp' => $this->total_dpp,
-        ]);
-    }
-
-    /**
-     * Calculate total amount from all items
-     */
-    private function calculateTotalAmount()
-    {
-        $this->total_amount = array_sum(array_map(function ($detail) {
-            $qty = $detail['qty'] ?? 0;
-            $price = $detail['price'] ?? 0;
-            // disc_pct is in percentage format (e.g., 50 for 50%)
-            $discountPercent = $this->normalizeDiscountPercent($detail['disc_pct'] ?? 0);
-
-            $amount = $qty * $price;
-            $discountAmount = $amount * ($discountPercent / 100);
-            return $amount - $discountAmount;
-        }, $this->input_details));
-
-        $this->total_amount = round($this->total_amount, 2);
-    }
-
-    /**
-     * Calculate total discount from all items
-     */
-    private function calculateTotalDiscount()
-    {
-        $this->total_discount = array_sum(array_map(function ($detail) {
-            $qty = $detail['qty'] ?? 0;
-            $price = $detail['price'] ?? 0;
-            // disc_pct is in percentage format (e.g., 50 for 50%)
-            $discountPercent = $this->normalizeDiscountPercent($detail['disc_pct'] ?? 0);
-
-            $amount = $qty * $price;
-            return $amount * ($discountPercent / 100);
-        }, $this->input_details));
-
-        $this->total_discount = round($this->total_discount, 2);
-    }
-
-    /**
-     * Delete an item from the purchase order
-     */
     public function deleteItem($index)
     {
         try {
@@ -595,8 +516,9 @@ class Detail extends BaseComponent
                 'status_code' => 'OPEN',
                 'tax_invoice' => $this->inputs['tax_invoice'] ?? null,
                 'send_to' => $this->inputs['send_to'] ?? 'Supplier',
-                'curr_id' => $this->inputs['curr_id'] ?? 1,
-                'curr_code' => $this->inputs['curr_code'] ?? 'USD'
+                'curr_id' => $this->inputs['curr_id'],
+                'curr_rate' => $this->inputs['curr_rate'],
+                'curr_code' => $this->inputs['curr_code']
             ];
 
             // Prepare detail data dengan pengecekan null
@@ -614,7 +536,7 @@ class Detail extends BaseComponent
                     'matl_code' => $material->code,
                     'matl_descr' => $material->name,
                     'matl_uom' => $material->uom,
-                    'qty' => $orderDetail->qty ?? 0,
+                    'qty' => $orderDetail->qty,
                     'wh_id' => $this->inputs['wh_id'] ?? 0,
                     'wh_code' => $this->inputs['wh_code'] ?? '',
                     'reffdtl_id' => $orderDetail->id,
@@ -664,11 +586,11 @@ class Detail extends BaseComponent
             try {
                 $result = $this->orderService->updOrder($this->object->id, $headerData, []);
                 if (!$result) {
-                    throw new \Exception('Gagal mengubah Purchase Order.');
+                    throw new Exception('Gagal mengubah Purchase Order.');
                 }
                 // $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
                 return $this->redirectToEdit();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->dispatch('error', $e->getMessage());
                 return;
             }
@@ -755,6 +677,7 @@ class Detail extends BaseComponent
     private function prepareDetailData()
     {
         $detailData = $this->input_details;
+        // dd($this->input_details);
 
         foreach ($detailData as $i => &$detail) {
             // Set material data
@@ -773,13 +696,20 @@ class Detail extends BaseComponent
             $detail['price'] = $matlUom ? $matlUom->selling_price : 0;
             $detail['price_uom'] = $detail['matl_uom'] ?? 'PCS';
 
-            // Calculate amounts (disc_pct already in correct format)
-            $this->calculateDetailAmounts($detail, $this->inputs['tax_flag'] ?? 'N');
+            // Update input_details dengan data yang sudah diperbaiki
+            // $this->input_details[$i] = $detail;
+
+            // // Calculate amounts menggunakan updateItemAmount yang sudah ada
+            // $this->updateItemAmount($i);
+
+            // // Ambil hasil perhitungan yang sudah diupdate
+            // $detail = $this->input_details[$i];
 
             // Set transaction fields
             $detail['tr_type'] = $this->trType;
             $detail['tr_seq'] = $i + 1;
         }
+        // dd($detailData, $this->input_details);
         unset($detail);
 
         return $detailData;
@@ -793,19 +723,6 @@ class Detail extends BaseComponent
         // No scaling needed - keep original format
         return $this->normalizeDiscountPercent($discountPercent);
     }
-
-    /**
-     * Scale discount percentage from database format
-     */
-    private function scaleDiscountFromStorage($discountPercent)
-    {
-        // No scaling needed - keep original format
-        if (is_numeric($discountPercent)) {
-            return $discountPercent;
-        }
-        return 0;
-    }
-
 
     private function calculateTotalsFromDetails($detailData)
     {
@@ -821,40 +738,6 @@ class Detail extends BaseComponent
             'total_amt' => $totalAmt,
             'total_amt_tax' => $totalAmtTax
         ];
-    }
-
-    /**
-     * Hitung jumlah detail
-     */
-    private function calculateDetailAmounts(&$detail, $taxFlag)
-    {
-        // Calculate basic amount
-        $qty = $detail['qty'] ?? 0;
-        $price = $detail['price'] ?? 0;
-
-        // disc_pct is in percentage format (e.g., 50 for 50%)
-        $discountPercent = $this->normalizeDiscountPercent($detail['disc_pct'] ?? 0);
-
-        $amount = $qty * $price;
-        $discountAmount = $amount * ($discountPercent / 100);
-        $detail['amt'] = $amount - $discountAmount;
-
-        // Calculate tax amounts
-        $taxValue = (float)($this->inputs['tax_value'] ?? 0);
-        $taxPctDecimal = $taxValue / 100;
-
-        if ($taxFlag === 'I') {
-            $detail['dpp'] = $detail['amt'] / (1 + $taxPctDecimal);
-            $detail['ppn'] = $detail['amt'] - $detail['dpp'];
-        } elseif ($taxFlag === 'E') {
-            $detail['dpp'] = $detail['amt'];
-            $detail['ppn'] = $detail['amt'] * $taxPctDecimal;
-        } else {
-            $detail['dpp'] = $detail['amt'];
-            $detail['ppn'] = 0;
-        }
-
-        $detail['amt_tax'] = $detail['dpp'] + $detail['ppn'];
     }
 
     /**
@@ -1139,9 +1022,25 @@ class Detail extends BaseComponent
     {
         $this->total_amount = (float)$data['total_amount'];
         $this->total_discount = (float)$data['total_discount'];
+        $this->total_dpp = (float)$data['total_dpp'];
+        $this->total_tax = (float)$data['total_tax'];
 
-        // Recalculate DPP and PPN
-        $this->calculateDPPandPPN($this->inputs['tax_flag'] ?? '');
+        $this->total_amount = 0;
+        $this->total_discount = 0;
+        $this->total_dpp = 0;
+        $this->total_tax = 0;
+        foreach ($this->input_details as $detail) {
+
+            $this->total_amount += $detail['amt'];
+            $this->total_discount += $detail['disc_amt'];
+            $this->total_dpp += $detail['dpp'];
+            $this->total_tax += $detail['ppn'];
+        }
+        // Format as Rupiah
+        $this->total_amount = rupiah($this->total_amount);
+        $this->total_discount = rupiah($this->total_discount);
+        $this->total_dpp = rupiah($this->total_dpp);
+        $this->total_tax = rupiah($this->total_tax);
     }
 
     /**

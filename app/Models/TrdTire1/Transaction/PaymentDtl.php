@@ -21,10 +21,11 @@ class PaymentDtl extends BaseModel
         'tr_seq',
         'billhdrtr_type',
         'billhdrtr_code',
-        'billhdrtr_id',
+        'billhdr_id',
         'amt',
         'amt_base',
-        'status_code'
+        'status_code',
+        'partnerbal_id'
     ];
 
     #region Relations

@@ -88,7 +88,7 @@ class BillingService
         $detailData = $dataBilling['detailData'];
 
         $billingDtl = BillingDtl::where('dlvhdr_id', $deliveryId)->first();
-        // $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
+        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
         // dd($billingDtl, $headerData, $detailData);
         // 4. Update billing
         $this->updBilling($billingDtl->trhdr_id, $headerData, $detailData);
@@ -114,7 +114,7 @@ class BillingService
     {
         $sql = "select
                 CASE WHEN dh.tr_type='PD' THEN 'APB' WHEN dh.tr_type='SD' THEN 'ARB' ELSE '' END tr_type,
-                dh.tr_date, '' tr_code, '' reff_code, dh.partner_id, dh.partner_code,oh.payment_term_id,oh.payment_term,oh.payment_due_days,
+                dh.tr_date, dh.tr_code, '' reff_code, dh.partner_id, dh.partner_code,oh.payment_term_id,oh.payment_term,oh.payment_due_days,
                 oh.curr_id,oh.curr_code,oh.curr_rate, null print_date
                 ,dh.id dlvhdr_id, dd.id dlvdtl_id, dh.tr_type dlvhdrtr_type, dh.tr_code dlvhdrtr_code, dd.tr_seq dlvdtltr_seq,
                 dd.matl_id, dd.matl_code, dd.matl_uom, dd.matl_descr,
@@ -132,13 +132,12 @@ class BillingService
         // dd($dataBilling);
 
         $header = (array) $dataBilling[0];
+        // $headerData = [];
 
-        // Generate tr_code billing yang baru
-        $billingTrType = $header['tr_type'];
-        $newTrCode = $this->generateBillingCode($billingTrType);
+        // dd($headerData);
 
         $headerData = [
-            'tr_code' => $newTrCode, // Gunakan kode billing yang baru
+            'tr_code' => $header['tr_code'],
             'tr_type' => $header['tr_type'],
             'tr_date' => $header['tr_date'],
             'reff_code' => $header['reff_code'],
@@ -149,7 +148,7 @@ class BillingService
             'payment_due_days' => $header['payment_due_days'],
             'curr_id' => $header['curr_id'],
             'curr_code' => $header['curr_code'],
-            'curr_rate' => $header['curr_rate'],
+            'curr_rate' => (float) $header['curr_rate'],
             'print_date' => $header['print_date'],
             'amt_reff' => 0,
             'status_code' => $header['status_code'],
@@ -206,7 +205,12 @@ class BillingService
 
         // Pastikan headerData ada id-nya sebelum update partner balance
         $headerData['id'] = $billingHdr->id;
-        $this->partnerBalanceService->updPartnerBalance('+', $headerData);
+        $headerData['reff_id'] = $billingHdr->id;
+        $headerData['reff_type'] = $billingHdr->tr_type;
+        $headerData['reff_code'] = $billingHdr->tr_code;
+        $headerData['total_amt'] = $billingHdr->total_amt;
+
+        $this->partnerBalanceService->updFromBilling('+', $headerData);
         return $billingHdr;
     }
 
@@ -245,6 +249,19 @@ class BillingService
         }
     }
 
+    public function updAmtReff(string $mode, float $Amt, int $billHdrId)
+    {
+        // Update amt_reff di BillingHdr
+        $billingHdr = BillingHdr::find($billHdrId);
+        if ($billingHdr) {
+            if ($mode === '+') {
+                $billingHdr->amt_reff = ($billingHdr->amt_reff ?? 0) + $Amt;
+            } else if ($mode === '-') {
+                $billingHdr->amt_reff = ($billingHdr->amt_reff ?? 0) - $Amt;
+            }
+            $billingHdr->save();
+        }
+    }
 
     private function generateBillingCode(string $billingTrType): string
     {

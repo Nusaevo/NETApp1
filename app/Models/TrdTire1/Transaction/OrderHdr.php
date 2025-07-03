@@ -33,6 +33,8 @@ class OrderHdr extends BaseModel
         'tr_date',
         'print_date',
         'curr_rate',
+        'curr_id',
+        'curr_code',
         'note',
         'sales_type',
         'tax_doc_flag',
