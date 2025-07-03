@@ -99,6 +99,7 @@ class OrderService
 
     private function saveHeader(array $headerData, ?int $orderId = null): OrderHdr
     {
+        // dd($headerData, $orderId);
         if ($orderId) {
             $order = OrderHdr::findOrFail($orderId);
             $order->update($headerData);
@@ -109,6 +110,7 @@ class OrderService
     }
     private function saveDetails(array $headerData, array $detailData): array
     {
+        // dd($detailData);
         // throw new \Exception("Terjadi kesalahan.");
         // Pastikan header sudah tersimpan dan memiliki ID
         if (!isset($headerData['id']) || empty($headerData['id'])) {
@@ -121,9 +123,11 @@ class OrderService
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_code'] = $headerData['tr_code'];
 
+            // dd($detail);
             // Simpan detail terlebih dahulu
             $savedDetail = OrderDtl::create($detail);
             $savedDetails[] = $savedDetails;
+            // dd($savedDetail);
 
             // Kirim detail yang baru disimpan ke addReservation
             $this->inventoryService->addReservation('+', $headerData, $savedDetail->toArray());
@@ -139,14 +143,6 @@ class OrderService
 
     private function deleteDetails(int $orderID): void
     {
-        // Ambil semua detail lama
-        // $details = OrderDtl::where('trhdr_id', $orderID)->get();
-        // $header = OrderHdr::find($orderID);
-        // foreach ($details as $detail) {
-        //     if ($header) {
-        //         $this->inventoryService->addReservation('-', $header->toArray(), $detail->toArray());
-        //     }
-        // }
         // Then delete the details
         OrderDtl::where('trhdr_id', $orderID)->delete();
         $this->inventoryService->delIvtLog($orderID);

@@ -2,12 +2,11 @@
 
 namespace App\Services\TrdTire1;
 
-use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl, PaymentAdv};
-use App\Models\TrdTire1\Master\Partner;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\TrdTire1\Master\PartnerBal;
-use Illuminate\Support\Facades\{DB, Log};
 use Exception;
+use Illuminate\Support\Facades\{DB, Log};
+use App\Models\TrdTire1\Master\PartnerBal;
+use App\Services\SysConfig1\ConfigService;
+use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl, PaymentAdv};
 
 class PaymentService
 {
@@ -18,51 +17,32 @@ class PaymentService
         $this->partnerBalanceService = $partnerBalanceService;
     }
 
-    public function addPayment(array $headerData, array $detailData, array $sourceData, $advanceData)
+    public function addPayment(array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt)
     {
-        return DB::transaction(function () use ($headerData, $detailData, $sourceData, $advanceData) {
-            // Debugging
-            Log::debug('Starting addPayment transaction', [
-                'detailData_count' => count($detailData),
-                'sourceData_count' => count($sourceData)
-            ]);
+        DB::beginTransaction();
+        try {
 
             // Simpan header
             $paymentHdr = $this->saveHeader($headerData);
-            Log::debug('Header saved', ['id' => $paymentHdr->id]);
-
-            // Update headerData dengan ID yang baru dibuat
             $headerData['id'] = $paymentHdr->id;
-            Log::debug('Updated headerData with new ID', ['headerData' => $headerData]);
 
-            // Set header ID ke detail data
-            foreach ($detailData as &$detail) {
-                $detail['trhdr_id'] = $paymentHdr->id;
-                $detail['tr_code'] = $paymentHdr->tr_code;
-                $detail['tr_type'] = $paymentHdr->tr_type;
-            }
-            unset($detail);
-
-            // Set header ID ke payment data
-            foreach ($sourceData as &$payment) {
-                $payment['trhdr_id'] = $paymentHdr->id;
-                $payment['tr_code'] = $paymentHdr->tr_code;
-                $payment['tr_type'] = $paymentHdr->tr_type;
-            }
-            unset($payment);
-
-            // Simpan detail dan payment
             $this->savePaymentDetail($headerData, $detailData);
             $this->savePaymentSrc($headerData, $sourceData);
-            $this->savePaymentAdv($headerData, $advanceData);
+            if ($advanceData) {
+                $this->savePaymentAdv($headerData, $advanceData);
+            }
+            if ($overAmt) {
+                $this->overPayment($headerData, $advanceData, $overAmt);
+            }
 
-            return [
-                'header' => $paymentHdr
-            ];
-        });
+            DB::commit();
+       } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception('Error adding payment: ' . $e->getMessage());
+        };
     }
 
-    public function modPayment(int $paymentId, array $headerData, array $detailData, array $sourceData, $advanceData = [])
+    public function updPayment(int $paymentId, array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt = 0.0)
     {
         DB::beginTransaction();
         try {
@@ -74,35 +54,21 @@ class PaymentService
 
             // Update header
             $paymentHdr->update($headerData);
-
-            // Pastikan headerData memiliki ID yang benar
             $headerData['id'] = $paymentHdr->id;
-            Log::debug('Updated headerData with existing ID in modPayment', ['headerData' => $headerData]);
-
-            // Hapus detail dan payment lama
-            $this->deleteDetail($paymentId);
-            $this->deletePayment($paymentId);
 
             // Set header ID ke detail data
-            foreach ($detailData as &$detail) {
-                $detail['trhdr_id'] = $paymentHdr->id;
-                $detail['tr_code'] = $paymentHdr->tr_code;
-                $detail['tr_type'] = $paymentHdr->tr_type;
-            }
-            unset($detail);
+            // Hapus detail dan payment lama
+            $this->deleteDetail($paymentId);
 
-            // Set header ID ke payment data
-            foreach ($sourceData as &$payment) {
-                $payment['trhdr_id'] = $paymentHdr->id;
-                $payment['tr_code'] = $paymentHdr->tr_code;
-                $payment['tr_type'] = $paymentHdr->tr_type;
-            }
-            unset($payment);
 
-            // Simpan detail dan payment baru
             $this->savePaymentDetail($headerData, $detailData);
             $this->savePaymentSrc($headerData, $sourceData);
-            $this->savePaymentAdv($headerData, $advanceData);
+            if ($advanceData) {
+                $this->savePaymentAdv($headerData, $advanceData);
+            }
+            if ($overAmt) {
+                $this->overPayment($headerData, $advanceData, $overAmt);
+            }
 
             DB::commit();
             return $paymentHdr;
@@ -115,7 +81,6 @@ class PaymentService
     public function delPayment(int $paymentId)
     {
         $this->deleteDetail($paymentId);
-        $this->deletePayment($paymentId);
         $this->deleteHeader($paymentId);
     }
 
@@ -135,6 +100,7 @@ class PaymentService
 
     private function savePaymentDetail(array $headerData, array $detailData): void
     {
+        // dd($headerData, $detailData);
         // Debug: tampilkan data yang akan disimpan
         if (empty($detailData)) {
             Log::warning('No detail data to save in PaymentDtl');
@@ -142,29 +108,27 @@ class PaymentService
         }
 
         try {
-            // Log headerData untuk debugging
-            Log::debug('savePaymentDetail - headerData received', [
-                'headerData' => $headerData,
-                'has_id' => isset($headerData['id']),
-                'id_value' => $headerData['id'] ?? 'not set'
-            ]);
+            foreach ($detailData as &$detail) {
+                $detail['trhdr_id'] = $headerData["id"];
+                $detail['tr_type'] = $headerData["tr_type"];
+                $detail['tr_code'] = $headerData["tr_code"];
+            }
+            unset($detail);
 
             foreach ($detailData as $detail) {
-                try {
-                    $paymentDetail = new PaymentDtl($detail);
-                    $result = $paymentDetail->save();
+                $paymentDtl = new PaymentDtl($detail);
+                $paymentDtl->save();
+                $detail['id'] = $paymentDtl->id;
 
-                    if (!$result) {
-                        Log::error('Failed to save PaymentDtl', [
-                            'detail' => $detail,
-                            'errors' => $paymentDetail->getErrors() ?? 'Unknown error'
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Error saving PaymentDtl: ' . $e->getMessage(), [
-                        'detail' => $detail,
-                        'trace' => $e->getTraceAsString()
-                    ]);
+                // Debug sebelum update partner balance
+                $partnerBalId = $this->partnerBalanceService->updFromPayment('-', $headerData, $detail);
+
+                $paymentDtl->partnerbal_id = $partnerBalId;
+                $paymentDtl->save();
+
+                try {
+                    app(BillingService::class)->updAmtReff("+", $detail["amt"], $detail["billhdr_id"]);
+                } catch (\Throwable $e) {
                     throw $e;
                 }
             }
@@ -174,9 +138,8 @@ class PaymentService
                 Log::debug('About to update partner balance with headerData', [
                     'headerData' => $headerData
                 ]);
-                $this->partnerBalanceService->updPartnerBalance('-', $headerData);
-            }
-        } catch (\Exception $e) {
+           }
+        } catch (Exception $e) {
             Log::error('Error in savePaymentDetail: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'headerData' => $headerData
@@ -187,6 +150,13 @@ class PaymentService
 
     private function savePaymentSrc(array $headerData, array $sourceData): void
     {
+        foreach ($sourceData as &$source) {
+            $source['trhdr_id'] = $headerData["id"];
+            $source['tr_type'] = "ARPS";
+            $source['tr_code'] = $headerData["tr_code"];
+        }
+        unset($source);
+
         foreach ($sourceData as $payment) {
             $paymentSrc = new PaymentSrc($payment);
             $paymentSrc->save();
@@ -195,10 +165,13 @@ class PaymentService
 
     private function savePaymentAdv(array $headerData, array $advanceData): void
     {
-        // Simpan detail pembayaran advance jika ada
-        if (empty($advanceData)) {
-            return;
+
+        foreach ($advanceData as $advance) {
+            $advance['trhdr_id'] = $headerData["id"];
+            $advance['tr_type'] = "ARPA";
+            $advance['tr_code'] = $headerData["tr_code"];
         }
+        unset($advance);
 
         foreach ($advanceData as $adv) {
             // Selalu ambil partner_id dan partner_code dari PaymentHdr berdasarkan id header
@@ -207,7 +180,7 @@ class PaymentService
                 $paymentHdr = PaymentHdr::find($headerData['id']);
             }
             if (!$paymentHdr) {
-                throw new \Exception('PaymentHdr tidak ditemukan untuk simpan advance');
+                throw new Exception('PaymentHdr tidak ditemukan untuk simpan advance');
             }
             $partner_id = $paymentHdr->partner_id;
             $partner_code = $paymentHdr->partner_code;
@@ -244,12 +217,36 @@ class PaymentService
             $payAdv['id'] = $headerData['id'] ?? null;
             $payAdv['total_amt'] = $payAdv['amt'] ?? 0;
             $payAdv['tr_date'] = $paymentHdr->tr_date ?? now();
-            $this->partnerBalanceService->updPartnerBalance('-', $payAdv);
 
-            // Tambahkan lebih bayar ke kolom amt_adv pada PartnerBal
-            $partnerBal->amt_adv = ($partnerBal->amt_adv ?? 0) + ($payAdv['amt'] ?? 0);
-            $partnerBal->save();
+            $partnerBalId = $this->partnerBalanceService->updFromBilling('-', $payAdv);
+            $paymentAdv->partnerbal_id = $partnerBalId;
+            $paymentAdv->save();
+
         }
+    }
+
+    private function overPayment(array $headerData, array $advanceData, float $overAmt): void
+    {
+        $advanceData['trhdr_id'] = $headerData['id'];
+        $advanceData['tr_type'] = 'ARPA';
+        $advanceData['tr_code'] = $headerData['tr_code'];
+        $advanceData['tr_seq'] = 1;
+        $advanceData['adv_type_code'] = 'ARADVPAY';
+        $adcanceData['adv_type_id'] = app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', $advanceData['adv_type_code']);
+        $advanceData['amt'] = $overAmt;
+        $advanceData['reff_id'] = $headerData['id'];
+        $advanceData['reff_type'] = $headerData['tr_type'];
+        $advanceData['reff_code'] = $headerData['tr_code'];
+
+        $paymentAdv = new PaymentAdv($advanceData);
+        $paymentAdv->save();
+        $advanceData['id'] = $headerData['id'];
+
+
+        $paartnerBalId = $this->partnerBalanceService->updFromPayment('+', $headerData, $advanceData);
+
+        $paymentAdv->partnerbal_id = $paartnerBalId;
+        $paymentAdv->save();
     }
 
     private function deleteHeader(int $paymentId): bool
@@ -262,21 +259,17 @@ class PaymentService
     {
         // Get existing details
         $existingDetails = PaymentDtl::where('trhdr_id', $paymentId)->get();
-
-        // Delete details
         foreach ($existingDetails as $detail) {
-            $detail->forceDelete();
+            app(BillingService::class)->updAmtReff("-", $detail["amt"], $detail["billhdr_id"]);
+            $existingDetails->delete();
         }
-    }
 
-    private function deletePayment(int $paymentId): void
-    {
-        // Get existing payments
-        $existingPayments = PaymentSrc::where('trhdr_id', $paymentId)->get();
+        $existingDetails = PaymentSrc::where('trhdr_id', $paymentId)->get();
+        $existingDetails->delete();
 
-        // Delete payments
-        foreach ($existingPayments as $payment) {
-            $payment->forceDelete();
-        }
+        $existingDetails = PaymentAdv::where('trhdr_id', $paymentId)->get();
+        $existingDetails->delete();
+
+        app(PartnerBalanceService::class)->delPartnerLog($detail["billhdr_id"]);
     }
-}
+ }
