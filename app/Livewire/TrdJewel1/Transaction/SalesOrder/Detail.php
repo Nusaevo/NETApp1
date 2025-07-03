@@ -245,8 +245,8 @@ class Detail extends BaseComponent
             $partner = Partner::find($this->inputs['partner_id']);
             $this->inputs['partner_code'] = $partner->code;
         }
-        $this->inputs['print_settings'] = $this->filterprintRemarks($this->printSettings);
-        $this->inputs['print_remarks'] = $this->filterprintRemarks($this->printRemarks);
+        $this->inputs['print_settings'] = json_encode($this->filterprintRemarks($this->printSettings));
+        $this->inputs['print_remarks'] = json_encode($this->filterprintRemarks($this->printRemarks));
         $this->object->saveOrder($this->appCode, $this->trType, $this->inputs, $this->input_details , true);
         if($this->actionValue == 'Create')
         {
