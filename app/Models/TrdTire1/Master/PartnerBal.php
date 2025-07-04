@@ -10,6 +10,7 @@ class PartnerBal extends BaseModel
     protected $table = 'partner_bals';
     public $timestamps = false;
 
+
     protected $fillable = [
         'partner_id',
         'partner_code',
@@ -19,7 +20,7 @@ class PartnerBal extends BaseModel
 
     ];
 
-    protected $primaryKey = 'partner_id'; // Ensure the primary key is defined
+    protected $primaryKey = 'id';
 
     public static function boot()
     {

@@ -147,24 +147,24 @@
                                                 model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                                 :options="$materials" required="true" :action="$actionValue"
                                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
                                                 label="" :action="$actionValue" type="number"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
                                                 label="" :action="$actionValue" type="number" required="true"
                                                 onChanged="updateItemAmount({{ $key }})"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" type="number"
                                                 onChanged="updateItemAmount({{ $key }})"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
@@ -175,7 +175,7 @@
                                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
                                                 :action="$actionValue" cssClass="btn-danger text-danger"
                                                 iconPath="delete.svg"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                     </tr>
                                 @endforeach
@@ -183,7 +183,7 @@
 
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                    button-name="Tambah" :enabled="!$isDeliv ? 'true' : 'false'" />
+                                    button-name="Tambah" :enabled="$isDeliv ? 'false' : 'true'" />
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>

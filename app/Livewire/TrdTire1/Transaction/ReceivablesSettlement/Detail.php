@@ -746,11 +746,8 @@ class Detail extends BaseComponent
             // Generate tr_code jika dalam mode create
             if ($this->actionValue == 'Create') {
                 $this->getTransactionCode();
-            }
-
-            // Siapkan data header dengan default values
+            }            // Siapkan data header dengan default values
             $headerData = [
-                'id' => $this->objectIdValue,
                 'tr_code' => $this->inputs['tr_code'],
                 'tr_type' => $this->trType,
                 'tr_date' => $this->inputs['tr_date'],
@@ -844,38 +841,66 @@ class Detail extends BaseComponent
                     'paymentCount' => count($paymentData),
                     'detailData' => $detailData,
                     'headerData' => $headerData
-                ]);
-
-                // Force trace to see exactly what's happening
+                ]);                // Force trace to see exactly what's happening
                 Log::debug(json_encode($detailData, JSON_PRETTY_PRINT));
 
                 // Gunakan service untuk menyimpan data
                 $advanceData = [];
-                if ($this->advanceBalance > 0) {
-                    $advType = ConfigConst::where('const_group', 'ADV_TYPE_CODE')->where('str1', 'ARADVPAY')->first();
-                    $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
-                    $advanceData[] = [
-                        'tr_seq' => 1,
-                        'adv_type_id' => $advType ? $advType->id : null,
-                        'adv_type_code' => $advType ? $advType->str1 : 'ARADVPAY',
-                        'partnerbal_id' => $partnerBal ? $partnerBal->id : null,
-                        'reff_id' => $headerData['id'],
-                        'reff_type' => $headerData['tr_type'],
-                        'reff_code' => $headerData['tr_code'],
-                        'amt' => $this->advanceBalance,
-                        'amt_base' => $this->advanceBalance,
-                    ];
-                }
+
                 if ($this->actionValue == 'Create') {
                     $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
+
+                    if (!$result || !isset($result->id)) {
+                        throw new Exception('Failed to create payment: Invalid result returned from addPayment service');
+                    }
+
                     $this->objectIdValue = $result->id;
                     $headerData['id'] = $result->id;
+
+                    // Setelah header tersimpan, baru siapkan advanceData jika ada
+                    if ($this->advanceBalance > 0) {
+                        $advType = ConfigConst::where('const_group', 'ADV_TYPE_CODE')->where('str1', 'ARADVPAY')->first();
+                        $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
+                        $advanceData[] = [
+                            'tr_seq' => 1,
+                            'adv_type_id' => $advType ? $advType->id : null,
+                            'adv_type_code' => $advType ? $advType->str1 : 'ARADVPAY',
+                            'partnerbal_id' => $partnerBal ? $partnerBal->id : null,
+                            'reff_id' => $headerData['id'],
+                            'reff_type' => $headerData['tr_type'],
+                            'reff_code' => $headerData['tr_code'],
+                            'amt' => $this->advanceBalance,
+                            'amt_base' => $this->advanceBalance,
+                        ];
+                        // Simpan advance data setelah header tersimpan
+                        $this->paymentService->savePaymentAdv($headerData, $advanceData);
+                    }
+
                     Log::debug('After addPayment, updated objectIdValue and headerData', [
                         'new_id' => $this->objectIdValue,
                         'headerData' => $headerData
                     ]);
                     $this->actionValue = 'Edit';
                 } else {
+                    // Untuk mode Edit, ID sudah ada
+                    $headerData['id'] = $this->objectIdValue;
+
+                    if ($this->advanceBalance > 0) {
+                        $advType = ConfigConst::where('const_group', 'ADV_TYPE_CODE')->where('str1', 'ARADVPAY')->first();
+                        $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
+                        $advanceData[] = [
+                            'tr_seq' => 1,
+                            'adv_type_id' => $advType ? $advType->id : null,
+                            'adv_type_code' => $advType ? $advType->str1 : 'ARADVPAY',
+                            'partnerbal_id' => $partnerBal ? $partnerBal->id : null,
+                            'reff_id' => $headerData['id'],
+                            'reff_type' => $headerData['tr_type'],
+                            'reff_code' => $headerData['tr_code'],
+                            'amt' => $this->advanceBalance,
+                            'amt_base' => $this->advanceBalance,
+                        ];
+                    }
+
                     $this->paymentService->updPayment($this->objectIdValue, $headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
                 }
             } catch (\Exception $e) {
