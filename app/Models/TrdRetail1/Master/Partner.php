@@ -75,7 +75,7 @@ class Partner extends BaseModel
     public static function generateNewCode($name)
     {
         $initialCode = strtoupper(substr($name, 0, 1));
-        $latestCode = self::where('code', 'LIKE', $initialCode . '%')
+        $latestCode = self::withTrashed()->where('code', 'LIKE', $initialCode . '%')
                       ->orderByRaw("CAST(SUBSTRING(code, LENGTH(?) + 1) AS INTEGER) DESC", [$initialCode])
                       ->pluck('code')
                       ->first();
