@@ -13,7 +13,7 @@ trait BaseTrait
     public static function bootUpdatesCreatedByAndUpdatedAt()
     {
         static::creating(function ($model) {
-            sanitizeModelAttributes($model->attributes);
+            // sanitizeModelAttributes($model->attributes);
             if ($model->timestamps !== false) {
                 $userId = Auth::check() ? Auth::user()->code : 'SYSTEM';
                 $model->created_by = $userId;
@@ -26,7 +26,7 @@ trait BaseTrait
         });
 
         static::updating(function ($model) {
-            sanitizeModelAttributes($model->attributes);
+            // sanitizeModelAttributes($model->attributes);
             if ($model->timestamps !== false) {
                 $userId = Auth::check() ? Auth::user()->code : 'SYSTEM';
                 $model->updated_by = $userId;

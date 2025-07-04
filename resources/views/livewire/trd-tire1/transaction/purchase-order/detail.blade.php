@@ -130,7 +130,7 @@
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number" />
+                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number" onChanged="onPriceChanged({{ $key }})"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"

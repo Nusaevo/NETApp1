@@ -11,9 +11,12 @@ class OrderService
 {
     protected $inventoryService;
 
-    public function __construct(InventoryService $inventoryService)
+    protected $materialService;
+
+    public function __construct(InventoryService $inventoryService, MaterialService $materialService)
     {
         $this->inventoryService = $inventoryService;
+        $this->materialService = $materialService;
     }
 
     public function addOrder(array $headerData, array $detailData): OrderHdr
@@ -129,6 +132,15 @@ class OrderService
             $savedDetails[] = $savedDetails;
             // dd($savedDetail);
 
+            // if PO
+            if ($headerData['tr_code'] === 'PO') {
+                $this->materialService->updLastBuyingPrice(
+                    $savedDetail->matl_id,
+                    $savedDetail->matl_uom,
+                    $savedDetail->price,
+                    $headerData['tr_date']
+                );
+            }
             // Kirim detail yang baru disimpan ke addReservation
             $this->inventoryService->addReservation('+', $headerData, $savedDetail->toArray());
         }

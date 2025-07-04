@@ -4,7 +4,7 @@ namespace App\Services\TrdTire1;
 
 use App\Models\TrdTire1\Master\PartnerBal;
 use App\Models\TrdTire1\Master\PartnerLog;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Log};
 
 class PartnerBalanceService
 {
@@ -32,11 +32,14 @@ class PartnerBalanceService
             ]
         );
         $partnerBal = null;
-        $tes = PartnerBal::where('partner_id', '=', $headerData['partner_id'])
-                                ->where('reff_id', '=', $headerData['reff_id'])->first();
-        $tes->amt_bal = $amtBal + $tes->amt_bal;
-        // dd($partnerBal);
-        $tes->update();
+        // dd($headerData);
+        $partnerBal = PartnerBal::where([
+            'partner_id' => $headerData['partner_id'],
+            'reff_id' => $headerData['reff_id']
+        ])->first();
+
+        $partnerBal->amt_bal = $amtBal + $partnerBal->amt_bal;
+        $partnerBal->save();
 
         $logData = [
             'tr_date' => $headerData['tr_date'],
@@ -50,7 +53,7 @@ class PartnerBalanceService
             'trdtl_id' => 0,
             'partner_id' => $headerData['partner_id'],
             'partner_code' => $headerData['partner_code'],
-            'partnerbal_id' => $tes->id,
+            'partnerbal_id' => $partnerBal->id,
             'curr_id' => $headerData['curr_id'],
             'amt' => $amtBal,
             'tr_amt' => $headerData['total_amt'],
@@ -60,11 +63,20 @@ class PartnerBalanceService
         // dd($logData, $amtBal);
         PartnerLog::create($logData);
         // dd($tes);
-        return $tes->id;
+        return $partnerBal->id;
     }
 
     public function updFromPayment(string $mode, array $headerData, array $detailData)
     {
+        // Debug: log data yang diterima
+        Log::debug('PartnerBalanceService::updFromPayment called', [
+            'mode' => $mode,
+            'headerData_keys' => array_keys($headerData),
+            'detailData_keys' => array_keys($detailData),
+            'headerData' => $headerData,
+            'detailData' => $detailData
+        ]);
+
         // dd($mode, $headerData);
         if (!isset($headerData['id'])) {
             throw new \Exception('Header ID (id) is required');
@@ -76,16 +88,44 @@ class PartnerBalanceService
             $amtBal = -$detailData['amt'];
         }
 
+        // Validasi field yang diperlukan
+        $requiredHeaderFields = ['id', 'partner_id', 'partner_code', 'tr_type', 'tr_code', 'tr_date'];
+        $requiredDetailFields = ['amt', 'tr_seq', 'id'];
+
+        foreach ($requiredHeaderFields as $field) {
+            if (!isset($headerData[$field])) {
+                throw new \Exception("Missing required header field: {$field}");
+            }
+        }
+
+        foreach ($requiredDetailFields as $field) {
+            if (!isset($detailData[$field])) {
+                throw new \Exception("Missing required detail field: {$field}");
+            }
+        }
+
+        // Untuk payment detail, perlu billhdr_id, billhdrtr_type, billhdrtr_code
+        if (isset($detailData['billhdr_id'])) {
+            $reffId = $detailData['billhdr_id'];
+            $reffType = $detailData['billhdrtr_type'] ?? '';
+            $reffCode = $detailData['billhdrtr_code'] ?? '';
+        } else {
+            // Fallback untuk kasus lain
+            $reffId = $detailData['reff_id'] ?? $headerData['id'];
+            $reffType = $detailData['reff_type'] ?? $headerData['tr_type'];
+            $reffCode = $detailData['reff_code'] ?? $headerData['tr_code'];
+        }
+
         // Cari atau buat partner balance berdasarkan partner_id
         $partnerBal = PartnerBal::updateOrCreate(
             [
                 'partner_id' => $headerData['partner_id'],
-                'reff_id' => $detailData['billhdr_id'],
+                'reff_id' => $reffId,
             ],
             [
                 'partner_code' => $headerData['partner_code'],
-                'reff_type' => $detailData['billhdrtr_type'],
-                'reff_code' => $detailData['billhdrtr_code'],
+                'reff_type' => $reffType,
+                'reff_code' => $reffCode,
                 'amt_bal' => 0,
                 'amt_adv' => 0,
                 'note' => '',
