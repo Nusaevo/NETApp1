@@ -130,7 +130,8 @@
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number" onChanged="onPriceChanged({{ $key }})"/>
+                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
+                                                onChanged="updateItemAmount({{ $key }})" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
@@ -141,7 +142,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="updateItemAmount({{ $key }})" type="number" />
+                                                onChanged="updateItemAmount({{ $key }})" type="number"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt"
@@ -167,7 +168,7 @@
                             :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
                         {{-- @include('layout.customs.buttons.save') --}}
                         <x-ui-button clickEvent="Save" button-name="Simpan" loading="true" :action="$actionValue"
-                            cssClass="btn-primary" iconPath="save.svg" :enabled="true"/>
+                            cssClass="btn-primary" iconPath="save.svg" :enabled="true" />
 
                     </x-ui-footer>
                 </div>

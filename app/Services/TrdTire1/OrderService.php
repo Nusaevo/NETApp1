@@ -21,10 +21,12 @@ class OrderService
 
     public function addOrder(array $headerData, array $detailData): OrderHdr
     {
-        // DB::beginTransaction();
-        // try{
+
+        DB::beginTransaction();
+        try{
             // Simpan header terlebih dahulu
             $order = $this->saveHeader($headerData);
+            // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
 
             // Set ID header ke headerData untuk digunakan di saveDetails
             $headerData['id'] = $order->id;
@@ -32,13 +34,12 @@ class OrderService
             // Simpan detail
             $this->saveDetails($headerData, $detailData);
 
-            // DB::commit();
+            DB::commit();
             return $order;
-        // } catch (Exception $e) {
-        //     DB::rollBack();
-        //     return $order;
-            // throw new Exception('Error updating order: ' . $e->getMessage());
-        // }
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw new Exception('Error updating order: ' . $e->getMessage());
+        }
 
     }
 
@@ -106,34 +107,30 @@ class OrderService
         if ($orderId) {
             $order = OrderHdr::findOrFail($orderId);
             $order->update($headerData);
-            return $order;
+        } else {
+            // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
+            $order = OrderHdr::create($headerData);
         }
-
-        return OrderHdr::create($headerData);
+        // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
+        return $order;
     }
     private function saveDetails(array $headerData, array $detailData): array
     {
-        // dd($detailData);
-        // throw new \Exception("Terjadi kesalahan.");
-        // Pastikan header sudah tersimpan dan memiliki ID
+        // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
 
         $savedDetails = [];
         foreach ($detailData as $detail) {
-            // Set field wajib dari header
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_code'] = $headerData['tr_code'];
 
-            // dd($detail);
-            // Simpan detail terlebih dahulu
             $savedDetail = OrderDtl::create($detail);
-            $savedDetails[] = $savedDetails;
-            // dd($savedDetail);
+            $savedDetails[] = $savedDetail;
 
-            // if PO
-            if ($headerData['tr_code'] === 'PO') {
+                        // if PO (check if tr_code starts with 'PO')
+            if (str_starts_with($headerData['tr_code'], 'PO')) {
                 $this->materialService->updLastBuyingPrice(
                     $savedDetail->matl_id,
                     $savedDetail->matl_uom,

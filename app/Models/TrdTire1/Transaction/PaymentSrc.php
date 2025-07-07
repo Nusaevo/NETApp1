@@ -28,6 +28,9 @@ class PaymentSrc extends BaseModel
         'bank_duedt',
         'bank_note',
         'amt',
+        // baru
+        'partnerbal_id',
+        'amt_base'
     ];
 
     #region Relations

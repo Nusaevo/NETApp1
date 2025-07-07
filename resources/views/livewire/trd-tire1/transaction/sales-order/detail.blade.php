@@ -162,9 +162,8 @@
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
-                                                label="" :action="$actionValue" type="number"
-                                                onChanged="updateItemAmount({{ $key }})"
-                                                :enabled="$isDeliv ? 'false' : 'true'" />
+                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
+                                                onChanged="updateItemAmount({{ $key }})" type="number"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt_idr"

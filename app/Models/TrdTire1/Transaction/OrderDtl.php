@@ -27,6 +27,8 @@ class OrderDtl extends BaseModel
         'matl_descr',
         'matl_uom',
         'qty',
+        'qty_uom',
+        'qty_base',
         'qty_reff',
         'price',
         'amt',
