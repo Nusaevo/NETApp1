@@ -19,8 +19,7 @@ class PaymentHdr extends BaseModel
     protected static function boot()
     {
         parent::boot();
-    }
-    protected $fillable = [
+    }    protected $fillable = [
         'tr_type',
         'tr_code',
         'tr_date',
@@ -31,14 +30,12 @@ class PaymentHdr extends BaseModel
         'bank_code',
         'bank_reff',
         'bank_due',
-        'bank_rcv',
-        'bank_rcv_base',
         'bank_note',
         'curr_id',
         'curr_rate',
-        'status_code',
-        'version_number',
-        'updated_at'
+        'amt_srcs',
+        'amt_advs',
+        'amt_dtls',
     ];
 
     #region Relations

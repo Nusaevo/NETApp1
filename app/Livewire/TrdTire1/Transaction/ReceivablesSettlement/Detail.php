@@ -206,12 +206,6 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
-        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
-        Log::debug('ReceivablesSettlement rendering view', [
-            'viewPath' => $renderRoute,
-            'actionValue' => $this->actionValue,
-            'isEditOrView' => $this->isEditOrView()
-        ]);
 
         $this->customValidationAttributes  = [
             'inputs.tax'      => $this->trans('tax'),
@@ -225,18 +219,6 @@ class Detail extends BaseComponent
         $this->warehouses = $this->masterService->getWarehouse();
         $this->PaymentType = $this->masterService->getPaymentTypeData();
         $this->codeBill = $this->masterService->getBillCode();
-
-        // Debug $codeBill to see its structure
-        Log::debug('codeBill options', [
-            'codeBill_count' => count($this->codeBill),
-            'codeBill_sample' => array_slice($this->codeBill, 0, 5)
-        ]);
-
-        // Debug $codeBill to see its structure
-        Log::debug('codeBill options', [
-            'codeBill_count' => count($this->codeBill),
-            'codeBill_sample' => array_slice($this->codeBill, 0, 5)
-        ]);
 
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {
@@ -272,13 +254,7 @@ class Detail extends BaseComponent
             $paymentAdv = PaymentAdv::where('trhdr_id', $this->objectIdValue)->first();
             $this->advanceBalance = $paymentAdv ? $paymentAdv->amt : 0;
 
-            // Debug the loaded data
-            Log::debug('Data loaded for edit/view', [
-                'object_id' => $this->object->id,
-                'input_details_count' => count($this->input_details),
-                'input_payments_count' => count($this->input_payments),
-                'input_details_sample' => array_slice($this->input_details, 0, 3)
-            ]);
+
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
@@ -308,16 +284,7 @@ class Detail extends BaseComponent
             })
             ->toArray();
 
-        // Debug: tampilkan advanceOptions yang dibuat
-        Log::debug('advanceOptions created', [
-            'count' => count($this->advanceOptions),
-            'sample_options' => array_slice($this->advanceOptions, 0, 3)
-        ]);
 
-        // Jika tidak ada data advance, berikan pesan debug
-        if (empty($this->advanceOptions)) {
-            Log::warning('No advance options available - no PartnerBal records with amt_adv != 0');
-        }
 
         // Inisialisasi input_advance jika belum ada
         if (!isset($this->input_advance) || !is_array($this->input_advance)) {
@@ -371,15 +338,14 @@ class Detail extends BaseComponent
     }
 
     public function onCodeChanged($key, $billHdrId)
-    {
-        $billHdr = BillingHdr::find($billHdrId); // Cari berdasarkan id
+    {        $billHdr = BillingHdr::find($billHdrId); // Cari berdasarkan id
 
         if ($billHdr) {
             $this->input_details[$key]['tr_date'] = $billHdr->tr_date;
             $this->input_details[$key]['billhdrtr_code'] = $billHdr->id; // Simpan id, bukan tr_code
 
-            // Ambil langsung dari total_amt pada BillingHdr
-            $this->input_details[$key]['amtbill'] = $billHdr->total_amt ?? 0;
+            // Ambil langsung dari amt pada BillingHdr
+            $this->input_details[$key]['amtbill'] = $billHdr->amt ?? 0;
         } else {
             $this->dispatch('error', __('Bill not found.'));
         }
@@ -388,7 +354,8 @@ class Detail extends BaseComponent
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-            $this->object_detail = PaymentDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
+            $this->object_detail = PaymentDtl::where('trhdr_id', $this->object->id)
+                ->where('tr_type', $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
 
@@ -402,9 +369,8 @@ class Detail extends BaseComponent
                 if ($detail->billdtl_id) {
                     $billingDtl = BillingDtl::find($detail->billdtl_id);
                     if ($billingDtl) {
-                        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
-                        if ($billingHdr) {
-                            $amtbill = $billingHdr->total_amt ?? 0;
+                        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);                        if ($billingHdr) {
+                            $amtbill = $billingHdr->amt ?? 0;
                             $billhdr_id = $billingHdr->id;
                             $billhdrtr_code = $billingHdr->tr_code;
                             $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
@@ -419,7 +385,18 @@ class Detail extends BaseComponent
                         $billhdr_id = $billingHdr->id;
                         $billhdrtr_code = $billingHdr->tr_code;
                         $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
-                        $amtbill = $billingHdr->total_amt ?? 0;
+                        $amtbill = $billingHdr->amt ?? 0;
+                    }
+                }
+
+                // Jika masih kosong, coba ambil dari billhdr_id langsung
+                if (!$billhdr_id && !empty($detail->billhdr_id)) {
+                    $billingHdr = BillingHdr::find($detail->billhdr_id);
+                    if ($billingHdr) {
+                        $billhdr_id = $billingHdr->id;
+                        $billhdrtr_code = $billingHdr->tr_code;
+                        $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
+                        $amtbill = $billingHdr->amt ?? 0;
                     }
                 }
 
@@ -449,6 +426,7 @@ class Detail extends BaseComponent
                     'amt'             => $detail->amt ?? null,
                 ];
             }
+
         }
     }
     #endregion
@@ -620,15 +598,10 @@ class Detail extends BaseComponent
     protected function loadPaymentDetails()
     {
         if (!empty($this->object)) {
+            // Cari dengan tr_type yang benar dari header, atau dengan tr_type lama (ARPS)
             $this->object_detail = PaymentSrc::where('trhdr_id', $this->object->id)
-                ->where('tr_type', $this->object->tr_type)
+                ->whereIn('tr_type', [$this->object->tr_type, 'ARPS'])
                 ->get();
-
-            Log::debug('Loading payment sources', [
-                'payment_id' => $this->object->id,
-                'tr_type' => $this->object->tr_type,
-                'payment_sources_count' => count($this->object_detail)
-            ]);
 
             if (!empty($this->object_detail)) {
                 foreach ($this->object_detail as $key => $detail) {
@@ -666,11 +639,7 @@ class Detail extends BaseComponent
                             break;
                     }
 
-                    Log::debug('Processed payment item', [
-                        'key' => $key,
-                        'pay_type_code' => $detail->pay_type_code,
-                        'amt' => $detail->amt
-                    ]);
+
                 }
             } else {
                 $this->input_payments = [];
@@ -757,7 +726,7 @@ class Detail extends BaseComponent
                 'process_flag' => 'N',
                 'wh_id' => $this->inputs['wh_id'] ?? 0, // berikan default value
                 'wh_code' => $this->inputs['wh_code'] ?? '', // berikan default value
-                'total_amt' => array_sum(array_column($this->input_details, 'amt')), // tambahkan total amount
+                'amt' => $this->normalizeAmount(array_sum(array_column($this->input_details, 'amt'))), // tambahkan total amount
             ];
 
             // Validasi partner wajib dipilih
@@ -788,12 +757,16 @@ class Detail extends BaseComponent
                 }
                 $billingHdr = BillingHdr::find($detail['billhdr_id']); // Ambil berdasarkan id
                 if ($billingHdr) {
+                    // Normalisasi format angka untuk amt
+                    $amt = $this->normalizeAmount($detail['amt']);
+
                     $detailData[] = [
                         'tr_seq' => $key + 1,
-                        'amt' => $detail['amt'],
+                        'amt' => $amt,
                         'billhdrtr_code' => $billingHdr->tr_code, // Simpan tr_code ke database
                         'billhdrtr_type' => $billingHdr->tr_type,
                         'billhdr_id' => $billingHdr->id, // Simpan juga id BillingHdr
+                        'tr_code' => $headerData['tr_code'], // Tambahkan tr_code dari header
                     ];
                 } else {
                     // Jika tidak ditemukan, skip
@@ -801,18 +774,18 @@ class Detail extends BaseComponent
                 }
             }
 
-            // Log detail yang akan disimpan
-            Log::debug('Detail data prepared for saving', [
-                'input_details' => $this->input_details,
-                'processed_details' => $detailData,
-                'detail_count' => count($detailData)
-            ]);
+
 
 
             // Siapkan data pembayaran
             $paymentData = [];
             foreach ($this->input_payments as $key => $payment) {
                 $payType = ConfigConst::where('str1', $payment['pay_type_code'])->first();
+
+                // Normalisasi format angka untuk amt
+                $amt = $payment['amt_tunai'] ?? $payment['amt_giro'] ?? $payment['amt_trf'] ?? $payment['amt_advance'] ?? 0;
+                $amt = $this->normalizeAmount($amt);
+
                 $paymentData[] = [
                     'tr_seq' => $key + 1,
                     'pay_type_id' => $payType ? $payType->id : null,
@@ -820,7 +793,7 @@ class Detail extends BaseComponent
                     'bank_id' => $payType ? $payType->id : null,
                     'bank_code' => $payment['pay_type_code'],
                     'bank_note' => $payment['bank_note'] ?? '',
-                    'amt' => $payment['amt_tunai'] ?? $payment['amt_giro'] ?? $payment['amt_trf'] ?? $payment['amt_advance'] ?? 0,
+                    'amt' => $amt,
                     'bank_reff' => $this->getBankReff($payment),
                     'bank_duedt' => $this->getBankDate($payment),
                 ];
@@ -832,17 +805,7 @@ class Detail extends BaseComponent
                 return;
             }
 
-            // Tambahkan debug untuk melihat apa yang akan disimpan
             try {
-                // Debugging sebelum menyimpan
-                Log::debug('About to save payment data', [
-                    'actionValue' => $this->actionValue,
-                    'detailCount' => count($detailData),
-                    'paymentCount' => count($paymentData),
-                    'detailData' => $detailData,
-                    'headerData' => $headerData
-                ]);                // Force trace to see exactly what's happening
-                Log::debug(json_encode($detailData, JSON_PRETTY_PRINT));
 
                 // Gunakan service untuk menyimpan data
                 $advanceData = [];
@@ -876,10 +839,7 @@ class Detail extends BaseComponent
                         $this->paymentService->savePaymentAdv($headerData, $advanceData);
                     }
 
-                    Log::debug('After addPayment, updated objectIdValue and headerData', [
-                        'new_id' => $this->objectIdValue,
-                        'headerData' => $headerData
-                    ]);
+
                     $this->actionValue = 'Edit';
                 } else {
                     // Untuk mode Edit, ID sudah ada
@@ -950,27 +910,42 @@ class Detail extends BaseComponent
         }
     }
 
+    /**
+     * Normalisasi format angka dari format Indonesia (dengan titik sebagai pemisah ribuan)
+     * ke format numerik yang bisa disimpan ke database
+     */
+    private function normalizeAmount($amount)
+    {
+        if (empty($amount)) {
+            return 0;
+        }
+
+        // Jika sudah berupa angka, return langsung
+        if (is_numeric($amount)) {
+            return (float)$amount;
+        }
+
+        // Jika berupa string, hapus semua karakter non-digit kecuali titik dan koma
+        $cleaned = preg_replace('/[^0-9.,]/', '', $amount);
+
+        // Jika ada koma sebagai pemisah desimal, ganti dengan titik
+        $cleaned = str_replace(',', '.', $cleaned);
+
+        // Hapus semua titik kecuali yang terakhir (untuk desimal)
+        $parts = explode('.', $cleaned);
+        if (count($parts) > 2) {
+            // Ada lebih dari satu titik, berarti ada pemisah ribuan
+            $decimal = array_pop($parts); // Ambil bagian terakhir sebagai desimal
+            $integer = implode('', $parts); // Gabungkan semua bagian lain
+            $cleaned = $integer . '.' . $decimal;
+        }
+
+        return (float)$cleaned;
+    }
+
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
-
-        Log::debug('ReceivablesSettlement rendering view', [
-            'viewPath' => $renderRoute,
-            'actionValue' => $this->actionValue,
-            'isEditOrView' => $this->isEditOrView(),
-            'input_details' => $this->input_details,
-            'payment_details_count' => count($this->input_details),
-        ]);
-
-        if (count($this->input_details) > 0) {
-            Log::debug('Data loaded for edit/view', [
-                'object_id' => $this->objectIdValue,
-                'input_details_count' => count($this->input_details),
-                'input_payments_count' => count($this->input_payments),
-                'input_details_sample' => array_slice($this->input_details, 0, 3)
-            ]);
-        }
-
         return view($renderRoute);
     }
 

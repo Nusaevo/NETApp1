@@ -60,9 +60,6 @@ class Detail extends BaseComponent
     public $rules  = [
         'inputs.tr_code'       => 'required',
         'inputs.partner_id'    => 'required',
-        'input_details.*.qty'  => 'required_if:input_details.*.matl_id,!=,null',
-        'input_details.*.matl_id'  => 'required_if:input_details.*.qty,!=,null',
-        'input_details.*.disc_pct' => 'nullable|numeric|min:0|max:100',
     ];
 
     protected $listeners = [
@@ -248,7 +245,6 @@ class Detail extends BaseComponent
             'inputs.tr_code'      => $this->trans('tr_code'),
             'inputs.partner_id'   => $this->trans('partner_id'),
             'inputs.send_to_name' => $this->trans('send_to_name'),
-            'input_details.*.disc_pct' => 'Diskon (%)',
         ];
 
         $this->orderService = app(OrderService::class);
@@ -395,10 +391,9 @@ class Detail extends BaseComponent
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             // Calculate basic amount with discount
-            $qty = (float)$this->input_details[$key]['qty'];
-            $price = (float)$this->input_details[$key]['price'];
-            // disc_pct is in percentage format (e.g., 50 for 50%)
-            $discountPercent = $this->normalizeDiscountPercent($this->input_details[$key]['disc_pct'] ?? 0);
+            $qty = $this->stringToNumeric($this->input_details[$key]['qty']);
+            $price = $this->stringToNumeric($this->input_details[$key]['price']);
+            $discountPercent = $this->stringToNumeric($this->input_details[$key]['disc_pct'] ?? 0);
 
             $amountGross = $qty * $price;
             $discountAmount = $amountGross * ($discountPercent / 100);
@@ -412,7 +407,7 @@ class Detail extends BaseComponent
             $amount = $this->input_details[$key]['amt'];
 
             if ($taxFlag === 'I') {
-                $this->input_details[$key]['dpp'] = round($amount / (1 + $taxPctDecimal), 2);
+                $this->input_details[$key]['dpp'] = round($amount / (1 + $taxPctDecimal), 0);
                 $this->input_details[$key]['ppn'] = $amount - $this->input_details[$key]['dpp'];
             } elseif ($taxFlag === 'E') {
                 $this->input_details[$key]['dpp'] = $amount;
@@ -540,10 +535,6 @@ class Detail extends BaseComponent
 
             foreach ($objectDetails as $key => $detail) {
                 $arr = populateArrayFromModel($detail);
-                // Hapus manipulasi diskon, ambil apa adanya dari DB
-                // if (isset($arr['disc_pct']) && is_numeric($arr['disc_pct'])) {
-                //     $arr['disc_pct'] = $arr['disc_pct'] / 10;
-                // }
                 $arr['has_delivery'] = $detail->has_delivery ?? false;
                 $arr['is_editable'] = $detail->is_editable ?? true;
                 $this->input_details[$key] = $arr;
@@ -593,25 +584,6 @@ class Detail extends BaseComponent
         $this->processNormalOrder($headerData, $detailData);
     }
 
-    /**
-     * Validasi input dan format diskon
-     */
-    // private function validateAndFormatInputs()
-    // {
-    //     if (!isset($this->input_details) || !is_array($this->input_details)) {
-    //         $this->input_details = [];
-    //     }
-
-    //     foreach ($this->input_details as &$detail) {
-    //         if (isset($detail['disc_pct'])) {
-    //             $detail['disc_pct'] = $this->normalizeDiscountPercent($detail['disc_pct']);
-    //         }
-    //     }
-    //     unset($detail);
-
-    //     $this->validate($this->rules);
-    // }
-
 
     private function prepareHeaderData()
     {
@@ -659,15 +631,14 @@ class Detail extends BaseComponent
                 $detail['matl_descr'] = $material->name;
                 $detail['matl_uom'] = $material->uom;
             }
-            // Set price data
-            $matlUom = MatlUom::where('matl_id', $detail['matl_id'])
-                ->where('matl_uom', $detail['matl_uom'])
-                ->first();
-            $detail['price'] = $matlUom ? $matlUom->selling_price : 0;
+            $detail['price'] = $this->stringToNumeric($detail['price']);
+            $detail['qty'] = $this->stringToNumeric($detail['qty']);
+            $detail['disc_pct'] = $this->stringToNumeric($detail['disc_pct']);
             $detail['price_uom'] = $detail['matl_uom'] ?? 'PCS';
-            // Set transaction fields
             $detail['tr_type'] = $this->trType;
             $detail['tr_seq'] = $i + 1;
+            $detail['qty_uom'] = 'PCS';
+            $detail['qty_base'] = 1;
         }
         unset($detail);
         return $detailData;

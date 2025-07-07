@@ -170,7 +170,7 @@ class PaymentService
 
         foreach ($sourceData as &$source) {
             $source['trhdr_id'] = $headerData["id"];
-            $source['tr_type'] = "ARPS";
+            $source['tr_type'] = $headerData["tr_type"]; // Gunakan tr_type dari header
             $source['tr_code'] = $headerData["tr_code"];
         }
         unset($source);

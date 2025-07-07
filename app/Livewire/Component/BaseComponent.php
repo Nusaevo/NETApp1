@@ -254,21 +254,22 @@ class BaseComponent extends Component
         $this->dispatch('form-changed', hasChanges: false);
         $this->validateForm();
 
+        // DB::beginTransaction();
         try {
-            DB::transaction(function () {
-                $this->updateVersionNumber();
-                $this->onValidateAndSave();
-            });
-
-            if (!$this->isEditOrView() && $this->resetAfterCreate) {
-                $this->onReset();
-            }
-            $this->dispatch('success', __('generic.string.save'));
-        } catch (QueryException | PDOException | Exception $e) {
+            $this->updateVersionNumber();
+            $this->onValidateAndSave();
+            // DB::commit();
+        } catch (Exception $e) {
+            // DB::rollBack();
             $this->rollbackVersionNumber();
-            Log::error("Method Save : " . $e->getMessage());
             $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
+            Log::error("Method Save : " . $e->getMessage());
+            throw $e;
         }
+        if (!$this->isEditOrView() && $this->resetAfterCreate) {
+            $this->onReset();
+        }
+        $this->dispatch('success', __('generic.string.save'));
     }
 
     public function SaveWithoutNotification()
@@ -360,6 +361,17 @@ class BaseComponent extends Component
     {
         // This method is intentionally left empty.
         // Override this method in child classes to implement specific reset logic.
+    }
+    public function stringToNumeric($value)
+    {
+        if (empty($value) || !is_string($value)) {
+            return (float) $value;
+        }
+
+        // Remove dots (thousand separators) and replace comma with dot for decimal
+        $cleanValue = str_replace(['.', ','], ['', '.'], $value);
+
+        return (float) $cleanValue;
     }
 
 }

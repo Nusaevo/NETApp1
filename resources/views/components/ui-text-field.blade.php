@@ -76,7 +76,12 @@
                     @if (isset($required) && $required === 'true') required @endif accept=".pdf, .doc, .docx"
                     @if (isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'barcode')
-            <input wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror" @if(isset($action) && $action=='View' || (!empty($enabled) && $enabled==='false' )) disabled @endif @if(isset($required) && $required==='true' ) required @endif placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="off" wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />
+                <input wire:model="{{ $model }}" id="{{ $id }}" type="text"
+                    class="form-control @error($model) is-invalid @enderror"
+                    @if ((isset($action) && $action == 'View') || (!empty($enabled) && $enabled === 'false')) disabled @endif
+                    @if (isset($required) && $required === 'true') required @endif
+                    placeholder="{{ isset($placeHolder) ? $placeHolder : '' }}" autocomplete="off"
+                    wire:change="{{ isset($onChanged) ? $onChanged : '' }}" />
 
                 <script>
                     document.addEventListener('livewire:load', function() {

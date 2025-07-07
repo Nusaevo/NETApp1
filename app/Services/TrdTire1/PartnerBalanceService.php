@@ -11,9 +11,9 @@ class PartnerBalanceService
     public function updFromBilling(string $mode, array $headerData)
     {
         if ($mode === '+') {
-            $amtBal = $headerData['total_amt'];
+            $amtBal = $headerData['amt'];
         } else if ($mode === '-') {
-            $amtBal = -$headerData['total_amt'];
+            $amtBal = -$headerData['amt'];
         }
         // dd($amtBal);
         // Cari atau buat partner balance berdasarkan partner_id
@@ -56,7 +56,7 @@ class PartnerBalanceService
             'partnerbal_id' => $partnerBal->id,
             'curr_id' => $headerData['curr_id'],
             'amt' => $amtBal,
-            'tr_amt' => $headerData['total_amt'],
+            'tr_amt' => $headerData['amt'],
             'tr_desc' => 'Billing ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'],
         ];
         // Selalu buat log baru untuk delivery
