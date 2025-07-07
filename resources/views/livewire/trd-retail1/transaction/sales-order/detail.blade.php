@@ -22,9 +22,18 @@
                                 {{-- <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
                                     required="true" :action="$actionValue" enabled="false" clickEvent="openPartnerDialogBox"
                                     buttonName="Search" :buttonEnabled="$isPanelEnabled" /> --}}
-                                <x-ui-text-field-search type="int" label="{{ $this->trans('customer') }}"
-                                    clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners"
-                                    required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                <x-ui-dropdown-search
+                                    label="{{ $this->trans('customer') }}"
+                                    model="inputs.partner_id"
+                                    searchModel="App\Models\TrdTire1\Master\Partner"
+                                    searchWhereCondition="status=A"
+                                    optionValue="id"
+                                    optionLabel="name"
+                                    placeHolder="Pilih Customer"
+                                    required="true"
+                                    :action="$actionValue"
+                                    :enabled="$isPanelEnabled"
+                                    type="int" />
 
                                 {{-- <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
                                     height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
@@ -112,7 +121,7 @@
                                             <td style="text-align: center;">
                                                 <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"
                                                     :options="$uomOptions"
-                                                    onChanged="onUomChanged({{ $key }}, $event.target.value)" />
+                                                    onChanged="onUomChanged({{ $key }}, $event.target.value)" >
                                             </td>
                                             <td style="text-align: center;">
                                                 @if (!empty($input_details[$key]['image_url']))

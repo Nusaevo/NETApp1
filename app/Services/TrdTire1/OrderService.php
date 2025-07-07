@@ -4,7 +4,6 @@ namespace App\Services\TrdTire1;
 
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Models\TrdTire1\Transaction\OrderDtl;
-use Illuminate\Support\Facades\DB;
 use Exception;
 
 class OrderService
@@ -21,8 +20,6 @@ class OrderService
 
     public function addOrder(array $headerData, array $detailData): OrderHdr
     {
-
-        DB::beginTransaction();
         try{
             // Simpan header terlebih dahulu
             $order = $this->saveHeader($headerData);
@@ -34,18 +31,14 @@ class OrderService
             // Simpan detail
             $this->saveDetails($headerData, $detailData);
 
-            DB::commit();
             return $order;
         } catch (Exception $e) {
-            DB::rollBack();
             throw new Exception('Error updating order: ' . $e->getMessage());
         }
-
     }
 
     public function updOrder(int $orderId, array $headerData, array $detailData): OrderHdr
     {
-        DB::beginTransaction();
         try {
             // Update header
             $order = $this->saveHeader($headerData, $orderId);
@@ -59,30 +52,24 @@ class OrderService
                 $this->saveDetails($headerData, $detailData);
             }
 
-            DB::commit();
             return $order;
         } catch (Exception $e) {
-            DB::rollBack();
             throw new Exception('Error updating order: ' . $e->getMessage());
         }
     }
 
      public function delOrder(int $orderId)
      {
-         DB::beginTransaction();
          try {
              $this->deleteDetails($orderId);
              $this->deleteHeader($orderId);
-             DB::commit();
          } catch (Exception $e) {
-             DB::rollBack();
              throw new Exception('Error deleting order: ' . $e->getMessage());
          }
     }
 
     public function updOrderQtyReff(string $mode, float $qtyDeliv, int $orderDtlId)
     {
-        DB::beginTransaction();
         try {
             // Update qty_reff di OrderDtl
             $orderDtl = OrderDtl::find($orderDtlId);
@@ -94,9 +81,7 @@ class OrderService
                 }
                 $orderDtl->save();
             }
-            DB::commit();
         } catch (Exception $e) {
-            DB::rollBack();
             throw new Exception('Error updating order quantity reference: ' . $e->getMessage());
         }
     }
@@ -116,7 +101,7 @@ class OrderService
     }
     private function saveDetails(array $headerData, array $detailData): array
     {
-        // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
+        //throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
