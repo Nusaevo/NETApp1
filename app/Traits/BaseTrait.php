@@ -38,14 +38,6 @@ trait BaseTrait
             $attributes = $model->getAllColumns();
             foreach ($attributes as $attribute) {
                 $value = $model->getAllColumnValues($attribute);
-                // if (is_numeric($value) && strpos($value, '.') !== false) {
-
-                //     $decimalPart = explode('.', $value)[1];
-                //     if ((int) $decimalPart === 0) {
-                //         $value = (int) $value;
-                //     }
-                // }
-
                 if (is_string($value) && isJsonFormat($value)) {
                     $value = json_decode($value, true);
                 }

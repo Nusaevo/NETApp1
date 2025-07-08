@@ -300,7 +300,7 @@ class Detail extends BaseComponent
 
             $this->input_details[] = [
                 'matl_id' => null,
-                'qty' => null,
+                'qty' => null, 'price' => null, 'disc_pct' => null, 'amt' => null,'disc_amt' => null,
             ];
             $this->dispatch('success', __('generic.string.add_item'));
         } catch (Exception $e) {
@@ -615,31 +615,22 @@ class Detail extends BaseComponent
         // Save order
         $this->saveOrder($headerData, $detailData);
 
-        DB::commit();
-
-        $this->dispatch('success', 'Purchase Order berhasil ' .
-            ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
-
         return $this->redirectToEdit();
     }
 
     private function saveOrder($headerData, $detailData)
     {
-        try {
-            if ($this->actionValue === 'Create') {
-                $order = $this->orderService->addOrder($headerData, $detailData);
-                if (!$order) {
-                    throw new Exception('Gagal membuat Purchase Order.');
-                }
-                $this->object = $order;
-            } else {
-                $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-                if (!$result) {
-                    throw new Exception('Gagal mengubah Purchase Order.');
-                }
+        if ($this->actionValue === 'Create') {
+            $order = $this->orderService->addOrder($headerData, $detailData);
+            if (!$order) {
+                throw new Exception('Gagal membuat Purchase Order.');
             }
-        } catch (Exception $e) {
-            throw $e; // biar bisa rollback di caller
+            $this->object = $order;
+        } else {
+            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
+            if (!$result) {
+                throw new Exception('Gagal mengubah Purchase Order.');
+            }
         }
     }
     private function redirectToEdit()

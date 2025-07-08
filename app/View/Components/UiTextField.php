@@ -27,12 +27,15 @@ class UiTextField extends UiBaseComponent
 
     public $buttonEnabled;
 
+    // Currency format for number type (IDR, USD, EUR, etc.)
+    public $currency;
+
     /**
      * Constructor for the UiTextField component.
      *
      * @param string $model        Livewire model name for binding data to the field.
      * @param string $label        Label displayed alongside the text field.
-     * @param string $type         Input type for the text field, e.g., 'text', 'number' (default: 'text').
+     * @param string $type         Input type for the text field, e.g., 'text', 'number', 'date', 'datetime', 'textarea', 'code', 'document', 'barcode', 'image' (default: 'text').
      * @param string $action       Action type, such as 'View' or 'Edit'.
      * @param string $required     Determines if the field is required ('true' or 'false').
      * @param string $enabled      Determines if the field is enabled ('true', 'false', 'always').
@@ -45,6 +48,7 @@ class UiTextField extends UiBaseComponent
      * @param string $clickEvent   Event triggered by an associated button or clickable element.
      * @param string $buttonName   Name or label displayed on the associated button, if any.
      * @param string $capslockMode Enables automatic uppercase transformation ('true' or 'false').
+     * @param string $currency     Currency format for number type (IDR, USD, EUR, etc.).
      */
     public function __construct(
         $model,
@@ -62,7 +66,8 @@ class UiTextField extends UiBaseComponent
         $clickEvent = '',
         $buttonName = "",
         $capslockMode = 'false',
-        $buttonEnabled = 'true'
+        $buttonEnabled = 'true',
+        $currency = ''
     ) {
         // Call parent constructor to initialize base component properties
         parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, $clickEvent, str_replace(['.', '[', ']'], '_', $model));
@@ -89,6 +94,9 @@ class UiTextField extends UiBaseComponent
         $this->capslockMode = $capslockMode;
 
         $this->buttonEnabled = $buttonEnabled;
+
+        // Currency format for number type
+        $this->currency = $currency;
 
         if ($type === 'code' && $action === 'Edit') {
             $this->enabled = 'false';
