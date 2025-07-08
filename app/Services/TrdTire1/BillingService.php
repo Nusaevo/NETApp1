@@ -120,8 +120,8 @@ class BillingService
                 dd.matl_id, dd.matl_code, dd.matl_uom, dd.matl_descr,
                 dd.qty,od.qty_uom,od.qty_base,od.price_uom,od.price_base, 'O' status_code,
                 ROUND(od.price*(1-od.disc_pct/100), 5) as price,
-                case when oh.tax_flag in('I', 'N') then ROUND(od.price*(1-od.disc_pct/100)*dd.qty, 5)
-                when oh.tax_flag='E' then ROUND(od.price*(1-od.disc_pct/100)*dd.qty *(1+oh.tax_pct/100), 5)
+                case when oh.tax_code in('I', 'N') then ROUND(od.price*(1-od.disc_pct/100)*dd.qty, 5)
+                when oh.tax_code='E' then ROUND(od.price*(1-od.disc_pct/100)*dd.qty *(1+oh.tax_pct/100), 5)
                 else 0 end amt
                 from deliv_dtls dd
                 join deliv_hdrs dh on dh.id=dd.trhdr_id
@@ -212,7 +212,7 @@ class BillingService
         $headerData['amt'] = $billingHdr->amt;
 
         // Update partner balance dan dapatkan partnerbal_id
-        $partnerBalId = $this->partnerBalanceService->updFromBilling('+', $headerData);
+        $partnerBalId = $this->partnerBalanceService->updFromBilling( $headerData);
 
         // Update BillingHdr dengan partnerbal_id
         $billingHdr->partnerbal_id = $partnerBalId;
@@ -290,30 +290,16 @@ class BillingService
      */
     public function getOutstandingBillsByPartner($partnerId = null)
     {
-        $query = BillingHdr::query();
-        if ($partnerId) {
-            $query->where('partner_id', $partnerId);
-        }
-        $query->whereNull('deleted_at');
-        $bills = $query->get();
-        $result = [];        foreach ($bills as $bill) {
-            // Ambil amt_reff langsung dari BillingHdr
-            $amt_reff = $bill->amt_reff ?? 0;
-            $outstanding = ($bill->amt ?? 0) - $amt_reff;
-            if ($outstanding > 0) {
-                // Hitung due_date
-                $tr_date = $bill->tr_date ? \Carbon\Carbon::parse($bill->tr_date) : \Carbon\Carbon::now();
-                $payment_due_days = (int)($bill->payment_due_days ?? 0);
-                $due_date = $tr_date->copy()->addDays($payment_due_days)->format('d-m-Y');
-                $result[] = [
-                    'billhdrtr_code'   => $bill->tr_code,
-                    'due_date'         => $due_date,
-                    'outstanding_amt'  => $outstanding,
-                    'amt'              => 0,
-                    'billhdr_id'       => $bill->id,
-                ];
-            }
-        }
-        return $result;
+        $bills = BillingHdr::select([
+                'id as billhdr_id',
+                'tr_code as billhdrtr_code',
+                DB::raw('tr_date + make_interval(days => payment_due_days) AS due_date'),
+                DB::raw('(amt - amt_reff) as outstanding_amt')
+            ])
+            ->where('partner_id', $partnerId)
+            ->get();
+
+        // dd($bills);
+        return $bills;
     }
 }

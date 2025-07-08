@@ -105,6 +105,7 @@
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_payments.{{ $key }}.amt" label=""
                                             :action="$actionValue" enabled="false" type="number" />
+                                        @dump($input_payments[$key]['amt'])
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
@@ -146,10 +147,12 @@
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
                                             label="" :action="$actionValue" enabled="false" type="text" />
+                                        @dump($input_details[$key]['billhdrtr_code'])
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.due_date"
                                             label="" :action="$actionValue" enabled="false" type="date" />
+                                        @dump($input_details[$key]['due_date'])
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.outstanding_amt"
@@ -171,7 +174,8 @@
                         <x-slot name="button">
                             {{-- <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                 button-name="Add" /> --}}
-                            <x-ui-button clickEvent="payItem" cssClass="btn btn-primary" button-name="Auto Pelunasan" />
+                            <x-ui-button clickEvent="payItem" cssClass="btn btn-primary"
+                                button-name="Auto Pelunasan" />
                         </x-slot>
                     </x-ui-table>
                 </x-ui-card>

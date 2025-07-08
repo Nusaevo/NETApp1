@@ -26,8 +26,9 @@ class OrderHdr extends BaseModel
     protected $fillable = [
         'tr_code',
         'tr_type',
-        'tax_flag',
+        'tax_code',
         'tax_pct',
+        'tax_id',
         'partner_id',
         'partner_code',
         'payment_term_id',

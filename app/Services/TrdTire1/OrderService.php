@@ -60,12 +60,12 @@ class OrderService
 
      public function delOrder(int $orderId)
      {
-         try {
+        try {
              $this->deleteDetails($orderId);
              $this->deleteHeader($orderId);
-         } catch (Exception $e) {
+        } catch (Exception $e) {
              throw new Exception('Error deleting order: ' . $e->getMessage());
-         }
+        }
     }
 
     public function updOrderQtyReff(string $mode, float $qtyDeliv, int $orderDtlId)
