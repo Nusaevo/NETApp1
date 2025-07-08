@@ -33,7 +33,7 @@ class Detail extends BaseComponent
     public $total_tax;
     public $total_dpp;
     public $total_discount;
-    public $trType = "APP";
+    public $trType = "ARP";
     public $versionNumber = "0.0";
     public $object_detail;
     public $matl_action = 'Create';
@@ -303,24 +303,6 @@ class Detail extends BaseComponent
         $this->inputs['partner_id'] = 0;
     }
 
-    #region Debt List Methods
-    public function addItem()
-    {
-        try {
-            $this->input_details[] = [
-                'billhdrtr_code' => null,
-                'tr_date' => null,
-                'amt' => null,
-                'amtbill' => 0,
-            ];
-
-            $this->dispatch('success', __('generic.string.add_item'));
-        } catch (Exception $e) {
-            Log::error('Error adding item: ' . $e->getMessage());
-            $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
-        }
-    }
-
     public function deleteItem($index)
     {
         try {
@@ -417,7 +399,7 @@ class Detail extends BaseComponent
                     $due_date = $tr_date->format('d-m-Y');
                 }
 
-                $this->input_details[$key] = [
+                $this->input_details[] = [
                     'billhdr_id'      => $billhdr_id, // id BillingHdr untuk proses simpan
                     'billhdrtr_code'  => $billhdrtr_code, // kode nota untuk tampilan
                     'due_date'        => $due_date, // tanggal jatuh tempo
@@ -450,6 +432,7 @@ class Detail extends BaseComponent
                 'bank_duedt_transfer' => null,
                 'amt_advance' => null,
                 'bank_note' => null,
+                'amt' => 0,
             ];
             $this->input_payments[] = $newItem;
 
@@ -715,7 +698,7 @@ class Detail extends BaseComponent
             // Generate tr_code jika dalam mode create
             if ($this->actionValue == 'Create') {
                 $this->getTransactionCode();
-            }            // Siapkan data header dengan default values
+            }
             $headerData = [
                 'tr_code' => $this->inputs['tr_code'],
                 'tr_type' => $this->trType,
@@ -728,6 +711,7 @@ class Detail extends BaseComponent
                 'wh_code' => $this->inputs['wh_code'] ?? '', // berikan default value
                 'amt' => $this->normalizeAmount(array_sum(array_column($this->input_details, 'amt'))), // tambahkan total amount
             ];
+            // dd($headerData, $this->inputs);
 
             // Validasi partner wajib dipilih
             if (empty($headerData['partner_id']) || empty($headerData['partner_code'])) {
@@ -1010,54 +994,19 @@ class Detail extends BaseComponent
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_code'] = $partner->code; // Set partner_code
             $this->inputs['partner_name'] = $partner->code;
-            $this->inputs['textareacustommer'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
 
-            // Set npwpOptions with data from JSON wp_details
-            if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
-                $wpDetails = $partner->PartnerDetail->wp_details;
-                if (is_string($wpDetails)) {
-                    $wpDetails = json_decode($wpDetails, true);
-                }
-                if (is_array($wpDetails) && !empty($wpDetails)) {
-                    $this->npwpOptions = array_map(function ($item) {
-                        return [
-                            'label' => $item['npwp'],
-                            'value' => $item['npwp'],
-                        ];
-                    }, $wpDetails);
-                    // Automatically select the first npwpOption
-                    $firstNpwpOption = $this->npwpOptions[0] ?? null;
-                    if ($firstNpwpOption) {
-                        $this->inputs['npwp_code'] = $firstNpwpOption['value'];
-                        $this->onTaxPayerChanged();
-                    }
-                }
-            }
-            // Set shipOptions with data from JSON shipping_address
-            if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
-                $shipDetail = $partner->PartnerDetail->shipping_address;
-                if (is_string($shipDetail)) {
-                    $shipDetail = json_decode($shipDetail, true);
-                }
-                if (is_array($shipDetail) && !empty($shipDetail)) {
-                    $this->shipOptions = array_map(function ($item) {
-                        return [
-                            'label' => $item['name'],
-                            'value' => $item['name'],
-                        ];
-                    }, $shipDetail);
-                    // Automatically select the first shipOption
-                    $firstShipOption = $this->shipOptions[0] ?? null;
-                    if ($firstShipOption) {
-                        $this->inputs['ship_to_name'] = $firstShipOption['value'];
-                        $this->onShipToChanged();
-                    }
-                }
-            }
-
-            // Ambil data nota outstanding dari BillingService (logic di service, bukan di Livewire)
-            $billingService = app(\App\Services\TrdTire1\BillingService::class);
-            $this->input_details = $billingService->getOutstandingBillsByPartner($partner->id);
+            $billingService = app(BillingService::class);
+            $this->input_details = collect($billingService->getOutstandingBillsByPartner($partner->id))
+                ->map(function($item) {
+                    return [
+                        'billhdr_id'      => $item->billhdr_id,
+                        'billhdrtr_code'  => $item->billhdrtr_code,
+                        'due_date'        => $item->due_date,
+                        'amtbill'         => $item->outstanding_amt, // atau field lain sesuai kebutuhan
+                        'outstanding_amt' => $item->outstanding_amt,
+                        'amt'             => 0, // default 0, user akan isi
+                    ];
+                })->toArray();
 
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');

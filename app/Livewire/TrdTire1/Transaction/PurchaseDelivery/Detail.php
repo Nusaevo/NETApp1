@@ -76,6 +76,7 @@ class Detail extends BaseComponent
             'input_details.*.matl_id' => $this->trans('matl_id'),
             'input_details.*.qty_order' => $this->trans('qty_order'),
             'input_details.*.price' => $this->trans('price'),
+            'input_details.*.qty' => $this->trans('qty'),
         ];
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers();
@@ -88,7 +89,7 @@ class Detail extends BaseComponent
             $this->isPanelEnabled = "false";
             // Populate inputs array
             $this->inputs = populateArrayFromModel($this->object);
-            // $this->inputs['status_code_text'] = $this->object->status_Code_text;
+            // $this->inputs['status_code'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
 
@@ -212,6 +213,7 @@ class Detail extends BaseComponent
                 // 'reffhdrtr_id' => $orderHeader ? $orderHeader->id : null,
                 'wh_code' => $this->inputs['wh_code'] ?? null,
                 'wh_id' => $wh_id,
+                'qty' => null, // Inisialisasi qty sebagai null
             ];
         }
     }
@@ -220,7 +222,9 @@ class Detail extends BaseComponent
     #region CRUD Operations
     public function onValidateAndSave()
     {
+        // dd($this->inputs, $this->input_details);
         try {
+            $this->validate();
             // Validasi header
             if (empty($this->inputs['tr_code']) && empty($this->inputs['reffhdrtr_code']) && empty($this->inputs['partner_id'])) {
                 $this->dispatch('error', 'Semua field header wajib diisi');
@@ -422,8 +426,6 @@ class Detail extends BaseComponent
             $this->dispatch('error', 'Mohon pilih nota pembelian terlebih dahulu.');
             return;
         }
-
-        // $this->isPanelEnabled = false;
 
         $this->input_details[] = [
             'matl_id' => null,

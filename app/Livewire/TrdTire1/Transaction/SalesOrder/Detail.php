@@ -60,6 +60,9 @@ class Detail extends BaseComponent
     public $rules  = [
         'inputs.tr_code'       => 'required',
         'inputs.partner_id'    => 'required',
+        'inputs.tax_code'      => 'required',
+        // 'input_details.*.qty' => 'required',
+        'input_details.*.matl_id' => 'required',
     ];
 
     protected $listeners = [
@@ -90,47 +93,30 @@ class Detail extends BaseComponent
     }
 
     /*
-     * Mengatur perhitungan pajak (DPP dan PPN) berdasarkan tax_flag dan tax_value.
+     * Mengatur perhitungan pajak (DPP dan PPN) berdasarkan tax_code dan tax_value.
      */
     public function onSOTaxChange()
     {
         try {
-            $configData = ConfigConst::select('num1', 'str1')
+            $configData = ConfigConst::select('id', 'num1', 'str1')
                 ->where('const_group', 'TRX_SO_TAX')
-                ->where('str1', $this->inputs['tax_flag'])
+                ->where('str1', $this->inputs['tax_code'])
                 ->first();
-            $this->inputs['tax_value'] = $configData->num1 ?? 0;
+
+            $this->inputs['tax_id'] = $configData->id;
+            $this->inputs['tax_value'] = $configData->num1;
             $taxType = $configData->str1 ?? '';
             $this->inputs['tax_pct'] = $this->inputs['tax_value'];
-            $this->calculateDPPandPPN($taxType);
-        } catch (Exception $e) {
-            $this->dispatch('error', $e->getMessage());
-        }
-    }
 
-    public function calculateDPPandPPN($taxType)
-    {
-        try {
-            $taxValue = (float)($this->inputs['tax_value'] ?? 0);
-            $totalAmount = (float)$this->total_amount;
-            if ($taxType === 'I') {
-                $dpp = $totalAmount / (1 + $taxValue / 100);
-                $ppn = $totalAmount - $dpp;
-            } elseif ($taxType === 'E') {
-                $dpp = $totalAmount;
-                $ppn = ($taxValue / 100) * $totalAmount;
-            } else {
-                $dpp = $totalAmount;
-                $ppn = 0;
+            // Recalculate all item amounts when tax changes
+            foreach ($this->input_details as $key => $detail) {
+                $this->updateItemAmount($key);
             }
-            $this->total_dpp = round($dpp, 2);
-            $this->total_tax = round($ppn, 2);
-            $this->dispatch('updateDPP', $this->total_dpp);
+
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
     }
-
     /*
      * Ketika partner berubah, ambil data NPWP dan Shipping Address dari detail partner
      */
@@ -288,9 +274,9 @@ class Detail extends BaseComponent
         } else {
             $this->isPanelEnabled = "true";
             $this->inputs['tax_doc_flag'] = true;
-            $this->inputs['tax_flag'] = 'I';
+            $this->inputs['tax_code'] = 'I';
         }
-        if (!empty($this->inputs['tax_flag'])) {
+        if (!empty($this->inputs['tax_code'])) {
             $this->onSOTaxChange();
         }
         $this->dispatch('updateTaxPayerEnabled', !empty($this->inputs['tax_doc_flag']));
@@ -344,14 +330,20 @@ class Detail extends BaseComponent
      */
     public function addItem()
     {
-        if ($this->isDeliv || !$this->canAddNewItem()) {
-            $this->dispatch('warning', 'Tidak bisa menambah item karena sudah ada pengiriman (delivery) pada salah satu item.');
-            return;
-        }
         try {
+            // Check if can add new item
+            // if ($this->isDeliv) {
+            //     $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah memiliki delivery.');
+            //     return;
+            // }
+
             $this->input_details[] = [
-                'matl_id'  => null,
-                'qty'      => null,
+                'matl_id' => null,
+                'qty' => null,
+                'price' => null,
+                'disc_pct' => null,
+                'amt' => null,
+                'disc_amt' => null,
             ];
             $this->dispatch('success', __('generic.string.add_item'));
         } catch (Exception $e) {
@@ -374,6 +366,8 @@ class Detail extends BaseComponent
                     $this->input_details[$key]['matl_uom']    = $material->uom;
                     $this->input_details[$key]['matl_descr']  = $material->name;
                     $this->input_details[$key]['disc_pct'] = 0.00; // Default 0%
+                    // dd('onMaterialChanged called with key: ' . $key . ' and matl_id: ' . $matl_id . $this->input_details[$key]['price']       = $matlUom->selling_price);
+
                     $this->updateItemAmount($key);
                 } else {
                     $this->dispatch('error', __('generic.error.material_uom_not_found'));
@@ -390,10 +384,9 @@ class Detail extends BaseComponent
     public function updateItemAmount($key)
     {
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            // Calculate basic amount with discount
             $qty = $this->stringToNumeric($this->input_details[$key]['qty']);
             $price = $this->stringToNumeric($this->input_details[$key]['price']);
-            $discountPercent = $this->stringToNumeric($this->input_details[$key]['disc_pct'] ?? 0);
+            $discountPercent = $this->normalizeDiscountPercent($this->input_details[$key]['disc_pct'] ?? 0);
 
             $amountGross = $qty * $price;
             $discountAmount = $amountGross * ($discountPercent / 100);
@@ -401,7 +394,7 @@ class Detail extends BaseComponent
             $this->input_details[$key]['disc_amt'] = $discountAmount;
 
             // Calculate tax amounts
-            $taxFlag = $this->inputs['tax_flag'] ?? 'N';
+            $taxFlag = $this->inputs['tax_code'] ?? 'N';
             $taxValue = $this->inputs['tax_pct'] ?? 0;
             $taxPctDecimal = $taxValue / 100;
             $amount = $this->input_details[$key]['amt'];
@@ -418,62 +411,19 @@ class Detail extends BaseComponent
             }
 
             $this->input_details[$key]['amt_tax'] = $this->input_details[$key]['dpp'] + $this->input_details[$key]['ppn'];
-        } else {
-            $this->input_details[$key]['amt'] = 0;
-            $this->input_details[$key]['disc_amt'] = 0;
-            $this->input_details[$key]['dpp'] = 0;
-            $this->input_details[$key]['ppn'] = 0;
-            $this->input_details[$key]['amt_tax'] = 0;
-        }
 
-        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
-        $this->recalculateTotals();
+            $this->dispatch('updateAmount', [
+                'total_amount' => $this->total_amount,
+                'total_discount' => $this->total_discount,
+                'total_tax' => $this->total_tax,
+                'total_dpp' => $this->total_dpp,
+            ]);
+        }
     }
 
     public function recalculateTotals()
     {
-        $this->calculateTotalAmount();
-        $this->calculateTotalDiscount();
-        $this->calculateTotalDPP();
-        $this->calculateTotalTax();
-        $this->dispatch('updateAmount', [
-            'total_amount'    => $this->total_amount,
-            'total_discount'  => $this->total_discount,
-            'total_tax'       => $this->total_tax,
-            'total_dpp'       => $this->total_dpp,
-        ]);
-    }
-
-    private function calculateTotalAmount()
-    {
-        $this->total_amount = 0;
-        foreach ($this->input_details as $detail) {
-            $this->total_amount += $detail['amt'] ?? 0;
-        }
-    }
-
-    private function calculateTotalDiscount()
-    {
-        $this->total_discount = 0;
-        foreach ($this->input_details as $detail) {
-            $this->total_discount += $detail['disc_amt'] ?? 0;
-        }
-    }
-
-    private function calculateTotalDPP()
-    {
-        $this->total_dpp = 0;
-        foreach ($this->input_details as $detail) {
-            $this->total_dpp += $detail['dpp'] ?? 0;
-        }
-    }
-
-    private function calculateTotalTax()
-    {
-        $this->total_tax = 0;
-        foreach ($this->input_details as $detail) {
-            $this->total_tax += $detail['ppn'] ?? 0;
-        }
+        // This method is removed - calculations are done in updateAmount
     }
 
     /**
@@ -516,7 +466,6 @@ class Detail extends BaseComponent
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
             $this->dispatch('success', __('generic.string.delete_item'));
-            $this->recalculateTotals();
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
@@ -560,10 +509,22 @@ class Detail extends BaseComponent
 
         // Jika sudah ada delivery, hanya boleh update header
         if ($this->isDeliv) {
-            $this->dispatch('warning', 'Ada pengiriman (delivery) pada salah satu item. Hanya header yang bisa diupdate.');
+            // Prepare data header saja
             $headerData = $this->prepareHeaderData();
-            $this->saveOrder($headerData, []);
-            return $this->redirectToEdit();
+            $detailData = []; // Kosongkan detail agar tidak diubah
+
+            // Simpan hanya header (tanpa update detail)
+            try {
+                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
+                if (!$result) {
+                    throw new Exception('Gagal mengubah Sales Order.');
+                }
+                $this->dispatch('warning', 'Ada pengiriman (delivery) pada salah satu item. Hanya header yang bisa diupdate.');
+                return $this->redirectToEdit();
+            } catch (Exception $e) {
+                $this->dispatch('error', $e->getMessage());
+                throw new Exception('Gagal memperbarui Sales Order: ' . $e->getMessage());
+            }
         }
 
         // Jika belum ada delivery, proses normal
@@ -592,7 +553,7 @@ class Detail extends BaseComponent
         $defaults = [
             'tr_type' => $this->trType,
             'tr_date' => date('Y-m-d'),
-            'tax_flag' => 'N'
+            'tax_code' => 'N'
         ];
 
         foreach ($defaults as $key => $value) {
@@ -635,6 +596,7 @@ class Detail extends BaseComponent
             $detail['qty'] = $this->stringToNumeric($detail['qty']);
             $detail['disc_pct'] = $this->stringToNumeric($detail['disc_pct']);
             $detail['price_uom'] = $detail['matl_uom'] ?? 'PCS';
+            $detail['price_base'] = $detail['price']; // Add price_base calculation like in PO
             $detail['tr_type'] = $this->trType;
             $detail['tr_seq'] = $i + 1;
             $detail['qty_uom'] = 'PCS';
@@ -763,7 +725,7 @@ class Detail extends BaseComponent
                 throw new Exception(__('Data header tidak ditemukan'));
             }
 
-            $this->orderService->deleteOrder($this->object->id);
+            $this->orderService->delOrder($this->object->id);
             $this->dispatch('success', __('Data berhasil terhapus'));
 
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
@@ -945,6 +907,44 @@ class Detail extends BaseComponent
                 }
             }
         }
+    }
+
+    /**
+     * Check delivery status for all items
+     */
+    public function checkDeliveryStatus()
+    {
+        $this->isDeliv = false; // Default: field aktif (bisa diedit)
+
+        foreach ($this->input_details as $key => $detail) {
+            if (isset($detail['id']) && !empty($detail['id'])) {
+                $orderDtl = OrderDtl::find($detail['id']);
+                if ($orderDtl && $orderDtl->hasDelivery()) {
+                    $this->isDeliv = true; // Ada delivery, field tidak aktif
+                    $this->input_details[$key]['has_delivery'] = true;
+                } else {
+                    $this->input_details[$key]['has_delivery'] = false;
+                }
+            } else {
+                $this->input_details[$key]['has_delivery'] = false;
+            }
+        }
+    }
+
+    // Livewire lifecycle hooks
+    public function updated($propertyName)
+    {
+        if ($propertyName === 'input_details') {
+            $this->checkDeliveryStatus();
+        }
+    }
+
+    // Constructor untuk menginisialisasi services
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    {
+        parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);
+
+        $this->orderService = app(OrderService::class);
     }
 
     /*

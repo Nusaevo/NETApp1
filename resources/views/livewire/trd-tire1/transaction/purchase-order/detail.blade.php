@@ -86,7 +86,7 @@
                                             </x-ui-table>
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}" model="inputs.tax_flag"
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}" model="inputs.tax_code"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                 </div>

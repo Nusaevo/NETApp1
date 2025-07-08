@@ -59,8 +59,8 @@ class Detail extends BaseComponent
     public $rules = [
         'inputs.tr_code' => 'required',
         'inputs.partner_name' => 'required',
-        'inputs.tax_flag' => 'required',
-        'input_details.*.qty' => 'required',
+        'inputs.tax_code' => 'required',
+        // 'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
     ];
 
@@ -128,53 +128,26 @@ class Detail extends BaseComponent
     public function onSOTaxChange()
     {
         try {
-            $configData = ConfigConst::select('num1', 'str1')
+            $configData = ConfigConst::select('id', 'num1', 'str1')
                 ->where('const_group', 'TRX_SO_TAX')
-                ->where('str1', $this->inputs['tax_flag'])
+                ->where('str1', $this->inputs['tax_code'])
                 ->first();
 
-            $this->inputs['tax_value'] = $configData->num1 ?? 0;
+            $this->inputs['tax_id'] = $configData->id;
+            $this->inputs['tax_value'] = $configData->num1;
             $taxType = $configData->str1 ?? '';
             $this->inputs['tax_pct'] = $this->inputs['tax_value'];
 
-            $this->calculateDPPandPPN($taxType);
-        } catch (Exception $e) {
-            $this->dispatch('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Calculate DPP (taxable base) and PPN (tax)
-     */
-    public function calculateDPPandPPN($taxType)
-    {
-        try {
-            $taxValue = (float)($this->inputs['tax_value'] ?? 0);
-            $totalAmount = (float)$this->total_amount;
-
-            if ($taxType === 'I') {
-                $dpp = $totalAmount / (1 + $taxValue / 100);
-                $ppn = $totalAmount - $dpp;
-            } elseif ($taxType === 'E') {
-                $dpp = $totalAmount;
-                $ppn = ($taxValue / 100) * $totalAmount;
-            } else {
-                $dpp = $totalAmount;
-                $ppn = 0;
+            // Recalculate all item amounts when tax changes
+            foreach ($this->input_details as $key => $detail) {
+                $this->updateItemAmount($key);
             }
 
-            $this->total_dpp = number_format((float)$dpp, 2, ',', '.');
-            $this->total_tax = number_format((float)$ppn, 2, ',', '.');
-
-            // Store raw numeric values for saving
-            $this->inputs['dpp'] = (float)$dpp;
-            $this->inputs['ppn'] = (float)$ppn;
-
-            $this->dispatch('updateDPP', $this->total_dpp);
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
     }
+
 
     /**
      * Handle partner change and load NPWP data
@@ -258,10 +231,10 @@ class Detail extends BaseComponent
             $this->loadDetails();
         } else {
             $this->isPanelEnabled = "true";
-            $this->inputs['tax_flag'] = 'I';
+            $this->inputs['tax_code'] = 'I';
         }
 
-        if (!empty($this->inputs['tax_flag'])) {
+        if (!empty($this->inputs['tax_code'])) {
             $this->onSOTaxChange();
         }
         // dd($this->input_details);
@@ -300,7 +273,11 @@ class Detail extends BaseComponent
 
             $this->input_details[] = [
                 'matl_id' => null,
-                'qty' => null, 'price' => null, 'disc_pct' => null, 'amt' => null,'disc_amt' => null,
+                'qty' => null,
+                'price' => null,
+                'disc_pct' => null,
+                'amt' => null,
+                'disc_amt' => null,
             ];
             $this->dispatch('success', __('generic.string.add_item'));
         } catch (Exception $e) {
@@ -350,7 +327,7 @@ class Detail extends BaseComponent
             $this->input_details[$key]['disc_amt'] = $discountAmount;
 
             // Calculate tax amounts
-            $taxFlag = $this->inputs['tax_flag'];
+            $taxFlag = $this->inputs['tax_code'];
             $taxValue = $this->inputs['tax_pct'];
             $taxPctDecimal = $taxValue / 100;
             $amount = $this->input_details[$key]['amt'];
@@ -502,6 +479,8 @@ class Detail extends BaseComponent
         $headerData = $this->prepareHeaderData();
         $detailData = $this->prepareDetailData();
 
+        // dd($detailData);
+
         // Calculate totals from detail data
         $totals = $this->calculateTotalsFromDetails($detailData);
         $headerData['total_amt'] = $totals['total_amt'];
@@ -520,7 +499,7 @@ class Detail extends BaseComponent
         $defaults = [
             'tr_type' => $this->trType,
             'tr_date' => date('Y-m-d'),
-            'tax_flag' => 'N'
+            'tax_code' => 'N'
         ];
 
         foreach ($defaults as $key => $value) {
