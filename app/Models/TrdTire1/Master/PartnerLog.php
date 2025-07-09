@@ -28,6 +28,9 @@ class PartnerLog extends BaseModel
         'tr_amt',
         'amt',
         'tr_desc',
+        'reff_id',
+        'reff_type',
+        'reff_code',
     ];
 
     public function scopeGetActiveData()

@@ -19,9 +19,8 @@ class PaymentService
 
     public function addPayment(array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt)
     {
-        DB::beginTransaction();
+        // dd($headerData, $detailData, $sourceData, $advanceData, $overAmt);
         try {
-
             // Simpan header
             $paymentHdr = $this->saveHeader($headerData);
             $headerData['id'] = $paymentHdr->id;
@@ -31,20 +30,18 @@ class PaymentService
             if ($advanceData) {
                 $this->savePaymentAdv($headerData, $advanceData);
             }
-            if ($overAmt) {
-                $this->overPayment($headerData, $advanceData, $overAmt);
+            if ($overAmt > 0) {
+                $this->overPayment($headerData, $overAmt); // Pass empty array untuk advanceData
             }
 
-            DB::commit();
+            return $paymentHdr;
        } catch (Exception $e) {
-            DB::rollBack();
             throw new Exception('Error adding payment: ' . $e->getMessage());
-        };
+        }
     }
 
     public function updPayment(int $paymentId, array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt = 0.0)
     {
-        DB::beginTransaction();
         try {
             // Cek apakah payment header ada
             $paymentHdr = PaymentHdr::find($paymentId);
@@ -66,14 +63,12 @@ class PaymentService
             if ($advanceData) {
                 $this->savePaymentAdv($headerData, $advanceData);
             }
-            if ($overAmt) {
-                $this->overPayment($headerData, $advanceData, $overAmt);
+            if ($overAmt > 0) {
+                $this->overPayment($headerData, $overAmt); // Pass empty array untuk advanceData
             }
 
-            DB::commit();
             return $paymentHdr;
         } catch (Exception $e) {
-            DB::rollBack();
             throw $e;
         }
     }
@@ -86,6 +81,7 @@ class PaymentService
 
     private function saveHeader(array $headerData): PaymentHdr
     {
+        // dd($headerData);
         if (isset($headerData['id'])) {
             $paymentHdr = PaymentHdr::find($headerData['id']);
             if (!$paymentHdr) {
@@ -102,9 +98,14 @@ class PaymentService
     {
         // dd($headerData, $detailData);
         // Debug: tampilkan data yang akan disimpan
-        if (empty($detailData)) {
-            Log::warning('No detail data to save in PaymentDtl');
-            return;
+        // if (empty($detailData)) {
+        //     Log::warning('No detail data to save in PaymentDtl');
+        //     return;
+        // }
+
+        // Pastikan headerData memiliki id
+        if (!isset($headerData['id'])) {
+            throw new Exception('Header ID tidak tersedia untuk menyimpan PaymentDetail');
         }
 
         try {
@@ -115,30 +116,22 @@ class PaymentService
             }
             unset($detail);
 
-            foreach ($detailData as $detail) {
+            foreach ($detailData as &$detail) {
                 $paymentDtl = new PaymentDtl($detail);
                 $paymentDtl->save();
                 $detail['id'] = $paymentDtl->id;
 
                 // Debug sebelum update partner balance
-                $partnerBalId = $this->partnerBalanceService->updFromPayment('-', $headerData, $detail);
+                $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $detail);
 
                 $paymentDtl->partnerbal_id = $partnerBalId;
                 $paymentDtl->save();
 
-                try {
-                    app(BillingService::class)->updAmtReff("+", $detail["amt"], $detail["billhdr_id"]);
-                } catch (\Throwable $e) {
-                    throw $e;
-                }
-            }
+                app(BillingService::class)->updAmtReff("+", $detail["amt"], $detail["billhdr_id"]);
 
-            // Update saldo partner sekali saja setelah semua detail disimpan
-            if (!empty($detailData)) {
-                Log::debug('About to update partner balance with headerData', [
-                    'headerData' => $headerData
-                ]);
-           }
+            }
+            unset($detail);
+
         } catch (Exception $e) {
             Log::error('Error in savePaymentDetail: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
@@ -150,9 +143,14 @@ class PaymentService
 
     private function savePaymentSrc(array $headerData, array $sourceData): void
     {
+        // Pastikan headerData memiliki id
+        if (!isset($headerData['id'])) {
+            throw new Exception('Header ID tidak tersedia untuk menyimpan PaymentSrc');
+        }
+
         foreach ($sourceData as &$source) {
             $source['trhdr_id'] = $headerData["id"];
-            $source['tr_type'] = "ARPS";
+            $source['tr_type'] = $headerData["tr_type"] . 'S'; // Gunakan tr_type dari header
             $source['tr_code'] = $headerData["tr_code"];
         }
         unset($source);
@@ -160,92 +158,81 @@ class PaymentService
         foreach ($sourceData as $payment) {
             $paymentSrc = new PaymentSrc($payment);
             $paymentSrc->save();
+            $payment['id'] = $paymentSrc->id;
+
+            $partnerBalId = $this->partnerBalanceService->updFromPayment( $headerData, $payment);
+            if (!$paymentSrc->partnerbal_id) {
+                $paymentSrc->partnerbal_id = $partnerBalId;  // Now using the ID directly
+            }
+            $paymentSrc->save();
+
+
         }
     }
 
-    private function savePaymentAdv(array $headerData, array $advanceData): void
+    public function savePaymentAdv(array $headerData, array $advanceData): void
     {
+        // Pastikan headerData memiliki id
+        if (!isset($headerData['id'])) {
+            throw new Exception('Header ID tidak tersedia untuk menyimpan PaymentAdv');
+        }
 
-        foreach ($advanceData as $advance) {
+        // dd($headerData, $advanceData);
+        foreach ($advanceData as &$advance) {
             $advance['trhdr_id'] = $headerData["id"];
-            $advance['tr_type'] = "ARPA";
+            $advance['tr_type'] = $headerData["tr_type"] . 'A';
             $advance['tr_code'] = $headerData["tr_code"];
         }
         unset($advance);
 
-        foreach ($advanceData as $adv) {
-            // Selalu ambil partner_id dan partner_code dari PaymentHdr berdasarkan id header
-            $paymentHdr = null;
-            if (isset($headerData['id'])) {
-                $paymentHdr = PaymentHdr::find($headerData['id']);
-            }
-            if (!$paymentHdr) {
-                throw new Exception('PaymentHdr tidak ditemukan untuk simpan advance');
-            }
-            $partner_id = $paymentHdr->partner_id;
-            $partner_code = $paymentHdr->partner_code;
-            // Pastikan partnerbal_id tidak null
-            $partnerBal = PartnerBal::where('partner_id', $partner_id)->first();
-            if (!$partnerBal) {
-                $partnerBal = PartnerBal::create([
-                    'partner_id' => $partner_id,
-                    'partner_code' => $partner_code,
-                    'amt_bal' => 0,
-                    'amt_adv' => 0,
-                ]);
-            }
-            $payAdv = [
-                'trhdr_id'      => $headerData['id'] ?? null,
-                'tr_type'       => ($headerData['tr_type'] ?? '') . 'A',
-                'tr_code'       => $headerData['tr_code'] ?? null,
-                'tr_seq'        => $adv['tr_seq'] ?? 1,
-                'adv_type_id'   => $adv['adv_type_id'] ?? '',
-                'adv_type_code' => $adv['adv_type_code'] ?? null,
-                'partnerbal_id' => $partnerBal->id,
-                'partner_id'    => $partner_id,
-                'partner_code'  => $partner_code,
-                'reff_id'       => $headerData['id'] ?? null,
-                'reff_type'     => $headerData['tr_type'] ?? null,
-                'reff_code'     => $adv['reff_code'] ?? null,
-                'amt'           => $adv['amt'] ?? 0,
-                'amt_base'      => $adv['amt_base'] ?? 0,
-            ];
-
-            $paymentAdv = new PaymentAdv($payAdv);
+        foreach ($advanceData as $advance) {
+            $paymentAdv = new PaymentAdv($advance);
             $paymentAdv->save();
+            $advance['id'] = $paymentAdv->id;
 
-            $payAdv['id'] = $headerData['id'] ?? null;
-            $payAdv['total_amt'] = $payAdv['amt'] ?? 0;
-            $payAdv['tr_date'] = $paymentHdr->tr_date ?? now();
-
-            $partnerBalId = $this->partnerBalanceService->updFromBilling('-', $payAdv);
-            $paymentAdv->partnerbal_id = $partnerBalId;
+            $partnerBalId = $this->partnerBalanceService->updFromPayment( $headerData, $advance);
+            if (!$paymentAdv->partnerbal_id) {
+                $paymentAdv->partnerbal_id = $partnerBalId;  // Now using the ID directly
+            }
             $paymentAdv->save();
 
         }
+
     }
 
-    private function overPayment(array $headerData, array $advanceData, float $overAmt): void
+    private function overPayment(array $headerData, float $overAmt): void
     {
-        $advanceData['trhdr_id'] = $headerData['id'];
-        $advanceData['tr_type'] = 'ARPA';
-        $advanceData['tr_code'] = $headerData['tr_code'];
-        $advanceData['tr_seq'] = 1;
-        $advanceData['adv_type_code'] = 'ARADVPAY';
-        $adcanceData['adv_type_id'] = app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', $advanceData['adv_type_code']);
-        $advanceData['amt'] = $overAmt;
-        $advanceData['reff_id'] = $headerData['id'];
-        $advanceData['reff_type'] = $headerData['tr_type'];
-        $advanceData['reff_code'] = $headerData['tr_code'];
+        // Pastikan headerData memiliki id
+        if (!isset($headerData['id'])) {
+            throw new Exception('Header ID tidak tersedia untuk menyimpan overPayment');
+        }
 
-        $paymentAdv = new PaymentAdv($advanceData);
+        if ($overAmt <= 0) {
+            Log::warning('OverPayment amount is 0 or negative, skipping');
+            return;
+        }
+
+        // Buat array baru untuk overPayment, jangan gunakan $advanceData yang mungkin kosong
+        $overPaymentData = [
+            'trhdr_id' => $headerData['id'],
+            'tr_type' => $headerData['tr_type'] . 'A',
+            'tr_code' => $headerData['tr_code'],
+            'tr_seq' => 1,
+            'adv_type_code' => 'ARADVPAY',
+            'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
+            'amt' => $overAmt,
+            'reff_id' => $headerData['id'],
+            'reff_type' => $headerData['tr_type'],
+            'reff_code' => $headerData['tr_code'],
+        ];
+
+        $paymentAdv = new PaymentAdv($overPaymentData);
         $paymentAdv->save();
-        $advanceData['id'] = $headerData['id'];
+        $overPaymentData['id'] = $paymentAdv->id;
 
+        $partnerBalId = $this->partnerBalanceService->updFromPayment( $headerData, $overPaymentData);
+        $paymentAdv->partnerbal_id = $partnerBalId;  // This is already correct since it uses the ID directly
 
-        $paartnerBalId = $this->partnerBalanceService->updFromPayment('+', $headerData, $advanceData);
-
-        $paymentAdv->partnerbal_id = $paartnerBalId;
         $paymentAdv->save();
     }
 
@@ -261,15 +248,14 @@ class PaymentService
         $existingDetails = PaymentDtl::where('trhdr_id', $paymentId)->get();
         foreach ($existingDetails as $detail) {
             app(BillingService::class)->updAmtReff("-", $detail["amt"], $detail["billhdr_id"]);
-            $existingDetails->delete();
+            $detail->delete();
         }
 
-        $existingDetails = PaymentSrc::where('trhdr_id', $paymentId)->get();
-        $existingDetails->delete();
+        PaymentSrc::where('trhdr_id', $paymentId)->delete();
 
-        $existingDetails = PaymentAdv::where('trhdr_id', $paymentId)->get();
-        $existingDetails->delete();
+        PaymentAdv::where('trhdr_id', $paymentId)->delete();
 
-        app(PartnerBalanceService::class)->delPartnerLog($detail["billhdr_id"]);
+        // Delete partner log untuk setiap detail
+        app(PartnerBalanceService::class)->delPartnerLog($paymentId);
     }
  }

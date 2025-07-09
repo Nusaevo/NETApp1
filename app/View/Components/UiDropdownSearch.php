@@ -16,6 +16,8 @@ class UIDropdownSearch extends UiBaseComponent
     public $optionLabel;            // Field yang dijadikan label (misal: 'name')
 
     /**
+     * Create a new UiDropdownSearch component instance.
+     *
      * @param string $label
      * @param string $model
      * @param mixed  $selectedValue
@@ -31,9 +33,11 @@ class UIDropdownSearch extends UiBaseComponent
      * @param string $placeHolder
      * @param string $buttonName
      * @param string $searchModel    Nama model Eloquent (namespace) untuk pencarian
-     * @param string $searchWhereCondition
+     * @param string $searchWhereCondition WHERE conditions (AND: &, OR: |)
+     *                                     Example: "status_code=A&deleted_at=null" or "status=A|status=I"
      * @param string $optionValue    Field untuk value
-     * @param string $optionLabel    Field untuk label
+     * @param string $optionLabel    Field untuk label. Multiple fields separated by comma
+     *                              Example: "code,name" will display "ABC123 - Product Name"
      */
     public function __construct(
         $label = '',

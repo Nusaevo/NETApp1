@@ -243,32 +243,129 @@ function terbilang($nilai)
 
 if (!function_exists('sanitizeModelAttributes')) {
     /**
-     * Sanitize model attributes before saving.
+     * Sanitize model attributes before saving to DB.
      *
-     * - Dates: Sanitized via `sanitizeDate`
-     * - Numeric strings: Properly formatted (`.` and `,` swapped)
-     * - Strings: Trimmed whitespace
-     * - Arrays: JSON-encoded
+     * - Trim strings
+     * - If value is an array:
+     *   - Use '' if column type is string
+     *   - Use 0 if column type is numeric (int, decimal, float)
+     *   - Use null if column is nullable
      *
      * @param array $attributes Reference to model attributes array
+     * @param array $columnTypes Optional array mapping column names to types ['column' => 'string|int|float|decimal']
+     * @param array $nullableColumns Optional array of column names that allow null values
      */
-    function sanitizeModelAttributes(&$attributes)
+    function sanitizeModelAttributes(&$attributes, $columnTypes = [], $nullableColumns = [])
     {
         foreach ($attributes as $key => $value) {
-            if (isDateAttribute($key, $value)) {
-                // Sanitize Date
-                $attributes[$key] = sanitizeDate($value);
-            } elseif (isFormattedNumeric($value)) {
-                $attributes[$key] = str_replace('.', '', $value);
-                $attributes[$key] = str_replace(',', '.', $attributes[$key]);
-
-            } elseif (is_array($value)) {
-                // Encode Arrays as JSON
-                $attributes[$key] = json_encode($value);
+            if (is_array($value)) {
+                // Handle arrays based on column type
+                if (in_array($key, $nullableColumns)) {
+                    $attributes[$key] = null;
+                } elseif (isset($columnTypes[$key])) {
+                    $columnType = strtolower($columnTypes[$key]);
+                    if (in_array($columnType, ['int', 'integer', 'bigint', 'smallint', 'tinyint', 'decimal', 'float', 'double', 'numeric'])) {
+                        $attributes[$key] = 0;
+                    } elseif (in_array($columnType, ['json', 'jsonb'])) {
+                        $attributes[$key] = '{}'; // Empty JSON object
+                    } else {
+                        $attributes[$key] = '';
+                    }
+                } else {
+                    // Default: assume string type
+                    $attributes[$key] = '';
+                }
             } elseif (is_string($value)) {
-                // Trim Strings
-                $attributes[$key] = trim($value);
+                // Handle JSON/JSONB fields with empty strings
+                if (isset($columnTypes[$key])) {
+                    $columnType = strtolower($columnTypes[$key]);
+                    if (in_array($columnType, ['json', 'jsonb']) && trim($value) === '') {
+
+                        $attributes[$key] = '{}'; // Convert empty string to empty JSON object for JSON fields
+                    } else {
+                        // Trim string values for non-JSON fields
+                        $attributes[$key] = trim($value);
+                    }
+                } else {
+                    // Trim string values when column type is unknown
+                    $attributes[$key] = trim($value);
+                }
+            } elseif (is_object($value)) {
+                // Convert objects to string or handle appropriately
+                $attributes[$key] = (string) $value;
             }
+        }
+    }
+}
+
+if (!function_exists('sanitizeModelAttributesAuto')) {
+    /**
+     * Automatically sanitize model attributes using model schema information.
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model The Eloquent model instance
+     * @param array $attributes Reference to model attributes array
+     */
+    function sanitizeModelAttributesAuto($model, &$attributes)
+    {
+        try {
+            $table = $model->getTable();
+            $connection = $model->getConnection();
+            $columnTypes = [];
+            $nullableColumns = [];
+            $driver = $connection->getDriverName();
+
+            // Use information_schema for cross-database compatibility
+            if ($driver === 'pgsql') {
+                // PostgreSQL
+                $columns = $connection->select("
+                    SELECT column_name, data_type, is_nullable, column_default
+                    FROM information_schema.columns
+                    WHERE table_name = ? AND table_schema = 'public'
+                    ORDER BY ordinal_position
+                ", [$table]);
+            } elseif ($driver === 'mysql') {
+                // MySQL
+                $databaseName = $connection->getDatabaseName();
+                $columns = $connection->select("
+                    SELECT COLUMN_NAME as column_name, DATA_TYPE as data_type,
+                           IS_NULLABLE as is_nullable, COLUMN_DEFAULT as column_default
+                    FROM information_schema.COLUMNS
+                    WHERE TABLE_NAME = ? AND TABLE_SCHEMA = ?
+                    ORDER BY ORDINAL_POSITION
+                ", [$table, $databaseName]);
+            } else {
+                // Generic SQL standard fallback
+                $columns = $connection->select("
+                    SELECT column_name, data_type, is_nullable, column_default
+                    FROM information_schema.columns
+                    WHERE table_name = ?
+                    ORDER BY ordinal_position
+                ", [$table]);
+            }
+
+            foreach ($columns as $column) {
+                $columnName = $column->column_name;
+                $columnType = strtolower($column->data_type);
+
+                $columnTypes[$columnName] = $columnType;
+
+                // Check if column is nullable
+                if (isset($column->is_nullable) && strtolower($column->is_nullable) === 'yes') {
+                    $nullableColumns[] = $columnName;
+                }
+            }
+
+            // Call the main sanitize function with detected types
+            sanitizeModelAttributes($attributes, $columnTypes, $nullableColumns);
+
+        } catch (\Exception $e) {
+            // Fallback to basic sanitization if schema detection fails
+            \Log::warning('Schema detection failed for table: ' . ($model->getTable() ?? 'unknown'), [
+                'error' => $e->getMessage(),
+                'model' => get_class($model),
+                'driver' => $connection->getDriverName() ?? 'unknown'
+            ]);
+            sanitizeModelAttributes($attributes);
         }
     }
 }

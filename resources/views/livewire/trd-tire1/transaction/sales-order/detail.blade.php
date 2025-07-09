@@ -104,8 +104,8 @@
                                             required="false" enabled="false" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}"
-                                            model="inputs.tax_flag" :options="$SOTax" required="true"
+                                        <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}"
+                                            model="inputs.tax_code" :options="$SOTax" required="true"
                                             :action="$actionValue" onChanged="onSOTaxChange" />
                                         <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
                                             model="inputs.payment_term_id" :options="$paymentTerms" required="true"
@@ -147,35 +147,32 @@
                                                 model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
                                                 :options="$materials" required="true" :action="$actionValue"
                                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" type="number"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                label="" :action="$actionValue" type="number" :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
                                                 label="" :action="$actionValue" type="number" required="true"
                                                 onChanged="updateItemAmount({{ $key }})"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
-                                                label="" :action="$actionValue" type="number"
-                                                onChanged="updateItemAmount({{ $key }})"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
+                                                onChanged="updateItemAmount({{ $key }})" type="number" />
                                         </td>
                                         <td style="text-align: center;">
-                                            <x-ui-text-field model="input_details.{{ $key }}.amt_idr"
+                                            <x-ui-text-field model="input_details.{{ $key }}.amt"
                                                 label="" :action="$actionValue" type="text" enabled="false"
                                                 type="number" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
                                                 :action="$actionValue" cssClass="btn-danger text-danger"
-                                                iconPath="delete.svg"
-                                                :enabled="!$isDeliv && (isset($input_details[$key]['is_editable']) ? $input_details[$key]['is_editable'] : true) ? 'true' : 'false'" />
+                                                iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                     </tr>
                                 @endforeach
@@ -183,7 +180,7 @@
 
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                    button-name="Tambah" :enabled="!$isDeliv ? 'true' : 'false'" />
+                                    button-name="Tambah" :enabled="$isDeliv ? 'false' : 'true'" />
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>
@@ -192,7 +189,7 @@
                             :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
                         {{-- @include('layout.customs.buttons.save') --}}
                         <x-ui-button clickEvent="Save" button-name="Simpan" loading="true" :action="$actionValue"
-                            cssClass="btn-primary" iconPath="save.svg" :enabled="true"/>
+                            cssClass="btn-primary" iconPath="save.svg" :enabled="true" />
                     </x-ui-footer>
                 </div>
                 <x-ui-table id="SummaryTable">

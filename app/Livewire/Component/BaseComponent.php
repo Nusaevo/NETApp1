@@ -254,21 +254,25 @@ class BaseComponent extends Component
         $this->dispatch('form-changed', hasChanges: false);
         $this->validateForm();
 
+        // Get connection name from the model to ensure transaction uses same connection
+        $connectionName = $this->getModelConnection();
+        DB::connection($connectionName)->beginTransaction();
         try {
-            DB::transaction(function () {
-                $this->updateVersionNumber();
-                $this->onValidateAndSave();
-            });
-
-            if (!$this->isEditOrView() && $this->resetAfterCreate) {
-                $this->onReset();
-            }
-            $this->dispatch('success', __('generic.string.save'));
-        } catch (QueryException | PDOException | Exception $e) {
+            $this->updateVersionNumber();
+            $this->onValidateAndSave();
+            DB::connection($connectionName)->commit();
+        } catch (Exception $e) {
+            DB::connection($connectionName)->rollBack();
             $this->rollbackVersionNumber();
-            Log::error("Method Save : " . $e->getMessage());
             $this->dispatch('error', __('generic.error.save', ['message' => $e->getMessage()]));
+            Log::error("Method Save : " . $e->getMessage());
+            return;
         }
+
+        if (!$this->isEditOrView() && $this->resetAfterCreate) {
+            $this->onReset();
+        }
+        $this->dispatch('success', __('generic.string.save'));
     }
 
     public function SaveWithoutNotification()
@@ -280,7 +284,9 @@ class BaseComponent extends Component
         $this->validateForm();
 
         try {
-            DB::transaction(function () {
+            // Use the same connection as the model
+            $connectionName = $this->getModelConnection();
+            DB::connection($connectionName)->transaction(function () {
                 $this->updateVersionNumber();
                 $this->onValidateAndSave();
             });
@@ -360,6 +366,34 @@ class BaseComponent extends Component
     {
         // This method is intentionally left empty.
         // Override this method in child classes to implement specific reset logic.
+    }
+
+    /**
+     * Get the database connection name used by the model
+     * This ensures transaction uses the same connection as the model
+     */
+    protected function getModelConnection(): string
+    {
+        // If object exists, use its connection
+        if (isset($this->object) && method_exists($this->object, 'getConnectionName')) {
+            return $this->object->getConnectionName();
+        }
+
+        // Fall back to session app_code or default connection
+        $appCode = Session::get('app_code');
+        return $appCode ?: config('database.default');
+    }
+
+    public function stringToNumeric($value)
+    {
+        if (empty($value) || !is_string($value)) {
+            return (float) $value;
+        }
+
+        // Remove dots (thousand separators) and replace comma with dot for decimal
+        $cleanValue = str_replace(['.', ','], ['', '.'], $value);
+
+        return (float) $cleanValue;
     }
 
 }

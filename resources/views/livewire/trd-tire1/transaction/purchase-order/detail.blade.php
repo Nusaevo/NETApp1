@@ -86,9 +86,26 @@
                                             </x-ui-table>
                                         </x-slot>
                                     </x-ui-dialog-box>
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax_flag') }}" model="inputs.tax_flag"
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}" model="inputs.tax_code"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
+                                </div>
+                                <div class="row">
+                                    {{-- Dropdown Search Component untuk pencarian supplier dengan AJAX --}}
+                                    {{-- Menggunakan Select2 dengan search real-time ke database --}}
+                                    {{-- <x-ui-dropdown-search
+                                        label="Cari Supplier (Dropdown Search)"
+                                        model="inputs.partner_id"
+                                        optionValue="id"
+                                        optionLabel="code,name"
+                                        searchModel="App\Models\TrdTire1\Master\Partner"
+                                        searchWhereCondition="status_code=A&deleted_at=null"
+                                        placeHolder="Ketik untuk mencari supplier..."
+                                        type="int"
+                                        required="false"
+                                        :action="$actionValue"
+                                        :enabled="$isPanelEnabled ? 'true' : 'false'"
+                                        onChanged="onSupplierSelected" /> --}}
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('Detail Supplier') }}"
@@ -122,15 +139,25 @@
                                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
-                                            <x-ui-dropdown-select type="int" label="" clickEvent=""
-                                                model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
-                                                :options="$materials" required="true" :action="$actionValue"
-                                                onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                :enabled="$isDeliv ? 'false' : 'true'" />
+                                            {{-- Dropdown Search untuk Material --}}
+                                             <x-ui-dropdown-search
+                                                            model="input_details.{{ $key }}.matl_id"
+                                                            searchModel="App\Models\TrdTire1\Master\Material"
+                                                            searchWhereCondition="status_code=A&deleted_at=null"
+                                                            optionValue="id"
+                                                            optionLabel="code,name"
+                                                            placeHolder="Search materials..."
+                                                            :selectedValue="$input_details[$key]['matl_id'] ?? ''"
+                                                            required="true"
+                                                            :action="$actionValue"
+                                                            enabled="true"
+                                                            onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
+                                                            type="int" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number" />
+                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
+                                                onChanged="updateItemAmount({{ $key }})" decimalPlaces="2" currency="IDR"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
@@ -141,7 +168,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="updateItemAmount({{ $key }})" type="number" />
+                                                onChanged="updateItemAmount({{ $key }})" type="number"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt"
@@ -167,7 +194,7 @@
                             :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
                         {{-- @include('layout.customs.buttons.save') --}}
                         <x-ui-button clickEvent="Save" button-name="Simpan" loading="true" :action="$actionValue"
-                            cssClass="btn-primary" iconPath="save.svg" :enabled="true"/>
+                            cssClass="btn-primary" iconPath="save.svg" :enabled="true" />
 
                     </x-ui-footer>
                 </div>

@@ -32,7 +32,9 @@ class BillingHdr extends BaseModel
         'curr_rate',
         'status_code',
         'print_date',
-        'total_amt'
+        'amt',
+        'amt_reff',
+        'partnerbal_id'
     ];
 
     #region Relations
@@ -50,6 +52,11 @@ class BillingHdr extends BaseModel
     public function BillingDtl()
     {
         return $this->hasMany(BillingDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+    }
+
+    public function PartnerBal()
+    {
+        return $this->belongsTo(PartnerBal::class, 'partnerbal_id', 'id');
     }
     #endregion
 }

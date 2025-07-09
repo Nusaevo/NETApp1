@@ -9,6 +9,7 @@ use App\Models\TrdTire1\Master\SalesReward;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdTire1\Master\MatlUom;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
 class OrderDtl extends BaseModel
@@ -26,6 +27,8 @@ class OrderDtl extends BaseModel
         'matl_descr',
         'matl_uom',
         'qty',
+        'qty_uom',
+        'qty_base',
         'qty_reff',
         'price',
         'amt',

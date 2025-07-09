@@ -29,6 +29,8 @@ class MatlUom extends BaseModel
         'qty_fgr',
         'qty_fgi',
         'selling_price',
+        'last_buying_price',
+        'last_buying_date'
         // 'initial_qty_fgr' // Pastikan field ini ada jika diperlukan
     ];
 

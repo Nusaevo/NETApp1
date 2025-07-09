@@ -14,6 +14,7 @@ use App\Models\SysConfig1\ConfigConst;
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\TrdTire1\Master\PartnerDetail;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -21,11 +22,13 @@ class OrderHdr extends BaseModel
 {
     use SoftDeletes;
 
+
     protected $fillable = [
         'tr_code',
         'tr_type',
-        'tax_flag',
+        'tax_code',
         'tax_pct',
+        'tax_id',
         'partner_id',
         'partner_code',
         'payment_term_id',
