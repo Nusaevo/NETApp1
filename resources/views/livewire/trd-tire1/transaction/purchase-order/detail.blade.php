@@ -91,6 +91,23 @@
                                         onChanged="onSOTaxChange" />
                                 </div>
                                 <div class="row">
+                                    {{-- Dropdown Search Component untuk pencarian supplier dengan AJAX --}}
+                                    {{-- Menggunakan Select2 dengan search real-time ke database --}}
+                                    {{-- <x-ui-dropdown-search
+                                        label="Cari Supplier (Dropdown Search)"
+                                        model="inputs.partner_id"
+                                        optionValue="id"
+                                        optionLabel="code,name"
+                                        searchModel="App\Models\TrdTire1\Master\Partner"
+                                        searchWhereCondition="status_code=A&deleted_at=null"
+                                        placeHolder="Ketik untuk mencari supplier..."
+                                        type="int"
+                                        required="false"
+                                        :action="$actionValue"
+                                        :enabled="$isPanelEnabled ? 'true' : 'false'"
+                                        onChanged="onSupplierSelected" /> --}}
+                                </div>
+                                <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('Detail Supplier') }}"
                                         model="inputs.textareasupplier" type="textarea" :action="$actionValue"
                                         required="false" enabled="false" />
@@ -122,16 +139,25 @@
                                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
-                                            <x-ui-dropdown-select type="int" label="" clickEvent=""
-                                                model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
-                                                :options="$materials" required="true" :action="$actionValue"
-                                                onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                :enabled="$isDeliv ? 'false' : 'true'" />
+                                            {{-- Dropdown Search untuk Material --}}
+                                            <x-ui-dropdown-search
+                                                label=""
+                                                model="input_details.{{ $key }}.matl_id"
+                                                optionValue="id"
+                                                optionLabel="code,name"
+                                                searchModel="App\Models\TrdTire1\Master\Material"
+                                                searchWhereCondition="status_code=A&deleted_at=null"
+                                                placeHolder="Ketik untuk mencari barang..."
+                                                type="int"
+                                                required="true"
+                                                :action="$actionValue"
+                                                :enabled="$isDeliv ? 'false' : 'true'"
+                                                onChanged="onMaterialChanged({{ $key }}, $event.target.value)" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
-                                                onChanged="updateItemAmount({{ $key }})" />
+                                                onChanged="updateItemAmount({{ $key }})" decimalPlaces="2" currency="IDR"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"

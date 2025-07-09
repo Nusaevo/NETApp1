@@ -22,6 +22,9 @@ use App\Http\Controllers\DropdownSearchController;
 */
 
 Route::middleware('auth')->group(function () {
+    // Dropdown Search Route
+    Route::get('/search-dropdown', [DropdownSearchController::class, 'search'])->name('dropdown.search');
+
     $livewireComponents = [];
     $livewireDirectory = app_path('Livewire');
     $namespaceBase = 'App\Livewire';
@@ -105,7 +108,5 @@ Route::get('/error', function () {
 });
 
 Route::get('/auth/redirect/{provider}', [SocialiteController::class, 'redirect']);
-Route::get('/search-dropdown', [DropdownSearchController::class, 'index'])->name('search.partner');
-
 
 require __DIR__ . '/auth.php';

@@ -159,6 +159,40 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Handle supplier selection from dropdown search
+     */
+    public function onSupplierSelected($partnerId)
+    {
+        if ($partnerId && $partnerId !== '0') {
+            $partner = Partner::find($partnerId);
+            if ($partner) {
+                $this->inputs['partner_id'] = $partnerId;
+                $this->inputs['partner_name'] = $partner->name;
+
+                // Update detail supplier textarea
+                $this->inputs['textareasupplier'] =
+                    "Kode: " . $partner->code . "\n" .
+                    "Nama: " . $partner->name . "\n" .
+                    "Alamat: " . ($partner->address ?? '-') . "\n" .
+                    "Telepon: " . ($partner->phone ?? '-') . "\n" .
+                    "Email: " . ($partner->email ?? '-');
+
+                // Load NPWP data
+                $this->npwpOptions = $this->listNpwp($partner);
+
+                // Trigger partner changed event
+                $this->onPartnerChanged();
+            }
+        } else {
+            // Clear partner data when selection is cleared
+            $this->inputs['partner_id'] = null;
+            $this->inputs['partner_name'] = '';
+            $this->inputs['textareasupplier'] = '';
+            $this->npwpOptions = null;
+        }
+    }
+
+    /**
      * Extract NPWP list from partner details
      */
     private function listNpwp($partner)

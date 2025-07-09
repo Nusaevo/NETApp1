@@ -25,58 +25,18 @@
                                 <x-ui-dropdown-search
                                     label="{{ $this->trans('customer') }}"
                                     model="inputs.partner_id"
-                                    searchModel="App\Models\TrdTire1\Master\Partner"
-                                    searchWhereCondition="status=A"
+                                    searchModel="App\Models\TrdRetail1\Master\Partner"
+                                    searchWhereCondition="deleted_at=null&grp=C"
                                     optionValue="id"
-                                    optionLabel="name"
-                                    placeHolder="Pilih Customer"
+                                    optionLabel="code,name"
+                                    placeHolder="Type to search customers..."
+                                    :selectedValue="$inputs['partner_id']"
                                     required="true"
                                     :action="$actionValue"
                                     :enabled="$isPanelEnabled"
                                     type="int" />
 
-                                {{-- <x-ui-dialog-box id="partnerDialogBox" title="Search Supplier" width="600px"
-                                    height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
-                                    <x-slot name="body">
-                                        <x-ui-text-field type="text" label="Search Code/Nama Supplier"
-                                            model="partnerSearchText" required="true" :action="$actionValue" enabled="true"
-                                            clickEvent="searchPartners" buttonName="Search" />
-                                        <!-- Table -->
-                                        <x-ui-table id="partnersTable" padding="0px" margin="0px">
-                                            <x-slot name="headers">
-                                                <th class="min-w-100px">Code</th>
-                                                <th class="min-w-100px">Name</th>
-                                                <th class="min-w-100px">Address</th>
-                                            </x-slot>
-                                            <x-slot name="rows">
-                                                @if (empty($suppliers))
-                                                    <tr>
-                                                        <td colspan="4" class="text-center text-muted">No Data Found
-                                                        </td>
-                                                    </tr>
-                                                @else
-                                                    @foreach ($suppliers as $key => $supplier)
-                                                        <tr wire:key="row-{{ $key }}-supplier">
-                                                            <td>
-                                                                <x-ui-option label="" required="false"
-                                                                    layout="horizontal" enabled="true" type="checkbox"
-                                                                    visible="true" :options="[$supplier['id'] => $supplier['code']]"
-                                                                    onChanged="selectPartner({{ $supplier['id'] }})" />
-                                                            </td>
-                                                            <td>{{ $supplier['name'] }}</td>
-                                                            <td>{{ $supplier['address'] }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                @endif
-                                            </x-slot>
-                                            <x-slot name="footer">
-                                                <x-ui-button clickEvent="confirmSelection"
-                                                    button-name="Confirm Selection" loading="true" :action="$actionValue"
-                                                    cssClass="btn-primary" />
-                                            </x-slot>
-                                        </x-ui-table>
-                                    </x-slot>
-                                </x-ui-dialog-box> --}}
+                                {{-- Legacy partner dialog box removed - now using dropdown search component --}}
                                 <x-ui-text-field label="Status" model="inputs.status_code_text" type="text"
                                     :action="$actionValue" required="false" enabled="false" />
                             </div>
@@ -112,11 +72,19 @@
                                         <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
-                                                <x-ui-text-field-search type="int" label="" clickEvent=""
-                                                    model="input_details.{{ $key }}.matl_id" :selectedValue="$input_details[$key]['matl_id']"
-                                                    :options="$materials" required="true" :action="$actionValue"
+                                                <x-ui-dropdown-search
+                                                    model="input_details.{{ $key }}.matl_id"
+                                                    searchModel="App\Models\TrdRetail1\Master\Material"
+                                                    searchWhereCondition="status_code=A&deleted_at=null"
+                                                    optionValue="id"
+                                                    optionLabel="code,name"
+                                                    placeHolder="Search materials..."
+                                                    :selectedValue="$input_details[$key]['matl_id'] ?? ''"
+                                                    required="true"
+                                                    :action="$actionValue"
+                                                    enabled="true"
                                                     onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                    enabled="true" />
+                                                    type="int" />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"

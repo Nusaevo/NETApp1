@@ -17,7 +17,7 @@ class OrderHdr extends BaseModel
     protected $fillable = [
         'tr_id', 'tr_type', 'tr_date', 'reff_code', 'partner_id', 'partner_code',
         'sales_id', 'sales_code', 'deliv_by', 'payment_term_id', 'payment_term',
-        'curr_id', 'curr_code', 'curr_rate', 'status_code', 'print_settings', 'print_remarks'
+        'curr_id', 'curr_code', 'curr_rate', 'status_code',
     ];
 
     /* ======================================================
@@ -263,13 +263,23 @@ class OrderHdr extends BaseModel
 
         foreach ($inputDetails as $index => $detail) {
             $detail['tr_seq'] = $index + 1;
-            $detail['tr_id'] = $this->tr_id;
-            $detail['trhdr_id'] = $this->id;
-            $detail['tr_type'] = $trType;
+            $detail['tr_id'] = $this->tr_id ?? 0;
+            $detail['trhdr_id'] = $this->id ?? 0;
+            $detail['tr_type'] = $trType ?? '';
 
             if (isset($detail['qty'])) {
                 $detail['qty_reff'] = $detail['qty'];
             }
+
+            // Ensure all fields have default values
+            $detail['matl_id'] = $detail['matl_id'] ?? 0;
+            $detail['matl_code'] = $detail['matl_code'] ?? '';
+            $detail['matl_uom'] = $detail['matl_uom'] ?? '';
+            $detail['wh_id'] = $detail['wh_id'] ?? 0;
+            $detail['wh_code'] = $detail['wh_code'] ?? '';
+            $detail['qty'] = $detail['qty'] ?? 0;
+            $detail['price'] = $detail['price'] ?? 0;
+            $detail['amt'] = $detail['amt'] ?? 0;
 
             $orderDtl = OrderDtl::firstOrNew([
                 'tr_id' => $detail['tr_id'],
@@ -316,11 +326,11 @@ class OrderHdr extends BaseModel
         ]);
 
         $delivHdr->fill([
-            'tr_id'        => $this->tr_id,
-            'tr_type'      => $values['delivTrType'],
-            'tr_date'      => $this->tr_date,
-            'partner_id'   => $this->partner_id,
-            'partner_code' => $this->partner_code,
+            'tr_id'        => $this->tr_id ?? 0,
+            'tr_type'      => $values['delivTrType'] ?? '',
+            'tr_date'      => $this->tr_date ?? date('Y-m-d'),
+            'partner_id'   => $this->partner_id ?? 0,
+            'partner_code' => $this->partner_code ?? '',
             'deliv_by'     => $inputs['deliv_by'] ?? '',
         ]);
 
@@ -336,13 +346,13 @@ class OrderHdr extends BaseModel
         ]);
 
         $billingHdr->fill([
-            'tr_id'        => $this->tr_id,
-            'tr_type'      => $values['billingTrType'],
-            'tr_date'      => $this->tr_date,
-            'partner_id'   => $this->partner_id,
-            'partner_code' => $this->partner_code,
-            'payment_term_id' => $this->payment_term_id,
-            'payment_term' => '',
+            'tr_id'        => $this->tr_id ?? 0,
+            'tr_type'      => $values['billingTrType'] ?? '',
+            'tr_date'      => $this->tr_date ?? date('Y-m-d'),
+            'partner_id'   => $this->partner_id ?? 0,
+            'partner_code' => $this->partner_code ?? '',
+            'payment_term_id' => $this->payment_term_id ?? 0,
+            'payment_term' => $this->payment_term ?? '',
             'payment_due_days' => 0,
         ]);
 
@@ -358,11 +368,11 @@ class OrderHdr extends BaseModel
         ]);
 
         $paymentHdr->fill([
-            'tr_id'        => $this->tr_id,
-            'tr_type'      => $values['paymentTrType'],
-            'tr_date'      => $this->tr_date,
-            'partner_id'   => $this->partner_id,
-            'partner_code' => $this->partner_code,
+            'tr_id'        => $this->tr_id ?? 0,
+            'tr_type'      => $values['paymentTrType'] ?? '',
+            'tr_date'      => $this->tr_date ?? date('Y-m-d'),
+            'partner_id'   => $this->partner_id ?? 0,
+            'partner_code' => $this->partner_code ?? '',
             'bank_id'      => $inputs['bank_id'] ?? 0,
             'bank_code'    => $inputs['bank_code'] ?? '',
             'bank_reff'    => $inputs['bank_reff'] ?? '',
@@ -370,8 +380,8 @@ class OrderHdr extends BaseModel
             'bank_rcv'     => $inputs['bank_rcv'] ?? 0,
             'bank_rcv_base'=> $inputs['bank_rcv_base'] ?? 0,
             'bank_note'    => $inputs['bank_note'] ?? '',
-            'curr_id'      => $this->curr_id,
-            'curr_rate'    => $this->curr_rate,
+            'curr_id'      => $this->curr_id ?? 0,
+            'curr_rate'    => $this->curr_rate ?? 0,
         ]);
 
         if ($paymentHdr->isNew()) {
@@ -420,18 +430,18 @@ class OrderHdr extends BaseModel
             'tr_type'       => $delivTrType,
             'tr_id'         => $this->tr_id,
             'tr_seq'        => $orderDtl->tr_seq,
-            'reffdtl_id'    => $orderDtl->id,
-            'reffhdrtr_type'=> $this->tr_type,
-            'reffhdrtr_id'  => $this->tr_id,
-            'reffdtltr_seq' => $orderDtl->tr_seq,
-            'matl_id'       => $orderDtl->matl_id,
-            'matl_code'     => $orderDtl->matl_code,
-            'matl_descr'    => $orderDtl->matl_descr,
-            'matl_uom'      => $orderDtl->matl_uom,
-            'wh_id'         => $detailData['wh_id'] ?? '',
+            'reffdtl_id'    => $orderDtl->id ?? 0,
+            'reffhdrtr_type'=> $this->tr_type ?? '',
+            'reffhdrtr_id'  => $this->tr_id ?? 0,
+            'reffdtltr_seq' => $orderDtl->tr_seq ?? 0,
+            'matl_id'       => $orderDtl->matl_id ?? 0,
+            'matl_code'     => $orderDtl->matl_code ?? '',
+            'matl_descr'    => $orderDtl->matl_descr ?? '',
+            'matl_uom'      => $orderDtl->matl_uom ?? '',
+            'wh_id'         => $detailData['wh_id'] ?? 0,
             'wh_code'       => $detailData['wh_code'] ?? '',
-            'qty'           => $orderDtl->qty,
-            'qty_reff'      => $orderDtl->qty_reff,
+            'qty'           => $orderDtl->qty ?? 0,
+            'qty_reff'      => $orderDtl->qty_reff ?? 0,
         ]);
 
         if ($delivDtl->isNew()) {
@@ -449,18 +459,18 @@ class OrderHdr extends BaseModel
         $billingDtl->fill([
             'trhdr_id'      => $billingHdr->id,
             'tr_type'       => $billingTrType,
-            'tr_id'         => $orderDtl->tr_id,
-            'tr_seq'        => $orderDtl->tr_seq,
-            'dlvdtl_id'     => $delivDtl->id,
-            'dlvhdrtr_type' => $delivDtl->tr_type,
-            'dlvhdrtr_id'   => $delivDtl->tr_id,
-            'dlvdtltr_seq'  => $delivDtl->tr_seq,
-            'matl_id'       => $orderDtl->matl_id,
-            'matl_code'     => $orderDtl->matl_code,
-            'matl_uom'      => $orderDtl->matl_uom,
+            'tr_id'         => $orderDtl->tr_id ?? 0,
+            'tr_seq'        => $orderDtl->tr_seq ?? 0,
+            'dlvdtl_id'     => $delivDtl->id ?? 0,
+            'dlvhdrtr_type' => $delivDtl->tr_type ?? '',
+            'dlvhdrtr_id'   => $delivDtl->tr_id ?? 0,
+            'dlvdtltr_seq'  => $delivDtl->tr_seq ?? 0,
+            'matl_id'       => $orderDtl->matl_id ?? 0,
+            'matl_code'     => $orderDtl->matl_code ?? '',
+            'matl_uom'      => $orderDtl->matl_uom ?? '',
             'descr'         => '',
-            'qty'           => $orderDtl->qty,
-            'qty_base'      => $orderDtl->qty,
+            'qty'           => $orderDtl->qty ?? 0,
+            'qty_base'      => $orderDtl->qty ?? 0,
             'price'         => $orderDtl->price ?? 0,
             'price_base'    => $orderDtl->price ?? 0,
             'amt'           => $orderDtl->amt ?? 0,
@@ -482,14 +492,14 @@ class OrderHdr extends BaseModel
         $paymentDtl->fill([
             'trhdr_id'      => $paymentHdr->id,
             'tr_type'       => $paymentTrType,
-            'tr_id'         => $orderDtl->tr_id,
-            'tr_seq'        => $orderDtl->tr_seq,
-            'billdtl_id'    => $billingDtl->id,
-            'billhdrtr_type'=> $billingDtl->tr_type,
-            'billhdrtr_id'  => $billingDtl->tr_id,
-            'billdtltr_seq' => $billingDtl->tr_seq,
-            'amt'           => $billingDtl->amt,
-            'amt_base'      => $billingDtl->amt,
+            'tr_id'         => $orderDtl->tr_id ?? 0,
+            'tr_seq'        => $orderDtl->tr_seq ?? 0,
+            'billdtl_id'    => $billingDtl->id ?? 0,
+            'billhdrtr_type'=> $billingDtl->tr_type ?? '',
+            'billhdrtr_id'  => $billingDtl->tr_id ?? 0,
+            'billdtltr_seq' => $billingDtl->tr_seq ?? 0,
+            'amt'           => $billingDtl->amt ?? 0,
+            'amt_base'      => $billingDtl->amt ?? 0,
             'status_code'   => Status::OPEN,
         ]);
         $paymentDtl->save();

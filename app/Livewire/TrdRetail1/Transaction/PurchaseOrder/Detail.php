@@ -57,10 +57,9 @@ class Detail extends BaseComponent
     public $wh_code='';
     public $rules  = [
         'inputs.tr_date' => 'required',
-        'inputs.partner_id' => 'required',
-        'inputs.payment_term_id' => 'required',
+        'inputs.partner_id' => 'required|numeric|min:1',
         'input_details.*.qty' => 'required|numeric|min:1',
-        'input_details.*.matl_id' => 'required',
+        'input_details.*.matl_id' => 'required|numeric|min:1',
         'wh_code' => 'required',
         'input_details.*.matl_uom' => 'required',
     ];
@@ -117,6 +116,19 @@ class Detail extends BaseComponent
         $this->inputs['tr_type']  = $this->trType;
         $this->inputs['curr_id'] = ConfigConst::CURRENCY_RUPIAH_ID;
         $this->inputs['curr_code'] = "IDR";
+
+        // Initialize other required fields
+        $this->inputs['reff_code'] = '';
+        $this->inputs['partner_id'] = 0;
+        $this->inputs['partner_code'] = '';
+        $this->inputs['sales_id'] = 0;
+        $this->inputs['sales_code'] = '';
+        $this->inputs['deliv_by'] = '';
+        $this->inputs['payment_term_id'] = 0;
+        $this->inputs['payment_term'] = '';
+        $this->inputs['curr_rate'] = 0;
+        $this->inputs['print_settings'] = '';
+        $this->inputs['print_remarks'] = '';
     }
 
     public function render()
@@ -139,15 +151,38 @@ class Detail extends BaseComponent
         // Update partner_code berdasarkan partner_id jika diperlukan.
         if (!isNullOrEmptyNumber($this->inputs['partner_id']) && $this->inputs['partner_id'] > 0) {
             $partner = Partner::find($this->inputs['partner_id']);
-            $this->inputs['partner_code'] = $partner ? $partner->code : null;
+            $this->inputs['partner_code'] = $partner ? $partner->code : '';
         } else {
             $this->addError('partner_id', 'Supplier tidak ditemukan');
             throw new Exception('Harap isi Supplier terlebih dahulu');
         }
-        if (!isNullOrEmptyNumber($this->inputs['payment_term_id'])) {
+
+        // Initialize payment term data
+        if (!isNullOrEmptyNumber($this->inputs['payment_term_id']) && $this->inputs['payment_term_id'] > 0) {
             $this->masterService = new MasterService();
             $paymentTerm = $this->masterService->getPaymentTermById($this->inputs['payment_term_id']);
             $this->inputs['payment_term'] = $paymentTerm ?? "";
+        } else {
+            $this->inputs['payment_term_id'] = 0;
+            $this->inputs['payment_term'] = "";
+        }
+
+        // Ensure all required fields are properly initialized
+        $this->inputs['reff_code'] = $this->inputs['reff_code'] ?? '';
+        $this->inputs['sales_id'] = $this->inputs['sales_id'] ?? 0;
+        $this->inputs['sales_code'] = $this->inputs['sales_code'] ?? '';
+        $this->inputs['deliv_by'] = $this->inputs['deliv_by'] ?? '';
+        $this->inputs['curr_rate'] = $this->inputs['curr_rate'] ?? 0;
+        $this->inputs['print_settings'] = $this->inputs['print_settings'] ?? '';
+        $this->inputs['print_remarks'] = $this->inputs['print_remarks'] ?? '';
+
+        // Convert any array values to strings or appropriate types
+        foreach ($this->inputs as $key => $value) {
+            if (is_array($value)) {
+                $this->inputs[$key] = json_encode($value);
+            } elseif (is_object($value)) {
+                $this->inputs[$key] = (string) $value;
+            }
         }
         // Persiapkan array detail untuk disimpan.
         // Contoh: Update urutan (tr_seq), tambahkan info warehouse dan material.
@@ -167,7 +202,17 @@ class Detail extends BaseComponent
 
             // Ambil data material untuk mendapatkan material code.
             $material = Material::withTrashed()->find($detail['matl_id'] ?? null);
-            $detail['matl_code'] = $material ? $material->code : null;
+            $detail['matl_code'] = $material ? $material->code : '';
+
+            // Ensure numeric fields are properly typed
+            $detail['qty'] = (float) ($detail['qty'] ?? 0);
+            $detail['price'] = (float) ($detail['price'] ?? 0);
+            $detail['amt'] = (float) ($detail['amt'] ?? 0);
+            $detail['matl_id'] = (int) ($detail['matl_id'] ?? 0);
+
+            // Remove any array or object fields that might cause issues
+            unset($detail['image_url']); // This might be causing issues if it's an object
+            unset($detail['matl_descr']); // Remove description if it's not needed in save
 
             // Jika diperlukan, tambahkan atau ubah field lain di detail.
             $itemsToSave[] = $detail;
@@ -184,7 +229,7 @@ class Detail extends BaseComponent
 
         // Redirect bila aksi adalah Create, atau lakukan tindakan lanjutan sesuai kebutuhan.
         if ($this->actionValue === 'Create') {
-            return redirect()->route($this->appCode . '.Transaction.SalesOrder.Detail', [
+            return redirect()->route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
                 'action'   => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id),
             ]);
@@ -281,7 +326,8 @@ class Detail extends BaseComponent
         $this->input_details[] = [
             'matl_id' => null,
             'qty' => null,
-            'price' => 0.0
+            'price' => 0.0,
+            'amt' => 0.0
         ];
     }
     public function onMaterialChanged($key, $matl_id)
