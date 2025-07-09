@@ -26,7 +26,8 @@ use Illuminate\Support\Facades\DB;
  */
 
 class DropdownSearchController extends Controller
-{    public function search(Request $request)
+{
+    public function search(Request $request)
     {
         try {
             $query = $request->get('q', '');
@@ -103,7 +104,9 @@ class DropdownSearchController extends Controller
                     foreach ($searchFields as $field) {
                         $field = trim($field);
                         if ($field) {
-                            $q->orWhere($field, 'LIKE', "%{$query}%");
+                            // Use case-insensitive LIKE search
+                            $q->orWhere($field, 'ILIKE', "%{$query}%")
+                              ->orWhere($field, 'LIKE', "%{$query}%");
                         }
                     }
                 });

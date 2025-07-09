@@ -441,7 +441,13 @@ class Detail extends BaseComponent
 
     public function searchMaterials()
     {
-        $query = Material::query();
+        $query = Material::query()
+            ->leftJoin('matl_uoms', function($join) {
+                $join->on('materials.id', '=', 'matl_uoms.matl_id');
+            })
+            ->select('materials.*',
+                     'matl_uoms.buying_price as buying_price',
+                     'matl_uoms.selling_price as selling_price');
 
         if (!empty($this->searchTerm)) {
             $searchTermUpper = strtoupper($this->searchTerm);
@@ -454,13 +460,13 @@ class Detail extends BaseComponent
 
         // Apply filters
         if (!empty($this->filterCategory)) {
-            $query->where('category', $this->filterCategory);
+            $query->where('materials.category', $this->filterCategory);
         }
         if (!empty($this->filterBrand)) {
-            $query->where('brand', $this->filterBrand);
+            $query->where('materials.brand', $this->filterBrand);
         }
         if (!empty($this->filterType)) {
-            $query->where('class_code', $this->filterType);
+            $query->where('materials.class_code', $this->filterType);
         }
 
         $this->materialList = $query->get();

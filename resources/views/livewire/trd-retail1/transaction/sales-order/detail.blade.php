@@ -89,7 +89,7 @@
                                             <td style="text-align: center;">
                                                 <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"
                                                     :options="$uomOptions"
-                                                    onChanged="onUomChanged({{ $key }}, $event.target.value)" >
+                                                    onChanged="onUomChanged({{ $key }}, $event.target.value)" />
                                             </td>
                                             <td style="text-align: center;">
                                                 @if (!empty($input_details[$key]['image_url']))
@@ -146,14 +146,35 @@
                                             required="true" :action="$actionValue" enabled="true" clickEvent=""
                                             buttonName="" />
                                         <!-- Table -->
-                                        <x-ui-text-field-search label="Category" model="filterCategory"
-                                            :options="$kategoriOptions" onChanged="" />
+                                        <x-ui-dropdown-search
+                                            label="Category"
+                                            model="filterCategory"
+                                            searchModel="App\Models\SysConfig1\ConfigConst"
+                                            searchWhereCondition="const_group=MMATL_CATEGL1&deleted_at=null"
+                                            optionValue="str1"
+                                            optionLabel="str2"
+                                            placeHolder="Select category..."
+                                            type="string" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-text-field-search label="Brand" model="filterBrand" :options="$brandOptions"
-                                            onChanged="" />
-                                        <x-ui-text-field-search label="Type" model="filterType" :options="$typeOptions"
-                                            onChanged="" />
+                                        <x-ui-dropdown-search
+                                            label="Brand"
+                                            model="filterBrand"
+                                            searchModel="App\Models\SysConfig1\ConfigConst"
+                                            searchWhereCondition="const_group=MMATL_BRAND&deleted_at=null"
+                                            optionValue="str1"
+                                            optionLabel="str2"
+                                            placeHolder="Select brand..."
+                                            type="string" />
+                                        <x-ui-dropdown-search
+                                            label="Type"
+                                            model="filterType"
+                                            searchModel="App\Models\SysConfig1\ConfigConst"
+                                            searchWhereCondition="const_group=MMATL_TYPE&deleted_at=null"
+                                            optionValue="str1"
+                                            optionLabel="str2"
+                                            placeHolder="Select type..."
+                                            type="string" />
                                     </div>
 
 
@@ -164,12 +185,14 @@
                                             <th class="min-w-100px">Code</th>
                                             <th class="min-w-100px">Image</th>
                                             <th class="min-w-100px">Name</th>
+                                            <th class="min-w-100px">Buying Price</th>
+                                            <th class="min-w-100px">Selling Price</th>
                                         </x-slot>
 
                                         <x-slot name="rows">
                                             @if (empty($materialList))
                                                 <tr>
-                                                    <td colspan="7" class="text-center text-muted">No Data
+                                                    <td colspan="5" class="text-center text-muted">No Data
                                                         Found</td>
                                                 </tr>
                                             @else
@@ -190,6 +213,8 @@
                                                             @endif
                                                         </td>
                                                         <td>{{ $material->name }}</td>
+                                                        <td style="text-align: right;">{{ rupiah($material->buying_price ?? 0) }}</td>
+                                                        <td style="text-align: right;">{{ rupiah($material->selling_price ?? 0) }}</td>
                                                     </tr>
                                                 @endforeach
                                             @endif

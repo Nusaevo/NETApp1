@@ -140,19 +140,19 @@
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
                                             {{-- Dropdown Search untuk Material --}}
-                                            <x-ui-dropdown-search
-                                                label=""
-                                                model="input_details.{{ $key }}.matl_id"
-                                                optionValue="id"
-                                                optionLabel="code,name"
-                                                searchModel="App\Models\TrdTire1\Master\Material"
-                                                searchWhereCondition="status_code=A&deleted_at=null"
-                                                placeHolder="Ketik untuk mencari barang..."
-                                                type="int"
-                                                required="true"
-                                                :action="$actionValue"
-                                                :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="onMaterialChanged({{ $key }}, $event.target.value)" />
+                                             <x-ui-dropdown-search
+                                                            model="input_details.{{ $key }}.matl_id"
+                                                            searchModel="App\Models\TrdTire1\Master\Material"
+                                                            searchWhereCondition="status_code=A&deleted_at=null"
+                                                            optionValue="id"
+                                                            optionLabel="code,name"
+                                                            placeHolder="Search materials..."
+                                                            :selectedValue="$input_details[$key]['matl_id'] ?? ''"
+                                                            required="true"
+                                                            :action="$actionValue"
+                                                            enabled="true"
+                                                            onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
+                                                            type="int" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
