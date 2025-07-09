@@ -5,8 +5,9 @@ namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PaymentDtl, PaymentSrc, BillingDtl, BillingHdr, PaymentAdv};
 use App\Models\TrdTire1\Master\{Partner, Material, PartnerBal};
-use App\Models\SysConfig1\ConfigConst;
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
 use App\Enums\Status;
+use App\Services\SysConfig1\ConfigService;
 use App\Services\TrdTire1\PaymentService;
 use App\Services\TrdTire1\Master\MasterService;
 use Illuminate\Support\Facades\{Session, Log, DB};
@@ -91,14 +92,36 @@ class Detail extends BaseComponent
     public function boot()
     {
         $this->paymentService = app(PaymentService::class);
-    }
-
-    public function getTransactionCode()
+    }    public function getTransactionCode()
     {
         $tax_doc_flag = !empty($this->inputs['tax_doc_flag']);
         $tr_type = $this->trType;
 
-        $this->inputs['tr_code'] = PaymentHdr::generateTransactionId($tr_type, $tax_doc_flag);
+        // Generate tr_code using ConfigSnum with ARP_LASTID
+        $configSnum = ConfigSnum::where('code', 'ARP_LASTID')->first();
+
+        if ($configSnum) {
+            $stepCnt = $configSnum->step_cnt;
+            $proposedTrId = $configSnum->last_cnt + $stepCnt;
+
+            // Check if the proposed ID exceeds wrap_high
+            if ($proposedTrId > $configSnum->wrap_high) {
+                $proposedTrId = $configSnum->wrap_low;
+            }
+
+            // Ensure the proposed ID is not below wrap_low
+            $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+
+            // Update the last_cnt in ConfigSnum
+            $configSnum->last_cnt = $proposedTrId;
+            $configSnum->save();
+
+            // Generate the transaction code with the new sequence (8 digits)
+            $this->inputs['tr_code'] = sprintf('%08d', $proposedTrId);
+        } else {
+            // Fallback to the original method if ConfigSnum not found
+            $this->inputs['tr_code'] = PaymentHdr::generateTransactionId($tr_type, $tax_doc_flag);
+        }
     }
 
     public function onSOTaxChange()
@@ -220,6 +243,17 @@ class Detail extends BaseComponent
         $this->PaymentType = $this->masterService->getPaymentTypeData();
         $this->codeBill = $this->masterService->getBillCode();
 
+        $partnerBalsWithAdvance = PartnerBal::where('amt_adv', '!=', 0)->get();
+
+        foreach ($partnerBalsWithAdvance as $partnerBal) {
+            $this->input_advance[] = [
+                'partnerbal_id' => $partnerBal->id,
+                'partner_code' => $partnerBal->partner_code,
+                'amtAdvBal' => $partnerBal->amt_adv,
+                'amt' => 0,
+            ];
+        }
+
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {
                 $this->dispatch('error', 'Invalid object ID');
@@ -233,7 +267,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
-            $this->inputs['partner_name'] = $this->object->partner->code;
+            $this->inputs['partner_name'] = $this->object->partner->code . ' - ' . $this->object->partner->name;
             $this->inputs['tr_code'] = $this->object->tr_code;
 
             // Load details
@@ -265,13 +299,16 @@ class Detail extends BaseComponent
 
         $this->inputs['tr_date'] = Carbon::now()->format('d-m-Y');
 
-        // Tambahkan partnerOptions untuk dropdown bank_reff
-        $this->partnerOptions = Partner::orderBy('name')->get()->map(function($partner) {
-            return [
-                'label' => $partner->name,
-                'value' => $partner->name,
-            ];
-        })->toArray();
+        // Tambahkan partnerOptions untuk dropdown bank_reff (hanya partner grup B - Bank)
+        $this->partnerOptions = Partner::where('grp', Partner::BANK)
+            ->orderBy('name')
+            ->get()
+            ->map(function($partner) {
+                return [
+                    'label' => $partner->name,
+                    'value' => $partner->name,
+                ];
+            })->toArray();
 
         // Ambil daftar partner_bals yang amt_adv != 0 untuk dropdown Advance
         $this->advanceOptions = PartnerBal::where('amt_adv', '!=', 0)->get()
@@ -284,12 +321,11 @@ class Detail extends BaseComponent
             })
             ->toArray();
 
-
-
         // Inisialisasi input_advance jika belum ada
         if (!isset($this->input_advance) || !is_array($this->input_advance)) {
             $this->input_advance = [];
         }
+
     }
 
     public function onReset()
@@ -298,7 +334,9 @@ class Detail extends BaseComponent
         $this->object = new PaymentHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_type'] = $this->trType;
-        $this->inputs['curr_id'] = ConfigConst::CURRENCY_DOLLAR_ID;
+        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
+        $this->inputs['curr_rate'] = 1.00;
         $this->inputs['wh_code'] = 18;
         $this->inputs['partner_id'] = 0;
     }
@@ -664,6 +702,20 @@ class Detail extends BaseComponent
         }
     }
 
+    public function deleteTransaction()
+    {
+        try {
+            $this->paymentService->delPayment($this->object->id);
+
+            $this->dispatch('success', __('Data berhasil terhapus'));
+            return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+
+        } catch (\Exception $e) {
+            $this->dispatch('error', __('generic.error.delete', [
+                'message' => $e->getMessage()
+            ]));
+        }
+    }
     public function delete()
     {
         try {
@@ -783,6 +835,23 @@ class Detail extends BaseComponent
                 ];
             }
 
+            // Siapkan data advance
+            $advanceData = [];
+            foreach ($this->input_advance as $key => $advance) {
+                if (!empty($advance['partnerbal_id']) && !empty($advance['amt'])) {
+                    $advanceData[] = [
+                        'tr_seq' => $key + 1,
+                        'partnerbal_id' => $advance['partnerbal_id'],
+                        'amt' => $this->normalizeAmount($advance['amt']),
+                        'adv_type_code' => 'ARADVUSE',
+                        'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVUSE'),
+                        'reff_id' => null, // akan diisi di service
+                        'reff_type' => $this->trType,
+                        'reff_code' => $headerData['tr_code'],
+                    ];
+                }
+            }
+
             // Check if detailData is empty after all processing
             if (empty($detailData)) {
                 $this->dispatch('error', 'Tidak ada detail pembayaran yang valid untuk disimpan. Pastikan Anda telah memilih nota yang valid.');
@@ -790,10 +859,6 @@ class Detail extends BaseComponent
             }
 
             try {
-
-                // Gunakan service untuk menyimpan data
-                $advanceData = [];
-
                 if ($this->actionValue == 'Create') {
                     $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
 
@@ -802,49 +867,10 @@ class Detail extends BaseComponent
                     }
 
                     $this->objectIdValue = $result->id;
-                    $headerData['id'] = $result->id;
-
-                    // Setelah header tersimpan, baru siapkan advanceData jika ada
-                    if ($this->advanceBalance > 0) {
-                        $advType = ConfigConst::where('const_group', 'ADV_TYPE_CODE')->where('str1', 'ARADVPAY')->first();
-                        $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
-                        $advanceData[] = [
-                            'tr_seq' => 1,
-                            'adv_type_id' => $advType ? $advType->id : null,
-                            'adv_type_code' => $advType ? $advType->str1 : 'ARADVPAY',
-                            'partnerbal_id' => $partnerBal ? $partnerBal->id : null,
-                            'reff_id' => $headerData['id'],
-                            'reff_type' => $headerData['tr_type'],
-                            'reff_code' => $headerData['tr_code'],
-                            'amt' => $this->advanceBalance,
-                            'amt_base' => $this->advanceBalance,
-                        ];
-                        // Simpan advance data setelah header tersimpan
-                        $this->paymentService->savePaymentAdv($headerData, $advanceData);
-                    }
-
-
                     $this->actionValue = 'Edit';
                 } else {
-                    // Untuk mode Edit, ID sudah ada
+                    // For Edit mode, ID already exists
                     $headerData['id'] = $this->objectIdValue;
-
-                    if ($this->advanceBalance > 0) {
-                        $advType = ConfigConst::where('const_group', 'ADV_TYPE_CODE')->where('str1', 'ARADVPAY')->first();
-                        $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
-                        $advanceData[] = [
-                            'tr_seq' => 1,
-                            'adv_type_id' => $advType ? $advType->id : null,
-                            'adv_type_code' => $advType ? $advType->str1 : 'ARADVPAY',
-                            'partnerbal_id' => $partnerBal ? $partnerBal->id : null,
-                            'reff_id' => $headerData['id'],
-                            'reff_type' => $headerData['tr_type'],
-                            'reff_code' => $headerData['tr_code'],
-                            'amt' => $this->advanceBalance,
-                            'amt_base' => $this->advanceBalance,
-                        ];
-                    }
-
                     $this->paymentService->updPayment($this->objectIdValue, $headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
                 }
             } catch (\Exception $e) {
@@ -993,7 +1019,7 @@ class Detail extends BaseComponent
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_code'] = $partner->code; // Set partner_code
-            $this->inputs['partner_name'] = $partner->code;
+            $this->inputs['partner_name'] = $this->object->partner->code . ' - ' . $this->object->partner->name;
 
             $billingService = app(BillingService::class);
             $this->input_details = collect($billingService->getOutstandingBillsByPartner($partner->id))
@@ -1001,7 +1027,7 @@ class Detail extends BaseComponent
                     return [
                         'billhdr_id'      => $item->billhdr_id,
                         'billhdrtr_code'  => $item->billhdrtr_code,
-                        'due_date'        => $item->due_date,
+                        'due_date'        => Carbon::parse($item->due_date)->format('Y-m-d'), // pastikan formatnya sesuai
                         'amtbill'         => $item->outstanding_amt, // atau field lain sesuai kebutuhan
                         'outstanding_amt' => $item->outstanding_amt,
                         'amt'             => 0, // default 0, user akan isi
@@ -1116,6 +1142,7 @@ class Detail extends BaseComponent
     {
         $this->input_advance[] = [
             'partnerbal_id' => null,
+            'amtAdvBal' => 0,
             'amt' => 0,
         ];
     }
@@ -1141,12 +1168,14 @@ class Detail extends BaseComponent
         $selected = collect($this->advanceOptions)->firstWhere('value', $partnerbal_id);
 
         if ($selected) {
-            $this->input_advance[$key]['amt'] = number_format((float)$selected['amt_adv'], 0);
+            $this->input_advance[$key]['amtAdvBal'] = number_format((float)$selected['amt_adv'], 0);
             $this->input_advance[$key]['partnerbal_id'] = $selected['value'];
-            $this->dispatch('success', 'Advance amount berhasil diambil: ' . $this->input_advance[$key]['amt']);
+            $this->input_advance[$key]['amt'] = $selected['amt_adv']; // Gunakan amt_adv bukan value
+            $this->dispatch('success', 'Advance amount berhasil diambil: ' . number_format((float)$selected['amt_adv'], 0));
         } else {
-            $this->input_advance[$key]['amt'] = 0;
+            $this->input_advance[$key]['amtAdvBal'] = 0;
             $this->input_advance[$key]['partnerbal_id'] = null;
+            $this->input_advance[$key]['amt'] = 0;
             $this->dispatch('error', 'Partner balance tidak ditemukan.');
         }
         $this->input_advance = array_values($this->input_advance);

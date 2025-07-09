@@ -27,6 +27,12 @@
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
                                     </div>
                                     <div class="row">
+                                        <x-ui-dropdown-search label="{{ $this->trans('customer') }}"
+                                            model="inputs.partner_id" searchModel="App\Models\TrdTire1\Master\Partner"
+                                            searchWhereCondition="deleted_at=null&grp=C" optionValue="id"
+                                            optionLabel="code,name,address,city"
+                                            placeHolder="Type to search customers..." :selectedValue="$inputs['partner_id']" required="true"
+                                            :action="$actionValue" :enabled="$isPanelEnabled" type="int" />
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                             type="code" :action="$actionValue" required="true"
                                             clickEvent="getTransactionCode" buttonName="Nomor Baru" enabled="true"

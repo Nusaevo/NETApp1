@@ -39,7 +39,13 @@
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
+                                    <x-ui-dropdown-search label="Supplier"
+                                        model="inputs.partner_id" searchModel="App\Models\TrdTire1\Master\Partner"
+                                        searchWhereCondition="deleted_at=null&grp=S" optionValue="id"
+                                        optionLabel="code,name,address,city" placeHolder="Type to search supplier..."
+                                        :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        type="int" />
+                                    {{-- <x-ui-text-field type="text" label="Supplier" model="inputs.partner_name"
                                         required="true" :action="$actionValue" enabled="false"
                                         clickEvent="openPartnerDialogBox" buttonName="Cari" :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-dialog-box id="partnerDialogBox" title="Cari Supplier" width="600px"
@@ -85,9 +91,9 @@
                                                 </x-slot>
                                             </x-ui-table>
                                         </x-slot>
-                                    </x-ui-dialog-box>
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}" model="inputs.tax_code"
-                                        :options="$SOTax" required="true" :action="$actionValue"
+                                    </x-ui-dialog-box> --}}
+                                    <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}"
+                                        model="inputs.tax_code" :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                 </div>
                                 <div class="row">
@@ -108,9 +114,9 @@
                                         onChanged="onSupplierSelected" /> --}}
                                 </div>
                                 <div class="row">
-                                    <x-ui-text-field label="{{ $this->trans('Detail Supplier') }}"
+                                    {{-- <x-ui-text-field label="{{ $this->trans('Detail Supplier') }}"
                                         model="inputs.textareasupplier" type="textarea" :action="$actionValue"
-                                        required="false" enabled="false" />
+                                        required="false" enabled="false" /> --}}
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
                                         type="textarea" :action="$actionValue" required="false" />
                                 </div>
@@ -140,24 +146,19 @@
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
                                             {{-- Dropdown Search untuk Material --}}
-                                             <x-ui-dropdown-search
-                                                            model="input_details.{{ $key }}.matl_id"
-                                                            searchModel="App\Models\TrdTire1\Master\Material"
-                                                            searchWhereCondition="status_code=A&deleted_at=null"
-                                                            optionValue="id"
-                                                            optionLabel="code,name"
-                                                            placeHolder="Search materials..."
-                                                            :selectedValue="$input_details[$key]['matl_id'] ?? ''"
-                                                            required="true"
-                                                            :action="$actionValue"
-                                                            enabled="true"
-                                                            onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                            type="int" />
+                                            <x-ui-dropdown-search model="input_details.{{ $key }}.matl_id"
+                                                searchModel="App\Models\TrdTire1\Master\Material"
+                                                searchWhereCondition="status_code=A&deleted_at=null" optionValue="id"
+                                                optionLabel="code,name" placeHolder="Search materials..."
+                                                :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true" :action="$actionValue" enabled="true"
+                                                onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
+                                                type="int" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
-                                                onChanged="updateItemAmount({{ $key }})" decimalPlaces="2" currency="IDR"/>
+                                                onChanged="updateItemAmount({{ $key }})" decimalPlaces="2"
+                                                currency="IDR" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
@@ -168,7 +169,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="updateItemAmount({{ $key }})" type="number"/>
+                                                onChanged="updateItemAmount({{ $key }})" type="number" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt"

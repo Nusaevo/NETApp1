@@ -77,8 +77,8 @@ class PartnerBalanceService
                 $reffCode = $detailData['billhdrtr_code'];
 
                 $amtBal = -$detailData['amt'];
+                $trAmt = $detailData['amt'];
                 $trDesc = 'Payment ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'];
-
 
             } else if ($detailData['tr_type'] === 'ARPS') {
                 $partnerId = $detailData['bank_id'] ;
@@ -88,8 +88,8 @@ class PartnerBalanceService
                 $reffCode = '';
 
                 $amtBal = $detailData['amt'];
+                $trAmt = $detailData['amt'];
                 $trDesc =  'PayRcvd To ' . $detailData['bank_code'];
-
 
             } else if ($detailData['tr_type'] === 'ARPA') {
                 $partnerId = $headerData['partner_id'];
@@ -99,9 +99,73 @@ class PartnerBalanceService
                 $reffCode = $detailData['reff_code'];
 
                 $amtAdv = -$detailData['amt'];
-                $trDesc = 'Advance Usage from ' . $detailData['reff_type'] . ' ' . $detailData['reff_code'];
+                $trAmt = -$detailData['amt'];
+                $trDesc = 'Sisa Pembayaran dari ' . $detailData['reff_type'] . ' ' . $detailData['reff_code'];
 
             }
+
+            // Cari atau buat partner balance berdasarkan partner_id
+            $partnerBal = PartnerBal::updateOrCreate(
+                [
+                    'partner_id' => $partnerId,
+                    'reff_id' => $reffId,
+                ],
+                [
+                    'partner_code' => $partnerCode,
+                    'reff_type' => $reffType,
+                    'reff_code' => $reffCode,
+                    'amt_bal' => 0,
+                    'amt_adv' => 0,
+                    'note' => $trDesc,
+                ]
+            );
+
+            $partnerBal->amt_bal += $amtBal;
+            $partnerBal->amt_adv += $amtAdv;
+            $partnerBal->note = $trDesc; // update note setiap kali update
+            $partnerBal->save();
+
+            $logData = [
+                'trhdr_id' => $detailData['trhdr_id'],
+                'tr_type' => $detailData['tr_type'],
+                'tr_code' => $detailData['tr_code'],
+                'tr_date' => $headerData['tr_date'],
+                'tr_seq' => $detailData['tr_seq'],
+                'trdtl_id' => $detailData['id'],
+                'partner_id' => $partnerId,
+                'partner_code' => $partnerCode,
+                'partnerbal_id' => $partnerBal->id,
+                'amt' => $amtBal != 0 ? $amtBal : $amtAdv,
+                'tr_amt' => $trAmt,
+                'tr_desc' => $trDesc,
+            ];
+            // dd($logData, $amtBal);
+            PartnerLog::create($logData);
+            // dd($logData);
+            return $partnerBal->id;
+        } catch (Exception $e) {
+            throw new Exception('Error deleting order: ' . $e->getMessage());
+        }
+    }
+    public function updFromOverPayment( array $headerData, array $detailData)
+    {
+        // dd( $headerData);
+        try {
+            if (!isset($headerData['id'])) {
+                throw new Exception('Header ID (id) is required');
+            }
+
+            $amtAdv = 0;
+
+            $partnerId = $headerData['partner_id'];
+            $reffId = $detailData['reff_id'];
+            $partnerCode = $headerData['partner_code'];
+            $reffType = $detailData['reff_type'];
+            $reffCode = $detailData['reff_code'];
+
+            $amtAdv = $detailData['amt'];
+            $trAmt = $detailData['amt'];
+            $trDesc = 'Advance Usage from ' . $detailData['reff_type'] . ' ' . $detailData['reff_code'];
 
             // Cari atau buat partner balance berdasarkan partner_id
             $partnerBal = PartnerBal::updateOrCreate(
@@ -119,11 +183,9 @@ class PartnerBalanceService
                 ]
             );
 
-            $partnerBal->amt_bal += $amtBal;
             $partnerBal->amt_adv += $amtAdv;
             $partnerBal->save();
 
-            // Selalu buat log baru untuk delivery
 
             $logData = [
                 'trhdr_id' => $detailData['trhdr_id'],
@@ -135,8 +197,8 @@ class PartnerBalanceService
                 'partner_id' => $partnerId,
                 'partner_code' => $partnerCode,
                 'partnerbal_id' => $partnerBal->id,
-                'amt' => $amtBal,
-                'tr_amt' => $detailData['amt'],
+                'amt' => $amtAdv,
+                'tr_amt' => $trAmt,
                 'tr_desc' => $trDesc,
             ];
             // dd($logData, $amtBal);
