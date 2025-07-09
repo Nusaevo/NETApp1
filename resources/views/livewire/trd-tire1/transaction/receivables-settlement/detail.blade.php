@@ -19,7 +19,7 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-text-field type="text" label="Customer" model="inputs.partner_name"
-                                        required="true" :action="$actionValue" enabled="false"
+                                        required="true" :action="$actionValue" enabled="true"
                                         clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-dialog-box id="partnerDialogBox" title="Cari Customer" width="600px"
                                         height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
@@ -105,7 +105,6 @@
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_payments.{{ $key }}.amt" label=""
                                             :action="$actionValue" enabled="false" type="number" />
-                                        @dump($input_payments[$key]['amt'])
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
@@ -147,12 +146,10 @@
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
                                             label="" :action="$actionValue" enabled="false" type="text" />
-                                        @dump($input_details[$key]['billhdrtr_code'])
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.due_date"
                                             label="" :action="$actionValue" enabled="false" type="date" />
-                                        @dump($input_details[$key]['due_date'])
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.outstanding_amt"
@@ -202,11 +199,11 @@
                                             onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_advance.{{ $key }}.amt" label=""
-                                            :action="$actionValue" enabled="false" type="text" />
+                                        <x-ui-text-field model="input_advance.{{ $key }}.amtAdvBal" label=""
+                                            :action="$actionValue" enabled="false" type="number" />
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_advance.{{ $key }}.amt2"
-                                            label="" :action="$actionValue" enabled="true" type="text" />
+                                        <x-ui-text-field model="input_advance.{{ $key }}.amt"
+                                            label="" :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     </td>
                                     <td style="text-align: center;">
@@ -255,6 +252,8 @@
 
     <!-- Footer with Save button -->
     <x-ui-footer>
+        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true" :action="$actionValue"
+                cssClass="btn-danger" iconPath="delete.svg" />
         <x-ui-button clickEvent="SaveAll" button-name="Save" loading="true" :action="$actionValue"
             cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>
@@ -339,6 +338,7 @@
             @endif
         </x-slot>
         <x-slot name="footer">
+
             <x-ui-button clickEvent="confirmPayment" button-name="Save" loading="true" :action="$actionValue"
                 cssClass="btn-primary" />
         </x-slot>
