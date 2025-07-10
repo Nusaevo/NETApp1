@@ -156,12 +156,6 @@
                                 },
 
                                 updateDisplay() {
-                                    // If rawValue is empty, show 0 in display but don't modify rawValue
-                                    if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
-                                        this.displayValue = '0';
-                                        return;
-                                    }
-
                                     // Check if rawValue has decimals or if current display has comma
                                     let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
                                                     (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
@@ -188,8 +182,11 @@
                                     // Parse the input to get raw number (no rounding during input)
                                     let parsed = this.parseNumber(inputValue, false);
 
-                                    // Update raw value
+                                    // Update raw value - ensure it's always synced properly
                                     this.rawValue = parsed;
+
+                                    // Explicitly sync with Livewire for required validation
+                                    this.syncWithLivewire();
 
                                     // Format the display value
                                     if (inputValue.includes(',')) {
@@ -223,6 +220,9 @@
                                     // Parse and format the final value when user leaves the field (with rounding)
                                     let parsed = this.parseNumber(inputValue, true);
                                     this.rawValue = parsed;
+
+                                    // Explicitly sync with Livewire for validation
+                                    this.syncWithLivewire();
 
                                     if (parsed !== null) {
                                         // Only show decimals if the input contained a comma (user typed decimals)
@@ -271,15 +271,17 @@
 
                                     // Block all other keys
                                     event.preventDefault();
+                                },
+
+                                syncWithLivewire() {
+                                    // Force sync the value with Livewire for proper validation
+                                    // This ensures required validation works even with empty values
+                                    $wire.set('{{ $model }}', this.rawValue);
                                 }
                             }"
-                            x-init="
-                                // Initialize display to show 0 if rawValue is empty, but don't modify rawValue
-                                $nextTick(() => {
-                                    updateDisplay();
-                                });
-                                $watch('rawValue', () => updateDisplay())
-                            "
+                            x-init="updateDisplay(); $watch('rawValue', () => updateDisplay());
+                                     // Ensure proper sync on init
+                                     this.syncWithLivewire();"
                             type="text"
                             inputmode="decimal"
                             id="{{ $id }}"
@@ -288,11 +290,9 @@
                             @if(isset($required) && $required === 'true') required @endif
                             placeholder="{{ isset($label) ? $label : '' }}"
                             autocomplete="off"
-                            wire:model="{{ $model }}"
                             @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
                             x-on:input="onInput($event)"
                             x-on:blur="onBlur($event)"
-                            x-on:focus="if (rawValue === null || rawValue === undefined || rawValue === '') { rawValue = 0; }"
                             x-on:keydown="onKeydown($event)"
                             x-bind:value="displayValue">
                     </div>
@@ -385,12 +385,6 @@
                             },
 
                             updateDisplay() {
-                                // If rawValue is empty, show 0 in display but don't modify rawValue
-                                if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
-                                    this.displayValue = '0';
-                                    return;
-                                }
-
                                 // Check if rawValue has decimals or if current display has comma
                                 let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
                                                 (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
@@ -422,6 +416,9 @@
 
                                 // Update raw value
                                 this.rawValue = parsed;
+
+                                // Explicitly sync with Livewire for required validation
+                                this.syncWithLivewire();
 
                                 // Only format if the input contains a comma (user wants decimals)
                                 // For whole numbers without comma, just add thousand separators
@@ -458,6 +455,9 @@
                                 // Parse and format the final value when user leaves the field (with rounding)
                                 let parsed = this.parseNumber(inputValue, true);
                                 this.rawValue = parsed;
+
+                                // Explicitly sync with Livewire for validation
+                                this.syncWithLivewire();
 
                                 if (parsed !== null) {
                                     // Only show decimals if the input contained a comma (user typed decimals)
@@ -506,15 +506,17 @@
 
                                 // Block all other keys
                                 event.preventDefault();
+                            },
+
+                            syncWithLivewire() {
+                                // Force sync the value with Livewire for proper validation
+                                // This ensures required validation works even with empty values
+                                $wire.set('{{ $model }}', this.rawValue);
                             }
                         }"
-                        x-init="
-                            // Initialize display to show 0 if rawValue is empty, but don't modify rawValue
-                            $nextTick(() => {
-                                updateDisplay();
-                            });
-                            $watch('rawValue', () => updateDisplay())
-                        "
+                        x-init="updateDisplay(); $watch('rawValue', () => updateDisplay());
+                                 // Ensure proper sync on init
+                                 this.syncWithLivewire();"
                         type="text"
                         inputmode="decimal"
                         id="{{ $id }}"
@@ -523,11 +525,9 @@
                         @if(isset($required) && $required === 'true') required @endif
                         placeholder="{{ isset($label) ? $label : '' }}"
                         autocomplete="off"
-                        wire:model="{{ $model }}"
                         @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
                         x-on:input="onInput($event)"
                         x-on:blur="onBlur($event)"
-                        x-on:focus="if (rawValue === null || rawValue === undefined || rawValue === '') { rawValue = 0; }"
                         x-on:keydown="onKeydown($event)"
                         x-bind:value="displayValue">
                 @endif
