@@ -156,6 +156,12 @@
                                 },
 
                                 updateDisplay() {
+                                    // If rawValue is empty, show 0 in display but don't modify rawValue
+                                    if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
+                                        this.displayValue = '0';
+                                        return;
+                                    }
+
                                     // Check if rawValue has decimals or if current display has comma
                                     let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
                                                     (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
@@ -267,7 +273,13 @@
                                     event.preventDefault();
                                 }
                             }"
-                            x-init="updateDisplay(); $watch('rawValue', () => updateDisplay())"
+                            x-init="
+                                // Initialize display to show 0 if rawValue is empty, but don't modify rawValue
+                                $nextTick(() => {
+                                    updateDisplay();
+                                });
+                                $watch('rawValue', () => updateDisplay())
+                            "
                             type="text"
                             inputmode="decimal"
                             id="{{ $id }}"
@@ -276,9 +288,11 @@
                             @if(isset($required) && $required === 'true') required @endif
                             placeholder="{{ isset($label) ? $label : '' }}"
                             autocomplete="off"
+                            wire:model="{{ $model }}"
                             @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
                             x-on:input="onInput($event)"
                             x-on:blur="onBlur($event)"
+                            x-on:focus="if (rawValue === null || rawValue === undefined || rawValue === '') { rawValue = 0; }"
                             x-on:keydown="onKeydown($event)"
                             x-bind:value="displayValue">
                     </div>
@@ -371,6 +385,12 @@
                             },
 
                             updateDisplay() {
+                                // If rawValue is empty, show 0 in display but don't modify rawValue
+                                if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
+                                    this.displayValue = '0';
+                                    return;
+                                }
+
                                 // Check if rawValue has decimals or if current display has comma
                                 let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
                                                 (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
@@ -488,7 +508,13 @@
                                 event.preventDefault();
                             }
                         }"
-                        x-init="updateDisplay(); $watch('rawValue', () => updateDisplay())"
+                        x-init="
+                            // Initialize display to show 0 if rawValue is empty, but don't modify rawValue
+                            $nextTick(() => {
+                                updateDisplay();
+                            });
+                            $watch('rawValue', () => updateDisplay())
+                        "
                         type="text"
                         inputmode="decimal"
                         id="{{ $id }}"
@@ -497,9 +523,11 @@
                         @if(isset($required) && $required === 'true') required @endif
                         placeholder="{{ isset($label) ? $label : '' }}"
                         autocomplete="off"
+                        wire:model="{{ $model }}"
                         @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
                         x-on:input="onInput($event)"
                         x-on:blur="onBlur($event)"
+                        x-on:focus="if (rawValue === null || rawValue === undefined || rawValue === '') { rawValue = 0; }"
                         x-on:keydown="onKeydown($event)"
                         x-bind:value="displayValue">
                 @endif
