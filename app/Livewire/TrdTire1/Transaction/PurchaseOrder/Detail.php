@@ -58,7 +58,7 @@ class Detail extends BaseComponent
     // Validation rules for header and details
     public $rules = [
         'inputs.tr_code' => 'required',
-        'inputs.partner_name' => 'required',
+        'inputs.partner_id' => 'required',
         'inputs.tax_code' => 'required',
         // 'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
@@ -348,11 +348,12 @@ class Detail extends BaseComponent
      */
     public function updateItemAmount($key)
     {
+        // dd($this->input_details[$key]);
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             // Calculate basic amount with discount
-            $qty = $this->stringToNumeric($this->input_details[$key]['qty']);
-            $price = $this->stringToNumeric($this->input_details[$key]['price']);
-            $discountPercent = $this->stringToNumeric($this->input_details[$key]['disc_pct'] ?? 0);
+            $qty = $this->input_details[$key]['qty'];
+            $price = $this->input_details[$key]['price'];
+            $discountPercent = $this->input_details[$key]['disc_pct'];
 
             $amountGross = $qty * $price;
             // dd($this->input_details[$key], $amountGross, $discountPercent);
@@ -819,33 +820,6 @@ class Detail extends BaseComponent
             $this->selectedPartners = array_values($this->selectedPartners);
         } else {
             $this->selectedPartners[] = $partnerId;
-        }
-    }
-
-    /**
-     * Confirm partner selection
-     */
-    public function confirmSelection()
-    {
-        if (empty($this->selectedPartners)) {
-            $this->dispatch('error', "Silakan pilih satu supplier terlebih dahulu.");
-            return;
-        }
-        if (count($this->selectedPartners) > 1) {
-            $this->dispatch('error', "Hanya boleh memilih satu supplier.");
-            return;
-        }
-
-        $partner = Partner::find($this->selectedPartners[0]);
-
-        if ($partner) {
-            $this->inputs['partner_id'] = $partner->id;
-            $this->inputs['partner_name'] = $partner->code;
-            $this->inputs['partner_code'] = $partner->code;
-            $this->inputs['textareasupplier'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
-            $this->dispatch('success', "Supplier berhasil dipilih.");
-            $this->dispatch('closePartnerDialogBox');
-            $this->onPartnerChanged();
         }
     }
 
