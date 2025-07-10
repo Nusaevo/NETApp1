@@ -791,33 +791,15 @@ class Detail extends BaseComponent
         }
     }
 
-    public function selectPartner($partnerId)
-    {
-        $key = array_search($partnerId, $this->selectedPartners);
-        if ($key !== false) {
-            unset($this->selectedPartners[$key]);
-            $this->selectedPartners = array_values($this->selectedPartners);
-        } else {
-            $this->selectedPartners[] = $partnerId;
-        }
-    }
 
-    public function confirmSelection()
+    public function onPartnerChange()
     {
-        if (empty($this->selectedPartners)) {
-            $this->dispatch('error', "Silakan pilih satu supplier terlebih dahulu.");
-            return;
-        }
-        if (count($this->selectedPartners) > 1) {
-            $this->dispatch('error', "Hanya boleh memilih satu supplier.");
-            return;
-        }
-        $partner = Partner::find($this->selectedPartners[0]);
+        $partner = Partner::find($this->inputs['partner_id']);
         if ($partner) {
             $this->inputs['partner_id'] = $partner->id;
             $this->inputs['partner_code'] = $partner->code;
             $this->inputs['partner_name'] = $partner->code;
-            $this->inputs['textareacustommer'] = $partner->name . "\n" . $partner->address . "\n" . $partner->city;
+            $this->inputs['textareacustommer'] = $partner->address . "\n" . $partner->city;
             if (!empty($this->inputs['tax_doc_flag'])) {
                 if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
                     $wpDetails = $partner->PartnerDetail->wp_details;

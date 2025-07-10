@@ -27,7 +27,7 @@ class PaymentService
 
             $this->savePaymentDetail($headerData, $detailData);
             $this->savePaymentSrc($headerData, $sourceData);
-            if ($advanceData) {
+            if (!empty($advanceData)) {
                 $this->savePaymentAdv($headerData, $advanceData);
             }
             if ($overAmt > 0) {
@@ -60,7 +60,7 @@ class PaymentService
 
             $this->savePaymentDetail($headerData, $detailData);
             $this->savePaymentSrc($headerData, $sourceData);
-            if ($advanceData) {
+            if (!empty($advanceData)) {
                 $this->savePaymentAdv($headerData, $advanceData);
             }
             if ($overAmt > 0) {
@@ -177,6 +177,12 @@ class PaymentService
             throw new Exception('Header ID tidak tersedia untuk menyimpan PaymentAdv');
         }
 
+        // Log untuk debugging
+        Log::info('Saving PaymentAdv', [
+            'headerData' => $headerData,
+            'advanceData' => $advanceData
+        ]);
+
         // dd($headerData, $advanceData);
         foreach ($advanceData as &$advance) {
             $advance['trhdr_id'] = $headerData["id"];
@@ -187,6 +193,7 @@ class PaymentService
 
         foreach ($advanceData as $advance) {
             $paymentAdv = new PaymentAdv($advance);
+            $paymentAdv->amt = -$advance['amt']; // Pastikan nilai amt negatif
             $paymentAdv->save();
             $advance['id'] = $paymentAdv->id;
 
@@ -220,7 +227,7 @@ class PaymentService
             'tr_seq' => 1,
             'adv_type_code' => 'ARADVPAY',
             'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
-            'amt' => $overAmt,
+            'amt' => $overAmt, // Pakai negatif agar menjadi positive saat updfromPayment
             'reff_id' => $headerData['id'],
             'reff_type' => $headerData['tr_type'],
             'reff_code' => $headerData['tr_code'],
@@ -230,8 +237,15 @@ class PaymentService
         $paymentAdv->save();
         $overPaymentData['id'] = $paymentAdv->id;
 
-        $partnerBalId = $this->partnerBalanceService->updFromPayment( $headerData, $overPaymentData);
+        $partnerBalId = $this->partnerBalanceService->updFromOverPayment( $headerData, $overPaymentData);
         $paymentAdv->partnerbal_id = $partnerBalId;  // This is already correct since it uses the ID directly
+
+        // Update note pada partnerbal setelah overpayment
+        $partnerBal = PartnerBal::find($partnerBalId);
+        if ($partnerBal) {
+            $partnerBal->note = 'Sisa Pembayaran ' . $overPaymentData['reff_type'] . ' ' . $overPaymentData['reff_code'];
+            $partnerBal->save();
+        }
 
         $paymentAdv->save();
     }

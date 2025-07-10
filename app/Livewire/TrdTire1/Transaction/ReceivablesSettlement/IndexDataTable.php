@@ -22,15 +22,26 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return PaymentHdr::with(['PaymentDtl', 'Partner']) // Update builder
-            ->where('payment_hdrs.tr_type', 'APP')
-            ->where('payment_hdrs.status_code', Status::OPEN, Status::ACTIVE);
+            ->whereIn('payment_hdrs.tr_type', ['APP', 'ARP'])
+            ->whereIn('payment_hdrs.status_code', [Status::OPEN, Status::ACTIVE]);
     }
     public function columns(): array
     {
         return [
             Column::make('Transaction', 'tr_code')
                 ->searchable()
-                ->sortable(),
+                ->sortable()
+                ->format(function ($value, $row) {
+                    if ($row->partner_id) {
+                        return '<a href="' . route($this->appCode . '.Transaction.ReceivablesSettlement.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->id)
+                        ]) . '">' . $row->tr_code . '</a>';
+                    } else {
+                        return $row->tr_code;
+                    }
+                })
+                ->html(),
             Column::make($this->trans("date"), "tr_date")
                 ->searchable()
                 ->sortable(),
@@ -106,7 +117,6 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
-                        'row' => $row,
                         'row' => $row,
                         'custom_actions' => [
                             // [
