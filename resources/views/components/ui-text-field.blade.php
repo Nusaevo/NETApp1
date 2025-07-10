@@ -532,7 +532,7 @@
             <div class="d-flex align-items-center ms-2">
                 <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
                     <button type="button" class="btn btn-secondary" wire:click="{{ $clickEvent }}"
-                            @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif>
+                            @if ((isset($action) && $action === 'View') || (isset($buttonEnabled) && $buttonEnabled === 'false')) disabled @endif>
                         {{ $buttonName }}
                     </button>
                 </span>
