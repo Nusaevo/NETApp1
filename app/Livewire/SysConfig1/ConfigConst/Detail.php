@@ -50,9 +50,6 @@ class Detail extends BaseComponent
         $this->applications = $this->configService->getActiveApplications(true);
 
         $this->isEnabled = $this->actionValue === 'Create' ? 'true' : 'false';
-        if (!$this->isSysConfig1) {
-            $this->object->setConnection(Session::get('app_code'));
-        }
 
         if ($this->isEditOrView()) {
             // Fetch the application based on the additionalParam
@@ -63,6 +60,16 @@ class Detail extends BaseComponent
                 $this->object->setConnection($this->application->code);
                 $this->object = $this->object->withTrashed()->find($this->objectIdValue);
                 $this->inputs = populateArrayFromModel($this->object);
+            }
+        } else {
+            // For Create action, set up connection based on app type
+            if (!$this->isSysConfig1) {
+                $this->object->setConnection(Session::get('app_code'));
+                // For non-SysConfig1, find application if additionalParam exists
+                if ($this->additionalParam) {
+                    $this->application = ConfigAppl::find($this->additionalParam);
+                    $this->selectedApplication = $this->additionalParam;
+                }
             }
         }
     }
@@ -87,9 +94,13 @@ class Detail extends BaseComponent
         $this->object->fill($this->inputs);
         if ($this->isEditOrView()) {
             $this->object->setConnection($this->application->code);
-        }else{
-            $this->application = ConfigAppl::find($this->selectedApplication);
-            $this->object->setConnection( $this->application->code);
+        } else {
+            if ($this->selectedApplication) {
+                $this->application = ConfigAppl::find($this->selectedApplication);
+                $this->object->setConnection($this->application->code);
+            } elseif (!$this->isSysConfig1) {
+                $this->object->setConnection(Session::get('app_code'));
+            }
         }
         $this->object->save();
     }
