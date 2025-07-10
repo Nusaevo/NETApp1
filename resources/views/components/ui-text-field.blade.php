@@ -182,8 +182,11 @@
                                     // Parse the input to get raw number (no rounding during input)
                                     let parsed = this.parseNumber(inputValue, false);
 
-                                    // Update raw value
+                                    // Update raw value - ensure it's always synced properly
                                     this.rawValue = parsed;
+
+                                    // Explicitly sync with Livewire for required validation
+                                    this.syncWithLivewire();
 
                                     // Format the display value
                                     if (inputValue.includes(',')) {
@@ -217,6 +220,9 @@
                                     // Parse and format the final value when user leaves the field (with rounding)
                                     let parsed = this.parseNumber(inputValue, true);
                                     this.rawValue = parsed;
+
+                                    // Explicitly sync with Livewire for validation
+                                    this.syncWithLivewire();
 
                                     if (parsed !== null) {
                                         // Only show decimals if the input contained a comma (user typed decimals)
@@ -265,9 +271,17 @@
 
                                     // Block all other keys
                                     event.preventDefault();
+                                },
+
+                                syncWithLivewire() {
+                                    // Force sync the value with Livewire for proper validation
+                                    // This ensures required validation works even with empty values
+                                    $wire.set('{{ $model }}', this.rawValue);
                                 }
                             }"
-                            x-init="updateDisplay(); $watch('rawValue', () => updateDisplay())"
+                            x-init="updateDisplay(); $watch('rawValue', () => updateDisplay());
+                                     // Ensure proper sync on init
+                                     this.syncWithLivewire();"
                             type="text"
                             inputmode="decimal"
                             id="{{ $id }}"
@@ -403,6 +417,9 @@
                                 // Update raw value
                                 this.rawValue = parsed;
 
+                                // Explicitly sync with Livewire for required validation
+                                this.syncWithLivewire();
+
                                 // Only format if the input contains a comma (user wants decimals)
                                 // For whole numbers without comma, just add thousand separators
                                 if (inputValue.includes(',')) {
@@ -438,6 +455,9 @@
                                 // Parse and format the final value when user leaves the field (with rounding)
                                 let parsed = this.parseNumber(inputValue, true);
                                 this.rawValue = parsed;
+
+                                // Explicitly sync with Livewire for validation
+                                this.syncWithLivewire();
 
                                 if (parsed !== null) {
                                     // Only show decimals if the input contained a comma (user typed decimals)
@@ -486,9 +506,17 @@
 
                                 // Block all other keys
                                 event.preventDefault();
+                            },
+
+                            syncWithLivewire() {
+                                // Force sync the value with Livewire for proper validation
+                                // This ensures required validation works even with empty values
+                                $wire.set('{{ $model }}', this.rawValue);
                             }
                         }"
-                        x-init="updateDisplay(); $watch('rawValue', () => updateDisplay())"
+                        x-init="updateDisplay(); $watch('rawValue', () => updateDisplay());
+                                 // Ensure proper sync on init
+                                 this.syncWithLivewire();"
                         type="text"
                         inputmode="decimal"
                         id="{{ $id }}"
