@@ -47,28 +47,10 @@
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'date')
-                <input x-data="{
-                        initDatepicker() {
-                            let input = this.$refs.inputField;
-                            if (input) {
-                                myJQuery(input).datepicker({
-                                    dateFormat: 'dd-mm-yy',
-                                    changeMonth: true,
-                                    changeYear: true,
-                                    showButtonPanel: true
-                                }).on('change', function() {
-                                    $wire.set('{{ $model }}', myJQuery(this).val());
-                                    @if(isset($onChanged) && $onChanged !== '')
-                                    Livewire.dispatch('{{ $onChanged }}');
-                                    @endif
-                                });
-                            }
-                        }
-                    }" x-init="initDatepicker()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
+                <input wire:model="{{ $model }}" id="{{ $id }}" type="date" class="form-control @error($model) is-invalid @enderror"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
-                       readonly="readonly" x-ref="inputField"
-                       @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
+                       @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'number')
                 @if(isset($currency) && $currency !== '')
                     <div class="input-group">
@@ -174,9 +156,14 @@
                                 },
 
                                 updateDisplay() {
-                                    // Only show decimals if the current display value has a comma (user typed it)
+                                    // Check if rawValue has decimals or if current display has comma
+                                    let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
+                                                    (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
                                     let hasComma = this.displayValue.includes(',');
-                                    this.displayValue = this.formatNumber(this.rawValue, hasComma, false);
+
+                                    // Show decimals if value has decimals OR user previously typed comma
+                                    let showDecimals = hasDecimals || hasComma;
+                                    this.displayValue = this.formatNumber(this.rawValue, showDecimals, false);
                                 },
 
                                 onInput(event) {
@@ -384,9 +371,14 @@
                             },
 
                             updateDisplay() {
-                                // Only show decimals if the current display value has a comma (user typed it)
+                                // Check if rawValue has decimals or if current display has comma
+                                let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
+                                                (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
                                 let hasComma = this.displayValue.includes(',');
-                                this.displayValue = this.formatNumber(this.rawValue, hasComma, false);
+
+                                // Show decimals if value has decimals OR user previously typed comma
+                                let showDecimals = hasDecimals || hasComma;
+                                this.displayValue = this.formatNumber(this.rawValue, showDecimals, false);
                             },
 
                             onInput(event) {
