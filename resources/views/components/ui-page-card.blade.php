@@ -51,12 +51,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             let hasChanges = false;
 
-            window.addEventListener('beforeunload', function(e) {
-                if (hasChanges) {
-                    e.preventDefault();
-                    e.returnValue = 'Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?';
-                }
-            });
+            // window.addEventListener('beforeunload', function(e) {
+            //     if (hasChanges) {
+            //         e.preventDefault();
+            //         e.returnValue = 'Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin meninggalkan halaman ini?';
+            //     }
+            // });
 
             Livewire.on('form-changed', function(data) {
                 hasChanges = data.hasChanges;
