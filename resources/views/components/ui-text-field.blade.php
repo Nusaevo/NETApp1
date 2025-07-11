@@ -17,7 +17,7 @@
                        @if(isset($required) && $required === 'true') required @endif accept=".pdf, .doc, .docx"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'barcode')
-                <input x-data="{
+                <input wire:model="{{ $model }}" x-data="{
                         initBarcode() {
                             let barcodeInput = this.$refs.inputField;
                             if (barcodeInput) {
@@ -41,13 +41,13 @@
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif x-ref="inputField">
             @elseif(isset($type) && $type === 'code')
-                <input type="text" class="form-control @error($model) is-invalid @enderror"
+                <input wire:model="{{ $model }}" type="text" class="form-control @error($model) is-invalid @enderror"
                        @if ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'date')
-                <input id="{{ $id }}" type="date" class="form-control @error($model) is-invalid @enderror"
+                <input wire:model="{{ $model }}" id="{{ $id }}" type="date" class="form-control @error($model) is-invalid @enderror"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
