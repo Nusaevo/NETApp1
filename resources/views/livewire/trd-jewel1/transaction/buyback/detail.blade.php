@@ -2,7 +2,7 @@
     <div>
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
-    <x-ui-page-card isForm="true" title="{{ $this->trans($actionValue)}} {!! $menuName !!}  {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
+    <x-ui-page-card  title="{{ $this->trans($actionValue)}} {!! $menuName !!}  {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
         <x-ui-tab-view id="myTab" tabs="General"> </x-ui-tab-view>

@@ -78,7 +78,6 @@ class Detail extends BaseComponent
                 throw new Exception($this->trans('message.log_date_already_exists'));
             }
         }
-        $this->currencyChanged();
 
         $this->object->fill($this->inputs);
         $this->object->save();

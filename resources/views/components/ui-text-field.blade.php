@@ -35,19 +35,19 @@
                                 });
                             }
                         }
-                    }" x-init="initBarcode()" wire:model="{{ $model }}" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
+                    }" x-init="initBarcode()" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif x-ref="inputField">
             @elseif(isset($type) && $type === 'code')
-                <input wire:model="{{ $model }}" type="text" class="form-control @error($model) is-invalid @enderror"
+                <input type="text" class="form-control @error($model) is-invalid @enderror"
                        @if ((isset($action) && ($action === 'Edit' || $action === 'View')) || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @elseif(isset($type) && $type === 'date')
-                <input wire:model="{{ $model }}" id="{{ $id }}" type="date" class="form-control @error($model) is-invalid @enderror"
+                <input id="{{ $id }}" type="date" class="form-control @error($model) is-invalid @enderror"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" @endif />
@@ -71,43 +71,26 @@
                         <input x-data="{
                                 rawValue: @entangle($model),
                                 displayValue: '',
-                                decimalPlaces: {{ isset($decimalPlaces) && $decimalPlaces !== null ? $decimalPlaces : 'null' }},
 
-                                formatNumber(num, showDecimals = false, applyRounding = false) {
+                                formatNumber(num, showDecimals = false) {
                                     if (!num || num === '' || num === null || num === undefined) {
                                         return '';
                                     }
-                                    // Convert to number and format with Indonesian style (dots for thousands, comma for decimals)
                                     let number = parseFloat(num);
                                     if (isNaN(number)) return '';
-
-                                    // Apply decimal rounding only when explicitly requested (usually onBlur)
-                                    if (applyRounding && this.decimalPlaces !== null) {
-                                        number = parseFloat(number.toFixed(this.decimalPlaces));
-                                    }
-
-                                    // Format using Indonesian locale style
                                     let parts = number.toString().split('.');
-                                    let integerPart = parseInt(parts[0]).toLocaleString('de-DE'); // Use German locale for dot separation
+                                    let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
                                     let decimalPart = parts[1] || '';
-
-                                    // Only show decimals if explicitly requested (user typed comma) or if the number originally had decimals
-                                    if (showDecimals && this.decimalPlaces !== null && this.decimalPlaces > 0) {
-                                        if (decimalPart === '') {
-                                            decimalPart = '0'.repeat(this.decimalPlaces);
-                                        } else if (applyRounding) {
-                                            // Only pad to exact decimal places when rounding (onBlur)
-                                            decimalPart = decimalPart.padEnd(this.decimalPlaces, '0').substring(0, this.decimalPlaces);
-                                        }
+                                    if (decimalPart) {
                                         return integerPart + ',' + decimalPart;
-                                    } else if (decimalPart && showDecimals) {
-                                        return integerPart + ',' + decimalPart;
-                                    } else {
-                                        return integerPart;
                                     }
+                                    if (showDecimals) {
+                                        return integerPart + ',00';
+                                    }
+                                    return integerPart;
                                 },
 
-                                parseNumber(str, applyRounding = false) {
+                                parseNumber(str) {
                                     if (!str || str === '') return null;
 
                                     // Indonesian format: 1.234.567,89 → 1234567.89
@@ -147,23 +130,25 @@
 
                                     let number = parseFloat(cleanStr);
 
-                                    // Only apply rounding when explicitly requested (usually onBlur)
-                                    if (applyRounding && this.decimalPlaces !== null && !isNaN(number)) {
-                                        number = parseFloat(number.toFixed(this.decimalPlaces));
-                                    }
-
                                     return isNaN(number) ? null : number;
-                                },
-
-                                updateDisplay() {
-                                    // Check if rawValue has decimals or if current display has comma
-                                    let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
-                                                    (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
-                                    let hasComma = this.displayValue.includes(',');
-
-                                    // Show decimals if value has decimals OR user previously typed comma
-                                    let showDecimals = hasDecimals || hasComma;
-                                    this.displayValue = this.formatNumber(this.rawValue, showDecimals, false);
+                                },                                updateDisplay() {
+                                    if (this.rawValue !== null && this.rawValue !== undefined && this.rawValue !== '') {
+                                        let numberValue;
+                                        if (typeof this.rawValue === 'string') {
+                                            numberValue = this.parseNumber(this.rawValue);
+                                            this.rawValue = numberValue;
+                                        } else {
+                                            numberValue = this.rawValue;
+                                        }
+                                        if (numberValue !== null && numberValue !== undefined) {
+                                            let isDecimal = numberValue % 1 !== 0;
+                                            this.displayValue = this.formatNumber(numberValue, isDecimal);
+                                        } else {
+                                            this.displayValue = '';
+                                        }
+                                    } else {
+                                        this.displayValue = '';
+                                    }
                                 },
 
                                 onInput(event) {
@@ -173,14 +158,14 @@
                                     // Don't format immediately if user just typed a comma and nothing after
                                     if (inputValue.endsWith(',')) {
                                         this.displayValue = inputValue;
-                                        // Still parse to update raw value (no rounding during input)
-                                        let parsed = this.parseNumber(inputValue, false);
+                                        // Still parse to update raw value
+                                        let parsed = this.parseNumber(inputValue);
                                         this.rawValue = parsed;
                                         return;
                                     }
 
-                                    // Parse the input to get raw number (no rounding during input)
-                                    let parsed = this.parseNumber(inputValue, false);
+                                    // Parse the input to get raw number
+                                    let parsed = this.parseNumber(inputValue);
 
                                     // Update raw value - ensure it's always synced properly
                                     this.rawValue = parsed;
@@ -198,8 +183,8 @@
                                                 // User is typing in decimal part, show current input
                                                 this.displayValue = inputValue;
                                             } else {
-                                                // Format the whole number with decimals since user typed comma (no rounding)
-                                                this.displayValue = this.formatNumber(parsed, true, false);
+                                                // Format the whole number with decimals since user typed comma
+                                                this.displayValue = this.formatNumber(parsed, true);
                                             }
                                         } else {
                                             this.displayValue = inputValue;
@@ -217,17 +202,20 @@
                                 onBlur(event) {
                                     let inputValue = event.target.value;
 
-                                    // Parse and format the final value when user leaves the field (with rounding)
-                                    let parsed = this.parseNumber(inputValue, true);
+                                    // Parse and format the final value when user leaves the field
+                                    let parsed = this.parseNumber(inputValue);
                                     this.rawValue = parsed;
 
                                     // Explicitly sync with Livewire for validation
                                     this.syncWithLivewire();
 
                                     if (parsed !== null) {
-                                        // Only show decimals if the input contained a comma (user typed decimals)
+                                        // Show decimals if the input contained a comma (user typed decimals) OR if parsed value has decimals
                                         let hasComma = inputValue.includes(',');
-                                        this.displayValue = this.formatNumber(parsed, hasComma, true);
+                                        let valueHasDecimals = parsed % 1 !== 0; // Check if value is not a whole number
+                                        let showDecimals = hasComma || valueHasDecimals;
+
+                                        this.displayValue = this.formatNumber(parsed, showDecimals);
                                         event.target.value = this.displayValue;
                                     } else {
                                         this.displayValue = '';
@@ -253,12 +241,6 @@
 
                                     // Allow comma (,) for decimal separator - key code 188
                                     if (event.keyCode === 188 || event.key === ',') {
-                                        // Don't allow comma if decimalPlaces is 0
-                                        if (this.decimalPlaces === 0) {
-                                            event.preventDefault();
-                                            return;
-                                        }
-
                                         // Check if comma already exists in current value
                                         let currentValue = event.target.value;
                                         if (currentValue.includes(',')) {
@@ -274,14 +256,38 @@
                                 },
 
                                 syncWithLivewire() {
-                                    // Force sync the value with Livewire for proper validation
-                                    // This ensures required validation works even with empty values
-                                    $wire.set('{{ $model }}', this.rawValue);
+                                    let valueToSync = this.rawValue;
+                                    console.log('=== syncWithLivewire DEBUG ===');
+                                    console.log('original rawValue:', this.rawValue);
+                                    if (typeof valueToSync === 'string') {
+                                        valueToSync = this.parseNumber(valueToSync);
+                                    }
+                                    console.log('valueToSync:', valueToSync);
+                                    console.log('valueToSync type:', typeof valueToSync);
+                                    $wire.set('{{ $model }}', valueToSync);
                                 }
                             }"
-                            x-init="updateDisplay(); $watch('rawValue', () => updateDisplay());
-                                     // Ensure proper sync on init
-                                     this.syncWithLivewire();"
+                            x-init="console.log('=== CURRENCY INIT DEBUG ===');
+                                     updateDisplay();
+                                     $watch('rawValue', (value, oldValue) => {
+                                         console.log('=== CURRENCY WATCH DEBUG ===');
+                                         console.log('oldValue:', oldValue);
+                                         console.log('newValue:', value);
+                                         // Always normalize rawValue to dot-decimal number
+                                         if (typeof value === 'string') {
+                                             rawValue = parseNumber(value);
+                                         } else {
+                                             rawValue = value;
+                                         }
+                                         updateDisplay();
+                                         if (typeof syncWithLivewire === 'function') {
+                                             syncWithLivewire();
+                                         }
+                                         $el.value = displayValue;
+                                     });
+                                     if (typeof syncWithLivewire === 'function') {
+                                         syncWithLivewire();
+                                     }"
                             type="text"
                             inputmode="decimal"
                             id="{{ $id }}"
@@ -300,43 +306,26 @@
                     <input x-data="{
                             rawValue: @entangle($model),
                             displayValue: '',
-                            decimalPlaces: {{ isset($decimalPlaces) && $decimalPlaces !== null ? $decimalPlaces : 'null' }},
 
-                            formatNumber(num, showDecimals = false, applyRounding = false) {
+                            formatNumber(num, showDecimals = false) {
                                 if (!num || num === '' || num === null || num === undefined) {
                                     return '';
                                 }
-                                // Convert to number and format with Indonesian style (dots for thousands, comma for decimals)
                                 let number = parseFloat(num);
                                 if (isNaN(number)) return '';
-
-                                // Apply decimal rounding only when explicitly requested (usually onBlur)
-                                if (applyRounding && this.decimalPlaces !== null) {
-                                    number = parseFloat(number.toFixed(this.decimalPlaces));
-                                }
-
-                                // Format using Indonesian locale style
                                 let parts = number.toString().split('.');
-                                let integerPart = parseInt(parts[0]).toLocaleString('de-DE'); // Use German locale for dot separation
+                                let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
                                 let decimalPart = parts[1] || '';
-
-                                // Only show decimals if explicitly requested (user typed comma) or if original number has decimals
-                                if (showDecimals && this.decimalPlaces !== null && this.decimalPlaces > 0) {
-                                    if (decimalPart === '') {
-                                        decimalPart = '0'.repeat(this.decimalPlaces);
-                                    } else if (applyRounding) {
-                                        // Only pad to exact decimal places when rounding (onBlur)
-                                        decimalPart = decimalPart.padEnd(this.decimalPlaces, '0').substring(0, this.decimalPlaces);
-                                    }
+                                if (decimalPart) {
                                     return integerPart + ',' + decimalPart;
-                                } else if (decimalPart && showDecimals) {
-                                    return integerPart + ',' + decimalPart;
-                                } else {
-                                    return integerPart;
                                 }
+                                if (showDecimals) {
+                                    return integerPart + ',00';
+                                }
+                                return integerPart;
                             },
 
-                            parseNumber(str, applyRounding = false) {
+                            parseNumber(str) {
                                 if (!str || str === '') return null;
 
                                 // Indonesian format: 1.234.567,89 → 1234567.89
@@ -376,23 +365,25 @@
 
                                 let number = parseFloat(cleanStr);
 
-                                // Only apply rounding when explicitly requested (usually onBlur)
-                                if (applyRounding && this.decimalPlaces !== null && !isNaN(number)) {
-                                    number = parseFloat(number.toFixed(this.decimalPlaces));
-                                }
-
                                 return isNaN(number) ? null : number;
-                            },
-
-                            updateDisplay() {
-                                // Check if rawValue has decimals or if current display has comma
-                                let hasDecimals = this.rawValue !== null && this.rawValue !== undefined &&
-                                                (this.rawValue.toString().includes('.') || this.rawValue % 1 !== 0);
-                                let hasComma = this.displayValue.includes(',');
-
-                                // Show decimals if value has decimals OR user previously typed comma
-                                let showDecimals = hasDecimals || hasComma;
-                                this.displayValue = this.formatNumber(this.rawValue, showDecimals, false);
+                            },                            updateDisplay() {
+                                if (this.rawValue !== null && this.rawValue !== undefined && this.rawValue !== '') {
+                                    let numberValue;
+                                    if (typeof this.rawValue === 'string') {
+                                        numberValue = this.parseNumber(this.rawValue);
+                                        this.rawValue = numberValue;
+                                    } else {
+                                        numberValue = this.rawValue;
+                                    }
+                                    if (numberValue !== null && numberValue !== undefined) {
+                                        let isDecimal = numberValue % 1 !== 0;
+                                        this.displayValue = this.formatNumber(numberValue, isDecimal);
+                                    } else {
+                                        this.displayValue = '';
+                                    }
+                                } else {
+                                    this.displayValue = '';
+                                }
                             },
 
                             onInput(event) {
@@ -402,6 +393,9 @@
                                 // Don't format immediately if user just typed a comma
                                 if (inputValue.endsWith(',')) {
                                     this.displayValue = inputValue;
+                                    // Still parse to update raw value
+                                    let parsed = this.parseNumber(inputValue);
+                                    this.rawValue = parsed;
                                     return;
                                 }
 
@@ -411,8 +405,8 @@
                                     return;
                                 }
 
-                                // Parse the input to get raw number (no rounding during input)
-                                let parsed = this.parseNumber(inputValue, false);
+                                // Parse the input to get raw number
+                                let parsed = this.parseNumber(inputValue);
 
                                 // Update raw value
                                 this.rawValue = parsed;
@@ -425,7 +419,7 @@
                                 if (inputValue.includes(',')) {
                                     // User typed comma, so they want decimal formatting
                                     if (parsed !== null) {
-                                        let newDisplayValue = this.formatNumber(parsed, true, false);
+                                        let newDisplayValue = this.formatNumber(parsed, true);
 
                                         // If user is typing after comma, don't reformat yet
                                         let commaIndex = inputValue.indexOf(',');
@@ -452,17 +446,20 @@
                             onBlur(event) {
                                 let inputValue = event.target.value;
 
-                                // Parse and format the final value when user leaves the field (with rounding)
-                                let parsed = this.parseNumber(inputValue, true);
+                                // Parse and format the final value when user leaves the field
+                                let parsed = this.parseNumber(inputValue);
                                 this.rawValue = parsed;
 
                                 // Explicitly sync with Livewire for validation
                                 this.syncWithLivewire();
 
                                 if (parsed !== null) {
-                                    // Only show decimals if the input contained a comma (user typed decimals)
+                                    // Show decimals if the input contained a comma (user typed decimals) OR if parsed value has decimals
                                     let hasComma = inputValue.includes(',');
-                                    this.displayValue = this.formatNumber(parsed, hasComma, true);
+                                    let valueHasDecimals = parsed % 1 !== 0; // Check if value is not a whole number
+                                    let showDecimals = hasComma || valueHasDecimals;
+
+                                    this.displayValue = this.formatNumber(parsed, showDecimals);
                                     event.target.value = this.displayValue;
                                 } else {
                                     this.displayValue = '';
@@ -488,12 +485,6 @@
 
                                 // Allow comma (,) for decimal separator - key code 188
                                 if (event.keyCode === 188 || event.key === ',') {
-                                    // Don't allow comma if decimalPlaces is 0
-                                    if (this.decimalPlaces === 0) {
-                                        event.preventDefault();
-                                        return;
-                                    }
-
                                     // Check if comma already exists in current value
                                     let currentValue = event.target.value;
                                     if (currentValue.includes(',')) {
@@ -509,14 +500,38 @@
                             },
 
                             syncWithLivewire() {
-                                // Force sync the value with Livewire for proper validation
-                                // This ensures required validation works even with empty values
-                                $wire.set('{{ $model }}', this.rawValue);
+                                let valueToSync = this.rawValue;
+                                console.log('=== NON-CURRENCY syncWithLivewire DEBUG ===');
+                                console.log('original rawValue:', this.rawValue);
+                                if (typeof valueToSync === 'string') {
+                                    valueToSync = this.parseNumber(valueToSync);
+                                }
+                                console.log('valueToSync:', valueToSync);
+                                console.log('valueToSync type:', typeof valueToSync);
+                                $wire.set('{{ $model }}', valueToSync);
                             }
                         }"
-                        x-init="updateDisplay(); $watch('rawValue', () => updateDisplay());
-                                 // Ensure proper sync on init
-                                 this.syncWithLivewire();"
+                        x-init="console.log('=== NON-CURRENCY INIT DEBUG ===');
+                                 updateDisplay();
+                                 $watch('rawValue', (value, oldValue) => {
+                                     console.log('=== NON-CURRENCY WATCH DEBUG ===');
+                                     console.log('oldValue:', oldValue);
+                                     console.log('newValue:', value);
+                                     // Always normalize rawValue to dot-decimal number
+                                     if (typeof value === 'string') {
+                                         rawValue = parseNumber(value);
+                                     } else {
+                                         rawValue = value;
+                                     }
+                                     updateDisplay();
+                                     if (typeof syncWithLivewire === 'function') {
+                                         syncWithLivewire();
+                                     }
+                                     $el.value = displayValue;
+                                 });
+                                 if (typeof syncWithLivewire === 'function') {
+                                     syncWithLivewire();
+                                 }"
                         type="text"
                         inputmode="decimal"
                         id="{{ $id }}"
