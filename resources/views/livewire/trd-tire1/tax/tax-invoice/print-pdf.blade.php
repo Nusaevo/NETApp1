@@ -72,7 +72,7 @@
                                                     <td rowspan="{{ count($order->OrderDtl) }}">{{ $order->tr_code }}
                                                     </td>
                                                     <td rowspan="{{ count($order->OrderDtl) }}"
-                                                        style="text-align: left">{{ $order->print_remarks }}</td>
+                                                        style="text-align: left">{{ $order->tax_doc_num }}</td>
                                                     <td rowspan="{{ count($order->OrderDtl) }}">
                                                         {{ \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y') }}
                                                     </td>

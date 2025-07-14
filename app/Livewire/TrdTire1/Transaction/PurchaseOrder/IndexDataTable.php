@@ -83,6 +83,7 @@ class IndexDataTable extends BaseDataTableComponent
                         Status::PRINT => 'Print',
                         Status::SHIP => 'Ship',
                         Status::CANCEL => 'Cancel',
+                        Status::ACTIVE => 'Active',
                     ];
                     return $statusMap[$value] ?? 'Unknown';
                 }),
@@ -136,6 +137,7 @@ class IndexDataTable extends BaseDataTableComponent
             SelectFilter::make('Status', 'status_code')
                 ->options([
                     '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
+                    Status::ACTIVE => 'Active',
                     Status::OPEN => 'Open',
                     Status::PRINT => 'Print',
                     Status::SHIP => 'Ship',

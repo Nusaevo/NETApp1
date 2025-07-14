@@ -41,7 +41,7 @@
                                     </td>
                                     <td
                                         style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 50%;">
-                                        <h3 style="margin-bottom: -5px; font-weight: bold; text-decoration: underline;">
+                                        <h3 style="margin-bottom: -5px; text-decoration: underline;">
                                             NOTA
                                             PENJUALAN</h3>
                                         <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
@@ -93,11 +93,11 @@
                                             <td
                                                 style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;">
                                                 {{ $OrderDtl->matl_descr }}
-                                                @if ($loop->last)
+                                                {{-- @if ($loop->last)
                                                     <p style="margin-top: 5px; margin-bottom: -5px">Penerima:
                                                         ________________
                                                     </p>
-                                                @endif
+                                                @endif --}}
                                             </td>
                                             <td style="text-align: center;">
                                                 {{ ceil($OrderDtl->qty) }}</td>
@@ -125,9 +125,13 @@
                                     @endforeach
                                 </tbody>
                             </table>
-                            <table style="margin-top: -19px; width: 60.9%;">
+                            <table style="margin-top: -18px; width: 100%;">
                                 <tr>
-                                    <td colspan="3" style="text-align: center; border: 1px solid #000;">
+                                    <td colspan="3" style="text-align: start; border-width: 1px 0px 1px 1px; border-style: solid; border-color: #000;">
+                                        <p style="margin: 0;">Penerima:
+                                        </p>
+                                    </td>
+                                    <td colspan="3" style="text-align: end; border-width: 1px 1px 1px 0px; border-style: solid; border-color: #000;">
                                         <p style="margin: 0;">Pembayaran:
                                             <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
                                         </p>
@@ -142,7 +146,10 @@
     </body>
     <script>
         function printInvoice() {
-            window.print();
+            @this.updatePrintCounter();
+            setTimeout(function() {
+                window.print();
+            }, 1000);
         }
     </script>
 </div>

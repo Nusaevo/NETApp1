@@ -90,7 +90,7 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($amtTax);
                 })
                 ->sortable(),
-            Column::make($this->trans("No Faktur"), "print_remarks")
+            Column::make($this->trans("No Faktur"), "tax_doc_num")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("Tgl Proses"), "print_date")
@@ -283,10 +283,10 @@ class IndexDataTable extends BaseDataTableComponent
                             }
                             $lastId = $newId;
                         }
-                    } while (OrderHdr::where('print_remarks', $newId)->exists());
+                    } while (OrderHdr::where('tax_doc_num', $newId)->exists());
 
                     // Update nomor faktur pada order yang bersangkutan
-                    OrderHdr::where('id', $orderId)->update(['print_remarks' => $newId]);
+                    OrderHdr::where('id', $orderId)->update(['tax_doc_num' => $newId]);
 
                     // Perbarui nomor faktur tertinggi yang telah dipakai
                     if ($newId > $maxAssigned) {
@@ -320,17 +320,17 @@ class IndexDataTable extends BaseDataTableComponent
         }
 
         if (count($this->getSelected()) > 0) {
-            $orders = OrderHdr::whereIn('id', $this->getSelected())->get(['id', 'print_remarks']);
+            $orders = OrderHdr::whereIn('id', $this->getSelected())->get(['id', 'tax_doc_num']);
 
             foreach ($orders as $order) {
-                if ($order->print_remarks) {
+                if ($order->tax_doc_num) {
                     // Simpan nomor yang dihapus agar bisa digunakan kembali
-                    $this->deletedRemarks[] = $order->print_remarks;
+                    $this->deletedRemarks[] = $order->tax_doc_num;
                 }
             }
 
             // Hapus nomor faktur pada order yang dipilih
-            OrderHdr::whereIn('id', $this->getSelected())->update(['print_remarks' => null]);
+            OrderHdr::whereIn('id', $this->getSelected())->update(['tax_doc_num' => null]);
 
             $this->clearSelected();
             $this->dispatch('success', 'Nomor faktur berhasil dihapus');
@@ -366,15 +366,15 @@ class IndexDataTable extends BaseDataTableComponent
                             }
                             $lastId = $newId;
                         }
-                    } while (OrderHdr::where('print_remarks', $newId)->exists());
+                    } while (OrderHdr::where('tax_doc_num', $newId)->exists());
 
                     // Jika order sudah memiliki nomor, simpan sebagai reusable
                     $order = OrderHdr::find($orderId);
-                    if ($order->print_remarks) {
-                        $this->deletedRemarks[] = $order->print_remarks;
+                    if ($order->tax_doc_num) {
+                        $this->deletedRemarks[] = $order->tax_doc_num;
                     }
 
-                    OrderHdr::where('id', $orderId)->update(['print_remarks' => $newId]);
+                    OrderHdr::where('id', $orderId)->update(['tax_doc_num' => $newId]);
 
                     // Update maxAssigned jika nomor baru lebih tinggi
                     if ($newId > $maxAssigned) {

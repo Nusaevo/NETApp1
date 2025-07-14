@@ -14,14 +14,6 @@ class InventoryService
 
     public function addReservation(string $mode, array $headerData, array $detailData)
     {
-        // dd([
-        //     'mode' => $mode,
-        //     'qty' => $detailData['qty'] ?? null,
-        //     'matl_id' => $detailData['matl_id'] ?? null,
-        //     'tr_type' => $headerData['tr_type'] ?? null,
-        //     'called_from' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? null,
-        // ]);
-
         // Hitung price dan amount
         $price = 0;
         $trAmt = 0;
