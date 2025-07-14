@@ -466,10 +466,6 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota tidak bisa dihapus karena status Completed');
-                return;
-            }
 
             // Panggil service untuk hapus delivery beserta detail dan inventory
             $deliveryService = app(DeliveryService::class);

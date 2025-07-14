@@ -50,6 +50,7 @@ class Detail extends BaseComponent
 
     // Delivery status property - simplified
     public $isDeliv = false;
+    public $materialCategory = null; // Tambahan: untuk menyimpan category hasil mapping sales_type
 
     protected $masterService;
     protected $orderService;
@@ -720,7 +721,9 @@ class Detail extends BaseComponent
             }
 
             // 3) Pastikan OrderService sudah diinisialisasi
-            // $this->initializeServices();
+            if (!$this->orderService) {
+                $this->orderService = app(OrderService::class);
+            }
 
             // 4) Gunakan OrderService untuk menghapus order
             $this->orderService->delOrder($this->object->id);
@@ -852,6 +855,19 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Helper: Dapatkan category material dari ConfigConst berdasarkan sales_type
+     */
+    private function getCategoryBySalesType($salesType)
+    {
+        $configs = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+            ->where('str1', $salesType)
+            ->get();
+        // Ambil kolom str2 dari $configs dalam bentuk array
+        $str2Array = $configs->pluck('str2')->toArray();
+        return $str2Array;
+    }
+
+    /**
      * Handle sales_type change and filter materials accordingly
      */
     public function onSalesTypeChanged()
@@ -859,10 +875,12 @@ class Detail extends BaseComponent
         $salesType = $this->inputs['sales_type'] ?? null;
         if (!$salesType) {
             $this->materials = [];
+            $this->materialCategory = null;
             return;
         }
 
-        // Ambil data material lengkap dari database
+        $categories = $this->getCategoryBySalesType($salesType); // Get array of categories
+        // Take the first category for search filter or use a default
         $allMaterials = Material::all();
         $filtered = [];
 

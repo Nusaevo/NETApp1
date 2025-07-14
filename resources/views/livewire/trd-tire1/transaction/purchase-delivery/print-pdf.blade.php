@@ -72,7 +72,7 @@
                                             <tr style="font-weight: normal;">
                                                 @if ($index === 0)
                                                     <!-- Hanya tampilkan pada seq 1 -->
-                                                    <td rowspan="{{ count($order->OrderDtl) }}">{{ $order->print_remarks }}</td>
+                                                    <td rowspan="{{ count($order->OrderDtl) }}">{{ $order->tax_doc_num }}</td>
                                                     <td style="text-align: left;" rowspan="{{ count($order->OrderDtl) }}">
                                                         {{ \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y') }}
                                                     </td>

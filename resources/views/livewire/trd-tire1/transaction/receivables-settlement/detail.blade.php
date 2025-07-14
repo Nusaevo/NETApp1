@@ -18,53 +18,12 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-text-field type="text" label="Customer" model="inputs.partner_name"
-                                        required="true" :action="$actionValue" enabled="true"
-                                        clickEvent="openPartnerDialogBox" buttonName="Search" :buttonEnabled="$isPanelEnabled" />
-                                    <x-ui-dialog-box id="partnerDialogBox" title="Cari Customer" width="600px"
-                                        height="400px" onOpened="openPartnerDialogBox" onClosed="closePartnerDialogBox">
-                                        <x-slot name="body">
-                                            <x-ui-text-field type="text" label="Cari Code/Nama Customer"
-                                                model="partnerSearchText" required="true" :action="$actionValue"
-                                                enabled="true" clickEvent="searchPartners" buttonName="Cari" />
-                                            <!-- Table -->
-                                            <x-ui-table id="partnersTable" padding="0px" margin="0px">
-                                                <x-slot name="headers">
-                                                    <th class="min-w-100px">Code</th>
-                                                    <th class="min-w-100px">Name</th>
-                                                    <th class="min-w-100px">Address</th>
-                                                </x-slot>
-                                                <x-slot name="rows">
-                                                    @if (empty($suppliers))
-                                                        <tr>
-                                                            <td colspan="4" class="text-center text-muted">No Data
-                                                                Found</td>
-                                                        </tr>
-                                                    @else
-                                                        @foreach ($suppliers as $key => $Customer)
-                                                            <tr wire:key="row-{{ $key }}-Customer">
-                                                                <td>
-                                                                    <x-ui-option label="" required="false"
-                                                                        layout="horizontal" enabled="true"
-                                                                        type="checkbox" visible="true" :options="[
-                                                                            $Customer['id'] => $Customer['code'],
-                                                                        ]"
-                                                                        onChanged="selectPartner({{ $Customer['id'] }})" />
-                                                                </td>
-                                                                <td>{{ $Customer['name'] }}</td>
-                                                                <td>{{ $Customer['address'] }}</td>
-                                                            </tr>
-                                                        @endforeach
-                                                    @endif
-                                                </x-slot>
-                                                <x-slot name="footer">
-                                                    <x-ui-button clickEvent="confirmSelection"
-                                                        button-name="Confirm Selection" loading="true" :action="$actionValue"
-                                                        cssClass="btn-primary" />
-                                                </x-slot>
-                                            </x-ui-table>
-                                        </x-slot>
-                                    </x-ui-dialog-box>
+                                    <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
+                                        searchModel="App\Models\TrdTire1\Master\Partner"
+                                        searchWhereCondition="deleted_at=null&grp=C" optionValue="id"
+                                        optionLabel="code,name" placeHolder="Type to search custommer..."
+                                        :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        type="int" onChanged="onPartnerChange"/>
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
@@ -76,7 +35,48 @@
                 </div>
             </div>
             <br>
-
+            <div class="col-md-12">
+                <x-ui-card title="Saldo Lebih Bayar">
+                    <x-ui-table id="AdvanceTable">
+                        <x-slot name="headers">
+                            <th style="width: 50px; text-align: center;">No</th>
+                            <th style="width: 200px; text-align: center;">Keterangan</th>
+                            <th style="width: 150px; text-align: center;">Jumlah</th>
+                            <th style="width: 150px; text-align: center;">Dipakai</th>
+                            <th style="width: 70px; text-align: center;">Actions</th>
+                        </x-slot>
+                        <x-slot name="rows">
+                            @foreach ($input_advance as $key => $advance)
+                                <tr wire:key="advance-{{ $key }}">
+                                    <td style="text-align: center;">{{ $loop->iteration }}</td>
+                                    <td>
+                                        <x-ui-dropdown-select :options="$advanceOptions"
+                                            model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue"
+                                            enabled="true"
+                                            onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_advance.{{ $key }}.amtAdvBal"
+                                            label="" :action="$actionValue" enabled="false" type="number" />
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_advance.{{ $key }}.amt" label=""
+                                            :action="$actionValue" enabled="false" type="number" />
+                                    </td>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <x-ui-button :clickEvent="'deleteAdvanceItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
+                                            cssClass="btn-danger text-danger" iconPath="delete.svg" />
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </x-slot>
+                        <x-slot name="button">
+                            <x-ui-button clickEvent="addAdvanceItem" cssClass="btn btn-primary" iconPath="add.svg"
+                                button-name="Add" />
+                        </x-slot>
+                    </x-ui-table>
+                </x-ui-card>
+            </div>
             <br>
             <div class="col-md-12">
                 <x-ui-card title="Pembayaran">
@@ -103,12 +103,13 @@
                                             label="" :action="$actionValue" enabled="false" type="text" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_payments.{{ $key }}.amt" label=""
-                                            :action="$actionValue" enabled="false" type="number" />
+                                        <x-ui-text-field model="input_payments.{{ $key }}.amt"
+                                            label="" :action="$actionValue" enabled="false" type="number" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
-                                            cssClass="btn-secondary text-light" iconPath="edit.svg" />
+                                        <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="" loading="true"
+                                            :action="$actionValue" cssClass="btn-secondary text-light"
+                                            iconPath="edit.svg" />
                                         <x-ui-button :clickEvent="'deletePaymentItem(' . $key . ')'" button-name="" loading="true"
                                             :action="$actionValue" cssClass="btn-danger text-danger"
                                             iconPath="delete.svg" />
@@ -178,82 +179,26 @@
                 </x-ui-card>
             </div>
             <br>
-            <div class="col-md-12">
-                <x-ui-card title="Advance">
-                    <x-ui-table id="AdvanceTable">
-                        <x-slot name="headers">
-                            <th style="width: 50px; text-align: center;">No</th>
-                            <th style="width: 200px; text-align: center;">Pemakaian Advance</th>
-                            <th style="width: 150px; text-align: center;">Amount</th>
-                            <th style="width: 150px; text-align: center;">Dipakai</th>
-                            <th style="width: 70px; text-align: center;">Actions</th>
-                        </x-slot>
-                        <x-slot name="rows">
-                            @foreach ($input_advance as $key => $advance)
-                                <tr wire:key="advance-{{ $key }}">
-                                    <td style="text-align: center;">{{ $loop->iteration }}</td>
-                                    <td>
-                                        <x-ui-dropdown-select :options="$advanceOptions"
-                                            model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue"
-                                            enabled="true"
-                                            onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <x-ui-text-field model="input_advance.{{ $key }}.amtAdvBal" label=""
-                                            :action="$actionValue" enabled="false" type="number" />
-                                    <td style="text-align: center;">
-                                        <x-ui-text-field model="input_advance.{{ $key }}.amt"
-                                            label="" :action="$actionValue" enabled="true" type="number" />
-                                    </td>
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <x-ui-button :clickEvent="'deleteAdvanceItem(' . $key . ')'" button-name="" loading="true"
-                                            :action="$actionValue" cssClass="btn-danger text-danger"
-                                            iconPath="delete.svg" />
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </x-slot>
-                        <x-slot name="button">
-                            <x-ui-button clickEvent="addAdvanceItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="Add" />
-                        </x-slot>
-                    </x-ui-table>
-                </x-ui-card>
-            </div>
             <br>
-            <div class="col-md-12">
-                <x-ui-table id="AdvanceSummaryTable">
-                    <x-slot name="headers">
-                        <th style="width: 150px; text-align: center;">Total Pembayaran</th>
-                        <th style="width: 150px; text-align: center;">Total Amt Nota</th>
-                        <th style="width: 150px; text-align: center;">Lebih Bayar</th>
-                    </x-slot>
-                    <x-slot name="rows">
-                        <tr>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="totalPaymentAmount" label="" :action="$actionValue"
+            <x-ui-card title="">
+                <x-ui-padding>
+                    <div class="row">
+                        <x-ui-text-field model="totalPaymentAmount" label="Total Pembayaran" :action="$actionValue"
                                     enabled="false" type="number" />
-                            </td>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="totalNotaAmount" label="" :action="$actionValue"
+                        <x-ui-text-field model="totalNotaAmount" label="Total Amt Nota" :action="$actionValue"
                                     enabled="false" type="number" />
-                            </td>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="advanceBalance" label="" :action="$actionValue"
+                        <x-ui-text-field model="advanceBalance" label="Lebih Bayar" :action="$actionValue"
                                     enabled="false" type="number" />
-                            </td>
-                        </tr>
-                    </x-slot>
-                </x-ui-table>
-            </div>
+                    </div>
+                </x-ui-padding>
+            </x-ui-card>
         </x-ui-tab-view-content>
     </x-ui-page-card>
 
     <!-- Footer with Save button -->
     <x-ui-footer>
         <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true" :action="$actionValue"
-                cssClass="btn-danger" iconPath="delete.svg" />
+            cssClass="btn-danger" iconPath="delete.svg" />
         <x-ui-button clickEvent="SaveAll" button-name="Save" loading="true" :action="$actionValue"
             cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>

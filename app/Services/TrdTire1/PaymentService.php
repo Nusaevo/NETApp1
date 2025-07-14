@@ -168,26 +168,20 @@ class PaymentService
 
 
         }
-    }
-
-    public function savePaymentAdv(array $headerData, array $advanceData): void
+    }    public function savePaymentAdv(array $headerData, array $advanceData): void
     {
         // Pastikan headerData memiliki id
         if (!isset($headerData['id'])) {
             throw new Exception('Header ID tidak tersedia untuk menyimpan PaymentAdv');
         }
 
-        // Log untuk debugging
-        Log::info('Saving PaymentAdv', [
-            'headerData' => $headerData,
-            'advanceData' => $advanceData
-        ]);
-
         // dd($headerData, $advanceData);
         foreach ($advanceData as &$advance) {
             $advance['trhdr_id'] = $headerData["id"];
             $advance['tr_type'] = $headerData["tr_type"] . 'A';
             $advance['tr_code'] = $headerData["tr_code"];
+            // Set reff_id to the partnerbal_id of the advance being used
+            $advance['reff_id'] = $advance['partnerbal_id'];
         }
         unset($advance);
 
