@@ -15,7 +15,7 @@
                     </div>
                     <div class="row">
                         <x-ui-text-field label="{{ $this->trans('gold_price_base') }}" model="inputs.goldprice_basecurr" type="number" :action="$actionValue" required="true" placeHolder="{{ $this->trans('placeholder_gold_price_base') }}" span="Half" onChanged="currencyChanged" />
-                        <x-ui-text-field label="{{ $this->trans('gold_price_currency') }}" model="inputs.goldprice_curr" type="number" :action="$actionValue" required="true" placeHolder="{{ $this->trans('placeholder_gold_price_currency') }}" span="Half" enabled="false" />
+                        <x-ui-text-field label="{{ $this->trans('gold_price_currency') }}" model="inputs.goldprice_curr" type="number" :action="$actionValue" required="true" placeHolder="{{ $this->trans('placeholder_gold_price_currency') }}" span="Half" enabled="false" currency="USD" decimalPlaces="2"/>
                     </div>
                 </x-ui-card>
             </div>

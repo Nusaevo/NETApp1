@@ -1,5 +1,8 @@
 @php
     $id = str_replace(['.', '[', ']'], '_', $model);
+
+    // Parameter untuk decimal places
+    $decimalPlaces = isset($decimalPlaces) ? intval($decimalPlaces) : null;
 @endphp
 
 <div class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
@@ -54,21 +57,20 @@
             @elseif(isset($type) && $type === 'number')
                 @if(isset($currency) && $currency !== '')
                     <div class="input-group">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text">
-                                @switch($currency)
-                                    @case('IDR')
-                                        IDR
-                                        @break
-                                    @case('USD')
-                                        USD
-                                        @break
-                                    @default
-                                        {{ $currency }}
-                                @endswitch
-                            </div>
-                        </div>
-                        <input x-data="{
+                        <span class="input-group-text">
+                            @switch($currency)
+                                @case('IDR')
+                                    IDR
+                                    @break
+                                @case('USD')
+                                    USD
+                                    @break
+                                @default
+                                    {{ $currency }}
+                            @endswitch
+                        </span>
+                        <div class="form-floating flex-grow-1">
+                            <input x-data="{
                                 rawValue: @entangle($model),
                                 displayValue: '',
 
@@ -78,15 +80,37 @@
                                     }
                                     let number = parseFloat(num);
                                     if (isNaN(number)) return '';
+
+                                    // Jika decimalPlaces diset, bulatkan ke jumlah decimal tersebut
+                                    @if(isset($decimalPlaces))
+                                    // Bulatkan ke jumlah decimal yang ditentukan
+                                    number = parseFloat(number.toFixed({{ $decimalPlaces }}));
+                                    @endif
+
                                     let parts = number.toString().split('.');
                                     let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
                                     let decimalPart = parts[1] || '';
+
                                     if (decimalPart) {
+                                        @if(isset($decimalPlaces))
+                                        // Pad dengan 0 jika perlu untuk mencapai jumlah decimal yang diinginkan
+                                        while (decimalPart.length < {{ $decimalPlaces }}) {
+                                            decimalPart += '0';
+                                        }
+                                        // Potong jika terlalu panjang
+                                        decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
+                                        @endif
                                         return integerPart + ',' + decimalPart;
                                     }
+
                                     if (showDecimals) {
+                                        @if(isset($decimalPlaces))
+                                        return integerPart + ',' + '0'.repeat({{ $decimalPlaces }});
+                                        @else
                                         return integerPart + ',00';
+                                        @endif
                                     }
+
                                     return integerPart;
                                 },
 
@@ -301,6 +325,11 @@
                             x-on:blur="onBlur($event)"
                             x-on:keydown="onKeydown($event)"
                             x-bind:value="displayValue">
+
+                            @if (!empty($label))
+                                <label for="{{ $id }}" class="@if(isset($required) && $required === 'true') required @endif">{{ $label }}</label>
+                            @endif
+                        </div>
                     </div>
                 @else
                     <input x-data="{
@@ -313,15 +342,37 @@
                                 }
                                 let number = parseFloat(num);
                                 if (isNaN(number)) return '';
+
+                                // Jika decimalPlaces diset, bulatkan ke jumlah decimal tersebut
+                                @if(isset($decimalPlaces))
+                                // Bulatkan ke jumlah decimal yang ditentukan
+                                number = parseFloat(number.toFixed({{ $decimalPlaces }}));
+                                @endif
+
                                 let parts = number.toString().split('.');
                                 let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
                                 let decimalPart = parts[1] || '';
+
                                 if (decimalPart) {
+                                    @if(isset($decimalPlaces))
+                                    // Pad dengan 0 jika perlu untuk mencapai jumlah decimal yang diinginkan
+                                    while (decimalPart.length < {{ $decimalPlaces }}) {
+                                        decimalPart += '0';
+                                    }
+                                    // Potong jika terlalu panjang
+                                    decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
+                                    @endif
                                     return integerPart + ',' + decimalPart;
                                 }
+
                                 if (showDecimals) {
+                                    @if(isset($decimalPlaces))
+                                    return integerPart + ',' + '0'.repeat({{ $decimalPlaces }});
+                                    @else
                                     return integerPart + ',00';
+                                    @endif
                                 }
+
                                 return integerPart;
                             },
 
@@ -559,7 +610,7 @@
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @endif
 
-            @if (!empty($label))
+            @if (!empty($label) && !(isset($type) && $type === 'number' && isset($currency) && $currency !== ''))
                 <label for="{{ $id }}" class="@if(isset($required) && $required === 'true') required @endif">{{ $label }}</label>
             @endif
             @if(!empty($placeHolder))

@@ -30,6 +30,9 @@ class UiTextField extends UiBaseComponent
     // Currency format for number type (IDR, USD, EUR, etc.)
     public $currency;
 
+    // Number of decimal places for number fields (null = use default behavior)
+    public $decimalPlaces;
+
     /**
      * Constructor for the UiTextField component.
      *
@@ -49,6 +52,7 @@ class UiTextField extends UiBaseComponent
      * @param string $buttonName   Name or label displayed on the associated button, if any.
      * @param string $capslockMode Enables automatic uppercase transformation ('true' or 'false').
      * @param string $currency     Currency format for number type (IDR, USD, EUR, etc.).
+     * @param int|null $decimalPlaces Number of decimal places for number fields (null = use default behavior).
      */
     public function __construct(
         $model,
@@ -67,7 +71,8 @@ class UiTextField extends UiBaseComponent
         $buttonName = "",
         $capslockMode = 'false',
         $buttonEnabled = 'true',
-        $currency = ''
+        $currency = '',
+        $decimalPlaces = null
     ) {
         // Call parent constructor to initialize base component properties
         parent::__construct($label, $model, $required, $enabled, $visible, $action, $onChanged, $clickEvent, str_replace(['.', '[', ']'], '_', $model));
@@ -97,6 +102,9 @@ class UiTextField extends UiBaseComponent
 
         // Currency format for number type
         $this->currency = $currency;
+
+        // Set decimal places for number fields
+        $this->decimalPlaces = $decimalPlaces;
 
         if ($type === 'code' && $action === 'Edit') {
             $this->enabled = 'false';
