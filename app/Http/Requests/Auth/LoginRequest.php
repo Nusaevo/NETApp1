@@ -9,10 +9,11 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\SysConfig1\ConfigService;
-
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use App\Models\SysConfig1\ConfigAppl;
 use App\Models\SysConfig1\ConfigUser;
+use App\Models\SysConfig1\ConfigConst;
 class LoginRequest extends FormRequest
 {
     /**
@@ -56,17 +57,274 @@ class LoginRequest extends FormRequest
      *
      * @throws \Illuminate\Validation\ValidationException
      */
+    /**
+     * Get MAC address from IP address
+     *
+     * @param string $ip
+     * @return string|null
+     */
+    private function getMacAddressFromIp($ip)
+    {
+        // This is a simplified implementation for demonstration
+        // In reality, server-side MAC address detection is limited and may not be reliable
+
+        // First attempt: Use getmac command on Windows
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            try {
+                // Try getmac command first (Windows specific)
+                $output = [];
+                exec('getmac /v /fo csv', $output);
+                Log::info("GETMAC output: " . json_encode($output));
+
+                // Parse the CSV output from getmac
+                foreach ($output as $i => $line) {
+                    // Skip header line
+                    if ($i === 0) continue;
+
+                    // Parse CSV line
+                    $parts = str_getcsv($line);
+                    if (count($parts) >= 3) {
+                        // Check if this connection is associated with our IP
+                        if (strpos($parts[2], $ip) !== false) {
+                            // Format is typically "AA-BB-CC-DD-EE-FF"
+                            $mac = $parts[0];
+                            return strtolower(str_replace('-', ':', $mac));
+                        }
+                    }
+                }
+
+                // Try ARP command
+                $output = [];
+                exec('arp -a ' . $ip, $output);
+                Log::info("ARP output for IP {$ip}: " . json_encode($output));
+
+                foreach ($output as $line) {
+                    // Windows format: "  192.168.1.1           00-09-0f-aa-00-01     dynamic"
+                    if (strpos($line, $ip) !== false) {
+                        $parts = preg_split('/\s+/', trim($line));
+                        // MAC address is typically the second non-empty part
+                        foreach ($parts as $part) {
+                            if (preg_match('/([0-9a-fA-F]{2}-){5}([0-9a-fA-F]{2})/', $part)) {
+                                return strtolower(str_replace('-', ':', $part));
+                            }
+                        }
+                    }
+                }
+
+                // Try parsing raw ARP output with alternative formats
+                foreach ($output as $line) {
+                    if (strpos($line, $ip) !== false) {
+                        // Try to extract any MAC-like pattern
+                        if (preg_match('/([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})/', $line, $matches)) {
+                            return strtolower(str_replace('-', ':', $matches[0]));
+                        }
+                    }
+                }                // Try direct ipconfig command to get physical address - this is the most reliable
+                $output = [];
+                exec('ipconfig /all', $output);
+                Log::info("IPCONFIG output: " . json_encode($output));
+
+                $physical_address = "";
+                $current_adapter = "";
+                $ip_found = false;
+
+                // First pass: Find the adapter with our IP and get its MAC
+                foreach ($output as $line) {
+                    $line = trim($line);
+
+                    // Capture adapter name
+                    if (strpos($line, "adapter") !== false && strpos($line, ":") !== false) {
+                        $current_adapter = trim($line);
+                        $ip_found = false;
+                    }
+
+                    // Check if this adapter has our IP
+                    if (strpos($line, "IPv4 Address") !== false && strpos($line, $ip) !== false) {
+                        $ip_found = true;
+                        Log::info("Found matching IP adapter: " . $current_adapter);
+                    }
+
+                    // If we found the right adapter, get its MAC
+                    if ($ip_found && strpos($line, "Physical Address") !== false) {
+                        $parts = explode(":", $line, 2); // Split at first colon only
+                        if (count($parts) > 1) {
+                            $physical_address = trim($parts[1]);
+                            // Remove any spaces in the MAC address
+                            $physical_address = str_replace(' ', '', $physical_address);
+                            Log::info("Extracted physical address: " . $physical_address);
+
+                            // Format correctly: DC-45-46-64-B1-35 -> dc:45:46:64:b1:35
+                            return strtolower(str_replace('-', ':', $physical_address));
+                        }
+                    }
+                }
+
+                // If we didn't find it with the first pass, try a simpler approach
+                if (empty($physical_address)) {
+                    foreach ($output as $line) {
+                        $line = trim($line);
+                        if (strpos($line, "Physical Address") !== false) {
+                            $parts = explode(":", $line, 2); // Split at first colon only
+                            if (count($parts) > 1) {
+                                $physical_address = trim($parts[1]);
+                                // Remove any spaces in the MAC address
+                                $physical_address = str_replace(' ', '', $physical_address);
+                                Log::info("Extracted any physical address: " . $physical_address);
+
+                                // Format correctly: DC-45-46-64-B1-35 -> dc:45:46:64:b1:35
+                                return strtolower(str_replace('-', ':', $physical_address));
+                            }
+                        }
+                    }
+                }
+
+                // Last resort: Try to generate a device-specific fingerprint
+                $server_signature = $_SERVER['HTTP_USER_AGENT'] ?? '';
+                $server_signature .= $_SERVER['SERVER_ADDR'] ?? '';
+                $server_signature .= $_SERVER['REMOTE_ADDR'] ?? '';
+
+                // Create a consistent hash that looks like a MAC address
+                $hash = md5($server_signature);
+                $mac_format = substr($hash, 0, 2) . ':' .
+                              substr($hash, 2, 2) . ':' .
+                              substr($hash, 4, 2) . ':' .
+                              substr($hash, 6, 2) . ':' .
+                              substr($hash, 8, 2) . ':' .
+                              substr($hash, 10, 2);
+
+                Log::info("Generated device fingerprint as MAC: {$mac_format}");
+                return $mac_format;
+
+            } catch (\Exception $e) {
+                Log::error("Error getting MAC address: " . $e->getMessage());
+            }
+        }
+        // On Linux server, try to use ARP
+        else {
+            try {
+                $output = [];
+                // Try the ip neighbor command first (more modern)
+                exec('ip neighbor show ' . $ip, $output);
+
+                if (empty($output)) {
+                    // Fall back to arp command
+                    exec('arp -a ' . $ip, $output);
+                }
+
+                Log::info("Linux ARP output: " . json_encode($output));
+
+                foreach ($output as $line) {
+                    if (strpos($line, $ip) !== false) {
+                        if (preg_match('/([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})/', $line, $matches)) {
+                            return strtolower(str_replace('-', ':', $matches[0]));
+                        }
+                    }
+                }
+
+                // Try ifconfig as a last resort
+                exec('ifconfig -a', $output);
+                foreach ($output as $i => $line) {
+                    if (strpos($line, "inet " . $ip) !== false && $i > 0) {
+                        // Look for HWaddr or ether in previous lines
+                        $prevLine = $output[$i-1];
+                        if (preg_match('/([0-9a-fA-F]{2}[:-]){5}([0-9a-fA-F]{2})/', $prevLine, $matches)) {
+                            return strtolower(str_replace('-', ':', $matches[0]));
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error("Error getting MAC address on Linux: " . $e->getMessage());
+            }
+        }
+
+        // Log failure
+        Log::warning("Could not determine MAC address for IP: {$ip}, using device fingerprint instead");
+
+        // Generate a consistent device fingerprint as fallback
+        $device_info = request()->header('User-Agent') . $ip;
+        $hash = md5($device_info);
+        $mac_format = substr($hash, 0, 2) . ':' .
+                      substr($hash, 2, 2) . ':' .
+                      substr($hash, 4, 2) . ':' .
+                      substr($hash, 6, 2) . ':' .
+                      substr($hash, 8, 2) . ':' .
+                      substr($hash, 10, 2);
+
+        Log::info("Generated device fingerprint as MAC: {$mac_format}");
+        return $mac_format;
+    }
+
+    /**
+     * Check if the device is in the allowed list from database
+     *
+     * @param string|null $macAddress
+     * @return bool
+     */
+    private function isDeviceAllowed($macAddress)
+    {
+        if (!$macAddress) {
+            Log::warning("MAC address could not be determined");
+            return false;
+        }
+
+        // Log the MAC address we're checking
+        Log::info("Checking if MAC address is allowed: {$macAddress}");
+
+        // Check if MAC address is in the ALLOW_DEVICE constant group
+        $allowedDevices = ConfigConst::where('const_group', 'ALLOW_DEVICE')
+            ->where(function ($query) use ($macAddress) {
+                $query->where('str1', $macAddress)
+                    ->orWhere('str2', $macAddress)
+                    // Also check for case-insensitive matches
+                    ->orWhereRaw('LOWER(str1) = ?', [strtolower($macAddress)])
+                    ->orWhereRaw('LOWER(str2) = ?', [strtolower($macAddress)]);
+            })
+            ->exists();
+
+        if (!$allowedDevices) {
+            Log::warning("Unauthorized device attempted login: {$macAddress}");
+            return false;
+        }
+
+        Log::info("Device authorized successfully: {$macAddress}");
+        return true;
+    }
+
     public function authenticate()
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('code', 'password'), $this->boolean('remember'))) {
+        $credentials = [
+            'code' => request()->input('code'),
+            'password' => request()->input('password')
+        ];
+
+        $remember = request()->has('remember');
+
+        if (! Auth::attempt($credentials, $remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'code' => trans('auth.failed'),
             ]);
         }
+
+        // Check if device is allowed
+        $clientIp = request()->ip();
+        $macAddress = $this->getMacAddressFromIp($clientIp);
+        // Log MAC address for debugging
+        Log::info("MAC address for client IP {$clientIp}: {$macAddress}");
+
+        if (!$this->isDeviceAllowed($macAddress)) {
+            Auth::logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'code' => 'Device not authorized. Please contact your administrator.',
+            ]);
+        }
+
         $salt = Str::random(40);
         $appKey = config('app.key');
         Session::put('session_salt', $salt . $appKey);
@@ -126,6 +384,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey()
     {
-        return Str::transliterate(Str::lower($this->input('code')).'|'.$this->ip());
+        return Str::transliterate(Str::lower(request()->input('code', '')).'|'.request()->ip());
     }
 }

@@ -52,6 +52,7 @@ function schemaHelper($model, $column = null, $operation = 'columns')
 
 /**
  * Populate model attributes with default values based on column type.
+ * Preserves null values rather than replacing them with defaults.
  *
  * @param \Illuminate\Database\Eloquent\Model $model
  * @return array
@@ -68,9 +69,15 @@ function populateArrayFromModel($model)
 
     foreach ($columns as $column) {
         if (schemaHelper($model, $column, 'hasColumn')) {
-            $type = schemaHelper($model, $column, 'type') ?? 'string';
-            $value = $model->{$column} ?? getDefaultValueForType($type);
-            $data[$column] = $value;
+            // Check if the column exists on the model
+            if (array_key_exists($column, $model->getAttributes())) {
+                // Use the actual value (even if null)
+                $data[$column] = $model->{$column};
+            } else {
+                // Column doesn't exist in model attributes, provide default
+                $type = schemaHelper($model, $column, 'type') ?? 'string';
+                $data[$column] = getDefaultValueForType($type);
+            }
         }
     }
 
