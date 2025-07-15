@@ -29,14 +29,14 @@ class CheckAllowedDevice
             // Check if the MAC address is in the allowed devices list
             $isAllowed = $this->isDeviceAllowed($macAddress);
 
-            if (!$isAllowed) {
-                // MAC address not in allowed list
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+            // if (!$isAllowed) {
+            //     // MAC address not in allowed list
+            //     Auth::logout();
+            //     $request->session()->invalidate();
+            //     $request->session()->regenerateToken();
 
-                return redirect()->route('login')->with('error', 'Device not authorized. Please contact your administrator.');
-            }
+            //     return redirect()->route('login')->with('error', 'Device not authorized. Please contact your administrator.');
+            // }
         }
 
         return $next($request);

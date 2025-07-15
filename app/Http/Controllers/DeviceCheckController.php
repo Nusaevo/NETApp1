@@ -1,62 +1,29 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Controllers;
 
-use Illuminate\Auth\Events\Lockout;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
-use App\Services\SysConfig1\ConfigService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
-use App\Models\SysConfig1\ConfigAppl;
-use App\Models\SysConfig1\ConfigUser;
 use App\Models\SysConfig1\ConfigConst;
-class LoginRequest extends FormRequest
+
+class DeviceCheckController extends Controller
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Show the device check page
      *
-     * @return bool
+     * @return \Illuminate\View\View
      */
-    public function authorize()
+    public function index()
     {
-        return true;
+        // Ensure we can access the view
+        try {
+            return view('device.check');
+        } catch (\Exception $e) {
+            // If there's an error with the view, return a simple fallback
+            return response()->view('errors.500', ['exception' => $e], 500);
+        }
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
-    public function rules()
-    {
-        return [
-            'code' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ];
-    }
-    /**
-     * Get the error messages for the defined validation rules.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [
-            'code.required' => 'UserName is required',
-            'password.required' => 'Password is required',
-        ];
-    }
-    /**
-     * Attempt to authenticate the request's credentials.
-     *
-     * @return void
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     /**
      * Get MAC address from IP address
      *
@@ -119,7 +86,9 @@ class LoginRequest extends FormRequest
                             return strtolower(str_replace('-', ':', $matches[0]));
                         }
                     }
-                }                // Try direct ipconfig command to get physical address - this is the most reliable
+                }
+
+                // Try direct ipconfig command to get physical address - this is the most reliable
                 $output = [];
                 exec('ipconfig /all', $output);
                 Log::info("IPCONFIG output: " . json_encode($output));
@@ -186,11 +155,11 @@ class LoginRequest extends FormRequest
                 // Create a consistent hash that looks like a MAC address
                 $hash = md5($server_signature);
                 $mac_format = substr($hash, 0, 2) . ':' .
-                              substr($hash, 2, 2) . ':' .
-                              substr($hash, 4, 2) . ':' .
-                              substr($hash, 6, 2) . ':' .
-                              substr($hash, 8, 2) . ':' .
-                              substr($hash, 10, 2);
+                            substr($hash, 2, 2) . ':' .
+                            substr($hash, 4, 2) . ':' .
+                            substr($hash, 6, 2) . ':' .
+                            substr($hash, 8, 2) . ':' .
+                            substr($hash, 10, 2);
 
                 Log::info("Generated device fingerprint as MAC: {$mac_format}");
                 return $mac_format;
@@ -244,11 +213,11 @@ class LoginRequest extends FormRequest
         $device_info = request()->header('User-Agent') . $ip;
         $hash = md5($device_info);
         $mac_format = substr($hash, 0, 2) . ':' .
-                      substr($hash, 2, 2) . ':' .
-                      substr($hash, 4, 2) . ':' .
-                      substr($hash, 6, 2) . ':' .
-                      substr($hash, 8, 2) . ':' .
-                      substr($hash, 10, 2);
+                    substr($hash, 2, 2) . ':' .
+                    substr($hash, 4, 2) . ':' .
+                    substr($hash, 6, 2) . ':' .
+                    substr($hash, 8, 2) . ':' .
+                    substr($hash, 10, 2);
 
         Log::info("Generated device fingerprint as MAC: {$mac_format}");
         return $mac_format;
@@ -281,27 +250,125 @@ class LoginRequest extends FormRequest
                     substr($fingerprint, 6, 2) . ':' .
                     substr($fingerprint, 8, 2) . ':' .
                     substr($fingerprint, 10, 2);
+
         return strtolower($formatted);
     }
 
     /**
-     * Check if the device is in the allowed list from database
+     * Check device status and return device information
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkDevice(Request $request)
+    {
+        try {
+            $clientIp = $request->ip();
+            $macAddress = $this->getMacAddressFromIp($clientIp);
+            $browserFingerprint = $this->createBrowserFingerprint($request);
+
+            $macAllowed = $this->isIdentifierAllowed($macAddress);
+            $fingerprintAllowed = $this->isIdentifierAllowed($browserFingerprint);
+
+            // Try to get allowed devices, but handle database errors gracefully
+            try {
+                $allowedDevices = ConfigConst::where('const_group', 'ALLOW_DEVICE')->get(['id', 'str1', 'str2', 'note1']);
+            } catch (\Exception $e) {
+                Log::error("Error fetching allowed devices: " . $e->getMessage());
+                $allowedDevices = [];
+            }
+
+            return response()->json([
+                'clientIp' => $clientIp,
+                'macAddress' => $macAddress,
+                'browserFingerprint' => $browserFingerprint,
+                'macAllowed' => $macAllowed,
+                'fingerprintAllowed' => $fingerprintAllowed,
+                'allowedDevices' => $allowedDevices,
+                'serverOS' => PHP_OS,
+                'serverInfo' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
+                'userAgent' => $request->header('User-Agent'),
+                'requestHeaders' => collect($request->header())->filter(function($value, $key) {
+                    // Filter out sensitive headers
+                    return !in_array(strtolower($key), ['cookie', 'authorization']);
+                })
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error in checkDevice: " . $e->getMessage());
+            return response()->json([
+                'error' => true,
+                'message' => 'Error checking device: ' . $e->getMessage(),
+                'clientIp' => $request->ip(),
+                'macAddress' => 'Error detecting',
+                'browserFingerprint' => 'Error generating',
+                'macAllowed' => false,
+                'fingerprintAllowed' => false,
+                'serverOS' => PHP_OS,
+                'userAgent' => $request->header('User-Agent')
+            ]);
+        }
+    }
+
+    /**
+     * Register a new device to allowed list
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function registerDevice(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required|string|max:30',
+            'identifierType' => 'required|in:mac,fingerprint',
+            'remarks' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $identifier = strtolower($request->input('identifier'));
+            $remarks = $request->input('remarks') ?: 'Added on ' . now()->format('Y-m-d H:i:s');
+
+            // Create a new ConfigConst record
+            $device = new ConfigConst();
+            $device->const_group = 'ALLOW_DEVICE';
+            $device->str1 = $identifier;
+
+            // Check if the model has 'remarks' or 'note1' field
+            if (in_array('remarks', $device->getFillable())) {
+                $device->remarks = $remarks;
+            } else if (in_array('note1', $device->getFillable())) {
+                $device->note1 = $remarks;
+            }
+
+            $device->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Device registered successfully',
+                'device' => $device
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error registering device: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to register device: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check if the identifier is in the allowed list from database
      *
      * @param string|null $identifier Device identifier (MAC address or fingerprint)
      * @return bool
      */
-    private function isDeviceAllowed($identifier)
+    private function isIdentifierAllowed($identifier)
     {
         if (!$identifier) {
-            Log::warning("Device identifier could not be determined");
             return false;
         }
 
-        // Log the identifier we're checking
-        Log::info("Checking if device identifier is allowed: {$identifier}");
-
         // Check if identifier is in the ALLOW_DEVICE constant group
-        $allowedDevices = ConfigConst::where('const_group', 'ALLOW_DEVICE')
+        return ConfigConst::where('const_group', 'ALLOW_DEVICE')
             ->where(function ($query) use ($identifier) {
                 $query->where('str1', $identifier)
                     ->orWhere('str2', $identifier)
@@ -310,114 +377,5 @@ class LoginRequest extends FormRequest
                     ->orWhereRaw('LOWER(str2) = ?', [strtolower($identifier)]);
             })
             ->exists();
-
-        if (!$allowedDevices) {
-            Log::warning("Unauthorized device attempted login: {$identifier}");
-            return false;
-        }
-
-        Log::info("Device authorized successfully: {$identifier}");
-        return true;
-    }
-
-    public function authenticate()
-    {
-        $this->ensureIsNotRateLimited();
-
-        $credentials = [
-            'code' => request()->input('code'),
-            'password' => request()->input('password')
-        ];
-
-        $remember = request()->has('remember');
-
-        if (! Auth::attempt($credentials, $remember)) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'code' => trans('auth.failed'),
-            ]);
-        }
-
-        // Check if device is allowed
-        $clientIp = request()->ip();
-        $macAddress = $this->getMacAddressFromIp($clientIp);
-        // Log MAC address for debugging
-        Log::info("MAC address for client IP {$clientIp}: {$macAddress}");
-
-        // Create a browser fingerprint to supplement MAC address
-        $browserFingerprint = $this->createBrowserFingerprint(request());
-        Log::info("Browser fingerprint: {$browserFingerprint}");
-
-        // if (!$this->isDeviceAllowed($macAddress) && !$this->isDeviceAllowed($browserFingerprint)) {
-        //     Auth::logout();
-        //     request()->session()->invalidate();
-        //     request()->session()->regenerateToken();
-
-        //     throw ValidationException::withMessages([
-        //         'code' => 'Device not authorized. Please contact your administrator.',
-        //     ]);
-        // }
-
-        $salt = Str::random(40);
-        $appKey = config('app.key');
-        Session::put('session_salt', $salt . $appKey);
-
-        $configService = new ConfigService();
-        $appIds = $configService->getAppIds();
-        if (!empty($appIds)) {
-            $firstAppId = $appIds[0];
-            $firstApp = ConfigAppl::find($firstAppId);
-            if ($firstApp) {
-                Session::put('app_id', $firstApp->id);
-                Session::put('app_code', $firstApp->code);
-                Session::put('database', $firstApp->db_name);
-
-
-                $user = ConfigUser::find(Auth::id());
-
-                if ($user) {
-                    $groupCodes = $user->getGroupCodesBySessionAppCode();
-                    Session::put('group_codes', $groupCodes);
-                }
-            }
-        }
-
-        RateLimiter::clear($this->throttleKey());
-    }
-
-    /**
-     * Ensure the login request is not rate limited.
-     *
-     * @return void
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function ensureIsNotRateLimited()
-    {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
-            return;
-        }
-
-        event(new Lockout($this));
-
-        $seconds = RateLimiter::availableIn($this->throttleKey());
-
-        throw ValidationException::withMessages([
-            'code' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
-        ]);
-    }
-
-    /**
-     * Get the rate limiting throttle key for the request.
-     *
-     * @return string
-     */
-    public function throttleKey()
-    {
-        return Str::transliterate(Str::lower(request()->input('code', '')).'|'.request()->ip());
     }
 }

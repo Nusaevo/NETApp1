@@ -7,7 +7,7 @@ use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Utils\PasswordEncryptionController;
-
+use App\Http\Controllers\DeviceCheckController;
 
 use App\Http\Controllers\DropdownSearchController;
 /*
@@ -20,6 +20,11 @@ use App\Http\Controllers\DropdownSearchController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+// Device Check Routes - publicly accessible
+Route::get('/checkdevice', [DeviceCheckController::class, 'index'])->name('device.check');
+Route::get('/checkdevice/status', [DeviceCheckController::class, 'checkDevice'])->name('device.check.status');
+Route::post('/checkdevice/register', [DeviceCheckController::class, 'registerDevice'])->name('device.register');
 
 Route::middleware('auth')->group(function () {
     // Dropdown Search Route
