@@ -23,7 +23,6 @@
                                     label="{{ $this->trans('supplier') }}"
                                     model="inputs.partner_id"
                                     query="SELECT id, code, name FROM partners WHERE deleted_at IS NULL AND grp='V'"
-
                                     optionValue="id"
                                     optionLabel="code,name"
                                     placeHolder="Type to search suppliers..."

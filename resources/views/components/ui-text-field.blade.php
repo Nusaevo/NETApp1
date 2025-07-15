@@ -3,11 +3,18 @@
 
     // Parameter untuk decimal places
     $decimalPlaces = isset($decimalPlaces) ? intval($decimalPlaces) : null;
+
+    // Determine if field has label for styling purposes
+    $hasLabel = !empty($label);
+    $inputClass = $hasLabel ? 'form-control' : 'form-control form-control-sm py-2';
+
+    // Set column class with bottom margin when label is present
+    $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
 @endphp
 
-<div class="col-sm mb-5" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
+<div class="{{ $colClass }}" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
     <div class="d-flex align-items-center">
-        <div class="form-floating flex-grow-1">
+        <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1">
             @if(isset($type) && $type === 'textarea')
                 <textarea style="min-height: 80px;" wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
                           @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
@@ -15,7 +22,7 @@
                           placeholder="{{ isset($label) ? $label : '' }}"
                           @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif autocomplete="off"></textarea>
             @elseif(isset($type) && $type === 'document')
-                <input wire:model="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror"
+                <input wire:model="{{ $model }}" id="{{ $id }}" type="file" class="{{ $inputClass }} @error($model) is-invalid @enderror"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif accept=".pdf, .doc, .docx"
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
@@ -38,7 +45,7 @@
                                 });
                             }
                         }
-                    }" x-init="initBarcode()" id="{{ $id }}" type="text" class="form-control @error($model) is-invalid @enderror"
+                    }" x-init="initBarcode()" id="{{ $id }}" type="text" class="{{ $inputClass }} @error($model) is-invalid @enderror"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
@@ -69,7 +76,7 @@
                                     {{ $currency }}
                             @endswitch
                         </span>
-                        <div class="form-floating flex-grow-1">
+                        <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1">
                             <input x-data="{
                                 rawValue: @entangle($model),
                                 displayValue: '',
@@ -315,7 +322,7 @@
                             type="text"
                             inputmode="decimal"
                             id="{{ $id }}"
-                            class="form-control @error($model) is-invalid @enderror"
+                            class="{{ $inputClass }} @error($model) is-invalid @enderror"
                             @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                             @if(isset($required) && $required === 'true') required @endif
                             placeholder="{{ isset($label) ? $label : '' }}"
@@ -586,7 +593,7 @@
                         type="text"
                         inputmode="decimal"
                         id="{{ $id }}"
-                        class="form-control @error($model) is-invalid @enderror"
+                        class="{{ $inputClass }} @error($model) is-invalid @enderror"
                         @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                         @if(isset($required) && $required === 'true') required @endif
                         placeholder="{{ isset($label) ? $label : '' }}"
@@ -598,12 +605,12 @@
                         x-bind:value="displayValue">
                 @endif
             @elseif(isset($type) && $type === 'image')
-                <input wire:model="{{ $model }}" id="{{ $id }}" type="file" class="form-control @error($model) is-invalid @enderror" accept="image/*"
+                <input wire:model="{{ $model }}" id="{{ $id }}" type="file" class="{{ $inputClass }} @error($model) is-invalid @enderror" accept="image/*"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
             @else
-                <input wire:model="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="form-control @error($model) is-invalid @enderror"
+                <input wire:model="{{ $model }}" type="{{ isset($type) ? $type : 'text' }}" class="{{ $inputClass }} @error($model) is-invalid @enderror"
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"

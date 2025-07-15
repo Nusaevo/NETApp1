@@ -6,6 +6,9 @@
     // Determine enabled state externally.
     $isEnabled = isset($enabled) && ($enabled === 'always' || $enabled === 'true');
 
+    // Use standard form-select class for consistent sizing
+    $inputClass = 'form-select';
+
     // Default to session app_code if connection is not specified
     // Use 'Default' as a special value - the controller will interpret this
     // as a request to use the app_code session variable
@@ -31,8 +34,11 @@
     $hasModelParams = !empty($searchModel) && !empty($searchWhereCondition);
     $hasQueryParam = !empty($sqlQuery);
 
-
+    // Generate a unique ID for this instance to avoid conflicts
+    $uniqueId = uniqid('select2_');
 @endphp
+
+<!-- Custom styles moved to pagebase.css -->
 
 <div wire:key="{{ $id }}-dropdown-search" class="{{ $colClass }}"
     @if (isset($span)) span="{{ $span }}" @endif
@@ -41,7 +47,7 @@
     <!-- Make the container position relative so the overlay positions correctly -->
     <div class="input-group position-relative">
         <!-- This container is ignored by Livewire for select2 handling -->
-        <div wire:ignore class="{{ $containerClass }}" x-data x-init="() => {
+        <div wire:ignore class="{{ $containerClass }} position-relative" x-data x-init="() => {
                 const initSelect2 = () => {
                     const selectElement = document.getElementById('{{ $id }}');
                     if (!selectElement) {
@@ -59,6 +65,17 @@
                         placeholder: '{{ $placeHolder ?? 'Select an option' }}',
                         allowClear: true,
                         minimumInputLength: 1,
+                        width: '100%',
+                        // Use standard size Select2 that matches form-select
+                        // Show the clear button for all types
+                        templateSelection: function(data) {
+                            if (!data.id || data.id === '') {
+                                return $('<span>' + data.text + '</span>');
+                            }
+
+                            // For non-empty values, show the clear button
+                            return $('<span>' + data.text + '</span>');
+                        },
                         ajax: {
                             url: '/search-dropdown',
                             dataType: 'json',
@@ -143,6 +160,11 @@
                     // Remove duplicate event bindings
                     $(selectElement).off('select2:select');
                     $(selectElement).off('select2:clear');
+
+                    // Ensure placeholder is visible initially
+                    if (!$(selectElement).val() || $(selectElement).val() === '{{ $blankValue }}') {
+                        $(selectElement).val(null).trigger('change');
+                    }
 
                     // Bind select event
                     $(selectElement).on('select2:select', function () {
@@ -229,7 +251,7 @@
             }">
 
             <select id="{{ $id }}"
-                class="form-select responsive-input @error($model) is-invalid @enderror
+                class="{{ $inputClass }} @error($model) is-invalid @enderror
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                 wire:model="{{ $model }}"
                 data-placeholder="{{ $placeHolder ?? 'Select an option' }}"
@@ -239,7 +261,7 @@
                 data-option-label="{{ $optionLabel }}"
                 @if (!$isEnabled && ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
                 wire:loading.attr="disabled">
-                <option value="{{ $blankValue }}"></option>
+                <option value="{{ $blankValue }}" selected></option>
             </select>
 
             @if (!empty($label))
