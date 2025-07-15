@@ -5,6 +5,33 @@
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
     // Determine enabled state externally.
     $isEnabled = isset($enabled) && ($enabled === 'always' || $enabled === 'true');
+
+    // Default to session app_code if connection is not specified
+    // Use 'Default' as a special value - the controller will interpret this
+    // as a request to use the app_code session variable
+    $dbConnection = isset($connection) ? $connection : 'Default';
+
+    // Handle SQL query if provided, using component property if available
+    // Access the raw query value directly from the component property
+    $rawQuery = $query ?? '';
+
+     // Escape single quotes for HTML attributes and JavaScript
+    // Replace single quotes with encoded version to avoid issues
+    $escapedQuery = !empty($rawQuery) ? str_replace("'", "\'", (string)$rawQuery) : '';
+
+    // Force SQL query processing and ensure it's a string - must not be empty
+    $sqlQuery = !empty($rawQuery) ? (string)$rawQuery : '';
+
+    // Ensure we never have empty query in the output
+    if (empty($sqlQuery)) {
+        \Log::warning('Empty SQL query in dropdown', ['component_id' => $id]);
+    }
+
+    // Handle model-based params (backward compatibility)
+    $hasModelParams = !empty($searchModel) && !empty($searchWhereCondition);
+    $hasQueryParam = !empty($sqlQuery);
+
+
 @endphp
 
 <div wire:key="{{ $id }}-dropdown-search" class="{{ $colClass }}"
@@ -35,15 +62,57 @@
                         ajax: {
                             url: '/search-dropdown',
                             dataType: 'json',
-                            delay: 250,
-                            data: function (params) {
-                                return {
+                            delay: 250,                            data: function (params) {
+                                // Get query data directly from the data attribute
+                                // Need to decode HTML entities from the data attribute
+                                let queryValue = String($(selectElement).attr('data-query') || '');
+
+                                // Decode HTML entities in the query value
+                                try {
+                                    // Use textarea trick to properly decode HTML entities
+                                    const textarea = document.createElement('textarea');
+                                    textarea.innerHTML = queryValue;
+                                    queryValue = textarea.value;
+
+                                    console.log('Decoded query value:', queryValue);
+                                } catch (e) {
+                                    console.error('Error decoding query:', e);
+                                }
+
+                                // Log raw value for debugging
+                                console.log('Raw query value from data attribute:', queryValue);
+
+                                // Check if query is empty
+                                if (!queryValue || queryValue.trim() === '') {
+                                    console.error('QUERY IS EMPTY! Component:', selectElement.id);
+                                }
+
+                                // Only include the query parameter, not both query and sqlQuery
+                                const data = {
                                     q: params.term || '',
-                                    model: $(selectElement).data('search-model'),
-                                    where: $(selectElement).data('search-where'),
+                                    connection: $(selectElement).data('connection'),
+                                    query: queryValue, // Only use one parameter name for consistency
                                     option_value: $(selectElement).data('option-value'),
                                     option_label: $(selectElement).data('option-label'),
                                 };
+
+                                // ENHANCED DEBUGGING - check if query is properly set
+                                const hasQuery = queryValue && queryValue.trim().length > 0;
+                                if (!hasQuery) {
+                                    console.error(`ERROR: Empty query for dropdown ${selectElement.id}!`, {
+                                        'data-query': $(selectElement).attr('data-query'),
+                                        'data-connection': $(selectElement).attr('data-connection')
+                                    });
+                                }
+
+                                console.debug(`Sending dropdown params for ${selectElement.id}:`, {
+                                    queryValue: queryValue,
+                                    queryValueLength: queryValue ? queryValue.length : 0,
+                                    connection: $(selectElement).data('connection')
+                                });
+
+                                console.log('Dropdown search params:', data);
+                                return data;
                             },
                             processResults: function (data) {
                                 if (data && data.results) {
@@ -118,13 +187,31 @@
                         @this.set('{{ $model }}', blankValue);
                     });
 
-                    console.log(`Select2 initialized for #{{ $id }}`);
+                    console.log(`Select2 initialized for #{{ $id }}`, {
+                        connection: '{{ $dbConnection }}',
+                        query: document.getElementById('{{ $id }}').getAttribute('data-query'),
+                        hasQueryParam: {{ $hasQueryParam ? 'true' : 'false' }},
+                    });
 
                     // Restore existing value if present
                     const existingValue = '{{ $selectedValue ?? '' }}' || '{{ $this->$model ?? '' }}';
-                    if (existingValue && existingValue !== '{{ $blankValue }}') {
-                        // Fetch display text for existing value
-                        fetch('/search-dropdown?model={{ urlencode($searchModel) }}&option_value={{ $optionValue }}&option_label={{ $optionLabel }}&where={{ urlencode($searchWhereCondition) }}&id=' + existingValue)
+                    if (existingValue && existingValue !== '{{ $blankValue }}') {                            // Fetch display text for existing value using the correct endpoint
+                        const endpoint = '/search-dropdown';
+
+                        // Use the same query from the data attribute
+                        const queryParam = document.getElementById('{{ $id }}').getAttribute('data-query');
+
+                        // Use URLSearchParams to encode parameters properly
+                        const params = new URLSearchParams();
+                        params.append('connection', '{{ $dbConnection }}');
+                        params.append('query', queryParam);
+                        params.append('option_value', '{{ $optionValue }}');
+                        params.append('option_label', '{{ $optionLabel }}');
+                        params.append('id', existingValue);
+
+                        console.log('Fetching with params:', params.toString());
+
+                        fetch(`${endpoint}?${params.toString()}`)
                             .then(response => response.json())
                             .then(data => {
                                 if (data && data.results && data.results.length > 0) {
@@ -146,8 +233,8 @@
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                 wire:model="{{ $model }}"
                 data-placeholder="{{ $placeHolder ?? 'Select an option' }}"
-                data-search-model="{{ $searchModel }}"
-                data-search-where="{{ $searchWhereCondition }}"
+                data-connection="{{ $dbConnection }}"
+                data-query="{{ htmlspecialchars($query, ENT_QUOTES, 'UTF-8') }}"
                 data-option-value="{{ $optionValue }}"
                 data-option-label="{{ $optionLabel }}"
                 @if (!$isEnabled && ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
@@ -189,31 +276,28 @@
 </div>
 
 {{--
-Enhanced UI Dropdown Search Component with AJAX Support
+Enhanced UI Dropdown Search Component with Raw Query Support
 
 Features:
+- Uses app_code from session as default connection
+- Support for raw SQL queries
 - Real-time AJAX search with Select2
-- Multiple WHERE conditions support:
-  * AND conditions: separated by & (ampersand)
-  * OR conditions: separated by | (pipe) within AND groups
-  * Example: "status_code=A&deleted_at=null" or "status=A|status=I&type=CUSTOMER"
 - Multi-label display:
   * Separate multiple fields with comma (,)
   * Example: optionLabel="code,name" displays "ABC123 - Product Name"
-- Supports operators: =, !=, >, <, null values
 
 Example usage:
 <x-ui-dropdown-search
-    label="Search Partner"
-    model="selectedPartnerId"
-    optionValue="id"
-    optionLabel="code,name,address"
-    searchModel="App\Models\TrdTire1\Master\Partner"
-    searchWhereCondition="status_code=A&deleted_at=null&type=SUPPLIER|type=CUSTOMER"
-    placeHolder="Type to search partners..."
-    selectedValue="123"
-    type="int"
+    label="Search Brand"
+    model="selectedBrandId"
+    optionValue="str1"
+    optionLabel="str2"
+    query="SELECT str1, str2 FROM config_const WHERE const_group='MMATL_BRAND' AND deleted_at IS NULL"
+    connection="Default"
+    placeHolder="Type to search brands..."
+    selectedValue="BRAND001"
+    type="string"
     required="false"
-    onChanged="onPartnerSelected"
+    onChanged="onBrandSelected"
 />
 --}}

@@ -61,7 +61,7 @@
                                             required="false" enabled="false" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}"
+                                        <x-ui-dropdown-select label="{{ $this->trans('Pajak') }}"
                                             model="inputs.tax_code" :options="$SOTax" required="true"
                                             :action="$actionValue" onChanged="onSOTaxChange" />
                                         <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
@@ -158,6 +158,8 @@
                                     enabled="false" type="text" :value="$total_tax" />
                                 <x-ui-text-field model="total_amount" label="Total Amount" :action="$actionValue"
                                     enabled="false" type="text" :value="$total_amount" />
+                                <x-ui-text-field model="inputs.print_remarks" label="Revision" :action="$actionValue"
+                                    enabled="false" type="text" :value="$inputs['print_remarks']" />
                             </div>
                         </x-ui-padding>
                     </x-ui-card>
@@ -186,24 +188,18 @@
                             cssClass="btn-primary" iconPath="save.svg" :enabled="true" />
                     </x-ui-footer>
                 </div>
-                {{-- <x-ui-footer>
-                    <div>
-                        <x-ui-button :action="$actionValue"
-                            clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                                'action' => encryptWithSessionKey('Edit'),
-                                'objectId' => encryptWithSessionKey($object->id),
-                            ]) }}"
-                            cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
-                            iconPath="print.svg" />
-                        <x-ui-button :action="$actionValue"
-                            clickEvent="{{ route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
-                                'action' => encryptWithSessionKey('Edit'),
-                                'objectId' => encryptWithSessionKey($object->id),
-                            ]) }}"
-                            cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
-                            iconPath="print.svg" />
-                    </div>
-                </x-ui-footer> --}}
+
         </x-ui-tab-view-content>
     </x-ui-page-card>
 </div>
+
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('printCounterUpdated', (newValue) => {
+            const revisionField = document.querySelector('[wire\\:model="inputs.print_remarks"]');
+            if (revisionField) {
+                revisionField.value = newValue;
+            }
+        });
+    });
+</script>

@@ -25,6 +25,18 @@ class PrintPdf extends BaseComponent
         }
     }
 
+    /**
+     * Update print counter untuk surat jalan
+     */
+    public function updateDeliveryPrintCounter()
+    {
+        if ($this->object) {
+            $newVersion = OrderHdr::updateDeliveryPrintCounterStatic($this->object->id);
+            $this->dispatch('success', 'Print counter surat jalan berhasil diupdate: ' . $newVersion);
+            $this->dispatch('refreshData');
+        }
+    }
+
     protected function onLoadForEdit()
     {
     }

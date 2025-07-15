@@ -49,11 +49,13 @@ class OrderHdr extends BaseModel
         'npwp_code',
         'total_amt',
         'total_amt_tax',
-        'reff_code'
+        'reff_code',
+        'print_remarks'
     ];
 
     protected $casts = [
         'tax_doc_flag' => 'boolean',
+        'print_remarks' => 'array',
     ];
 
     protected static function boot()
@@ -65,6 +67,8 @@ class OrderHdr extends BaseModel
         //     $orderHdr->deleteDeliveryAndBilling();
         //     $orderHdr->deleteOrderDetails();
         // });
+
+
     }
 
     #region Relasi
@@ -311,5 +315,98 @@ class OrderHdr extends BaseModel
         $matlCodes = $this->OrderDtl()->pluck('matl_code')->toArray();
         return implode(', ', $matlCodes);
     }
+
+            /**
+     * Update print counter untuk nota jual
+     */
+    public function updatePrintCounter()
+    {
+        $currentData = $this->getPrintCounterData();
+        $currentData['nota']++;
+        $this->print_remarks = $currentData;
+        $this->save();
+        return $this->getDisplayFormat();
+    }
+
+    /**
+     * Update print counter untuk surat jalan
+     */
+    public function updateDeliveryPrintCounter()
+    {
+        $currentData = $this->getPrintCounterData();
+        $currentData['surat_jalan']++;
+        $this->print_remarks = $currentData;
+        $this->save();
+        return $this->getDisplayFormat();
+    }
+
+    /**
+     * Ambil data counter dalam format array
+     */
+    private function getPrintCounterData()
+    {
+        if (empty($this->print_remarks)) {
+            return ['nota' => 0, 'surat_jalan' => 0];
+        }
+
+        if (is_array($this->print_remarks) && isset($this->print_remarks['nota']) && isset($this->print_remarks['surat_jalan'])) {
+            return $this->print_remarks;
+        }
+
+        // Fallback: parse format lama (1.0, 1.1, dst)
+        if (is_string($this->print_remarks) && strpos($this->print_remarks, '.') !== false) {
+            $parts = explode('.', $this->print_remarks);
+            if (count($parts) >= 2) {
+                return [
+                    'nota' => (int)$parts[0],
+                    'surat_jalan' => (int)$parts[1]
+                ];
+            }
+        }
+
+        return ['nota' => 0, 'surat_jalan' => 0];
+    }
+
+    /**
+     * Ambil format tampilan (1.1, 2.1, dst)
+     */
+    public function getDisplayFormat()
+    {
+        $data = $this->getPrintCounterData();
+        return $data['nota'] . '.' . $data['surat_jalan'];
+    }
+
+    /**
+     * Ambil data counter lengkap
+     */
+    public function getPrintCounterArray()
+    {
+        return $this->getPrintCounterData();
+    }
     #endregion
+
+    /**
+     * Update print counter untuk nota jual (static method)
+     */
+    public static function updatePrintCounterStatic($orderId)
+    {
+        $orderHdr = self::find($orderId);
+        if ($orderHdr) {
+            return $orderHdr->updatePrintCounter();
+        }
+        return '0.0';
+    }
+
+    /**
+     * Update print counter untuk surat jalan (static method)
+     */
+    public static function updateDeliveryPrintCounterStatic($orderId)
+    {
+        $orderHdr = self::find($orderId);
+        if ($orderHdr) {
+            return $orderHdr->updateDeliveryPrintCounter();
+        }
+        return '0.0';
+    }
 }
+

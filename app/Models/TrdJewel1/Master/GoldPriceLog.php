@@ -46,9 +46,10 @@ class GoldPriceLog extends BaseModel
             return null;
         }
 
-        $baseCurrency = toNumberFormatter($baseCurrency);
-        $currentRate = toNumberFormatter($currentRate);
+        // $baseCurrency = toNumberFormatter($baseCurrency);
+        // $currentRate = toNumberFormatter($currentRate);
 
-        return numberFormat($baseCurrency / $currentRate, 2);
+        //return numberFormat($baseCurrency / $currentRate, 2);
+        return $baseCurrency / $currentRate;
     }
 }

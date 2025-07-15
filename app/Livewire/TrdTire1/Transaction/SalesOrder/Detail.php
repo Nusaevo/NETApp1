@@ -36,7 +36,6 @@ class Detail extends BaseComponent
     public $total_dpp = 0;
     public $total_discount = 0;
     public $trType = "SO";
-    public $versionNumber = "0.0";
     public $matl_action = 'Create';
     public $matl_objectId = null;
     public $currency = [];
@@ -44,8 +43,6 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     public $npwpOptions = [];
     public $shipOptions = [];
-    public $notaCount = 0;
-    public $suratJalanCount = 0;
     public $isPanelEnabled = "false";
     public $payer = "true";
     public $isDeliv = false; // True jika ada delivery pada salah satu detail
@@ -70,6 +67,7 @@ class Detail extends BaseComponent
         'delete'        => 'delete',
         'updateAmount'  => 'updateAmount',
         'onSalesTypeChanged' => 'onSalesTypeChanged', // tambahkan listener baru
+        'refreshData'   => 'refreshData',
     ];
 
     /*
@@ -258,6 +256,7 @@ class Detail extends BaseComponent
             $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
             $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr;
             $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
+            $this->inputs['print_remarks'] = $this->object->getDisplayFormat();
             // Hitung due_date berdasarkan tr_date dan payment_due_days
             $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
             $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
@@ -275,6 +274,7 @@ class Detail extends BaseComponent
             $this->isPanelEnabled = "true";
             $this->inputs['tax_doc_flag'] = true;
             $this->inputs['tax_code'] = 'I';
+            $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
         }
         if (!empty($this->inputs['tax_code'])) {
             $this->onSOTaxChange();
@@ -298,6 +298,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['wh_code']   = 18;
         $this->inputs['partner_id']= 0;
+        $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
     }
 
     /**
@@ -560,6 +561,8 @@ class Detail extends BaseComponent
             $headerData[$key] = $headerData[$key] ?? $value;
         }
 
+
+
         // Fallback untuk partner_code
         if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
             $partner = Partner::find($headerData['partner_id']);
@@ -725,6 +728,11 @@ class Detail extends BaseComponent
                 throw new Exception(__('Data header tidak ditemukan'));
             }
 
+            // Pastikan orderService sudah diinisialisasi
+            if (!$this->orderService) {
+                $this->orderService = app(OrderService::class);
+            }
+
             $this->orderService->delOrder($this->object->id);
             $this->dispatch('success', __('Data berhasil terhapus'));
 
@@ -737,33 +745,7 @@ class Detail extends BaseComponent
     /*
      * Cetak invoice dan surat jalan.
      */
-    public function printInvoice()
-    {
-        try {
-            $this->notaCount++;
-            $this->versionNumber = "{$this->notaCount}.{$this->suratJalanCount}";
-            return redirect()->route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                'action'   => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
-            ]);
-        } catch (Exception $e) {
-            $this->dispatch('error', $e->getMessage());
-        }
-    }
 
-    public function printDelivery()
-    {
-        try {
-            $this->suratJalanCount++;
-            $this->versionNumber = "{$this->notaCount}.{$this->suratJalanCount}";
-            return redirect()->route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
-                'action'   => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
-            ]);
-        } catch (Exception $e) {
-            $this->dispatch('error', $e->getMessage());
-        }
-    }
 
     /*
      * Metode tambahan untuk pencarian dan pemilihan partner (supplier/customer)
@@ -910,6 +892,18 @@ class Detail extends BaseComponent
             } else {
                 $this->input_details[$key]['has_delivery'] = false;
             }
+        }
+    }
+
+        /**
+     * Refresh data setelah print counter diupdate
+     */
+    public function refreshData()
+    {
+        if ($this->object && $this->object->id) {
+            $this->object->refresh();
+            $this->inputs['print_remarks'] = $this->object->getDisplayFormat();
+            $this->dispatch('printCounterUpdated', $this->inputs['print_remarks']);
         }
     }
 

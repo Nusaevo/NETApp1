@@ -150,7 +150,10 @@
 
     <script>
         function printInvoice() {
-            window.print();
+            @this.updateDeliveryPrintCounter();
+            setTimeout(function() {
+                window.print();
+            }, 1000);
         }
     </script>
 </div>

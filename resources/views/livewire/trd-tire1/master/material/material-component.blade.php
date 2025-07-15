@@ -158,9 +158,11 @@
                         <x-ui-card title="Associations">
                             <x-ui-padding>
                                 <x-ui-text-field label="{{ $this->trans('stock') }}" model="matl_uoms.qty_oh"
-                                    type="text" :action="$actionValue" required="false" enabled="false" :value="$matl_uoms['qty_oh']" />
+                                    type="text" :action="$actionValue" required="false" enabled="false"
+                                    :value="$matl_uoms['qty_oh']" />
                                 <x-ui-text-field label="{{ $this->trans('reserved') }}" model="matl_uoms.qty_fgi"
-                                    type="text" :action="$actionValue" required="false" enabled="false" :value="$matl_uoms['qty_fgi']" />
+                                    type="text" :action="$actionValue" required="false" enabled="false"
+                                    :value="$matl_uoms['qty_fgi']" />
                             </x-ui-padding>
                         </x-ui-card>
                         <x-ui-card title="Tagging">
@@ -177,7 +179,21 @@
         </x-ui-tab-view-content>
 
         <x-ui-footer>
-            @include('layout.customs.buttons.save')
+            @if (
+                $actionValue !== 'Create' &&
+                    (!$object instanceof App\Models\SysConfig1\ConfigUser || auth()->user()->id !== $object->id))
+                @if (isset($permissions['delete']) && $permissions['delete'])
+                    <div style="padding-right: 10px;">
+                        @include('layout.customs.buttons.disable')
+                    </div>
+                @endif
+            @endif
+            <div>
+                @include('layout.customs.buttons.save')
+            </div>
         </x-ui-footer>
+        {{-- <x-ui-footer>
+            @include('layout.customs.buttons.save')
+        </x-ui-footer> --}}
     </x-ui-page-card>
 </div>

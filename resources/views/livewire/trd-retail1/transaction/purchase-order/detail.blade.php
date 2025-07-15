@@ -22,8 +22,8 @@
                                 <x-ui-dropdown-search
                                     label="{{ $this->trans('supplier') }}"
                                     model="inputs.partner_id"
-                                    searchModel="App\Models\TrdRetail1\Master\Partner"
-                                    searchWhereCondition="deleted_at=null&grp=V"
+                                    query="SELECT id, code, name FROM partners WHERE deleted_at IS NULL AND grp='V'"
+
                                     optionValue="id"
                                     optionLabel="code,name"
                                     placeHolder="Type to search suppliers..."
@@ -66,8 +66,8 @@
                                                     <td>
                                                         <x-ui-dropdown-search
                                                             model="input_details.{{ $key }}.matl_id"
-                                                            searchModel="App\Models\TrdRetail1\Master\Material"
-                                                            searchWhereCondition="status_code=A&deleted_at=null"
+                                                            query="SELECT id, code, name FROM material WHERE status_code='A' AND deleted_at IS NULL"
+
                                                             optionValue="id"
                                                             optionLabel="code,name"
                                                             placeHolder="Search materials..."
@@ -138,8 +138,8 @@
                                                 <x-ui-dropdown-search
                                                     label="Category"
                                                     model="filterCategory"
-                                                     searchModel="App\Models\SysConfig1\ConfigConst"
-                                                    searchWhereCondition="const_group=MMATL_CATEGL1&deleted_at=null"
+                                                    query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_CATEGL1' AND deleted_at IS NULL"
+
                                                     optionValue="str1"
                                                     optionLabel="str2"
                                                     placeHolder="Select category..."
@@ -149,8 +149,8 @@
                                                 <x-ui-dropdown-search
                                                     label="Brand"
                                                     model="filterBrand"
-                                                    searchModel="App\Models\SysConfig1\ConfigConst"
-                                                    searchWhereCondition="const_group=MMATL_BRAND&deleted_at=null"
+                                                    query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_BRAND' AND deleted_at IS NULL"
+
                                                     optionValue="str1"
                                                     optionLabel="str2"
                                                     placeHolder="Select brand..."
@@ -158,8 +158,8 @@
                                                 <x-ui-dropdown-search
                                                     label="Type"
                                                     model="filterType"
-                                                    searchModel="App\Models\SysConfig1\ConfigConst"
-                                                    searchWhereCondition="const_group=MMATL_TYPE&deleted_at=null"
+                                                    query="SELECT str1, str2 FROM config_const WHERE const_group='MMATL_TYPE' AND deleted_at IS NULL"
+
                                                     optionValue="str1"
                                                     optionLabel="str2"
                                                     placeHolder="Select type..."

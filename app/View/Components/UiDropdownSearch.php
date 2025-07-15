@@ -14,6 +14,8 @@ class UIDropdownSearch extends UiBaseComponent
     public $searchWhereCondition;   // Kondisi tambahan (WHERE)
     public $optionValue;            // Field yang dijadikan value (misal: 'id')
     public $optionLabel;            // Field yang dijadikan label (misal: 'name')
+    public $connection;             // Database connection (default: 'Default' - akan menggunakan session app_code)
+    public $query;                  // Raw SQL query untuk pencarian data
 
     /**
      * Create a new UiDropdownSearch component instance.
@@ -38,6 +40,9 @@ class UIDropdownSearch extends UiBaseComponent
      * @param string $optionValue    Field untuk value
      * @param string $optionLabel    Field untuk label. Multiple fields separated by comma
      *                              Example: "code,name" will display "ABC123 - Product Name"
+     * @param string $connection     Database connection name. Use 'Default' to use session app_code
+     * @param string $query          Raw SQL query untuk pencarian data.
+     *                              Example: "SELECT id, code, name FROM partner WHERE deleted_at IS NULL"
      */
     public function __construct(
         $label = '',
@@ -57,7 +62,9 @@ class UIDropdownSearch extends UiBaseComponent
         $searchModel = '',
         $searchWhereCondition = '',
         $optionValue = 'id',
-        $optionLabel = 'name'
+        $optionLabel = 'name',
+        $connection = 'Default',
+        $query = ''
     ) {
         // Panggil parent untuk inisiasi umum
         parent::__construct(
@@ -82,6 +89,8 @@ class UIDropdownSearch extends UiBaseComponent
         $this->searchWhereCondition  = $searchWhereCondition;
         $this->optionValue           = $optionValue;
         $this->optionLabel           = $optionLabel;
+        $this->connection            = $connection;
+        $this->query                 = $query;
     }
 
     /**
@@ -91,7 +100,38 @@ class UIDropdownSearch extends UiBaseComponent
      */
     public function render()
     {
-        // Kita pakai route('partner.search') secara hard-coded (statis) di Blade
+        // Check if query is empty
+        if (empty($this->query)) {
+            \Log::warning('UiDropdownSearch has empty query', [
+                'component' => $this->model,
+                'connection' => $this->connection,
+                'selectedValue' => $this->selectedValue
+            ]);
+        }
+
+        // Log query data with more detail for debugging
+        \Log::debug('UiDropdownSearch component render', [
+            'component' => $this->model,
+            'query' => $this->query,
+            'query_length' => strlen($this->query ?? ''),
+            'query_type' => gettype($this->query),
+            'hasQuery' => !empty($this->query),
+            'connection' => $this->connection
+        ]);
+
+        // Untuk backward compatibility:
+        // Jika menggunakan format lama (model-based) tapi juga menyediakan query,
+        // prioritaskan query (format baru)
+
+        // Untuk kasus konversi otomatis model ke query jika keduanya diberikan
+        if (!empty($this->searchModel) && empty($this->query)) {
+            // Tampilkan peringatan jika masih menggunakan format lama tanpa query
+            \Log::warning('UiDropdownSearch using deprecated model-based format', [
+                'model' => $this->searchModel,
+                'component' => $this->model
+            ]);
+        }
+
         return view('components.ui-dropdown-search');
     }
 }

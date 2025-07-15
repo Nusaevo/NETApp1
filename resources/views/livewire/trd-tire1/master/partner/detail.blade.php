@@ -98,7 +98,6 @@
                                         @include('layout.customs.buttons.disable')
                                     </div>
                                 @endif
-
                             @endif
                             <div>
                                 @include('layout.customs.buttons.save')

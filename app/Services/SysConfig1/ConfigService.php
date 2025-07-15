@@ -110,4 +110,16 @@ class ConfigService extends BaseService
 
         return $configConst->id ?? 0;
     }
+
+    /**
+     * Helper: Dapatkan category material dari ConfigConst berdasarkan sales_type
+     */
+    public function getCategoryBySalesType($salesType)
+    {
+        $config = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+            ->where('str1', $salesType)
+            ->get();
+            // dd($config, $salesType);
+        return $config ? $config->str2 : null;
+    }
 }

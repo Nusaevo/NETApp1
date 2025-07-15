@@ -25,6 +25,18 @@ class PrintPdf extends BaseComponent
         }
     }
 
+    /**
+     * Update print counter untuk nota jual
+     */
+    public function updatePrintCounter()
+    {
+        if ($this->object) {
+            $newVersion = OrderHdr::updatePrintCounterStatic($this->object->id);
+            $this->dispatch('success', 'Print counter berhasil diupdate: ' . $newVersion);
+            $this->dispatch('refreshData');
+        }
+    }
+
     protected function onLoadForEdit()
     {
     }
