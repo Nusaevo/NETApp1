@@ -66,7 +66,7 @@
                                                     <td>
                                                         <x-ui-dropdown-search
                                                             model="input_details.{{ $key }}.matl_id"
-                                                            query="SELECT id, code, name FROM material WHERE status_code='A' AND deleted_at IS NULL"
+                                                            query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"
 
                                                             optionValue="id"
                                                             optionLabel="code,name"
