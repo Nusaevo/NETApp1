@@ -312,6 +312,7 @@ class LoginRequest extends FormRequest
         // Check if device is allowed
         $clientIp = request()->ip();
         $macAddress = $this->getMacAddressFromIp($clientIp);
+        dd($macAddress); // Debugging line to check MAC address
         // Log MAC address for debugging
         Log::info("MAC address for client IP {$clientIp}: {$macAddress}");
 

@@ -26,7 +26,6 @@ class CheckAllowedDevice
             // Get MAC address using IP (this is a simplified approach since getting the actual MAC address
             // from a web request is technically challenging and often not reliable)
             $macAddress = $this->getMacAddressFromIp($clientIp);
-
             // Check if the MAC address is in the allowed devices list
             $isAllowed = $this->isDeviceAllowed($macAddress);
 
