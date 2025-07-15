@@ -8,6 +8,9 @@
     $hasLabel = !empty($label);
     $inputClass = $hasLabel ? 'form-control' : 'form-control form-control-sm py-2';
 
+    // Set textarea class with appropriate styling
+    $textareaClass = $hasLabel ? 'form-control form-control-lg' : 'form-control form-control-lg mb-5';
+
     // Set column class with bottom margin when label is present
     $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
 @endphp
@@ -16,7 +19,7 @@
     <div class="d-flex align-items-center">
         <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1">
             @if(isset($type) && $type === 'textarea')
-                <textarea style="min-height: 80px;" wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="form-control form-control-lg @error($model) is-invalid @enderror"
+                <textarea style="min-height: 80px;" wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="{{ $textareaClass }} @error($model) is-invalid @enderror"
                           @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                           @if(isset($required) && $required === 'true') required @endif
                           placeholder="{{ isset($label) ? $label : '' }}"
