@@ -38,7 +38,7 @@
                                 <div class="row">
                                     <x-ui-dropdown-search label="{{ $this->trans('supplier') }}"
                                         model="inputs.partner_id"
-                                        query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'V'"
+                                        query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
                                         optionValue="id" optionLabel="code,name,address,city"
                                         placeHolder="Type to search suppliers..." :selectedValue="$inputs['partner_id']" required="true"
                                         :action="$actionValue" :enabled="$isPanelEnabled" type="int" />
