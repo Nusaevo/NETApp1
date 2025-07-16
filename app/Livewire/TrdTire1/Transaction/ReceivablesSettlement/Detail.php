@@ -270,19 +270,26 @@ class Detail extends BaseComponent
 
             // Hitung ulang total pembayaran dan total nota
             $this->totalPaymentAmount = 0;
+            $totalFromPayments = 0;
             foreach ($this->input_payments as $payment) {
                 $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
-                $this->totalPaymentAmount += is_numeric($amtValue) ? (float)$amtValue : 0;
+                $totalFromPayments += is_numeric($amtValue) ? (float)$amtValue : 0;
             }
+            $totalAdvanceUsed = 0.0;
+            foreach ($this->input_advance as $advance) {
+                $totalAdvanceUsed += is_numeric($advance['amt']) ? (float)$advance['amt'] : 0.0;
+            }
+            $this->totalPaymentAmount = $totalAdvanceUsed + $totalFromPayments;
+
             $this->totalNotaAmount = 0;
             foreach ($this->input_details as $detail) {
                 $this->totalNotaAmount += is_numeric($detail['amt']) ? (float)$detail['amt'] : 0;
             }
-            // Ambil lebih bayar dari PaymentAdv
-            $paymentAdv = PaymentAdv::where('trhdr_id', $this->objectIdValue)->first();
-            $this->advanceBalance = $paymentAdv ? $paymentAdv->amt : 0;
-
-
+            // Jangan ambil advanceBalance dari PaymentAdv, tapi hitung dari selisih total pembayaran dan total nota
+            $this->advanceBalance = round($this->totalPaymentAmount - $this->totalNotaAmount, 2);
+            if (abs($this->advanceBalance) < 0.01) {
+                $this->advanceBalance = 0;
+            }
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
@@ -317,6 +324,20 @@ class Detail extends BaseComponent
             })
             ->toArray();
 
+        // Pastikan advanceOptions juga mengandung partnerbal_id yang sudah pernah dipakai (input_advance)
+        $existingAdvanceIds = array_column($this->advanceOptions, 'value');
+        foreach ($this->input_advance as $adv) {
+            if (!in_array($adv['partnerbal_id'], $existingAdvanceIds) && !empty($adv['partnerbal_id'])) {
+                $partnerBal = PartnerBal::find($adv['partnerbal_id']);
+                $reffCode = $partnerBal ? $partnerBal->reff_code : ('ID ' . $adv['partnerbal_id']);
+                $this->advanceOptions[] = [
+                    'label' => $reffCode,
+                    'value' => $adv['partnerbal_id'],
+                    'amt_adv' => $adv['amtAdvBal'],
+                ];
+            }
+        }
+
         // Inisialisasi input_advance jika belum ada
         if (!isset($this->input_advance) || !is_array($this->input_advance)) {
             $this->input_advance = [];
@@ -345,8 +366,7 @@ class Detail extends BaseComponent
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
             }
 
-            unset($this->input_details[$index]);
-            $this->input_details = array_values($this->input_details);
+            array_splice($this->input_details, $index, 1);
 
             $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
@@ -674,13 +694,42 @@ class Detail extends BaseComponent
             // Load advance (lebih bayar) yang sudah pernah digunakan
             $advances = PaymentAdv::where('trhdr_id', $this->object->id)->get();
             $this->input_advance = [];
+            // Hanya tampilkan PaymentAdv yang hasil pemakaian advance (bukan overpayment)
             foreach ($advances as $adv) {
-                $this->input_advance[] = [
-                    'partnerbal_id' => $adv->partnerbal_id,
-                    'partner_code' => $adv->partner_code ?? '',
-                    'amtAdvBal' => abs($adv->amt),
-                    'amt' => abs($adv->amt),
-                ];
+                if (!empty($adv->partnerbal_id) && $adv->reff_id != $adv->trhdr_id) {
+                    $this->input_advance[] = [
+                        'partnerbal_id' => $adv->partnerbal_id,
+                        'partner_code' => $adv->partner_code ?? '',
+                        'amtAdvBal' => abs($adv->amt),
+                        'amt' => abs($adv->amt),
+                    ];
+                }
+            }
+
+            // Perbaiki perhitungan advanceBalance:
+            // Setelah save (edit mode), advanceBalance harus 0 jika seluruh advance sudah digunakan (sudah masuk ke total pembayaran)
+            $this->advanceBalance = round($this->totalPaymentAmount - $this->totalNotaAmount, 2);
+            if ($this->isEditOrView()) {
+                // Jika total pembayaran (termasuk advance) sudah sama dengan total nota, lebih bayar = 0
+                if (abs($this->totalPaymentAmount - $this->totalNotaAmount) < 0.01) {
+                    $this->advanceBalance = 0;
+                } else {
+                    // Jika masih ada sisa advance (misal, advance > total nota), tampilkan sisa lebih bayar
+                    // Namun, jika advance sudah dipakai semua, advanceBalance tetap 0
+                    // (advanceBalance tidak boleh menampilkan amt advance yang sudah dipakai)
+                    if (empty($this->input_advance) || array_sum(array_column($this->input_advance, 'amt')) == 0) {
+                        $this->advanceBalance = 0;
+                    }
+                }
+                // Hilangkan sisa kecil akibat pembulatan
+                if (abs($this->advanceBalance) < 0.01) {
+                    $this->advanceBalance = 0;
+                }
+            } else {
+                // Mode create: advanceBalance = sisa advance jika ada, atau selisih pembayaran-nota
+                if (abs($this->advanceBalance) < 0.01) {
+                    $this->advanceBalance = 0;
+                }
             }
         }
     }
@@ -1056,18 +1105,16 @@ class Detail extends BaseComponent
                     })->toArray();
             }
 
-            // Populate advance items sesuai partner yang dipilih (hanya untuk Create mode)
+            // Pada mode Create, populate advance dari PartnerBal jika ada (hanya saat partner dipilih)
             if (!$this->isEditOrView()) {
                 $this->input_advance = [];
                 $partnerAdvances = PartnerBal::where('partner_id', $partner->id)
                     ->where('amt_adv', '!=', 0)
                     ->get();
-
                 foreach ($partnerAdvances as $partnerBal) {
                     $this->input_advance[] = [
                         'partnerbal_id' => $partnerBal->id,
                         'partner_code' => $partnerBal->partner_code,
-                        // Pastikan amtAdvBal integer tanpa desimal
                         'amtAdvBal' => (int)round($partnerBal->amt_adv),
                         'amt' => 0,
                     ];

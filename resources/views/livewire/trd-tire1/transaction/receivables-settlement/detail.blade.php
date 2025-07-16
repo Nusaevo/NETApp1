@@ -60,6 +60,7 @@
                                             model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue"
                                             enabled="true"
                                             onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
+                                            {{-- @dump($advance) --}}
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_advance.{{ $key }}.amtAdvBal"
@@ -148,7 +149,7 @@
                         <!-- Define table rows -->
                         <x-slot name="rows">
                             @foreach ($input_details as $key => $input_detail)
-                                <tr wire:key="list{{ $input_detail['billhdr_id'] ?? $key }}">
+                                <tr wire:key="detail-{{ $input_detail['billhdr_id'] ?? $key }}">
                                     <td style="text-align: center;">{{ $loop->iteration }}</td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
@@ -160,7 +161,7 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.outstanding_amt"
-                                            label="" :action="$actionValue" enabled="false" type="number" value="{{ (int) $input_detail['outstanding_amt'] }}"/>
+                                            label="" :action="$actionValue" enabled="false" type="number"/>
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label=""

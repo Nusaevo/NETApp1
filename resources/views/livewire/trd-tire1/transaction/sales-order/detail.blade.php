@@ -36,7 +36,7 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-search label="Supplier" model="inputs.partner_id"
-                                            query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
+                                            query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'V'"
                                             optionValue="id" optionLabel="code,name,address,city"
                                             placeHolder="Type to search supplier..." :selectedValue="$inputs['partner_id']" required="true"
                                             :action="$actionValue" :enabled="$isPanelEnabled" type="int"
