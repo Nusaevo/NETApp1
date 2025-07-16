@@ -194,7 +194,7 @@ class IndexDataTable extends BaseDataTableComponent
                 ->toArray();
 
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
-            $this->dispatch('submitDeliveryDate');
+            // $this->dispatch('submitDeliveryDate');
         }
     }
 
@@ -232,8 +232,7 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Redirect to print view
             return redirect()->route('TrdTire1.Transaction.SalesBilling.PrintPdf', [
-                // 'orderIds' => encryptWithSessionKey($selectedOrderIds),
-                'action' => encryptWithSessionKey('Print'),
+                'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey(json_encode($selectedOrderIds)),
             ]);
         }

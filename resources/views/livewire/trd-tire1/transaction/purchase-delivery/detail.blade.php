@@ -66,8 +66,7 @@
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
                                                 <x-ui-dropdown-search model="input_details.{{ $key }}.matl_id"
-                                                    searchModel="App\Models\TrdTire1\Master\Material"
-                                                    searchWhereCondition="status_code=A&deleted_at=null"
+                                                    query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"
                                                     optionValue="id" optionLabel="code,name"
                                                     placeHolder="Search materials..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                     :action="$actionValue" enabled="true"

@@ -205,7 +205,7 @@ class IndexDataTable extends BaseDataTableComponent
             OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
 
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
-            $this->dispatch('submitDeliveryDate');
+            // $this->dispatch('submitDeliveryDate'); // Dihapus agar tidak auto-submit
 
         }
     }

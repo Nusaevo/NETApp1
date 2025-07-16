@@ -2,11 +2,12 @@
 
 namespace App\Services\TrdTire1;
 
-use App\Models\TrdTire1\Inventories\{IvtLog, IvtBal};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl};
-use App\Models\TrdTire1\Master\{MatlUom};
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\DB;
+use App\Models\TrdTire1\Master\{MatlUom};
+use App\Models\TrdTire1\Inventories\IvttrHdr;
+use App\Models\TrdTire1\Inventories\{IvtLog, IvtBal, IvttrDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr};
 
 class InventoryService
 {
@@ -14,6 +15,14 @@ class InventoryService
 
     public function addReservation(string $mode, array $headerData, array $detailData)
     {
+        // dd([
+        //     'mode' => $mode,
+        //     'qty' => $detailData['qty'] ?? null,
+        //     'matl_id' => $detailData['matl_id'] ?? null,
+        //     'tr_type' => $headerData['tr_type'] ?? null,
+        //     'called_from' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? null,
+        // ]);
+
         // Hitung price dan amount
         $price = 0;
         $trAmt = 0;
@@ -41,24 +50,16 @@ class InventoryService
         }
 
         // Buat atau update IvtBal untuk order (hanya berdasarkan matl_id)
-        $ivtBal = IvtBal::where([
+        $ivtBal = IvtBal::updateOrCreate([
             'matl_id' => $detailData['matl_id'],
+            'matl_uom' => $detailData['matl_uom'],
             'wh_id' => 0,
             'batch_code' => ''
-        ])->first();
+        ], [
+            'matl_code' => $detailData['matl_code'] ?? ''
+            // qty_oh, qty_fgr, qty_fgi tidak di-set di sini agar tidak overwrite
+        ]);
 
-        if (!$ivtBal) {
-            $ivtBal = new IvtBal([
-                'matl_id' => $detailData['matl_id'],
-                'matl_code' => $detailData['matl_code'] ?? '',
-                'matl_uom' => $detailData['matl_uom'] ?? '',
-                'wh_id' => 0,
-                'batch_code' => '',
-                'qty_oh' => 0,
-                'qty_fgr' => 0,
-                'qty_fgi' => 0
-            ]);
-        }
 
         // dibungkus mode + dan -
         if ($headerData) {
@@ -73,10 +74,10 @@ class InventoryService
                 }
             } else if ($mode === '-') {
                 switch ($headerData['tr_type']) {
-                    case 'SO': // Sales Order: Tambah FGI
+                    case 'SO': // Sales Order: Kurangi FGI
                         $ivtBal->qty_fgi = ($ivtBal->qty_fgi ?? 0) - ($detailData['qty']);
                         break;
-                    case 'PO': // Purchase Order: Tambah FGR
+                    case 'PO': // Purchase Order: Kurangi FGR
                         $ivtBal->qty_fgr = ($ivtBal->qty_fgr ?? 0) - ($detailData['qty']);
                         break;
                 }
@@ -131,118 +132,230 @@ class InventoryService
     }
 
 
-    public function addOnhand(array $headerData, DelivDtl $detailData): void
+    public function addOnhand(array $headerData, array $detailData): int
     {
-        // Update ivtBal untuk delivery (berdasarkan matl_id, wh_id, dan batch_code)
-        $ivtBal = IvtBal::where([
-            'matl_id' => $detailData->matl_id,
-            'wh_id' => $detailData->wh_id,
-            'batch_code' => $detailData->batch_code,
-        ])->first();
+        $price = 0;
+        $amt = 0;
+        $qty = 0;
+        $trDesc = '';
+        if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD') {
+            $orderHdr = OrderHdr::find($detailData['reffhdr_id']);
+            if (!$orderHdr) {
+                throw new Exception('Order header not found for reffhdr_id: ' . $detailData['reffhdr_id']);
+            }
+            $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
+            if (!$orderDtl) {
+                throw new Exception('Order detail not found for reffdtl_id: ' . $detailData['reffdtl_id']);
+            }
+            $price = $orderDtl->price * (1 - ($orderDtl->discPct / 100));
+            if ($orderHdr->tax_code === 'I') {
+                $price = $price / (1 + ($orderHdr->tax_pct / 100));
+            }
 
-        if (!$ivtBal) {
-            $ivtBal = new IvtBal([
-                'matl_id' => $detailData->matl_id,
-                'matl_code' => $detailData->matl_code,
-                'wh_code' => $detailData->wh_code,
-                'wh_id' => $detailData->wh_id,
-                'matl_uom' => $detailData->matl_uom,
-                'batch_code' => $detailData->batch_code,
-                'qty_oh' => 0,
-                'qty_fgr' => 0,
-                'qty_fgi' => 0
-            ]);
         }
 
         switch ($headerData['tr_type']) {
             case 'PD': // Purchase Delivery: Tambah OH, Kurangi FGR
-                $ivtBal->qty_oh = ($ivtBal->qty_oh ?? 0) + ($detailData->qty);
-                $trQty = $detailData->qty;
+                $qty = $detailData['qty'];
+                $amt = $price * $qty;
+                $trDesc = 'DELIVERY IN ' . $detailData['tr_code'];
                 break;
             case 'SD': // Sales Delivery: Kurangi OH, Kurangi FGI
-                $ivtBal->qty_oh = ($ivtBal->qty_oh ?? 0) - ($detailData->qty);
-                $trQty = $detailData->qty;
+                $qty = -$detailData['qty'];
+                $amt = $price * $qty;
+                $trDesc = 'DELIVERY OUT ' . $detailData['tr_code'];
+                break;
+            case 'TW':
+                if ($detailData['tr_seq_sign'] < 0) {
+                    // Jika TW keluar, kurangi OH
+                    $qty = -$detailData['qty'];
+                    $trDesc = 'TRANSFER WH OUT ' . $detailData['tr_code'];
+                } else {
+                    // Jika TW masuk, tambah OH
+                    $qty = $detailData['qty'];
+                    $trDesc = 'TRANSFER WH IN ' . $detailData['tr_code'];
+                }
+                break;
+            case 'IA':
+                    $trDesc = 'ADJUSTMENT ' . $detailData['tr_code'];
                 break;
         }
+
+        $ivtBal = IvtBal::updateOrCreate([
+            'matl_id' => $detailData['matl_id'],
+            'matl_uom' => $detailData['matl_uom'],
+            'wh_id' => $detailData['wh_id'],
+            'batch_code' => $detailData['batch_code'],
+        ],[
+            'matl_code' => $detailData['matl_code'],
+            'wh_code' => $detailData['wh_code'],
+        ]);
+        $ivtBal->qty_oh += $qty;
         $ivtBal->save();
-
-        // Ambil data OrderDtl untuk mendapatkan disc_pct
-        $orderDtl = OrderDtl::find($detailData->reffdtl_id);
-        $discPct = $orderDtl ? $orderDtl->disc_pct : 0;
-
-        // Ambil price dari MatlUom berdasarkan matl_id
-        $matlUom = MatlUom::where('matl_id', $detailData->matl_id)->first();
-        $price = $matlUom ? $matlUom->selling_price : 0;
-
-        // Hitung price setelah diskon
-        $price = $price * (1 - ($discPct / 100));
-        $trAmt = $price * $detailData->qty;
+        $detailData['ivt_id'] = $ivtBal->id;
 
         // Siapkan data log
         $logData = [
-            'trhdr_id' => $detailData->trhdr_id,
-            'tr_type' => $detailData->tr_type,
-            'tr_code' => $detailData->tr_code,
-            'tr_seq' => $detailData->tr_seq,
-            'trdtl_id' => $detailData->id ?? null,
+            'trhdr_id' => $detailData['trhdr_id'],
+            'tr_type' => $detailData['tr_type'],
+            'tr_code' => $detailData['tr_code'],
+            'tr_seq' => $detailData['tr_seq'],
+            'trdtl_id' => $detailData['id'],
             'ivt_id' => $ivtBal->id,
-            'matl_id' => $detailData->matl_id,
-            'matl_code' => $detailData->matl_code,
-            'matl_uom' => $detailData->matl_uom,
-            'wh_id' => $detailData->wh_id,
-            'wh_code' => $detailData->wh_code,
-            'batch_code' => $detailData->batch_code,
+            'matl_id' => $detailData['matl_id'],
+            'matl_code' => $detailData['matl_code'],
+            'matl_uom' => $detailData['matl_uom'],
+            'wh_id' => $detailData['wh_id'],
+            'wh_code' => $detailData['wh_code'],
+            'batch_code' => $detailData['batch_code'],
             'reff_id' => $headerData['reff_id'] ?? 0,
             'tr_date' => $headerData['tr_date'],
-            'qty' => $headerData['tr_type'] === 'PD' ? $detailData->qty : -$detailData->qty,
+            'tr_qty' => $detailData['qty'],
+            'qty' => $qty,
             'price' => $price,
-            'tr_amt' => $trAmt,
-            'tr_qty' => $trQty,
-            'tr_desc' => 'DELIVERY ' . $detailData->tr_type . ' ' . $detailData->tr_code,
+            'amt' => $amt,
+            'tr_desc' => $trDesc,
             'price_cogs' => 0,
             'amt_cogs' => 0,
             'qty_running' => 0,
             'amt_running' => 0,
-            'process_flag' => $headerData['process_flag'] ?? ''
+            'process_flag' => ''
         ];
 
         // Simpan log inventory
         IvtLog::create($logData);
+
+        return $ivtBal->id;
     }
-    public function delIvtLog(int $trHdrId)
+
+    public function delIvtLog(int $ivttrId)
     {
         // Hapus semua log inventory terkait trHdrId
-        $logs = IvtLog::where('trhdr_id', $trHdrId)->get();
+        $logs = IvtLog::where('trhdr_id', $ivttrId)->get();
         foreach ($logs as $log) {
-            // Update IvtBal jika perlu
             $ivtBal = IvtBal::find($log->ivt_id);
             if ($ivtBal) {
-                switch ($log->tr_type) {
-                    case 'SOR': // Sales Order Reservation: Kurangi FGI
-                        $ivtBal->qty_fgi -= $log->tr_qty;
-                        break;
-                    case 'POR': // Purchase Order Reservation: Kurangi FGR
-                        $ivtBal->qty_fgr -= $log->tr_qty;
-                        break;
-                    case 'SDR': // Sales Order Reservation: Kurangi FGI
-                        $ivtBal->qty_fgi += $log->tr_qty;
-                        break;
-                    case 'PDR': // Purchase Order Reservation: Kurangi FGR
-                        $ivtBal->qty_fgr += $log->tr_qty;
-                        break;
-                    case 'SD': // Sales Delivery: Kembalikan OH dan FGI
-                        $ivtBal->qty_oh += $log->tr_qty; // Kembalikan OH yang dikurangi
-                        break;
-                    case 'PD': // Purchase Delivery: Kembalikan OH dan FGR
-                        $ivtBal->qty_oh -= $log->tr_qty; // Kurangi OH yang ditambah
-                        break;
+                if ($log->tr_type === 'POR' || $log->tr_type === 'PDR') {
+                    $ivtBal->qty_fgr -= $log->qty;
+                } else if ($log->tr_type === 'SOR' || $log->tr_type === 'SDR') {
+                    $ivtBal->qty_fgi -= $log->qty;
+                } else {
+                    $ivtBal->qty_oh -= $log->qty;
                 }
                 $ivtBal->save();
             }
-
-            // Hapus log inventory
             $log->delete();
         }
+    }
+
+    public function addInventory(array $headerData, array $detailData): IvttrHdr
+    {
+        if (empty($headerData) || empty($detailData)) {
+            throw new Exception('Header data or detail data is empty');
+        }
+        try{
+            $ivttrHdr = $this->saveHeader($headerData);
+            $headerData['id'] = $ivttrHdr->id;
+
+            $this->saveDetails($headerData, $detailData);
+
+            return $ivttrHdr;
+        } catch (Exception $e) {
+            throw new Exception('Error updating order: ' . $e->getMessage());
+        }
+
+    }
+
+    public function updInventory(array $headerData, array $detailData, int $ivttrId): IvttrHdr
+    {
+        // Validasi headerData dan detailData
+        if (empty($headerData) || empty($detailData)) {
+            throw new Exception('Header data or detail data is empty');
+        }
+        try {
+            $ivttrHdr = $this->saveHeader($headerData);
+            $headerData['id'] = $ivttrHdr->id;
+
+            $this->deleteDetails($ivttrId);
+
+            $this->saveDetails($headerData, $detailData);
+
+            return $ivttrHdr;
+        } catch (Exception $e) {
+            throw $e;
+        }
+ }
+
+    public function delInventory(int $ivttrId): void
+    {
+        $this->deleteDetails($ivttrId);
+        $this->deleteHeader($ivttrId);
+    }
+
+    #region saveHeader
+    private function saveHeader(array $headerData)
+    {
+        if ($headerData['id']) {
+            $ivttrHdr = IvttrHdr::findOrFail($headerData['id']);
+            $ivttrHdr->update($headerData);
+        } else {
+            $ivttrHdr = IvttrHdr::create($headerData);
+        }
+        return $ivttrHdr;
+    }
+    #endregion
+
+    private function saveDetails(array $headerData, array $detailData): array
+    {
+        if (!isset($headerData['id']) || empty($headerData['id'])) {
+            throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
+        }
+
+        $trSeq = 1;
+        $savedDetails = [];
+        foreach ($detailData as $detail) {
+            $detail['trhdr_id'] = $headerData['id'];
+            $detail['tr_type'] =  $headerData['tr_type'];
+            $detail['tr_code'] = $headerData['tr_code'];
+
+            $detail1 = $detail;
+            $detail1['tr_seq'] = -$detail['tr_seq'];
+            $savedDetail = IvttrDtl::create($detail1);
+            $savedDetails = $savedDetail->toArray();
+            $savedDetails['tr_seq_sign'] = -$detail['tr_seq'];
+            $savedDetails['tr_seq'] = $trSeq;
+            $ivtId = $this->addOnhand($headerData, $savedDetails);
+            $savedDetail->ivt_id = $ivtId;
+            $savedDetail->save();
+            $trSeq++;
+
+            $detail2 = $detail;
+            $detail2['wh_id'] = $detail['wh_id2'];
+            $detail2['wh_code'] = $detail['wh_code2'];
+            $savedDetail = IvttrDtl::create($detail2);
+            $savedDetails = $savedDetail->toArray();
+            $savedDetails['tr_seq_sign'] = $detail['tr_seq'];
+            $savedDetails['tr_seq'] = $trSeq;
+            $ivtId = $this->addOnhand($headerData, $savedDetails);
+            $savedDetail->ivt_id = $ivtId;
+            $savedDetail->save();
+            $trSeq++;
+
+            // dd('Detail saved successfully', $savedDetail->toArray());
+        }
+        return $savedDetails;
+    }
+
+    private function deleteHeader(int $ivttrId)
+    {
+        IvttrHdr::where('id', $ivttrId)->forceDelete();
+    }
+
+    private function deleteDetails(int $ivttrId): void
+    {
+        // Hapus detail
+        IvttrDtl::where('trhdr_id', $ivttrId)->delete();
+        $this->delIvtLog($ivttrId);
     }
     #endregion
 }
