@@ -49,16 +49,15 @@
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
                                                 <x-ui-dropdown-select type="int" label="" clickEvent=""
-                                                    model="input_details.{{ $key }}.matl_id"
-                                                    :selectedValue="$input_detail['matl_id']"
-                                                    :options="$filteredMaterials" required="true"
-                                                    :action="$actionValue"
+                                                    model="input_details.{{ $key }}.matl_id" :selectedValue="$input_detail['matl_id']"
+                                                    :options="$filteredMaterials" required="true" :action="$actionValue"
                                                     :enabled="$isPanelEnabled" />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty"
                                                     label="" :enabled="$isPanelEnabled" :action="$actionValue"
-                                                    onChanged="updateItemAmount({{ $key }})" type="text" required="true" />
+                                                    onChanged="updateItemAmount({{ $key }})" type="text"
+                                                    required="true" />
                                             </td>
                                             <td style="text-align: center;">
                                                 @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
@@ -92,7 +91,11 @@
                     </div>
                     <x-ui-footer>
                         <div>
+                            <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
+                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" />
+
                             @include('layout.customs.buttons.save')
+
                         </div>
                     </x-ui-footer>
                 </div>

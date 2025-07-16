@@ -17,15 +17,17 @@ class IvttrDtl extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
-        'tr_id',
+        'tr_code',
         'tr_seq',
         'matl_id',
         'matl_code',
+        'wh_id',
         'matl_uom',
         'wh_code',
         'batch_code',
         'qty',
-        'tr_descr'
+        'tr_descr',
+        'ivt_id'
     ];
     public function scopeGetActiveData()
     {

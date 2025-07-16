@@ -101,7 +101,6 @@ class PartnerBalanceService
                 $amtAdv = -$detailData['amt'];
                 $trAmt = -$detailData['amt'];
                 $trDesc = 'Sisa Pembayaran dari ' . $detailData['reff_type'] . ' ' . $detailData['reff_code'];
-
             }
 
             // Cari atau buat partner balance berdasarkan partner_id
@@ -120,10 +119,23 @@ class PartnerBalanceService
                 ]
             );
 
+
             $partnerBal->amt_bal += $amtBal;
             $partnerBal->amt_adv += $amtAdv;
             $partnerBal->note = $trDesc; // update note setiap kali update
             $partnerBal->save();
+
+            // Jika ARPA, kurangi juga amt_adv dari PartnerBal lama (saldo sebelumnya)
+            // if ($detailData['tr_type'] === 'ARPA' && $reffId) {
+            //     $oldPartnerBal = PartnerBal::where('partner_id', $partnerId)
+            //         ->where('id', '!=', $partnerBal->id)
+            //         ->where('reff_id', $reffId)
+            //         ->first();
+            //     if ($oldPartnerBal) {
+            //         $oldPartnerBal->amt_adv -= abs($detailData['amt']);
+            //         $oldPartnerBal->save();
+            //     }
+            // }
 
             $logData = [
                 'trhdr_id' => $detailData['trhdr_id'],

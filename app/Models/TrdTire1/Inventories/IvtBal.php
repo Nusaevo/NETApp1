@@ -11,24 +11,11 @@ class IvtBal extends BaseModel
 {
     protected $table = 'ivt_bals';
     public $timestamps = false;
-
+    protected $primaryKey = 'id';
 
     public static function boot()
     {
         parent::boot();
-        // static::created(function ($ivtBal) {
-        //     $ivtBalUnit = IvtBalUnit::firstOrNew([
-        //         'ivt_id'    => $ivtBal->id,
-        //         'matl_id'   => $ivtBal->matl_id,
-        //         'wh_id'     => $ivtBal->wh_id,
-        //         'batch_code' => $ivtBal->batch_code,
-        //     ]);
-        //     if (!$ivtBalUnit->exists) {
-        //         $ivtBalUnit->qty_oh = 0;
-        //     }
-        //     $ivtBalUnit->qty_oh = $ivtBal->qty_oh;
-        //     $ivtBalUnit->save();
-        // });
     }
 
     protected $fillable = [

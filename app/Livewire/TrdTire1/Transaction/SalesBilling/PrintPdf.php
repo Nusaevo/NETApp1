@@ -8,22 +8,25 @@ use App\Models\TrdTire1\Transaction\BillingHdr;
 
 class PrintPdf extends BaseComponent
 {
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    {
+        parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);
+    }
     public $orders = [];
     public $selectedOrderIds;
 
     protected function onPreRender()
     {
-        // dd($this->objectIdValue);
         if ($this->isEditOrView()) {
-            if (empty($this->objectIdValue)) {
+            if (empty($this->objectId)) {
                 $this->dispatch('error', 'Invalid object ID');
                 return;
             }
 
-            // Decode the encrypted order IDs
-            $this->selectedOrderIds = json_decode(decryptWithSessionKey($this->objectIdValue), true);
+            $decrypted = decryptWithSessionKey($this->objectId);
+            $this->selectedOrderIds = json_decode($decrypted, true);
 
-            // Fetch data with the same filters and relations as in IndexDataTable
+            // Fetch data dengan filter
             $this->orders = BillingHdr::with(['Partner'])
                 ->whereIn('id', $this->selectedOrderIds)
                 ->where('billing_hdrs.tr_type', 'ARB')

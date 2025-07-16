@@ -32,7 +32,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("date"), "tr_date")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("tr_id"), "tr_id")
+            Column::make($this->trans("tr_code"), "tr_code")
                 ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")
                 ->sortable(),

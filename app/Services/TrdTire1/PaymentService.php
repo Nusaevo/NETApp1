@@ -213,12 +213,15 @@ class PaymentService
             return;
         }
 
-        // Buat array baru untuk overPayment, jangan gunakan $advanceData yang mungkin kosong
+        // Cari tr_seq terakhir untuk trhdr_id ini
+        $lastSeq = (int) PaymentAdv::where('trhdr_id', $headerData['id'])->max('tr_seq');
+        $nextSeq = $lastSeq > 0 ? $lastSeq + 1 : 1;
+
         $overPaymentData = [
             'trhdr_id' => $headerData['id'],
             'tr_type' => $headerData['tr_type'] . 'A',
             'tr_code' => $headerData['tr_code'],
-            'tr_seq' => 1,
+            'tr_seq' => $nextSeq,
             'adv_type_code' => 'ARADVPAY',
             'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
             'amt' => $overAmt, // Pakai negatif agar menjadi positive saat updfromPayment

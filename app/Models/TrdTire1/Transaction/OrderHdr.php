@@ -41,14 +41,15 @@ class OrderHdr extends BaseModel
         'note',
         'sales_type',
         'tax_doc_flag',
+        'tax_doc_num',
         'payment_term',
         'ship_to_name',
         'ship_to_addr',
         'npwp_name',
         'npwp_addr',
         'npwp_code',
-        'total_amt',
-        'total_amt_tax',
+        'amt',
+        'amt_tax',
         'reff_code',
         'print_remarks'
     ];

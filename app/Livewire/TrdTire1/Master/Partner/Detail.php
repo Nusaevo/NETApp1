@@ -125,12 +125,12 @@ class Detail extends BaseComponent
         }
 
 
-        if ($this->actionValue == 'Create') {
-            return redirect()->route($this->appCode . '.Master.Partner.Detail', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id)
-            ]);
-        }
+        // if ($this->actionValue == 'Create') {
+        //     return redirect()->route($this->appCode . '.Master.Partner.Detail', [
+        //         'action' => encryptWithSessionKey('Edit'),
+        //         'objectId' => encryptWithSessionKey($this->object->id)
+        //     ]);
+        // }
     }
 
     public function changeStatus()

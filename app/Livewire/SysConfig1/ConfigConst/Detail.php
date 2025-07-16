@@ -38,14 +38,14 @@ class Detail extends BaseComponent
     protected function onPreRender()
     {
         $this->isSysConfig1 = Session::get('app_code') === 'SysConfig1';
-        $this->customValidationAttributes = [
-            'inputs' => 'Input',
-            'inputs.*' => 'Input',
-            'inputs.const_group' => 'Const Group',
-            'inputs.seq' => 'Const Seq',
-            'inputs.str1' => 'Str1',
-            'inputs.str2' => 'Str2',
-        ];
+        // $this->customValidationAttributes = [
+        //     'inputs' => 'Input',
+        //     'inputs.*' => 'Input',
+        //     'inputs.const_group' => 'Const Group',
+        //     'inputs.seq' => 'Const Seq',
+        //     'inputs.str1' => 'Str1',
+        //     'inputs.str2' => 'Str2',
+        // ];
         $this->configService = new ConfigService();
         $this->applications = $this->configService->getActiveApplications(true);
 

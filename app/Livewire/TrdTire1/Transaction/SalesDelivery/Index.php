@@ -37,17 +37,19 @@ class Index extends BaseComponent
         $this->dispatch('open-modal-delivery-date');
     }
 
-    public function submitDeliveryDate()
+    public function onValidateAndSave()
     {
         $this->validate([
             'tr_date' => 'required|date',
             'inputs.wh_code' => 'required',
         ]);
 
-        DB::beginTransaction();
         try {
             $selectedOrders = OrderHdr::whereIn('id', $this->selectedOrderIds)->get();
             $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
+
+            $successCount = 0;
+            $errorMessages = [];
 
             foreach ($selectedOrders as $order) {
                 // Prepare header data
@@ -66,22 +68,20 @@ class Index extends BaseComponent
                     'note' => '',
                     'reff_date' => $this->tr_date,
                 ];
-                // dd($headerData);
 
                 // Prepare detail data
                 $detailData = [];
                 $trSeq = 0;
                 $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
                 foreach ($orderDetails as $detail) {
-
-                    // Get available stock from IvtBal for the material and warehouse, ordered by batch_code
                     $availableBatches = $warehouse ? IvtBal::where('matl_id', $detail->matl_id)
                         ->where('wh_id', $warehouse->id)
                         ->orderBy('batch_code')
                         ->get() : collect();
 
                     if ($availableBatches->isEmpty()) {
-                        throw new Exception(__('Tidak ada stok tersedia untuk material: ' . $detail->matl_code));
+                        $errorMessages[] = __('Tidak ada stok tersedia untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code);
+                        continue 2; // skip ke order berikutnya
                     } else {
                         $qtyOrder =  $detail->qty;
                         foreach ($availableBatches as $ivtBalBatch) {
@@ -94,7 +94,7 @@ class Index extends BaseComponent
                                 $qtyOrder -= $ivtBalBatch->qty_oh;
                             }
                             if ($qtyShip > 0) {
-                            $detailData[] = [
+                                $detailData[] = [
                                     'tr_seq' => $trSeq += 1,
                                     'matl_id' => $detail->matl_id,
                                     'matl_code' => $detail->matl_code,
@@ -104,7 +104,7 @@ class Index extends BaseComponent
                                     'wh_id' => $warehouse ? $warehouse->id : null,
                                     'wh_code' => $warehouse ? $warehouse->str1 : null,
                                     'reffdtl_id' => $detail->id,
-                                    'reffhdrtr_id' => $order->id,
+                                    'reffhdr_id' => $order->id,
                                     'reffhdrtr_type' => $detail->OrderHdr->tr_type,
                                     'reffhdrtr_code' => $order->tr_code,
                                     'reffdtltr_seq' => $detail->tr_seq,
@@ -117,75 +117,62 @@ class Index extends BaseComponent
                             }
                         }
                         if ($qtyOrder > 0) {
-                            // $this->dispatch('error', 'Stok tidak mencukupi untuk material: ' . $detail->matl_code);
-                            throw new Exception(__('Stok tidak mencukupi untuk material: ' . $detail->matl_code));
-
+                            $errorMessages[] = __('Stok tidak mencukupi untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code);
+                            continue 2; // skip ke order berikutnya
                         }
                     }
                 }
 
-                // VALIDASI DATA sebelum kirim ke service
-                // if (!$warehouse) {
-                //     $this->dispatch('error', 'Warehouse tidak ditemukan!');
-                //     DB::rollBack();
-                //     return;
-                // }
-                // if (empty($detailData)) {
-                //     $this->dispatch('error', 'Tidak ada detail barang yang valid untuk dikirim!');
-                //     DB::rollBack();
-                //     return;
-                // }
-                // if (empty($headerData['partner_id']) || empty($headerData['tr_code'])) {
-                //     $this->dispatch('error', 'Data header tidak lengkap!');
-                //     DB::rollBack();
-                //     return;
-                // }
+                // Create delivery using service
+                $deliveryService = app(DeliveryService::class);
+                $result = $deliveryService->addDelivery($headerData, $detailData);
+                if (empty($result['header'])) {
+                    $errorMessages[] = 'Gagal membuat Delivery untuk order ' . $order->tr_code . ': Data header tidak valid atau ada constraint DB.';
+                    continue;
+                }
 
-            }
-            // Create delivery using service
-            $deliveryService = app(DeliveryService::class);
-            $result = $deliveryService->addDelivery($headerData, $detailData);
-            if (empty($result['header'])) {
-                $this->dispatch('error', 'Gagal membuat Delivery: Data header tidak valid atau ada constraint DB.');
-                DB::rollBack();
-                return;
-            }
+                // Update headerData dengan id dari SD yang baru
+                $headerData['id'] = $result['header']->id;
 
-            // Update headerData dengan id dari SD yang baru
-            $headerData['id'] = $result['header']->id;
-
-            // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
-            $total_amt = 0;
-            foreach ($detailData as $detail) {
-                if (isset($detail['reffdtl_id']) && isset($detail['qty'])) {
-                    $orderDtl = OrderDtl::find($detail['reffdtl_id']);
-                    if ($orderDtl) {
-                        $price = $orderDtl->price;
-                        $disc_pct = $orderDtl->disc_pct ?? 0;
-                        $qty = $detail['qty'];
-                        $price_after_disc = $price - ($price * $disc_pct / 100);
-                        $total_amt += $price_after_disc * $qty;
+                // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
+                $total_amt = 0;
+                foreach ($detailData as $detail) {
+                    if (isset($detail['reffdtl_id']) && isset($detail['qty'])) {
+                        $orderDtl = OrderDtl::find($detail['reffdtl_id']);
+                        if ($orderDtl) {
+                            $price = $orderDtl->price;
+                            $disc_pct = $orderDtl->disc_pct ?? 0;
+                            $qty = $detail['qty'];
+                            $price_after_disc = $price - ($price * $disc_pct / 100);
+                            $total_amt += $price_after_disc * $qty;
+                        }
                     }
                 }
+                $headerData['total_amt'] = $total_amt;
+
+                // Update juga trhdr_id pada setiap detail
+                foreach ($detailData as &$detail) {
+                    $detail['trhdr_id'] = $result['header']->id;
+                }
+                unset($detail);
+
+                // Tambahkan pembuatan BillingHdr jika diperlukan
+                // app(BillingService::class)->addBilling($headerData, $detailData);
+
+                $successCount++;
             }
-            $headerData['total_amt'] = $total_amt;
 
-            // Update juga trhdr_id pada setiap detail
-            foreach ($detailData as &$detail) {
-                $detail['trhdr_id'] = $result['header']->id;
+            // Setelah loop, tampilkan hasil
+            if ($successCount > 0) {
+                $this->dispatch('success', $successCount . ' Sales Delivery berhasil dibuat');
             }
-            unset($detail);
-
-            // Tambahkan pembuatan BillingHdr
-            // app(BillingService::class)->addBilling($headerData, $detailData);
-
-            DB::commit();
+            if (!empty($errorMessages)) {
+                $this->dispatch('error', implode(', ', $errorMessages));
+            }
             $this->dispatch('close-modal-delivery-date');
-            $this->dispatch('success', 'Sales Delivery berhasil dibuat');
             $this->dispatch('refreshDatatable');
 
         } catch (Exception $e) {
-            DB::rollBack();
             $this->dispatch('error', 'Gagal membuat Sales Delivery: ' . $e->getMessage());
         }
     }

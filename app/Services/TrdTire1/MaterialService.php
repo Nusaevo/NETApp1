@@ -5,7 +5,8 @@ namespace App\Services\TrdTire1;
 use App\Models\TrdTire1\Master\MatlUom;
 
 class MaterialService
-{        public function updLastBuyingPrice($matlId, $matlUom, $lastBuyingPrice, $lastBuyingDate)
+{
+    public function updLastBuyingPrice($matlId, $matlUom, $lastBuyingPrice, $lastBuyingDate)
     {
         $matlUomRec = MatlUom::where([
             'matl_id'  => $matlId,

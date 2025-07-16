@@ -49,6 +49,8 @@ class Detail extends BaseComponent
 
     // Detail (item) properties
     public $input_details = [];
+    public $materialQuery = "";
+    public $materialCategory = null;
     public $materials;
     protected $masterService;
     protected $orderService;
@@ -115,15 +117,6 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
-    /*
-     * Ketika partner berubah, ambil data NPWP dan Shipping Address dari detail partner
-     */
-    public function onPartnerChanged()
-    {
-        $partner = Partner::find($this->inputs['partner_id']);
-        $this->npwpOptions = $partner ? $this->listNpwp($partner) : [];
-        $this->shipOptions = $partner ? $this->listShip($partner) : [];
-    }
 
     private function listNpwp($partner)
     {
@@ -184,33 +177,31 @@ class Detail extends BaseComponent
     public function onSalesTypeChanged()
     {
         $salesType = $this->inputs['sales_type'] ?? null;
+        $this->input_details = [];
+
         if (!$salesType) {
             $this->materials = [];
+            $this->materialQuery = "";
+            $this->materialCategory = null;
             return;
         }
 
-        // Ambil data material lengkap dari database
-        $allMaterials = Material::with('MatlUom')->get();
-        $filtered = [];
+        $categories = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+            ->where('str1', $salesType)
+            ->pluck('str2') // Category names
+            ->map(function ($val) {
+                return "'" . trim($val) . "'";
+            })->toArray();
 
-        foreach ($allMaterials as $material) {
-            $category = $material->category ?? null;
-            if (!$category) continue;
+        $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
-            $categoryNorm = trim(strtoupper($category));
-            $config = ConfigConst::where('const_group', 'MMATL_CATEGORY')
-                ->whereRaw('UPPER(TRIM(str2)) = ?', [$categoryNorm])
-                ->first();
-
-            if ($config && $config->str1 === $salesType) {
-                $filtered[] = [
-                    'label' => $material->code . ' - ' . $material->name,
-                    'value' => $material->id,
-                ];
-            }
-        }
-
-        $this->materials = $filtered;
+        $this->materialQuery = "
+            SELECT id, code, name
+            FROM materials
+            WHERE status_code = 'A'
+            AND deleted_at IS NULL
+            AND category IN ($categoryList)
+        ";
 
         // Jika dalam mode edit, jangan reset input_details
         if (!$this->isEditOrView()) {
@@ -239,7 +230,11 @@ class Detail extends BaseComponent
         $this->paymentTerms = $this->masterService->getPaymentTerm();
         $this->warehouses = $this->masterService->getWarehouse();
 
+        // --- Perbaikan urutan: panggil onSalesTypeChanged() sebelum loadDetails() ---
         if ($this->isEditOrView()) {
+            if (!empty($this->inputs['sales_type'])) {
+                $this->onSalesTypeChanged();
+            }
             if (empty($this->objectIdValue)) {
                 $this->dispatch('error', 'Invalid object ID');
                 return;
@@ -256,7 +251,13 @@ class Detail extends BaseComponent
             $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
             $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr;
             $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
-            $this->inputs['print_remarks'] = $this->object->getDisplayFormat();
+            // Pastikan print_remarks adalah string/float, bukan array/object
+            $printRemarks = $this->object->getDisplayFormat();
+            if (is_array($printRemarks)) {
+                $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
+            } else {
+                $this->inputs['print_remarks'] = $printRemarks;
+            }
             // Hitung due_date berdasarkan tr_date dan payment_due_days
             $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
             $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
@@ -264,17 +265,13 @@ class Detail extends BaseComponent
                 ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
                 : ($trDate ? $trDate->format('Y-m-d') : null);
             $this->onPartnerChanged();
+            // PENTING: load detail item agar input_details terisi saat edit
             $this->loadDetails();
-
-            // Set sales_type dan load materials
-            if (!empty($this->inputs['sales_type'])) {
-                $this->onSalesTypeChanged();
-            }
         } else {
             $this->isPanelEnabled = "true";
             $this->inputs['tax_doc_flag'] = true;
             $this->inputs['tax_code'] = 'I';
-            $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
+            $this->inputs['print_remarks'] = '0.0';
         }
         if (!empty($this->inputs['tax_code'])) {
             $this->onSOTaxChange();
@@ -331,6 +328,10 @@ class Detail extends BaseComponent
      */
     public function addItem()
     {
+        if (empty($this->inputs['sales_type'])) {
+            $this->dispatch('error', 'Silakan pilih tipe kendaraan terlebih dahulu sebelum menambah item!');
+            return;
+        }
         try {
             // Check if can add new item
             // if ($this->isDeliv) {
@@ -477,22 +478,24 @@ class Detail extends BaseComponent
      */
     protected function loadDetails()
     {
-        $this->isDeliv = false;
         if (!empty($this->object)) {
             $objectDetails = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
 
             foreach ($objectDetails as $key => $detail) {
+                // Ambil array aslinya
                 $arr = populateArrayFromModel($detail);
-                $arr['has_delivery'] = $detail->has_delivery ?? false;
-                $arr['is_editable'] = $detail->is_editable ?? true;
+
                 $this->input_details[$key] = $arr;
                 $this->updateItemAmount($key);
-                if ($arr['has_delivery']) {
-                    $this->isDeliv = true;
-                }
+
             }
+            // dd($this->input_details);
+            // dd($this->input_details);
+
+            // Check delivery status after loading details
+            $this->checkDeliveryStatus();
         }
     }
 
@@ -521,7 +524,7 @@ class Detail extends BaseComponent
                     throw new Exception('Gagal mengubah Sales Order.');
                 }
                 $this->dispatch('warning', 'Ada pengiriman (delivery) pada salah satu item. Hanya header yang bisa diupdate.');
-                return $this->redirectToEdit();
+                // return $this->redirectToEdit();
             } catch (Exception $e) {
                 $this->dispatch('error', $e->getMessage());
                 throw new Exception('Gagal memperbarui Sales Order: ' . $e->getMessage());
@@ -540,8 +543,8 @@ class Detail extends BaseComponent
 
         // Calculate totals from detail data
         $totals = $this->calculateTotalsFromDetails($detailData);
-        $headerData['total_amt'] = $totals['total_amt'];
-        $headerData['total_amt_tax'] = $totals['total_amt_tax'];
+        $headerData['amt'] = $totals['amt'];
+        $headerData['amt_tax'] = $totals['amt_tax'];
 
         $this->processNormalOrder($headerData, $detailData);
     }
@@ -621,8 +624,8 @@ class Detail extends BaseComponent
         }
 
         return [
-            'total_amt' => $totalAmt,
-            'total_amt_tax' => $totalAmtTax
+            'amt' => $totalAmt,
+            'amt_tax' => $totalAmtTax
         ];
     }
 
@@ -774,7 +777,7 @@ class Detail extends BaseComponent
     }
 
 
-    public function onPartnerChange()
+    public function onPartnerChanged()
     {
         $partner = Partner::find($this->inputs['partner_id']);
         if ($partner) {
@@ -825,7 +828,7 @@ class Detail extends BaseComponent
                     }
                 }
             }
-            $this->dispatch('success', "Custommer berhasil dipilih.");
+            // $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
         }
     }
