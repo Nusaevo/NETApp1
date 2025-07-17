@@ -38,8 +38,11 @@
                                 <!-- Define table headers -->
                                 <x-slot name="headers">
                                     <th style="width: 50px; text-align: center;">No</th>
-                                    <th style="width: 150px; text-align: center;">Code</th>
+                                    <th style="width: 150px; text-align: center;">Nama Barang</th>
+                                    <th style="width: 50px; text-align: center;">Kode Batch</th>
+                                    <th style="width: 50px; text-align: center;">Stock</th>
                                     <th style="width: 50px; text-align: center;">Quantity</th>
+                                    <th style="width: 50px; text-align: center;">Stock Akhir</th>
                                     <th style="width: 70px; text-align: center;">Actions</th>
                                 </x-slot>
                                 <!-- Define table rows -->
@@ -54,7 +57,25 @@
                                                     :enabled="$isPanelEnabled" />
                                             </td>
                                             <td style="text-align: center;">
+                                                <x-ui-text-field model="input_details.{{ $key }}.batch_code"
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
+                                                    onChanged="updateItemAmount({{ $key }})" type="text"
+                                                    required="true" />
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_oh"
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
+                                                    onChanged="updateItemAmount({{ $key }})" type="text"
+                                                    required="true" enabled="false" />
+                                            </td>
+                                            <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty"
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
+                                                    onChanged="updateItemAmount({{ $key }})" type="text"
+                                                    required="true" />
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_end"
                                                     label="" :enabled="$isPanelEnabled" :action="$actionValue"
                                                     onChanged="updateItemAmount({{ $key }})" type="text"
                                                     required="true" />

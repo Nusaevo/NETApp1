@@ -35,10 +35,10 @@
                                             :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-dropdown-search label="Supplier" model="inputs.partner_id"
-                                            query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'V'"
+                                        <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
+                                            query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
                                             optionValue="id" optionLabel="code,name,address,city"
-                                            placeHolder="Type to search supplier..." :selectedValue="$inputs['partner_id']" required="true"
+                                            placeHolder="Type to search customer..." :selectedValue="$inputs['partner_id']" required="true"
                                             :action="$actionValue" :enabled="$isPanelEnabled" type="int"
                                             onChanged="onPartnerChanged" />
                                         <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
