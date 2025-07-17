@@ -119,6 +119,9 @@
                                         }
                                         // Potong jika terlalu panjang
                                         decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
+                                        @else
+                                        // Jika tidak ada decimalPlaces, tampilkan semua decimal yang ada
+                                        // Tidak ada batasan atau padding
                                         @endif
                                         return integerPart + ',' + decimalPart;
                                     }
@@ -158,6 +161,13 @@
 
                                         // Remove any non-digit characters from decimal part
                                         afterComma = afterComma.replace(/[^0-9]/g, '');
+
+                                        // If decimalPlaces is set, limit decimal length during parsing
+                                        @if(isset($decimalPlaces))
+                                        if (afterComma.length > {{ $decimalPlaces }}) {
+                                            afterComma = afterComma.substring(0, {{ $decimalPlaces }});
+                                        }
+                                        @endif
 
                                         // Reconstruct with dot as decimal separator
                                         cleanStr = beforeComma + (afterComma ? '.' + afterComma : '');
@@ -411,6 +421,9 @@
                                     }
                                     // Potong jika terlalu panjang
                                     decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
+                                    @else
+                                    // Jika tidak ada decimalPlaces, tampilkan semua decimal yang ada
+                                    // Tidak ada batasan atau padding
                                     @endif
                                     return integerPart + ',' + decimalPart;
                                 }
@@ -450,6 +463,13 @@
 
                                     // Remove any non-digit characters from decimal part
                                     afterComma = afterComma.replace(/[^0-9]/g, '');
+
+                                    // If decimalPlaces is set, limit decimal length during parsing
+                                    @if(isset($decimalPlaces))
+                                    if (afterComma.length > {{ $decimalPlaces }}) {
+                                        afterComma = afterComma.substring(0, {{ $decimalPlaces }});
+                                    }
+                                    @endif
 
                                     // Reconstruct with dot as decimal separator
                                     cleanStr = beforeComma + (afterComma ? '.' + afterComma : '');
