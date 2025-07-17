@@ -10,6 +10,7 @@ use App\Enums\Status;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\TrdTire1\Inventories\IvttrDtl;
+use App\Services\TrdTire1\InventoryService;
 use Illuminate\Support\Facades\{Session, DB};
 use Exception;
 
@@ -90,7 +91,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['tr_type'] = $this->object->tr_type;
             $this->inputs['tr_date'] = $this->object->tr_date;
-            $this->inputs['tr_id'] = $this->object->tr_id;
+            $this->inputs['tr_code'] = $this->object->tr_code;
             $this->inputs['wh_code'] = $this->object->IvttrDtl->first()->wh_code ?? null;
             $this->inputs['tr_descr'] = $this->object->IvttrDtl->first()->tr_descr ?? null;
 
@@ -120,7 +121,7 @@ class Detail extends BaseComponent
         $this->reset('inputs', 'input_details');
         $this->object = new IvttrHdr();
         $this->inputs = populateArrayFromModel($this->object);
-        $this->inputs['tr_date']  = date('Y-m-d');
+        $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['wh_code'] = "";
     }
 
@@ -275,6 +276,7 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        // dd($this->inputs, $this->input_details);
         if ($this->actionValue == 'Edit') {
             if ($this->object->isOrderCompleted()) {
                 $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
@@ -287,17 +289,37 @@ class Detail extends BaseComponent
             $this->inputs['tr_type'] = $warehouseType->str1;
         }
 
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'SALESORDER_LASTID');
+        // Ambil detailData dari prepareBatchCode
+
+
+        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'IVT_LASTID');
+
+        // Ambil ulang object agar tr_code terisi
+        $this->object->refresh();
+        $this->inputs['id'] = $this->object->id;
+        $this->inputs['tr_code'] = $this->object->tr_code;
 
         // Setelah header tersimpan, periksa tr_type
         if ($this->inputs['tr_type'] === 'TW') {
-            $this->dispatch('toggleWarehouseDropdown', true);
-        } else {
-            $this->dispatch('toggleWarehouseDropdown', false);
-        }
+            // Convert warehouse codes to IDs
+            $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
+            $warehouse2 = ConfigConst::where('str1', $this->inputs['wh_code2'])->first();
 
-        // Process material details based on transaction type
-        $this->processMaterialDetails();
+            $this->inputs['wh_id'] = $warehouse ? $warehouse->id : null;
+            $this->inputs['wh_id2'] = $warehouse2 ? $warehouse2->id : null;
+            $this->inputs['id'] = $this->object->id;
+
+            // dd('tes');
+            $detailData = $this->prepareBatchCode();
+            // dd($detailData);
+
+            if ($this->actionValue == 'Edit') {
+                app(InventoryService::class)->updInventory($this->inputs, $detailData, $this->object->id);
+            } else {
+                app(InventoryService::class)->addInventory($this->inputs, $detailData);
+            }
+        } else {
+        }
 
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
@@ -307,319 +329,19 @@ class Detail extends BaseComponent
         }
     }
 
-    protected function processMaterialDetails()
-    {
-        if ($this->inputs['tr_type'] === 'TW') {
-            // --- Logika TW (Transfer) ---
-            $pair = 1;
-            foreach ($this->input_details as $detail) {
-                if (!$detail['is_editable']) {
-                    continue;
-                }
-                $transferQty = $detail['qty'];
-                $materialId = $detail['matl_id'];
-
-                // Ambil batch stok dari gudang sumber secara FIFO
-                $sourceBatches = IvtBal::where('wh_code', $this->inputs['wh_code'])
-                    ->where('matl_id', $materialId)
-                    ->orderBy('batch_code', 'asc')
-                    ->get();
-
-                if ($sourceBatches->isEmpty()) {
-                    $sourceBatches->push(IvtBal::create([
-                        'wh_code'    => $this->inputs['wh_code'],
-                        'matl_id'    => $materialId,
-                        'matl_code'  => $detail['matl_code'] ?? '',
-                        'matl_uom'   => $detail['matl_uom'] ?? '',
-                        'batch_code' => $detail['batch_code'] ?? '1',
-                        'qty_oh'     => 0,
-                    ]));
-                }
-
-                foreach ($sourceBatches as $batch) {
-                    if ($transferQty <= 0) break;
-                    if ($batch->qty_oh <= 0) continue;
-
-                    $deduct = min($transferQty, $batch->qty_oh);
-                    $batch->qty_oh -= $deduct;
-                    $batch->save();
-
-                    // Pencatatan pengurangan di sumber (tr_seq negatif)
-                    $sourceDtl = IvttrDtl::where('trhdr_id', $this->object->id)
-                        ->where('wh_code', $this->inputs['wh_code'])
-                        ->where('matl_id', $materialId)
-                        ->where('batch_code', $batch->batch_code)
-                        ->first();
-                    if ($sourceDtl) {
-                        $sourceDtl->qty += (-$deduct);
-                        $sourceDtl->save();
-                    } else {
-                        IvttrDtl::create([
-                            'trhdr_id'   => $this->object->id,
-                            'tr_seq'     => -$pair,
-                            'wh_code'    => $this->inputs['wh_code'],
-                            'matl_id'    => $materialId,
-                            'tr_id'      => $this->object->id,
-                            'matl_code'  => $batch->matl_code,
-                            'matl_uom'   => $batch->matl_uom,
-                            'batch_code' => $batch->batch_code,
-                            'ivt_id'     => $batch->id,
-                            'qty'        => -$deduct,
-                        ]);
-                    }
-
-                    // Transfer ke gudang tujuan (wh_code2)
-                    if (!empty($this->inputs['wh_code2'])) {
-                        $destWarehouse = ConfigConst::where('str1', $this->inputs['wh_code2'])->first();
-                        $dest_wh_id = $destWarehouse ? $destWarehouse->id : '';
-
-                        $destBatch = IvtBal::where('wh_code', $this->inputs['wh_code2'])
-                            ->where('matl_id', $materialId)
-                            ->where('matl_uom', $batch->matl_uom)
-                            ->where('batch_code', $batch->batch_code)
-                            ->where('wh_id', $dest_wh_id)
-                            ->first();
-
-                        if ($destBatch) {
-                            $destBatch->increment('qty_oh', $deduct);
-                            $destBatch->refresh();
-                        } else {
-                            $destBatch = IvtBal::create([
-                                'wh_code'    => $this->inputs['wh_code2'],
-                                'matl_id'    => $materialId,
-                                'matl_code'  => $batch->matl_code,
-                                'matl_uom'   => $batch->matl_uom,
-                                'batch_code' => $batch->batch_code,
-                                'wh_id'      => $dest_wh_id,
-                                'qty_oh'     => $deduct,
-                            ]);
-                        }
-
-                        $destDtl = IvttrDtl::where('trhdr_id', $this->object->id)
-                            ->where('wh_code', $this->inputs['wh_code2'])
-                            ->where('matl_id', $materialId)
-                            ->where('batch_code', $destBatch->batch_code)
-                            ->first();
-                        if ($destDtl) {
-                            $destDtl->qty += $deduct;
-                            $destDtl->save();
-                        } else {
-                            IvttrDtl::create([
-                                'trhdr_id'   => $this->object->id,
-                                'tr_seq'     => $pair,
-                                'wh_code'    => $this->inputs['wh_code2'],
-                                'matl_id'    => $materialId,
-                                'tr_id'      => $this->object->id,
-                                'matl_code'  => $destBatch->matl_code,
-                                'matl_uom'   => $destBatch->matl_uom,
-                                'batch_code' => $destBatch->batch_code,
-                                'ivt_id'     => $destBatch->id,
-                                'qty'        => $deduct,
-                            ]);
-                        }
-                    }
-                    $pair++;
-                    $transferQty -= $deduct;
-                }
-
-                // Jika masih ada sisa transferQty, cari batch sumber berikutnya yang masih memiliki stok
-                if ($transferQty > 0) {
-                    $remainingBatch = $sourceBatches->first(function ($batch) {
-                        return $batch->qty_oh > 0;
-                    });
-                    if ($remainingBatch) {
-                        $remainingBatch->qty_oh -= $transferQty;
-                        $remainingBatch->save();
-
-                        $sourceDtl = IvttrDtl::where('trhdr_id', $this->object->id)
-                            ->where('wh_code', $this->inputs['wh_code'])
-                            ->where('matl_id', $materialId)
-                            ->where('batch_code', $remainingBatch->batch_code)
-                            ->first();
-                        if ($sourceDtl) {
-                            $sourceDtl->qty += (-$transferQty);
-                            $sourceDtl->save();
-                        } else {
-                            IvttrDtl::create([
-                                'trhdr_id'   => $this->object->id,
-                                'tr_seq'     => -$pair,
-                                'wh_code'    => $this->inputs['wh_code'],
-                                'matl_id'    => $materialId,
-                                'tr_id'      => $this->object->id,
-                                'matl_code'  => $remainingBatch->matl_code,
-                                'matl_uom'   => $remainingBatch->matl_uom,
-                                'batch_code' => $remainingBatch->batch_code,
-                                'ivt_id'     => $remainingBatch->id,
-                                'qty'        => -$transferQty,
-                            ]);
-                        }
-
-                        if (!empty($this->inputs['wh_code2'])) {
-                            $destWarehouse = ConfigConst::where('str1', $this->inputs['wh_code2'])->first();
-                            $dest_wh_id = $destWarehouse ? $destWarehouse->id : '';
-
-                            $destBatch = IvtBal::where('wh_code', $this->inputs['wh_code2'])
-                                ->where('matl_id', $materialId)
-                                ->where('matl_uom', $remainingBatch->matl_uom)
-                                ->where('batch_code', $remainingBatch->batch_code)
-                                ->where('wh_id', $dest_wh_id)
-                                ->first();
-                            if ($destBatch) {
-                                $destBatch->increment('qty_oh', $transferQty);
-                                $destBatch->refresh();
-                            } else {
-                                $destBatch = IvtBal::create([
-                                    'wh_code'    => $this->inputs['wh_code2'],
-                                    'matl_id'    => $materialId,
-                                    'matl_code'  => $remainingBatch->matl_code,
-                                    'matl_uom'   => $remainingBatch->matl_uom,
-                                    'batch_code' => $remainingBatch->batch_code,
-                                    'wh_id'      => $dest_wh_id,
-                                    'qty_oh'     => $transferQty,
-                                ]);
-                            }
-                            $destDtl = IvttrDtl::where('trhdr_id', $this->object->id)
-                                ->where('wh_code', $this->inputs['wh_code2'])
-                                ->where('matl_id', $materialId)
-                                ->where('batch_code', $destBatch->batch_code)
-                                ->first();
-                            if ($destDtl) {
-                                $destDtl->qty += $transferQty;
-                                $destDtl->save();
-                            } else {
-                                IvttrDtl::create([
-                                    'trhdr_id'   => $this->object->id,
-                                    'tr_seq'     => $pair,
-                                    'wh_code'    => $this->inputs['wh_code2'],
-                                    'matl_id'    => $materialId,
-                                    'tr_id'      => $this->object->id,
-                                    'matl_code'  => $destBatch->matl_code,
-                                    'matl_uom'   => $destBatch->matl_uom,
-                                    'batch_code' => $destBatch->batch_code,
-                                    'ivt_id'     => $destBatch->id,
-                                    'qty'        => $transferQty,
-                                ]);
-                            }
-                        }
-                        $pair++;
-                        $transferQty = 0;
-                    } else {
-                        throw new Exception("Stok tidak mencukupi untuk material id: $materialId");
-                    }
-                }
-            }
-        } elseif ($this->inputs['tr_type'] === 'IA') {
-            // --- Logika IA (Inventory Adjustment) ---
-            // Hanya menggunakan satu gudang (wh_code).
-            // Jika adjustQty negatif, lakukan pengurangan stok secara FIFO;
-            // jika positif, tambahkan stok ke batch terbaru.
-            foreach ($this->input_details as $detail) {
-                if (!$detail['is_editable']) {
-                    continue;
-                }
-                $adjustQty = $detail['qty'];
-                $materialId = $detail['matl_id'];
-
-                if ($adjustQty < 0) {
-                    $remainingQty = abs($adjustQty);
-                    $batches = IvtBal::where('wh_code', $this->inputs['wh_code'])
-                        ->where('matl_id', $materialId)
-                        ->orderBy('batch_code', 'asc')
-                        ->get();
-                    $tr_seq = 1;
-                    foreach ($batches as $batch) {
-                        if ($remainingQty <= 0) break;
-                        if ($batch->qty_oh <= 0) continue;
-                        $deduct = min($remainingQty, $batch->qty_oh);
-                        $batch->qty_oh -= $deduct;
-                        $batch->save();
-
-                        $detailRecord = IvttrDtl::where('trhdr_id', $this->object->id)
-                            ->where('wh_code', $this->inputs['wh_code'])
-                            ->where('matl_id', $materialId)
-                            ->where('batch_code', $batch->batch_code)
-                            ->first();
-                        if ($detailRecord) {
-                            $detailRecord->qty += (-$deduct);
-                            $detailRecord->save();
-                        } else {
-                            IvttrDtl::create([
-                                'trhdr_id'   => $this->object->id,
-                                'tr_seq'     => $tr_seq,
-                                'wh_code'    => $this->inputs['wh_code'],
-                                'matl_id'    => $materialId,
-                                'tr_id'      => $this->object->id,
-                                'matl_code'  => $batch->matl_code,
-                                'matl_uom'   => $batch->matl_uom,
-                                'batch_code' => $batch->batch_code,
-                                'ivt_id'     => $batch->id,
-                                'qty'        => -$deduct,
-                            ]);
-                        }
-                        $tr_seq++;
-                        $remainingQty -= $deduct;
-                    }
-                    if ($remainingQty > 0) {
-                        throw new Exception("Stok tidak mencukupi untuk material id: $materialId");
-                    }
-                } elseif ($adjustQty > 0) {
-                    $batch = IvtBal::where('wh_code', $this->inputs['wh_code'])
-                        ->where('matl_id', $materialId)
-                        ->orderBy('id', 'desc')
-                        ->first();
-                    if ($batch) {
-                        $batch->increment('qty_oh', $adjustQty);
-                        $batch->refresh();
-                    } else {
-                        $batch = IvtBal::create([
-                            'wh_code'    => $this->inputs['wh_code'],
-                            'matl_id'    => $materialId,
-                            'matl_code'  => $detail['matl_code'] ?? '',
-                            'matl_uom'   => $detail['matl_uom'] ?? '',
-                            'batch_code' => $detail['batch_code'] ?? '1',
-                            'qty_oh'     => $adjustQty,
-                        ]);
-                    }
-
-                    $detailRecord = IvttrDtl::where('trhdr_id', $this->object->id)
-                        ->where('wh_code', $this->inputs['wh_code'])
-                        ->where('matl_id', $materialId)
-                        ->where('batch_code', $batch->batch_code)
-                        ->first();
-                    if ($detailRecord) {
-                        $detailRecord->qty += $adjustQty;
-                        $detailRecord->save();
-                    } else {
-                        IvttrDtl::create([
-                            'trhdr_id'   => $this->object->id,
-                            'tr_seq'     => 1,
-                            'wh_code'    => $this->inputs['wh_code'],
-                            'matl_id'    => $materialId,
-                            'tr_id'      => $this->object->id,
-                            'matl_code'  => $batch->matl_code,
-                            'matl_uom'   => $batch->matl_uom,
-                            'batch_code' => $batch->batch_code,
-                            'ivt_id'     => $batch->id,
-                            'qty'        => $adjustQty,
-                        ]);
-                    }
-                }
-            }
-        }
-    }
 
     public function delete()
     {
         try {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
-            }
+            // if ($this->object->isOrderCompleted()) {
+            //     $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+            //     return;
+            // }
 
-            if (!$this->object->isOrderEnableToDelete()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
-                return;
-            }
+            // if (!$this->object->isOrderEnableToDelete()) {
+            //     $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+            //     return;
+            // }
 
             if (isset($this->object->status_code)) {
                 $this->object->status_code =  Status::NONACTIVE;
@@ -635,6 +357,17 @@ class Detail extends BaseComponent
         return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
     }
 
+    public function deleteTransaction()
+    {
+        try {
+            app(InventoryService::class)->delInventory($this->object->id);
+            $this->dispatch('success', __('generic.string.disable'));
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.disable', ['message' => $e->getMessage()]));
+        }
+        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+
     public function onTypeChanged($value)
     {
         $this->inputs['tr_type'] = $value;
@@ -646,17 +379,57 @@ class Detail extends BaseComponent
         return $this->actionValue === 'Edit' || $this->actionValue === 'View';
     }
 
-    public function getMaterialLabel($matlId)
+    protected function prepareBatchCode()
     {
-        if (!$this->materials) return '';
+        $result = [];
+        $whIdFrom = $this->inputs['wh_id'];
+        $whCodeFrom = $this->inputs['wh_code'];
+        $whIdTo = $this->inputs['wh_id2'];
+        $whCodeTo = $this->inputs['wh_code2'];
 
-        $material = $this->materials->firstWhere('value', $matlId);
-        return $material['label'] ?? '';
-    }
+        if (!$whIdFrom || !$whIdTo || empty($this->input_details)) {
+            return $result;
+        }
 
-    public function isItemEditable($inputDetail)
-    {
-        return isset($inputDetail['is_editable']) && $inputDetail['is_editable'];
+        $seq = 1;
+        foreach ($this->input_details as $item) {
+            $matlId = $item['matl_id'];
+            $qtyNeeded = $item['qty'];
+            if (!$matlId || $qtyNeeded <= 0) continue;
+
+            // Ambil material info
+            $material = Material::find($matlId);
+            $matlUom = $material->uom ?? null;
+            $matlCode = $material->code ?? null;
+
+            $batches = IvtBal::where('wh_id', $whIdFrom)
+                ->where('matl_id', $matlId)
+                ->where('qty_oh', '>', 0)
+                ->orderBy('batch_code')
+                ->orderBy('id')
+                ->get();
+
+            foreach ($batches as $batch) {
+                if ($qtyNeeded <= 0) break;
+                $takeQty = min($batch->qty_oh, $qtyNeeded);
+                $result[] = [
+                    'tr_seq'    => $seq,
+                    'matl_id'   => $matlId,
+                    'matl_code' => $matlCode,
+                    'matl_uom'  => $matlUom,
+                    'batch_code'=> $batch->batch_code,
+                    'qty'       => $takeQty,
+                    'wh_id'     => $whIdFrom,
+                    'wh_code'   => $whCodeFrom,
+                    'wh_id2'    => $whIdTo,
+                    'wh_code2'  => $whCodeTo,
+                ];
+                $qtyNeeded -= $takeQty;
+                $seq++;
+            }
+            // dd($result);
+        }
+        return $result;
     }
     #endregion
 }

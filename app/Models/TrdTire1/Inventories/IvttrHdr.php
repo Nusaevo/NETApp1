@@ -2,6 +2,7 @@
 
 namespace App\Models\TrdTire1\Inventories;
 
+use App\Models\SysConfig1\ConfigSnum;
 use App\Models\TrdTire1\Transaction\DelivDtl;
 use App\Enums\Constant;
 use App\Models\Base\BaseModel;
@@ -12,11 +13,18 @@ class IvttrHdr extends BaseModel
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->tr_code)) {
+                $model->tr_code = self::generateInventoryTransactionId();
+            }
+        });
     }
 
     protected $fillable = [
         'tr_type',
         'tr_date',
+        'tr_code',
         'remark',
     ];
     public function scopeGetActiveData()
@@ -36,23 +44,34 @@ class IvttrHdr extends BaseModel
 
     public function saveOrderHeader($appCode, $trType, $inputs, $lastIdKey)
     {
-        // Implement the logic to save the order header
-        // Example:
         $this->fill($inputs);
 
-        // Generate tr_id with incremented value only if it's a new record
+        // Generate tr_code dengan ConfigSnum hanya jika record baru
         if (!$this->exists) {
-            $lastRecord = self::orderBy('tr_id', 'desc')->first();
-            $lastId = $lastRecord ? intval($lastRecord->tr_id) : 0;
-            $this->tr_id = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
+            $this->tr_code = self::generateInventoryTransactionId();
         }
 
-        // $this->tr_type = $inputs['tr_type'];
         $this->save();
     }
-    public function getTrIdAttribute($value)
+
+    public static function generateInventoryTransactionId()
     {
-        return sprintf('%03d', $value);
+        $configSnum = ConfigSnum::where('code', 'IVT_LASTID')->first();
+        $stepCnt = $configSnum->step_cnt;
+        $proposedTrId = $configSnum->last_cnt + $stepCnt;
+        if ($proposedTrId > $configSnum->wrap_high) {
+            $proposedTrId = $configSnum->wrap_low;
+        }
+        $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+        $configSnum->update(['last_cnt' => $proposedTrId]);
+        return $proposedTrId;
+    }
+
+    public static function generateSimpleTrCode()
+    {
+        $last = self::orderBy('tr_code', 'desc')->whereNotNull('tr_code')->where('tr_code', '!=', '')->first();
+        $lastCode = $last ? intval($last->tr_code) : 0;
+        return strval($lastCode + 1);
     }
 
     public function isOrderCompleted()

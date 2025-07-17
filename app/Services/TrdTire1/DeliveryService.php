@@ -21,7 +21,6 @@ class DeliveryService
     #region Delivery Methods
     public function addDelivery(array $headerData, array $detailData): array
     {
-        DB::beginTransaction();
         try {
             $delivHdr = $this->saveHeader($headerData);
 
@@ -36,9 +35,7 @@ class DeliveryService
             $this->saveDetail($headerData, $detailData);
 
             app(BillingService::class)->addfromDelivery($delivHdr->id);
-            DB::commit();
         } catch (Exception $e) {
-            DB::rollBack();
             throw new Exception('Error adding delivery: ' . $e->getMessage());
         }
         return [
@@ -48,7 +45,6 @@ class DeliveryService
 
     public function updDelivery(int $delivId, array $headerData, array $detailData): DelivHdr
     {
-        DB::beginTransaction();
         try {
             // Cek apakah delivery header ada
             $delivHdr = DelivHdr::find($delivId);
@@ -70,10 +66,8 @@ class DeliveryService
             app(BillingService::class)->updfromDelivery($delivHdr->id);
             // dd($headerData, $detailData);
 
-            DB::commit();
             return $delivHdr;
         } catch (Exception $e) {
-            DB::rollBack();
             throw $e;
         }
     }
@@ -112,19 +106,11 @@ class DeliveryService
     private function saveDetail(array $headerData, array $detailData): void
     {
         foreach ($detailData as $detail) {
-            // Simpan detail
-            // $delivDetail = new DelivDtl($detail);
-            // $delivDetail->save();
-
             $delivDetail = DelivDtl::create($detail);
-            // dd('tes');
-            // $delivDetails[] = $delivDetail;
 
             // Siapkan data untuk delReservation
             $delivDetailRsv = $delivDetail->toArray();
-            $headerDataRsv = $headerData;
-
-            // Sesuaikan tr_type untuk delReservation
+            $headerDataRsv = $headerData;            // Sesuaikan tr_type untuk delReservation
             if ($delivDetail->tr_type === 'PD') {
                 $delivDetailRsv['tr_type'] = 'PO';
                 $headerDataRsv['tr_type'] = 'PO';
@@ -135,11 +121,9 @@ class DeliveryService
             // Hapus reservasi order
             $this->inventoryService->addReservation('-', $headerDataRsv, $delivDetailRsv);
 
-            // dd('tes');
-            // Tambah stok onhand
-            $this->inventoryService->addOnhand($headerData, $delivDetail);
+            // Tambah stok onhand - convert $delivDetail object to array
+            $this->inventoryService->addOnhand($headerData, $delivDetail->toArray());
 
-            // dd('tes212');
             // Update qty_reff di OrderDtl
             if ($delivDetail->reffdtl_id) {
                 $this->orderService->updOrderQtyReff('+', $delivDetail->qty, $delivDetail->reffdtl_id);

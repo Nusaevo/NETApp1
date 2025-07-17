@@ -10,14 +10,13 @@ use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Support\Carbon;
+use Livewire\Attributes\On;
 
 class IndexDataTable extends BaseDataTableComponent
 {
     public $print_date;
     public $selectedItems = [];
-    public $deletedRemarks = [];
     public $filters = [];
 
     protected $model = OrderHdr::class;
@@ -91,6 +90,10 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->sortable(),
             Column::make($this->trans("No Faktur"), "tax_doc_num")
+                ->format(function ($value, $row) {
+                    // Tampilkan nomor faktur hanya jika tidak 0 (tidak dihapus)
+                    return $row->tax_doc_num && $row->tax_doc_num != 0 ? $row->tax_doc_num : '';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("Tgl Proses"), "print_date")
@@ -190,12 +193,6 @@ class IndexDataTable extends BaseDataTableComponent
         $masaOptions = ['' => 'Not Selected'] + $masaOptions;
 
         return [
-            SelectFilter::make('Nomor Faktur Pajak Terakhir')
-                ->options([$configDetails['last_cnt'] => $configDetails['last_cnt']])
-                ->filter(function (Builder $builder, string $value) {}),
-            SelectFilter::make('Batas Nomor Faktur')
-                ->options([$configDetails['wrap_high'] => $configDetails['wrap_high']])
-                ->filter(function (Builder $builder, string $value) {}),
             SelectFilter::make('Tanggal Proses')
                 ->options($printDates)
                 ->filter(function (Builder $builder, string $value) {
@@ -239,16 +236,15 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function setProsesDate()
     {
-
-        $newDataCount = OrderHdr::where('print_date', '1900-01-01')->count();
+        $newDataCount = OrderHdr::whereNull('print_date')->count();
 
         if ($newDataCount === 0) {
             $this->dispatch('error', 'Tidak ada data baru yang bisa diproses.');
             return;
         }
 
-        // Update all print_date to current date if it is '1900-01-01'
-        OrderHdr::where('print_date', '1900-01-01')
+        // Update semua print_date yang null menjadi tanggal sekarang
+        OrderHdr::whereNull('print_date')
             ->update(['print_date' => now()]);
 
         $this->dispatch('success', 'Tanggal proses berhasil disimpan');
@@ -261,54 +257,19 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        if (count($this->getSelected()) > 0) {
-            $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-            if ($config) {
-                $lastId = (int) $config->last_cnt;
-                $stepCnt = (int) $config->step_cnt;
-                $wrapHigh = (int) $config->wrap_high;
-                $maxAssigned = $lastId; // Variabel untuk menyimpan nomor faktur tertinggi yang telah dipakai
+        $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
+            ->with('Partner')
+            ->get(['id', 'tr_code', 'partner_id', 'total_amt'])
+            ->map(function ($order) {
+                return [
+                    'nomor_nota' => $order->tr_code,
+                    'nama' => $order->Partner ? $order->Partner->name : '',
+                    'total_amt' => rupiah($order->total_amt),
+                ];
+            })
+            ->toArray();
 
-                $selectedOrderIds = $this->getSelected();
-                foreach ($selectedOrderIds as $orderId) {
-                    do {
-                        if (!empty($this->deletedRemarks)) {
-                            // Urutkan deletedRemarks sehingga nomor terkecil digunakan terlebih dahulu
-                            sort($this->deletedRemarks);
-                            $newId = array_shift($this->deletedRemarks);
-                        } else {
-                            $newId = $lastId + $stepCnt;
-                            if ($newId > $wrapHigh) {
-                                $newId = 1; // Reset ke 1 jika melebihi batas
-                            }
-                            $lastId = $newId;
-                        }
-                    } while (OrderHdr::where('tax_doc_num', $newId)->exists());
-
-                    // Update nomor faktur pada order yang bersangkutan
-                    OrderHdr::where('id', $orderId)->update(['tax_doc_num' => $newId]);
-
-                    // Perbarui nomor faktur tertinggi yang telah dipakai
-                    if ($newId > $maxAssigned) {
-                        $maxAssigned = $newId;
-                    }
-                }
-
-                // Update last_cnt berdasarkan nomor faktur tertinggi yang baru diset
-                $config->last_cnt = $maxAssigned;
-                $config->save();
-
-                // Kosongkan deletedRemarks setelah digunakan
-                $this->deletedRemarks = [];
-                $this->clearSelected();
-                $this->dispatch('success', 'Nomor faktur berhasil disimpan');
-            } else {
-                $this->dispatch('showAlert', [
-                    'type' => 'error',
-                    'message' => 'Konfigurasi SO_FPAJAK_LASTID tidak ditemukan'
-                ]);
-            }
-        }
+        $this->dispatch('openNomorFakturModal', orderIds: $this->getSelected(), selectedItems: $selectedItems, actionType: 'set');
     }
 
 
@@ -319,22 +280,19 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        if (count($this->getSelected()) > 0) {
-            $orders = OrderHdr::whereIn('id', $this->getSelected())->get(['id', 'tax_doc_num']);
+        $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
+            ->with('Partner')
+            ->get(['id', 'tr_code', 'partner_id', 'total_amt'])
+            ->map(function ($order) {
+                return [
+                    'nomor_nota' => $order->tr_code,
+                    'nama' => $order->Partner ? $order->Partner->name : '',
+                    'total_amt' => rupiah($order->total_amt),
+                ];
+            })
+            ->toArray();
 
-            foreach ($orders as $order) {
-                if ($order->tax_doc_num) {
-                    // Simpan nomor yang dihapus agar bisa digunakan kembali
-                    $this->deletedRemarks[] = $order->tax_doc_num;
-                }
-            }
-
-            // Hapus nomor faktur pada order yang dipilih
-            OrderHdr::whereIn('id', $this->getSelected())->update(['tax_doc_num' => null]);
-
-            $this->clearSelected();
-            $this->dispatch('success', 'Nomor faktur berhasil dihapus');
-        }
+        $this->dispatch('openNomorFakturModal', orderIds: $this->getSelected(), selectedItems: $selectedItems, actionType: 'delete');
     }
 
     public function changeNomorFaktur()
@@ -344,71 +302,25 @@ class IndexDataTable extends BaseDataTableComponent
             return;
         }
 
-        if (count($this->getSelected()) > 0) {
-            $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-            if ($config) {
-                $lastId   = (int) $config->last_cnt;
-                $stepCnt  = (int) $config->step_cnt;
-                $wrapHigh = (int) $config->wrap_high;
-                $maxAssigned = $lastId; // Menyimpan nomor faktur tertinggi yang telah dipakai
+        $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
+            ->with('Partner')
+            ->get(['id', 'tr_code', 'partner_id', 'total_amt'])
+            ->map(function ($order) {
+                return [
+                    'nomor_nota' => $order->tr_code,
+                    'nama' => $order->Partner ? $order->Partner->name : '',
+                    'total_amt' => rupiah($order->total_amt),
+                ];
+            })
+            ->toArray();
 
-                $selectedOrderIds = $this->getSelected();
-                foreach ($selectedOrderIds as $orderId) {
-                    do {
-                        if (!empty($this->deletedRemarks)) {
-                            // Urutkan agar nomor terkecil dipakai terlebih dahulu
-                            sort($this->deletedRemarks);
-                            $newId = array_shift($this->deletedRemarks);
-                        } else {
-                            $newId = $lastId + $stepCnt;
-                            if ($newId > $wrapHigh) {
-                                $newId = 1; // Reset ke 1 jika melebihi batas
-                            }
-                            $lastId = $newId;
-                        }
-                    } while (OrderHdr::where('tax_doc_num', $newId)->exists());
-
-                    // Jika order sudah memiliki nomor, simpan sebagai reusable
-                    $order = OrderHdr::find($orderId);
-                    if ($order->tax_doc_num) {
-                        $this->deletedRemarks[] = $order->tax_doc_num;
-                    }
-
-                    OrderHdr::where('id', $orderId)->update(['tax_doc_num' => $newId]);
-
-                    // Update maxAssigned jika nomor baru lebih tinggi
-                    if ($newId > $maxAssigned) {
-                        $maxAssigned = $newId;
-                    }
-                }
-
-                // Update konfigurasi last_cnt sesuai dengan nomor faktur tertinggi yang telah dipakai
-                $config->last_cnt = $maxAssigned;
-                $config->save();
-
-                // Kosongkan reusable deletedRemarks setelah dipakai
-                $this->deletedRemarks = [];
-                $this->clearSelected();
-                $this->dispatch('success', 'Nomor faktur berhasil diubah');
-            } else {
-                $this->dispatch('showAlert', [
-                    'type' => 'error',
-                    'message' => 'Konfigurasi SO_FPAJAK_LASTID tidak ditemukan'
-                ]);
-            }
-        }
+        $this->dispatch('openNomorFakturModal', orderIds: $this->getSelected(), selectedItems: $selectedItems, actionType: 'change');
     }
 
 
     public function getConfigDetails()
     {
-        $config = Configsnum::where('code', 'SO_FPAJAK_LASTID')->first();
-        if ($config) {
-            return [
-                'last_cnt' => $config->last_cnt,
-                'wrap_high' => $config->wrap_high,
-            ];
-        }
+        // Method ini sudah tidak diperlukan karena nomor faktur bebas
         return [
             'last_cnt' => 'N/A',
             'wrap_high' => 'N/A',
@@ -448,5 +360,11 @@ class IndexDataTable extends BaseDataTableComponent
             ]);
         }
         $this->dispatch('error', 'Masa belum dipilih.');
+    }
+
+    #[On('refreshDatatable')]
+    public function refreshDatatable()
+    {
+        $this->clearSelected();
     }
 }

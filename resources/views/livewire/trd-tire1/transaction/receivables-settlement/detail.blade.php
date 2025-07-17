@@ -18,12 +18,18 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
+                                    {{-- <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
                                         searchModel="App\Models\TrdTire1\Master\Partner"
                                         searchWhereCondition="deleted_at=null&grp=C" optionValue="id"
                                         optionLabel="code,name" placeHolder="Type to search custommer..."
                                         :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        type="int" onChanged="onPartnerChange"/>
+                                        type="int" onChanged="onPartnerChange" /> --}}
+                                    <x-ui-dropdown-search label="Supplier" model="inputs.partner_id"
+                                        query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
+                                        optionValue="id" optionLabel="code,name,address,city"
+                                        placeHolder="Type to search supplier..." :selectedValue="$inputs['partner_id']" required="true"
+                                        :action="$actionValue" :enabled="$isPanelEnabled" type="int"
+                                        onChanged="onPartnerChange" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
@@ -54,6 +60,7 @@
                                             model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue"
                                             enabled="true"
                                             onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
+                                            {{-- @dump($advance) --}}
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_advance.{{ $key }}.amtAdvBal"
@@ -142,7 +149,7 @@
                         <!-- Define table rows -->
                         <x-slot name="rows">
                             @foreach ($input_details as $key => $input_detail)
-                                <tr wire:key="list{{ $input_detail['billhdr_id'] ?? $key }}">
+                                <tr wire:key="detail-{{ $input_detail['billhdr_id'] ?? $key }}">
                                     <td style="text-align: center;">{{ $loop->iteration }}</td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
@@ -154,7 +161,7 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.outstanding_amt"
-                                            label="" :action="$actionValue" enabled="false" type="number" />
+                                            label="" :action="$actionValue" enabled="false" type="number"/>
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
@@ -184,11 +191,11 @@
                 <x-ui-padding>
                     <div class="row">
                         <x-ui-text-field model="totalPaymentAmount" label="Total Pembayaran" :action="$actionValue"
-                                    enabled="false" type="number" />
+                            enabled="false" type="number" />
                         <x-ui-text-field model="totalNotaAmount" label="Total Amt Nota" :action="$actionValue"
-                                    enabled="false" type="number" />
+                            enabled="false" type="number" />
                         <x-ui-text-field model="advanceBalance" label="Lebih Bayar" :action="$actionValue"
-                                    enabled="false" type="number" />
+                            enabled="false" type="number" />
                     </div>
                 </x-ui-padding>
             </x-ui-card>

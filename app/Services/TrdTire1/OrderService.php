@@ -93,6 +93,8 @@ class OrderService
             $order = OrderHdr::findOrFail($orderId);
             $order->update($headerData);
         } else {
+            // Pastikan print_date selalu null saat create order baru
+            $headerData['print_date'] = null;
             // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
             $order = OrderHdr::create($headerData);
         }
@@ -140,6 +142,40 @@ class OrderService
         // Then delete the details
         OrderDtl::where('trhdr_id', $orderID)->delete();
         $this->inventoryService->delIvtLog($orderID);
+    }
+
+    // Check if the order is editable
+    public function isEditable(int $orderId): bool
+    {
+        $orderHdr = OrderHdr::find($orderId);
+        if (!$orderHdr) {
+            return false;
+        }
+
+        $orderHdr = OrderHdr::where('trhdr_id', $orderId)
+            ->first();
+        if ($orderHdr->qty_reff > 0) {
+            return false;
+        }
+
+        // Check if the order is editable based on its status
+        return true;
+    }
+
+    public function isDeletable(int $orderId): bool
+    {
+        $order = OrderHdr::find($orderId);
+        if (!$order) {
+            return false;
+        }
+
+        $orderHdr = OrderHdr::where('trhdr_id', $orderId)
+            ->first();
+        if ($orderHdr->qty_reff > 0) {
+            return false;
+        }
+        // Check if the order is deletable based on its status
+        return true;
     }
 
 }

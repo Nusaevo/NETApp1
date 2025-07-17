@@ -4,7 +4,6 @@
     style="
         width: {{ $width }};
         height: {{ $height }};
-        overflow: auto;
     "
 >
     {{-- Header --}}
@@ -13,7 +12,7 @@
     @endif
 
     {{-- Body --}}
-    <div style="max-width: 100%; max-height: 100%; overflow: auto;">
+    <div style="max-width: 100%; max-height: 100%;">
         @isset($slot)
             {{ $slot }}
         @endisset

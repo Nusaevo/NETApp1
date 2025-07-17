@@ -5,6 +5,10 @@
     // Menentukan class untuk kolom dan form-floating
     $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
+
+    // Determine input class based on whether there's a label
+    // Height and padding now handled through CSS
+    $inputClass = !empty($label) ? 'form-select' : 'form-select form-select-sm';
 @endphp
 
 <div class="{{ $colClass }}" wire:ignore.self
@@ -17,7 +21,7 @@
                 @if (isset($modelType) && $modelType === 'lazy') wire:model.lazy="{{ isset($model) ? $model : '' }}"
                 @else wire:model="{{ isset($model) ? $model : '' }}" @endif
                 @if (isset($onChanged) && $onChanged) wire:change="{{ $onChanged }}" @endif
-                class="form-select @error($model) is-invalid @enderror
+                class="{{ $inputClass }} @error($model) is-invalid @enderror
                 @if (isset($enabled) && $enabled === 'false') disabled-gray @endif"
                 {{-- Disable dropdown when in "View" mode or when "enabled" is "false" --}}
                 @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif

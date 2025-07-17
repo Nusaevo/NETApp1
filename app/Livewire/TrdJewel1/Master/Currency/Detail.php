@@ -53,7 +53,6 @@ class Detail extends BaseComponent
         $defaultCurrency = $this->currencyData['defaultCurrency'];
         $this->inputs['curr_id'] = $defaultCurrency['value'];
         $this->inputs['log_date']  = date('Y-m-d');
-        $this->inputs['goldprice_curr'] = 0;
         $this->object = new GoldPriceLog();
     }
 

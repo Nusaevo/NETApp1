@@ -299,7 +299,11 @@ class BillingService
             ->where('partner_id', $partnerId)
             ->get();
 
-        // dd($bills);
+        // Pastikan outstanding_amt integer (tanpa ribuan/desimal)
+        foreach ($bills as $bill) {
+            $bill->outstanding_amt = (int) $bill->outstanding_amt;
+        }
+
         return $bills;
     }
 }

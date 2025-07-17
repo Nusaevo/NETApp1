@@ -175,30 +175,37 @@ class PaymentService
             throw new Exception('Header ID tidak tersedia untuk menyimpan PaymentAdv');
         }
 
-        // dd($headerData, $advanceData);
-        foreach ($advanceData as &$advance) {
-            $advance['trhdr_id'] = $headerData["id"];
-            $advance['tr_type'] = $headerData["tr_type"] . 'A';
-            $advance['tr_code'] = $headerData["tr_code"];
-            // Set reff_id to the partnerbal_id of the advance being used
-            $advance['reff_id'] = $advance['partnerbal_id'];
-        }
-        unset($advance);
-
+        // Untuk setiap advance yang digunakan, cukup kurangi amt_adv pada partnerbal
         foreach ($advanceData as $advance) {
-            $paymentAdv = new PaymentAdv($advance);
-            $paymentAdv->amt = -$advance['amt']; // Pastikan nilai amt negatif
-            $paymentAdv->save();
-            $advance['id'] = $paymentAdv->id;
-
-            $partnerBalId = $this->partnerBalanceService->updFromPayment( $headerData, $advance);
-            if (!$paymentAdv->partnerbal_id) {
-                $paymentAdv->partnerbal_id = $partnerBalId;  // Now using the ID directly
+            if (empty($advance['partnerbal_id']) || empty($advance['amt'])) {
+                continue;
             }
+            // Kurangi amt_adv pada partnerbal
+            $partnerBal = PartnerBal::find($advance['partnerbal_id']);
+            if ($partnerBal) {
+                $partnerBal->amt_adv = $partnerBal->amt_adv - $advance['amt'];
+                if ($partnerBal->amt_adv < 0) {
+                    $partnerBal->amt_adv = 0;
+                }
+                $partnerBal->save();
+            }
+            // Jika ingin tetap mencatat di PaymentAdv (untuk histori), bisa simpan data positif (bukan negatif)
+            $advanceRecord = [
+                'trhdr_id' => $headerData['id'],
+                'tr_type' => $headerData['tr_type'] . 'A',
+                'tr_code' => $headerData['tr_code'],
+                'tr_seq' => $advance['tr_seq'] ?? 1,
+                'adv_type_code' => 'ARADVPAY',
+                'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
+                'amt' => $advance['amt'], // Simpan positif untuk histori
+                'partnerbal_id' => $advance['partnerbal_id'],
+                'reff_id' => $advance['partnerbal_id'],
+                'reff_type' => $headerData['tr_type'],
+                'reff_code' => $headerData['tr_code'],
+            ];
+            $paymentAdv = new PaymentAdv($advanceRecord);
             $paymentAdv->save();
-
         }
-
     }
 
     private function overPayment(array $headerData, float $overAmt): void
@@ -213,12 +220,15 @@ class PaymentService
             return;
         }
 
-        // Buat array baru untuk overPayment, jangan gunakan $advanceData yang mungkin kosong
+        // Cari tr_seq terakhir untuk trhdr_id ini
+        $lastSeq = (int) PaymentAdv::where('trhdr_id', $headerData['id'])->max('tr_seq');
+        $nextSeq = $lastSeq > 0 ? $lastSeq + 1 : 1;
+
         $overPaymentData = [
             'trhdr_id' => $headerData['id'],
             'tr_type' => $headerData['tr_type'] . 'A',
             'tr_code' => $headerData['tr_code'],
-            'tr_seq' => 1,
+            'tr_seq' => $nextSeq,
             'adv_type_code' => 'ARADVPAY',
             'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
             'amt' => $overAmt, // Pakai negatif agar menjadi positive saat updfromPayment
@@ -257,6 +267,18 @@ class PaymentService
         foreach ($existingDetails as $detail) {
             app(BillingService::class)->updAmtReff("-", $detail["amt"], $detail["billhdr_id"]);
             $detail->delete();
+        }
+
+        // Kembalikan amt_adv ke PartnerBal untuk setiap penggunaan advance yang dihapus
+        $advances = PaymentAdv::where('trhdr_id', $paymentId)->get();
+        foreach ($advances as $adv) {
+            if (!empty($adv->partnerbal_id) && $adv->reff_id != $adv->trhdr_id) { // hanya pemakaian advance
+                $partnerBal = PartnerBal::find($adv->partnerbal_id);
+                if ($partnerBal) {
+                    $partnerBal->amt_adv += $adv->amt;
+                    $partnerBal->save();
+                }
+            }
         }
 
         PaymentSrc::where('trhdr_id', $paymentId)->delete();

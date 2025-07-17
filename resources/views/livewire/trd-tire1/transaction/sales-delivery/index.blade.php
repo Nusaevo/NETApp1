@@ -51,7 +51,7 @@
             </div>
         </x-slot>
         <x-slot name="footer">
-            <x-ui-button clickEvent="submitDeliveryDate" button-name="Kirim" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="onValidateAndSave" button-name="Kirim" loading="true" :action="$actionValue"
                 cssClass="btn-primary" />
         </x-slot>
     </x-ui-dialog-box>
@@ -76,8 +76,8 @@
             });
 
             // Listener untuk submit delivery date
-            Livewire.on('submitDeliveryDate', event => {
-                @this.submitDeliveryDate();
+            Livewire.on('onValidateAndSave', event => {
+                @this.onValidateAndSave();
             });
         });
     </script>

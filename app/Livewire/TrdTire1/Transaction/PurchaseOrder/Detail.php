@@ -51,7 +51,7 @@ class Detail extends BaseComponent
     // Delivery status property - simplified
     public $isDeliv = false;
     public $materialCategory = null; // Tambahan: untuk menyimpan category hasil mapping sales_type
-
+    public $materialQuery = "";
     protected $masterService;
     protected $orderService;
     protected $inventoryService;
@@ -249,6 +249,7 @@ class Detail extends BaseComponent
             $this->onSalesTypeChanged();
         }
 
+
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
@@ -299,6 +300,11 @@ class Detail extends BaseComponent
      */
     public function addItem()
     {
+        // Validasi: sales_type harus dipilih dulu
+        if (empty($this->inputs['sales_type'])) {
+            $this->dispatch('error', 'Silakan pilih tipe kendaraan terlebih dahulu sebelum menambah item!');
+            return;
+        }
         try {
             // Check if can add new item
             if ($this->isDeliv) {
@@ -336,6 +342,8 @@ class Detail extends BaseComponent
                     $this->input_details[$key]['matl_descr'] = $material->name;
                     $this->input_details[$key]['disc_pct'] = 0.00; // Default 0%
                     $this->updateItemAmount($key);
+                    // dd($this->input_details[$key]);
+                    // $this->input_details = array_values($this->input_details);
                 } else {
                     $this->dispatch('error', __('generic.error.material_uom_not_found'));
                 }
@@ -445,10 +453,10 @@ class Detail extends BaseComponent
                 $arr = populateArrayFromModel($detail);
 
                 $this->input_details[$key] = $arr;
-
                 $this->updateItemAmount($key);
 
             }
+            // dd($this->input_details);
             // dd($this->input_details);
 
             // Check delivery status after loading details
@@ -519,8 +527,8 @@ class Detail extends BaseComponent
 
         // Calculate totals from detail data
         $totals = $this->calculateTotalsFromDetails($detailData);
-        $headerData['total_amt'] = $totals['total_amt'];
-        $headerData['total_amt_tax'] = $totals['total_amt_tax'];
+        $headerData['amt'] = $totals['amt'];
+        $headerData['amt_tax'] = $totals['amt_tax'];
 
         $this->processNormalOrder($headerData, $detailData);
     }
@@ -617,8 +625,8 @@ class Detail extends BaseComponent
         }
 
         return [
-            'total_amt' => $totalAmt,
-            'total_amt_tax' => $totalAmtTax
+            'amt' => $totalAmt,
+            'amt_tax' => $totalAmtTax
         ];
     }
 
@@ -873,36 +881,31 @@ class Detail extends BaseComponent
     public function onSalesTypeChanged()
     {
         $salesType = $this->inputs['sales_type'] ?? null;
+        $this->input_details = [];
+
         if (!$salesType) {
             $this->materials = [];
+            $this->materialQuery = "";
             $this->materialCategory = null;
             return;
         }
 
-        $categories = $this->getCategoryBySalesType($salesType); // Get array of categories
-        // Take the first category for search filter or use a default
-        $allMaterials = Material::all();
-        $filtered = [];
+        $categories = ConfigConst::where('const_group', 'MMATL_CATEGORY')
+            ->where('str1', $salesType)
+            ->pluck('str2') // Category names
+            ->map(function ($val) {
+                return "'" . trim($val) . "'";
+            })->toArray();
 
-        foreach ($allMaterials as $material) {
-            $category = $material->category ?? null;
-            if (!$category) continue;
+        $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
-            $categoryNorm = trim(strtoupper($category));
-            $config = ConfigConst::where('const_group', 'MMATL_CATEGORY')
-                ->whereRaw('UPPER(TRIM(str2)) = ?', [$categoryNorm])
-                ->first();
-
-            if ($config && $config->str1 === $salesType) {
-                $filtered[] = [
-                    'label' => $material->code . ' - ' . $material->name,
-                    'value' => $material->id,
-                ];
-            }
-        }
-
-        $this->materials = $filtered;
-        $this->input_details = [];
+        $this->materialQuery = "
+            SELECT id, code, name
+            FROM materials
+            WHERE status_code = 'A'
+            AND deleted_at IS NULL
+            AND category IN ($categoryList)
+        ";
     }
 
     /**

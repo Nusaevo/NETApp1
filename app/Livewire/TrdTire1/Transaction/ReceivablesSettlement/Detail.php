@@ -270,19 +270,26 @@ class Detail extends BaseComponent
 
             // Hitung ulang total pembayaran dan total nota
             $this->totalPaymentAmount = 0;
+            $totalFromPayments = 0;
             foreach ($this->input_payments as $payment) {
                 $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
-                $this->totalPaymentAmount += is_numeric($amtValue) ? (float)$amtValue : 0;
+                $totalFromPayments += is_numeric($amtValue) ? (float)$amtValue : 0;
             }
+            $totalAdvanceUsed = 0.0;
+            foreach ($this->input_advance as $advance) {
+                $totalAdvanceUsed += is_numeric($advance['amt']) ? (float)$advance['amt'] : 0.0;
+            }
+            $this->totalPaymentAmount = $totalAdvanceUsed + $totalFromPayments;
+
             $this->totalNotaAmount = 0;
             foreach ($this->input_details as $detail) {
                 $this->totalNotaAmount += is_numeric($detail['amt']) ? (float)$detail['amt'] : 0;
             }
-            // Ambil lebih bayar dari PaymentAdv
-            $paymentAdv = PaymentAdv::where('trhdr_id', $this->objectIdValue)->first();
-            $this->advanceBalance = $paymentAdv ? $paymentAdv->amt : 0;
-
-
+            // Jangan ambil advanceBalance dari PaymentAdv, tapi hitung dari selisih total pembayaran dan total nota
+            $this->advanceBalance = round($this->totalPaymentAmount - $this->totalNotaAmount, 2);
+            if (abs($this->advanceBalance) < 0.01) {
+                $this->advanceBalance = 0;
+            }
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
@@ -317,6 +324,20 @@ class Detail extends BaseComponent
             })
             ->toArray();
 
+        // Pastikan advanceOptions juga mengandung partnerbal_id yang sudah pernah dipakai (input_advance)
+        $existingAdvanceIds = array_column($this->advanceOptions, 'value');
+        foreach ($this->input_advance as $adv) {
+            if (!in_array($adv['partnerbal_id'], $existingAdvanceIds) && !empty($adv['partnerbal_id'])) {
+                $partnerBal = PartnerBal::find($adv['partnerbal_id']);
+                $reffCode = $partnerBal ? $partnerBal->reff_code : ('ID ' . $adv['partnerbal_id']);
+                $this->advanceOptions[] = [
+                    'label' => $reffCode,
+                    'value' => $adv['partnerbal_id'],
+                    'amt_adv' => $adv['amtAdvBal'],
+                ];
+            }
+        }
+
         // Inisialisasi input_advance jika belum ada
         if (!isset($this->input_advance) || !is_array($this->input_advance)) {
             $this->input_advance = [];
@@ -345,8 +366,7 @@ class Detail extends BaseComponent
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
             }
 
-            unset($this->input_details[$index]);
-            $this->input_details = array_values($this->input_details);
+            array_splice($this->input_details, $index, 1);
 
             $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
@@ -429,17 +449,17 @@ class Detail extends BaseComponent
                 if (isset($billingHdr) && $billingHdr) {
                     $tr_date = $billingHdr->tr_date ? \Carbon\Carbon::parse($billingHdr->tr_date) : \Carbon\Carbon::now();
                     $payment_due_days = (int)($billingHdr->payment_due_days ?? 0);
-                    $due_date = $tr_date->copy()->addDays($payment_due_days)->format('d-m-Y');
+                    $due_date = $tr_date->copy()->addDays($payment_due_days)->format('Y-m-d');
                 } else {
                     // Jika tidak ada billingHdr, tetap pakai Carbon
                     $tr_date = isset($tr_date) ? \Carbon\Carbon::parse($tr_date) : \Carbon\Carbon::now();
-                    $due_date = $tr_date->format('d-m-Y');
+                    $due_date = $tr_date->format('Y-m-d');
                 }
 
                 $this->input_details[] = [
                     'billhdr_id'      => $billhdr_id, // id BillingHdr untuk proses simpan
                     'billhdrtr_code'  => $billhdrtr_code, // kode nota untuk tampilan
-                    'due_date'        => $due_date, // tanggal jatuh tempo
+                    'due_date'        => $due_date, // tanggal jatuh tempo (Y-m-d agar cocok input type="date")
                     'amtbill'         => $amtbill,
                     'outstanding_amt' => $outstanding_amt,
                     'amt'             => $detail->amt ?? null,
@@ -451,6 +471,15 @@ class Detail extends BaseComponent
     #endregion
 
     #region Payment List Methods
+    // Handler untuk hapus row kosong jika modal ditutup tanpa klik Save
+    public function closePaymentDialogBox()
+    {
+        if ($this->activePaymentItemKey !== null && isset($this->input_payments[$this->activePaymentItemKey]) && empty($this->input_payments[$this->activePaymentItemKey]['pay_type_code'])) {
+            unset($this->input_payments[$this->activePaymentItemKey]);
+            $this->input_payments = array_values($this->input_payments);
+        }
+        $this->activePaymentItemKey = null;
+    }
     public function addPaymentItem()
     {
         try {
@@ -550,9 +579,8 @@ class Detail extends BaseComponent
         if ($payTypeCode === 'CASH' || $payTypeCode === 'ADV') {
             $this->input_payments[$key]['bank_reff'] = $bankNote;
         }
-
         $this->dispatch('closePaymentDialogBox');
-        $this->activePaymentItemKey = null;
+        // $this->activePaymentItemKey = null;
     }
 
     public function onPaymentTypeChange()
@@ -618,7 +646,7 @@ class Detail extends BaseComponent
     protected function loadPaymentDetails()
     {
         if (!empty($this->object)) {
-            // Cari dengan tr_type yang benar dari header, atau dengan tr_type lama (ARPS)
+            // Load payment sources
             $this->object_detail = PaymentSrc::where('trhdr_id', $this->object->id)
                 ->whereIn('tr_type', [$this->object->tr_type, 'ARPS'])
                 ->get();
@@ -658,13 +686,50 @@ class Detail extends BaseComponent
                             $this->input_payments[$key]['bank_reff'] = $detail->bank_note ?? '';
                             break;
                     }
-
-
                 }
             } else {
                 $this->input_payments = [];
-                // Don't clear input_details here - it should be handled by loadDetails()
-                // $this->input_details = [];
+            }
+
+            // Load advance (lebih bayar) yang sudah pernah digunakan
+            $advances = PaymentAdv::where('trhdr_id', $this->object->id)->get();
+            $this->input_advance = [];
+            // Hanya tampilkan PaymentAdv yang hasil pemakaian advance (bukan overpayment)
+            foreach ($advances as $adv) {
+                if (!empty($adv->partnerbal_id) && $adv->reff_id != $adv->trhdr_id) {
+                    $this->input_advance[] = [
+                        'partnerbal_id' => $adv->partnerbal_id,
+                        'partner_code' => $adv->partner_code ?? '',
+                        'amtAdvBal' => abs($adv->amt),
+                        'amt' => abs($adv->amt),
+                    ];
+                }
+            }
+
+            // Perbaiki perhitungan advanceBalance:
+            // Setelah save (edit mode), advanceBalance harus 0 jika seluruh advance sudah digunakan (sudah masuk ke total pembayaran)
+            $this->advanceBalance = round($this->totalPaymentAmount - $this->totalNotaAmount, 2);
+            if ($this->isEditOrView()) {
+                // Jika total pembayaran (termasuk advance) sudah sama dengan total nota, lebih bayar = 0
+                if (abs($this->totalPaymentAmount - $this->totalNotaAmount) < 0.01) {
+                    $this->advanceBalance = 0;
+                } else {
+                    // Jika masih ada sisa advance (misal, advance > total nota), tampilkan sisa lebih bayar
+                    // Namun, jika advance sudah dipakai semua, advanceBalance tetap 0
+                    // (advanceBalance tidak boleh menampilkan amt advance yang sudah dipakai)
+                    if (empty($this->input_advance) || array_sum(array_column($this->input_advance, 'amt')) == 0) {
+                        $this->advanceBalance = 0;
+                    }
+                }
+                // Hilangkan sisa kecil akibat pembulatan
+                if (abs($this->advanceBalance) < 0.01) {
+                    $this->advanceBalance = 0;
+                }
+            } else {
+                // Mode create: advanceBalance = sisa advance jika ada, atau selisih pembayaran-nota
+                if (abs($this->advanceBalance) < 0.01) {
+                    $this->advanceBalance = 0;
+                }
             }
         }
     }
@@ -1020,38 +1085,37 @@ class Detail extends BaseComponent
                 return $item->outstanding_amt > 0;
             });
 
-            // Validasi: jika tidak ada piutang yang outstanding, tampilkan error
+
+            // Jika tidak ada nota outstanding, beri warning, tapi tetap lanjutkan proses advance
             if ($validOutstandingBills->isEmpty()) {
-                $this->dispatch('error', "Tidak ada nota yang dilunasi untuk customer ini.");
-                $this->dispatch('closePartnerDialogBox');
-                return;
+                $this->input_details = [];
+                $this->dispatch('warning', "Tidak ada nota yang dilunasi untuk customer ini, namun saldo advance tetap bisa digunakan.");
+            } else {
+                // Hanya buat input_details jika ada piutang yang outstanding_amt > 0
+                $this->input_details = $validOutstandingBills
+                    ->map(function($item) {
+                        return [
+                            'billhdr_id'      => $item->billhdr_id,
+                            'billhdrtr_code'  => $item->billhdrtr_code,
+                            'due_date'        => Carbon::parse($item->due_date)->format('Y-m-d'), // pastikan formatnya sesuai
+                            'amtbill'         => $item->outstanding_amt, // atau field lain sesuai kebutuhan
+                            'outstanding_amt' => $item->outstanding_amt,
+                            'amt'             => 0,
+                        ];
+                    })->toArray();
             }
 
-            // Hanya buat input_details jika ada piutang yang outstanding_amt > 0
-            $this->input_details = $validOutstandingBills
-                ->map(function($item) {
-                    return [
-                        'billhdr_id'      => $item->billhdr_id,
-                        'billhdrtr_code'  => $item->billhdrtr_code,
-                        'due_date'        => Carbon::parse($item->due_date)->format('Y-m-d'), // pastikan formatnya sesuai
-                        'amtbill'         => $item->outstanding_amt, // atau field lain sesuai kebutuhan
-                        'outstanding_amt' => $item->outstanding_amt,
-                        'amt'             => 0,
-                    ];
-                })->toArray();
-
-            // Populate advance items sesuai partner yang dipilih (hanya untuk Create mode)
+            // Pada mode Create, populate advance dari PartnerBal jika ada (hanya saat partner dipilih)
             if (!$this->isEditOrView()) {
                 $this->input_advance = [];
                 $partnerAdvances = PartnerBal::where('partner_id', $partner->id)
                     ->where('amt_adv', '!=', 0)
                     ->get();
-
                 foreach ($partnerAdvances as $partnerBal) {
                     $this->input_advance[] = [
                         'partnerbal_id' => $partnerBal->id,
                         'partner_code' => $partnerBal->partner_code,
-                        'amtAdvBal' => $partnerBal->amt_adv,
+                        'amtAdvBal' => (int)round($partnerBal->amt_adv),
                         'amt' => 0,
                     ];
                 }
@@ -1189,9 +1253,11 @@ class Detail extends BaseComponent
 
         // 8. Update summary footer
         // Total advance yang digunakan
-        $totalAdvanceUsed = 0;
+        $totalAdvanceUsed = 0.0;
+        $totalAmtAdvBal = 0.0;
         foreach ($this->input_advance as $advance) {
-            $totalAdvanceUsed += is_numeric($advance['amt']) ? (float)$advance['amt'] : 0;
+            $totalAdvanceUsed += is_numeric($advance['amt']) ? (float)$advance['amt'] : 0.0;
+            $totalAmtAdvBal += is_numeric($advance['amtAdvBal']) ? (float)$advance['amtAdvBal'] : 0.0;
         }
 
         // Total dari input_payments
@@ -1211,7 +1277,13 @@ class Detail extends BaseComponent
         }
 
         // Sisa advance setelah digunakan
-        $this->advanceBalance = $this->totalPaymentAmount - $this->totalNotaAmount;
+        // Jika tidak ada pembayaran lain, advanceBalance = sisa amtAdvBal
+        // Jika ada pembayaran lain, advanceBalance = totalPaymentAmount - totalNotaAmount
+        if ($totalFromPayments == 0) {
+            $this->advanceBalance = $totalAmtAdvBal - $totalAdvanceUsed;
+        } else {
+            $this->advanceBalance = $this->totalPaymentAmount - $this->totalNotaAmount;
+        }
 
         $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
     }

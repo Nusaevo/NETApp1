@@ -354,7 +354,6 @@ if (!function_exists('sanitizeModelAttributesAuto')) {
                     $nullableColumns[] = $columnName;
                 }
             }
-
             // Call the main sanitize function with detected types
             sanitizeModelAttributes($attributes, $columnTypes, $nullableColumns);
 
