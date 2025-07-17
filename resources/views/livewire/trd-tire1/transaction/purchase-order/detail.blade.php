@@ -36,14 +36,14 @@
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-search label="{{ $this->trans('supplier') }}"
+                                    <x-ui-dropdown-search label="{{ $this->trans('Supplier') }}"
                                         model="inputs.partner_id"
-                                        query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
+                                        query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'V'"
                                         optionValue="id" optionLabel="code,name,address,city"
                                         placeHolder="Type to search suppliers..." :selectedValue="$inputs['partner_id']" required="true"
                                         :action="$actionValue" :enabled="$isPanelEnabled" type="int" />
                                     {{-- @dump($inputs['partner_id']) --}}
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}" model="inputs.tax_code"
+                                    <x-ui-dropdown-select label="{{ $this->trans('PPN') }}" model="inputs.tax_code"
                                         :options="$SOTax" required="true" :action="$actionValue"
                                         onChanged="onSOTaxChange" />
                                 </div>

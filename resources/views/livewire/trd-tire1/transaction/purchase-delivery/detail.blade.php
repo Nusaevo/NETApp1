@@ -33,11 +33,12 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" model="inputs.wh_code"
-                                        :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                                        :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled" onChanged="onWarehouseChanged($event.target.value)"/>
                                     <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
                                         model="inputs.reffhdrtr_code" type="text" :action="$actionValue" :options="$purchaseOrders"
-                                        required="false" :selectedValue="$inputs['reffhdrtr_code'] ?? ''"
+                                        required="false" :selectedValue="$inputs['reffhdrtr_code']"
                                         onChanged="onPurchaseOrderChanged($event.target.value)" />
+                                        {{-- @dump($inputs['reffhdrtr_code']) --}}
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
                                         type="text" :action="$actionValue" required="false" readonly="true"

@@ -9,7 +9,6 @@ use Exception;
 class OrderService
 {
     protected $inventoryService;
-
     protected $materialService;
 
     public function __construct(InventoryService $inventoryService, MaterialService $materialService)
@@ -178,4 +177,14 @@ class OrderService
         return true;
     }
 
+    public function getOutstandingPO()
+    {
+        $purchaseOrders = OrderDtl::whereColumn('qty', '>', 'qty_reff')
+            ->distinct()
+            ->get(['tr_code', 'trhdr_id']);
+        return $purchaseOrders->map(fn($order) => [
+            'label' => $order->tr_code,
+            'value' => $order->trhdr_id,
+        ])->toArray();
+    }
 }
