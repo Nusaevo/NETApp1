@@ -50,7 +50,7 @@ class UiTextField extends UiBaseComponent
      * @param int $height          Custom height for the text field (useful for textarea customization).
      * @param string $clickEvent   Event triggered by an associated button or clickable element.
      * @param string $buttonName   Name or label displayed on the associated button, if any.
-     * @param string $capslockMode Enables automatic uppercase transformation ('true' or 'false').
+     * @param string $capslockMode Enables automatic uppercase transformation ('true' or 'false'). When enabled, all text is automatically converted to uppercase as the user types.
      * @param string $currency     Currency format for number type (IDR, USD, EUR, etc.).
      * @param int|null $decimalPlaces Number of decimal places for number fields (null = use default behavior).
      */

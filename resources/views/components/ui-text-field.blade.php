@@ -6,10 +6,10 @@
 
     // Determine if field has label for styling purposes
     $hasLabel = !empty($label);
-    $inputClass = $hasLabel ? 'form-control' : 'form-control form-control-sm py-2';
+    $inputClass = $hasLabel ? 'form-control' : 'form-control form-control-sm';
 
     // Set textarea class with appropriate styling
-    $textareaClass = $hasLabel ? 'form-control form-control-lg' : 'form-control form-control-lg mb-5';
+    $textareaClass = $hasLabel ? 'form-control' : 'form-control mb-5';
 
     // Set column class with bottom margin when label is present
     $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
@@ -81,8 +81,18 @@
                         </span>
                         <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1">
                             <input x-data="{
-                                rawValue: @entangle($model),
+                                rawValue: @entangle($model).live,
                                 displayValue: '',
+
+                                init() {
+                                    // Watch for external model changes from Livewire
+                                    this.$wire.$watch('{{ $model }}', (value) => {
+                                        console.log('=== CURRENCY MODEL WATCH ===');
+                                        console.log('New model value:', value);
+                                        this.rawValue = value;
+                                        this.updateDisplay();
+                                    });
+                                },
 
                                 formatNumber(num, showDecimals = false) {
                                     if (!num || num === '' || num === null || num === undefined) {
@@ -166,22 +176,36 @@
 
                                     return isNaN(number) ? null : number;
                                 },                                updateDisplay() {
-                                    if (this.rawValue !== null && this.rawValue !== undefined && this.rawValue !== '') {
-                                        let numberValue;
-                                        if (typeof this.rawValue === 'string') {
-                                            numberValue = this.parseNumber(this.rawValue);
-                                            this.rawValue = numberValue;
-                                        } else {
-                                            numberValue = this.rawValue;
+                                    console.log('=== CURRENCY updateDisplay ===');
+                                    console.log('rawValue:', this.rawValue);
+                                    console.log('rawValue type:', typeof this.rawValue);
+
+                                    if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
+                                        console.log('=== CURRENCY CLEARING DISPLAY ===');
+                                        this.displayValue = '';
+                                        if (this.$el) {
+                                            this.$el.value = '';
                                         }
-                                        if (numberValue !== null && numberValue !== undefined) {
-                                            let isDecimal = numberValue % 1 !== 0;
-                                            this.displayValue = this.formatNumber(numberValue, isDecimal);
-                                        } else {
-                                            this.displayValue = '';
-                                        }
+                                        return;
+                                    }
+
+                                    let numberValue;
+                                    if (typeof this.rawValue === 'string') {
+                                        numberValue = this.parseNumber(this.rawValue);
+                                        this.rawValue = numberValue;
+                                    } else {
+                                        numberValue = this.rawValue;
+                                    }
+
+                                    if (numberValue !== null && numberValue !== undefined) {
+                                        let isDecimal = numberValue % 1 !== 0;
+                                        this.displayValue = this.formatNumber(numberValue, isDecimal);
                                     } else {
                                         this.displayValue = '';
+                                    }
+
+                                    if (this.$el) {
+                                        this.$el.value = this.displayValue;
                                     }
                                 },
 
@@ -302,26 +326,32 @@
                                 }
                             }"
                             x-init="console.log('=== CURRENCY INIT DEBUG ===');
+                                     init();
                                      updateDisplay();
                                      $watch('rawValue', (value, oldValue) => {
                                          console.log('=== CURRENCY WATCH DEBUG ===');
                                          console.log('oldValue:', oldValue);
                                          console.log('newValue:', value);
+
+                                         // Handle reset case - when value becomes null/undefined/empty, clear display
+                                         if (value === null || value === undefined || value === '') {
+                                             console.log('=== CURRENCY CLEARING FROM WATCH ===');
+                                             displayValue = '';
+                                             if ($el) {
+                                                 $el.value = '';
+                                             }
+                                             return;
+                                         }
+
                                          // Always normalize rawValue to dot-decimal number
                                          if (typeof value === 'string') {
-                                             rawValue = parseNumber(value);
-                                         } else {
-                                             rawValue = value;
+                                             let parsed = parseNumber(value);
+                                             if (parsed !== rawValue) {
+                                                 rawValue = parsed;
+                                             }
                                          }
                                          updateDisplay();
-                                         if (typeof syncWithLivewire === 'function') {
-                                             syncWithLivewire();
-                                         }
-                                         $el.value = displayValue;
-                                     });
-                                     if (typeof syncWithLivewire === 'function') {
-                                         syncWithLivewire();
-                                     }"
+                                     });"
                             type="text"
                             inputmode="decimal"
                             id="{{ $id }}"
@@ -343,8 +373,18 @@
                     </div>
                 @else
                     <input x-data="{
-                            rawValue: @entangle($model),
+                            rawValue: @entangle($model).live,
                             displayValue: '',
+
+                            init() {
+                                // Watch for external model changes from Livewire
+                                this.$wire.$watch('{{ $model }}', (value) => {
+                                    console.log('=== NON-CURRENCY MODEL WATCH ===');
+                                    console.log('New model value:', value);
+                                    this.rawValue = value;
+                                    this.updateDisplay();
+                                });
+                            },
 
                             formatNumber(num, showDecimals = false) {
                                 if (!num || num === '' || num === null || num === undefined) {
@@ -428,22 +468,36 @@
 
                                 return isNaN(number) ? null : number;
                             },                            updateDisplay() {
-                                if (this.rawValue !== null && this.rawValue !== undefined && this.rawValue !== '') {
-                                    let numberValue;
-                                    if (typeof this.rawValue === 'string') {
-                                        numberValue = this.parseNumber(this.rawValue);
-                                        this.rawValue = numberValue;
-                                    } else {
-                                        numberValue = this.rawValue;
+                                console.log('=== NON-CURRENCY updateDisplay ===');
+                                console.log('rawValue:', this.rawValue);
+                                console.log('rawValue type:', typeof this.rawValue);
+
+                                if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
+                                    console.log('=== NON-CURRENCY CLEARING DISPLAY ===');
+                                    this.displayValue = '';
+                                    if (this.$el) {
+                                        this.$el.value = '';
                                     }
-                                    if (numberValue !== null && numberValue !== undefined) {
-                                        let isDecimal = numberValue % 1 !== 0;
-                                        this.displayValue = this.formatNumber(numberValue, isDecimal);
-                                    } else {
-                                        this.displayValue = '';
-                                    }
+                                    return;
+                                }
+
+                                let numberValue;
+                                if (typeof this.rawValue === 'string') {
+                                    numberValue = this.parseNumber(this.rawValue);
+                                    this.rawValue = numberValue;
+                                } else {
+                                    numberValue = this.rawValue;
+                                }
+
+                                if (numberValue !== null && numberValue !== undefined) {
+                                    let isDecimal = numberValue % 1 !== 0;
+                                    this.displayValue = this.formatNumber(numberValue, isDecimal);
                                 } else {
                                     this.displayValue = '';
+                                }
+
+                                if (this.$el) {
+                                    this.$el.value = this.displayValue;
                                 }
                             },
 
@@ -573,26 +627,32 @@
                             }
                         }"
                         x-init="console.log('=== NON-CURRENCY INIT DEBUG ===');
+                                 init();
                                  updateDisplay();
                                  $watch('rawValue', (value, oldValue) => {
                                      console.log('=== NON-CURRENCY WATCH DEBUG ===');
                                      console.log('oldValue:', oldValue);
                                      console.log('newValue:', value);
+
+                                     // Handle reset case - when value becomes null/undefined/empty, clear display
+                                     if (value === null || value === undefined || value === '') {
+                                         console.log('=== NON-CURRENCY CLEARING FROM WATCH ===');
+                                         displayValue = '';
+                                         if ($el) {
+                                             $el.value = '';
+                                         }
+                                         return;
+                                     }
+
                                      // Always normalize rawValue to dot-decimal number
                                      if (typeof value === 'string') {
-                                         rawValue = parseNumber(value);
-                                     } else {
-                                         rawValue = value;
+                                         let parsed = parseNumber(value);
+                                         if (parsed !== rawValue) {
+                                             rawValue = parsed;
+                                         }
                                      }
                                      updateDisplay();
-                                     if (typeof syncWithLivewire === 'function') {
-                                         syncWithLivewire();
-                                     }
-                                     $el.value = displayValue;
-                                 });
-                                 if (typeof syncWithLivewire === 'function') {
-                                     syncWithLivewire();
-                                 }"
+                                 });"
                         type="text"
                         inputmode="decimal"
                         id="{{ $id }}"
@@ -617,7 +677,34 @@
                        @if ((isset($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled @endif
                        @if(isset($required) && $required === 'true') required @endif
                        placeholder="{{ isset($label) ? $label : '' }}" autocomplete="off"
-                       @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif />
+                       @if(isset($onChanged) && $onChanged !== '') wire:change="{{ $onChanged }}" wire:keydown.enter="{{ $onChanged }}" @endif
+                       @if(isset($capslockMode) && $capslockMode === 'true')
+                       x-data="{
+                           initCapslock() {
+                               let input = this.$el;
+                               // Convert to uppercase when typing (input event)
+                               input.addEventListener('input', function() {
+                                   if (input.value) {
+                                       let cursorPosition = input.selectionStart;
+                                       input.value = input.value.toUpperCase();
+                                       // Restore cursor position
+                                       input.setSelectionRange(cursorPosition, cursorPosition);
+                                   }
+                               });
+
+                               // Also convert on blur as a fallback
+                               input.addEventListener('blur', function() {
+                                   if (input.value) {
+                                       input.value = input.value.toUpperCase();
+                                       // Trigger Livewire model update
+                                       input.dispatchEvent(new Event('input', { bubbles: true }));
+                                   }
+                               });
+                           }
+                       }"
+                       x-init="initCapslock()"
+                       @endif
+                       />
             @endif
 
             @if (!empty($label) && !(isset($type) && $type === 'number' && isset($currency) && $currency !== ''))
