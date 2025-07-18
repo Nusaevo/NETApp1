@@ -2,9 +2,10 @@
 
 namespace App\Services\SysConfig1;
 
-use App\Models\SysConfig1\{ConfigAppl, ConfigConst, ConfigUser};
-use Illuminate\Support\Facades\Auth;
 use App\Services\Base\BaseService;
+use Illuminate\Support\Facades\Auth;
+use App\Models\SysConfig1\ConfigSnum;
+use App\Models\SysConfig1\{ConfigAppl, ConfigConst, ConfigUser};
 
 
 class ConfigService extends BaseService
@@ -122,4 +123,5 @@ class ConfigService extends BaseService
             // dd($config, $salesType);
         return $config ? $config->str2 : null;
     }
+
 }

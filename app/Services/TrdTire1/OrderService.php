@@ -184,7 +184,7 @@ class OrderService
             ->get(['tr_code', 'trhdr_id']);
         return $purchaseOrders->map(fn($order) => [
             'label' => $order->tr_code,
-            'value' => $order->trhdr_id,
+            'value' => $order->tr_code,
         ])->toArray();
     }
 }

@@ -384,16 +384,5 @@ class BaseComponent extends Component
         return $appCode ?: config('database.default');
     }
 
-    public function stringToNumeric($value)
-    {
-        if (empty($value) || !is_string($value)) {
-            return (float) $value;
-        }
-
-        // Remove dots (thousand separators) and replace comma with dot for decimal
-        $cleanValue = str_replace(['.', ','], ['', '.'], $value);
-
-        return (float) $cleanValue;
-    }
 
 }

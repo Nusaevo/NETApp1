@@ -29,6 +29,7 @@ class Detail extends BaseComponent
     public $deletedItems = [];
     public $newItems = [];
     public $materials;
+    public $object;
     public $object_detail;
     public $trhdr_id;
     public $tr_seq;
@@ -74,6 +75,7 @@ class Detail extends BaseComponent
             'input_details.*.price' => $this->trans('price'),
             'input_details.*.qty' => $this->trans('qty'),
         ];
+
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers();
         $this->warehouses = $this->masterService->getWarehouse();
@@ -94,11 +96,11 @@ class Detail extends BaseComponent
                 // dd($delivDtl);
                 if ($delivDtl) {
                     $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
-                    $this->inputs['qty'] = $delivDtl->qty;
+                    $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
+                    // $this->inputs['qty'] = $delivDtl->qty;
                     $this->inputs['wh_code'] = $delivDtl->wh_code;
                 }
             }
-
             // Load partner data
             $partner = Partner::find($this->object->partner_id);
             if ($partner) {
@@ -106,12 +108,19 @@ class Detail extends BaseComponent
                 $this->inputs['partner_name'] = $partner->name;
             }
 
+             if (
+                !empty($this->inputs['reffhdrtr_code']) &&
+                !collect($this->purchaseOrders)->pluck('value')->contains($this->inputs['reffhdrtr_code'])
+            ) {
+                $this->purchaseOrders[] = [
+                    'label' => $this->inputs['reffhdrtr_code'],
+                    'value' => $this->inputs['reffhdrtr_code'],
+                ];
+            }
+
             // Load details and purchase order details
             $this->loadDetails();
-            $this->inputs['reffhdr_id'] = $this->object->reffhdr_id;
-            // if ($this->inputs['reffhdrtr_code']) {
-                $this->inputs['reffhdrtr_code'] = $this->object->reffhdrtr_code;
-            // }
+            $this->whCodeOnChanged($this->inputs['wh_code']);
         }
     }
 
@@ -140,9 +149,7 @@ class Detail extends BaseComponent
             $this->object_detail = DelivDtl::GetByDelivHdr($this->object->id, $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
-
-            $this->inputs['reffhdr_id'] = $this->object->reffhdr_id;
-            $this->inputs['refhdrtr_code'] = $this->object->reffhdrtr_code;
+            // dd($this->object_detail, $this->object->id, $this->object->tr_type);
 
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
@@ -150,8 +157,27 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['qty'] = $detail->qty;
                 $this->input_details[$key]['qty_order'] = ($detail->OrderDtl->qty - $detail->OrderDtl->qty_reff) + $detail->qty; // Adjust qty_order
                 // dd($this->input_details[$key]);
+                // $this->inputs['reffhdr_id'] = $this->object->reffhdr_id;
+                // $this->inputs['refhdrtr_code'] = $this->object->reffhdrtr_code;               
             }
         }
+    }
+
+    public function addItem()
+    {
+        if (empty($this->inputs['reffhdrtr_code'])) {
+            $this->dispatch('error', 'Mohon pilih nota pembelian terlebih dahulu.');
+            return;
+        }
+
+        $this->input_details[] = [
+            'matl_id' => null,
+            'qty_order' => null,
+            'matl_descr' => null,
+            'matl_uom' => null,
+            'order_id' => null,
+            'qty' => null,
+        ];
     }
 
     public function deleteItem($index)
@@ -191,13 +217,14 @@ class Detail extends BaseComponent
                 order_dtls.tr_type as reffhdrtr_type,
                 order_dtls.tr_code as reffhdrtr_code
             ')
-            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
-            ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
-            ->where('order_hdrs.id', $value)
-            ->get();
+                ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+                ->join('partners', 'order_hdrs.partner_id', '=', 'partners.id')
+                ->where('order_hdrs.tr_type', 'PO')
+                ->where('order_hdrs.tr_code', $value)
+                ->get();
 
             // dd($orderDetail);
-            if(!$orderDetail) {
+            if (!$orderDetail) {
                 $this->dispatch('error', 'Tidak ada detail order yang ditemukan untuk kode pembelian ini.');
                 return;
             }
@@ -210,24 +237,27 @@ class Detail extends BaseComponent
             foreach ($orderDetail as $detail) {
                 $qty_remaining = $detail->qty - $detail->qty_reff;
                 // dd($qty_remaining);
-                $this->input_details[] = [
-                    'matl_id' => $detail->matl_id,
-                    'qty_order' => $qty_remaining,
-                    'matl_descr' => $detail->matl_descr,
-                    'matl_uom' => $detail->matl_uom,
-                    'reffhdr_id' => $value,
-                    'reffdtl_id' => $detail->reffdtl_id,
-                    'reffhdrtr_type' => $detail->reffhdrtr_type,
-                    'reffhdrtr_code' => $detail->reffhdrtr_code,
-                    'wh_code' => $this->inputs['wh_code'],
-                    'wh_id' => $this->inputs['wh_id'],
-                    'qty' => 0, // Inisialisasi qty sebagai null
-                ];
+                if ($qty_remaining > 0) {
+                    // Hanya tambahkan detail jika qty_remaining lebih besar dari 0
+                    $this->input_details[] = [
+                        'matl_id' => $detail->matl_id,
+                        'qty_order' => $qty_remaining,
+                        'matl_descr' => $detail->matl_descr,
+                        'matl_uom' => $detail->matl_uom,
+                        'reffhdr_id' => $value,
+                        'reffdtl_id' => $detail->reffdtl_id,
+                        'reffhdrtr_type' => $detail->reffhdrtr_type,
+                        'reffhdrtr_code' => $detail->reffhdrtr_code,
+                        'wh_code' => $this->inputs['wh_code'],
+                        'wh_id' => $this->inputs['wh_id'],
+                        'qty' => 0, // Inisialisasi qty sebagai null
+                    ];
+                }
             }
         }
     }
 
-    public function onWarehouseChanged($value)
+    public function whCodeOnChanged($value)
     {
         // dd($value);
         if (empty($value)) {
@@ -251,36 +281,6 @@ class Detail extends BaseComponent
         // dd($this->input_details, $this->inputs);
     }
 
-    // public function loadPurchaseOrderDetails($reffhdrtr_code)
-    // {
-    //     $this->input_details = [];
-    //     $orderDetails = OrderDtl::where('tr_code', $reffhdrtr_code)
-    //                     ->where('qty', '>', 'qty_reff') // Hanya ambil order yang masih ada sisa qty
-    //                     ->get();
-
-    //     // Cari wh_id dari ConfigConst berdasarkan wh_code di inputs
-    //     // $wh_id = null;
-    //     // if (!empty($this->inputs['wh_code'])) {
-    //     //     $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
-    //     //     $wh_id = $warehouse ? $warehouse->id : null;
-    //     // }
-
-    //     foreach ($orderDetails as $detail) {
-    //         $qty_remaining = $detail->qty - $detail->qty_reff;
-    //         $this->input_details[] = [
-    //             'matl_id' => $detail->matl_id,
-    //             'qty_order' => $qty_remaining,
-    //             'matl_descr' => $detail->matl_descr,
-    //             'matl_uom' => $detail->matl_uom,
-    //             'order_id' => $detail->id,
-    //             'reffdtl_id' => $detail->id,
-    //             // 'reffhdrtr_id' => $orderHeader ? $orderHeader->id : null,
-    //             'wh_code' => $inputs['wh_code'],
-    //             'wh_id' => $input['wh_id'],
-    //             'qty' => 0, // Inisialisasi qty sebagai null
-    //         ];
-    //     }
-    // }
     #endregion
 
     #region CRUD Operations
@@ -459,29 +459,11 @@ class Detail extends BaseComponent
                     'objectId' => encryptWithSessionKey($this->object->id),
                 ]
             );
-
         } catch (Exception $e) {
             DB::rollBack();
             throw new Exception('Gagal menyimpan Purchase Delivery: ' . $e->getMessage());
             // $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
-    }
-
-    public function addItem()
-    {
-        if (empty($this->inputs['reffhdrtr_code'])) {
-            $this->dispatch('error', 'Mohon pilih nota pembelian terlebih dahulu.');
-            return;
-        }
-
-        $this->input_details[] = [
-            'matl_id' => null,
-            'qty_order' => null,
-            'matl_descr' => null,
-            'matl_uom' => null,
-            'order_id' => null,
-            'qty' => null,
-        ];
     }
 
     public function onMaterialChanged($index, $matl_id)
