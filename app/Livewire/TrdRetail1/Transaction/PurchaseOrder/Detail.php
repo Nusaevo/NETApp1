@@ -424,8 +424,12 @@ class Detail extends BaseComponent
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
                 $material = Material::withTrashed()->find($detail->matl_id);
-                $attachment = optional($material->Attachment)->first();
-                $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
+                if ($material) {
+                    $attachment = optional($material->Attachment)->first();
+                    $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
+                } else {
+                    $this->input_details[$key]['image_url'] = '';
+                }
                 $this->updateItemAmount($key);
             }
         }
