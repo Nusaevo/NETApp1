@@ -85,6 +85,7 @@
                                                     enabled="true"
                                                     onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                                     type="int" />
+
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"

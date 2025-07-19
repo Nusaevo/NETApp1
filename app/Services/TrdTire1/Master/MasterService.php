@@ -2,11 +2,12 @@
 
 namespace App\Services\TrdTire1\Master;
 
-use App\Models\TrdTire1\Master\Material;
-use App\Models\TrdTire1\Master\Partner;
-use App\Models\TrdTire1\Transaction\BillingHdr;
 use App\Services\Base\BaseService;
+use App\Models\SysConfig1\ConfigSnum;
+use App\Models\TrdTire1\Master\Partner;
+use App\Models\TrdTire1\Master\Material;
 use App\Models\TrdTire1\Transaction\OrderHdr;
+use App\Models\TrdTire1\Transaction\BillingHdr;
 
 class MasterService extends BaseService
 {
@@ -56,6 +57,7 @@ class MasterService extends BaseService
         $data = $this->getConfigData('TRX_WAREHOUSE');
         return $this->mapData($data);
     }
+    
     public function getWarehouseType()
     {
         $data = $this->getConfigData('TRX_WH_TYPE');
@@ -375,4 +377,35 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+
+    public function getNewTrCode($trType): string
+    {
+        switch ($trType) {
+            case 'PO':
+                $code = 'PURCHORDER_LASTID';
+                $format = 'PO%06d';
+                break;
+            case 'SO':
+                $code = 'SO';
+                break;
+            case 'DO':
+                $code = 'DO';
+                break;
+            case 'INV':
+                $code = 'INV';
+                break;
+            default:
+                return "";
+        }
+
+        $configSnum = ConfigSnum::where('code', $code)->first();
+        $newId = $configSnum->last_cnt + $configSnum->step_cnt;
+        if ($newId > $configSnum->wrap_high) {
+            $newId = $configSnum->wrap_low;
+        }
+        $configSnum->last_cnt = $newId;
+        $configSnum->save();
+        return sprintf($format, $newId); // Contoh: PO000001
+    }
+
 }

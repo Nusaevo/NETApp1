@@ -42,6 +42,9 @@ class Detail extends BaseComponent
     public $isPanelEnabled = "false";
     public $notaCount = 0;
     public $suratJalanCount = 0;
+    public $ddMaterial = [];
+    public $object;
+    public $object_detail;
 
     // Detail (item) properties
     public $input_details = [];
@@ -52,6 +55,7 @@ class Detail extends BaseComponent
     public $isDeliv = false;
     public $materialCategory = null; // Tambahan: untuk menyimpan category hasil mapping sales_type
     public $materialQuery = "";
+
     protected $masterService;
     protected $orderService;
     protected $inventoryService;
@@ -69,8 +73,8 @@ class Detail extends BaseComponent
     protected $listeners = [
         'changeStatus' => 'changeStatus',
         'delete' => 'delete',
-        'updateAmount' => 'updateAmount',
-        'onSalesTypeChanged' => 'onSalesTypeChanged', // tambahkan listener baru
+        // 'updateAmount' => 'updateAmount',
+        'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
     ];
 
     // Livewire lifecycle hooks
@@ -89,136 +93,77 @@ class Detail extends BaseComponent
         $this->orderService = app(OrderService::class);
     }
 
-    /**
-     * Initialize services
-     */
-    // private function initializeServices()
-    // {
-    //     if (!$this->orderService) {
-    //         $this->orderService = new OrderService($this->inventoryService);
-    //     }
-    // }
-
-    /**
-     * Generate transaction code based on sales_type and tax_invoice
-     */
-    public function getTransactionCode()
-    {
-        if (!isset($this->inputs['sales_type'])) {
-            $this->dispatch('warning', 'Tipe Kendaraan harus diisi');
-            return;
-        }
-
-
-        $sales_type = $this->inputs['sales_type'];
-        $tax_invoice = isset($this->inputs['tax_invoice']) && $this->inputs['tax_invoice'];
-        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, 'PO', $tax_invoice);
-    }
-
-    /**
-     * Handle tax invoice checkbox change
-     */
-    public function onTaxInvoiceChanged()
-    {
-        $this->getTransactionCode();
-    }
-
-    /**
-     * Calculate tax when tax type changes
-     */
-    public function onSOTaxChange()
-    {
-        try {
-            $configData = ConfigConst::select('id', 'num1', 'str1')
-                ->where('const_group', 'TRX_SO_TAX')
-                ->where('str1', $this->inputs['tax_code'])
-                ->first();
-
-            $this->inputs['tax_id'] = $configData->id;
-            $this->inputs['tax_value'] = $configData->num1;
-            $taxType = $configData->str1 ?? '';
-            $this->inputs['tax_pct'] = $this->inputs['tax_value'];
-
-            // Recalculate all item amounts when tax changes
-            foreach ($this->input_details as $key => $detail) {
-                $this->updateItemAmount($key);
-            }
-
-        } catch (Exception $e) {
-            $this->dispatch('error', $e->getMessage());
-        }
-    }
 
 
     /**
      * Handle partner change and load NPWP data
      */
-    public function onPartnerChanged()
-    {
-        $partner = Partner::find($this->inputs['partner_id']);
-        $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
-    }
+    // public function partnerIdOnChanged()
+    // {
+    //     $partner = Partner::find($this->inputs['partner_id']);
+    //     $this->npwpOptions = $partner ? $this->listNpwp($partner) : null;
+    // }
 
     /**
      * Handle supplier selection from dropdown search
      */
-    public function onSupplierSelected($partnerId)
-    {
-        if ($partnerId && $partnerId !== '0') {
-            $partner = Partner::find($partnerId);
-            if ($partner) {
-                $this->inputs['partner_id'] = $partnerId;
-                $this->inputs['partner_name'] = $partner->name;
+    // public function onSupplierSelected($partnerId)
+    // {
+    //     if ($partnerId && $partnerId !== '0') {
+    //         $partner = Partner::find($partnerId);
+    //         if ($partner) {
+    //             $this->inputs['partner_id'] = $partnerId;
+    //             $this->inputs['partner_name'] = $partner->name;
 
-                // Update detail supplier textarea
-                $this->inputs['textareasupplier'] =
-                    "Kode: " . $partner->code . "\n" .
-                    "Nama: " . $partner->name . "\n" .
-                    "Alamat: " . ($partner->address ?? '-') . "\n" .
-                    "Telepon: " . ($partner->phone ?? '-') . "\n" .
-                    "Email: " . ($partner->email ?? '-');
+    //             // Update detail supplier textarea
+    //             $this->inputs['textareasupplier'] =
+    //                 "Kode: " . $partner->code . "\n" .
+    //                 "Nama: " . $partner->name . "\n" .
+    //                 "Alamat: " . ($partner->address ?? '-') . "\n" .
+    //                 "Telepon: " . ($partner->phone ?? '-') . "\n" .
+    //                 "Email: " . ($partner->email ?? '-');
 
-                // Load NPWP data
-                $this->npwpOptions = $this->listNpwp($partner);
+    //             // Load NPWP data
+    //             $this->npwpOptions = $this->listNpwp($partner);
 
-                // Trigger partner changed event
-                $this->onPartnerChanged();
-            }
-        } else {
-            // Clear partner data when selection is cleared
-            $this->inputs['partner_id'] = null;
-            $this->inputs['partner_name'] = '';
-            $this->inputs['textareasupplier'] = '';
-            $this->npwpOptions = null;
-        }
-    }
+    //             // Trigger partner changed event
+    //             $this->partnerIdOnChanged();
+    //         }
+    //     } else {
+    //         // Clear partner data when selection is cleared
+    //         $this->inputs['partner_id'] = null;
+    //         $this->inputs['partner_name'] = '';
+    //         $this->inputs['textareasupplier'] = '';
+    //         $this->npwpOptions = null;
+    //     }
+    // }
 
     /**
      * Extract NPWP list from partner details
      */
-    private function listNpwp($partner)
-    {
-        $partnerDetail = $partner->PartnerDetail;
+    // private function listNpwp($partner)
+    // {
+    //     $partnerDetail = $partner->PartnerDetail;
 
-        if ($partnerDetail && $partnerDetail->wp_details) {
-            $wpDetails = $partnerDetail->wp_details;
+    //     if ($partnerDetail && $partnerDetail->wp_details) {
+    //         $wpDetails = $partnerDetail->wp_details;
 
-            if (is_string($wpDetails)) {
-                $wpDetails = json_decode($wpDetails, true);
-            }
+    //         if (is_string($wpDetails)) {
+    //             $wpDetails = json_decode($wpDetails, true);
+    //         }
 
-            if (is_array($wpDetails)) {
-                return array_map(function ($item) {
-                    return [
-                        'label' => $item['npwp'],
-                        'value' => $item['npwp'],
-                    ];
-                }, $wpDetails);
-            }
-        }
+    //         if (is_array($wpDetails)) {
+    //             return array_map(function ($item) {
+    //                 return [
+    //                     'label' => $item['npwp'],
+    //                     'value' => $item['npwp'],
+    //                 ];
+    //             }, $wpDetails);
+    //         }
+    //     }
 
-        return null;
-    }
+    //     return null;
+    // }
 
     /**
      * Initialize component data before rendering
@@ -246,13 +191,13 @@ class Detail extends BaseComponent
 
         // Tambahkan filter material jika sales_type sudah terisi
         if (!empty($this->inputs['sales_type'])) {
-            $this->onSalesTypeChanged();
+            $this->salesTypeOnChanged();
         }
-
 
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->inputs = populateArrayFromModel($this->object);
+            $this->inputs = $this->object->toArray(); // Populate inputs from the model
+            // $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
@@ -263,15 +208,16 @@ class Detail extends BaseComponent
             $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
                 ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
                 : ($trDate ? $trDate->format('Y-m-d') : null);
-            $this->onPartnerChanged();
-            $this->loadDetails();
+            $this->salesTypeOnChanged();
+            $this->loadDetails();   
+            // dd($this->input_details);
         } else {
             $this->isPanelEnabled = "true";
             $this->inputs['tax_code'] = 'I';
         }
 
         if (!empty($this->inputs['tax_code'])) {
-            $this->onSOTaxChange();
+            $this->taxCodeOnChanged();
         }
         // dd($this->input_details);
     }
@@ -298,13 +244,14 @@ class Detail extends BaseComponent
     /**
      * Add a new item to the purchase order
      */
-    public function addItem()
+    public function addItemOnClick()
     {
         // Validasi: sales_type harus dipilih dulu
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih tipe kendaraan terlebih dahulu sebelum menambah item!');
             return;
         }
+
         try {
             // Check if can add new item
             if ($this->isDeliv) {
@@ -317,6 +264,8 @@ class Detail extends BaseComponent
                 'qty' => null,
                 'price' => null,
                 'disc_pct' => null,
+                'dpp' => null,
+                'ppn' => null,
                 'amt' => null,
                 'disc_amt' => null,
             ];
@@ -327,9 +276,42 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Generate transaction code based on sales_type and tax_invoice
+     */
+    public function trCodeOnClick()
+    {
+        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType);
+    }
+
+    /**
+     * Calculate tax when tax type changes
+     */
+    public function taxCodeOnChanged()
+    {
+        try {
+            $configData = ConfigConst::select('id', 'num1', 'str1')
+                ->where('const_group', 'TRX_SO_TAX')
+                ->where('str1', $this->inputs['tax_code'])
+                ->first();
+
+            $this->inputs['tax_id'] = $configData->id;
+            $this->inputs['tax_value'] = $configData->num1;
+            // $taxType = $configData->str1 ?? '';
+            $this->inputs['tax_pct'] = $this->inputs['tax_value'];
+
+            // Recalculate all item amounts when tax changes
+            foreach ($this->input_details as $key => $detail) {
+                $this->calcItemAmount($key);
+            }
+
+        } catch (Exception $e) {
+            $this->dispatch('error', $e->getMessage());
+        }
+    }
+    /**
      * Handle material selection and auto-populate fields
      */
-    public function onMaterialChanged($key, $matl_id)
+    public function matlIdOnChanged($key, $matl_id)
     {
         if ($matl_id) {
             $material = Material::find($matl_id);
@@ -341,7 +323,7 @@ class Detail extends BaseComponent
                     $this->input_details[$key]['matl_uom'] = $material->uom;
                     $this->input_details[$key]['matl_descr'] = $material->name;
                     $this->input_details[$key]['disc_pct'] = 0.00; // Default 0%
-                    $this->updateItemAmount($key);
+                    $this->calcItemAmount($key);
                     // dd($this->input_details[$key]);
                     // $this->input_details = array_values($this->input_details);
                 } else {
@@ -352,10 +334,23 @@ class Detail extends BaseComponent
             }
         }
     }
-    /**
-     * Calculate item amount based on quantity, price and discount
-     */
-    public function updateItemAmount($key)
+
+    public function priceOnChanged($key)
+    {
+        $this->calcItemAmount($key);
+    }
+
+    public function qtyOnChanged($key)
+    {
+        $this->calcItemAmount($key);
+    }
+
+    public function discPctOnChanged($key)
+    {
+        $this->calcItemAmount($key);
+    }
+
+    public function calcItemAmount($key)
     {
         // dd($this->input_details[$key]);
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
@@ -375,7 +370,9 @@ class Detail extends BaseComponent
             $taxValue = $this->inputs['tax_pct'];
             $taxPctDecimal = $taxValue / 100;
             $amount = $this->input_details[$key]['amt'];
-
+            
+            $this->input_details[$key]['dpp'] = 0;
+            $this->input_details[$key]['ppn'] = 0;
             if ($taxFlag === 'I') {
                 $this->input_details[$key]['dpp'] = round($amount / (1 + $taxPctDecimal), 0);
                 $this->input_details[$key]['ppn'] = $amount - $this->input_details[$key]['dpp'];
@@ -390,25 +387,25 @@ class Detail extends BaseComponent
             // $tesdpp = number_format((float)$this->input_details[$key]['dpp'], 5, ',', '.');
             // dd($tesdpp, $this->input_details[$key]['dpp']);
             $this->input_details[$key]['amt_tax'] = $this->input_details[$key]['dpp'] + $this->input_details[$key]['ppn'];
-            // $this->recalculateTotals();
-            $this->dispatch('updateAmount', [
-                'total_amount' => $this->total_amount,
-                'total_discount' => $this->total_discount,
-                'total_tax' => $this->total_tax,
-                'total_dpp' => $this->total_dpp,
-            ]);
+            
+            $this->total_amount = 0;
+            $this->total_discount = 0;
+            $this->total_dpp = 0;
+            $this->total_tax = 0;
+            // dd($this->input_details, $this->input_details[$key]['disc_amt']);
+            foreach ($this->input_details as $detail) {
+                $this->total_amount += $detail['amt'];
+                $this->total_discount += $detail['disc_amt'] ?? 0;
+                $this->total_dpp += $detail['dpp'];
+                $this->total_tax += $detail['ppn'];
+            }
+            // Format as Rupiah
+            $this->total_amount = rupiah($this->total_amount);
+            $this->total_discount = rupiah($this->total_discount);
+            $this->total_dpp = rupiah($this->total_dpp);
+            $this->total_tax = rupiah($this->total_tax);
+            
         }
-    }
-
-    /**
-     * Normalize discount percentage (handle string format with comma)
-     */
-    private function normalizeDiscountPercent($discountPercent)
-    {
-        if (is_string($discountPercent)) {
-            $discountPercent = str_replace(',', '.', $discountPercent);
-        }
-        return (float)$discountPercent;
     }
 
     public function deleteItem($index)
@@ -444,17 +441,14 @@ class Detail extends BaseComponent
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-            $objectDetails = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
+            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
 
-            foreach ($objectDetails as $key => $detail) {
-                // Ambil array aslinya
-                $arr = populateArrayFromModel($detail);
-
-                $this->input_details[$key] = $arr;
-                $this->updateItemAmount($key);
-
+            $this->input_details = $this->object_detail->toArray();
+            foreach ($this->object_detail as $key => $detail) {
+                // $this->input_details[$key] = populateArrayFromModel($detail);
+                $this->calcItemAmount($key);
             }
             // dd($this->input_details);
             // dd($this->input_details);
@@ -467,7 +461,7 @@ class Detail extends BaseComponent
     /**
      * Handle payment term change and update due date
      */
-    public function onPaymentTermChanged()
+    public function paymentTermOnChanged()
     {
         if (!empty($this->inputs['payment_term_id'])) {
             $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
@@ -589,23 +583,12 @@ class Detail extends BaseComponent
             }
 
             // Set price data - gunakan price yang sudah diinput user, bukan dari database
-            $detail['price'] = $this->stringToNumeric($detail['price']);
-            $detail['qty'] = $this->stringToNumeric($detail['qty']);
-            $detail['disc_pct'] = $this->stringToNumeric($detail['disc_pct']);
+            $detail['price'] = $detail['price'];
+            $detail['qty'] = $detail['qty'];
+            $detail['disc_pct'] = $detail['disc_pct'];
             $detail['price_uom'] = $detail['matl_uom'] ?? 'PCS';
             $detail['qty_uom'] = 'PCS';
             $detail['qty_base'] = 1;
-
-            // Update input_details dengan data yang sudah diperbaiki
-            // $this->input_details[$i] = $detail;
-
-            // // Calculate amounts menggunakan updateItemAmount yang sudah ada
-            // $this->updateItemAmount($i);
-
-            // // Ambil hasil perhitungan yang sudah diupdate
-            // $detail = $this->input_details[$i];
-
-            // Set transaction fields
             $detail['tr_type'] = $this->trType;
             $detail['tr_seq'] = $i + 1;
         }
@@ -656,6 +639,7 @@ class Detail extends BaseComponent
             }
         }
     }
+
     private function redirectToEdit()
     {
         $objectId = $this->actionValue === 'Create' ? $this->object->id : $this->object->id;
@@ -791,94 +775,9 @@ class Detail extends BaseComponent
     }
 
     /**
-     * Open partner selection dialog
-     */
-    public function openPartnerDialogBox()
-    {
-        $this->partnerSearchText = '';
-        $this->suppliers = [];
-        $this->selectedPartners = [];
-        $this->dispatch('openPartnerDialogBox');
-    }
-
-    /**
-     * Search for partners/suppliers
-     */
-    public function searchPartners()
-    {
-        if (!empty($this->partnerSearchText)) {
-            $searchTerm = strtoupper($this->partnerSearchText);
-            $this->suppliers = Partner::where('grp', Partner::SUPPLIER)
-                ->where(function ($query) use ($searchTerm) {
-                    $query->whereRaw("UPPER(code) LIKE ?", ["%{$searchTerm}%"])
-                        ->orWhereRaw("UPPER(name) LIKE ?", ["%{$searchTerm}%"]);
-                })
-                ->get();
-        } else {
-            $this->dispatch('error', "Mohon isi kode atau nama supplier");
-        }
-    }
-
-    /**
-     * Select/deselect a partner
-     */
-    public function selectPartner($partnerId)
-    {
-        $key = array_search($partnerId, $this->selectedPartners);
-
-        if ($key !== false) {
-            unset($this->selectedPartners[$key]);
-            $this->selectedPartners = array_values($this->selectedPartners);
-        } else {
-            $this->selectedPartners[] = $partnerId;
-        }
-    }
-
-    /**
-     * Update totals when changes are made
-     */
-    public function updateAmount($data)
-    {
-        $this->total_amount = (float)$data['total_amount'];
-        $this->total_discount = (float)$data['total_discount'];
-        $this->total_dpp = (float)$data['total_dpp'];
-        $this->total_tax = (float)$data['total_tax'];
-
-        $this->total_amount = 0;
-        $this->total_discount = 0;
-        $this->total_dpp = 0;
-        $this->total_tax = 0;
-        foreach ($this->input_details as $detail) {
-
-            $this->total_amount += $detail['amt'];
-            $this->total_discount += $detail['disc_amt'];
-            $this->total_dpp += $detail['dpp'];
-            $this->total_tax += $detail['ppn'];
-        }
-        // Format as Rupiah
-        $this->total_amount = rupiah($this->total_amount);
-        $this->total_discount = rupiah($this->total_discount);
-        $this->total_dpp = rupiah($this->total_dpp);
-        $this->total_tax = rupiah($this->total_tax);
-    }
-
-    /**
-     * Helper: Dapatkan category material dari ConfigConst berdasarkan sales_type
-     */
-    private function getCategoryBySalesType($salesType)
-    {
-        $configs = ConfigConst::where('const_group', 'MMATL_CATEGORY')
-            ->where('str1', $salesType)
-            ->get();
-        // Ambil kolom str2 dari $configs dalam bentuk array
-        $str2Array = $configs->pluck('str2')->toArray();
-        return $str2Array;
-    }
-
-    /**
      * Handle sales_type change and filter materials accordingly
      */
-    public function onSalesTypeChanged()
+    public function salesTypeOnChanged()
     {
         $salesType = $this->inputs['sales_type'] ?? null;
         $this->input_details = [];

@@ -20,32 +20,32 @@
                                 <div class="row">
                                     <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
                                         layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        onChanged="onSalesTypeChanged" />
+                                        onChanged="salesTypeOnChanged" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                         type="code" :action="$actionValue" required="false"
-                                        clickEvent="getTransactionCode" buttonName="Nomor Baru" enabled="false"
+                                        clickEvent="trCodeOnClick" buttonName="Nomor Baru" enabled="false"
                                         :buttonEnabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-dropdown-select label="{{ $this->trans('payment_terms') }}"
                                         model="inputs.payment_term_id" :options="$paymentTerms" required="true"
-                                        :action="$actionValue" onChanged="onPaymentTermChanged" />
+                                        :action="$actionValue" onChanged="paymentTermOnChanged" />
                                     <x-ui-text-field label="Tanggal Jatuh Tempo" model="inputs.due_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                 </div>
                                 <div class="row">
-                                    <x-ui-dropdown-search label="{{ $this->trans('supplier') }}"
+                                    <x-ui-dropdown-search label="{{ $this->trans('Supplier') }}"
                                         model="inputs.partner_id"
-                                        query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
+                                        query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'V'"
                                         optionValue="id" optionLabel="code,name,address,city"
                                         placeHolder="Type to search suppliers..." :selectedValue="$inputs['partner_id']" required="true"
                                         :action="$actionValue" :enabled="$isPanelEnabled" type="int" />
                                     {{-- @dump($inputs['partner_id']) --}}
-                                    <x-ui-dropdown-select label="{{ $this->trans('tax_code') }}" model="inputs.tax_code"
+                                    <x-ui-dropdown-select label="{{ $this->trans('PPN') }}" model="inputs.tax_code"
                                         :options="$SOTax" required="true" :action="$actionValue"
-                                        onChanged="onSOTaxChange" />
+                                        onChanged="taxCodeOnChanged" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
@@ -76,45 +76,30 @@
                                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
-                                            {{-- <x-ui-dropdown-search model="input_details.{{ $key }}.matl_id"
-                                                query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"
-                                                optionValue="id" optionLabel="code,name"
-                                                placeHolder="Search materials..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
-                                                :action="$actionValue" enabled="true"
-                                                onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
-                                                type="int" /> --}}
-                                            @php
-                                                $materialQuery = "SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL";
-                                                if (($inputs['sales_type'] ?? '') == 'I') {
-                                                    $materialQuery .= " AND (category = 'BAN DALAM MOTOR' OR category = 'BAN LUAR MOTOR')";
-                                                } elseif (($inputs['sales_type'] ?? '') == 'O') {
-                                                    $materialQuery .= " AND (category = 'BAN DALAM MOBIL' OR category = 'BAN LUAR MOBIL')";
-                                                }
-                                            @endphp
-                                            <x-ui-dropdown-search label=""
+                                           <x-ui-dropdown-search label=""
                                                 model="input_details.{{ $key }}.matl_id"
                                                 :query="$materialQuery"
                                                 optionValue="id" optionLabel="code,name"
                                                 placeHolder="Select material..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
-                                                onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
+                                                onChanged="matlIdOnChanged({{ $key }}, $event.target.value)"
                                                 type="int" :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
-                                                onChanged="updateItemAmount({{ $key }})" decimalPlaces="2" />
+                                                onChanged="priceOnChanged({{ $key }})" decimalPlaces="2" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
                                                 label="" :enabled="$isDeliv ? 'false' : 'true'" :action="$actionValue"
-                                                onChanged="updateItemAmount({{ $key }})" type="number"
+                                                onChanged="qtyOnChanged({{ $key }})" type="number"
                                                 required="true" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="updateItemAmount({{ $key }})" type="number"
+                                                onChanged="discPctOnChanged({{ $key }})" type="number"
                                                 decimalPlaces="2" />
                                         </td>
                                         <td style="text-align: center;">
@@ -131,7 +116,7 @@
                                 @endforeach
                             </x-slot>
                             <x-slot name="button">
-                                <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
+                                <x-ui-button clickEvent="addItemOnClick" cssClass="btn btn-primary" iconPath="add.svg"
                                     button-name="Tambah" :enabled="$isDeliv ? 'false' : 'true'" />
                             </x-slot>
                         </x-ui-table>

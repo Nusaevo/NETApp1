@@ -38,7 +38,11 @@ class DropdownSearchController extends Controller
             $searchTerm = $request->get('q', '');
             $optionValue = $request->get('option_value', 'id');
             $optionLabel = $request->get('option_label', 'name');
-            $specificId = $request->get('id'); // For value restoration            // Debug all request parameters
+            $specificId = $request->get('id'); // For value restoration
+            $preserveExisting = $request->get('preserve_existing', false);
+            $bypassFilters = $request->get('bypass_filters', false);
+
+            // Debug all request parameters
             \Log::debug('All dropdown search parameters:', $request->all());
 
             // Get SQL query - check all possible parameter names with more detail
@@ -72,7 +76,10 @@ class DropdownSearchController extends Controller
             \Log::info('Final SQL query:', [
                 'query' => $sqlQuery,
                 'length' => $sqlQuery ? strlen($sqlQuery) : 0,
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
+                'preserve_existing' => $preserveExisting,
+                'bypass_filters' => $bypassFilters,
+                'specific_id' => $specificId
             ]);
 
             $requestConnection = $request->get('connection');
@@ -144,76 +151,79 @@ class DropdownSearchController extends Controller
 
             // Process SQL query
             try {
-                // For search, modify query to include search term
                 $modifiedQuery = "";
-                if (!empty($searchTerm)) {
-                    $modifiedQuery = $this->modifyQueryForSearch($sqlQuery, $searchTerm, $optionLabel);
+
+                if ($preserveExisting && $specificId && $bypassFilters) {
+                    // This is for fetching existing/selected value - bypass ALL filters
+                    \Log::info('Using bypass filters for selected value lookup:', [
+                        'specific_id' => $specificId,
+                        'option_value' => $optionValue,
+                        'preserve_existing' => $preserveExisting,
+                        'bypass_filters' => $bypassFilters
+                    ]);
+
+                    $modifiedQuery = $this->bypassAllFilters($sqlQuery, $optionValue, $specificId);
+                    $results = $db->select($modifiedQuery);
+
+                } else if ($specificId) {
+                    // Regular specific ID lookup with normal filters
+                    $modifiedQuery = $this->modifyQueryForId($sqlQuery, $optionValue, $specificId);
+                    $results = $db->select($modifiedQuery);
+
                 } else {
-                    $modifiedQuery = $sqlQuery;
+                    // Normal search with filters applied
+                    if (!empty($searchTerm)) {
+                        $modifiedQuery = $this->modifyQueryForSearch($sqlQuery, $searchTerm, $optionLabel);
+                    } else {
+                        $modifiedQuery = $sqlQuery;
+                    }
+
+                    // Execute query for regular search
+                    $results = $db->select($modifiedQuery . ' LIMIT 50');
                 }
 
-                // Execute query for regular search
-                $results = $db->select($modifiedQuery . ' LIMIT 50');
+                // Handle specific ID lookup (both bypass and normal)
+                if ($specificId && !empty($results)) {
+                    $item = $results[0];
 
-                // Prepare query with replacements for search term or specific ID
-                if ($specificId) {
-                    // For specific ID lookup, modify query to filter by ID
-                    $modifiedQuery = $this->modifyQueryForId($sqlQuery, $optionValue, $specificId);
-
-                    try {
-                        $results = $db->select($modifiedQuery);
-
-                        \Log::info('Specific ID lookup query:', [
-                            'modifiedQuery' => $modifiedQuery,
-                            'results' => count($results),
-                            'optionLabel' => $optionLabel
-                        ]);
-
-                        if (!empty($results)) {
-                            $item = $results[0];
-
-                            // Check if the required property exists
-                            if (!property_exists($item, $optionValue)) {
-                                \Log::error('Column not found in results:', [
-                                    'optionValue' => $optionValue,
-                                    'available' => array_keys(get_object_vars($item))
-                                ]);
-
-                                return response()->json([
-                                    'results' => [],
-                                    'error' => "Column '{$optionValue}' not found in result set"
-                                ], 400);
-                            }
-
-                            $displayText = $this->formatDisplayText($item, $optionLabel);
-
-                            return response()->json([
-                                'results' => [[
-                                    'id' => $item->{$optionValue},
-                                    'text' => $displayText
-                                ]]
-                            ]);
-                        } else {
-                            \Log::info('No results found for specific ID lookup:', [
-                                'id' => $specificId,
-                                'query' => $modifiedQuery
-                            ]);
-                            return response()->json(['results' => []]);
-                        }
-                    } catch (\Exception $e) {
-                        \Log::error('Error in specific ID lookup:', [
-                            'query' => $modifiedQuery,
-                            'error' => $e->getMessage()
+                    // Check if the required property exists
+                    if (!property_exists($item, $optionValue)) {
+                        \Log::error('Column not found in results:', [
+                            'optionValue' => $optionValue,
+                            'available' => array_keys(get_object_vars($item))
                         ]);
 
                         return response()->json([
                             'results' => [],
-                            'error' => 'Error retrieving specific ID: ' . $e->getMessage()
-                        ], 500);
+                            'error' => "Column '{$optionValue}' not found in result set"
+                        ], 400);
                     }
+
+                    $displayText = $this->formatDisplayText($item, $optionLabel);
+
+                    // Detect status indicators for existing values
+                    $statusInfo = $this->detectStatusIndicators($item);
+
+                    return response()->json([
+                        'results' => [[
+                            'id' => $item->{$optionValue},
+                            'text' => $displayText,
+                            'is_deleted' => $statusInfo['is_deleted'],
+                            'is_out_of_stock' => $statusInfo['is_out_of_stock'],
+                            'is_inactive' => $statusInfo['is_inactive'],
+                            'is_expired' => $statusInfo['is_expired'],
+                            'custom_status' => $statusInfo['custom_status']
+                        ]]
+                    ]);
+                } else if ($specificId) {
+                    \Log::info('No results found for specific ID lookup:', [
+                        'id' => $specificId,
+                        'query' => $modifiedQuery
+                    ]);
+                    return response()->json(['results' => []]);
                 }
 
-                // Format results
+                // Format results for regular search
                 $formattedResults = collect($results)->map(function ($item) use ($optionValue, $optionLabel) {
                     $displayText = $this->formatDisplayText($item, $optionLabel);
 
@@ -297,6 +307,89 @@ class DropdownSearchController extends Controller
         }
 
         return $displayText;
+    }
+
+    /**
+     * Bypass all filters for selected value lookup
+     * Removes ALL WHERE conditions and only searches by the specific ID
+     */
+    private function bypassAllFilters($sqlQuery, $optionValue, $specificId)
+    {
+        // Remove the entire WHERE clause and everything after it (GROUP BY, ORDER BY, etc.)
+        // Keep only the SELECT ... FROM ... part
+        $baseQuery = preg_replace('/\s+WHERE\s+.*$/i', '', $sqlQuery);
+
+        // Also remove any trailing ORDER BY, GROUP BY, HAVING clauses that might be standalone
+        $baseQuery = preg_replace('/\s+(ORDER\s+BY|GROUP\s+BY|HAVING)\s+.*$/i', '', $baseQuery);
+
+        // Add only the ID condition
+        $idCondition = " WHERE {$optionValue} = " . (is_numeric($specificId) ? $specificId : "'{$specificId}'");
+
+        $finalQuery = $baseQuery . $idCondition;
+
+        \Log::info('Bypass filters query transformation:', [
+            'original' => $sqlQuery,
+            'base_cleaned' => $baseQuery,
+            'final' => $finalQuery,
+            'specific_id' => $specificId,
+            'option_value' => $optionValue
+        ]);
+
+        return $finalQuery;
+    }    /**
+     * Detect status indicators for dropdown items
+     */
+    private function detectStatusIndicators($item)
+    {
+        $statusInfo = [
+            'is_deleted' => false,
+            'is_out_of_stock' => false,
+            'is_inactive' => false,
+            'is_expired' => false,
+            'custom_status' => null
+        ];
+
+        // Check for deleted status
+        if (property_exists($item, 'deleted_at') && !empty($item->deleted_at)) {
+            $statusInfo['is_deleted'] = true;
+            $statusInfo['custom_status'] = 'Deleted';
+        }
+
+        // Check for stock status
+        if (property_exists($item, 'stock') && $item->stock <= 0) {
+            $statusInfo['is_out_of_stock'] = true;
+            if (!$statusInfo['custom_status']) {
+                $statusInfo['custom_status'] = 'Out of Stock';
+            }
+        }
+
+        // Check for active status
+        if (property_exists($item, 'status') && $item->status !== 'active') {
+            $statusInfo['is_inactive'] = true;
+            if (!$statusInfo['custom_status']) {
+                $statusInfo['custom_status'] = 'Inactive';
+            }
+        }
+
+        if (property_exists($item, 'is_active') && !$item->is_active) {
+            $statusInfo['is_inactive'] = true;
+            if (!$statusInfo['custom_status']) {
+                $statusInfo['custom_status'] = 'Inactive';
+            }
+        }
+
+        // Check for expiration
+        if (property_exists($item, 'expired_date') && !empty($item->expired_date)) {
+            $expiredDate = \Carbon\Carbon::parse($item->expired_date);
+            if ($expiredDate->isPast()) {
+                $statusInfo['is_expired'] = true;
+                if (!$statusInfo['custom_status']) {
+                    $statusInfo['custom_status'] = 'Expired';
+                }
+            }
+        }
+
+        return $statusInfo;
     }
 
     /**

@@ -56,7 +56,7 @@
                                     font-weight: bold;">
                                         <b>Knit And Cro</b><br>
                                         08888052888<br>
-                                        Ruko Pluit Village No 59<br>
+                                        Ruko Pluit Village No 59<br>
                                         Jakarta
                                     </p>
                                 </td>
@@ -72,10 +72,18 @@
                         {{-- Detail Barang --}}
                         <table style="margin-top:4px;">
                             @php $grand_total = 0; @endphp
-                            @foreach ($object->OrderDtl as $item)
+                            @foreach ($object->OrderDtl()->withTrashed()->get() as $item)
                                 @continue(!$item->qty)
                                 <tr>
-                                    <td colspan="3" style="padding-top:4px;"><b>{{ $item->Material->code }} - {{ $item->Material->name }}</b></td>
+                                    <td colspan="3" style="padding-top:4px;">
+                                        <b>
+                                            @if($item->Material()->withTrashed()->first())
+                                                {{ $item->Material()->withTrashed()->first()->code }} - {{ $item->Material()->withTrashed()->first()->name }}
+                                            @else
+                                                Material Tidak Ditemukan
+                                            @endif
+                                        </b>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>{{ qty($item->qty) }} {{ $item->matl_uom }}</td>
@@ -104,14 +112,18 @@
                         <table style="width:100%; text-align:center; margin-top:6px;">
                             <tr>
                                 <td style="text-align:left; padding-bottom:4px;">
-                                    {{ $this->object->Partner->name }}
-                                    @if ($this->object->Partner->phone)
-                                        - {{ $this->object->Partner->phone }}
+                                    @if($this->object->Partner()->withTrashed()->first())
+                                        {{ $this->object->Partner()->withTrashed()->first()->name }}
+                                        @if ($this->object->Partner()->withTrashed()->first()->phone)
+                                            - {{ $this->object->Partner()->withTrashed()->first()->phone }}
+                                        @endif
+                                    @else
+                                        Partner Tidak Ditemukan
                                     @endif
                                 </td>
                             </tr>
                             <tr>
-                                <td><b>— Terima Kasih —</b></td>
+                                <td><b>— Terima Kasih —</b></td>
                             </tr>
                         </table>
 

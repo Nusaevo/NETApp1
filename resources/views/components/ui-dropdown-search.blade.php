@@ -217,7 +217,8 @@
 
                     // Restore existing value if present
                     const existingValue = '{{ $selectedValue ?? '' }}' || '{{ $this->$model ?? '' }}';
-                    if (existingValue && existingValue !== '{{ $blankValue }}') {                            // Fetch display text for existing value using the correct endpoint
+                    if (existingValue && existingValue !== '{{ $blankValue }}') {
+                        // Fetch display text for existing value using the correct endpoint
                         const endpoint = '/search-dropdown';
 
                         // Use the same query from the data attribute
@@ -230,19 +231,55 @@
                         params.append('option_value', '{{ $optionValue }}');
                         params.append('option_label', '{{ $optionLabel }}');
                         params.append('id', existingValue);
+                        params.append('preserve_existing', 'true');  // Flag for existing value lookup
+                        params.append('bypass_filters', 'true');    // Bypass business logic filters
 
-                        console.log('Fetching with params:', params.toString());
+                        console.log('Fetching existing value with params:', params.toString());
 
                         fetch(`${endpoint}?${params.toString()}`)
                             .then(response => response.json())
                             .then(data => {
                                 if (data && data.results && data.results.length > 0) {
                                     const item = data.results[0];
-                                    const option = new Option(item.text, item.id, true, true);
+                                    
+                                    // Build display text with status indicators
+                                    let displayText = item.text;
+                                    const indicators = [];
+                                    
+                                    if (item.is_deleted) indicators.push('Deleted');
+                                    if (item.is_out_of_stock) indicators.push('Out of Stock');
+                                    if (item.is_inactive) indicators.push('Inactive');
+                                    if (item.is_expired) indicators.push('Expired');
+                                    if (item.custom_status) indicators.push(item.custom_status);
+                                    
+                                    if (indicators.length > 0) {
+                                        displayText += ` (${indicators.join(', ')})`;
+                                    }
+                                    
+                                    const option = new Option(displayText, item.id, true, true);
+                                    
+                                    // Add appropriate CSS classes for styling
+                                    if (item.is_deleted) $(option).addClass('deleted-option');
+                                    if (item.is_out_of_stock) $(option).addClass('out-of-stock-option');
+                                    if (item.is_inactive) $(option).addClass('inactive-option');
+                                    if (item.is_expired) $(option).addClass('expired-option');
+                                    
+                                    $(selectElement).append(option).trigger('change');
+                                } else {
+                                    // If no result found, create a placeholder option
+                                    console.warn('No display text found for existing value, creating placeholder');
+                                    const option = new Option(`ID: ${existingValue} (Not Found)`, existingValue, true, true);
+                                    $(option).addClass('missing-option');
                                     $(selectElement).append(option).trigger('change');
                                 }
                             })
-                            .catch(error => console.warn('Failed to restore selected value:', error));
+                            .catch(error => {
+                                console.warn('Failed to restore selected value:', error);
+                                // Create a fallback option
+                                const option = new Option(`ID: ${existingValue} (Error Loading)`, existingValue, true, true);
+                                $(option).addClass('error-option');
+                                $(selectElement).append(option).trigger('change');
+                            });
                     }
                 };
 

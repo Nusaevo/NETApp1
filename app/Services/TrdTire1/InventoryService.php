@@ -166,18 +166,16 @@ class InventoryService
                 $trDesc = 'DELIVERY OUT ' . $detailData['tr_code'];
                 break;
             case 'TW':
-                if ($detailData['tr_seq_sign'] < 0) {
-                    // Jika TW keluar, kurangi OH
-                    $qty = -$detailData['qty'];
+                $qty = $detailData['qty'];
+                if ($detailData['qty'] < 0) {
                     $trDesc = 'TRANSFER WH OUT ' . $detailData['tr_code'];
                 } else {
-                    // Jika TW masuk, tambah OH
-                    $qty = $detailData['qty'];
                     $trDesc = 'TRANSFER WH IN ' . $detailData['tr_code'];
                 }
                 break;
             case 'IA':
-                    $trDesc = 'ADJUSTMENT ' . $detailData['tr_code'];
+                $qty = $detailData['qty'];
+                $trDesc = 'ADJUSTMENT ' . $detailData['tr_code'];
                 break;
         }
 
@@ -221,8 +219,6 @@ class InventoryService
             'amt_running' => 0,
             'process_flag' => ''
         ];
-
-        // Simpan log inventory
         IvtLog::create($logData);
 
         return $ivtBal->id;
@@ -318,28 +314,35 @@ class InventoryService
             $detail['tr_type'] =  $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
 
-            $detail1 = $detail;
-            $detail1['tr_seq'] = -$detail['tr_seq'];
-            $savedDetail = IvttrDtl::create($detail1);
-            $savedDetails = $savedDetail->toArray();
-            $savedDetails['tr_seq_sign'] = -$detail['tr_seq'];
-            $savedDetails['tr_seq'] = $trSeq;
-            $ivtId = $this->addOnhand($headerData, $savedDetails);
-            $savedDetail->ivt_id = $ivtId;
-            $savedDetail->save();
-            $trSeq++;
+            if ($detail['tr_type'] === 'TW') {
+                $detail1 = $detail;
+                $detail1['tr_seq'] = -$detail['tr_seq'];
+                $detail1['qty'] = -$detail['qty'];
+                $savedDetail = IvttrDtl::create($detail1);
+                $savedDetails = $savedDetail->toArray();
+                $savedDetails['tr_seq'] = $trSeq;
+                $ivtId = $this->addOnhand($headerData, $savedDetails);
+                $savedDetail->ivt_id = $ivtId;
+                $savedDetail->save();
+                $trSeq++;
 
-            $detail2 = $detail;
-            $detail2['wh_id'] = $detail['wh_id2'];
-            $detail2['wh_code'] = $detail['wh_code2'];
-            $savedDetail = IvttrDtl::create($detail2);
-            $savedDetails = $savedDetail->toArray();
-            $savedDetails['tr_seq_sign'] = $detail['tr_seq'];
-            $savedDetails['tr_seq'] = $trSeq;
-            $ivtId = $this->addOnhand($headerData, $savedDetails);
-            $savedDetail->ivt_id = $ivtId;
-            $savedDetail->save();
-            $trSeq++;
+                $detail2 = $detail;
+                $detail2['wh_id'] = $detail['wh_id2'];
+                $detail2['wh_code'] = $detail['wh_code2'];
+                $savedDetail = IvttrDtl::create($detail2);
+                $savedDetails = $savedDetail->toArray();
+                $savedDetails['tr_seq'] = $trSeq;
+                $ivtId = $this->addOnhand($headerData, $savedDetails);
+                $savedDetail->ivt_id = $ivtId;
+                $savedDetail->save();
+                $trSeq++;
+            } else if ($detail['tr_type'] === 'IA') {
+                $savedDetail = IvttrDtl::create($detail);
+                $ivtId = $this->addOnhand($headerData, $$detail);
+                $savedDetail->ivt_id = $ivtId;
+                $savedDetail->save();
+            }
+
 
             // dd('Detail saved successfully', $savedDetail->toArray());
         }
