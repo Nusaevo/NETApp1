@@ -195,9 +195,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             'deleteSelected' => 'Disable Selected',
-            'massUpdateBuyingPrice' => 'Mass Update Buying Price',
-            'massUpdateSellingPrice' => 'Mass Update Selling Price',
             'downloadCreateTemplate' => 'Download Create Template',
+            'massUpdateBuyingPrice' => 'Mass Update Modal',
+            'massUpdateSellingPrice' => 'Mass Update Harga Jual',
         ];
     }
 
