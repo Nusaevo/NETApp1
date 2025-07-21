@@ -32,11 +32,10 @@ class OrderDtl extends BaseModel
         'qty_reff',
         'price',
         'amt',
-        'disc_pct',
-        'dpp',
-        'ppn',
-        'price_uom',
+        'amt_beforetax',
         'amt_tax',
+        'disc_pct',
+        'price_uom',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];
@@ -44,47 +43,6 @@ class OrderDtl extends BaseModel
     protected static function boot()
     {
         parent::boot();
-        // static::saving(function ($orderDtl) {
-        //     $qty = $orderDtl->qty;
-        //     $price = $orderDtl->price;
-        //     $discPct = $orderDtl->disc_pct / 100;
-
-        //     // Ambil tax_pct dari OrderHdr jika ada, jika tidak gunakan default 0
-        //     $orderHdr = $orderDtl->OrderHdr;
-        //     $taxPct = $orderHdr ? ($orderHdr->tax_pct / 100) : 0;
-        //     $taxFlag = $orderHdr ? $orderHdr->tax_flag : 'N';
-
-        //     // Calculate amt with discount
-        //     $orderDtl->amt = $qty * $price * (1 - $discPct);
-
-        //     // Calculate amt_tax based on tax flag
-        //     if ($taxFlag === 'I') {
-        //         $orderDtl->amt_tax = $orderDtl->amt;
-        //     } elseif ($taxFlag === 'E') {
-        //         $orderDtl->amt_tax = round($orderDtl->amt * (1 + $taxPct), 2);
-        //     } else { // tax_flag === 'N'
-        //         $orderDtl->amt_tax = $orderDtl->amt;
-        //     }
-
-        //     // Calculate DPP based on tax flag
-        //     $priceDisc = $price * (1 - $discPct);
-        //     if ($taxFlag === 'I') {
-        //         $orderDtl->dpp = round($priceDisc / (1 + $taxPct), 2);
-        //         $orderDtl->ppn = round($orderDtl->dpp * $taxPct / 100, 2);
-        //     } elseif ($taxFlag === 'E') {
-        //         $orderDtl->dpp = round($priceDisc, 2);
-        //         $orderDtl->ppn = round($orderDtl->dpp * $taxPct / 100, 2);
-        //     } else {
-        //         $orderDtl->dpp = round($priceDisc, 2);
-        //         $orderDtl->ppn = 0;
-        //     }
-
-        //     // price_base = base_factor yang ada di MatlUom
-        //     $matlUom = MatlUom::where('matl_id', $orderDtl->matl_id)
-        //         ->where('matl_uom', $orderDtl->matl_uom)
-        //         ->first();
-        //     $orderDtl->qty_uom = $matlUom->matl_uom;
-        // });
     }
 
     #region Relations

@@ -24,8 +24,10 @@ class OrderHdr extends BaseModel
 
 
     protected $fillable = [
-        'tr_code',
         'tr_type',
+        'tr_code',
+        'tr_date',
+        'sales_type',
         'tax_code',
         'tax_pct',
         'tax_id',
@@ -33,13 +35,11 @@ class OrderHdr extends BaseModel
         'partner_code',
         'payment_term_id',
         'payment_due_days',
-        'tr_date',
-        'print_date',
+        'reff_code',
         'curr_rate',
         'curr_id',
         'curr_code',
         'note',
-        'sales_type',
         'tax_doc_flag',
         'tax_doc_num',
         'payment_term',
@@ -49,8 +49,10 @@ class OrderHdr extends BaseModel
         'npwp_addr',
         'npwp_code',
         'amt',
+        'amt_beforetax',
         'amt_tax',
-        'reff_code',
+        'amt_shipcost',
+        'print_date',
         'print_remarks'
     ];
 

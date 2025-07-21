@@ -99,8 +99,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="discPctOnChanged({{ $key }})" type="number"
-                                                decimalPlaces="2" />
+                                                onChanged="discPctOnChanged({{ $key }})" type="number"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt"

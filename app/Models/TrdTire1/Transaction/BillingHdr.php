@@ -33,6 +33,9 @@ class BillingHdr extends BaseModel
         'status_code',
         'print_date',
         'amt',
+        'amt_beforetax',
+        'amt_tax',
+        'amt_shipcost',
         'amt_reff',
         'partnerbal_id'
     ];
