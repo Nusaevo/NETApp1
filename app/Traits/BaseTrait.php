@@ -20,7 +20,7 @@ trait BaseTrait
                 $model->created_at = now();
                 $model->updated_by = $userId;
                 $model->updated_at = now();
-                // $model->setStatus(Status::ACTIVE);
+                $model->setStatus(Status::ACTIVE);
                 $model->version_number = 1;
             }
         });
