@@ -82,6 +82,14 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
+            Column::make('Ongkos Kirim', 'amt_shipcost')
+                ->label(function ($row) {
+                    $delivery = DelivHdr::where('tr_type', 'SD')
+                        ->where('tr_code', $row->tr_code)
+                        ->first();
+                    return $delivery && $delivery->amt_shipcost ? rupiah($delivery->amt_shipcost) : '-';
+                })
+                ->sortable(),
             Column::make($this->trans("Tanggal Kirim"), "tr_date")
                 ->label(function ($row) {
                     $delivery = DelivHdr::where('tr_type', 'SD')
@@ -251,14 +259,13 @@ class IndexDataTable extends BaseDataTableComponent
 
                 DB::commit();
 
-                $this->clearSelected();
-                $this->dispatch('showAlert', [
-                    'type' => 'success',
-                    'message' => "Berhasil membatalkan {$deletedCount} data pengiriman"
-                ]);
+            $this->clearSelected();
+            $this->dispatch('success', "Berhasil membatalkan {$deletedCount} data pengiriman");
+            $this->dispatch('refresh-page');
             } catch (Exception $e) {
                 DB::rollBack();
                 $this->dispatch('error', 'Gagal membatalkan pengiriman: ' . $e->getMessage());
+                $this->dispatch('refresh-page');
             }
         }
     }

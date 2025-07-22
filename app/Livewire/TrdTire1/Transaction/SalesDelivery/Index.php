@@ -19,11 +19,14 @@ class Index extends BaseComponent
 {
     public $selectedOrderIds = [];
     public $deliveryDate = '';
+    public $inputs = [
+        'tr_date' => '',
+        'wh_code' => '',
+        'amt_shipcost' => null,
+    ];
     protected $masterService;
     public $warehouses;
     public $selectedItems = [];
-    public $tr_date = ''; // Add this line
-
     protected $listeners = [
         'openDeliveryDateModal',
     ];
@@ -32,16 +35,22 @@ class Index extends BaseComponent
     {
         $this->selectedOrderIds = $orderIds;
         $this->selectedItems    = $selectedItems;
-        // ubah dari '' menjadi tanggal hari ini:
-        $this->tr_date          = Carbon::now()->format('Y-m-d');
+        // Set default tanggal kirim ke hari ini jika belum ada
+        $this->inputs['tr_date'] = Carbon::now()->format('Y-m-d');
         $this->dispatch('open-modal-delivery-date');
     }
 
     public function onValidateAndSave()
     {
+        if (empty($this->selectedOrderIds) || count($this->selectedOrderIds) === 0) {
+            $this->dispatch('error', 'Silakan pilih minimal satu nota untuk dikirim.');
+            return;
+        }
+
         $this->validate([
-            'tr_date' => 'required|date',
+            'inputs.tr_date' => 'required|date',
             'inputs.wh_code' => 'required',
+            'inputs.amt_shipcost' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -56,7 +65,7 @@ class Index extends BaseComponent
                 $headerData = [
                     'tr_type' => 'SD',
                     'tr_code' => $order->tr_code,
-                    'tr_date' => $this->tr_date,
+                    'tr_date' => $this->inputs['tr_date'],
                     'partner_id' => $order->partner_id,
                     'partner_code' => $order->partner_code,
                     'status_code' => $order->status_code,
@@ -66,7 +75,8 @@ class Index extends BaseComponent
                     'payment_term' => $order->payment_term ?? null,
                     'payment_due_days' => $order->payment_due_days ?? 0,
                     'note' => '',
-                    'reff_date' => $this->tr_date,
+                    'reff_date' => null,
+                    'amt_shipcost' => $this->inputs['amt_shipcost'],
                 ];
 
                 // Prepare detail data
@@ -171,9 +181,11 @@ class Index extends BaseComponent
             }
             $this->dispatch('close-modal-delivery-date');
             $this->dispatch('refreshDatatable');
+            $this->dispatch('refresh-page');
 
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal membuat Sales Delivery: ' . $e->getMessage());
+            $this->dispatch('refresh-page');
         }
     }
 
