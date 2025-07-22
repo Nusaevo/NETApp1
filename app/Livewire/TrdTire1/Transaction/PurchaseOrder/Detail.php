@@ -22,25 +22,25 @@ class Detail extends BaseComponent
 {
     // Header properties
     public $inputs = [];
-    public $SOTax = [];
-    public $SOSend = [];
+    public $taxCode = [];
+    // public $SOSend = [];
     public $paymentTerms = [];
     public $suppliers = [];
-    public $warehouses;
-    public $partners;
+    // public $warehouses;
+    // public $partners;
     public $sales_type;
-    public $tax_invoice;
+    // public $tax_invoice;
     public $total_amount = 0;
     public $total_tax = 0;
     public $total_dpp = 0;
     public $total_discount = 0;
     public $trType = "PO";
     public $versionNumber = "0.0";
-    public $npwpOptions = [];
+    // public $npwpOptions = [];
     public $isPanelEnabled = "false";
-    public $notaCount = 0;
-    public $suratJalanCount = 0;
-    public $ddMaterial = [];
+    // public $notaCount = 0;
+    // public $suratJalanCount = 0;
+    // public $ddMaterial = [];
     public $object;
     public $object_detail;
 
@@ -105,17 +105,17 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
-        $this->partners = $this->masterService->getCustomers();
-        $this->SOTax = $this->masterService->getSOTaxData();
-        $this->SOSend = $this->masterService->getSOSendData();
+        // $this->partners = $this->masterService->getCustomers();
+        $this->taxCode = $this->masterService->getSOTaxData();
+        // $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
-        $this->warehouses = $this->masterService->getWarehouse();
-        $this->materials = $this->masterService->getMaterials();
+        // $this->warehouses = $this->masterService->getWarehouse();
+        // $this->materials = $this->masterService->getMaterials();
 
         // Tambahkan filter material jika sales_type sudah terisi
-        if (!empty($this->inputs['sales_type'])) {
-            $this->salesTypeOnChanged();
-        }
+        // if (!empty($this->inputs['sales_type'])) {
+        //     $this->salesTypeOnChanged();
+        // }
 
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -129,6 +129,7 @@ class Detail extends BaseComponent
             $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
                 ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
                 : ($trDate ? $trDate->format('Y-m-d') : null);
+            // dd($this->inputs);
             $this->salesTypeOnChanged();
             $this->loadDetails();   
             // dd($this->input_details);
@@ -224,6 +225,7 @@ class Detail extends BaseComponent
             if ($material) {
                 $matlUom = MatlUom::where('matl_id', $matl_id)
                     -> where('matl_uom', $material->uom)->first();
+                // dd($matlUom);
                 if ($matlUom) {
                     $this->input_details[$key]['price'] = $matlUom->last_buying_price;
                 } else {
@@ -233,7 +235,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['matl_code'] = $material->code;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
                 $this->input_details[$key]['matl_descr'] = $material->name;
-                $this->input_details[$key]['disc_pct'] = 0; // Default 0%
+                $this->input_details[$key]['disc_pct'] = 0;
                 $this->calcItemAmount($key);
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));
@@ -337,19 +339,14 @@ class Detail extends BaseComponent
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-
             $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
 
             $this->input_details = $this->object_detail->toArray();
             foreach ($this->object_detail as $key => $detail) {
-                // $this->input_details[$key] = populateArrayFromModel($detail);
-                $this->calcItemAmount($key);
+                 $this->calcItemAmount($key);
             }
-
-
-            // Check delivery status after loading details
             $this->checkDeliveryStatus();
         }
     }
@@ -424,17 +421,14 @@ class Detail extends BaseComponent
 
    private function prepareHeaderData()
     {
-       $headerData = $this->inputs;
-
+        $headerData = $this->inputs;
         if ($this->actionValue === 'Create') {
             $headerData['status_code'] = Status::OPEN;
         }
-            // Fallback untuk partner_code
         if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
             $partner = Partner::find($headerData['partner_id']);
             $headerData['partner_code'] = $partner ? $partner->code : '';
         }
-
        return $headerData;
     }
 
@@ -606,7 +600,6 @@ class Detail extends BaseComponent
     public function salesTypeOnChanged()
     {
         $salesType = $this->inputs['sales_type'] ?? null;
-        $this->input_details = [];
 
         if (!$salesType) {
             $this->materials = [];
