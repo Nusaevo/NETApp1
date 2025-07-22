@@ -29,7 +29,7 @@
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                             type="code" :action="$actionValue" required="true"
-                                            clickEvent="getTransactionCode" buttonName="Nomor Baru" enabled="true"
+                                            clickEvent="trCodeOnClick" buttonName="Nomor Baru" enabled="true"
                                             :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" :enabled="$isPanelEnabled" />

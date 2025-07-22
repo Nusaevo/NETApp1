@@ -159,7 +159,95 @@ class Detail extends BaseComponent
         $this->isDeliv = false;
     } 
 
-     public function addItemOnClick()
+     public function onValidateAndSave()
+    {
+        // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
+        if (!$this->orderService) {
+            $this->orderService = app(OrderService::class);
+        }
+
+        // Jika sudah ada delivery, hanya boleh update header
+        if ($this->isDeliv) {
+            // Prepare data header saja
+            $headerData = $this->prepareHeaderData();
+            $detailData = []; // Kosongkan detail agar tidak diubah
+
+            // Simpan hanya header (tanpa update detail)
+            try {
+                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
+                if (!$result) {
+                    throw new Exception('Gagal mengubah Purchase Order.');
+                }
+                // $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
+                return $this->redirectToEdit();
+            } catch (Exception $e) {
+                $this->dispatch('error', $e->getMessage());
+                throw new Exception('Gagal memperbarui Purchase Order: ' . $e->getMessage());
+            }
+        }
+
+        // Jika belum ada delivery, proses normal
+        if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
+            $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
+            return;
+        }
+
+        $headerData = $this->prepareHeaderData();
+        $detailData = $this->prepareDetailData();
+        $totals = $this->calcTotalFromDetails($detailData);
+        $headerData['amt'] = $totals['amt'];
+        $headerData['amt_beforetax'] = $totals['amt_beforetax'];
+        $headerData['amt_tax'] = $totals['amt_tax'];
+
+        if ($this->actionValue === 'Create') {
+            $order = $this->orderService->addOrder($headerData, $detailData);
+            if (!$order) {
+                throw new Exception('Gagal membuat Purchase Order.');
+            }
+            $this->object = $order;
+        } else {
+            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
+            if (!$result) {
+                throw new Exception('Gagal mengubah Purchase Order.');
+            }
+        }
+        $this->redirectToEdit();
+    }
+
+    private function prepareHeaderData()
+    {
+        $headerData = $this->inputs;
+
+        if ($this->actionValue === 'Create') {
+            $headerData['status_code'] = Status::OPEN;
+        }
+        
+        if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
+            $partner = Partner::find($headerData['partner_id']);
+            $headerData['partner_code'] = $partner ? $partner->code : '';
+        }
+        return $headerData;
+    }
+
+    private function prepareDetailData()
+    {
+        $detailData = $this->input_details;
+        
+        $trSeq = 1;
+        foreach ($detailData as $i => &$detail) {
+            $detail['tr_seq'] = $trSeq++;
+            $detail['qty_uom'] = 'PCS';
+            $detail['price_uom'] = 'PCS';
+            $detail['qty_base'] = 1;
+            if ($this->actionValue === 'Create') {
+                $detail['status_code'] = Status::OPEN;
+            }
+        }
+        unset($detail);
+        return $detailData;
+    }
+
+   public function addItemOnClick()
     {
         // Validasi: sales_type harus dipilih dulu
         if (empty($this->inputs['sales_type'])) {
@@ -173,20 +261,7 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah terkirim.');
                 return;
             }
-
             $this->input_details[] = populateArrayFromModel(new OrderDtl());
-            // $this->input_details[] = [
-            //     'matl_id' => 0,
-            //     'qty' => 0,
-            //     'price' => 0,
-            //     'disc_pct' => 0,
-            //     'amt' => 0,
-            //     'amt_beforetax' => 0,
-            //     'amt_tax' => 0,
-            //     'disc_amt' => 0,
-            // ];
-            // dd($this->input_details);
-            // $this->dispatch('success', __('generic.string.add_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }
@@ -194,7 +269,7 @@ class Detail extends BaseComponent
 
      public function trCodeOnClick()
     {
-        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType);
+        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,"","");
     }
 
     public function taxCodeOnChanged()
@@ -212,7 +287,6 @@ class Detail extends BaseComponent
             foreach ($this->input_details as $key => $detail) {
                 $this->calcItemAmount($key);
             }
-
         } catch (Exception $e) {
             $this->dispatch('error', $e->getMessage());
         }
@@ -347,6 +421,8 @@ class Detail extends BaseComponent
             foreach ($this->object_detail as $key => $detail) {
                  $this->calcItemAmount($key);
             }
+
+            // Check delivery status after loading details
             $this->checkDeliveryStatus();
         }
     }
@@ -362,92 +438,6 @@ class Detail extends BaseComponent
                 $this->inputs['payment_due_days'] = $paymentTerm->num1;
             }
         }
-    }
-
-    public function onValidateAndSave()
-    {
-        // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
-        if (!$this->orderService) {
-            $this->orderService = app(OrderService::class);
-        }
-
-        // Jika sudah ada delivery, hanya boleh update header
-        if ($this->isDeliv) {
-            // Prepare data header saja
-            $headerData = $this->prepareHeaderData();
-            $detailData = []; // Kosongkan detail agar tidak diubah
-
-            // Simpan hanya header (tanpa update detail)
-            try {
-                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
-                if (!$result) {
-                    throw new Exception('Gagal mengubah Purchase Order.');
-                }
-                // $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
-                return $this->redirectToEdit();
-            } catch (Exception $e) {
-                $this->dispatch('error', $e->getMessage());
-                throw new Exception('Gagal memperbarui Purchase Order: ' . $e->getMessage());
-            }
-        }
-
-        // Jika belum ada delivery, proses normal
-        if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
-            $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
-            return;
-        }
-
-        $headerData = $this->prepareHeaderData();
-        $detailData = $this->prepareDetailData();
-        $totals = $this->calcTotalFromDetails($detailData);
-        $headerData['amt'] = $totals['amt'];
-        $headerData['amt_beforetax'] = $totals['amt_beforetax'];
-        $headerData['amt_tax'] = $totals['amt_tax'];
-
-        if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
-            if (!$order) {
-                throw new Exception('Gagal membuat Purchase Order.');
-            }
-            $this->object = $order;
-        } else {
-            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-            if (!$result) {
-                throw new Exception('Gagal mengubah Purchase Order.');
-            }
-        }
-        $this->redirectToEdit();
-    }
-
-   private function prepareHeaderData()
-    {
-        $headerData = $this->inputs;
-        if ($this->actionValue === 'Create') {
-            $headerData['status_code'] = Status::OPEN;
-        }
-        if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
-            $partner = Partner::find($headerData['partner_id']);
-            $headerData['partner_code'] = $partner ? $partner->code : '';
-        }
-       return $headerData;
-    }
-
-    private function prepareDetailData()
-    {
-        $detailData = $this->input_details;
-        
-        $trSeq = 1;
-        foreach ($detailData as $i => &$detail) {
-            $detail['tr_seq'] = $trSeq++;
-            $detail['qty_uom'] = 'PCS';
-            $detail['price_uom'] = 'PCS';
-            $detail['qty_base'] = 1;
-            if ($this->actionValue === 'Create') {
-                $detail['status_code'] = Status::OPEN;
-            }
-        }
-        unset($detail);
-        return $detailData;
     }
 
     private function calcTotalFromDetails($detailData)

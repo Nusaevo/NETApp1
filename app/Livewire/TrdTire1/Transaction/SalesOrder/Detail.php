@@ -78,7 +78,7 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete'        => 'delete',
         'updateAmount'  => 'updateAmount',
-        'onSalesTypeChanged' => 'onSalesTypeChanged', // tambahkan listener baru
+        // 'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
         'refreshData'   => 'refreshData',
     ];
 
@@ -97,23 +97,12 @@ class Detail extends BaseComponent
         $this->SOTax = $this->masterService->getSOTaxData();
         $this->SOSend = $this->masterService->getSOSendData();
         $this->paymentTerms = $this->masterService->getPaymentTerm();
-        $this->warehouses = $this->masterService->getWarehouse();
+        // $this->warehouses = $this->masterService->getWarehouse();
 
-        // --- Perbaikan urutan: panggil onSalesTypeChanged() sebelum loadDetails() ---
+        // --- Perbaikan urutan: panggil salesTypeOnChanged() sebelum loadDetails() ---
         if ($this->isEditOrView()) {
-            if (!empty($this->inputs['sales_type'])) {
-                $this->onSalesTypeChanged();
-            }
-            if (empty($this->objectIdValue)) {
-                $this->dispatch('error', 'Invalid object ID');
-                return;
-            }
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            if (!$this->object) {
-                $this->dispatch('error', 'Object not found');
-                return;
-            }
-            $this->inputs = populateArrayFromModel($this->object);
+            $this->inputs = $this->object->toArray(); 
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
             $this->inputs['partner_name'] = $this->object->partner->code;
@@ -134,7 +123,7 @@ class Detail extends BaseComponent
                 ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
                 : ($trDate ? $trDate->format('Y-m-d') : null);
             $this->onPartnerChanged();
-            // PENTING: load detail item agar input_details terisi saat edit
+            $this->salesTypeOnChanged();
             $this->loadDetails();
         } else {
             $this->isPanelEnabled = "true";
@@ -149,23 +138,126 @@ class Detail extends BaseComponent
     }
 
     /*
+     * Reset state untuk header dan detail.
+     */
+    public function onReset()
+    {
+        $this->reset('inputs', 'input_details');
+        $this->object = new OrderHdr();
+        $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['tr_date']   = date('Y-m-d');
+        $this->inputs['due_date']  = date('Y-m-d');
+        $this->inputs['tr_type']   = $this->trType;
+        $this->inputs['curr_code'] = "IDR";
+        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
+        $this->inputs['curr_rate'] = 1.00;
+        $this->inputs['wh_code']   = 18;
+        $this->inputs['partner_id']= 0;
+        $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
+    }
+
+    public function onValidateAndSave()
+    {
+        if (!$this->orderService) {
+            $this->orderService = app(OrderService::class);
+        }
+
+        $this->validate();
+
+        // Jika sudah ada delivery, hanya boleh update header
+        if ($this->isDeliv) {
+            // Prepare data header saja
+            $headerData = $this->prepareHeaderData();
+            $detailData = []; // Kosongkan detail agar tidak diubah
+            try {
+                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
+                if (!$result) {
+                    throw new Exception('Gagal mengubah Sales Order.');
+                }
+                $this->dispatch('warning', 'Ada pengiriman (delivery) pada salah satu item. Hanya header yang bisa diupdate.');
+                // return $this->redirectToEdit();
+            } catch (Exception $e) {
+                $this->dispatch('error', $e->getMessage());
+                throw new Exception('Gagal memperbarui Sales Order: ' . $e->getMessage());
+            }
+        }
+
+        // Jika belum ada delivery, proses normal
+        if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
+            $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
+            return;
+        }
+
+        // Prepare data
+        $headerData = $this->prepareHeaderData();
+        $detailData = $this->prepareDetailData();
+        $totals = $this->calcTotalFromDetails($detailData);
+        $headerData['amt'] = $totals['amt'];
+        $headerData['amt_beforetax'] = $totals['amt_beforetax'];
+        $headerData['amt_tax'] = $totals['amt_tax'];
+        // dd($headerData, $detailData);
+        if ($this->actionValue === 'Create') {
+            $order = $this->orderService->addOrder($headerData, $detailData);
+            if (!$order) {
+                throw new Exception('Gagal membuat Purchase Order.');
+            }
+            $this->object = $order;
+        } else {
+            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
+            if (!$result) {
+                throw new Exception('Gagal mengubah Purchase Order.');
+            }
+        }
+        $this->redirectToEdit();
+     }
+
+
+    private function prepareHeaderData()
+    {
+        $headerData = $this->inputs;
+
+        if ($this->actionValue === 'Create') {
+            $headerData['status_code'] = Status::OPEN;
+        }
+        
+        if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
+            $partner = Partner::find($headerData['partner_id']);
+            $headerData['partner_code'] = $partner ? $partner->code : '';
+        }
+        return $headerData;
+    }
+
+    private function prepareDetailData()
+    {
+        $detailData = $this->input_details;
+        
+        $trSeq = 1;
+        foreach ($detailData as $i => &$detail) {
+            $detail['tr_seq'] = $trSeq++;
+            $detail['qty_uom'] = 'PCS';
+            $detail['price_uom'] = 'PCS';
+            $detail['qty_base'] = 1;
+            if ($this->actionValue === 'Create') {
+                $detail['status_code'] = Status::OPEN;
+            }
+        }
+        unset($detail);
+        return $detailData;
+    }
+
+    /*
      * Method untuk generate kode transaksi.
      */
-    public function getTransactionCode()
+    public function trCodeOnClick()
     {
         // Tambahkan pengecekan sales_type
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
             return;
         }
-        if (!isset($this->inputs['sales_type']) || !isset($this->trType)) {
-            $this->dispatch('warning', 'Tipe Kendaraan dan Jenis Transaksi harus diisi');
-            return;
-        }
-        $sales_type = $this->inputs['sales_type'];
-        $tax_doc_flag = !empty($this->inputs['tax_doc_flag']);
-        $tr_type = $this->trType;
-        $this->inputs['tr_code'] = OrderHdr::generateTransactionId($sales_type, $tr_type, $tax_doc_flag);
+        $salesType = $this->inputs['sales_type'];
+        $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
+        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag);
     }
 
     /*
@@ -180,9 +272,7 @@ class Detail extends BaseComponent
                 ->first();
 
             $this->inputs['tax_id'] = $configData->id;
-            $this->inputs['tax_value'] = $configData->num1;
-            $taxType = $configData->str1 ?? '';
-            $this->inputs['tax_pct'] = $this->inputs['tax_value'];
+            $this->inputs['tax_pct'] = $configData->num1;
 
             // Recalculate all item amounts when tax changes
             foreach ($this->input_details as $key => $detail) {
@@ -193,39 +283,39 @@ class Detail extends BaseComponent
         }
     }
 
-    private function listNpwp($partner)
-    {
-        if (!$partner->PartnerDetail || empty($partner->PartnerDetail->wp_details)) {
-            return [];
-        }
-        $wpDetails = $partner->PartnerDetail->wp_details;
-        if (is_string($wpDetails)) {
-            $wpDetails = json_decode($wpDetails, true);
-        }
-        return is_array($wpDetails) ? array_map(function ($item) {
-            return [
-                'label' => $item['npwp'],
-                'value' => $item['npwp'],
-            ];
-        }, $wpDetails) : [];
-    }
+    // private function listNpwp($partner)
+    // {
+    //     if (!$partner->PartnerDetail || empty($partner->PartnerDetail->wp_details)) {
+    //         return [];
+    //     }
+    //     $wpDetails = $partner->PartnerDetail->wp_details;
+    //     if (is_string($wpDetails)) {
+    //         $wpDetails = json_decode($wpDetails, true);
+    //     }
+    //     return is_array($wpDetails) ? array_map(function ($item) {
+    //         return [
+    //             'label' => $item['npwp'],
+    //             'value' => $item['npwp'],
+    //         ];
+    //     }, $wpDetails) : [];
+    // }
 
-    private function listShip($partner)
-    {
-        if (!$partner->PartnerDetail || empty($partner->PartnerDetail->shipping_address)) {
-            return [];
-        }
-        $shipDetail = $partner->PartnerDetail->shipping_address;
-        if (is_string($shipDetail)) {
-            $shipDetail = json_decode($shipDetail, true);
-        }
-        return is_array($shipDetail) ? array_map(function ($item) {
-            return [
-                'label' => $item['name'],
-                'value' => $item['name'],
-            ];
-        }, $shipDetail) : [];
-    }
+    // private function listShip($partner)
+    // {
+    //     if (!$partner->PartnerDetail || empty($partner->PartnerDetail->shipping_address)) {
+    //         return [];
+    //     }
+    //     $shipDetail = $partner->PartnerDetail->shipping_address;
+    //     if (is_string($shipDetail)) {
+    //         $shipDetail = json_decode($shipDetail, true);
+    //     }
+    //     return is_array($shipDetail) ? array_map(function ($item) {
+    //         return [
+    //             'label' => $item['name'],
+    //             'value' => $item['name'],
+    //         ];
+    //     }, $shipDetail) : [];
+    // }
 
     /*
      * Update flag NPWP (payer) ketika tax_doc_flag berubah.
@@ -242,7 +332,9 @@ class Detail extends BaseComponent
             if ($paymentTerm) {
                 $dueDays = $paymentTerm->num1;
                 $this->inputs['due_date'] = date('Y-m-d', strtotime("+$dueDays days"));
-            }
+                $this->inputs['payment_term'] = $paymentTerm->str1;
+                $this->inputs['payment_due_days'] = $paymentTerm->num1;
+           }
         }
     }
 
@@ -289,25 +381,6 @@ class Detail extends BaseComponent
      * Bila mode edit/view, load data header (OrderHdr) dan detail (OrderDtl).
      */
 
-    /*
-     * Reset state untuk header dan detail.
-     */
-    public function onReset()
-    {
-        $this->reset('inputs', 'input_details');
-        $this->object = new OrderHdr();
-        $this->inputs = populateArrayFromModel($this->object);
-        $this->inputs['tr_date']   = date('Y-m-d');
-        $this->inputs['due_date']  = date('Y-m-d');
-        $this->inputs['tr_type']   = $this->trType;
-        $this->inputs['curr_code'] = "IDR";
-        $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
-        $this->inputs['curr_rate'] = 1.00;
-        $this->inputs['wh_code']   = 18;
-        $this->inputs['partner_id'] = 0;
-        $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
-    }
-
     /**
      * Cek apakah item tertentu masih bisa diedit (belum ada delivery)
      */
@@ -339,25 +412,20 @@ class Detail extends BaseComponent
     public function addItem()
     {
         if (empty($this->inputs['sales_type'])) {
-            $this->dispatch('error', 'Silakan pilih tipe kendaraan terlebih dahulu sebelum menambah item!');
+            $this->dispatch('error', 'Silakan pilih nota MOTOR atau MOBIL terlebih dahulu.');
             return;
         }
         try {
-            // Check if can add new item
-            // if ($this->isDeliv) {
-            //     $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah memiliki delivery.');
-            //     return;
-            // }
-
-            $this->input_details[] = [
-                'matl_id' => null,
-                'qty' => null,
-                'price' => null,
-                'disc_pct' => null,
-                'amt' => null,
-                'disc_amt' => null,
-            ];
-            $this->dispatch('success', __('generic.string.add_item'));
+            $this->input_details[] = populateArrayFromModel(new OrderDtl());
+            // $this->input_details[] = [
+            //     'matl_id' => null,
+            //     'qty' => null,
+            //     'price' => null,
+            //     'disc_pct' => null,
+            //     'amt' => null,
+            //     'disc_amt' => null,
+            // ];
+            // $this->dispatch('success', __('generic.string.add_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }
@@ -424,7 +492,6 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
             }
-
             $this->total_amount = 0;
             $this->total_discount = 0;
             $this->total_dpp = 0;
@@ -479,100 +546,6 @@ class Detail extends BaseComponent
             $this->checkDeliveryStatus();
         }
     }
-
-    /*
-     * Save semua data: bila hanya header yang terisi maka hanya OrderHdr yang disimpan,
-     * dan bila terdapat item (detail) maka OrderDtl juga akan tersimpan.
-     */
-    public function onValidateAndSave()
-    {
-        if (!$this->orderService) {
-            $this->orderService = app(OrderService::class);
-        }
-
-        $this->validate();
-
-        // Jika sudah ada delivery, hanya boleh update header
-        if ($this->isDeliv) {
-            // Prepare data header saja
-            $headerData = $this->prepareHeaderData();
-            $detailData = []; // Kosongkan detail agar tidak diubah
-
-            // Simpan hanya header (tanpa update detail)
-            try {
-                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
-                if (!$result) {
-                    throw new Exception('Gagal mengubah Sales Order.');
-                }
-                $this->dispatch('warning', 'Ada pengiriman (delivery) pada salah satu item. Hanya header yang bisa diupdate.');
-                // return $this->redirectToEdit();
-            } catch (Exception $e) {
-                $this->dispatch('error', $e->getMessage());
-                throw new Exception('Gagal memperbarui Sales Order: ' . $e->getMessage());
-            }
-        }
-
-        // Jika belum ada delivery, proses normal
-        if ($this->actionValue === 'Edit' && $this->object->isOrderCompleted()) {
-            $this->dispatch('warning', 'Nota ini tidak bisa di-edit karena status sudah Completed');
-            return;
-        }
-
-        // Prepare data
-        $headerData = $this->prepareHeaderData();
-        $detailData = $this->prepareDetailData();
-        $totals = $this->calcTotalFromDetails($detailData);
-        $headerData['amt'] = $totals['amt'];
-        $headerData['amt_beforetax'] = $totals['amt_beforetax'];
-        $headerData['amt_tax'] = $totals['amt_tax'];
-
-        if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
-            if (!$order) {
-                throw new Exception('Gagal membuat Purchase Order.');
-            }
-            $this->object = $order;
-        } else {
-            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-            if (!$result) {
-                throw new Exception('Gagal mengubah Purchase Order.');
-            }
-        }
-        $this->redirectToEdit();
-    }
-
-
-    private function prepareHeaderData()
-    {
-        $headerData = $this->inputs;
-        if ($this->actionValue === 'Create') {
-            $headerData['status_code'] = Status::OPEN;
-        }
-        if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
-            $partner = Partner::find($headerData['partner_id']);
-            $headerData['partner_code'] = $partner ? $partner->code : '';
-        }
-        return $headerData;
-    }
-
-    private function prepareDetailData()
-    {
-        $detailData = $this->input_details;
-
-        $trSeq = 1;
-        foreach ($detailData as $i => &$detail) {
-            $detail['tr_seq'] = $trSeq++;
-            $detail['qty_uom'] = 'PCS';
-            $detail['price_uom'] = 'PCS';
-            $detail['qty_base'] = 1;
-            if ($this->actionValue === 'Create') {
-                $detail['status_code'] = Status::OPEN;
-            }
-        }
-        unset($detail);
-        return $detailData;
-    }
-
 
     private function calcTotalFromDetails($detailData)
     {
