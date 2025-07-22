@@ -94,6 +94,7 @@ class InventoryService
 
         // Simpan log inventory
         IvtLog::create($logData);
+        return $ivtBal->id;
     }
 
 

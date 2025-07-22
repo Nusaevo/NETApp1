@@ -44,7 +44,7 @@
                                         :action="$actionValue" :enabled="$isPanelEnabled" type="int" />
                                     {{-- @dump($inputs['partner_id']) --}}
                                     <x-ui-dropdown-select label="{{ $this->trans('PPN') }}" model="inputs.tax_code"
-                                        :options="$SOTax" required="true" :action="$actionValue"
+                                        :options="$taxCode" required="true" :action="$actionValue"
                                         onChanged="taxCodeOnChanged" />
                                 </div>
                                 <div class="row">
