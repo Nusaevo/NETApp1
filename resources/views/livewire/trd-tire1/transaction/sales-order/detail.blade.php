@@ -36,32 +36,24 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-search label="Customer" model="inputs.partner_id" optionValue="id"
-                                            :query="$ddPartner['query']" 
+                                            :query="$ddPartner['query']"
                                             :optionLabel="$ddPartner['optionLabel']"
-                                            :placeHolder="$ddPartner['placeHolder']" 
+                                            :placeHolder="$ddPartner['placeHolder']"
                                             :selectedValue="$inputs['partner_id']" required="true"
                                             :action="$actionValue" :enabled="$isPanelEnabled" type="int"
                                             onChanged="onPartnerChanged" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
-                                            model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" 
+                                            model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']"
                                             :options="$shipOptions"
-                                            required="true" :action="$actionValue" onChanged="onShipToChanged" />
+                                            required="true" :action="$actionValue"/>
                                    </div>
                                     <div class="row">
                                             <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
                                             model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions"
-                                            required="false" :action="$actionValue" onChanged="onTaxPayerChanged"
+                                            required="false" :action="$actionValue"
                                             :enabled="$payer" />
-                                    </div>
-                                    <div class="row">
-                                        <x-ui-text-field label="" model="inputs.textareacustommer" type="textarea"
-                                            :action="$actionValue" required="false" enabled="false" />
-                                        <x-ui-text-field label="" model="inputs.textareasend_to" type="textarea"
-                                            :action="$actionValue" required="false" enabled="false" />
-                                        <x-ui-text-field label="" model="inputs.textarea_npwp" type="textarea"
-                                            :action="$actionValue" required="false" enabled="false" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('Pajak') }}"

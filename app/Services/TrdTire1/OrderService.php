@@ -84,7 +84,6 @@ class OrderService
             throw new Exception('Error updating order quantity reference: ' . $e->getMessage());
         }
     }
-
     private function saveHeader(array $headerData, ?int $orderId = null): OrderHdr
     {
         if ($orderId) {
@@ -98,6 +97,7 @@ class OrderService
         }
         return $order;
     }
+
     private function saveDetails(array $headerData, array $detailData): array
     {
         //throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
@@ -126,7 +126,6 @@ class OrderService
             // Kirim detail yang baru disimpan ke addReservation
             $this->inventoryService->addReservation($headerData, $savedDetail->toArray());
         }
-
         return $savedDetails;
     }
 

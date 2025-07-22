@@ -269,6 +269,7 @@ class InventoryService
 
     private function saveDetails(array $headerData, array $detailData): array
     {
+        // dd('Saving details', $headerData, $detailData);
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
@@ -303,10 +304,13 @@ class InventoryService
                 $savedDetail->save();
                 $trSeq++;
             } else if ($detail['tr_type'] === 'IA') {
+                $detail['tr_seq'] = $trSeq;
                 $savedDetail = IvttrDtl::create($detail);
-                $ivtId = $this->addOnhand($headerData, $$detail);
+                $detail['id'] = $savedDetail->id; // <-- tambahkan baris ini!
+                $ivtId = $this->addOnhand($headerData, $detail);
                 $savedDetail->ivt_id = $ivtId;
                 $savedDetail->save();
+                $trSeq++;
             }
 
 

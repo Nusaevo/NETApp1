@@ -23,7 +23,7 @@
                                         onChanged="onTypeChanged($event.target.value)" />
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" />
-                                    <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_id" :action="$actionValue"
+                                    <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
                                         required="false" enabled="false" />
                                 </div>
                                 <div class="row">
@@ -51,34 +51,35 @@
                                         <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
-                                                <x-ui-dropdown-select type="int" label="" clickEvent=""
+                                                <x-ui-dropdown-select type="int" label=""
                                                     model="input_details.{{ $key }}.matl_id" :selectedValue="$input_detail['matl_id']"
                                                     :options="$filteredMaterials" required="true" :action="$actionValue"
-                                                    :enabled="$isPanelEnabled" />
+                                                    :enabled="$isPanelEnabled"
+                                                    onChanged="onMaterialChanged({{ $key }})" />
                                             </td>
                                             <td style="text-align: center;">
-                                                <x-ui-text-field model="input_details.{{ $key }}.batch_code"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
-                                                    onChanged="updateItemAmount({{ $key }})" type="text"
-                                                    required="true" />
+                                                <x-ui-dropdown-select type="int" label="" :options="$filteredBatchCode[$key] ?? []"
+                                                    model="input_details.{{ $key }}.batch_code"
+                                                    :selectedValue="$input_detail['batch_code'] ?? null"
+                                                    :enabled="$isPanelEnabled"
+                                                    :action="$actionValue"
+                                                    required="true"
+                                                    onChanged="onBatchCodeChanged({{ $key }})" />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty_oh"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
-                                                    onChanged="updateItemAmount({{ $key }})" type="text"
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
                                                     required="true" enabled="false" />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
-                                                    onChanged="updateItemAmount({{ $key }})" type="text"
-                                                    required="true" />
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
+                                                    required="true" onChanged="onQtyChanged({{ $key }})" />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty_end"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
-                                                    onChanged="updateItemAmount({{ $key }})" type="text"
-                                                    required="true" />
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
+                                                    required="true" enabled="false" />
                                             </td>
                                             <td style="text-align: center;">
                                                 @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
@@ -99,7 +100,7 @@
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}"
                                             model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue"
-                                            enabled="true" onChanged="onWarehouseChanged($event.target.value)" />
+                                            :enabled="$isPanelEnabled" onChanged="onWarehouseChanged($event.target.value)" />
                                         <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}"
                                             model="inputs.wh_code2" :options="$warehouses" required="true"
                                             :enabled="$isEditWhCode2" />
@@ -113,7 +114,7 @@
                     <x-ui-footer>
                         <div>
                             <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
-                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" />
+                                :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" />
 
                             @include('layout.customs.buttons.save')
 

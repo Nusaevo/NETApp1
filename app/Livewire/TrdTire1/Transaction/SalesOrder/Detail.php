@@ -52,8 +52,8 @@ class Detail extends BaseComponent
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari customer ...",
         'optionLabel' => "code,name,address,city",
-        'query' => "SELECT id,code,name,address,city 
-                    FROM partners 
+        'query' => "SELECT id,code,name,address,city
+                    FROM partners
                     WHERE deleted_at IS NULL AND grp = 'C'",
     ];
 
@@ -102,13 +102,10 @@ class Detail extends BaseComponent
         // --- Perbaikan urutan: panggil salesTypeOnChanged() sebelum loadDetails() ---
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->inputs = $this->object->toArray(); 
+            $this->inputs = $this->object->toArray();
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
             $this->inputs['partner_name'] = $this->object->partner->code;
-            $this->inputs['textareasend_to'] = $this->object->ship_to_addr;
-            $this->inputs['textarea_npwp'] = $this->object->npwp_name . "\n" . $this->object->npwp_addr;
-            $this->inputs['textareacustommer'] = $this->object->partner->name . "\n" . $this->object->partner->address . "\n" . $this->object->partner->city;
             // Pastikan print_remarks adalah string/float, bukan array/object
             $printRemarks = $this->object->getDisplayFormat();
             if (is_array($printRemarks)) {
@@ -219,7 +216,7 @@ class Detail extends BaseComponent
         if ($this->actionValue === 'Create') {
             $headerData['status_code'] = Status::OPEN;
         }
-        
+
         if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
             $partner = Partner::find($headerData['partner_id']);
             $headerData['partner_code'] = $partner ? $partner->code : '';
@@ -230,7 +227,7 @@ class Detail extends BaseComponent
     private function prepareDetailData()
     {
         $detailData = $this->input_details;
-        
+
         $trSeq = 1;
         foreach ($detailData as $i => &$detail) {
             $detail['tr_seq'] = $trSeq++;
@@ -282,47 +279,14 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
-
-    // private function listNpwp($partner)
-    // {
-    //     if (!$partner->PartnerDetail || empty($partner->PartnerDetail->wp_details)) {
-    //         return [];
-    //     }
-    //     $wpDetails = $partner->PartnerDetail->wp_details;
-    //     if (is_string($wpDetails)) {
-    //         $wpDetails = json_decode($wpDetails, true);
-    //     }
-    //     return is_array($wpDetails) ? array_map(function ($item) {
-    //         return [
-    //             'label' => $item['npwp'],
-    //             'value' => $item['npwp'],
-    //         ];
-    //     }, $wpDetails) : [];
-    // }
-
-    // private function listShip($partner)
-    // {
-    //     if (!$partner->PartnerDetail || empty($partner->PartnerDetail->shipping_address)) {
-    //         return [];
-    //     }
-    //     $shipDetail = $partner->PartnerDetail->shipping_address;
-    //     if (is_string($shipDetail)) {
-    //         $shipDetail = json_decode($shipDetail, true);
-    //     }
-    //     return is_array($shipDetail) ? array_map(function ($item) {
-    //         return [
-    //             'label' => $item['name'],
-    //             'value' => $item['name'],
-    //         ];
-    //     }, $shipDetail) : [];
-    // }
-
     /*
      * Update flag NPWP (payer) ketika tax_doc_flag berubah.
      */
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
+        // Clear tr_code when tax_doc_flag changes
+        $this->inputs['tr_code'] = null;
     }
 
     public function onPaymentTermChanged()
@@ -345,6 +309,9 @@ class Detail extends BaseComponent
     {
         $salesType = $this->inputs['sales_type'] ?? null;
         $this->input_details = [];
+
+        // Clear tr_code when sales type changes
+        $this->inputs['tr_code'] = null;
 
         if (!$salesType) {
             $this->materials = [];
@@ -565,52 +532,7 @@ class Detail extends BaseComponent
             'amt_tax' => $amtTax
         ];
     }
-
-
-    // private function processNormalOrder($headerData, $detailData)
-    // {
-    //     try {
-    //         DB::beginTransaction();
-
-    //         // Save order
-    //         $this->saveOrder($headerData, $detailData);
-
-    //         DB::commit();
-
-    //         $this->dispatch('success', 'Sales Order berhasil ' .
-    //             ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
-
-    //         return $this->redirectToEdit();
-    //     } catch (Exception $e) {
-    //         DB::rollBack();
-    //         $this->dispatch('error', 'Gagal menyimpan Sales Order: ' . $e->getMessage());
-    //         throw $e;
-    //     }
-    // }
-
-    // /**
-    //  * Save order data
-    //  */
-    // private function saveOrder($headerData, $detailData)
-    // {
-    //     try {
-    //         if ($this->actionValue === 'Create') {
-    //             $order = $this->orderService->addOrder($headerData, $detailData);
-    //             if (!$order) {
-    //                 throw new Exception('Gagal membuat Sales Order.');
-    //             }
-    //             $this->object = $order;
-    //         } else {
-    //             $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-    //             if (!$result) {
-    //                 throw new Exception('Gagal mengubah Sales Order.');
-    //             }
-    //         }
-    //     } catch (Exception $e) {
-    //         throw $e; // biar bisa rollback di caller
-    //     }
-    // }
-
+    
     private function redirectToEdit()
     {
         $objectId = $this->actionValue === 'Create' ? $this->object->id : $this->object->id;
@@ -716,12 +638,25 @@ class Detail extends BaseComponent
     {
         $partner = Partner::find($this->inputs['partner_id']);
         if ($partner) {
-            // $this->inputs['partner_id'] = $partner->id;
+            // Set basic partner info
             $this->inputs['partner_code'] = $partner->code;
             $this->inputs['partner_name'] = $partner->code;
-            $this->inputs['textareacustommer'] = $partner->address . "\n" . $partner->city;
+            $this->inputs['partner_real_name'] = $partner->name;
+            $this->inputs['partner_address'] = $partner->address;
+            $this->inputs['partner_city'] = $partner->city;
+
+            // Reset shipping info
+            $this->inputs['ship_to_name'] = null;
+            $this->inputs['ship_to_address'] = null;
             $this->shipOptions = [];
+
+            // Reset NPWP info
+            $this->inputs['npwp_code'] = null;
+            $this->inputs['npwp_name'] = null;
+            $this->inputs['npwp_addr'] = null;
             $this->npwpOptions = [];
+
+            // Handle Shipping Options
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
                 $shipDetail = $partner->PartnerDetail->shipping_address;
                 if (is_string($shipDetail)) {
@@ -730,17 +665,22 @@ class Detail extends BaseComponent
                 if (is_array($shipDetail) && !empty($shipDetail)) {
                     $this->shipOptions = array_map(function ($item) {
                         return [
-                            'label' => $item['name'],
+                            'label' => $item['name'] . ' - ' . $item['address'] . (isset($item['city']) ? ' - ' . $item['city'] : ''),
                             'value' => $item['name'],
+                            'address' => $item['address'],
                         ];
                     }, $shipDetail);
-                    $firstShipOption = $this->shipOptions[0] ?? null;
-                    if ($firstShipOption) {
-                        $this->inputs['ship_to_name'] = $firstShipOption['value'];
-                        $this->onShipToChanged();
+
+                    // Auto-select the first option
+                    foreach ($this->shipOptions as $opt) {
+                        $this->inputs['ship_to_name'] = $opt['value'];
+                        $this->inputs['ship_to_address'] = $opt['address'];
+                        break;
                     }
                 }
             }
+
+            // Handle NPWP Options if tax_doc_flag is set
             if (!empty($this->inputs['tax_doc_flag'])) {
                 if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
                     $wpDetails = $partner->PartnerDetail->wp_details;
@@ -750,68 +690,27 @@ class Detail extends BaseComponent
                     if (is_array($wpDetails) && !empty($wpDetails)) {
                         $this->npwpOptions = array_map(function ($item) {
                             return [
-                                'label' => $item['npwp'],
+                                'label' => $item['npwp'] . ' - ' . $item['wp_name'] . ' - ' . $item['wp_location'],
                                 'value' => $item['npwp'],
+                                'name' => $item['wp_name'],
+                                'address' => $item['wp_location'],
                             ];
                         }, $wpDetails);
-                        $firstNpwpOption = $this->npwpOptions[0] ?? null;
-                        if ($firstNpwpOption) {
-                            $this->inputs['npwp_code'] = $firstNpwpOption['value'];
-                            $this->onTaxPayerChanged();
+
+                        // Auto-select the first option
+                        foreach ($this->npwpOptions as $opt) {
+                            $this->inputs['npwp_code'] = $opt['value'];
+                            $this->inputs['npwp_name'] = $opt['name'];
+                            $this->inputs['npwp_addr'] = $opt['address'];
+                            break;
                         }
                     }
                 }
-            } else {
-                $this->inputs['npwp_code'] = null;
-                $this->inputs['textarea_npwp'] = null;
             }
-            // $this->dispatch('success', "Custommer berhasil dipilih.");
-            // $this->dispatch('closePartnerDialogBox');
         }
+
     }
 
-    public function onTaxPayerChanged()
-    {
-        $partner = Partner::find($this->inputs['partner_id']);
-        if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
-            $wpDetails = $partner->PartnerDetail->wp_details;
-            if (is_string($wpDetails)) {
-                $wpDetails = json_decode($wpDetails, true);
-            }
-            if (is_array($wpDetails)) {
-                foreach ($wpDetails as $detail) {
-                    if ($detail['npwp'] == $this->inputs['npwp_code']) {
-                        $this->inputs['textarea_npwp'] = $detail['wp_name'] . "\n" . $detail['wp_location'];
-                        $this->inputs['npwp_code'] = $detail['npwp'];
-                        $this->inputs['npwp_name'] = $detail['wp_name'];
-                        $this->inputs['npwp_addr'] = $detail['wp_location'];
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    public function onShipToChanged()
-    {
-        $partner = Partner::find($this->inputs['partner_id']);
-        if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
-            $shipDetails = $partner->PartnerDetail->shipping_address;
-            if (is_string($shipDetails)) {
-                $shipDetails = json_decode($shipDetails, true);
-            }
-            if (is_array($shipDetails)) {
-                foreach ($shipDetails as $detail) {
-                    if ($detail['name'] == $this->inputs['ship_to_name']) {
-                        $this->inputs['textareasend_to'] = $detail['address'];
-                        $this->inputs['ship_to_name'] = $detail['name'];
-                        $this->inputs['ship_to_addr'] = $detail['address'];
-                        break;
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * Check delivery status for all items
