@@ -378,34 +378,117 @@ class MasterService extends BaseService
         })->toArray();
     }
 
-    public function getNewTrCode($trType): string
+    public function getNewTrCode($trType, $salesType, $taxDocFlag): string
     {
-        switch ($trType) {
-            case 'PO':
-                $code = 'PURCHORDER_LASTID';
-                $format = 'PO%06d';
-                break;
-            case 'SO':
-                $code = 'SO';
-                break;
-            case 'DO':
-                $code = 'DO';
-                break;
-            case 'INV':
-                $code = 'INV';
-                break;
-            default:
-                return "";
+        if ($trType == 'SO'){
+            // Generate SO code based on sales type and tax document flag
+            return self::getNewTrCodeSo($salesType, $taxDocFlag);
+        } else {
+            switch ($trType) {
+                case 'PO':
+                    $code = 'PURCHORDER_LASTID';
+                    $format = 'PO%06d';
+                    break;
+                case 'TW':
+                    $code = 'DO';
+                    break;
+                case 'IA':
+                    $code = 'INV';
+                    break;
+                default:
+                    return "";
+            }
+
+            $configSnum = ConfigSnum::where('code', $code)->first();
+            if (!$configSnum) {
+                throw new \Exception("Configuration for code {$code} not found.");
+            }
+            $newId = $configSnum->last_cnt + $configSnum->step_cnt;
+            if ($newId > $configSnum->wrap_high) {
+                $newId = $configSnum->wrap_low;
+            }
+            $configSnum->last_cnt = $newId;
+            $configSnum->save();
+            return sprintf($format, $newId); // Contoh: PO000001
+        }
+    }
+
+    private static function getNewTrCodeSo($salesType, $taxDocFlag = true)
+    {
+
+        $year = date('y');
+        $monthNumber = date('n');
+        $monthLetter = chr(64 + $monthNumber);
+        $sequenceNumber = self::getNewSeqNumSo($salesType, $taxDocFlag);
+
+        if ($taxDocFlag) {
+            switch ($salesType) {
+                case 'O':
+                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
+                case 'I':
+                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
+                default:
+                    throw new \InvalidArgumentException('Invalid vehicle type');
+            }
+        } else {
+            switch ($salesType) {
+                case 'O': // MOTOR tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
+                    return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
+                case 'I': // MOBIL tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
+                    return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
+                default:
+                    throw new \InvalidArgumentException('Invalid vehicle type');
+            }
+        }
+    }
+
+    /**
+     * Fungsi ini mengambil nomor urut berdasarkan entri terakhir.
+     * Regex disesuaikan berdasarkan jenis kendaraan (MOTOR/MOBIL) dan flag tax invoice.
+     */
+    private static function getNewSeqNumSo($sales_type, $tax_doc_flag)
+    {
+        $currentYear = date('y');
+        $currentMonth = date('n');
+        $currentMonthLetter = chr(64 + $currentMonth);
+
+        $taxInvoiceFlag = $tax_doc_flag ? 1 : 0;
+
+        $lastOrder = OrderHdr::where('tr_type', 'SO')
+            ->where('sales_type', $sales_type)
+            ->where('tax_doc_flag', $taxInvoiceFlag)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($sales_type == 'O') {
+            if ($tax_doc_flag) {
+                $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter;
+            } else {
+                $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter;
+            }
+        } elseif ($sales_type == 'I') {
+            // MOBIL
+            if ($tax_doc_flag) {
+                $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
+            } else {
+                $pattern = '/^([A-Z]{2})(\d{2})8(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
+            }
+        } else {
+            throw new \InvalidArgumentException('Invalid sales type');
         }
 
-        $configSnum = ConfigSnum::where('code', $code)->first();
-        $newId = $configSnum->last_cnt + $configSnum->step_cnt;
-        if ($newId > $configSnum->wrap_high) {
-            $newId = $configSnum->wrap_low;
+        if ($lastOrder && preg_match($pattern, $lastOrder->tr_code, $matches)) {
+            if ($matches[1] === $expectedPrefix && $matches[2] == $currentYear) {
+                return (int)$matches[3] + 1;
+            }
         }
-        $configSnum->last_cnt = $newId;
-        $configSnum->save();
-        return sprintf($format, $newId); // Contoh: PO000001
+        return 1;
     }
+
+
 
 }
