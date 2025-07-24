@@ -112,24 +112,76 @@ class BillingService
 
     private function prepareDataFromDelivery($deliveryId): array
     {
-        $sql = "select
-                CASE WHEN dh.tr_type='PD' THEN 'APB' WHEN dh.tr_type='SD' THEN 'ARB' ELSE '' END tr_type,
-                dh.tr_date, dh.tr_code, '' reff_code, dh.partner_id, dh.partner_code,oh.payment_term_id,oh.payment_term,oh.payment_due_days,
-                oh.curr_id,oh.curr_code,oh.curr_rate, null print_date
-                ,dh.id dlvhdr_id, dd.id dlvdtl_id, dh.tr_type dlvhdrtr_type, dh.tr_code dlvhdrtr_code, dd.tr_seq dlvdtltr_seq,
-                dd.matl_id, dd.matl_code, dd.matl_uom, dd.matl_descr,
-                dd.qty,od.qty_uom,od.qty_base,od.price_uom,od.price_base, 'O' status_code,
-                ROUND(od.price*(1-od.disc_pct/100), 5) as price,
-                case when oh.tax_code in('I', 'N') then ROUND(od.price*(1-od.disc_pct/100)*dd.qty, 5)
-                when oh.tax_code='E' then ROUND(od.price*(1-od.disc_pct/100)*dd.qty *(1+oh.tax_pct/100), 5)
-                else 0 end amt
-                from deliv_dtls dd
-                join deliv_hdrs dh on dh.id=dd.trhdr_id
-                join order_dtls od on od.id=dd.reffdtl_id
-                join order_hdrs oh on oh.id=od.trhdr_id
-                where dd.trhdr_id= ?";
-        $dataBilling = DB::connection(Session::get('app_code'))->select($sql, [$deliveryId]);
-        // dd($dataBilling);
+        // $sql = "select
+        //         CASE WHEN dh.tr_type='PD' THEN 'APB' WHEN dh.tr_type='SD' THEN 'ARB' ELSE '' END tr_type,
+        //         dh.tr_date, dh.tr_code, '' reff_code, dh.partner_id, dh.partner_code, dh.amt_shipcost,
+        //         oh.payment_term_id,oh.payment_term,oh.payment_due_days,
+        //         oh.curr_id,oh.curr_code,oh.curr_rate, null print_date,
+        //         dh.id dlvhdr_id, dd.id dlvdtl_id, dh.tr_type dlvhdrtr_type, dh.tr_code dlvhdrtr_code, dd.tr_seq dlvdtltr_seq,
+        //         dd.matl_id, dd.matl_code, dd.matl_uom, dd.matl_descr,
+        //         dd.qty,od.qty_uom,od.qty_base,od.price_uom,od.price_base, 'O' status_code,
+        //         ROUND(od.price*(1-od.disc_pct/100), 5) as price,
+        //         case when oh.tax_code in('I', 'N') then ROUND(od.price*(1-od.disc_pct/100)*dd.qty, 5)
+        //         when oh.tax_code='E' then ROUND(od.price*(1-od.disc_pct/100)*dd.qty *(1+oh.tax_pct/100), 5)
+        //         else 0 end amt
+        //         from deliv_dtls dd
+        //         join deliv_hdrs dh on dh.id=dd.trhdr_id
+        //         join order_dtls od on od.id=dd.reffdtl_id
+        //         join order_hdrs oh on oh.id=od.trhdr_id
+        //         where dd.trhdr_id= ?";
+        // $dataBilling = DB::connection(Session::get('app_code'))->select($sql, [$deliveryId]);
+        // // dd($dataBilling);
+
+        $dataBilling = DB::connection(Session::get('app_code'))
+            ->table('deliv_dtls as dd')
+            ->join('deliv_hdrs as dh', 'dh.id', '=', 'dd.trhdr_id')
+            ->join('order_dtls as od', 'od.id', '=', 'dd.reffdtl_id')
+            ->join('order_hdrs as oh', 'oh.id', '=', 'od.trhdr_id')
+            ->where('dd.trhdr_id', $deliveryId)
+            ->selectRaw("
+                CASE 
+                    WHEN dh.tr_type = 'PD' THEN 'APB' 
+                    WHEN dh.tr_type = 'SD' THEN 'ARB' 
+                    ELSE '' 
+                END AS tr_type,
+                dh.tr_date,
+                dh.tr_code,
+                '' AS reff_code,
+                dh.partner_id,
+                dh.partner_code,
+                dh.amt_shipcost,
+                oh.payment_term_id,
+                oh.payment_term,
+                oh.payment_due_days,
+                oh.curr_id,
+                oh.curr_code,
+                oh.curr_rate,
+                NULL AS print_date,
+                dh.id AS dlvhdr_id,
+                dd.id AS dlvdtl_id,
+                dh.tr_type AS dlvhdrtr_type,
+                dh.tr_code AS dlvhdrtr_code,
+                dd.tr_seq AS dlvdtltr_seq,
+                dd.matl_id,
+                dd.matl_code,
+                dd.matl_uom,
+                dd.matl_descr,
+                dd.qty,
+                od.qty_uom,
+                od.qty_base,
+                od.price_uom,
+                od.price_base,
+                'O' AS status_code,
+                ROUND(od.price * (1 - od.disc_pct / 100), 5) AS price,
+                CASE 
+                    WHEN oh.tax_code IN ('I', 'N') THEN 
+                        ROUND(od.price * (1 - od.disc_pct / 100) * dd.qty, 5)
+                    WHEN oh.tax_code = 'E' THEN 
+                        ROUND(od.price * (1 - od.disc_pct / 100) * dd.qty * (1 + oh.tax_pct / 100), 5)
+                    ELSE 0 
+                END AS amt
+            ")
+            ->get();
 
         $header = (array) $dataBilling[0];
         // $headerData = [];
@@ -148,19 +200,20 @@ class BillingService
             'payment_due_days' => $header['payment_due_days'],
             'curr_id' => $header['curr_id'],
             'curr_code' => $header['curr_code'],
-            'curr_rate' => (float) $header['curr_rate'],
-            'print_date' => '1900-01-01',
+            'curr_rate' => $header['curr_rate'],
+            'print_date' => null,
             'amt_reff' => 0,
+            'amt_shipcost' => $header['amt_shipcost'],
             'status_code' => $header['status_code'],
         ];
         // dd($headerData);
 
         $totalAmount = 0;
         $detailData = [];
-        $data = 0;
+        $trSeq = 1;
         foreach ($dataBilling as $detail) {
             $detailData[] = [
-                'tr_seq' => $data += 1,
+                'tr_seq' => $trSeq,
                 'tr_code' => $header['tr_code'],
                 'dlvhdr_id' => $detail->dlvhdr_id,
                 'dlvdtl_id' => $detail->dlvdtl_id,
@@ -178,8 +231,14 @@ class BillingService
                 'price_uom' => $detail->price_uom,
                 'price_base' => (float) $detail->price_base,
                 'amt' => (float) $detail->amt,
+                'amt_beforetax' => (float) $detail->amt,
+                'amt_tax' => (float) $detail->amt,
                 'amt_reff' => 0,
             ];
+            if ($trSeq == 1) {
+                $detailData['amt_shipcost'] = $header['amt_shipcost'];
+            }
+            $trSeq++;
             $totalAmount += (float) $detail->amt;
         }
 

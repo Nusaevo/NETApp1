@@ -77,7 +77,7 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
-        $this->partners = $this->masterService->getCustomers();
+        // $this->partners = $this->masterService->getCustomers();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->purchaseOrders = app(OrderService::class)->getOutstandingPO();
 
@@ -149,14 +149,12 @@ class Detail extends BaseComponent
             $this->object_detail = DelivDtl::GetByDelivHdr($this->object->id, $this->object->tr_type)
                 ->orderBy('tr_seq')
                 ->get();
-            // dd($this->object_detail, $this->object->id, $this->object->tr_type);
 
+            $this->input_details = $this->object_detail->toArray();
             foreach ($this->object_detail as $key => $detail) {
-                $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['order_id'] = $detail->OrderDtl->id;
                 $this->input_details[$key]['qty'] = $detail->qty;
                 $this->input_details[$key]['qty_order'] = ($detail->OrderDtl->qty - $detail->OrderDtl->qty_reff) + $detail->qty; // Adjust qty_order
-                // dd($this->input_details[$key]);
                 // $this->inputs['reffhdr_id'] = $this->object->reffhdr_id;
                 // $this->inputs['refhdrtr_code'] = $this->object->reffhdrtr_code;               
             }

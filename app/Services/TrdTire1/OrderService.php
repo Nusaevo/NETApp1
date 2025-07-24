@@ -178,6 +178,7 @@ class OrderService
     public function getOutstandingPO()
     {
         $purchaseOrders = OrderDtl::whereColumn('qty', '>', 'qty_reff')
+            ->where('tr_type', 'PO')
             ->distinct()
             ->get(['tr_code', 'trhdr_id']);
         return $purchaseOrders->map(fn($order) => [

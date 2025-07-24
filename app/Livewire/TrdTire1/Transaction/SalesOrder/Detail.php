@@ -436,27 +436,32 @@ class Detail extends BaseComponent
             $discount = $this->input_details[$key]['disc_pct'] / 100;
             $taxValue = $this->inputs['tax_pct'] / 100;
             $priceAfterDisc = $price * (1 - $discount);
+            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue),0);
 
-            $amtDiscount = $qty * $price * $discount;
-            $this->input_details[$key]['disc_amt'] = $amtDiscount;
+            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount,0);
 
-            // Calculate tax amounts
-            // dd($this->inputs['tax_code'], $taxValue);
             $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
             $this->input_details[$key]['amt_tax'] = 0;
             if ($this->inputs['tax_code'] === 'I') {
+                // Catatan: khusus untuk yang include PPN
+                // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
+                $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
+                // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
+                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue,0);
+                // Total Nota dihiitung dari harga setelah disc * qty
+                // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
+                // alternatif lain 1 selisih bisa ditambahan ke PPN
+                // alternatif lain 2 selisih bisa ditambahan ke discount
                 $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
-                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty / (1 + $taxValue), 0);
-                $this->input_details[$key]['amt_tax'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'];
             } else if ($this->inputs['tax_code'] === 'E') {
-                $this->input_details[$key]['amt'] = round($priceAfterDisc * $qty * (1 + $taxValue), 0);
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
-                $this->input_details[$key]['amt_tax'] = $priceAfterDisc * $qty * $taxValue;
+                $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue,0);
+                $this->input_details[$key]['amt'] = $this->input_details[$key]['amt_beforetax'] + $this->input_details[$key]['amt_tax'];
             } else if ($this->inputs['tax_code'] === 'N') {
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
+                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             }
             $this->total_amount = 0;
             $this->total_discount = 0;
