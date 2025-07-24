@@ -94,9 +94,8 @@ class InventoryService
 
         // Simpan log inventory
         IvtLog::create($logData);
-        return $ivtBal->id;
+        // return $ivtBal->id;
     }
-
 
     public function addOnhand(array $headerData, array $detailData): int
     {
@@ -105,19 +104,15 @@ class InventoryService
         $qty = 0;
         $trDesc = '';
         if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD') {
-            $orderHdr = OrderHdr::find($detailData['reffhdr_id']);
-            if (!$orderHdr) {
-                throw new Exception('Order header not found for reffhdr_id: ' . $detailData['reffhdr_id']);
-            }
+            // $orderHdr = OrderHdr::find($detailData['reffhdr_id']);
+            // if (!$orderHdr) {
+            //     throw new Exception('Order header tidak ditemukan: ' . $detailData['reffhdr_id']);
+            // }
             $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
             if (!$orderDtl) {
-                throw new Exception('Order detail not found for reffdtl_id: ' . $detailData['reffdtl_id']);
+                throw new Exception('Order detail tidak ditemukan: ' . $detailData['reffdtl_id']);
             }
-            $price = $orderDtl->price * (1 - ($orderDtl->discPct / 100));
-            if ($orderHdr->tax_code === 'I') {
-                $price = $price / (1 + ($orderHdr->tax_pct / 100));
-            }
-
+            $price = $orderDtl->amt_beforetax / $orderDtl->qty;
         }
 
         switch ($headerData['tr_type']) {
