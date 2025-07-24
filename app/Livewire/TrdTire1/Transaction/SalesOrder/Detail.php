@@ -309,7 +309,6 @@ class Detail extends BaseComponent
     {
         $salesType = $this->inputs['sales_type'] ?? null;
         $this->input_details = [];
-
         // Clear tr_code when sales type changes
         $this->inputs['tr_code'] = null;
 
@@ -532,7 +531,7 @@ class Detail extends BaseComponent
             'amt_tax' => $amtTax
         ];
     }
-    
+
     private function redirectToEdit()
     {
         $objectId = $this->actionValue === 'Create' ? $this->object->id : $this->object->id;
@@ -648,6 +647,7 @@ class Detail extends BaseComponent
             // Reset shipping info
             $this->inputs['ship_to_name'] = null;
             $this->inputs['ship_to_address'] = null;
+            $this->inputs['ship_to_city'] = null;
             $this->shipOptions = [];
 
             // Reset NPWP info
@@ -659,26 +659,31 @@ class Detail extends BaseComponent
             // Handle Shipping Options
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
                 $shipDetail = $partner->PartnerDetail->shipping_address;
-                if (is_string($shipDetail)) {
-                    $shipDetail = json_decode($shipDetail, true);
-                }
                 if (is_array($shipDetail) && !empty($shipDetail)) {
                     $this->shipOptions = array_map(function ($item) {
+                        $addressParts = explode("\n", $item['address']);
+                        $address = $addressParts[0] ?? '';
+                        $city = $addressParts[1] ?? null;
                         return [
-                            'label' => $item['name'] . ' - ' . $item['address'] . (isset($item['city']) ? ' - ' . $item['city'] : ''),
+                            'label' => $item['name'] . ' - ' . $address . ($city ? ' - ' . $city : ''),
                             'value' => $item['name'],
-                            'address' => $item['address'],
+                            'address' => $address,
+                            'city' => $city,
                         ];
                     }, $shipDetail);
-
-                    // Auto-select the first option
-                    foreach ($this->shipOptions as $opt) {
-                        $this->inputs['ship_to_name'] = $opt['value'];
-                        $this->inputs['ship_to_address'] = $opt['address'];
-                        break;
+                    // Reset value dulu agar Livewire detect perubahan
+                    $this->inputs['ship_to_name'] = '';
+                    $this->inputs['ship_to_address'] = null;
+                    $this->inputs['ship_to_city'] = null;
+                    if (!empty($this->shipOptions)) {
+                        $first = reset($this->shipOptions);
+                        $this->inputs['ship_to_name'] = $first['value'] ?? null;
+                        $this->inputs['ship_to_address'] = $first['address'] ?? null;
+                        $this->inputs['ship_to_city'] = $first['city'] ?? null;
                     }
                 }
             }
+            // dd($this->inputs['ship_to_name'], $this->inputs['ship_to_address'], $this->inputs['ship_to_city']);
 
             // Handle NPWP Options if tax_doc_flag is set
             if (!empty($this->inputs['tax_doc_flag'])) {
@@ -697,18 +702,15 @@ class Detail extends BaseComponent
                             ];
                         }, $wpDetails);
 
-                        // Auto-select the first option
-                        foreach ($this->npwpOptions as $opt) {
-                            $this->inputs['npwp_code'] = $opt['value'];
-                            $this->inputs['npwp_name'] = $opt['name'];
-                            $this->inputs['npwp_addr'] = $opt['address'];
-                            break;
-                        }
+                        // Selalu isi default NPWP dari opsi pertama jika ada
+                        $first = reset($this->npwpOptions);
+                        $this->inputs['npwp_code'] = $first['value'] ?? null;
+                        $this->inputs['npwp_name'] = $first['name'] ?? null;
+                        $this->inputs['npwp_addr'] = $first['address'] ?? null;
                     }
                 }
             }
         }
-
     }
 
 

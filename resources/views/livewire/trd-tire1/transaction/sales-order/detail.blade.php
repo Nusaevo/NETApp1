@@ -28,32 +28,26 @@
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                            type="code" :action="$actionValue" required="true"
-                                            clickEvent="trCodeOnClick" buttonName="Nomor Baru" enabled="true"
-                                            :buttonEnabled="$isPanelEnabled" />
+                                            type="code" :action="$actionValue" required="true" clickEvent="trCodeOnClick"
+                                            buttonName="Nomor Baru" enabled="true" :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-dropdown-search label="Customer" model="inputs.partner_id" optionValue="id"
-                                            :query="$ddPartner['query']"
-                                            :optionLabel="$ddPartner['optionLabel']"
-                                            :placeHolder="$ddPartner['placeHolder']"
-                                            :selectedValue="$inputs['partner_id']" required="true"
-                                            :action="$actionValue" :enabled="$isPanelEnabled" type="int"
-                                            onChanged="onPartnerChanged" />
+                                        <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
+                                            optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
+                                            :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                            type="int" onChanged="onPartnerChanged" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
-                                            model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']"
-                                            :options="$shipOptions"
+                                            model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
                                             required="true" :action="$actionValue"/>
-                                   </div>
+                                    </div>
                                     <div class="row">
-                                            <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
+                                        <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
                                             model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions"
-                                            required="false" :action="$actionValue"
-                                            :enabled="$payer" />
+                                            required="false" :action="$actionValue" :enabled="$payer" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('Pajak') }}"
@@ -105,8 +99,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
-                                                onChanged="calcItemAmount({{ $key }})"
-                                                decimalPlaces="2" />
+                                                onChanged="calcItemAmount({{ $key }})" decimalPlaces="2" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"

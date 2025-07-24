@@ -119,7 +119,7 @@ class Detail extends BaseComponent
 
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->inputs = $this->object->toArray(); 
+            $this->inputs = $this->object->toArray();
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             // $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
@@ -131,7 +131,7 @@ class Detail extends BaseComponent
                 : ($trDate ? $trDate->format('Y-m-d') : null);
             // dd($this->inputs);
             $this->salesTypeOnChanged();
-            $this->loadDetails();   
+            $this->loadDetails();
             // dd($this->input_details);
         } else {
             $this->isPanelEnabled = "true";
@@ -157,7 +157,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['print_date']=null;
         $this->isDeliv = false;
-    } 
+    }
 
      public function onValidateAndSave()
     {
@@ -221,7 +221,7 @@ class Detail extends BaseComponent
         if ($this->actionValue === 'Create') {
             $headerData['status_code'] = Status::OPEN;
         }
-        
+
         if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
             $partner = Partner::find($headerData['partner_id']);
             $headerData['partner_code'] = $partner ? $partner->code : '';
@@ -232,7 +232,7 @@ class Detail extends BaseComponent
     private function prepareDetailData()
     {
         $detailData = $this->input_details;
-        
+
         $trSeq = 1;
         foreach ($detailData as $i => &$detail) {
             $detail['tr_seq'] = $trSeq++;
@@ -252,7 +252,7 @@ class Detail extends BaseComponent
         // Validasi: sales_type harus dipilih dulu
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih nota MOTOR atau MOBIL terlebih dahulu.');
-            return;   
+            return;
         }
 
         try {
@@ -364,7 +364,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
             }
-            
+
             $this->total_amount = 0;
             $this->total_discount = 0;
             $this->total_dpp = 0;
@@ -372,7 +372,7 @@ class Detail extends BaseComponent
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
                 $this->total_amount += $detail['amt'];
-                $this->total_discount += $detail['disc_amt'];
+                $this->total_discount += $detail['disc_amt'] ?? 0;
                 $this->total_dpp += $detail['amt_beforetax'];
                 $this->total_tax += $detail['amt_tax'];
             }
@@ -381,7 +381,7 @@ class Detail extends BaseComponent
             $this->total_discount = rupiah($this->total_discount);
             $this->total_dpp = rupiah($this->total_dpp);
             $this->total_tax = rupiah($this->total_tax);
-            
+
         }
     }
 
@@ -418,9 +418,11 @@ class Detail extends BaseComponent
                 ->get();
 
             $this->input_details = $this->object_detail->toArray();
-            foreach ($this->object_detail as $key => $detail) {
-                 $this->calcItemAmount($key);
+            foreach ($this->input_details as $key => &$detail) {
+                if (!isset($detail['disc_amt'])) $detail['disc_amt'] = 0;
+                $this->calcItemAmount($key);
             }
+            unset($detail);
 
             // Check delivery status after loading details
             $this->checkDeliveryStatus();
@@ -607,13 +609,21 @@ class Detail extends BaseComponent
 
         $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
-        $this->materialQuery = "
-            SELECT id, code, name
-            FROM materials
-            WHERE status_code = 'A'
-            AND deleted_at IS NULL
-            AND category IN ($categoryList)
-        ";
+        // Ambil semua matl_id yang sedang dipilih di input_details
+        $selectedMatlIds = collect($this->input_details)->pluck('matl_id')->filter()->unique()->toArray();
+        $selectedMatlIdsStr = '';
+        if (!empty($selectedMatlIds)) {
+            $selectedMatlIdsStr = implode(',', $selectedMatlIds);
+        }
+
+        $mainQuery = "SELECT id, code, name FROM materials WHERE status_code = 'A' AND deleted_at IS NULL AND category IN ($categoryList)";
+        // Jika ada matl_id yang tidak ada di hasil utama, tambahkan dengan UNION
+        if (!empty($selectedMatlIdsStr)) {
+            $unionQuery = "SELECT id, code, name FROM materials WHERE id IN ($selectedMatlIdsStr)";
+            $this->materialQuery = "$mainQuery UNION $unionQuery";
+        } else {
+            $this->materialQuery = $mainQuery;
+        }
     }
 
     public function checkDeliveryStatus()
