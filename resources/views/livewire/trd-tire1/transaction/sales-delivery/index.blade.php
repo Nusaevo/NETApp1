@@ -16,20 +16,30 @@
             <div class="form-group">
                 <div class="row">
                     <div class="col-md-6">
-                        <label for="deliveryDate">Tanggal Kirim</label>
-                        <input label="Tanggal Kirim" type="date"
+                        {{-- <label for="deliveryDate">Tanggal Kirim</label> --}}
+                        {{-- <input label="Tanggal Kirim" type="date"
                             class="form-control @error('tr_date') is-invalid @enderror" id="deliveryDate"
-                            wire:model="tr_date" :value="old('tr_date', now() -> format('Y-m-d'))">
-                        @error('tr_date')
+                            wire:model="tr_date" :value="old('tr_date', now() -> format('Y-m-d'))"> --}}
+                        <x-ui-text-field label="Tanggal Kirim" model="inputs.tr_date" type="date"
+                            :action="$actionValue" required="true" enabled="true"/>
+                    </div>
+                    <div class="col-md-6">
+                        <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code"
+                            :options="$warehouses" required="false" :action="$actionValue" />
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        {{-- <label for="amt_shipcost">Biaya Pengiriman</label> --}}
+                        {{-- <input type="number" class="form-control @error('inputs.amt_shipcost') is-invalid @enderror"
+                            id="amt_shipcost" wire:model="inputs.amt_shipcost" placeholder="Masukkan biaya pengiriman"> --}}
+                        <x-ui-text-field label="Biaya pengiriman" model="inputs.amt_shipcost" type="number"
+                            :action="$actionValue" required="false" enabled="true" />
+                        @error('inputs.amt_shipcost')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
                         @enderror
-                    </div>
-                    <div class="col-md-6">
-                        <label tyope="hidden" for=""></label>
-                        <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}" model="inputs.wh_code"
-                            :options="$warehouses" required="false" :action="$actionValue" />
                     </div>
                 </div>
                 <x-ui-table id="selectedItemsTable" padding="0px" margin="0px">
@@ -78,6 +88,11 @@
             // Listener untuk submit delivery date
             Livewire.on('onValidateAndSave', event => {
                 @this.onValidateAndSave();
+            });
+
+            // Listener untuk browser event refresh-page
+            window.addEventListener('refresh-page', function() {
+                window.location.reload();
             });
         });
     </script>

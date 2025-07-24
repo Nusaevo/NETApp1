@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Services\TrdTire1;
+namespace App\Services\TrdRetail1;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
-use App\Models\TrdTire1\Master\{MatlUom};
-use App\Models\TrdTire1\Inventories\IvttrHdr;
-use App\Models\TrdTire1\Inventories\{IvtLog, IvtBal, IvttrDtl};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr};
+use App\Models\TrdRetail1\Master\{MatlUom};
+use App\Models\TrdRetail1\Inventories\IvttrHdr;
+use App\Models\TrdRetail1\Inventories\{IvtLog, IvtBal, IvttrDtl};
+use App\Models\TrdRetail1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr};
 
 class InventoryService
 {
     #region Reservation Methods
 
-    public function addReservation(array $headerData, array $detailData)
+    public function addReservation(string $mode, array $headerData, array $detailData)
     {
         // dd([
         //     'mode' => $mode,
@@ -27,23 +27,29 @@ class InventoryService
         $price = 0;
         $trAmt = 0;
         $trQty = 0;
-        $qty = 0;
-        if ($headerData['tr_type'] === 'PO' || $headerData['tr_type'] === 'SO') {
-            $trQty = $detailData['qty'];
-            $qty = $trQty;
-            $price = $detailData['amt_beforetax'] / $detailData['qty'];
-            $trAmt = $detailData['amt_beforetax'];
-        } else if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD') {
-            $trQty = $detailData['qty'];
-            $qty = -$trQty;
+        $qty = $detailData['qty'] ?? 0;
+
+        if (isset($detailData['reffdtl_id'])) {
+            // Case Delivery: Ambil data dari OrderDtl
             $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
             if (!$orderDtl) {
-                throw new Exception('Order Detail nomor: ' . $detailData['reffhdr_id']);
+                throw new Exception('Order detail not found for reffdtl_id: ' . $detailData['reffdtl_id']);
             }
-            $price = $orderDtl->amt_beforetax / $orderDtl->qty;
-            $trAmt = $price * $trQty;
-        }            
-        
+            $price = $orderDtl->price * (1 - ($orderDtl->disc_pct / 100));
+        } else {
+            // Case Order: Gunakan data langsung dari detailData
+            $price = $detailData['price'] * (1 - ($detailData['disc_pct'] / 100));
+        }
+
+        if ($mode === '+') {
+            $trAmt = $price * $qty;
+            $trQty = $qty;
+        } else if ($mode === '-'){
+            $trAmt = $price * $qty;
+            $trQty = $qty;
+        }
+
+        // Buat atau update IvtBal untuk order (hanya berdasarkan matl_id)
         $ivtBal = IvtBal::updateOrCreate([
             'matl_id' => $detailData['matl_id'],
             'matl_uom' => $detailData['matl_uom'],
@@ -53,16 +59,45 @@ class InventoryService
             'matl_code' => $detailData['matl_code'] ?? ''
             // qty_oh, qty_fgr, qty_fgi tidak di-set di sini agar tidak overwrite
         ]);
-        if ($headerData['tr_type'] === 'PO' || $headerData['tr_type'] === 'PD') {
-            $ivtBal->qty_fgr +=  ($detailData['qty']);
-        } else if ($headerData['tr_type'] === 'SO' || $headerData['tr_type'] === 'SD') {
-            $ivtBal->qty_fgi +=  ($detailData['qty']);
-        }            
-        $ivtBal->save();
 
+
+        // dibungkus mode + dan -
+        if ($headerData) {
+            if ($mode === '+') {
+                switch ($headerData['tr_type']) {
+                    case 'SO': // Sales Order: Tambah FGI
+                        $ivtBal->qty_fgi = ($ivtBal->qty_fgi ?? 0) + ($detailData['qty']);
+                        break;
+                    case 'PO': // Purchase Order: Tambah FGR
+                        $ivtBal->qty_fgr = ($ivtBal->qty_fgr ?? 0) + ($detailData['qty']);
+                        break;
+                }
+            } else if ($mode === '-') {
+                switch ($headerData['tr_type']) {
+                    case 'SO': // Sales Order: Kurangi FGI
+                        $ivtBal->qty_fgi = ($ivtBal->qty_fgi ?? 0) - ($detailData['qty']);
+                        break;
+                    case 'PO': // Purchase Order: Kurangi FGR
+                        $ivtBal->qty_fgr = ($ivtBal->qty_fgr ?? 0) - ($detailData['qty']);
+                        break;
+                }
+            }
+            $ivtBal->save();
+        }
 
         // Tentukan tr_type untuk log
-        $trType = $headerData['tr_type'] . 'R';
+        $trType = $headerData['tr_type'];
+        // Tambah R untuk semua reservasi (baik order maupun delivery)
+        if ($mode === '+') {
+            $trType .= 'R';
+        } else if ($mode === '-') {
+            // Untuk delivery, ubah POR menjadi PDR
+            if ($trType === 'PO') {
+                $trType = 'PDR';
+            } else if ($trType === 'SO') {
+                $trType = 'SDR';
+            }
+        }
 
         // Siapkan data log
         $logData = [
@@ -80,7 +115,7 @@ class InventoryService
             'batch_code' => '',
             'reff_id' => $headerData['reff_id'] ?? 0,
             'tr_date' => $headerData['tr_date'],
-            'qty' => $qty,
+            'qty' => $mode === '+' ? $qty : -$qty,
             'price' => $price,
             'tr_amt' => $trAmt,
             'tr_qty' => $trQty,
@@ -89,12 +124,11 @@ class InventoryService
             'amt_cogs' => 0,
             'qty_running' => 0,
             'amt_running' => 0,
-            'process_flag' => '',
+            'process_flag' => $headerData['process_flag'] ?? ''
         ];
 
         // Simpan log inventory
         IvtLog::create($logData);
-        return $ivtBal->id;
     }
 
 
@@ -269,7 +303,6 @@ class InventoryService
 
     private function saveDetails(array $headerData, array $detailData): array
     {
-        // dd('Saving details', $headerData, $detailData);
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
@@ -304,13 +337,10 @@ class InventoryService
                 $savedDetail->save();
                 $trSeq++;
             } else if ($detail['tr_type'] === 'IA') {
-                $detail['tr_seq'] = $trSeq;
                 $savedDetail = IvttrDtl::create($detail);
-                $detail['id'] = $savedDetail->id; // <-- tambahkan baris ini!
                 $ivtId = $this->addOnhand($headerData, $detail);
                 $savedDetail->ivt_id = $ivtId;
                 $savedDetail->save();
-                $trSeq++;
             }
 
 

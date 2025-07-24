@@ -21,7 +21,7 @@
                                     <div class="row">
                                         <x-ui-option model="inputs.sales_type" :options="['I' => 'MOTOR', 'O' => 'MOBIL']" type="radio"
                                             layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
-                                            onChanged="onSalesTypeChanged" />
+                                            onChanged="salesTypeOnChanged" />
                                         <x-ui-option model="inputs.tax_doc_flag" label="Faktur Pajak" :options="['isTaxInvoice' => 'Ya']"
                                             type="checkbox" layout="horizontal" :action="$actionValue" :enabled="$isPanelEnabled"
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
@@ -29,33 +29,31 @@
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                             type="code" :action="$actionValue" required="true"
-                                            clickEvent="getTransactionCode" buttonName="Nomor Baru" enabled="true"
+                                            clickEvent="trCodeOnClick" buttonName="Nomor Baru" enabled="true"
                                             :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
-                                            query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
-                                            optionValue="id" optionLabel="code,name,address,city"
-                                            placeHolder="Type to search customer..." :selectedValue="$inputs['partner_id']" required="true"
+                                        <x-ui-dropdown-search label="Customer" model="inputs.partner_id" optionValue="id"
+                                            :query="$ddPartner['query']"
+                                            :optionLabel="$ddPartner['optionLabel']"
+                                            :placeHolder="$ddPartner['placeHolder']"
+                                            :selectedValue="$inputs['partner_id']" required="true"
                                             :action="$actionValue" :enabled="$isPanelEnabled" type="int"
                                             onChanged="onPartnerChanged" />
-                                        <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
-                                            model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
-                                            required="false" :action="$actionValue" onChanged="onShipToChanged" />
-                                        <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
-                                            model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions"
-                                            required="false" :action="$actionValue" onChanged="onTaxPayerChanged"
-                                            :enabled="$payer" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-text-field label="" model="inputs.textareacustommer" type="textarea"
-                                            :action="$actionValue" required="false" enabled="false" />
-                                        <x-ui-text-field label="" model="inputs.textareasend_to" type="textarea"
-                                            :action="$actionValue" required="false" enabled="false" />
-                                        <x-ui-text-field label="" model="inputs.textarea_npwp" type="textarea"
-                                            :action="$actionValue" required="false" enabled="false" />
+                                        <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
+                                            model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']"
+                                            :options="$shipOptions"
+                                            required="true" :action="$actionValue"/>
+                                   </div>
+                                    <div class="row">
+                                            <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
+                                            model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions"
+                                            required="false" :action="$actionValue"
+                                            :enabled="$payer" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('Pajak') }}"
@@ -96,17 +94,6 @@
                                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
-                                            @php
-                                                $materialQuery =
-                                                    "SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL";
-                                                if (($inputs['sales_type'] ?? '') == 'I') {
-                                                    $materialQuery .=
-                                                        " AND (category = 'BAN DALAM MOTOR' OR category = 'BAN LUAR MOTOR')";
-                                                } elseif (($inputs['sales_type'] ?? '') == 'O') {
-                                                    $materialQuery .=
-                                                        " AND (category = 'BAN DALAM MOBIL' OR category = 'BAN LUAR MOBIL')";
-                                                }
-                                            @endphp
                                             <x-ui-dropdown-search label=""
                                                 model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
                                                 optionValue="id" optionLabel="code,name"
@@ -118,19 +105,19 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
-                                                onChanged="updateItemAmount({{ $key }})"
+                                                onChanged="calcItemAmount({{ $key }})"
                                                 decimalPlaces="2" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.qty"
                                                 label="" :enabled="$isDeliv ? 'false' : 'true'" :action="$actionValue"
-                                                onChanged="updateItemAmount({{ $key }})" type="number"
+                                                onChanged="calcItemAmount({{ $key }})" type="number"
                                                 required="true" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="updateItemAmount({{ $key }})" type="number" />
+                                                onChanged="calcItemAmount({{ $key }})" type="number" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt"

@@ -20,13 +20,14 @@ class DelivHdr extends BaseModel
     protected $primaryKey = 'id';
     public $timestamps = true;
     protected $fillable = [
+        'tr_type',
         'tr_code',
         'tr_date',
+        'reff_code',
         'reff_date',
         'partner_id',
-        'reff_code',
         'partner_code',
-        'tr_type',
+        'amt_shipcost',
         'note',
     ];
     protected $casts = [

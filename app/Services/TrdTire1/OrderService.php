@@ -84,10 +84,8 @@ class OrderService
             throw new Exception('Error updating order quantity reference: ' . $e->getMessage());
         }
     }
-
     private function saveHeader(array $headerData, ?int $orderId = null): OrderHdr
     {
-        // dd($headerData, $orderId);
         if ($orderId) {
             $order = OrderHdr::findOrFail($orderId);
             $order->update($headerData);
@@ -97,9 +95,9 @@ class OrderService
             // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
             $order = OrderHdr::create($headerData);
         }
-        // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
         return $order;
     }
+
     private function saveDetails(array $headerData, array $detailData): array
     {
         //throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
@@ -110,6 +108,7 @@ class OrderService
         $savedDetails = [];
         foreach ($detailData as $detail) {
             $detail['trhdr_id'] = $headerData['id'];
+            $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
 
             $savedDetail = OrderDtl::create($detail);
@@ -125,9 +124,8 @@ class OrderService
                 );
             }
             // Kirim detail yang baru disimpan ke addReservation
-            $this->inventoryService->addReservation('+', $headerData, $savedDetail->toArray());
+            $this->inventoryService->addReservation($headerData, $savedDetail->toArray());
         }
-
         return $savedDetails;
     }
 

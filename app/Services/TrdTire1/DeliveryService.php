@@ -109,20 +109,22 @@ class DeliveryService
             $delivDetail = DelivDtl::create($detail);
 
             // Siapkan data untuk delReservation
-            $delivDetailRsv = $delivDetail->toArray();
-            $headerDataRsv = $headerData;            // Sesuaikan tr_type untuk delReservation
-            if ($delivDetail->tr_type === 'PD') {
-                $delivDetailRsv['tr_type'] = 'PO';
-                $headerDataRsv['tr_type'] = 'PO';
-            } else if ($delivDetail->tr_type === 'SD') {
-                $delivDetailRsv['tr_type'] = 'SO';
-                $headerDataRsv['tr_type'] = 'SO';
-            }
-            // Hapus reservasi order
-            $this->inventoryService->addReservation('-', $headerDataRsv, $delivDetailRsv);
+            // $delivDetailRsv = $delivDetail->toArray();
+            // $headerDataRsv = $headerData;            // Sesuaikan tr_type untuk delReservation
+            // if ($delivDetail->tr_type === 'PD') {
+            //     $delivDetailRsv['tr_type'] = 'PO';
+            //     $headerDataRsv['tr_type'] = 'PO';
+            // } else if ($delivDetail->tr_type === 'SD') {
+            //     $delivDetailRsv['tr_type'] = 'SO';
+            //     $headerDataRsv['tr_type'] = 'SO';
+            // }
+
+            $this->inventoryService->addReservation($headerData, $delivDetail->toArray());
 
             // Tambah stok onhand - convert $delivDetail object to array
-            $this->inventoryService->addOnhand($headerData, $delivDetail->toArray());
+            $ivtBalID = $this->inventoryService->addOnhand($headerData, $delivDetail->toArray());
+            $delivDetail->ivt_id = $ivtBalID;
+            $delivDetail->save();
 
             // Update qty_reff di OrderDtl
             if ($delivDetail->reffdtl_id) {

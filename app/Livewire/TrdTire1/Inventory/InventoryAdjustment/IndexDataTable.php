@@ -22,6 +22,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return IvttrHdr::query()
+            ->with(['IvttrDtl'])
             ->where('status_code', Status::OPEN)
             ->orWhere('status_code', Status::ACTIVE); // Include non-active records
     }
@@ -33,30 +34,57 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("tr_code"), "tr_code")
+                ->format(function ($value, $row) {
+                    return '<a href="' . route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey((string)$row->id)
+                    ]) . '">' . $row->tr_code . '</a>';
+                })
+                ->html()
                 ->sortable(),
-            Column::make($this->trans("tr_type"), "tr_type")
+            Column::make($this->trans("Tipe Transaksi"), "tr_type")
                 ->sortable(),
-            Column::make($this->trans("remark"), "remark")
-                ->sortable(),
-            // tr_id
-            // Column::make($this->trans("tr_code"), "tr_code")
-            //     ->format(function ($value, $row) {
-            //         return '<a href="' . route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
-            //             'action' => encryptWithSessionKey('Edit'),
-            //             'objectId' => encryptWithSessionKey((string)$row->id)  // Ensure it's a string
-            //         ]) . '">' . $row->tr_code . '</a>';
-            //     })
-            //     ->html(),
-            // Column::make($this->trans('qty'), 'total_qty')
-            //     ->label(function ($row) {
-            //         return $row->total_qty;
-            //     })
-            //     ->sortable(),
-            // Column::make($this->trans('amt'), 'total_amt')
-            //     ->label(function ($row) {
-            //         return rupiah($row->total_amt);
-            //     })
-            //     ->sortable(),
+            Column::make('Kode Barang', 'matl_code')
+                ->label(function ($row) {
+                    if ($row->IvttrDtl && $row->IvttrDtl->count() > 0) {
+                        return $row->IvttrDtl->pluck('matl_code')->filter()->first();
+                    }
+                    return '-';
+                }),
+            Column::make('Batch', 'batch_code')
+                ->label(function ($row) {
+                    if ($row->IvttrDtl && $row->IvttrDtl->count() > 0) {
+                        $batch = $row->IvttrDtl->pluck('batch_code')->filter()->first();
+                        return $batch ?: '-';
+                    }
+                    return '-';
+                }),
+            Column::make('Gudang', 'wh_code')
+                ->label(function ($row) {
+                    if ($row->tr_type === 'IA') {
+                        // Ambil wh_code dari detail dengan tr_seq > 0 (biasanya 1)
+                        if ($row->IvttrDtl && $row->IvttrDtl->count() > 0) {
+                            return $row->IvttrDtl->where('tr_seq', '>', 0)->pluck('wh_code')->filter()->first() ?: '-';
+                        }
+                        return '-';
+                    }
+                    if ($row->IvttrDtl && $row->IvttrDtl->count() > 0) {
+                        return $row->IvttrDtl->where('tr_seq', -1)->pluck('wh_code')->filter()->implode(', ');
+                    }
+                    return '-';
+                }),
+            Column::make('Gudand Tujuan', 'wh_code')
+                ->label(function ($row) {
+                    if ($row->tr_type === 'IA') {
+                        // Untuk IA, gudang tujuan dikosongkan
+                        return '-';
+                    }
+                    if ($row->IvttrDtl && $row->IvttrDtl->count() > 0) {
+                        // Ambil wh_code hanya untuk tr_seq == 1
+                        return $row->IvttrDtl->where('tr_seq', 1)->pluck('wh_code')->filter()->implode(', ');
+                    }
+                    return '-';
+                }),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

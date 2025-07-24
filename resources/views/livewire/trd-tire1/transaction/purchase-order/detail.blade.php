@@ -42,9 +42,8 @@
                                         optionValue="id" optionLabel="code,name,address,city"
                                         placeHolder="Type to search suppliers..." :selectedValue="$inputs['partner_id']" required="true"
                                         :action="$actionValue" :enabled="$isPanelEnabled" type="int" />
-                                    {{-- @dump($inputs['partner_id']) --}}
                                     <x-ui-dropdown-select label="{{ $this->trans('PPN') }}" model="inputs.tax_code"
-                                        :options="$SOTax" required="true" :action="$actionValue"
+                                        :options="$taxCode" required="true" :action="$actionValue"
                                         onChanged="taxCodeOnChanged" />
                                 </div>
                                 <div class="row">
@@ -84,6 +83,7 @@
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="matlIdOnChanged({{ $key }}, $event.target.value)"
                                                 type="int" :enabled="$isDeliv ? 'false' : 'true'" />
+                                                @dump($input_details[$key]['matl_id'] ?? '')
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"
@@ -99,8 +99,7 @@
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
                                                 label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="discPctOnChanged({{ $key }})" type="number"
-                                                decimalPlaces="2" />
+                                                onChanged="discPctOnChanged({{ $key }})" type="number"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt"

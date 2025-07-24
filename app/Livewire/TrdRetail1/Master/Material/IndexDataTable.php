@@ -196,6 +196,8 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'deleteSelected' => 'Disable Selected',
             'downloadCreateTemplate' => 'Download Create Template',
+            'massUpdateBuyingPrice' => 'Mass Update Modal',
+            'massUpdateSellingPrice' => 'Mass Update Harga Jual',
         ];
     }
 
@@ -224,7 +226,29 @@ class IndexDataTable extends BaseDataTableComponent
         ]);
     }
 
-    public function deleteMaterial($data)
+    public function massUpdateBuyingPrice()
+    {
+        $ids = $this->getSelected() ?? [];
+        if (empty($ids)) {
+            $this->dispatch('error', $this->trans('no_materials_selected'));
+            return;
+        }
+
+        // Dispatch to parent component
+        $this->dispatch('openBuyingPriceModal', $ids);
+    }
+
+    public function massUpdateSellingPrice()
+    {
+        $ids = $this->getSelected() ?? [];
+        if (empty($ids)) {
+            $this->dispatch('error', $this->trans('no_materials_selected'));
+            return;
+        }
+
+        // Dispatch to parent component
+        $this->dispatch('openSellingPriceModal', $ids);
+    }    public function deleteMaterial($data)
     {
         $uomIds = explode(',', $data);
 

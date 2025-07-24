@@ -108,7 +108,7 @@ class Detail extends BaseComponent
                 $this->inputs['partner_name'] = $partner->name;
             }
 
-             if (
+            if (
                 !empty($this->inputs['reffhdrtr_code']) &&
                 !collect($this->purchaseOrders)->pluck('value')->contains($this->inputs['reffhdrtr_code'])
             ) {
