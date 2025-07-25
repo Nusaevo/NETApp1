@@ -26,34 +26,40 @@ class OrderHdr extends BaseModel
     protected $fillable = [
         'tr_type',
         'tr_code',
-        'tr_date',
         'sales_type',
-        'tax_code',
-        'tax_pct',
-        'tax_id',
+        'tr_date',
+        'reff_code',
         'partner_id',
         'partner_code',
-        'payment_term_id',
-        'payment_due_days',
-        'reff_code',
-        'curr_rate',
-        'curr_id',
-        'curr_code',
-        'note',
-        'tax_doc_flag',
-        'tax_doc_num',
-        'payment_term',
         'ship_to_name',
         'ship_to_addr',
+        'npwp_code',
         'npwp_name',
         'npwp_addr',
-        'npwp_code',
+        'sales_id',
+        'sales_code',
+        'deliv_by',
+        'payment_term_id',
+        'payment_term',
+        'payment_due_days',
+        'curr_id',
+        'curr_code',
+        'curr_rate',
+        'tax_id',
+        'tax_code',
+        'tax_pct',
+        'tax_doc_flag',
+        'tax_doc_num',
+        'tax_process_date',
         'amt',
         'amt_beforetax',
         'amt_tax',
+        'amt_adjustdtl',
         'amt_shipcost',
+        'print_setting',       
+        'print_remarks',       
         'print_date',
-        'print_remarks'
+        'note',
     ];
 
     protected $casts = [
@@ -137,95 +143,6 @@ class OrderHdr extends BaseModel
         // Simpan header
         $this->save();
     }
-
-    // public static function generateTransactionId($sales_type, $tr_type, $tax_doc_flag = false)
-    // {
-    //     // if ($tr_type == 'PO') {
-    //     //     return self::generatePurchaseOrderId();
-    //     // }
-
-    //     $year = date('y');
-    //     $monthNumber = date('n');
-    //     $monthLetter = chr(64 + $monthNumber);
-    //     $sequenceNumber = self::getSequenceNumber($sales_type, $tax_doc_flag);
-
-    //     if ($tax_doc_flag) {
-    //         switch ($sales_type) {
-    //             case 'O':
-    //                 return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
-    //             case 'I':
-    //                 return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
-    //             default:
-    //                 throw new \InvalidArgumentException('Invalid vehicle type');
-    //         }
-    //     } else {
-    //         switch ($sales_type) {
-    //             case 'O': // MOTOR tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
-    //                 return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
-    //             case 'I': // MOBIL tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
-    //                 return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
-    //             default:
-    //                 throw new \InvalidArgumentException('Invalid vehicle type');
-    //         }
-    //     }
-    // }
-
-    // // private static function generatePurchaseOrderId()
-    // // {
-    // //     $lastId = ConfigSnum::where('code', 'PURCHORDER_LASTID')->first();
-    // //     $newId = (int)$lastId->last_cnt + 1;
-    // //     $lastId->last_cnt = $newId;
-    // //     $lastId->save();
-
-    // //     return sprintf('PO%04d', $newId); // Contoh: PO0001
-    // // }
-
-    // /**
-    //  * Fungsi ini mengambil nomor urut berdasarkan entri terakhir.
-    //  * Regex disesuaikan berdasarkan jenis kendaraan (MOTOR/MOBIL) dan flag tax invoice.
-    //  */
-    // private static function getSequenceNumber($sales_type, $tax_doc_flag)
-    // {
-    //     $currentYear = date('y');
-    //     $currentMonth = date('n');
-    //     $currentMonthLetter = chr(64 + $currentMonth);
-
-    //     $taxInvoiceFlag = $tax_doc_flag ? 1 : 0;
-
-    //     $lastOrder = OrderHdr::where('tr_type', 'SO')
-    //         ->where('sales_type', $sales_type)
-    //         ->where('tax_doc_flag', $taxInvoiceFlag)
-    //         ->orderBy('id', 'desc')
-    //         ->first();
-
-    //     if ($sales_type == 'O') {
-    //         if ($tax_doc_flag) {
-    //             $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
-    //             $expectedPrefix = $currentMonthLetter;
-    //         } else {
-    //             $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
-    //             $expectedPrefix = $currentMonthLetter;
-    //         }
-    //     } elseif ($sales_type == 'I') {
-    //         // MOBIL
-    //         if ($tax_doc_flag) {
-    //             $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
-    //             $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
-    //         } else {
-    //             $pattern = '/^([A-Z]{2})(\d{2})8(\d{5})$/';
-    //             $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
-    //         }
-    //     } else {
-    //         throw new \InvalidArgumentException('Invalid sales type');
-    //     }
-
-    //     if ($lastOrder && preg_match($pattern, $lastOrder->tr_code, $matches)) {
-    //         if ($matches[1] === $expectedPrefix && $matches[2] == $currentYear) {
-    //             return (int)$matches[3] + 1;
-    //         }
-    //     }
-    //     return 1;
-    // }
 
     public function saveOrderDetails($inputDetails, $trType, $inputs, $createBillingDelivery = false)
     {

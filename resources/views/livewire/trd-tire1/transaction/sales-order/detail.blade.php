@@ -125,7 +125,6 @@
                                     </tr>
                                 @endforeach
                             </x-slot>
-
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                     button-name="Tambah" :enabled="$isDeliv ? 'false' : 'true'" />

@@ -40,10 +40,10 @@ class InventoryService
             if (!$orderDtl) {
                 throw new Exception('Order Detail nomor: ' . $detailData['reffhdr_id']);
             }
-            $price = $orderDtl->amt_beforetax / $orderDtl->qty;
+            $price = $orderDtl->price_beforetax;
             $trAmt = $price * $trQty;
-        }            
-        
+        }
+
         $ivtBal = IvtBal::updateOrCreate([
             'matl_id' => $detailData['matl_id'],
             'matl_uom' => $detailData['matl_uom'],
@@ -54,10 +54,10 @@ class InventoryService
             // qty_oh, qty_fgr, qty_fgi tidak di-set di sini agar tidak overwrite
         ]);
         if ($headerData['tr_type'] === 'PO' || $headerData['tr_type'] === 'PD') {
-            $ivtBal->qty_fgr +=  ($detailData['qty']);
+            $ivtBal->qty_fgr +=  $qty;
         } else if ($headerData['tr_type'] === 'SO' || $headerData['tr_type'] === 'SD') {
-            $ivtBal->qty_fgi +=  ($detailData['qty']);
-        }            
+            $ivtBal->qty_fgi +=  $qty;
+        }
         $ivtBal->save();
 
 
@@ -81,14 +81,11 @@ class InventoryService
             'reff_id' => $headerData['reff_id'] ?? 0,
             'tr_date' => $headerData['tr_date'],
             'qty' => $qty,
-            'price' => $price,
-            'tr_amt' => $trAmt,
+            'price_beforetax' => $price,
             'tr_qty' => $trQty,
             'tr_desc' => 'RESERVASI ' . $headerData['tr_type'] . ' ' . $detailData['tr_code'],
             'price_cogs' => 0,
-            'amt_cogs' => 0,
             'qty_running' => 0,
-            'amt_running' => 0,
             'process_flag' => '',
         ];
 
@@ -112,18 +109,18 @@ class InventoryService
             if (!$orderDtl) {
                 throw new Exception('Order detail tidak ditemukan: ' . $detailData['reffdtl_id']);
             }
-            $price = $orderDtl->amt_beforetax / $orderDtl->qty;
+            $price = $orderDtl->price_beforetax;
         }
 
         switch ($headerData['tr_type']) {
             case 'PD': // Purchase Delivery: Tambah OH, Kurangi FGR
                 $qty = $detailData['qty'];
-                $amt = $price * $qty;
+                // $amt = $price * $qty;
                 $trDesc = 'DELIVERY IN ' . $detailData['tr_code'];
                 break;
             case 'SD': // Sales Delivery: Kurangi OH, Kurangi FGI
                 $qty = -$detailData['qty'];
-                $amt = $price * $qty;
+                // $amt = $price * $qty;
                 $trDesc = 'DELIVERY OUT ' . $detailData['tr_code'];
                 break;
             case 'TW':
@@ -171,13 +168,10 @@ class InventoryService
             'tr_date' => $headerData['tr_date'],
             'tr_qty' => $detailData['qty'],
             'qty' => $qty,
-            'price' => $price,
-            'amt' => $amt,
+            'price_beforetax' => $price,
             'tr_desc' => $trDesc,
             'price_cogs' => 0,
-            'amt_cogs' => 0,
             'qty_running' => 0,
-            'amt_running' => 0,
             'process_flag' => ''
         ];
         IvtLog::create($logData);

@@ -30,13 +30,10 @@ class IvtLog extends BaseModel
         'reff_id',
         'tr_date',
         'qty',
-        'price',
-        'tr_amt',
+        'price_beforetax',
         'tr_desc',
         'price_cogs',
-        'amt_cogs',
         'qty_running',
-        'amt_running',
         'process_flag',
         'tr_qty'
     ];
