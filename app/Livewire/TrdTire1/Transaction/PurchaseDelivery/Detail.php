@@ -156,7 +156,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['qty'] = $detail->qty;
                 $this->input_details[$key]['qty_order'] = ($detail->OrderDtl->qty - $detail->OrderDtl->qty_reff) + $detail->qty; // Adjust qty_order
                 // $this->inputs['reffhdr_id'] = $this->object->reffhdr_id;
-                // $this->inputs['refhdrtr_code'] = $this->object->reffhdrtr_code;               
+                // $this->inputs['refhdrtr_code'] = $this->object->reffhdrtr_code;
             }
         }
     }
@@ -221,8 +221,12 @@ class Detail extends BaseComponent
                 ->where('order_hdrs.tr_code', $value)
                 ->get();
 
-            // dd($orderDetail);
-            if (!$orderDetail) {
+            //     $data = \App\Models\TrdTire1\Transaction\OrderDtl::join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            //     ->where('order_hdrs.tr_type', 'PO')
+            //     ->where('order_hdrs.tr_code', 'PO000500')
+            //     ->get();
+            // dd($data->toArray());
+            if ($orderDetail->isEmpty()) {
                 $this->dispatch('error', 'Tidak ada detail order yang ditemukan untuk kode pembelian ini.');
                 return;
             }

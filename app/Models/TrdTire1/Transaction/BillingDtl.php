@@ -34,9 +34,12 @@ class BillingDtl extends BaseModel
         'price',
         'price_uom',
         'price_base',
+        'price_afterdisc',
+        'price_beforetax',
         'amt',
         'amt_beforetax',
         'amt_tax',
+        'amt_adjustdtl',
         'amt_shipcost',
         'status_code',
     ];

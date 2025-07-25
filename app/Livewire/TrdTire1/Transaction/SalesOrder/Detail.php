@@ -375,6 +375,30 @@ class Detail extends BaseComponent
     /*
      * TAMBAH ITEM (detail) pada sales order.
      */
+    // public function addItemOnClick()
+    // {
+    //     // Validasi: sales_type harus dipilih dulu
+    //     if (empty($this->inputs['sales_type'])) {
+    //         $this->dispatch('error', 'Silakan pilih nota MOTOR atau MOBIL terlebih dahulu.');
+    //         return;
+    //     }
+
+    //     try {
+    //         // Check if can add new item
+    //         if ($this->isDeliv) {
+    //             $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah terkirim.');
+    //             return;
+    //         }
+    //         $item = populateArrayFromModel(new OrderDtl());
+    //         $item['disc_pct'] = 0;
+    //         $item['price_base'] = 1;
+    //         $this->input_details[] = $item;
+    //     } catch (Exception $e) {
+    //         $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
+    //     }
+    // }
+
+
     public function addItem()
     {
         if (empty($this->inputs['sales_type'])) {
@@ -437,13 +461,14 @@ class Detail extends BaseComponent
             $taxValue = $this->inputs['tax_pct'] / 100;
             $priceAfterDisc = $price * (1 - $discount);
             $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue),0);
-
+            // dd($this->inputs['tax_code'], $price, $priceAfterDisc, $priceBeforeTax, $taxValue);
             $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount,0);
 
             $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
             $this->input_details[$key]['amt_tax'] = 0;
             if ($this->inputs['tax_code'] === 'I') {
+                $this->input_details[$key]['price_beforetax'] = $priceBeforeTax;
                 // Catatan: khusus untuk yang include PPN
                 // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
                 $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
@@ -451,18 +476,22 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue,0);
                 // Total Nota dihiitung dari harga setelah disc * qty
                 // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
-                // alternatif lain 1 selisih bisa ditambahan ke PPN
-                // alternatif lain 2 selisih bisa ditambahan ke discount
+                // priceAdjustment
                 $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             } else if ($this->inputs['tax_code'] === 'E') {
+                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue,0);
                 $this->input_details[$key]['amt'] = $this->input_details[$key]['amt_beforetax'] + $this->input_details[$key]['amt_tax'];
             } else if ($this->inputs['tax_code'] === 'N') {
+                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
                 $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             }
+            $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
+            $this->input_details[$key]['amt_adjustdtl'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'];
+
             $this->total_amount = 0;
             $this->total_discount = 0;
             $this->total_dpp = 0;

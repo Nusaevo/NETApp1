@@ -27,6 +27,7 @@ class BillingService
 
         // dd('addBilling called with headerData:', $headerData, 'and detailData:', $detailData);
         $billingHdr = $this->saveHeader($headerData);
+        $taxPct = $billingHdr->tax_pct;
 
         $headerData['id'] = $billingHdr->id;
 
@@ -34,10 +35,27 @@ class BillingService
             $detail['trhdr_id'] = $billingHdr->id;
             $detail['tr_type'] = $billingHdr->tr_type;
             $detail['tr_code'] = $billingHdr->tr_code;
+            $detail['amt_tax'] = (float) $detail['price_beforetax'] * (float) $detail['qty'] * (float) $taxPct / 100;
         }
         unset($detail);
         // dd($newDetailData);
         $this->saveDetail($headerData, $detailData);
+
+        // Update total header
+        $totals = BillingDtl::where('trhdr_id', $billingHdr->id)
+            ->selectRaw('
+                SUM(amt) as amt,
+                SUM(amt_beforetax) as amt_beforetax,
+                SUM(amt_tax) as amt_tax,
+                SUM(amt_adjustdtl) as amt_adjustdtl
+            ')
+            ->first();
+
+        $billingHdr->amt = $totals->amt;
+        $billingHdr->amt_beforetax = $totals->amt_beforetax;
+        $billingHdr->amt_tax = $totals->amt_tax;
+        $billingHdr->amt_adjustdtl = $totals->amt_adjustdtl;
+        $billingHdr->save();
     }
 
     public function updBilling(int $billingId, array $headerData, array $detailData)
@@ -50,6 +68,7 @@ class BillingService
 
         // Update header (akan membuat partner balance baru)
         $billingHdr = $this->saveHeader($headerData);
+        $taxPct = $billingHdr->tax_pct;
 
         // Hapus detail lama
         $this->deleteDetail($billingId);
@@ -59,11 +78,28 @@ class BillingService
             $detail['trhdr_id'] = $billingHdr->id;
             $detail['tr_type'] = $billingHdr->tr_type;
             $detail['tr_code'] = $billingHdr->tr_code;
+            $detail['amt_tax'] = (float) $detail['price_beforetax'] * (float) $detail['qty'] * (float) $taxPct / 100;
         }
         unset($detail);
 
         // Simpan detail baru
         $this->saveDetail($headerData, $detailData);
+
+        // Update total header
+        $totals = BillingDtl::where('trhdr_id', $billingHdr->id)
+            ->selectRaw('
+                SUM(amt) as amt,
+                SUM(amt_beforetax) as amt_beforetax,
+                SUM(amt_tax) as amt_tax,
+                SUM(amt_adjustdtl) as amt_adjustdtl
+            ')
+            ->first();
+
+        $billingHdr->amt = $totals->amt;
+        $billingHdr->amt_beforetax = $totals->amt_beforetax;
+        $billingHdr->amt_tax = $totals->amt_tax;
+        $billingHdr->amt_adjustdtl = $totals->amt_adjustdtl;
+        $billingHdr->save();
     }
 
     public function delBilling(int $billingId)
@@ -112,26 +148,6 @@ class BillingService
 
     private function prepareDataFromDelivery($deliveryId): array
     {
-        // $sql = "select
-        //         CASE WHEN dh.tr_type='PD' THEN 'APB' WHEN dh.tr_type='SD' THEN 'ARB' ELSE '' END tr_type,
-        //         dh.tr_date, dh.tr_code, '' reff_code, dh.partner_id, dh.partner_code, dh.amt_shipcost,
-        //         oh.payment_term_id,oh.payment_term,oh.payment_due_days,
-        //         oh.curr_id,oh.curr_code,oh.curr_rate, null print_date,
-        //         dh.id dlvhdr_id, dd.id dlvdtl_id, dh.tr_type dlvhdrtr_type, dh.tr_code dlvhdrtr_code, dd.tr_seq dlvdtltr_seq,
-        //         dd.matl_id, dd.matl_code, dd.matl_uom, dd.matl_descr,
-        //         dd.qty,od.qty_uom,od.qty_base,od.price_uom,od.price_base, 'O' status_code,
-        //         ROUND(od.price*(1-od.disc_pct/100), 5) as price,
-        //         case when oh.tax_code in('I', 'N') then ROUND(od.price*(1-od.disc_pct/100)*dd.qty, 5)
-        //         when oh.tax_code='E' then ROUND(od.price*(1-od.disc_pct/100)*dd.qty *(1+oh.tax_pct/100), 5)
-        //         else 0 end amt
-        //         from deliv_dtls dd
-        //         join deliv_hdrs dh on dh.id=dd.trhdr_id
-        //         join order_dtls od on od.id=dd.reffdtl_id
-        //         join order_hdrs oh on oh.id=od.trhdr_id
-        //         where dd.trhdr_id= ?";
-        // $dataBilling = DB::connection(Session::get('app_code'))->select($sql, [$deliveryId]);
-        // // dd($dataBilling);
-
         $dataBilling = DB::connection(Session::get('app_code'))
             ->table('deliv_dtls as dd')
             ->join('deliv_hdrs as dh', 'dh.id', '=', 'dd.trhdr_id')
@@ -139,10 +155,10 @@ class BillingService
             ->join('order_hdrs as oh', 'oh.id', '=', 'od.trhdr_id')
             ->where('dd.trhdr_id', $deliveryId)
             ->selectRaw("
-                CASE 
-                    WHEN dh.tr_type = 'PD' THEN 'APB' 
-                    WHEN dh.tr_type = 'SD' THEN 'ARB' 
-                    ELSE '' 
+                CASE
+                    WHEN dh.tr_type = 'PD' THEN 'APB'
+                    WHEN dh.tr_type = 'SD' THEN 'ARB'
+                    ELSE ''
                 END AS tr_type,
                 dh.tr_date,
                 dh.tr_code,
@@ -156,6 +172,9 @@ class BillingService
                 oh.curr_id,
                 oh.curr_code,
                 oh.curr_rate,
+                oh.tax_pct,
+                oh.tax_code,
+                oh.tax_id,
                 NULL AS print_date,
                 dh.id AS dlvhdr_id,
                 dd.id AS dlvdtl_id,
@@ -173,17 +192,20 @@ class BillingService
                 od.price_base,
                 'O' AS status_code,
                 ROUND(od.price * (1 - od.disc_pct / 100), 5) AS price,
-                CASE 
-                    WHEN oh.tax_code IN ('I', 'N') THEN 
+                ROUND(od.price_beforetax, 5) AS price_beforetax,
+                ROUND(od.price * (1 - od.disc_pct / 100), 5) AS price_afterdisc,
+                CASE
+                    WHEN oh.tax_code IN ('I', 'N') THEN
                         ROUND(od.price * (1 - od.disc_pct / 100) * dd.qty, 5)
-                    WHEN oh.tax_code = 'E' THEN 
+                    WHEN oh.tax_code = 'E' THEN
                         ROUND(od.price * (1 - od.disc_pct / 100) * dd.qty * (1 + oh.tax_pct / 100), 5)
-                    ELSE 0 
+                    ELSE 0
                 END AS amt
             ")
             ->get();
 
         $header = (array) $dataBilling[0];
+        $taxPct = (float) ($header['tax_pct']);
         // $headerData = [];
 
         // dd($headerData);
@@ -205,6 +227,9 @@ class BillingService
             'amt_reff' => 0,
             'amt_shipcost' => $header['amt_shipcost'],
             'status_code' => $header['status_code'],
+            'tax_pct' => $header['tax_pct'],
+            'tax_code' => $header['tax_code'],
+            'tax_id' => $header['tax_id'],
         ];
         // dd($headerData);
 
@@ -212,7 +237,14 @@ class BillingService
         $detailData = [];
         $trSeq = 1;
         foreach ($dataBilling as $detail) {
-            $detailData[] = [
+            $amt = round((float) $detail->amt, 5);
+            $price_beforetax = round((float) $detail->price_beforetax, 5);
+            $qty = round((float) $detail->qty, 5);
+            $amt_beforetax = $price_beforetax * $qty;
+            $amt_tax = $amt_beforetax * (float) $taxPct / 100;
+
+
+            $row = [
                 'tr_seq' => $trSeq,
                 'tr_code' => $header['tr_code'],
                 'dlvhdr_id' => $detail->dlvhdr_id,
@@ -224,20 +256,34 @@ class BillingService
                 'matl_code' => $detail->matl_code,
                 'matl_uom' => $detail->matl_uom,
                 'descr' => $detail->matl_descr,
-                'qty' => (float) $detail->qty,
+                'qty' => $qty,
                 'qty_uom' => $detail->qty_uom,
                 'qty_base' => (float) $detail->qty_base,
                 'price' => (float) $detail->price,
                 'price_uom' => $detail->price_uom,
                 'price_base' => (float) $detail->price_base,
-                'amt' => (float) $detail->amt,
-                'amt_beforetax' => (float) $detail->amt,
-                'amt_tax' => (float) $detail->amt,
+                'amt' => $amt,
+                'amt_tax' => $amt_tax,
                 'amt_reff' => 0,
+                'price_beforetax' => $price_beforetax,
+                'amt_beforetax' => $amt_beforetax,
+                'price_afterdisc' => (float) $detail->price_afterdisc,
+                'amt_adjustdtl' => round($amt - $amt_beforetax - $amt_tax, 5),
             ];
             if ($trSeq == 1) {
-                $detailData['amt_shipcost'] = $header['amt_shipcost'];
+                $row['amt_shipcost'] = $header['amt_shipcost'];
             }
+            // dd(['price_base' => (float) $detail->price_base]);
+            // dd([
+            //     'amt (bulat PHP)' => $amt,
+            //     'price_beforetax (bulat PHP)' => $price_beforetax,
+            //     'qty (bulat PHP)' => $qty,
+            //     'amt_beforetax (hitung manual)' => $amt_beforetax,
+            //     'taxPct (parameter)' => $taxPct,
+            //     'amt_tax (hitung manual)' => $amt_tax,
+            //     'amt_adjustdtl' => round($amt - $amt_beforetax - $amt_tax, 5),
+            // ]);
+            $detailData[] = $row;
             $trSeq++;
             $totalAmount += (float) $detail->amt;
         }
@@ -254,6 +300,10 @@ class BillingService
     private function saveHeader(array $headerData)
     {
         $billingHdr = null;
+        // Pastikan print_date tidak null, gunakan default '1900-01-01' jika kosong
+        if (empty($headerData['print_date'])) {
+            $headerData['print_date'] = '1900-01-01';
+        }
         if (!empty($headerData['id'])) {
             $billingHdr = BillingHdr::find($headerData['id']);
         }
@@ -269,9 +319,10 @@ class BillingService
         $headerData['reff_type'] = $billingHdr->tr_type;
         $headerData['reff_code'] = $billingHdr->tr_code;
         $headerData['amt'] = $billingHdr->amt;
+        $headerData['print_date'] = $billingHdr->print_date;
 
         // Update partner balance dan dapatkan partnerbal_id
-        $partnerBalId = $this->partnerBalanceService->updFromBilling( $headerData);
+        $partnerBalId = $this->partnerBalanceService->updFromBilling($headerData);
 
         // Update BillingHdr dengan partnerbal_id
         $billingHdr->partnerbal_id = $partnerBalId;

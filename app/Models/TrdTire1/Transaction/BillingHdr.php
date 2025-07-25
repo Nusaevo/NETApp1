@@ -18,26 +18,30 @@ class BillingHdr extends BaseModel
     }
 
     protected $fillable = [
-        'tr_code',
         'tr_type',
+        'tr_code',
         'tr_date',
         'reff_code',
         'partner_id',
         'partner_code',
+        'tax_id',
+        'tax_code',
+        'tax_pct',
         'payment_term_id',
         'payment_term',
         'payment_due_days',
         'curr_id',
         'curr_code',
         'curr_rate',
-        'status_code',
-        'print_date',
+        'partnerbal_id',
         'amt',
         'amt_beforetax',
         'amt_tax',
+        'amt_adjustdtl',
+        'amt_adjusthdr',
         'amt_shipcost',
         'amt_reff',
-        'partnerbal_id'
+        'print_date',
     ];
 
     #region Relations

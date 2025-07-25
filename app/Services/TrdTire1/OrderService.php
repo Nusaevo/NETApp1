@@ -100,6 +100,7 @@ class OrderService
 
     private function saveDetails(array $headerData, array $detailData): array
     {
+        // dd($detailData); // Pastikan field price_afterdisc dan price_beforetax ada dan nilainya benar
         //throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');

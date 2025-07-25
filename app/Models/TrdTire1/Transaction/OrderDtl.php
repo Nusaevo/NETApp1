@@ -18,24 +18,33 @@ class OrderDtl extends BaseModel
 
     protected $table = 'order_dtls';
     protected $fillable = [
-        'tr_code',
         'trhdr_id',
         'tr_type',
+        'tr_code',
         'tr_seq',
         'matl_id',
         'matl_code',
-        'matl_descr',
         'matl_uom',
+        'matl_descr',
         'qty',
         'qty_uom',
         'qty_base',
-        'qty_reff',
         'price',
+        'price_curr',
+        'price_uom',
+        'price_base',
+        'disc_pct',
+        'price_afterdisc',
+        'price_beforetax',
         'amt',
         'amt_beforetax',
+        'amt_adjustdtl',
         'amt_tax',
-        'disc_pct',
-        'price_uom',
+        'qty_reff',
+        'gt_process_date',
+        'gt_tr_code',
+        'gt_partner_id',
+        'gt_partner_code',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];
