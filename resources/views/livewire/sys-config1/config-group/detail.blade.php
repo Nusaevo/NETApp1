@@ -25,11 +25,11 @@
                         @include('layout.customs.form-footer')
                     </div>
                     <div class="col-md-8">
-                        <x-ui-card title="Group" height="400px">
+                        <x-ui-card title="Group">
                             @livewire('sys-config1.config-group.right-data-table', ['groupId' => $objectIdValue, 'appId' => $inputs['app_id'], 'selectedMenus' => $selectedMenus])
                         </x-ui-card>
 
-                        <x-ui-card title="Users" height="400px">
+                        <x-ui-card title="Users">
                             @livewire('sys-config1.config-group.user-data-table', ['groupId' => $objectIdValue, 'selectedUserIds' => $selectedUserIds])
                         </x-ui-card>
                     </div>
