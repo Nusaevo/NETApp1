@@ -24,10 +24,8 @@ class BillingService
 
     public function addBilling(array $headerData, array $detailData)
     {
-
-        // dd('addBilling called with headerData:', $headerData, 'and detailData:', $detailData);
+        // dd($headerData, $detailData);
         $billingHdr = $this->saveHeader($headerData);
-        $taxPct = $billingHdr->tax_pct;
 
         $headerData['id'] = $billingHdr->id;
 
@@ -35,27 +33,12 @@ class BillingService
             $detail['trhdr_id'] = $billingHdr->id;
             $detail['tr_type'] = $billingHdr->tr_type;
             $detail['tr_code'] = $billingHdr->tr_code;
-            $detail['amt_tax'] = (float) $detail['price_beforetax'] * (float) $detail['qty'] * (float) $taxPct / 100;
+            // $detail['amt_tax'] = (float) $detail['price_beforetax'] * (float) $detail['qty'] * (float) $taxPct / 100;
         }
         unset($detail);
-        // dd($newDetailData);
+        // dd($detailData);
         $this->saveDetail($headerData, $detailData);
 
-        // Update total header
-        $totals = BillingDtl::where('trhdr_id', $billingHdr->id)
-            ->selectRaw('
-                SUM(amt) as amt,
-                SUM(amt_beforetax) as amt_beforetax,
-                SUM(amt_tax) as amt_tax,
-                SUM(amt_adjustdtl) as amt_adjustdtl
-            ')
-            ->first();
-
-        $billingHdr->amt = $totals->amt;
-        $billingHdr->amt_beforetax = $totals->amt_beforetax;
-        $billingHdr->amt_tax = $totals->amt_tax;
-        $billingHdr->amt_adjustdtl = $totals->amt_adjustdtl;
-        $billingHdr->save();
     }
 
     public function updBilling(int $billingId, array $headerData, array $detailData)
@@ -84,22 +67,6 @@ class BillingService
 
         // Simpan detail baru
         $this->saveDetail($headerData, $detailData);
-
-        // Update total header
-        $totals = BillingDtl::where('trhdr_id', $billingHdr->id)
-            ->selectRaw('
-                SUM(amt) as amt,
-                SUM(amt_beforetax) as amt_beforetax,
-                SUM(amt_tax) as amt_tax,
-                SUM(amt_adjustdtl) as amt_adjustdtl
-            ')
-            ->first();
-
-        $billingHdr->amt = $totals->amt;
-        $billingHdr->amt_beforetax = $totals->amt_beforetax;
-        $billingHdr->amt_tax = $totals->amt_tax;
-        $billingHdr->amt_adjustdtl = $totals->amt_adjustdtl;
-        $billingHdr->save();
     }
 
     public function delBilling(int $billingId)
@@ -111,6 +78,7 @@ class BillingService
     public function addfromDelivery(int $deliveryId)
     {
         $dataBilling = $this->prepareDataFromDelivery($deliveryId);
+        // dd($dataBilling);
         $headerData = $dataBilling['headerData'];
         $detailData = $dataBilling['detailData'];
         // Simpan billing menggunakan method yang sudah ada
@@ -124,7 +92,7 @@ class BillingService
         $detailData = $dataBilling['detailData'];
 
         $billingDtl = BillingDtl::where('dlvhdr_id', $deliveryId)->first();
-        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
+        // $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
         // dd($billingDtl, $headerData, $detailData);
         // 4. Update billing
         $this->updBilling($billingDtl->trhdr_id, $headerData, $detailData);
@@ -191,21 +159,23 @@ class BillingService
                 od.price_uom,
                 od.price_base,
                 'O' AS status_code,
-                ROUND(od.price * (1 - od.disc_pct / 100), 5) AS price,
-                ROUND(od.price_beforetax, 5) AS price_beforetax,
-                ROUND(od.price * (1 - od.disc_pct / 100), 5) AS price_afterdisc,
+                od.price AS price,
+                od.price_afterdisc,
+                od.price_beforetax,
+                od.price_beforetax * dd.qty AS amt_beforetax,
+                ROUND(od.price_beforetax * dd.qty * (oh.tax_pct / 100), 0) AS amt_tax,
                 CASE
                     WHEN oh.tax_code IN ('I', 'N') THEN
-                        ROUND(od.price * (1 - od.disc_pct / 100) * dd.qty, 5)
+                        od.price_afterdisc * dd.qty
                     WHEN oh.tax_code = 'E' THEN
-                        ROUND(od.price * (1 - od.disc_pct / 100) * dd.qty * (1 + oh.tax_pct / 100), 5)
+                        od.price_afterdisc * dd.qty + ROUND(od.price_beforetax * dd.qty * (1 + oh.tax_pct / 100), 0)
                     ELSE 0
                 END AS amt
             ")
             ->get();
 
         $header = (array) $dataBilling[0];
-        $taxPct = (float) ($header['tax_pct']);
+        // $taxPct = (float) ($header['tax_pct']);
         // $headerData = [];
 
         // dd($headerData);
@@ -224,6 +194,10 @@ class BillingService
             'curr_code' => $header['curr_code'],
             'curr_rate' => $header['curr_rate'],
             'print_date' => null,
+            'amt' => 0,
+            'amt_beforetax' => 0,
+            'amt_tax' => 0,
+            'amt_adjustdtl' => 0,
             'amt_reff' => 0,
             'amt_shipcost' => $header['amt_shipcost'],
             'status_code' => $header['status_code'],
@@ -233,16 +207,9 @@ class BillingService
         ];
         // dd($headerData);
 
-        $totalAmount = 0;
         $detailData = [];
         $trSeq = 1;
         foreach ($dataBilling as $detail) {
-            $amt = round((float) $detail->amt, 5);
-            $price_beforetax = round((float) $detail->price_beforetax, 5);
-            $qty = round((float) $detail->qty, 5);
-            $amt_beforetax = $price_beforetax * $qty;
-            $amt_tax = $amt_beforetax * (float) $taxPct / 100;
-
 
             $row = [
                 'tr_seq' => $trSeq,
@@ -256,41 +223,33 @@ class BillingService
                 'matl_code' => $detail->matl_code,
                 'matl_uom' => $detail->matl_uom,
                 'descr' => $detail->matl_descr,
-                'qty' => $qty,
+                'qty' => $detail->qty,
                 'qty_uom' => $detail->qty_uom,
                 'qty_base' => (float) $detail->qty_base,
                 'price' => (float) $detail->price,
                 'price_uom' => $detail->price_uom,
                 'price_base' => (float) $detail->price_base,
-                'amt' => $amt,
-                'amt_tax' => $amt_tax,
+                'amt' => $detail->amt,
+                'amt_tax' => $detail->amt_tax,
                 'amt_reff' => 0,
-                'price_beforetax' => $price_beforetax,
-                'amt_beforetax' => $amt_beforetax,
+                'price_beforetax' => $detail->price_beforetax,
+                'amt_beforetax' => $detail->amt_beforetax,
                 'price_afterdisc' => (float) $detail->price_afterdisc,
-                'amt_adjustdtl' => round($amt - $amt_beforetax - $amt_tax, 5),
+                'amt_adjustdtl' => (float) $detail->amt - (float) $detail->amt_beforetax - (float) $detail->amt_tax,
             ];
             if ($trSeq == 1) {
                 $row['amt_shipcost'] = $header['amt_shipcost'];
             }
-            // dd(['price_base' => (float) $detail->price_base]);
-            // dd([
-            //     'amt (bulat PHP)' => $amt,
-            //     'price_beforetax (bulat PHP)' => $price_beforetax,
-            //     'qty (bulat PHP)' => $qty,
-            //     'amt_beforetax (hitung manual)' => $amt_beforetax,
-            //     'taxPct (parameter)' => $taxPct,
-            //     'amt_tax (hitung manual)' => $amt_tax,
-            //     'amt_adjustdtl' => round($amt - $amt_beforetax - $amt_tax, 5),
-            // ]);
             $detailData[] = $row;
             $trSeq++;
-            $totalAmount += (float) $detail->amt;
+            $headerData['amt'] += (float) $detail->amt;
+            $headerData['amt_beforetax'] += (float) $detail->amt_beforetax;
+            $headerData['amt_tax'] += (float) $detail->amt_tax;
+            $headerData['amt_adjustdtl'] += ((float) $detail->amt - (float) $detail->amt_beforetax - (float) $detail->amt_tax);
         }
 
         // dd($headerData, $detailData);
         // Update total amount di header
-        $headerData['amt'] = $totalAmount;
         return [
             'headerData' => $headerData,
             'detailData' => $detailData
@@ -333,6 +292,7 @@ class BillingService
 
     private function saveDetail(array $headerData, array $detailData)
     {
+        // dd($detailData);
         foreach ($detailData as $detail) {
             // Simpan detail
             $billingDetail = new BillingDtl($detail);

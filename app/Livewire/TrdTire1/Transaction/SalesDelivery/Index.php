@@ -165,10 +165,6 @@ class Index extends BaseComponent
                     $detail['trhdr_id'] = $result['header']->id;
                 }
                 unset($detail);
-
-                // Tambahkan pembuatan BillingHdr jika diperlukan
-                // app(BillingService::class)->addBilling($headerData, $detailData);
-
                 $successCount++;
             }
 

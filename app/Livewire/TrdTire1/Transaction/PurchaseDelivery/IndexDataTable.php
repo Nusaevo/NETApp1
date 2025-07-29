@@ -73,29 +73,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
                     $totalQty = DelivDtl::where('trhdr_id', $row->id)->sum('qty');
-                    return $totalQty;
+                    return round($totalQty);
                 })
                 ->sortable(),
-            // Column::make($this->trans("amt"), "total_amt_in_idr")
-            //     ->label(function ($row) {
-            //         $totalAmt = 0;
-
-            //         $orderDetails = DelivDtl::where('trhdr_id', $row->id)->get();
-
-            //         if ($orderDetails->isEmpty()) {
-            //             return 'N/A';
-            //         }
-            //     })
-            //     ->sortable(),
-
-            // Column::make($this->trans('status'), "status_code")
-            //     ->sortable()
-            //     ->format(function ($value, $row, Column $column) {
-            //         return Status::getStatusString($value);
-            //     }),
-            // Column::make($this->trans("created_date"), "created_at")
-            //     ->searchable()
-            //     ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [

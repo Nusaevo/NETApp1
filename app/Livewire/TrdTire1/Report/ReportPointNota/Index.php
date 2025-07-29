@@ -105,14 +105,12 @@ class Index extends BaseComponent
                 sr.reward AS point,
                 (od.qty * sr.reward) AS total_point
             FROM order_dtls od
-            JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.deleted_at IS NULL
+            JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code = 'X'
             JOIN partners p ON p.id = oh.partner_id
-            JOIN materials m ON m.id = od.matl_id
-            LEFT JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+            JOIN sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
+            JOIN materials m ON m.id = od.matl_id AND m.brand = sr.brand
             WHERE od.tr_type = 'SO'
-                AND od.deleted_at IS NULL
                 $whereDate
-                AND sr.code IS NOT NULL
             ORDER BY p.name, oh.tr_code, od.matl_code
         ";
 

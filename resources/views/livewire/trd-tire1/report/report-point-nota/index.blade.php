@@ -43,7 +43,7 @@
                             <div style="max-width:2480px; margin:auto; padding:20px;">
                                 <h4>TOKO BAN CAHAYA TERANG - SURABAYA</h4>
                                 <h3 style="text-decoration:underline; text-align:left;">
-                                    DATA PENJUALAN GT RADIAL per Customer
+                                    {!! $menuName !!}
                                 </h3>
                                 <p style="text-align:left; margin-bottom:0;">
                                     <strong>Kode Program : {{ $category }}</strong>
