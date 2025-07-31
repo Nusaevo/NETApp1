@@ -305,19 +305,27 @@ class Detail extends BaseComponent
         if ($matl_id) {
             $material = Material::find($matl_id);
             if ($material) {
+                // Cari UOM untuk material ini
                 $matlUom = MatlUom::where('matl_id', $matl_id)
-                    -> where('matl_uom', $material->uom)->first();
-                // dd($matlUom);
-                if ($matlUom) {
-                    $this->input_details[$key]['price'] = $matlUom->last_buying_price;
-                } else {
-                    $this->dispatch('error', __('generic.error.material_uom_not_found'));
-                }
+                    ->where('matl_uom', $material->uom)
+                    ->first();
+
+                // Set data material terlebih dahulu
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
                 $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->input_details[$key]['disc_pct'] = 0;
+
+                // Set harga berdasarkan UOM yang ditemukan
+                if ($matlUom) {
+                    $this->input_details[$key]['price'] = $matlUom->last_buying_price ?? 0;
+                } else {
+                    // Jika UOM tidak ditemukan, set harga 0 dan tampilkan warning
+                    $this->input_details[$key]['price'] = 0;
+                    $this->dispatch('warning', __('generic.error.material_uom_not_found') . ' - Material: ' . $material->name . ' (UOM: ' . $material->uom . ')');
+                }
+
                 $this->calcItemAmount($key);
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));

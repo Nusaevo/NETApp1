@@ -28,6 +28,13 @@
                             </button>
                         </div>
                     </div>
+                    <div class="row mt-2">
+                        <div class="col-md-12">
+                            <x-ui-option model="point_flag" label="Semua Point" :options="['isPoint' => 'Ya']"
+                                type="checkbox" layout="horizontal" :action="$actionValue" :checked="$point_flag"/>
+                                {{-- @dump($point_flag) --}}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -36,7 +43,7 @@
         <div id="print">
             <div>
                 <br>
-                <link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}">
+                {{-- <link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}"> --}}
                 <div class="card">
                     <div class="card-body">
                         <div class="container mb-5 mt-3">

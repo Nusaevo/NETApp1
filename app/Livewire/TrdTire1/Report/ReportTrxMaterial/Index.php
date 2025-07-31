@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Report\ReportPointNota;
+namespace App\Livewire\TrdTire1\Report\ReportTrxMaterial;
 
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session};
@@ -91,11 +91,11 @@ class Index extends BaseComponent
         ];
         $whereDate = '';
         if (!empty($this->startCode)) {
-            $whereDate .= " AND oh.tr_date >= :start_date";
+            $whereDate .= " AND dh.tr_date >= :start_date";
             $bindings['start_date'] = $this->startCode;
         }
-        if (!empty($this->endCode)) {
-            $whereDate .= " AND oh.tr_date <= :end_date";
+                if (!empty($this->endCode)) {
+            $whereDate .= " AND dh.tr_date <= :end_date";
             $bindings['end_date'] = $this->endCode;
         }
 
@@ -103,50 +103,81 @@ class Index extends BaseComponent
         $salesRewardJoin = $this->point_flag ? "LEFT OUTER JOIN" : "JOIN";
 
         // Tambahkan kondisi WHERE untuk memfilter data ketika tidak menggunakan LEFT OUTER JOIN
-        $whereSalesReward = $this->point_flag ? "" : " AND sr.reward IS NOT NULL";
+        $whereSalesReward = $this->point_flag ? "" : " AND r.reward IS NOT NULL";
 
         $query = "
             SELECT
-                oh.tr_code AS no_nota,
-                od.matl_code AS kode_brg,
-                od.matl_descr AS nama_barang,
-                p.name AS nama_pelanggan,
-                p.city AS kota_pelanggan,
-                od.qty AS total_ban,
-                COALESCE(sr.reward, 0) AS point,
-                (od.qty * COALESCE(sr.reward, 0)) AS total_point
-            FROM order_dtls od
-            JOIN order_hdrs oh ON oh.id = od.trhdr_id AND oh.tr_type = 'SO' AND oh.status_code = 'X'
-            JOIN partners p ON p.id = oh.partner_id
-            $salesRewardJoin sales_rewards sr ON sr.code = :sr_code AND sr.matl_code = od.matl_code
-            JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
-            WHERE od.tr_type = 'SO'
-                $whereDate
-                $whereSalesReward
-            ORDER BY p.name, oh.tr_code, od.matl_code
+                t.matl_code AS kode_brg,
+                t.matl_desc AS nama_barang,
+                COALESCE(ROUND(r.reward / r.qty, 3), 0) AS point,
+                t.qty_beli,
+                COALESCE(ROUND(t.qty_beli / r.qty * r.reward, 0), 0) AS point_beli,
+                t.qty_jual,
+                COALESCE(ROUND(t.qty_jual / r.qty * r.reward, 0), 0) AS point_jual
+            FROM (
+                SELECT
+                    COALESCE(b.matl_id, j.matl_id) AS matl_id,
+                    COALESCE(b.code, j.code) AS matl_code,
+                    COALESCE(b.name, j.name) AS matl_desc,
+                    COALESCE(b.qty_beli, 0) AS qty_beli,
+                    COALESCE(j.qty_jual, 0) AS qty_jual
+                FROM (
+                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_beli
+                    FROM deliv_hdrs dh
+                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
+                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    WHERE dh.tr_type = 'PD'
+                        $whereDate
+                    GROUP BY dd.matl_id, m.code, m.name
+                ) b
+                LEFT JOIN (
+                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_jual
+                    FROM deliv_hdrs dh
+                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
+                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    WHERE dh.tr_type = 'SD'
+                        $whereDate
+                    GROUP BY dd.matl_id, m.code, m.name
+                ) j ON j.matl_id = b.matl_id
+
+                UNION
+
+                SELECT
+                    j.matl_id,
+                    j.code AS matl_code,
+                    j.name AS matl_desc,
+                    0 AS qty_beli,
+                    j.qty_jual
+                FROM (
+                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_jual
+                    FROM deliv_hdrs dh
+                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
+                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    WHERE dh.tr_type = 'SD'
+                        $whereDate
+                    GROUP BY dd.matl_id, m.code, m.name
+                ) j
+                LEFT JOIN (
+                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_beli
+                    FROM deliv_hdrs dh
+                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
+                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    WHERE dh.tr_type = 'PD'
+                        $whereDate
+                    GROUP BY dd.matl_id, m.code, m.name
+                ) b ON b.matl_id = j.matl_id
+                WHERE b.matl_id IS NULL
+            ) t
+            $salesRewardJoin sales_rewards r ON r.matl_code = t.matl_code AND r.code = :sr_code
+            WHERE 1=1 $whereSalesReward
+            ORDER BY t.matl_code
         ";
         // dd($query);
 
         $rows = DB::connection(Session::get('app_code'))->select($query, $bindings);
 
-        // Grouping per customer
-        $grouped = [];
-        foreach ($rows as $row) {
-            $customerKey = $row->nama_pelanggan . ' - ' . $row->kota_pelanggan;
-            if (!isset($grouped[$customerKey])) {
-                $grouped[$customerKey] = [
-                    'customer' => $customerKey,
-                    'details' => [],
-                    'total_ban' => 0,
-                    'total_point' => 0,
-                ];
-            }
-            $grouped[$customerKey]['details'][] = $row;
-            $grouped[$customerKey]['total_ban'] += $row->total_ban;
-            $grouped[$customerKey]['total_point'] += $row->total_point;
-        }
-
-        $this->results = array_values($grouped);
+        // Langsung gunakan hasil query tanpa grouping karena sudah dalam format yang diinginkan
+        $this->results = $rows;
     }
 
     public function resetFilters()

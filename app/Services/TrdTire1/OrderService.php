@@ -4,6 +4,7 @@ namespace App\Services\TrdTire1;
 
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Models\TrdTire1\Transaction\OrderDtl;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Exception;
 
 class OrderService
@@ -28,7 +29,7 @@ class OrderService
             $headerData['id'] = $order->id;
 
             // Simpan detail
-            $this->saveDetails($headerData, $detailData);
+            $this->saveDetails($order->id, $headerData, $detailData);
 
             return $order;
         } catch (Exception $e) {
@@ -47,8 +48,7 @@ class OrderService
 
             // Hanya update detail jika $detailData tidak kosong
             if (!empty($detailData)) {
-                $this->deleteDetails($orderId);
-                $this->saveDetails($headerData, $detailData);
+                $this->saveDetails($orderId, $headerData, $detailData);
             }
 
             return $order;
@@ -88,7 +88,14 @@ class OrderService
     {
         if ($orderId) {
             $order = OrderHdr::findOrFail($orderId);
-            $order->update($headerData);
+
+            // Set data baru ke model untuk pengecekan isDirty
+            $order->fill($headerData);
+
+            // Update hanya jika ada perubahan data
+            if ($order->isDirty()) {
+                $order->save();
+            }
         } else {
             // Pastikan print_date selalu null saat create order baru
             $headerData['print_date'] = null;
@@ -98,36 +105,92 @@ class OrderService
         return $order;
     }
 
-    private function saveDetails(array $headerData, array $detailData): array
+    private function saveDetails(int $orderId, array $headerData, array $detailData): array
     {
-        // dd($detailData); // Pastikan field price_afterdisc dan price_beforetax ada dan nilainya benar
-        //throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
 
-        $savedDetails = [];
+        $this->inventoryService->delIvtLog($orderId);
+
+        $updatedDetails = [];
+        $existingDetailIds = [];
+
         foreach ($detailData as $detail) {
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
 
-            $savedDetail = OrderDtl::create($detail);
-            $savedDetails[] = $savedDetail;
+            // Jika ada ID detail, update existing record tanpa mengubah tr_seq
+            if (isset($detail['id']) && !empty($detail['id'])) {
+                $existingDetail = OrderDtl::withTrashed()->find($detail['id']);
 
-                        // if PO (check if tr_code starts with 'PO')
+                if ($existingDetail) {
+                    // Hapus ivt_logs untuk detail ini terlebih dahulu
+                    $this->inventoryService->delIvtLog(0, $existingDetail->id);
+
+                    // Hapus tr_seq dari array update agar tidak berubah
+                    unset($detail['tr_seq']);
+
+                    // Set data baru ke model untuk pengecekan isDirty
+                    $existingDetail->fill($detail);
+
+                    // Update hanya jika ada perubahan data
+                    if ($existingDetail->isDirty()) {
+                        $existingDetail->save();
+                    }
+
+                    $updatedDetails[] = $existingDetail;
+                    $existingDetailIds[] = $existingDetail->id;
+
+                    // Update last buying price jika PO
+                    if (str_starts_with($headerData['tr_code'], 'PO')) {
+                        $this->materialService->updLastBuyingPrice(
+                            $existingDetail->matl_id,
+                            $existingDetail->matl_uom,
+                            $existingDetail->price,
+                            $headerData['tr_date']
+                        );
+                    }
+
+                    // Add reservation inventory untuk detail yang diupdate
+                    $this->inventoryService->addReservation($headerData, $existingDetail->toArray());
+                    continue;
+                }
+            }
+
+            // Jika tidak ada ID atau record tidak ditemukan, create new record dengan tr_seq baru
+            $detail['tr_seq'] = $this->getNextSequence($orderId);
+            $newDetail = OrderDtl::create($detail);
+            $updatedDetails[] = $newDetail;
+            $existingDetailIds[] = $newDetail->id;
+
+            // Update last buying price jika PO
             if (str_starts_with($headerData['tr_code'], 'PO')) {
                 $this->materialService->updLastBuyingPrice(
-                    $savedDetail->matl_id,
-                    $savedDetail->matl_uom,
-                    $savedDetail->price,
+                    $newDetail->matl_id,
+                    $newDetail->matl_uom,
+                    $newDetail->price,
                     $headerData['tr_date']
                 );
             }
-            // Kirim detail yang baru disimpan ke addReservation
-            $this->inventoryService->addReservation($headerData, $savedDetail->toArray());
+
+            // Add new reservation
+            $this->inventoryService->addReservation($headerData, $newDetail->toArray());
         }
-        return $savedDetails;
+
+        // Hapus detail yang tidak ada dalam array detailData
+        $deletedDetails = OrderDtl::where('trhdr_id', $orderId)
+            ->whereNotIn('id', $existingDetailIds)
+            ->get();
+
+        foreach ($deletedDetails as $deletedDetail) {
+            // Hapus ivt_logs untuk detail yang dihapus
+            $this->inventoryService->delIvtLog(0, $deletedDetail->id);
+            $deletedDetail->delete();
+        }
+
+        return $updatedDetails;
     }
 
     private function deleteHeader(int $orderID)
@@ -186,5 +249,14 @@ class OrderService
             'label' => $order->tr_code,
             'value' => $order->tr_code,
         ])->toArray();
+    }
+    private function getNextSequence(int $orderId): int
+    {
+        // withTrashed() agar termasuk baris soft-deleted
+        $max = OrderDtl::withTrashed()
+            ->where('trhdr_id', $orderId)
+            ->max('tr_seq');
+
+        return ($max ?? 0) + 1;
     }
 }

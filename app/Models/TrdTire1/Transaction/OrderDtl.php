@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class OrderDtl extends BaseModel
 {
-    // use SoftDeletes;
+    use SoftDeletes;
 
     protected $table = 'order_dtls';
     protected $fillable = [
@@ -70,16 +70,16 @@ class OrderDtl extends BaseModel
         return $this->belongsTo(SalesReward::class, 'matl_id', 'matl_id');
     }
 
-    public function DelivDtl()
+    public function DelivPacking()
     {
-        return $this->hasMany(DelivDtl::class, 'reffdtl_id', 'id');
+        return $this->hasMany(DelivPacking::class, 'reffdtl_id', 'id');
     }
     #endregion
 
     #region Delivery Status Methods
     public function hasDelivery()
     {
-        return $this->DelivDtl()->exists();
+        return $this->DelivPacking()->exists();
     }
 
     public function isEditable()

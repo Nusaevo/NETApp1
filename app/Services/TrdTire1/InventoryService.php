@@ -179,10 +179,19 @@ class InventoryService
         return $ivtBal->id;
     }
 
-    public function delIvtLog(int $ivttrId)
+        public function delIvtLog(int $ivttrId, ?int $trdtlId = null)
     {
-        // Hapus semua log inventory terkait trHdrId
-        $logs = IvtLog::where('trhdr_id', $ivttrId)->get();
+        // Hapus log inventory berdasarkan trHdrId dan opsional trdtlId
+        if ($trdtlId !== null) {
+            // Jika ada trdtlId, cari berdasarkan trdtlId saja
+            $query = IvtLog::where('trdtl_id', $trdtlId);
+        } else {
+            // Jika tidak ada trdtlId, cari berdasarkan trhdrId
+            $query = IvtLog::where('trhdr_id', $ivttrId);
+        }
+
+        $logs = $query->get();
+
         foreach ($logs as $log) {
             $ivtBal = IvtBal::find($log->ivt_id);
             if ($ivtBal) {
@@ -198,6 +207,8 @@ class InventoryService
             $log->delete();
         }
     }
+
+
 
     public function addInventory(array $headerData, array $detailData): IvttrHdr
     {

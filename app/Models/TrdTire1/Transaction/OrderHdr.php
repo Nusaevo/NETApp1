@@ -56,8 +56,8 @@ class OrderHdr extends BaseModel
         'amt_tax',
         'amt_adjustdtl',
         'amt_shipcost',
-        'print_setting',       
-        'print_remarks',       
+        'print_setting',
+        'print_remarks',
         'print_date',
         'note',
     ];

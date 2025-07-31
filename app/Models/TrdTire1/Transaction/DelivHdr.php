@@ -20,15 +20,17 @@ class DelivHdr extends BaseModel
     protected $primaryKey = 'id';
     public $timestamps = true;
     protected $fillable = [
+        'tr_date',
         'tr_type',
         'tr_code',
-        'tr_date',
         'reff_code',
         'reff_date',
         'partner_id',
         'partner_code',
+        'deliv_by',
         'amt_shipcost',
         'note',
+        'billhdr_id',
     ];
     protected $casts = [
         'tr_code' => 'string',
@@ -42,9 +44,9 @@ class DelivHdr extends BaseModel
         return $this->belongsTo(Partner::class, 'partner_id', 'id');
     }
 
-    public function DelivDtl()
+    public function DelivPacking()
     {
-        return $this->hasMany(DelivDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+        return $this->hasMany(DelivPacking::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
     }
 
     public function OrderDtl()

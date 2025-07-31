@@ -14,31 +14,22 @@ use App\Models\TrdTire1\Master\MatlUom;
 // Pastikan BillingDtl sudah di-import jika digunakan di sini
 use App\Models\TrdTire1\Transaction\{OrderDtl, BillingDtl};
 
-class DelivDtl extends BaseModel
+class DelivPicking extends BaseModel
 {
 
-    protected $table = 'deliv_dtls';
+    protected $table = 'deliv_pickings';
 
     protected $fillable = [
-        'trhdr_id',
-        'tr_type',
-        'tr_code',
+        'trpacking_id',
         'tr_seq',
-        'reffdtl_id',
-        'reffhdrtr_type',
-        'reffhdrtr_code',
-        'reffdtltr_seq',
-        'reffhdr_id',
+        'ivt_id',
         'matl_id',
         'matl_code',
         'matl_uom',
-        'matl_descr',
-        'wh_code',
-        'qty',
         'wh_id',
-        'status_code',
-        'ivt_id',
-        'batch_code'
+        'wh_code',
+        'batch_code',
+        'qty',
     ];
 
     protected static function boot()
