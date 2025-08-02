@@ -25,6 +25,7 @@ class DelivHdr extends BaseModel
         'tr_code',
         'reff_code',
         'reff_date',
+        // 'reffhdrtr_code',
         'partner_id',
         'partner_code',
         'deliv_by',
@@ -69,17 +70,17 @@ class DelivHdr extends BaseModel
 
     public function getTotalQtyAttribute()
     {
-        return (int) $this->OrderDtl()->sum('qty');
+        return (int) $this->DelivPacking()->sum('qty');
     }
 
     public function getTotalAmtAttribute()
     {
-        return (int) $this->OrderDtl()->sum('amt');
+        return (int) $this->DelivPacking()->sum('qty');
     }
 
     public function getMatlCodesAttribute()
     {
-        $matlCodes = $this->OrderDtl()->pluck('matl_code')->toArray();
+        $matlCodes = $this->DelivPacking()->pluck('matl_descr')->toArray();
         return implode(', ', $matlCodes);
     }
     #endregion

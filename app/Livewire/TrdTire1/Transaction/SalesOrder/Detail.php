@@ -194,15 +194,15 @@ class Detail extends BaseComponent
         $headerData['amt_tax'] = $totals['amt_tax'];
         // dd($headerData, $detailData);
         if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
+            $order = $this->orderService->saveOrder($headerData, $detailData);
             if (!$order) {
-                throw new Exception('Gagal membuat Purchase Order.');
+                throw new Exception('Gagal membuat Nota penjualan');
             }
             $this->object = $order;
         } else {
-            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
+            $result = $this->orderService->saveOrder($headerData, $detailData);
             if (!$result) {
-                throw new Exception('Gagal mengubah Purchase Order.');
+                throw new Exception('Gagal mengubah Nota penjualan');
             }
         }
         $this->redirectToEdit();

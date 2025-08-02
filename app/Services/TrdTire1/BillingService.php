@@ -117,11 +117,11 @@ class BillingService
     private function prepareDataFromDelivery($deliveryId): array
     {
         $dataBilling = DB::connection(Session::get('app_code'))
-            ->table('deliv_dtls as dd')
-            ->join('deliv_hdrs as dh', 'dh.id', '=', 'dd.trhdr_id')
-            ->join('order_dtls as od', 'od.id', '=', 'dd.reffdtl_id')
+            ->table('deliv_packings as dp')
+            ->join('deliv_hdrs as dh', 'dh.id', '=', 'dp.trhdr_id')
+            ->join('order_dtls as od', 'od.id', '=', 'dp.reffdtl_id')
             ->join('order_hdrs as oh', 'oh.id', '=', 'od.trhdr_id')
-            ->where('dd.trhdr_id', $deliveryId)
+            ->where('dp.trhdr_id', $deliveryId)
             ->selectRaw("
                 CASE
                     WHEN dh.tr_type = 'PD' THEN 'APB'
@@ -145,15 +145,15 @@ class BillingService
                 oh.tax_id,
                 NULL AS print_date,
                 dh.id AS dlvhdr_id,
-                dd.id AS dlvdtl_id,
+                dp.id AS dlvdtl_id,
                 dh.tr_type AS dlvhdrtr_type,
                 dh.tr_code AS dlvhdrtr_code,
-                dd.tr_seq AS dlvdtltr_seq,
-                dd.matl_id,
-                dd.matl_code,
-                dd.matl_uom,
-                dd.matl_descr,
-                dd.qty,
+                dp.tr_seq AS dlvdtltr_seq,
+                od.matl_id,
+                od.matl_code,
+                od.matl_uom,
+                dp.matl_descr,
+                dp.qty,
                 od.qty_uom,
                 od.qty_base,
                 od.price_uom,
@@ -162,13 +162,13 @@ class BillingService
                 od.price AS price,
                 od.price_afterdisc,
                 od.price_beforetax,
-                od.price_beforetax * dd.qty AS amt_beforetax,
-                ROUND(od.price_beforetax * dd.qty * (oh.tax_pct / 100), 0) AS amt_tax,
+                od.price_beforetax * dp.qty AS amt_beforetax,
+                ROUND(od.price_beforetax * dp.qty * (oh.tax_pct / 100), 0) AS amt_tax,
                 CASE
                     WHEN oh.tax_code IN ('I', 'N') THEN
-                        od.price_afterdisc * dd.qty
+                        od.price_afterdisc * dp.qty
                     WHEN oh.tax_code = 'E' THEN
-                        od.price_afterdisc * dd.qty + ROUND(od.price_beforetax * dd.qty * (1 + oh.tax_pct / 100), 0)
+                        od.price_afterdisc * dp.qty + ROUND(od.price_beforetax * dp.qty * (1 + oh.tax_pct / 100), 0)
                     ELSE 0
                 END AS amt
             ")
