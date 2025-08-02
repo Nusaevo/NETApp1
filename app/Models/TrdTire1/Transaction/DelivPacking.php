@@ -2,23 +2,21 @@
 
 namespace App\Models\TrdTire1\Transaction;
 
-use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Master\Material;
+use App\Models\Base\BaseModel;
 use App\Models\TrdTire1\Inventories\IvtBal;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\TrdTire1\Master\SalesReward;
 use Illuminate\Support\Facades\DB;
-use App\Enums\Constant;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\TrdTire1\Inventories\IvtLog;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdTire1\Master\MatlUom;
-// Pastikan BillingDtl sudah di-import jika digunakan di sini
-use App\Models\TrdTire1\Transaction\{OrderDtl, BillingDtl};
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class DelivPacking extends BaseModel
 {
+    use SoftDeletes;
 
-    protected $table = 'deliv_packings ';
-
+    protected $table = 'deliv_packings';
     protected $fillable = [
         'trhdr_id',
         'tr_type',
@@ -33,37 +31,22 @@ class DelivPacking extends BaseModel
         'qty',
     ];
 
+    protected $appends = ['has_delivery', 'is_editable'];
+
     protected static function boot()
     {
         parent::boot();
-
-    }
-
-    /**
-     * Scope untuk mendapatkan data berdasarkan delivery header dan tipe transaksi
-     */
-    public function scopeGetByDelivHdr($query, $id, $trType)
-    {
-        return $query->where('trhdr_id', $id)
-            ->where('tr_type', $trType);
     }
 
     #region Relations
-
-    /**
-     * Relasi ke master Material
-     */
     public function Material()
     {
         return $this->belongsTo(Material::class, 'matl_id', 'id');
     }
 
-    /**
-     * Relasi ke delivery header berdasarkan tipe transaksi
-     */
     public function DelivHdr()
     {
-        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id');
+        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
 
     public function OrderDtl()
@@ -71,11 +54,38 @@ class DelivPacking extends BaseModel
         return $this->belongsTo(OrderDtl::class, 'reffdtl_id', 'id');
     }
 
-    public function IvtBal()
+    public function DelivPickings()
     {
-        return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')->where('wh_id', $this->wh_id);
+        return $this->hasMany(DelivPicking::class, 'trpacking_id', 'id');
+    }
+    #endregion
+
+    #region Delivery Status Methods
+    public function hasDelivery()
+    {
+        return $this->DelivPickings()->exists();
     }
 
+    public function isEditable()
+    {
+        return !$this->hasDelivery();
+    }
+
+    public function getHasDeliveryAttribute()
+    {
+        return $this->hasDelivery();
+    }
+
+    public function getIsEditableAttribute()
+    {
+        return $this->isEditable();
+    }
     #endregion
+
+    public function scopeGetByDelivHdr($query, $id, $trType)
+    {
+        return $query->where('trhdr_id', $id)
+            ->where('tr_type', $trType);
+    }
 }
 

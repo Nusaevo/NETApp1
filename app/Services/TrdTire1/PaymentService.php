@@ -26,7 +26,9 @@ class PaymentService
             $headerData['id'] = $paymentHdr->id;
 
             $this->savePaymentDetail($headerData, $detailData);
+
             $this->savePaymentSrc($headerData, $sourceData);
+            
             if (!empty($advanceData)) {
                 $this->savePaymentAdv($headerData, $advanceData);
             }

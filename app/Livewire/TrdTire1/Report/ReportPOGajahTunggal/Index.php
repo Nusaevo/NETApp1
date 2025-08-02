@@ -117,23 +117,22 @@ class Index extends BaseComponent
             SELECT
                 dh.reff_date AS tgl_sj,
                 dh.tr_code AS no_nota,
-                dd.matl_code AS kode_brg,
-                dd.matl_descr AS nama_barang,
+                dp.matl_descr AS nama_barang,
                 p.name AS nama_pelanggan,
                 p.city AS kota_pelanggan,
-                dd.qty AS total_ban,
+                dp.qty AS total_ban,
                 sr.reward AS point,
-                (dd.qty * sr.reward) AS total_point
-            FROM deliv_dtls dd
-            JOIN deliv_hdrs dh ON dh.id = dd.trhdr_id AND dh.tr_type = 'PD'
+                (dp.qty * sr.reward) AS total_point
+            FROM deliv_packings dp
+            JOIN deliv_hdrs dh ON dh.id = dp.trhdr_id AND dh.tr_type = 'PD'
             JOIN partners p ON p.id = dh.partner_id
-            JOIN sales_rewards sr ON sr.code = '{$rewardCode}' AND sr.matl_code = dd.matl_code
-            JOIN materials m ON m.id = dd.matl_id AND m.brand = sr.brand
-            WHERE dd.tr_type = 'PD'
+            JOIN sales_rewards sr ON sr.code = '{$rewardCode}' AND sr.matl_code = dp.matl_descr
+            JOIN materials m ON m.id = dp.matl_id AND m.brand = sr.brand
+            WHERE dp.tr_type = 'PD'
                 AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$brandFilter}
                 {$categoryFilter}
-            ORDER BY p.name, dh.tr_code, dd.matl_code
+            ORDER BY p.name, dh.tr_code, dp.matl_descr
         ";
         $rows = DB::connection(Session::get('app_code'))->select($query);
         // Grouping per customer
@@ -151,7 +150,6 @@ class Index extends BaseComponent
             $grouped[$customerKey]['details'][] = [
                 'tgl_sj' => $row->tgl_sj,
                 'no_nota' => $row->no_nota,
-                'kode_brg' => $row->kode_brg,
                 'nama_barang' => $row->nama_barang,
                 'total_ban' => $row->total_ban,
                 'point' => $row->point,
@@ -179,7 +177,7 @@ class Index extends BaseComponent
         $matlCondition = '';
         if ($matlId !== null) {
             $matlId = (int) $matlId;
-            $matlCondition = "AND dd.matl_id = {$matlId}";
+            $matlCondition = "AND dp.matl_id = {$matlId}";
         }
 
         $query = "
@@ -192,29 +190,23 @@ class Index extends BaseComponent
                 dh.partner_id,
                 p.name AS partner_name,
                 p.city AS partner_city,
-                dd.id AS deliv_dtl_id,
-                dd.tr_seq AS seq_no,
-                dd.matl_id,
-                dd.matl_code,
-                dd.matl_descr,
-                dd.matl_uom,
-                dd.qty,
-                dd.wh_code,
-                dd.wh_id,
-                dd.status_code,
-                dd.batch_code,
+                dp.id AS deliv_dtl_id,
+                dp.tr_seq AS seq_no,
+                dp.matl_id,
+                dp.matl_descr,
+                dp.qty,
                 m.name AS material_name,
                 m.descr AS material_description
             FROM deliv_hdrs dh
-            JOIN deliv_dtls dd ON dd.trhdr_id = dh.id AND dd.tr_type = dh.tr_type
+            JOIN deliv_packings dp ON dp.trhdr_id = dh.id AND dp.tr_type = dh.tr_type
             LEFT JOIN partners p ON p.id = dh.partner_id
-            LEFT JOIN materials m ON m.id = dd.matl_id
+            LEFT JOIN materials m ON m.id = dp.matl_id
             WHERE dh.tr_type = 'PD'
                 AND dh.deleted_at IS NULL
-                AND dd.deleted_at IS NULL
+                AND dp.deleted_at IS NULL
                 AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$matlCondition}
-            ORDER BY dh.reff_date, dh.tr_code, dd.tr_seq
+            ORDER BY dh.reff_date, dh.tr_code, dp.tr_seq
         ";
 
         return DB::connection(Session::get('app_code'))->select($query);
@@ -230,12 +222,12 @@ class Index extends BaseComponent
      */
     public function getDeliveryDataByPeriodEloquent($startDate, $endDate, $matlId = null)
     {
-        $query = DelivHdr::with(['DelivDtl.Material', 'Partner'])
+        $query = DelivHdr::with(['DelivPacking.Material', 'Partner'])
             ->where('tr_type', 'PD')
             ->whereBetween('reff_date', [$startDate, $endDate]);
 
         if ($matlId !== null) {
-            $query->whereHas('DelivDtl', function ($q) use ($matlId) {
+            $query->whereHas('DelivPacking', function ($q) use ($matlId) {
                 $q->where('matl_id', $matlId);
             });
         }

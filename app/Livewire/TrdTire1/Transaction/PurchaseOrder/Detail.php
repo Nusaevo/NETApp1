@@ -118,6 +118,7 @@ class Detail extends BaseComponent
         // }
 
         if ($this->isEditOrView()) {
+            // dd($this->objectIdValue);
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = $this->object->toArray();
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
@@ -200,18 +201,10 @@ class Detail extends BaseComponent
         $headerData['amt_tax'] = $totals['amt_tax'];
         $headerData['amt_adjustdtl'] = $totals['amt_adjustdtl'];
 
-        if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
-            if (!$order) {
-                throw new Exception('Gagal membuat Purchase Order.');
-            }
-            $this->object = $order;
-        } else {
-            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-            if (!$result) {
-                throw new Exception('Gagal mengubah Purchase Order.');
-            }
-        }
+        $order = $this->orderService->saveOrder($headerData, $detailData);
+
+        $this->object = $order['header'];
+
         $this->redirectToEdit();
     }
 
@@ -236,7 +229,7 @@ class Detail extends BaseComponent
 
         $trSeq = 1;
         foreach ($detailData as $i => &$detail) {
-            $detail['tr_seq'] = $trSeq++;
+            // $detail['tr_seq'] = $trSeq++;
             $detail['qty_uom'] = 'PCS';
             $detail['price_uom'] = 'PCS';
             $detail['qty_base'] = 1;
@@ -441,6 +434,7 @@ class Detail extends BaseComponent
                 ->get();
 
             $this->input_details = $this->object_detail->toArray();
+            // dd($this->input_details);
             foreach ($this->input_details as $key => &$detail) {
                 if (!isset($detail['disc_amt'])) $detail['disc_amt'] = 0;
                 if (!isset($detail['amt_adjustdtl'])) $detail['amt_adjustdtl'] = 0;
