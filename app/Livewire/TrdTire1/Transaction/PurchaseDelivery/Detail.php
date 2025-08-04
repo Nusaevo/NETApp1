@@ -159,6 +159,8 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['matl_code'] = $picking->matl_code;
                 $this->input_details[$key]['matl_uom'] = $picking->matl_uom;
                 $this->input_details[$key]['trpacking_id'] = $picking->trpacking_id;
+                // $this->input_details[$key]['picking_id'] = $picking->id;
+               
                 // $this->input_details[$key]['ivt_id'] = $picking->ivt_id;
                 // $this->input_details[$key]['batch_code'] = $picking->batch_code;
 
@@ -189,6 +191,7 @@ class Detail extends BaseComponent
             $orderDetail = OrderDtl::selectRaw('
                 order_hdrs.partner_id,
                 order_hdrs.partner_code,
+                order_hdrs.tr_date as order_date,
                 partners.name,
                 partners.city,
                 order_dtls.matl_id,
@@ -229,20 +232,21 @@ class Detail extends BaseComponent
                 $this->input_details[] = populateArrayFromModel($delivPacking);
                 $qty_remaining = $detail->qty - $detail->qty_reff;
                 if ($qty_remaining > 0) {
+                    $this->input_details[$key]['reffdtl_id'] = $detail->reffdtl_id;
+                    $this->input_details[$key]['reffhdr_id'] = $detail->reffhdr_id;
+                    $this->input_details[$key]['reffhdrtr_type'] = $detail->reffhdrtr_type;
+                    $this->input_details[$key]['reffhdrtr_code'] = $detail->reffhdrtr_code;
+                    $this->input_details[$key]['reffdtltr_seq'] = $detail->reffdtltr_seq;
+                    $this->input_details[$key]['matl_descr'] = $detail->matl_descr;
+                    $this->input_details[$key]['qty'] = 0;
+                    // // Tambahan Order Detail
                     $this->input_details[$key]['qty_order'] = $qty_remaining;
-                        $this->input_details[$key]['reffdtl_id'] = $detail->reffdtl_id;
-                        $this->input_details[$key]['reffhdr_id'] = $detail->reffhdr_id;
-                        $this->input_details[$key]['reffhdrtr_type'] = $detail->reffhdrtr_type;
-                        $this->input_details[$key]['reffhdrtr_code'] = $detail->reffhdrtr_code;
-                        $this->input_details[$key]['reffdtltr_seq'] = $detail->reffdtltr_seq;
-                        $this->input_details[$key]['matl_descr'] = $detail->matl_descr;
-                        // // Tambahan Order Detail
-                        $this->input_details[$key]['qty'] = 0;
-                        $this->input_details[$key]['matl_id'] = $detail->matl_id;
-                        $this->input_details[$key]['matl_code'] = $detail->matl_code;
-                        $this->input_details[$key]['matl_uom'] = $detail->matl_uom;
-                        $this->input_details[$key]['wh_id'] = $this->inputs['wh_id'];
-                        $this->input_details[$key]['wh_code'] = $this->inputs['wh_code'];
+                    $this->input_details[$key]['matl_id'] = $detail->matl_id;
+                    $this->input_details[$key]['matl_code'] = $detail->matl_code;
+                    $this->input_details[$key]['matl_uom'] = $detail->matl_uom;
+                    $this->input_details[$key]['wh_id'] = $this->inputs['wh_id'];
+                    $this->input_details[$key]['wh_code'] = $this->inputs['wh_code'];
+                    $this->input_details[$key]['order_date'] = $detail->order_date;
                     // ];
                 }
             }

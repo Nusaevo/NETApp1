@@ -44,22 +44,23 @@ class InventoryService
             $trAmt = $price * $trQty;
         }
 
-        $ivtBal = IvtBal::updateOrCreate([
-            'matl_id' => $detailData['matl_id'],
-            'matl_uom' => $detailData['matl_uom'],
-            'wh_id' => 0,
-            'batch_code' => ''
-        ], [
-            'matl_code' => $detailData['matl_code'] ?? ''
-            // qty_oh, qty_fgr, qty_fgi tidak di-set di sini agar tidak overwrite
-        ]);
+        $ivtBal = IvtBal::updateOrCreate(
+            [
+                'matl_id' => $detailData['matl_id'],
+                'matl_uom' => $detailData['matl_uom'],
+                'wh_id' => 0,
+                'batch_code' => ''
+            ],
+            [
+                'matl_code' => $detailData['matl_code'] ?? ''
+            ]
+        );
         if ($headerData['tr_type'] === 'PO' || $headerData['tr_type'] === 'PD') {
             $ivtBal->qty_fgr +=  $qty;
         } else if ($headerData['tr_type'] === 'SO' || $headerData['tr_type'] === 'SD') {
             $ivtBal->qty_fgi +=  $qty;
         }
         $ivtBal->save();
-
 
         // Tentukan tr_type untuk log
         $trType = $headerData['tr_type'] . 'R';
@@ -142,7 +143,7 @@ class InventoryService
             'matl_uom' => $detailData['matl_uom'],
             'wh_id' => $detailData['wh_id'],
             'batch_code' => $detailData['batch_code'],
-        ],[
+        ], [
             'matl_code' => $detailData['matl_code'],
             'wh_code' => $detailData['wh_code'],
         ]);
@@ -179,15 +180,15 @@ class InventoryService
         return $ivtBal->id;
     }
 
-        public function delIvtLog(int $ivttrId, ?int $trdtlId = null)
+    public function delIvtLog(int $trHdrId, ?int $trDtlId = null)
     {
         // Hapus log inventory berdasarkan trHdrId dan opsional trdtlId
-        if ($trdtlId !== null) {
+        if ($trDtlId !== null) {
             // Jika ada trdtlId, cari berdasarkan trdtlId saja
-            $query = IvtLog::where('trdtl_id', $trdtlId);
+            $query = IvtLog::where('trdtl_id', $trDtlId);
         } else {
             // Jika tidak ada trdtlId, cari berdasarkan trhdrId
-            $query = IvtLog::where('trhdr_id', $ivttrId);
+            $query = IvtLog::where('trhdr_id', $trHdrId);
         }
 
         $logs = $query->get();
@@ -215,7 +216,7 @@ class InventoryService
         if (empty($headerData) || empty($detailData)) {
             throw new Exception('Header data or detail data is empty');
         }
-        try{
+        try {
             $ivttrHdr = $this->saveHeader($headerData);
             $headerData['id'] = $ivttrHdr->id;
 
@@ -225,7 +226,6 @@ class InventoryService
         } catch (Exception $e) {
             throw new Exception('Error updating order: ' . $e->getMessage());
         }
-
     }
 
     public function updInventory(array $headerData, array $detailData, int $ivttrId): IvttrHdr
@@ -246,7 +246,7 @@ class InventoryService
         } catch (Exception $e) {
             throw $e;
         }
- }
+    }
 
     public function delInventory(int $ivttrId): void
     {

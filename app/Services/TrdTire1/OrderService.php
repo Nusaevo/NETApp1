@@ -153,7 +153,9 @@ class OrderService
 
 
         // Hapus detail yang tidak ada dalam array detailData
-        $deletedDetails = OrderDtl::whereNotIn('id', $existingDetailIds)->get();
+        $deletedDetails = OrderDtl::where('trhdr_id', $headerData['id'])
+            ->whereNotIn('id', $existingDetailIds)
+            ->get();
 
         foreach ($deletedDetails as $deletedDetail) {
             // Hapus ivt_logs untuk detail yang dihapus
