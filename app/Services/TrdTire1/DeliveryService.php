@@ -95,83 +95,146 @@ class DeliveryService
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
 
-        // $updatedDetails = [];
-        // $existingDetailIds = [];
+        $existingPackings = DelivPacking::withTrashed()->where('trhdr_id', $headerData['id'])->get();
         $packing_ids = [];
-        $picking_ids = [];
-
         foreach ($detailData as $detail) {
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
 
             if (!isset($detail['id']) || empty($detail['id'])) {
-                $detail['tr_seq'] = $this->getNextSequence($headerData['id']);
-                // $newDetail = DelivPacking::create($detail);
+                $detail['tr_seq'] = $this->getNextSequence('DelivPacking',$headerData['id']);
                 $packing = new DelivPacking();
                 $packing->fill($detail);
-                $packing->save();
+                $packing->save();   
+                $detail['id']= $packing->id;
+                $this->inventoryService->addReservation($headerData, $detailData);
+                $this->savePicking($headetData,$detail);
                 $packing_ids[] = $packing->id;
-
-                $detail['trpacking_id'] = $packing->id;
-                $picking = new DelivPicking();
-                $picking->fill($detail);
-                $picking->save();
-                $picking_ids[] = $picking->id;
-
-                // $this->inventoryService->addReservation($headerData, $newDetail->toArray());
-
             } else {
-                $packing = DelivPacking::withTrashed()->find($detail['id']);
-                $packing->fill($detail);
-                if ($packing->isDirty()) {
-                    // $this->inventoryService->delIvtLog(0, $packing->id);
-                    $packing->save();
-
-                    // $this->inventoryService->addReservation($headerData, $packing->toArray());
-
-                    $pickings = DelivPicking::withTrashed()->where('trpacking_id', '=' ,$packing->id)->get();
-                    foreach ($pickings as $picking) {
-                        // $this->inventoryService->delIvtLog(0, $packing->id);
-                        $picking->fill($detail);
-                        if ($picking->isDirty()) {
-                            $picking->save();
-
-                            // $this->inventoryService->addReservation($headerData, $packing->toArray());
-                        }
-                    }
-                }
-
-
+                $packing = $existingPackings->firstWhere('id', $detail['id']);
+                if ($packing) {
+                    $packing->fill($detail);
+                    if ($packing->isDirty()) {
+                        $this->inventoryService->delIvtLog(0, $detail->id);
+                        $packing->save();
+                        $this->inventoryService->addReservation($headerData, $detailData);
+                        $this->savePicking($headerData,$detail);
+                    }    
+                }    
                 $packing_ids[] = $packing->id;
-                $picking_ids[] = $picking->id;
             }
-        }
-        // dd($headerData, $detailData);
-        $packings = DelivPacking::where('trhdr_id', '=' ,$headerData['id'] )
-        ->whereNotIn('id', $packing_ids)
-        ->get();
-        foreach ($packings as $packing) {
-            // Hapus ivt_logs untuk detail yang dihapus
-            // $this->inventoryService->delIvtLog(0, $packing->id);
-            $packing->delete();
-            $pickings = DelivPicking::where('trpacking_id', '=' ,$packing->id );
-            foreach ($pickings as $picking) {
-                $picking->delete();
-            }
-        }
 
+        }
+        foreach ($existingPackings as $existing) {
+            if (!in_array($existing->id, $packing_ids)) {
+                $this->inventoryService->delIvtLog(0, $existing->id);
+                $existing->delete();
+            }
+        }
         return true;
 
     }
 
-    private function getNextSequence(int $orderId): int
-    {
-        // withTrashed() agar termasuk baris soft-deleted
-        $max = OrderDtl::withTrashed()
-            ->where('trhdr_id', $orderId)
-            ->max('tr_seq');
+    private function savePicking($headerData, $detailData){
+       
+        if ($detailData['tr_type'] === 'PO') {
+            $pickingData[] = [
+                'id' -> null,
+                'trpacking_id' -> $detailData['id'],
+                'tr_seq' -> 0,
+                'matl_id' -> $detailData['matl_id'],
+                'matl_code' -> $detailData['matl_code'],
+                'matl_uom' -> $detailData['matl_uom'],
+                'wh_id' -> $detailData['wh_id'],
+                'wh_code' -> $detailData['wh_code'],
+                'batch_code' -> date($detailData['order_date'],'Ymd'),
+                'qty' -> $detailData['qty'],
+            ];
+        } else if ($detailData['tr_type'] === 'SO') { 
+            $ivtBal = IvtBal::where('matl_id', $detailData['matl_id'])
+                ->where('matl_uom', $detailData['matl_uom'])
+                ->where('wh_id', $detailData['wh_id'])
+                ->orderBy('bacth_code')
+                ->get();
+            $qty_remaining = $detailData['qty'];
+            foreach ($ivtBal as $bal) {
+                $pickingData[] = [
+                    'id' -> null,
+                    'trpacking_id' -> $detailData['id'],
+                    'tr_seq' -> 0,
+                    'matl_id' -> $detailData['matl_id'],
+                    'matl_code' -> $detailData['matl_code'],
+                    'matl_uom' -> $detailData['matl_uom'],
+                    'wh_id' -> $detailData['wh_id'],
+                    'wh_code' -> $detailData['wh_code'],
+                    'batch_code' -> $bal->batch_code,
+                    'ivt_id' -> $bal->id,
+                ];
+                if ($bal->qty >= $qty_remaining) {
+                    $pickingData['qty'] = $qty_remaining;
+                    $qty_remaining = 0;
+                    break;
+                } else {
+                    $pickingData['qty'] = $bal->qty;
+                    $qty_remaining  -= $bal->qty;
+                }
+            }
+            if ($qty_remaining > 0) {
+                throw new Exception('Tidak cukup stok untuk picking. Qty yang diminta: ' . $detailData['qty'] . ', Qty yang tersedia: ' . ($detailData['qty'] - $qty_remaining));
+            }
+        }
 
+        $picking_ids = [];
+        $existingPickings = DelivPicking::withTrashed()->where('trpacking_id', $detailData['id'])->get();
+        foreach ($pickingData as $detail) {
+            $picking = $existingPickings
+                ->where('trpacking_id', $detail['trpacking_id'])
+                ->where('matl_id', $detail['matl_id'])
+                ->where('matl_uom', $detail['matl_uom'])
+                ->where('wh_id', $detail['wh_id'])
+                ->where('batch_code', $detail['batch_code'])
+                ->first();
+            if (!$picking) {
+                $detail['tr_seq'] = $this->getNextSequence('DelivPicking',$detailData['id']);
+                $picking = new DelivPicking();
+                $picking->fill($detail);
+                $picking->save();
+                $pickingData['id'] = $picking->id;
+                $this->inventoryService->addOnhand($headerData, $pickingData);
+                $picking_ids[] = $picking->id;
+            } else {
+                $picking->fill($detail);
+                if ($picking->isDirty()) {  
+                    $this->inventoryService->delIvtLog(0, $picking->id);
+                    $picking->save();
+                    $this->inventoryService->addOnhand($headerData, $pickingData);
+                }
+                $picking_ids[] = $picking->id;
+            }
+
+        }
+        foreach ($existingPickings as $existing) {
+            if (!in_array($existing->id, $picking_ids)) {
+                $this->inventoryService->delIvtLog(0, $existing->id);
+                $existing->delete();
+            }
+        }
+        return true;
+       
+    }
+
+    private function getNextSequence($model,int $$keyId): int
+    {
+        if ($model === 'DelivPacking') {
+            $max = DelivPacking::withTrashed()
+                ->where('trhdr_id', $keyId)
+                ->max('tr_seq');
+        } else if ($model === 'DelivPicking') {
+            $max = DelivPicking::withTrashed()
+                ->where('trpacking_id', $keyId)
+                ->max('tr_seq');
+        }   
         return ($max ?? 0) + 1;
     }
 
