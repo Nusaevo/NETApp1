@@ -15,14 +15,7 @@ class InventoryService
 
     public function addReservation(array $headerData, array $detailData)
     {
-        // dd([
-        //     'mode' => $mode,
-        //     'qty' => $detailData['qty'] ?? null,
-        //     'matl_id' => $detailData['matl_id'] ?? null,
-        //     'tr_type' => $headerData['tr_type'] ?? null,
-        //     'called_from' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['function'] ?? null,
-        // ]);
-
+        // dd($headerData, $detailData);
         // Hitung price dan amount
         $price = 0;
         $trAmt = 0;
@@ -43,6 +36,7 @@ class InventoryService
             $price = $orderDtl->price_beforetax;
             $trAmt = $price * $trQty;
         }
+        // dd($detailData);
 
         $ivtBal = IvtBal::updateOrCreate(
             [
@@ -61,17 +55,19 @@ class InventoryService
             $ivtBal->qty_fgi +=  $qty;
         }
         $ivtBal->save();
+        // dd($ivtBal);
 
         // Tentukan tr_type untuk log
         $trType = $headerData['tr_type'] . 'R';
 
+        // dd($headerData);
         // Siapkan data log
         $logData = [
             'trhdr_id' => $detailData['trhdr_id'],
             'tr_type' => $trType,
             'tr_code' => $detailData['tr_code'],
-            'tr_seq' => $detailData['tr_seq'] ?? 0,
-            'trdtl_id' => $detailData['id'] ?? 0,
+            'tr_seq' => $detailData['tr_seq'],
+            'trdtl_id' => $detailData['id'],
             'ivt_id' => $ivtBal->id,
             'matl_id' => $detailData['matl_id'],
             'matl_code' => $detailData['matl_code'] ?? '',
@@ -79,7 +75,7 @@ class InventoryService
             'wh_id' => 0,
             'wh_code' => '',
             'batch_code' => '',
-            'reff_id' => $headerData['reff_id'] ?? 0,
+            'reff_id' => 0,
             'tr_date' => $headerData['tr_date'],
             'qty' => $qty,
             'price_beforetax' => $price,
@@ -89,6 +85,7 @@ class InventoryService
             'qty_running' => 0,
             'process_flag' => '',
         ];
+        // dd($logData);
 
         // Simpan log inventory
         IvtLog::create($logData);
@@ -97,6 +94,7 @@ class InventoryService
 
     public function addOnhand(array $headerData, array $detailData): int
     {
+        // dd($detailData);
         $price = 0;
         $amt = 0;
         $qty = 0;
@@ -117,24 +115,24 @@ class InventoryService
             case 'PD': // Purchase Delivery: Tambah OH, Kurangi FGR
                 $qty = $detailData['qty'];
                 // $amt = $price * $qty;
-                $trDesc = 'DELIVERY IN ' . $detailData['tr_code'];
+                $trDesc = 'DELIVERY IN ' . $headerData['tr_code'];
                 break;
             case 'SD': // Sales Delivery: Kurangi OH, Kurangi FGI
                 $qty = -$detailData['qty'];
                 // $amt = $price * $qty;
-                $trDesc = 'DELIVERY OUT ' . $detailData['tr_code'];
+                $trDesc = 'DELIVERY OUT ' . $headerData['tr_code'];
                 break;
             case 'TW':
                 $qty = $detailData['qty'];
                 if ($detailData['qty'] < 0) {
-                    $trDesc = 'TRANSFER WH OUT ' . $detailData['tr_code'];
+                    $trDesc = 'TRANSFER WH OUT ' . $headerData['tr_code'];
                 } else {
-                    $trDesc = 'TRANSFER WH IN ' . $detailData['tr_code'];
+                    $trDesc = 'TRANSFER WH IN ' . $headerData['tr_code'];
                 }
                 break;
             case 'IA':
                 $qty = $detailData['qty'];
-                $trDesc = 'ADJUSTMENT ' . $detailData['tr_code'];
+                $trDesc = 'ADJUSTMENT ' . $headerData['tr_code'];
                 break;
         }
 
@@ -151,11 +149,12 @@ class InventoryService
         $ivtBal->save();
         $detailData['ivt_id'] = $ivtBal->id;
 
+        // dd($detailData);
         // Siapkan data log
         $logData = [
-            'trhdr_id' => $detailData['trhdr_id'],
-            'tr_type' => $detailData['tr_type'],
-            'tr_code' => $detailData['tr_code'],
+            'trhdr_id' => $headerData['id'],
+            'tr_type' => $headerData['tr_type'],
+            'tr_code' => $headerData['tr_code'],
             'tr_seq' => $detailData['tr_seq'],
             'trdtl_id' => $detailData['id'],
             'ivt_id' => $ivtBal->id,

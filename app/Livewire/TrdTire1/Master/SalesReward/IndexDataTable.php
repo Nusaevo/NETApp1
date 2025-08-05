@@ -24,7 +24,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return SalesReward::query()
-            ->whereIn('status_code', [Status::ACTIVE, Status::PRINT]);
+            ->whereIn('status_code', [Status::ACTIVE, Status::PRINT])
+            ->orderBy('id', 'desc');
     }
     // public function configure(): void
     // {

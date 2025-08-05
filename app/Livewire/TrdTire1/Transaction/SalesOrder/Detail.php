@@ -102,27 +102,35 @@ class Detail extends BaseComponent
         // --- Perbaikan urutan: panggil salesTypeOnChanged() sebelum loadDetails() ---
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->inputs = $this->object->toArray();
-            $this->inputs['status_code_text'] = $this->object->status_Code_text;
-            $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
-            $this->inputs['partner_name'] = $this->object->partner->code;
-            // Pastikan print_remarks adalah string/float, bukan array/object
-            $printRemarks = $this->object->getDisplayFormat();
-            if (is_array($printRemarks)) {
-                $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
+            if ($this->object) {
+                $this->inputs = $this->object->toArray();
+                $this->inputs['status_code_text'] = $this->object->status_Code_text;
+                $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
+                $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
+
+                // Pastikan print_remarks adalah string/float, bukan array/object
+                $printRemarks = $this->object->getDisplayFormat();
+                if (is_array($printRemarks)) {
+                    $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
+                } else {
+                    $this->inputs['print_remarks'] = $printRemarks;
+                }
+                // Hitung due_date berdasarkan tr_date dan payment_due_days
+                $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
+                $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+                $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+                    ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+                    : ($trDate ? $trDate->format('Y-m-d') : null);
+                $this->onPartnerChanged();
+                $this->salesTypeOnChanged();
+                $this->loadDetails();
             } else {
-                $this->inputs['print_remarks'] = $printRemarks;
+                // Jika object tidak ditemukan, buat instance baru dan tampilkan error
+                $this->object = new OrderHdr();
+                $this->dispatch('error', 'Data tidak ditemukan');
             }
-            // Hitung due_date berdasarkan tr_date dan payment_due_days
-            $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
-            $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
-            $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
-                ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
-                : ($trDate ? $trDate->format('Y-m-d') : null);
-            $this->onPartnerChanged();
-            $this->salesTypeOnChanged();
-            $this->loadDetails();
         } else {
+            $this->object = new OrderHdr(); // Inisialisasi object untuk mode Create
             $this->isPanelEnabled = "true";
             $this->inputs['tax_doc_flag'] = true;
             $this->inputs['tax_code'] = 'I';
@@ -162,12 +170,12 @@ class Detail extends BaseComponent
         $this->validate();
 
         // Jika sudah ada delivery, hanya boleh update header
-        if ($this->isDeliv) {
+        if ($this->isDeliv && $this->actionValue !== 'Create') {
             // Prepare data header saja
             $headerData = $this->prepareHeaderData();
             $detailData = []; // Kosongkan detail agar tidak diubah
             try {
-                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
+                $result = $this->orderService->saveOrder($headerData, []);
                 if (!$result) {
                     throw new Exception('Gagal mengubah Sales Order.');
                 }
@@ -194,11 +202,11 @@ class Detail extends BaseComponent
         $headerData['amt_tax'] = $totals['amt_tax'];
         // dd($headerData, $detailData);
         if ($this->actionValue === 'Create') {
-            $order = $this->orderService->saveOrder($headerData, $detailData);
-            if (!$order) {
+            $result = $this->orderService->saveOrder($headerData, $detailData);
+            if (!$result) {
                 throw new Exception('Gagal membuat Nota penjualan');
             }
-            $this->object = $order;
+            $this->object = $result['header']; // Ambil header object dari hasil array
         } else {
             $result = $this->orderService->saveOrder($headerData, $detailData);
             if (!$result) {
@@ -221,6 +229,17 @@ class Detail extends BaseComponent
             $partner = Partner::find($headerData['partner_id']);
             $headerData['partner_code'] = $partner ? $partner->code : '';
         }
+
+        // Set default values for NPWP fields to prevent null constraint violation
+        $headerData['npwp_code'] = $headerData['npwp_code'] ?? '';
+        $headerData['npwp_name'] = $headerData['npwp_name'] ?? '';
+        $headerData['npwp_addr'] = $headerData['npwp_addr'] ?? '';
+
+        // Set default values for shipping fields to prevent null constraint violation
+        $headerData['ship_to_name'] = $headerData['ship_to_name'] ?? '';
+        $headerData['ship_to_address'] = $headerData['ship_to_address'] ?? '';
+        $headerData['ship_to_city'] = $headerData['ship_to_city'] ?? '';
+
         return $headerData;
     }
 
@@ -285,8 +304,6 @@ class Detail extends BaseComponent
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
-        // Clear tr_code when tax_doc_flag changes
-        $this->inputs['tr_code'] = null;
     }
 
     public function onPaymentTermChanged()
@@ -309,8 +326,6 @@ class Detail extends BaseComponent
     {
         $salesType = $this->inputs['sales_type'] ?? null;
         $this->input_details = [];
-        // Clear tr_code when sales type changes
-        $this->inputs['tr_code'] = null;
 
         if (!$salesType) {
             $this->materials = [];
@@ -429,18 +444,27 @@ class Detail extends BaseComponent
         if ($matl_id) {
             $material = Material::find($matl_id);
             if ($material) {
+                // Cari data UOM untuk material ini
                 $matlUom = MatlUom::where('matl_id', $matl_id)
                     ->where('matl_uom', $material->uom)->first();
-                if ($matlUom) {
-                    $this->input_details[$key]['price'] = $matlUom->selling_price;
-                } else {
-                    $this->dispatch('error', __('generic.error.material_uom_not_found'));
-                }
+
+                // Set data material terlebih dahulu
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
                 $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->input_details[$key]['disc_pct'] = 0;
+
+                // Set harga berdasarkan data UOM jika ditemukan
+                if ($matlUom) {
+                    $this->input_details[$key]['price'] = $matlUom->selling_price;
+                } else {
+                    // Jika data UOM tidak ditemukan, set harga default atau 0
+                    $this->input_details[$key]['price'] = 0;
+                    // Tampilkan warning bahwa data UOM tidak ditemukan
+                    $this->dispatch('warning', 'Data UOM untuk material ' . $material->code . ' tidak ditemukan. Harga diset ke 0.');
+                }
+
                 $this->calcItemAmount($key);
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));
@@ -596,6 +620,12 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
+            // Jika mode Create, object belum disimpan ke database
+            if ($this->actionValue === 'Create') {
+                $this->dispatch('warning', 'Tidak ada data untuk dihapus pada mode Create');
+                return;
+            }
+
             if ($this->object->isOrderCompleted()) {
                 $this->dispatch('warning', 'Nota ini tidak bisa dihapus karena status sudah Completed');
                 return;
@@ -679,15 +709,15 @@ class Detail extends BaseComponent
             $this->inputs['partner_city'] = $partner->city;
 
             // Reset shipping info
-            $this->inputs['ship_to_name'] = null;
-            $this->inputs['ship_to_address'] = null;
-            $this->inputs['ship_to_city'] = null;
+            $this->inputs['ship_to_name'] = '';
+            $this->inputs['ship_to_address'] = '';
+            $this->inputs['ship_to_city'] = '';
             $this->shipOptions = [];
 
             // Reset NPWP info
-            $this->inputs['npwp_code'] = null;
-            $this->inputs['npwp_name'] = null;
-            $this->inputs['npwp_addr'] = null;
+            $this->inputs['npwp_code'] = '';
+            $this->inputs['npwp_name'] = '';
+            $this->inputs['npwp_addr'] = '';
             $this->npwpOptions = [];
 
             // Handle Shipping Options
@@ -707,13 +737,13 @@ class Detail extends BaseComponent
                     }, $shipDetail);
                     // Reset value dulu agar Livewire detect perubahan
                     $this->inputs['ship_to_name'] = '';
-                    $this->inputs['ship_to_address'] = null;
-                    $this->inputs['ship_to_city'] = null;
+                    $this->inputs['ship_to_address'] = '';
+                    $this->inputs['ship_to_city'] = '';
                     if (!empty($this->shipOptions)) {
                         $first = reset($this->shipOptions);
-                        $this->inputs['ship_to_name'] = $first['value'] ?? null;
-                        $this->inputs['ship_to_address'] = $first['address'] ?? null;
-                        $this->inputs['ship_to_city'] = $first['city'] ?? null;
+                        $this->inputs['ship_to_name'] = $first['value'] ?? '';
+                        $this->inputs['ship_to_address'] = $first['address'] ?? '';
+                        $this->inputs['ship_to_city'] = $first['city'] ?? '';
                     }
                 }
             }
@@ -738,9 +768,9 @@ class Detail extends BaseComponent
 
                         // Selalu isi default NPWP dari opsi pertama jika ada
                         $first = reset($this->npwpOptions);
-                        $this->inputs['npwp_code'] = $first['value'] ?? null;
-                        $this->inputs['npwp_name'] = $first['name'] ?? null;
-                        $this->inputs['npwp_addr'] = $first['address'] ?? null;
+                        $this->inputs['npwp_code'] = $first['value'] ?? '';
+                        $this->inputs['npwp_name'] = $first['name'] ?? '';
+                        $this->inputs['npwp_addr'] = $first['address'] ?? '';
                     }
                 }
             }

@@ -83,15 +83,24 @@ class MaterialListComponent extends DetailComponent
         if ($matl_id) {
             $material = Material::find($matl_id);
             if ($material) {
-                $matlUom = MatlUom::where('matl_id', $matl_id)->first(); // Fetch MatlUom using matl_id
+                // Set material info terlebih dahulu
+                $this->input_details[$key]['matl_id'] = $material->id;
+                $this->input_details[$key]['matl_uom'] = $material->uom;
+                $this->input_details[$key]['matl_descr'] = $material->name;
+
+                // Cari data UOM dengan matl_id dan matl_uom yang sesuai
+                $matlUom = MatlUom::where('matl_id', $matl_id)
+                    ->where('matl_uom', $material->uom)->first();
+
                 if ($matlUom) {
-                    $this->input_details[$key]['matl_id'] = $material->id;
-                    $this->input_details[$key]['price'] = $matlUom->selling_price; // Use selling_price from MatlUom
-                    $this->input_details[$key]['matl_uom'] = $material->uom;
-                    $this->input_details[$key]['matl_descr'] = $material->name;
+                    $this->input_details[$key]['price'] = $matlUom->selling_price;
                     $this->updateItemAmount($key);
                 } else {
-                    $this->dispatch('error', __('generic.error.material_uom_not_found'));
+                    // Jika UOM tidak ditemukan, set harga default dan tampilkan warning
+                    $this->input_details[$key]['price'] = 0;
+                    $this->dispatch('warning', __('generic.error.material_uom_not_found') . ' - Material: ' . $material->name . ' (UOM: ' . $material->uom . ')');
+                    // Tetap update amount meskipun harga 0
+                    $this->updateItemAmount($key);
                 }
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));

@@ -28,8 +28,9 @@ class DelivPicking extends BaseModel
         'wh_code',
         'batch_code',
         'qty',
-        // 'qty_reff',
-        // 'reffdtl_id',
+    ];
+    protected $casts = [
+        'qty' => 'float',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];

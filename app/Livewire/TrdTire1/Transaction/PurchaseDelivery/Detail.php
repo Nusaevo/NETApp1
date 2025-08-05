@@ -147,12 +147,13 @@ class Detail extends BaseComponent
                 ->orderBy('tr_seq')
                 ->get();
             $this->input_details = $this->object_detail->toArray();
-            $this->inputs['wh_id'] = $this->object_detail[0]->wh_id;
-            $this->inputs['wh_code'] = $this->object_detail[0]->wh_code;
             foreach ($this->object_detail as $key => $detail) {
                 $order = OrderDtl::find($detail->reffdtl_id);
+                $this->input_details[$key]['order_date'] = $order->OrderHdr->tr_date;
                 $this->input_details[$key]['qty_order'] = $order->qty - $order->qty_reff + $detail->qty;
                 $picking = DelivPicking::where('trpacking_id', $detail->id)->first();
+                $this->inputs['wh_id'] = $picking->wh_id;
+                $this->inputs['wh_code'] = $picking->wh_code;
                 $this->input_details[$key]['wh_id'] = $picking->wh_id;
                 $this->input_details[$key]['wh_code'] = $picking->wh_code;
                 $this->input_details[$key]['matl_id'] = $picking->matl_id;
@@ -160,7 +161,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['matl_uom'] = $picking->matl_uom;
                 $this->input_details[$key]['trpacking_id'] = $picking->trpacking_id;
                 // $this->input_details[$key]['picking_id'] = $picking->id;
-               
+
                 // $this->input_details[$key]['ivt_id'] = $picking->ivt_id;
                 // $this->input_details[$key]['batch_code'] = $picking->batch_code;
 
