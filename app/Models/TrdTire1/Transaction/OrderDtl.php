@@ -47,6 +47,22 @@ class OrderDtl extends BaseModel
         'gt_partner_code',
     ];
 
+    protected $casts = [
+        'qty' => 'float',
+        'qty_base' => 'float',
+        'price' => 'float',
+        'price_curr' => 'float',
+        'price_base' => 'float',
+        'disc_pct' => 'float',
+        'price_afterdisc' => 'float',
+        'price_beforetax' => 'float',
+        'amt' => 'float',
+        'amt_beforetax' => 'float',
+        'amt_adjustdtl' => 'float',
+        'amt_tax' => 'float',
+        'qty_reff' => 'float',
+    ];
+
     protected $appends = ['has_delivery', 'is_editable'];
 
     protected static function boot()

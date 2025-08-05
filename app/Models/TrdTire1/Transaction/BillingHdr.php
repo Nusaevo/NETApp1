@@ -24,9 +24,6 @@ class BillingHdr extends BaseModel
         'reff_code',
         'partner_id',
         'partner_code',
-        'tax_id',
-        'tax_code',
-        'tax_pct',
         'payment_term_id',
         'payment_term',
         'payment_due_days',
@@ -44,6 +41,17 @@ class BillingHdr extends BaseModel
         'print_date',
     ];
 
+    protected $casts = [
+        'curr_rate' => 'float',
+        'amt' => 'float',
+        'amt_beforetax' => 'float',
+        'amt_tax' => 'float',
+        'amt_adjustdtl' => 'float',
+        'amt_adjusthdr' => 'float',
+        'amt_shipcost' => 'float',
+        'amt_reff' => 'float',
+    ];
+
     #region Relations
     public function Partner()
     {
@@ -56,10 +64,14 @@ class BillingHdr extends BaseModel
         return $this->hasOne(OrderHdr::class, 'tr_code', 'tr_code')->where('tr_type', 'SO');
     }
 
-    public function BillingDtl()
+    public function BillingOrder()
     {
-        return $this->hasMany(BillingDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+        return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
     }
+    // public function BillingOrder()
+    // {
+    //     return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+    // }
 
     public function PartnerBal()
     {

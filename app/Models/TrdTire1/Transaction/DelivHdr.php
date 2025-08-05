@@ -25,7 +25,6 @@ class DelivHdr extends BaseModel
         'tr_code',
         'reff_code',
         'reff_date',
-        // 'reffhdrtr_code',
         'partner_id',
         'partner_code',
         'deliv_by',
@@ -35,6 +34,7 @@ class DelivHdr extends BaseModel
     ];
     protected $casts = [
         'tr_code' => 'string',
+        'amt_shipcost' => 'float',
     ];
 
     protected $appends = ['total_qty'];

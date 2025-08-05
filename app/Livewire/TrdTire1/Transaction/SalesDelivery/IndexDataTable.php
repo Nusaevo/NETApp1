@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, OrderDtl, OrderHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -100,10 +100,12 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("warehouse"), "warehouse")
                 ->label(function ($row) {
-                    $delivDtl = DelivDtl::where('tr_code', $row->tr_code)
-                        ->where('tr_type', 'SD')
-                        ->first();
-                    return $delivDtl ? $delivDtl->wh_code : '';
+                    // Mengambil warehouse dari DelivPicking
+                    $delivPicking = DelivPicking::whereHas('DelivPacking', function($query) use ($row) {
+                        $query->where('tr_code', $row->tr_code)
+                              ->where('tr_type', 'SD');
+                    })->first();
+                    return $delivPicking ? $delivPicking->wh_code : '-';
                 })
                 ->sortable(),
             Column::make($this->trans("Status"), "status")

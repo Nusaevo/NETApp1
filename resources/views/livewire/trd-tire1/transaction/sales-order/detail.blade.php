@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card isForm="true"
-        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_code ? ' (Nota #' . $this->object->tr_code . ')' : '' }}"
+        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ isset($this->object->tr_code) && $this->object->tr_code ? ' (Nota #' . $this->object->tr_code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
@@ -150,6 +150,7 @@
                     </x-ui-card>
                     <br>
                     <x-ui-footer>
+                        @if($actionValue !== 'Create' && isset($object->id))
                         <x-ui-button :action="$actionValue"
                             clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
                                 'action' => encryptWithSessionKey('Edit'),
@@ -165,6 +166,7 @@
                             ]) }}"
                             cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
                             iconPath="print.svg" />
+                        @endif
 
                         <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
                             :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />

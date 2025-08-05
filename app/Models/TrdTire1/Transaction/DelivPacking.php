@@ -30,6 +30,9 @@ class DelivPacking extends BaseModel
         'matl_descr',
         'qty',
     ];
+    protected $casts = [
+        'qty' => 'float',
+    ];
 
     protected $appends = ['has_delivery', 'is_editable'];
 

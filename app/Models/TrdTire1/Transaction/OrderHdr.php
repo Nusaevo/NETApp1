@@ -65,6 +65,13 @@ class OrderHdr extends BaseModel
     protected $casts = [
         'tax_doc_flag' => 'boolean',
         'print_remarks' => 'array',
+        'amt' => 'float',
+        'amt_beforetax' => 'float',
+        'amt_tax' => 'float',
+        'amt_adjustdtl' => 'float',
+        'amt_shipcost' => 'float',
+        'tax_pct' => 'float',
+        'curr_rate' => 'float',
     ];
 
     protected static function boot()
