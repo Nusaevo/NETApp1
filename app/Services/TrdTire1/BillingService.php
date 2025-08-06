@@ -1,15 +1,14 @@
 <?php
 
 namespace App\Services\TrdTire1;
+
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
+use App\Models\TrdTire1\Transaction\DelivHdr;
 use App\Models\TrdTire1\Transaction\BillingDtl;
 use App\Models\TrdTire1\Transaction\BillingHdr;
-use App\Models\TrdTire1\Transaction\DelivHdr;
-use App\Models\TrdTire1\Transaction\DelivDtl;
-use App\Models\TrdTire1\Transaction\OrderHdr;
-use App\Models\TrdTire1\Master\Material;
-use App\Models\TrdTire1\Master\MatlUom;
-use Illuminate\Support\Facades\Session;
+use App\Models\TrdTire1\Transaction\BillingDeliv;
+use App\Models\TrdTire1\Transaction\BillingOrder;
 
 class BillingService
 {
@@ -22,48 +21,325 @@ class BillingService
         $this->partnerBalanceService = $partnerBalanceService;
     }
 
-    public function addBilling(array $headerData, array $detailData)
+    public function saveBilling(array $headerData, array $detailData)
     {
+        $result = $this->validateAndMapData($headerData,$detailData);
 
-        // dd('addBilling called with headerData:', $headerData, 'and detailData:', $detailData);
-        $billingHdr = $this->saveHeader($headerData);
+        $dataBillingHdr = $result['data_billing_hdr'];
+        $dataBillingDeliv = $result['data_billing_deliv'];
+        $dataBillingOrder = $result['data_billing_order'];
 
-        $headerData['id'] = $billingHdr->id;
+        $billingHdr = $this->saveHeader($dataBillingHdr);
+        $dataBillingHdr['id'] = $billingHdr->id;
 
-        foreach ($detailData as &$detail) {
-            $detail['trhdr_id'] = $billingHdr->id;
-            $detail['tr_type'] = $billingHdr->tr_type;
-            $detail['tr_code'] = $billingHdr->tr_code;
-        }
-        unset($detail);
-        // dd($newDetailData);
-        $this->saveDetail($headerData, $detailData);
+        $billingDeliv = $this->saveBillingDeliv($dataBillingHdr, $dataBillingDeliv);
+        $billingOrder = $this->saveBillingOrder($dataBillingHdr, $dataBillingOrder);
+
+        return [
+            'billing_hdr' => $billingHdr,
+            'billing_deliv' => $billingDeliv,
+            'billing_order' => $billingOrder,
+        ];
     }
 
-    public function updBilling(int $billingId, array $headerData, array $detailData)
+    private function saveHeader(array $dataBillingHdr)
     {
-        // Pastikan headerData memiliki ID untuk update
-        $headerData['id'] = $billingId;
-
-        // Hapus partner balance log lama
-        $this->partnerBalanceService->delPartnerLog($billingId);
-
-        // Update header (akan membuat partner balance baru)
-        $billingHdr = $this->saveHeader($headerData);
-
-        // Hapus detail lama
-        $this->deleteDetail($billingId);
-
-        // Update detailData dengan info header yang terbaru
-        foreach ($detailData as &$detail) {
-            $detail['trhdr_id'] = $billingHdr->id;
-            $detail['tr_type'] = $billingHdr->tr_type;
-            $detail['tr_code'] = $billingHdr->tr_code;
+        if (!$dataBillingHdr['id']) {
+            $billingHdr = new BillingHdr();          
+        } else {
+            $billingHdr = BillingHdr::findOrFail($dataBillingHdr['id']);
         }
-        unset($detail);
+        $billingHdr->fill($dataBillingHdr);
+        if ($billingHdr->isDirty()){
+            $billingHdr->save();
+            $dataBillingHdr['id'] = $billingHdr->id;
+            $partnerBalId = $this->partnerBalanceService->updFromBilling($dataBillingHdr);
+            $billingHdr->partnerbal_id = $partnerBalId;
+            $billingHdr->save();
+        }
+        return $billingHdr;
+    }
 
-        // Simpan detail baru
-        $this->saveDetail($headerData, $detailData);
+    private function saveBillingDeliv(array $dataBillingHdr, array $dataBillingDeliv)
+    {
+        $dbBillingDeliv = BillingDeliv::where('trhdr_id', $dataBillingHdr['id'])->get();
+
+        $savedIds = [];
+        foreach ($dataBillingDeliv as $key => $detail) {
+            $billingDeliv = $dbBillingDeliv->where('deliv_id', $detail['deliv_id']);
+            if (!$billingDeliv) {
+                $detail['trhdr_id'] = $dataBillingHdr['id'];
+                $billingDeliv = new BillingDeliv();
+                $billingDeliv->fill($detail);
+                $billingDeliv->save();
+                $detail['id'] = $billingDeliv->id;
+            } else {
+                $detail['id'] = $billingDeliv->id;
+                $billingDeliv->fill($detail);
+                if ($billingDeliv->isDirty()) {
+                    $billingDeliv->save();
+                }
+            }
+            DelivHdr::updateBillHdrId($detail['deliv_id'], $dataBillingHdr['id']);
+            $savedIds[] = $billingDeliv->id;
+        }
+        foreach ($dbBillingDeliv as $existing) {
+            if (!in_array($existing->id, $savedIds)) {
+                DelivHdr::updateBillHdrId($existing->deliv_id, 0);
+                $existing->delete();
+            }
+        }
+        return $dbBillingDeliv;
+    }
+
+    private function saveBillingOrder(array $dataBillingHdr, array $dataBillingOrder)
+    {
+        $dbBillingOrder = BillingOrder::where('trhdr_id', $dataBillingHdr['id'])->get();
+
+        $savedIds = [];
+        foreach ($dataBillingOrder as $key => $detail) {
+            $billingOrder = $dbBillingOrder->where('reffdtl_id', $detail['reffdtl_id']);
+            if (!$billingOrder) {
+                $detail['trhdr_id'] = $dataBillingHdr['id'];
+                $detail['tr_seq'] = BillingOrder::getNextTrSeq($detail['trhdr_id']);
+                $billingOrder = new BillingOrder();
+                $billingOrder->fill($detail);
+                $billingOrder->save();
+                $detail['id'] = $billingOrder->id;
+            } else {
+                $detail['id'] = $billingOrder->id;
+                $detail['tr_seq'] = $billingOrder->tr_seq;
+                $billingOrder->fill($detail);
+                if ($billingOrder->isDirty()) {
+                    $billingOrder->save();
+                }
+            }
+            $savedIds[] = $billingOrder->id;
+            // // Update qty_reff di DelivDtl jika ada dlvdtl_id
+            // if (!empty($billingDetail->dlvdtl_id)) {
+            //     $this->deliveryService->updDelivQtyReff('+', $billingDetail->qty, $billingDetail->dlvdtl_id);
+            // }
+        }
+        foreach ($dbBillingOrder as $existing) {
+            if (!in_array($existing->id, $savedIds)) {
+                $existing->delete();
+            }
+        }
+        return $dbBillingOrder;
+    }
+
+    private function validateAndMapData(array $headerData, array $detailData)
+    {
+        // Requirements for headerData <-----------------------------------------
+        if (!array_key_exists('id',$headerData) ||
+            empty($headerData['tr_type']) || 
+            empty($headerData['tr_code']) || 
+            empty($headerData['tr_date'])) 
+        {
+            throw new \InvalidArgumentException('Header data is incomplete.');
+        }
+        
+        $dataBillingDeliv = [];
+        $amtShipCost = 0;
+        $billingId = 0;
+        foreach ($detailData as $detail) {
+            // Requirements for each detail <------------------------------------
+            if (empty($detail['deliv_id'])) {
+                throw new \InvalidArgumentException('Detail data is incomplete.');
+            } 
+            
+            $delivHdr = DelivHdr::where('id','=',$detail['deliv_id'])->get();
+            if ($delivHdr->isEmpty()) {
+                throw new \InvalidArgumentException('Delivery header not found for ID: ' . $detail['deliv_id']);
+            }
+            
+            $dataBillingDeliv[] = [
+                'id' => 0,
+                'trhdr_id' => $delivHdr->billhdr_id,
+                'deliv_id' => $delivHdr->id,
+                'deliv_type' => $delivHdr->tr_type,
+                'deliv_code' => $delivHdr->tr_code,
+                'amt_shipcost' => $delivHdr->amt_shipcost,                
+            ];
+            $amtShipCost += $delivHdr->amt_shipcost;
+            $billingId = $delivHdr->billhdr_id ?? 0;
+        }
+        
+        $dataBillingOrder = [];
+        $delivIds = implode(',', array_column($detailData, 'deliv_id'));
+        
+        // $delivPacking = DelivPacking::select('reffdtl_id')
+        //     ->selectRaw('SUM(qty) as qty')
+        //     ->whereIn('trhdr_id', $delivIds)
+        //     ->groupBy('reffdtl_id')
+        //     ->get();
+
+        $connectionName = Session::get('app_code');
+        // Subquery builder
+        $sub = DB::connection($connectionName)->table('deliv_packings')
+            ->select('reffdtl_id', DB::raw('SUM(qty) as qty'))
+            ->whereIn('trhdr_id', $delivIds)
+            ->groupBy('reffdtl_id');
+        // Main query
+        $delivPacking = DB::connection($connectionName)
+            ->table(DB::raw("({$sub->toSql()}) as d"))
+            ->mergeBindings($sub) // penting agar binding dari subquery ikut
+            ->join('order_dtls as od', 'od.id', '=', 'd.reffdtl_id')
+            ->join('order_hdrs as oh', 'oh.id', '=', 'od.trhdr_id')
+            ->selectRaw("
+                oh.partner_id,
+                oh.partner_code,
+                oh.payment_term_id,
+                oh.payment_term,
+                oh.payment_due_days
+                oh.curr_id,
+                oh.curr_code,
+                oh.curr_rate,
+                od.id as reffdtl_id,
+                od.trhdr_id as reffhdr_id,
+                od.tr_type as reffhdrtr_type,
+                od.tr_code as reffhdrtr_code,
+                od.tr_seq as reffdtltr_seq,
+                od.matl_descr,
+                d.qty,
+                od.qty_uom,
+                od.qty_base,
+                CASE WHEN d.qty=od.qty THEN amt ESLE 0 END as amt,
+                CASE WHEN d.qty=od.qty THEN amt_beforetax ESLE 0 END as amt_beforetax,
+                CASE WHEN d.qty=od.qty THEN amt_tax ESLE 0 END as amt_tax,
+                CASE WHEN d.qty=od.qty THEN amt_adjustdtl ESLE 0 END as amt_adjustdtl,
+                od.price,
+                od.disc_pct,
+                oh.tax_code,
+                oh.tax_pct
+            ")
+            ->get();        
+        
+        $dataBillingHdr = [
+            'id'=> $billingId,
+            'tr_type' => $headerData['tr_type'],
+            'tr_code' => $headerData['tr_code'],
+            'tr_date' => $headerData['tr_date'],
+            'reff_code' => 0,
+            'partner_id' => $delivPacking[0]['partner_id'],
+            'partner_code' => $delivPacking[0]['partner_code'],
+            'payment_term_id' => $delivPacking[0]['payment_term_id'],
+            'payment_term' => $delivPacking[0]['payment_term'],
+            'payment_due_days' => $delivPacking[0]['payment_due_days'],
+            'curr_id' => $delivPacking[0]['curr_id'],
+            'curr_code' => $delivPacking[0]['curr_code'],
+            'curr_rate' => $delivPacking[0]['curr_rate'],
+            'partnerbal_id' => 0,
+            'amt' => 0,
+            'amt_beforetax' => 0,
+            'amt_tax' => 0,
+            'amt_adjustdtl' => 0,
+            'amt_adjusthdr' => 0,
+            'amt_shipcost' => $amtShipCost,
+            'amt_reff' => 0,
+            'print_date' => null,
+        ];
+        
+        $amt = 0;
+        $amtBeforetax = 0;
+        $amtTax = 0;
+        $amtAdjustdtl = 0;
+        foreach ($delivPacking as $key => $packing) {
+            $dataBillingOrder[] = [
+                'trhdr_id' => $billingId,
+                'tr_type' => $headerData['tr_type'],
+                'tr_code' => $headerData['tr_code'],
+                'tr_seq' => 0,
+                'reffdtl_id' => $packing['reffdtl_id'],
+                'reffhdr_id' => $packing['reffdtl_id'],
+                'reffhdrtr_type' => $packing['reffdtl_id'],
+                'reffhdrtr_code' => $packing['reffdtl_id'],
+                'reffdtltr_seq' => $packing['reffdtl_id'],
+                'matl_descr' => $packing['matl_descr'],
+                'qty' => $packing['qty'],
+                'qty_uom' => $packing['qty_uom'],
+                'qty_base' => $packing['qty_base'],
+                'amt' => $packing['amt'],
+                'amt_beforetax' => $packing['amt_beforetax'],
+                'amt_tax' => $packing['amt_tax'],
+                'amt_adjustdtl' => $packing['amt_adjustdtl'],
+                'amt_reff' => 0,
+            ];
+
+            if ($packing['amt'] = 0) {
+                $result = $this->calculateAmounts(
+                    $packing['qty'],
+                    $packing['price'],
+                    $packing['disc_pct'],
+                    $packing['tax_pct'],
+                    $packing['tax_code']);
+                $dataBillingOrder[$key]['amt'] = $result['amt'];
+                $dataBillingOrder[$key]['amt_beforetax'] = $result['amt_beforetax'];
+                $dataBillingOrder[$key]['amt_tax'] = $result['amt_tax'];
+                $dataBillingOrder[$key]['amt_adjustdtl'] = $result['amt_adjust'];
+            }
+            $amt += $dataBillingOrder[$key]['amt'];
+            $amtBeforetax += $dataBillingOrder[$key]['amt_beforetax'];
+            $amtTax += $dataBillingOrder[$key]['amt_tax'];
+            $amtAdjustdtl += $dataBillingOrder[$key]['amt_adjustdtl'];
+        }
+        $dataBillingHdr['amt'] = $amt; 
+        $dataBillingHdr['amt_beforetax'] = $amtBeforetax; 
+        $dataBillingHdr['amt_tax'] = $amtTax; 
+        $dataBillingHdr['amt_adjustdtl'] = $amtAdjustdtl; 
+
+        return [
+            'data_billing_hdr' => $dataBillingHdr,
+            'data_billing_deliv' => $dataBillingDeliv,
+            'data_billing_order' => $dataBillingOrder,
+        ]; 
+
+    }
+
+    private function calculateAmounts(float $qty, float $price, float $discPct, float $taxPct, string $taxCode)
+    {
+        // Calculate basic amount with discount
+        $discount = $discPct / 100;
+        $tax = $taxPct / 100;
+        $priceAfterDisc = $price * (1 - $discount);
+        $priceBeforeTax = round($priceAfterDisc / (1 + $tax),0);
+        $amtDiscount = round($qty * $price * $discount,0);
+
+        $amt = 0;
+        $amtBeforeTax = 0;
+        $amtTax = 0;
+        if ($taxCode === 'I') {
+            // Catatan: khusus untuk yang include PPN
+            // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
+            $amtBeforeTax = $priceBeforeTax * $qty ;
+            // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
+            $amtTax = round($amtBeforeTax * $tax,0);
+            // Total Nota dihiitung dari harga setelah disc * qty
+            // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
+            // priceAdjustment
+            $amt = $priceAfterDisc * $qty;
+        } else if ($taxCode === 'E') {
+            $priceBeforeTax = $priceAfterDisc;
+            $amtBeforeTax = $priceAfterDisc * $qty;
+            $amtTax = round($priceAfterDisc * $qty * $tax,0);
+            $amt = $amtBeforeTax + $amtTax;
+        } else if ($taxCode === 'N') {
+            $priceBeforeTax = $priceAfterDisc;
+            $amtBeforeTax = $priceAfterDisc * $qty;
+            $amtTax = 0;
+            $amt = $amtBeforeTax;
+        }
+        $amtAdjust = $amt - $amtBeforeTax - $amtTax;
+
+        return [
+            'price_afterdisc' => $priceAfterDisc,
+            'price_beforetax' => $priceBeforeTax,
+            'amt' => $amt,
+            'amt_beforetax' => $amtBeforeTax,
+            'amt_tax' => $amtTax,
+            'amt_adjust' => $amtAdjust,
+            'amt_discout' => $amtDiscount,
+        ];
     }
 
     public function delBilling(int $billingId)
@@ -72,188 +348,22 @@ class BillingService
         $this->deleteHeader($billingId);
     }
 
-    public function addfromDelivery(int $deliveryId)
-    {
-        $dataBilling = $this->prepareDataFromDelivery($deliveryId);
-        $headerData = $dataBilling['headerData'];
-        $detailData = $dataBilling['detailData'];
-        // Simpan billing menggunakan method yang sudah ada
-        $this->addBilling($headerData, $detailData);
-    }
-
-    public function updFromDelivery(int $deliveryId)
-    {
-        $dataBilling = $this->prepareDataFromDelivery($deliveryId);
-        $headerData = $dataBilling['headerData'];
-        $detailData = $dataBilling['detailData'];
-
-        $billingDtl = BillingDtl::where('dlvhdr_id', $deliveryId)->first();
-        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);
-        // dd($billingDtl, $headerData, $detailData);
-        // 4. Update billing
-        $this->updBilling($billingDtl->trhdr_id, $headerData, $detailData);
-    }
-
-    public function delFromDelivery(int $deliveryId)
-    {
-        // Cari semua billing detail yang terkait dengan delivery ini
-        $billingDtls = BillingDtl::where('dlvhdr_id', $deliveryId)->get();
-
-        if ($billingDtls->isNotEmpty()) {
-            // Ambil trhdr_id yang unik (dalam kasus ada multiple details dengan header yang sama)
-            $billingHeaderIds = $billingDtls->pluck('trhdr_id')->unique();
-
-            // Hapus semua billing header yang terkait
-            foreach ($billingHeaderIds as $billingId) {
-                $this->delBilling($billingId);
-            }
-        }
-    }
-
-    private function prepareDataFromDelivery($deliveryId): array
-    {
-        $sql = "select
-                CASE WHEN dh.tr_type='PD' THEN 'APB' WHEN dh.tr_type='SD' THEN 'ARB' ELSE '' END tr_type,
-                dh.tr_date, dh.tr_code, '' reff_code, dh.partner_id, dh.partner_code,oh.payment_term_id,oh.payment_term,oh.payment_due_days,
-                oh.curr_id,oh.curr_code,oh.curr_rate, null print_date
-                ,dh.id dlvhdr_id, dd.id dlvdtl_id, dh.tr_type dlvhdrtr_type, dh.tr_code dlvhdrtr_code, dd.tr_seq dlvdtltr_seq,
-                dd.matl_id, dd.matl_code, dd.matl_uom, dd.matl_descr,
-                dd.qty,od.qty_uom,od.qty_base,od.price_uom,od.price_base, 'O' status_code,
-                ROUND(od.price*(1-od.disc_pct/100), 5) as price,
-                case when oh.tax_code in('I', 'N') then ROUND(od.price*(1-od.disc_pct/100)*dd.qty, 5)
-                when oh.tax_code='E' then ROUND(od.price*(1-od.disc_pct/100)*dd.qty *(1+oh.tax_pct/100), 5)
-                else 0 end amt
-                from deliv_dtls dd
-                join deliv_hdrs dh on dh.id=dd.trhdr_id
-                join order_dtls od on od.id=dd.reffdtl_id
-                join order_hdrs oh on oh.id=od.trhdr_id
-                where dd.trhdr_id= ?";
-        $dataBilling = DB::connection(Session::get('app_code'))->select($sql, [$deliveryId]);
-        // dd($dataBilling);
-
-        $header = (array) $dataBilling[0];
-        // $headerData = [];
-
-        // dd($headerData);
-
-        $headerData = [
-            'tr_code' => $header['tr_code'],
-            'tr_type' => $header['tr_type'],
-            'tr_date' => $header['tr_date'],
-            'reff_code' => $header['reff_code'],
-            'partner_id' => $header['partner_id'],
-            'partner_code' => $header['partner_code'],
-            'payment_term_id' => $header['payment_term_id'],
-            'payment_term' => $header['payment_term'],
-            'payment_due_days' => $header['payment_due_days'],
-            'curr_id' => $header['curr_id'],
-            'curr_code' => $header['curr_code'],
-            'curr_rate' => (float) $header['curr_rate'],
-            'print_date' => '1900-01-01',
-            'amt_reff' => 0,
-            'status_code' => $header['status_code'],
-        ];
-        // dd($headerData);
-
-        $totalAmount = 0;
-        $detailData = [];
-        $data = 0;
-        foreach ($dataBilling as $detail) {
-            $detailData[] = [
-                'tr_seq' => $data += 1,
-                'tr_code' => $header['tr_code'],
-                'dlvhdr_id' => $detail->dlvhdr_id,
-                'dlvdtl_id' => $detail->dlvdtl_id,
-                'dlvhdrtr_type' => $detail->dlvhdrtr_type,
-                'dlvhdrtr_code' => $detail->dlvhdrtr_code,
-                'dlvdtltr_seq' => $detail->dlvdtltr_seq,
-                'matl_id' => $detail->matl_id,
-                'matl_code' => $detail->matl_code,
-                'matl_uom' => $detail->matl_uom,
-                'descr' => $detail->matl_descr,
-                'qty' => (float) $detail->qty,
-                'qty_uom' => $detail->qty_uom,
-                'qty_base' => (float) $detail->qty_base,
-                'price' => (float) $detail->price,
-                'price_uom' => $detail->price_uom,
-                'price_base' => (float) $detail->price_base,
-                'amt' => (float) $detail->amt,
-                'amt_reff' => 0,
-            ];
-            $totalAmount += (float) $detail->amt;
-        }
-
-        // dd($headerData, $detailData);
-        // Update total amount di header
-        $headerData['amt'] = $totalAmount;
-        return [
-            'headerData' => $headerData,
-            'detailData' => $detailData
-        ];
-    }
-
-    private function saveHeader(array $headerData)
-    {
-        $billingHdr = null;
-        if (!empty($headerData['id'])) {
-            $billingHdr = BillingHdr::find($headerData['id']);
-        }
-        if ($billingHdr) {
-            $billingHdr->update($headerData);
-        } else {
-            $billingHdr = BillingHdr::create($headerData);
-        }
-
-        // Pastikan headerData ada id-nya sebelum update partner balance
-        $headerData['id'] = $billingHdr->id;
-        $headerData['reff_id'] = $billingHdr->id;
-        $headerData['reff_type'] = $billingHdr->tr_type;
-        $headerData['reff_code'] = $billingHdr->tr_code;
-        $headerData['amt'] = $billingHdr->amt;
-
-        // Update partner balance dan dapatkan partnerbal_id
-        $partnerBalId = $this->partnerBalanceService->updFromBilling( $headerData);
-
-        // Update BillingHdr dengan partnerbal_id
-        $billingHdr->partnerbal_id = $partnerBalId;
-        $billingHdr->save();
-
-        return $billingHdr;
-    }
-
-    private function saveDetail(array $headerData, array $detailData)
-    {
-        foreach ($detailData as $detail) {
-            // Simpan detail
-            $billingDetail = new BillingDtl($detail);
-            $billingDetail->save();
-
-            // Update qty_reff di DelivDtl jika ada dlvdtl_id
-            if (!empty($billingDetail->dlvdtl_id)) {
-                $this->deliveryService->updDelivQtyReff('+', $billingDetail->qty, $billingDetail->dlvdtl_id);
-            }
-        }
-    }
-
     private function deleteHeader(int $billingId)
     {
-        $billingHdr = BillingHdr::findOrFail($billingId);
-        $billingHdr->forceDelete();
         $this->partnerBalanceService->delPartnerLog($billingId);
+        $billingHdr = BillingHdr::findOrFail($billingId);
+        $billingHdr->delete();
     }
 
     private function deleteDetail(int $billingId)
     {
         // Get existing details
-        $existingDetails = BillingDtl::where('trhdr_id', $billingId)->get();
-
-        // Delete onhand and reservation for each detail
+        $existingDetails = BillingDeliv::where('trhdr_id', $billingId)->get();
         foreach ($existingDetails as $detail) {
-            if (!empty($detail->dlvdtl_id)) {
-                $this->deliveryService->updDelivQtyReff('-', $detail->qty, $detail->dlvdtl_id);
-            }
-            $detail->forceDelete();
+            DelivHdr::updateBillHdrId($detail->deliv_id, 0);
+            $detail->delete();
         }
+        $existingDetails = BillingOrder::where('trhdr_id', $billingId)->delete();
     }
 
     public function updAmtReff(string $mode, float $Amt, int $billHdrId)

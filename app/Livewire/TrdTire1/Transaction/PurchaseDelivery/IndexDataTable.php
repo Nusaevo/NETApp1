@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\Status;
@@ -23,7 +23,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return DelivHdr::with(['DelivDtl', 'Partner'])
+        return DelivHdr::with(['DelivPacking', 'Partner'])
             ->where('deliv_hdrs.tr_type', 'PD')
             ->where(function ($query) {
                 $query->where('deliv_hdrs.status_code', Status::OPEN)
@@ -65,37 +65,17 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans('Kode Barang'), 'kode_barang')
                 ->label(function ($row) {
-                    // Ambil semua kode barang dari DelivDtl, pisahkan dengan koma
-                    $matlCodes = DelivDtl::where('trhdr_id', $row->id)->pluck('matl_code');
+                    // Ambil semua kode barang dari DelivPacking, pisahkan dengan koma
+                    $matlCodes = DelivPacking::where('tr_code', $row->tr_code)->pluck('matl_descr');
                     return $matlCodes->isNotEmpty() ? $matlCodes->implode(', ') : '-';
                 })
                 ->sortable(),
             Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
-                    $totalQty = DelivDtl::where('trhdr_id', $row->id)->sum('qty');
-                    return $totalQty;
+                    $totalQty = DelivPacking::where('tr_code', $row->tr_code)->sum('qty');
+                    return round($totalQty);
                 })
                 ->sortable(),
-            // Column::make($this->trans("amt"), "total_amt_in_idr")
-            //     ->label(function ($row) {
-            //         $totalAmt = 0;
-
-            //         $orderDetails = DelivDtl::where('trhdr_id', $row->id)->get();
-
-            //         if ($orderDetails->isEmpty()) {
-            //             return 'N/A';
-            //         }
-            //     })
-            //     ->sortable(),
-
-            // Column::make($this->trans('status'), "status_code")
-            //     ->sortable()
-            //     ->format(function ($value, $row, Column $column) {
-            //         return Status::getStatusString($value);
-            //     }),
-            // Column::make($this->trans("created_date"), "created_at")
-            //     ->searchable()
-            //     ->sortable(),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
@@ -140,10 +120,10 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
-                        ->from('deliv_dtls')
-                        ->whereRaw('deliv_dtls.tr_code = deliv_hdrs.tr_code')
-                        ->where(DB::raw('UPPER(deliv_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('deliv_dtls.tr_type', 'PD');
+                        ->from('deliv_packings')
+                        ->whereRaw('deliv_packings.tr_code = deliv_hdrs.tr_code')
+                        ->where(DB::raw('UPPER(deliv_packings.matl_descr)'), 'like', '%' . strtoupper($value) . '%')
+                        ->where('deliv_packings.tr_type', 'PD');
                 });
             }),
         ];

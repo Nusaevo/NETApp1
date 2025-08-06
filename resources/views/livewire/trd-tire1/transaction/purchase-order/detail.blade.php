@@ -68,7 +68,6 @@
                                 <th style="width: 150px; text-align: center;">Jumlah</th>
                                 <th style="width: 70px; text-align: center;">Aksi</th>
                             </x-slot>
-
                             <!-- Define table rows -->
                             <x-slot name="rows">
                                 @foreach ($input_details ?? [] as $key => $input_detail)
@@ -83,7 +82,6 @@
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="matlIdOnChanged({{ $key }}, $event.target.value)"
                                                 type="int" :enabled="$isDeliv ? 'false' : 'true'" />
-                                                @dump($input_details[$key]['matl_id'] ?? '')
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.price"

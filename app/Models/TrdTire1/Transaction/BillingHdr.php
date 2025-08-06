@@ -18,8 +18,8 @@ class BillingHdr extends BaseModel
     }
 
     protected $fillable = [
-        'tr_code',
         'tr_type',
+        'tr_code',
         'tr_date',
         'reff_code',
         'partner_id',
@@ -30,14 +30,26 @@ class BillingHdr extends BaseModel
         'curr_id',
         'curr_code',
         'curr_rate',
-        'status_code',
-        'print_date',
+        'partnerbal_id',
         'amt',
         'amt_beforetax',
         'amt_tax',
+        'amt_adjustdtl',
+        'amt_adjusthdr',
         'amt_shipcost',
         'amt_reff',
-        'partnerbal_id'
+        'print_date',
+    ];
+
+    protected $casts = [
+        'curr_rate' => 'float',
+        'amt' => 'float',
+        'amt_beforetax' => 'float',
+        'amt_tax' => 'float',
+        'amt_adjustdtl' => 'float',
+        'amt_adjusthdr' => 'float',
+        'amt_shipcost' => 'float',
+        'amt_reff' => 'float',
     ];
 
     #region Relations
@@ -52,10 +64,14 @@ class BillingHdr extends BaseModel
         return $this->hasOne(OrderHdr::class, 'tr_code', 'tr_code')->where('tr_type', 'SO');
     }
 
-    public function BillingDtl()
+    public function BillingOrder()
     {
-        return $this->hasMany(BillingDtl::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+        return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
     }
+    // public function BillingOrder()
+    // {
+    //     return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
+    // }
 
     public function PartnerBal()
     {

@@ -42,6 +42,7 @@ class Index extends BaseComponent
 
     public function onValidateAndSave()
     {
+        // Validasi input
         if (empty($this->selectedOrderIds) || count($this->selectedOrderIds) === 0) {
             $this->dispatch('error', 'Silakan pilih minimal satu nota untuk dikirim.');
             return;
@@ -57,133 +58,93 @@ class Index extends BaseComponent
             $selectedOrders = OrderHdr::whereIn('id', $this->selectedOrderIds)->get();
             $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
 
+            if (!$warehouse) {
+                $this->dispatch('error', 'Warehouse tidak ditemukan.');
+                return;
+            }
+
             $successCount = 0;
             $errorMessages = [];
 
             foreach ($selectedOrders as $order) {
-                // Prepare header data
-                $headerData = [
+                // Persiapan array inputs
+                $inputs = [
                     'tr_type' => 'SD',
                     'tr_code' => $order->tr_code,
                     'tr_date' => $this->inputs['tr_date'],
                     'partner_id' => $order->partner_id,
                     'partner_code' => $order->partner_code,
                     'status_code' => $order->status_code,
-                    'wh_code' => $warehouse ? $warehouse->str1 : null,
-                    'wh_id' => $warehouse ? $warehouse->id : null,
-                    'payment_term_id' => $order->payment_term_id ?? 0,
-                    'payment_term' => $order->payment_term ?? null,
-                    'payment_due_days' => $order->payment_due_days ?? 0,
+                    'wh_code' => $warehouse->str1,
+                    'wh_id' => $warehouse->id,
+                    'payment_term_id' => $order->payment_term_id,
+                    'payment_term' => $order->payment_term,
+                    'payment_due_days' => $order->payment_due_days,
                     'note' => '',
                     'reff_date' => null,
-                    'amt_shipcost' => $this->inputs['amt_shipcost'],
+                    'amt_shipcost' => $this->inputs['amt_shipcost'] ?? 0,
                 ];
 
-                // Prepare detail data
-                $detailData = [];
-                $trSeq = 0;
+                // Persiapan array input_details
+                $input_details = [];
                 $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
+
                 foreach ($orderDetails as $detail) {
-                    $availableBatches = $warehouse ? IvtBal::where('matl_id', $detail->matl_id)
+                    // Cek stok tersedia di warehouse (hanya untuk validasi)
+                    $totalStock = IvtBal::where('matl_id', $detail->matl_id)
                         ->where('wh_id', $warehouse->id)
-                        ->orderBy('batch_code')
-                        ->get() : collect();
+                        ->where('qty_oh', '>', 0)
+                        ->sum('qty_oh');
 
-                    if ($availableBatches->isEmpty()) {
-                        $errorMessages[] = __('Tidak ada stok tersedia untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code);
+                    if ($totalStock < $detail->qty) {
+                        $errorMessages[] = __('Stok tidak mencukupi untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code . ' (Tersedia: ' . $totalStock . ', Dibutuhkan: ' . $detail->qty . ')');
                         continue 2; // skip ke order berikutnya
+                    }
+
+                    // Satu detail per material, batch allocation akan ditangani di savePicking
+                    $input_details[] = [
+                        'matl_id' => $detail->matl_id,
+                        'matl_code' => $detail->matl_code,
+                        'matl_descr' => $detail->matl_descr,
+                        'matl_uom' => $detail->matl_uom,
+                        'qty' => $detail->qty,
+                        'wh_id' => $warehouse->id,
+                        'wh_code' => $warehouse->str1,
+                        'reffdtl_id' => $detail->id,
+                        'reffhdr_id' => $order->id,
+                        'reffhdrtr_type' => $detail->OrderHdr->tr_type,
+                        'reffhdrtr_code' => $order->tr_code,
+                        'reffdtltr_seq' => $detail->tr_seq,
+                    ];
+                }
+
+                                // Panggil DeliveryService dengan array inputs dan input_details
+                if (!empty($input_details)) {
+                    $deliveryService = app(DeliveryService::class);
+                    $result = $deliveryService->saveDelivery($inputs, $input_details);
+
+                    if (!empty($result['header'])) {
+                        $successCount++;
                     } else {
-                        $qtyOrder =  $detail->qty;
-                        foreach ($availableBatches as $ivtBalBatch) {
-                            $qtyShip = 0;
-                            if  ($ivtBalBatch->qty_oh >= $qtyOrder) {
-                                $qtyShip = $qtyOrder;
-                                $qtyOrder = 0;
-                            } else {
-                                $qtyShip = $ivtBalBatch->qty_oh;
-                                $qtyOrder -= $ivtBalBatch->qty_oh;
-                            }
-                            if ($qtyShip > 0) {
-                                $detailData[] = [
-                                    'tr_seq' => $trSeq += 1,
-                                    'matl_id' => $detail->matl_id,
-                                    'matl_code' => $detail->matl_code,
-                                    'matl_descr' => $detail->matl_descr,
-                                    'matl_uom' => $detail->matl_uom,
-                                    'qty' => $qtyShip,
-                                    'wh_id' => $warehouse ? $warehouse->id : null,
-                                    'wh_code' => $warehouse ? $warehouse->str1 : null,
-                                    'reffdtl_id' => $detail->id,
-                                    'reffhdr_id' => $order->id,
-                                    'reffhdrtr_type' => $detail->OrderHdr->tr_type,
-                                    'reffhdrtr_code' => $order->tr_code,
-                                    'reffdtltr_seq' => $detail->tr_seq,
-                                    'ivt_id' => $ivtBalBatch->id,
-                                    'batch_code' => $ivtBalBatch->batch_code,
-                                ];
-                            }
-                            if ($qtyOrder == 0) {
-                                break;
-                            }
-                        }
-                        if ($qtyOrder > 0) {
-                            $errorMessages[] = __('Stok tidak mencukupi untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code);
-                            continue 2; // skip ke order berikutnya
-                        }
+                        $errorMessages[] = 'Gagal membuat Delivery untuk order ' . $order->tr_code;
                     }
                 }
-
-                // Create delivery using service
-                $deliveryService = app(DeliveryService::class);
-                $result = $deliveryService->addDelivery($headerData, $detailData);
-                if (empty($result['header'])) {
-                    $errorMessages[] = 'Gagal membuat Delivery untuk order ' . $order->tr_code . ': Data header tidak valid atau ada constraint DB.';
-                    continue;
-                }
-
-                // Update headerData dengan id dari SD yang baru
-                $headerData['id'] = $result['header']->id;
-
-                // Hitung total_amt dari detailData (price dari OrderDtl dikurangi disc_pct, dikali qty dari delivdtl)
-                $total_amt = 0;
-                foreach ($detailData as $detail) {
-                    if (isset($detail['reffdtl_id']) && isset($detail['qty'])) {
-                        $orderDtl = OrderDtl::find($detail['reffdtl_id']);
-                        if ($orderDtl) {
-                            $price = $orderDtl->price;
-                            $disc_pct = $orderDtl->disc_pct ?? 0;
-                            $qty = $detail['qty'];
-                            $price_after_disc = $price - ($price * $disc_pct / 100);
-                            $total_amt += $price_after_disc * $qty;
-                        }
-                    }
-                }
-                $headerData['total_amt'] = $total_amt;
-
-                // Update juga trhdr_id pada setiap detail
-                foreach ($detailData as &$detail) {
-                    $detail['trhdr_id'] = $result['header']->id;
-                }
-                unset($detail);
-
-                // Tambahkan pembuatan BillingHdr jika diperlukan
-                // app(BillingService::class)->addBilling($headerData, $detailData);
-
-                $successCount++;
             }
 
-            // Setelah loop, tampilkan hasil
+            // Tampilkan hasil
             if ($successCount > 0) {
                 $this->dispatch('success', $successCount . ' Sales Delivery berhasil dibuat');
             }
             if (!empty($errorMessages)) {
                 $this->dispatch('error', implode(', ', $errorMessages));
             }
+
             $this->dispatch('close-modal-delivery-date');
             $this->dispatch('refreshDatatable');
             $this->dispatch('refresh-page');
 
         } catch (Exception $e) {
+            Log::error('Error creating Sales Delivery: ' . $e->getMessage());
             $this->dispatch('error', 'Gagal membuat Sales Delivery: ' . $e->getMessage());
             $this->dispatch('refresh-page');
         }

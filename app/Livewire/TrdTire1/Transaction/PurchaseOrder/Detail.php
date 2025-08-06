@@ -118,8 +118,9 @@ class Detail extends BaseComponent
         // }
 
         if ($this->isEditOrView()) {
+            // dd($this->objectIdValue);
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
-            $this->inputs = $this->object->toArray(); 
+            $this->inputs = $this->object->toArray();
             $this->inputs['status_code_text'] = $this->object->status_Code_text;
             // $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
@@ -131,7 +132,7 @@ class Detail extends BaseComponent
                 : ($trDate ? $trDate->format('Y-m-d') : null);
             // dd($this->inputs);
             $this->salesTypeOnChanged();
-            $this->loadDetails();   
+            $this->loadDetails();
             // dd($this->input_details);
         } else {
             $this->isPanelEnabled = "true";
@@ -157,7 +158,7 @@ class Detail extends BaseComponent
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['print_date']=null;
         $this->isDeliv = false;
-    } 
+    }
 
      public function onValidateAndSave()
     {
@@ -198,19 +199,12 @@ class Detail extends BaseComponent
         $headerData['amt'] = $totals['amt'];
         $headerData['amt_beforetax'] = $totals['amt_beforetax'];
         $headerData['amt_tax'] = $totals['amt_tax'];
+        $headerData['amt_adjustdtl'] = $totals['amt_adjustdtl'];
 
-        if ($this->actionValue === 'Create') {
-            $order = $this->orderService->addOrder($headerData, $detailData);
-            if (!$order) {
-                throw new Exception('Gagal membuat Purchase Order.');
-            }
-            $this->object = $order;
-        } else {
-            $result = $this->orderService->updOrder($this->object->id, $headerData, $detailData);
-            if (!$result) {
-                throw new Exception('Gagal mengubah Purchase Order.');
-            }
-        }
+        $order = $this->orderService->saveOrder($headerData, $detailData);
+
+        $this->object = $order['header'];
+
         $this->redirectToEdit();
     }
 
@@ -221,7 +215,7 @@ class Detail extends BaseComponent
         if ($this->actionValue === 'Create') {
             $headerData['status_code'] = Status::OPEN;
         }
-        
+
         if (empty($headerData['partner_code']) && !empty($headerData['partner_id'])) {
             $partner = Partner::find($headerData['partner_id']);
             $headerData['partner_code'] = $partner ? $partner->code : '';
@@ -232,13 +226,17 @@ class Detail extends BaseComponent
     private function prepareDetailData()
     {
         $detailData = $this->input_details;
-        
+
         $trSeq = 1;
         foreach ($detailData as $i => &$detail) {
-            $detail['tr_seq'] = $trSeq++;
+            // $detail['tr_seq'] = $trSeq++;
             $detail['qty_uom'] = 'PCS';
             $detail['price_uom'] = 'PCS';
             $detail['qty_base'] = 1;
+            // Pastikan disc_pct selalu default 0 jika belum ada
+            if (!isset($detail['disc_pct']) || $detail['disc_pct'] === null) {
+                $detail['disc_pct'] = 0;
+            }
             if ($this->actionValue === 'Create') {
                 $detail['status_code'] = Status::OPEN;
             }
@@ -252,7 +250,7 @@ class Detail extends BaseComponent
         // Validasi: sales_type harus dipilih dulu
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih nota MOTOR atau MOBIL terlebih dahulu.');
-            return;   
+            return;
         }
 
         try {
@@ -261,7 +259,10 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah terkirim.');
                 return;
             }
-            $this->input_details[] = populateArrayFromModel(new OrderDtl());
+            $item = populateArrayFromModel(new OrderDtl());
+            $item['disc_pct'] = 0;
+            $item['price_base'] = 1;
+            $this->input_details[] = $item;
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }
@@ -297,19 +298,27 @@ class Detail extends BaseComponent
         if ($matl_id) {
             $material = Material::find($matl_id);
             if ($material) {
+                // Cari UOM untuk material ini
                 $matlUom = MatlUom::where('matl_id', $matl_id)
-                    -> where('matl_uom', $material->uom)->first();
-                // dd($matlUom);
-                if ($matlUom) {
-                    $this->input_details[$key]['price'] = $matlUom->last_buying_price;
-                } else {
-                    $this->dispatch('error', __('generic.error.material_uom_not_found'));
-                }
+                    ->where('matl_uom', $material->uom)
+                    ->first();
+
+                // Set data material terlebih dahulu
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
                 $this->input_details[$key]['matl_uom'] = $material->uom;
                 $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->input_details[$key]['disc_pct'] = 0;
+
+                // Set harga berdasarkan UOM yang ditemukan
+                if ($matlUom) {
+                    $this->input_details[$key]['price'] = $matlUom->last_buying_price ?? 0;
+                } else {
+                    // Jika UOM tidak ditemukan, set harga 0 dan tampilkan warning
+                    $this->input_details[$key]['price'] = 0;
+                    $this->dispatch('warning', __('generic.error.material_uom_not_found') . ' - Material: ' . $material->name . ' (UOM: ' . $material->uom . ')');
+                }
+
                 $this->calcItemAmount($key);
             } else {
                 $this->dispatch('error', __('generic.error.material_not_found'));
@@ -334,37 +343,45 @@ class Detail extends BaseComponent
 
     public function calcItemAmount($key)
     {
-        // dd($this->input_details[$key]);
         if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
             // Calculate basic amount with discount
             $qty = $this->input_details[$key]['qty'];
             $price = $this->input_details[$key]['price'];
-            $discount = $this->input_details[$key]['disc_pct']/100;
-            $taxValue = $this->inputs['tax_pct']/ 100;
+            $discount = $this->input_details[$key]['disc_pct'] / 100;
+            $taxValue = $this->inputs['tax_pct'] / 100;
             $priceAfterDisc = $price * (1 - $discount);
+            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue),0);
+            // dd($this->inputs['tax_code'], $price, $priceAfterDisc, $priceBeforeTax, $taxValue);
+            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount,0);
 
-            $amtDiscount = $qty * $price * $discount;
-            $this->input_details[$key]['disc_amt'] = $amtDiscount;
-
-            // Calculate tax amounts
-            // dd($this->inputs['tax_code'], $taxValue);
-            $this->input_details[$key]['amt'] =0;
+            $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
             $this->input_details[$key]['amt_tax'] = 0;
             if ($this->inputs['tax_code'] === 'I') {
+                $this->input_details[$key]['price_beforetax'] = $priceBeforeTax;
+                // Catatan: khusus untuk yang include PPN
+                // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
+                $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
+                // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
+                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue,0);
+                // Total Nota dihiitung dari harga setelah disc * qty
+                // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
+                // priceAdjustment
                 $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
-                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty / (1 + $taxValue), 0);
-                $this->input_details[$key]['amt_tax'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'];
             } else if ($this->inputs['tax_code'] === 'E') {
-                $this->input_details[$key]['amt'] = round($priceAfterDisc * $qty * (1 + $taxValue),0);
+                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
-                $this->input_details[$key]['amt_tax'] = $priceAfterDisc * $qty * $taxValue;
+                $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue,0);
+                $this->input_details[$key]['amt'] = $this->input_details[$key]['amt_beforetax'] + $this->input_details[$key]['amt_tax'];
             } else if ($this->inputs['tax_code'] === 'N') {
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
+                $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
+                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             }
-            
+            $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
+            $this->input_details[$key]['amt_adjustdtl'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'];
+
             $this->total_amount = 0;
             $this->total_discount = 0;
             $this->total_dpp = 0;
@@ -372,7 +389,7 @@ class Detail extends BaseComponent
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
                 $this->total_amount += $detail['amt'];
-                $this->total_discount += $detail['disc_amt'];
+                $this->total_discount += $detail['disc_amt'] ?? 0;
                 $this->total_dpp += $detail['amt_beforetax'];
                 $this->total_tax += $detail['amt_tax'];
             }
@@ -381,7 +398,6 @@ class Detail extends BaseComponent
             $this->total_discount = rupiah($this->total_discount);
             $this->total_dpp = rupiah($this->total_dpp);
             $this->total_tax = rupiah($this->total_tax);
-            
         }
     }
 
@@ -418,9 +434,13 @@ class Detail extends BaseComponent
                 ->get();
 
             $this->input_details = $this->object_detail->toArray();
-            foreach ($this->object_detail as $key => $detail) {
-                 $this->calcItemAmount($key);
+            // dd($this->input_details);
+            foreach ($this->input_details as $key => &$detail) {
+                if (!isset($detail['disc_amt'])) $detail['disc_amt'] = 0;
+                if (!isset($detail['amt_adjustdtl'])) $detail['amt_adjustdtl'] = 0;
+                $this->calcItemAmount($key);
             }
+            unset($detail);
 
             // Check delivery status after loading details
             $this->checkDeliveryStatus();
@@ -445,17 +465,20 @@ class Detail extends BaseComponent
         $amt = 0;
         $amtBeforeTax = 0;
         $amtTax = 0;
+        $amtAdjustDtl = 0;
 
         foreach ($detailData as $detail) {
             $amt += $detail['amt'] ?? 0;
             $amtBeforeTax += $detail['amt_beforetax'] ?? 0;
             $amtTax += $detail['amt_tax'] ?? 0;
+            $amtAdjustDtl += $detail['amt_adjustdtl'] ?? 0;
         }
 
         return [
             'amt' => $amt,
             'amt_beforetax' => $amtBeforeTax,
-            'amt_tax' => $amtTax
+            'amt_tax' => $amtTax,
+            'amt_adjustdtl' => $amtAdjustDtl
         ];
     }
 
@@ -607,13 +630,21 @@ class Detail extends BaseComponent
 
         $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
-        $this->materialQuery = "
-            SELECT id, code, name
-            FROM materials
-            WHERE status_code = 'A'
-            AND deleted_at IS NULL
-            AND category IN ($categoryList)
-        ";
+        // Ambil semua matl_id yang sedang dipilih di input_details
+        $selectedMatlIds = collect($this->input_details)->pluck('matl_id')->filter()->unique()->toArray();
+        $selectedMatlIdsStr = '';
+        if (!empty($selectedMatlIds)) {
+            $selectedMatlIdsStr = implode(',', $selectedMatlIds);
+        }
+
+        $mainQuery = "SELECT id, code, name FROM materials WHERE status_code = 'A' AND deleted_at IS NULL AND category IN ($categoryList)";
+        // Jika ada matl_id yang tidak ada di hasil utama, tambahkan dengan UNION
+        if (!empty($selectedMatlIdsStr)) {
+            $unionQuery = "SELECT id, code, name FROM materials WHERE id IN ($selectedMatlIdsStr)";
+            $this->materialQuery = "$mainQuery UNION $unionQuery";
+        } else {
+            $this->materialQuery = $mainQuery;
+        }
     }
 
     public function checkDeliveryStatus()

@@ -12,55 +12,26 @@ use App\Models\TrdTire1\Master\MatlUom;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
-class OrderDtl extends BaseModel
+class DelivPacking extends BaseModel
 {
     use SoftDeletes;
 
-    protected $table = 'order_dtls';
+    protected $table = 'deliv_packings';
     protected $fillable = [
         'trhdr_id',
         'tr_type',
         'tr_code',
         'tr_seq',
-        'matl_id',
-        'matl_code',
-        'matl_uom',
+        'reffdtl_id',
+        'reffhdr_id',
+        'reffhdrtr_type',
+        'reffhdrtr_code',
+        'reffdtltr_seq',
         'matl_descr',
         'qty',
-        'qty_uom',
-        'qty_base',
-        'price',
-        'price_curr',
-        'price_uom',
-        'price_base',
-        'disc_pct',
-        'price_afterdisc',
-        'price_beforetax',
-        'amt',
-        'amt_beforetax',
-        'amt_adjustdtl',
-        'amt_tax',
-        'qty_reff',
-        'gt_process_date',
-        'gt_tr_code',
-        'gt_partner_id',
-        'gt_partner_code',
     ];
-
     protected $casts = [
         'qty' => 'float',
-        'qty_base' => 'float',
-        'price' => 'float',
-        'price_curr' => 'float',
-        'price_base' => 'float',
-        'disc_pct' => 'float',
-        'price_afterdisc' => 'float',
-        'price_beforetax' => 'float',
-        'amt' => 'float',
-        'amt_beforetax' => 'float',
-        'amt_adjustdtl' => 'float',
-        'amt_tax' => 'float',
-        'qty_reff' => 'float',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];
@@ -76,26 +47,26 @@ class OrderDtl extends BaseModel
         return $this->belongsTo(Material::class, 'matl_id', 'id');
     }
 
-    public function OrderHdr()
+    public function DelivHdr()
     {
-        return $this->belongsTo(OrderHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
+        return $this->belongsTo(DelivHdr::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type);
     }
 
-    public function SalesReward()
+    public function OrderDtl()
     {
-        return $this->belongsTo(SalesReward::class, 'matl_id', 'matl_id');
+        return $this->belongsTo(OrderDtl::class, 'reffdtl_id', 'id');
     }
 
-    public function DelivPacking()
+    public function DelivPickings()
     {
-        return $this->hasMany(DelivPacking::class, 'reffdtl_id', 'id');
+        return $this->hasMany(DelivPicking::class, 'trpacking_id', 'id');
     }
     #endregion
 
     #region Delivery Status Methods
     public function hasDelivery()
     {
-        return $this->DelivPacking()->exists();
+        return $this->DelivPickings()->exists();
     }
 
     public function isEditable()
@@ -114,9 +85,10 @@ class OrderDtl extends BaseModel
     }
     #endregion
 
-    public function scopeGetByOrderHdr($query, $id, $trType)
+    public function scopeGetByDelivHdr($query, $id, $trType)
     {
         return $query->where('trhdr_id', $id)
             ->where('tr_type', $trType);
     }
 }
+
