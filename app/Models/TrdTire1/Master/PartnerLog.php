@@ -16,21 +16,27 @@ class PartnerLog extends BaseModel
     }
 
     protected $fillable = [
+        'tr_date',
+        'trdtl_id',
         'trhdr_id',
         'tr_type',
         'tr_code',
         'tr_seq',
-        'trdtl_id',
         'partner_id',
         'partner_code',
-        'partnerbal_id',
-        'tr_date',
-        'tr_amt',
-        'amt',
-        'tr_desc',
         'reff_id',
+        'reffhdr_id',
         'reff_type',
         'reff_code',
+        'tr_amt',
+        'tramt_adjusthdr',
+        'tramt_shipcost',
+        'partnerbal_id',
+        'amt',
+        'curr_id',
+        'curr_code',
+        'curr_rate',
+        'tr_desc',
     ];
 
     public function scopeGetActiveData()

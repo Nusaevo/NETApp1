@@ -38,27 +38,7 @@ class DeliveryService
                 'header' => $header,
                 'details' => $details
             ];
-            // Set trhdr_id, tr_code, tr_type pada setiap packing
-            // foreach ($detailData as &$detail) {
-            //     $detail['trhdr_id'] = $delivHdr->id;
-            //     $detail['tr_code'] = $delivHdr->tr_code;
-            //     $detail['tr_type'] = $delivHdr->tr_type;
-            // }
-            // unset($packing);
 
-            // // Set trhdr_id pada setiap picking
-            // foreach ($pickingData as &$picking) {
-            //     $picking['trhdr_id'] = $delivHdr->id;
-            // }
-            // unset($picking);
-
-            // dd($packingData, $pickingData);
-
-            // $this->savePacking($packingData, $pickingData);
-
-            // dd($packingData, $pickingData);
-
-            // app(BillingService::class)->addfromDelivery($delivHdr->id);
         } catch (Exception $e) {
             throw new Exception('Error adding delivery: ' . $e->getMessage());
         }
@@ -95,7 +75,8 @@ class DeliveryService
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
 
-        $existingPackings = DelivPacking::withTrashed()->where('trhdr_id', $headerData['id'])->get();
+        $existingPackings = DelivPacking::where('trhdr_id', $headerData['id'])
+            ->get();
         // foreach ($existingPackings as $packing) {
         //     dd($packing->isDirty(), $packing->isDirty('qty'), $packing->isClean(), $packing->getDirty());
         // }
