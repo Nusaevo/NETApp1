@@ -33,9 +33,9 @@
                             <td>{{ number_format($res->total_quantity, 0) }}</td>
                             <td>
                                 @if ($res->category === 'SO')
-                                    {{ rupiah(toNumberFormatter($res->total_buying_price)) }}
+                                    {{ rupiah($res->total_buying_price) }}
                                 @else
-                                    {{ dollar(toNumberFormatter($res->total_buying_price)) }}
+                                    {{ dollar($res->total_buying_price) }}
                                 @endif
                             </td>
                         </tr>

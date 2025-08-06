@@ -64,17 +64,17 @@
                                 @endif
 
                                 @if(!empty($res->material_descr))
-                                    <br>{{ e($res->material_descr) }}
+                                    <br>{{ ($res->material_descr) }}
                                 @endif
                             </td>
-                            <td>{{ dollar(toNumberFormatter($res->price))  }}</td>
+                            <td>{{ dollar($res->price)  }}</td>
                             <td>
                                 @if(!empty($res->no_nota))
                                 No Nota : {{ $res->no_nota }}
                                 <br>
                                 Customer :  {{  $res->partner_name }}
                                 <br>
-                                Harga Jual : {{ rupiah(toNumberFormatter($res->selling_price))  }}
+                                Harga Jual : {{ rupiah($res->selling_price)  }}
                                 <br>
                                 Tanggal :   {{  $res->tr_date }}
                                 @endif
