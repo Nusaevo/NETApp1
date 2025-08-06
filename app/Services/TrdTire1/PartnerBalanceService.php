@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\{DB, Log};
 
 class PartnerBalanceService
 {
-    public function updFromBilling( array $headerData)
+    public function updFromBilling(array $headerData)
     {
         try{
             $partnerBal = PartnerBal::updateOrCreate(
@@ -26,26 +26,30 @@ class PartnerBalanceService
                     'note' => '',
                 ]
             );
-
-            $partnerBal->amt_bal +=  $headerData['amt'];
+            $amt = $headerData['amt'] + $headerData['amt_adjusthdr'] + $headerData['amt_shipcost'];
+            $partnerBal->amt_bal += $amt;
             $partnerBal->save();
 
             $logData = [
                 'tr_date' => $headerData['tr_date'],
+                'trdtl_id' => 0,
                 'trhdr_id' => $headerData['id'],
                 'tr_type' => $headerData['tr_type'],
                 'tr_code' => $headerData['tr_code'],
-                'reff_id' => $headerData['reff_id'],
-                'reff_type' => $headerData['reff_type'],
-                'reff_code' => $headerData['reff_code'],
-                'tr_seq' => 0,
-                'trdtl_id' => 0,
+                'tr_seq' => 1,
                 'partner_id' => $headerData['partner_id'],
                 'partner_code' => $headerData['partner_code'],
-                'partnerbal_id' => $partnerBal->id,
-                'curr_id' => $headerData['curr_id'],
-                'amt' => $headerData['amt'],
+                'reff_id' => 0,
+                'reff_type' => '',
+                'reff_code' => '',
                 'tr_amt' => $headerData['amt'],
+                'tramt_adjusthdr' => $headerData['amt_adjusthdr'],
+                'tramt_shipcost' => $headerData['amt_shipcost'],
+                'partnerbal_id' => $partnerBal->id,
+                'amt' => $amt,
+                'curr_id' => $headerData['curr_id'],
+                'curr_code' => $headerData['curr_code'],
+                'curr_rate' => $headerData['curr_rate'],
                 'tr_desc' => 'Billing ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'],
             ];
             // Selalu buat log baru untuk delivery
@@ -200,10 +204,10 @@ class PartnerBalanceService
 
 
             $logData = [
+                'tr_date' => $headerData['tr_date'],
                 'trhdr_id' => $detailData['trhdr_id'],
                 'tr_type' => $detailData['tr_type'],
                 'tr_code' => $detailData['tr_code'],
-                'tr_date' => $headerData['tr_date'],
                 'tr_seq' => $detailData['tr_seq'],
                 'trdtl_id' => $detailData['id'],
                 'partner_id' => $partnerId,

@@ -51,4 +51,10 @@ class BillingOrder extends BaseModel
     //     return $this->belongsTo(PartnerBal::class, 'partnerbal_id', 'id');
     // }
     #endregion
+
+    public function getNextTrSeq($trhdrId)
+    {
+        $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
+        return $lastSeq + 1;
+    }
 }
