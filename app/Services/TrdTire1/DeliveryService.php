@@ -94,6 +94,7 @@ class DeliveryService
                 $packing = new DelivPacking();
                 $packing->fill($detail);
                 $packing->save();
+                OrderDtl::updateQtyReff($detail['qty'], $detail['reffdtl_id']);
 
                 $detail['id']= $packing->id;
                 $this->inventoryService->addReservation($headerData, $detail);
@@ -102,10 +103,13 @@ class DeliveryService
             } else {
                 $packing = $existingPackings->firstWhere('id', $detail['id']);
                 if ($packing) {
+                    $originalQty = $packing->getOriginal('qty');
                     $packing->fill($detail);
                     if ($packing->isDirty()) {
                         $this->inventoryService->delIvtLog(0, $detail['id']);
+                        OrderDtl::updateQtyReff(-$originalQty, $detail['reffdtl_id']);
                         $packing->save();
+                        OrderDtl::updateQtyReff($detail['qty'], $detail['reffdtl_id']);
 
                         $this->inventoryService->addReservation($headerData, $detail);
                         $this->savePicking($headerData,$detail);
@@ -118,6 +122,7 @@ class DeliveryService
         foreach ($existingPackings as $existing) {
             if (!in_array($existing->id, $packing_ids)) {
                 $this->inventoryService->delIvtLog(0, $existing->id);
+                OrderDtl::updateQtyReff(-$existing->qty, $existing->reffdtl_id);
                 $existing->delete();
             }
         }
@@ -225,18 +230,12 @@ class DeliveryService
     private function getNextSequence($model,int $keyId): int
     {
         if ($model === 'DelivPacking') {
-            $max = DelivPacking::withTrashed()
-                ->where('trhdr_id', $keyId)
-                ->max('tr_seq');
+            $max = DelivPacking::where('trhdr_id', $keyId)->max('tr_seq');
         } else if ($model === 'DelivPicking') {
-            $max = DelivPicking::withTrashed()
-                ->where('trpacking_id', $keyId)
-                ->max('tr_seq');
+            $max = DelivPicking::where('trpacking_id', $keyId)->max('tr_seq');
         }
         return ($max ?? 0) + 1;
     }
-
-
 
     private function deleteHeader(int $delivId): bool
     {

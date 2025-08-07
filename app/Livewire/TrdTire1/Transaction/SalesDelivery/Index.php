@@ -118,15 +118,41 @@ class Index extends BaseComponent
                     ];
                 }
 
-                                // Panggil DeliveryService dengan array inputs dan input_details
+                // Panggil DeliveryService dengan array inputs dan input_details
                 if (!empty($input_details)) {
                     $deliveryService = app(DeliveryService::class);
                     $result = $deliveryService->saveDelivery($inputs, $input_details);
+
+                    // Persiapan data untuk BillingService
+                    $billingHeaderData = [
+                        'id' => 0,
+                        'tr_type' => 'ARB',
+                        'tr_code' => $order->tr_code,
+                        'tr_date' => $this->inputs['tr_date'],
+                    ];
+
+                    // Ambil delivery_id dari hasil saveDelivery
+                    $deliveryDetails = [];
+                    if (!empty($result['header'])) {
+                        $deliveryDetails[] = [
+                            'deliv_id' => $result['header']->id,
+                        ];
+                    }
+
+                    $billingService = app(BillingService::class);
+                    $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
 
                     if (!empty($result['header'])) {
                         $successCount++;
                     } else {
                         $errorMessages[] = 'Gagal membuat Delivery untuk order ' . $order->tr_code;
+                    }
+
+                    // Cek hasil billing
+                    if (!empty($billingResult['billing_hdr'])) {
+                        // Billing berhasil dibuat
+                    } else {
+                        $errorMessages[] = 'Gagal membuat Billing untuk delivery order ' . $order->tr_code;
                     }
                 }
             }
@@ -139,14 +165,14 @@ class Index extends BaseComponent
                 $this->dispatch('error', implode(', ', $errorMessages));
             }
 
-            $this->dispatch('close-modal-delivery-date');
-            $this->dispatch('refreshDatatable');
-            $this->dispatch('refresh-page');
+            // $this->dispatch('close-modal-delivery-date');
+            // $this->dispatch('refreshDatatable');
+            // $this->dispatch('refresh-page');
 
         } catch (Exception $e) {
             Log::error('Error creating Sales Delivery: ' . $e->getMessage());
             $this->dispatch('error', 'Gagal membuat Sales Delivery: ' . $e->getMessage());
-            $this->dispatch('refresh-page');
+            // $this->dispatch('refresh-page');
         }
     }
 

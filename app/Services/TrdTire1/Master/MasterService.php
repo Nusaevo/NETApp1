@@ -57,7 +57,7 @@ class MasterService extends BaseService
         $data = $this->getConfigData('TRX_WAREHOUSE');
         return $this->mapData($data);
     }
-    
+
     public function getWarehouseType()
     {
         $data = $this->getConfigData('TRX_WH_TYPE');
@@ -487,6 +487,53 @@ class MasterService extends BaseService
             }
         }
         return 1;
+    }
+
+    // Perhitungan amount
+    public function calculateAmounts(float $qty, float $price, float $discPct, float $taxPct, string $taxCode)
+    {
+        // Calculate basic amount with discount
+        $discount = $discPct / 100;
+        $tax = $taxPct / 100;
+        $priceAfterDisc = $price * (1 - $discount);
+        $priceBeforeTax = round($priceAfterDisc / (1 + $tax),0);
+        $amtDiscount = round($qty * $price * $discount,0);
+
+        $amt = 0;
+        $amtBeforeTax = 0;
+        $amtTax = 0;
+        if ($taxCode === 'I') {
+            // Catatan: khusus untuk yang include PPN
+            // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
+            $amtBeforeTax = $priceBeforeTax * $qty ;
+            // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
+            $amtTax = round($amtBeforeTax * $tax,0);
+            // Total Nota dihiitung dari harga setelah disc * qty
+            // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
+            // priceAdjustment
+            $amt = $priceAfterDisc * $qty;
+        } else if ($taxCode === 'E') {
+            $priceBeforeTax = $priceAfterDisc;
+            $amtBeforeTax = $priceAfterDisc * $qty;
+            $amtTax = round($priceAfterDisc * $qty * $tax,0);
+            $amt = $amtBeforeTax + $amtTax;
+        } else if ($taxCode === 'N') {
+            $priceBeforeTax = $priceAfterDisc;
+            $amtBeforeTax = $priceAfterDisc * $qty;
+            $amtTax = 0;
+            $amt = $amtBeforeTax;
+        }
+        $amtAdjust = $amt - $amtBeforeTax - $amtTax;
+
+        return [
+            'price_afterdisc' => $priceAfterDisc,
+            'price_beforetax' => $priceBeforeTax,
+            'amt' => $amt,
+            'amt_beforetax' => $amtBeforeTax,
+            'amt_tax' => $amtTax,
+            'amt_adjust' => $amtAdjust,
+            'amt_discout' => $amtDiscount,
+        ];
     }
 
 

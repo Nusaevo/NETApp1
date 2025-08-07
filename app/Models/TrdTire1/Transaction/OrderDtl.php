@@ -9,6 +9,7 @@ use App\Models\TrdTire1\Master\SalesReward;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\TrdTire1\Master\MatlUom;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
@@ -118,5 +119,15 @@ class OrderDtl extends BaseModel
     {
         return $query->where('trhdr_id', $id)
             ->where('tr_type', $trType);
+    }
+
+    #region Update Qty Reff
+    public static function updateQtyReff($qtyDeliv, $orderDtlId)
+    {
+        $orderDtl = self::find($orderDtlId);
+        if ($orderDtl) {
+            $orderDtl->qty_reff += $qtyDeliv;
+            $orderDtl->save();
+        }
     }
 }

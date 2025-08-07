@@ -422,6 +422,9 @@ class Detail extends BaseComponent
         }
         try {
             $this->input_details[] = populateArrayFromModel(new OrderDtl());
+            $key = count($this->input_details) - 1;
+            $this->input_details[$key]['gt_process_date'] = null;
+            // dd($this->input_details);
             // $this->input_details[] = [
             //     'matl_id' => null,
             //     'qty' => null,
