@@ -84,10 +84,24 @@ class DelivHdr extends BaseModel
         return implode(', ', $matlCodes);
     }
     #endregion
-    public function updateBillHdrId(int $delivId, int $billHdrId)
+    public static function updateBillHdrId(int $delivId, int $billHdrId)
     {
         $delivHdr = self::findOrFail($delivId);
         $delivHdr->billhdr_id = $billHdrId;
         $delivHdr->save();
+    }
+
+    private function getNextTrSeq($model,int $keyId): int
+    {
+        if ($model === 'DelivPacking') {
+            $max = DelivPacking::withTrashed()
+                ->where('trhdr_id', $keyId)
+                ->max('tr_seq');
+        } else if ($model === 'DelivPicking') {
+            $max = DelivPicking::withTrashed()
+                ->where('trpacking_id', $keyId)
+                ->max('tr_seq');
+        }
+        return ($max ?? 0) + 1;
     }
 }

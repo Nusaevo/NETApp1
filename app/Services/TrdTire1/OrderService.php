@@ -21,12 +21,12 @@ class OrderService
     public function saveOrder(array $headerData, array $detailData)
     {
         try{
+            // dd($headerData, $detailData);
             $header = $this->saveHeader($headerData);
 
             $headerData['id'] = $header->id;
 
             $details = $this->saveDetails($headerData, $detailData);
-            // dd($headerData, $detailData);
 
             return [
                 'header' => $header,
@@ -64,6 +64,7 @@ class OrderService
             throw new Exception('Error updating order quantity reference: ' . $e->getMessage());
         }
     }
+
     private function saveHeader(array $headerData): OrderHdr
     {
         if (!isset($headerData['id']) || empty($headerData['id'])) {

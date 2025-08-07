@@ -298,49 +298,16 @@ class Detail extends BaseComponent
                 return;
             }
 
-            // Update data partner jika ada
-            // if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            //     $partner = Partner::find($this->inputs['partner_id']);
-            //     $this->inputs['partner_code'] = $partner->code;
-            // }
-            // $this->inputs['tr_type'] = $this->trType;
-            // dd($this->inputs['wh_id']);
-
             if ($this->object->isNew()) {
                 $this->object->status_code = Status::OPEN;
             }
 
-            // dd($this->input_details);
-            // dd($this->inputs, $this->input_details);
-            // Persiapkan data untuk service
-            // $orderHdr = OrderHdr::where('tr_code', $this->inputs['reffhdrtr_code'])->first();
-            // $headerData = array_merge($this->inputs, [
-            //     'status_code' => $this->object->status_code,
-            //     // 'reff_code' => $orderHdr ? $orderHdr->id : null,
-            //     // 'reffhdrtr_id' => $orderHdr ? $orderHdr->id : null,
-            // ]);
-            // dd($headerData);
-
-            // if ($this->actionValue === 'Edit') {
-            //     $headerData['id'] = $this->object->id;
-            // }
-
             $headerData = $this->inputs;
             $detailData = $this->input_details;
 
-            // dd($headerData, $detailData);
-
-            // Panggil service untuk memproses purchase delivery
             $deliveryService = app(DeliveryService::class);
-
-            // dd($headerData, $detailData);
-            // if ($this->actionValue === 'Create') {
             $result = $deliveryService->saveDelivery($headerData, $detailData);
-            // dd($result);
             $this->object = $result['header'];
-
-            // dd($this->object);
-            // DB::commit();
 
             $this->dispatch('success', 'Purchase Delivery berhasil ' .
                 ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');

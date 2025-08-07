@@ -14,6 +14,11 @@ class BillingOrder extends BaseModel
 
 
     protected $fillable = [
+        'trhdr_id',
+        'tr_type',
+        'tr_code',
+        'tr_seq',
+        'reffdtl_id',
         'reffhdr_id',
         'reffhdrtr_type',
         'reffhdrtr_code',
@@ -22,6 +27,10 @@ class BillingOrder extends BaseModel
         'qty',
         'qty_uom',
         'qty_base',
+        'amt',
+        'amt_beforetax',
+        'amt_tax',
+        'amt_adjustdtl',
     ];
 
     protected $casts = [
@@ -52,9 +61,9 @@ class BillingOrder extends BaseModel
     // }
     #endregion
 
-    public function getNextTrSeq($trhdrId)
+    public static function getNextTrSeq($trhdrId)
     {
         $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
-        return $lastSeq + 1;
+        return ($lastSeq ?? 0) + 1;
     }
 }

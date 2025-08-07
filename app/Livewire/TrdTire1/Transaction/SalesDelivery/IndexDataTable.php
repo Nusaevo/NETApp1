@@ -9,6 +9,7 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Master\MatlUom;
+use App\Services\TrdTire1\BillingService;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
@@ -243,11 +244,13 @@ class IndexDataTable extends BaseDataTableComponent
 
                 // Gunakan DeliveryService untuk menghapus delivery
                 $deliveryService = app(DeliveryService::class);
+                $billingService = app(BillingService::class);
                 $deletedCount = 0;
 
                 foreach ($delivHdrs as $delivHdr) {
                     try {
                         $deliveryService->delDelivery($delivHdr->id);
+                        $billingService->delBilling($delivHdr->billhdr_id);
                         $deletedCount++;
                     } catch (Exception $e) {
                         // Log error untuk debugging
