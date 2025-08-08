@@ -120,7 +120,7 @@ class BillingService
                 $detail['trhdr_id'] = $dataBillingHdr['id'];
 
                 // Generate the next sequence number for this billing header
-                $detail['tr_seq'] = BillingOrder::getNextTrSeq($detail['trhdr_id']);
+                $detail['tr_seq'] = BillingOrder::getNextTrSeq($detail['trhdr_id'])->get();
 
                 $billingOrder = new BillingOrder();
                 $billingOrder->fill($detail);

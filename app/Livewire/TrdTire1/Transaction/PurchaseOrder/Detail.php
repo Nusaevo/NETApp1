@@ -150,6 +150,7 @@ class Detail extends BaseComponent
         $this->reset('inputs', 'input_details');
         $this->object = new OrderHdr();
         $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['tax_process_date'] = null;
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['due_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = $this->trType;
@@ -228,18 +229,11 @@ class Detail extends BaseComponent
         $detailData = $this->input_details;
 
         $trSeq = 1;
-        foreach ($detailData as $i => &$detail) {
-            // $detail['tr_seq'] = $trSeq++;
+        foreach ($detailData as &$detail) {
+            $detail['price_curr'] = $detail['price'];
             $detail['qty_uom'] = 'PCS';
             $detail['price_uom'] = 'PCS';
             $detail['qty_base'] = 1;
-            // Pastikan disc_pct selalu default 0 jika belum ada
-            if (!isset($detail['disc_pct']) || $detail['disc_pct'] === null) {
-                $detail['disc_pct'] = 0;
-            }
-            if ($this->actionValue === 'Create') {
-                $detail['status_code'] = Status::OPEN;
-            }
         }
         unset($detail);
         return $detailData;
@@ -259,10 +253,11 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah terkirim.');
                 return;
             }
-            $item = populateArrayFromModel(new OrderDtl());
-            $item['disc_pct'] = 0;
-            $item['price_base'] = 1;
-            $this->input_details[] = $item;
+            $this->input_details[] = populateArrayFromModel(new OrderDtl());
+            $key = count($this->input_details) - 1;
+            $this->input_details[$key]['gt_process_date'] = null;
+            $this->input_details[$key]['disc_pct'] = 0;
+            $this->input_details[$key]['price_base'] = 1;
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }

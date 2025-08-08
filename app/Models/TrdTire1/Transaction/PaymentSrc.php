@@ -53,6 +53,11 @@ class PaymentSrc extends BaseModel
         return $this->belongsTo(PaymentHdr::class, 'trhdr_id', 'id');
     }
 
+    public static function getNextTrSeq(int $trhdrId): int
+    {
+        $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
+        return ($lastSeq ?? 0) + 1;
+    }
     #endregion
 
 

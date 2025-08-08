@@ -69,14 +69,19 @@ class BillingHdr extends BaseModel
     {
         return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
     }
-    // public function BillingOrder()
-    // {
-    //     return $this->hasMany(BillingOrder::class, 'trhdr_id', 'id')->where('tr_type', $this->tr_type)->orderBy('tr_seq');
-    // }
 
     public function PartnerBal()
     {
         return $this->belongsTo(PartnerBal::class, 'partnerbal_id', 'id');
     }
-    #endregion
+
+    public static function updAmtReff(int $trhdrId, float $amtReff)
+    {
+        $trhdr = self::find($trhdrId);
+        if ($trhdr) {
+            $trhdr->amt_reff += $amtReff;
+            $trhdr->save();
+        }
+    }
+
 }

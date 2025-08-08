@@ -15,8 +15,6 @@ use Illuminate\Support\Facades\Log;
 
 class OrderDtl extends BaseModel
 {
-    use SoftDeletes;
-
     protected $table = 'order_dtls';
     protected $fillable = [
         'trhdr_id',
@@ -129,5 +127,11 @@ class OrderDtl extends BaseModel
             $orderDtl->qty_reff += $qtyDeliv;
             $orderDtl->save();
         }
+    }
+
+    public static function getNextTrSeq(int $trhdrId): int
+    {
+        $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
+        return ($lastSeq ?? 0) + 1;
     }
 }

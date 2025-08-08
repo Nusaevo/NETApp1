@@ -61,7 +61,7 @@ class BillingOrder extends BaseModel
     // }
     #endregion
 
-    public static function getNextTrSeq($trhdrId)
+    public static function getNextTrSeq($trhdrId):int
     {
         $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
         return ($lastSeq ?? 0) + 1;
