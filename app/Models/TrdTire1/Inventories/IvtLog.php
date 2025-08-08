@@ -43,21 +43,4 @@ class IvtLog extends BaseModel
         return $this->orderBy('code', 'asc')->get();
     }
 
-    // public function DelivPacking()
-    // {
-    //     return $this->belongsTo(DelivPacking::class, 'trdtl_id');
-    // }
-
-    public static function removeIvtLogIfExists($trhdr_id, $tr_type, $tr_seq)
-    {
-        $log = IvtLog::where([
-            'trhdr_id' => $trhdr_id,
-            'tr_type' => $tr_type,
-            'tr_seq' => $tr_seq,
-        ])->first();
-
-        if ($log) {
-            $log->delete();
-        }
-    }
 }

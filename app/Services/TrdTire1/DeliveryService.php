@@ -2,14 +2,13 @@
 
 namespace App\Services\TrdTire1;
 
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, OrderHdr, OrderDtl};
+use Exception;
+use Illuminate\Support\Facades\Log;
 use App\Models\TrdTire1\Master\{Material, Partner};
 use App\Models\TrdTire1\Inventories\{IvtBal, IvtLog};
+
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, OrderHdr, OrderDtl};
 use App\Services\TrdTire1\{OrderService, InventoryService, MasterService, ConfigService, BillingService};
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Exception;
 
 class DeliveryService
 {
@@ -22,7 +21,7 @@ class DeliveryService
         $this->orderService = $orderService;
     }
 
-    #region Delivery Methods
+    #region Save Delivery
     public function saveDelivery(array $headerData, array $detailData)
     {
         try {
@@ -30,7 +29,7 @@ class DeliveryService
 
             $headerData['id'] = $header->id;
 
-            // dd($headerData);
+            // dd($headerData,$detailData);
             $details = $this->saveDetails($headerData, $detailData);
 
             // dd($header, $details);
@@ -38,22 +37,11 @@ class DeliveryService
                 'header' => $header,
                 'details' => $details
             ];
-
         } catch (Exception $e) {
             throw new Exception('Error adding delivery: ' . $e->getMessage());
         }
     }
 
-    public function delDelivery(int $delivId)
-    {
-        // Hapus billing yang terkait terlebih dahulu
-        // app(BillingService::class)->delFromDelivery($delivId);
-
-        $this->deletePacking($delivId);
-        $this->deleteHeader($delivId);
-    }
-
-    // Region Delivery Header Methods
     private function saveHeader(array $headerData): DelivHdr
     {
         if (!isset($headerData['id']) || empty($headerData['id'])) {
@@ -70,35 +58,31 @@ class DeliveryService
 
     private function saveDetails(array $headerData, array $detailData)
     {
-        // dd($headerData, $detailData);
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
 
         $existingPackings = DelivPacking::where('trhdr_id', $headerData['id'])
             ->get();
-        // foreach ($existingPackings as $packing) {
-        //     dd($packing->isDirty(), $packing->isDirty('qty'), $packing->isClean(), $packing->getDirty());
-        // }
-        // dd($existingPackings->isDirty(), $existingPackings->isDirty('qty'), $existingPackings->isClean(), $existingPackings->getDirty());
 
         $packing_ids = [];
-        foreach ($detailData as $detail) {
+        foreach ($detailData as &$detail) {
+
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
 
             // dd($detail);
             if (!isset($detail['id']) || empty($detail['id'])) {
-                $detail['tr_seq'] = $this->getNextSequence('DelivPacking',$headerData['id']);
+                $detail['tr_seq'] = DelivPacking::getNextTrSeq($headerData['id']);
                 $packing = new DelivPacking();
                 $packing->fill($detail);
                 $packing->save();
                 OrderDtl::updateQtyReff($detail['qty'], $detail['reffdtl_id']);
 
-                $detail['id']= $packing->id;
+                $detail['id'] = $packing->id;
                 $this->inventoryService->addReservation($headerData, $detail);
-                $this->savePicking($headerData,$detail);
+                $this->savePicking($headerData, $detail);
                 $packing_ids[] = $packing->id;
             } else {
                 $packing = $existingPackings->firstWhere('id', $detail['id']);
@@ -112,13 +96,13 @@ class DeliveryService
                         OrderDtl::updateQtyReff($detail['qty'], $detail['reffdtl_id']);
 
                         $this->inventoryService->addReservation($headerData, $detail);
-                        $this->savePicking($headerData,$detail);
+                        $this->savePicking($headerData, $detail);
                     }
                 }
                 $packing_ids[] = $packing->id;
             }
-
         }
+        unset($detail);
         foreach ($existingPackings as $existing) {
             if (!in_array($existing->id, $packing_ids)) {
                 $this->inventoryService->delIvtLog(0, $existing->id);
@@ -127,7 +111,6 @@ class DeliveryService
             }
         }
         return true;
-
     }
 
     private function savePicking($headerData, $detailData)
@@ -148,7 +131,7 @@ class DeliveryService
                 'reffdtl_id' => $detailData['reffdtl_id'],
                 'trdtl_id' => $detailData['id'],
             ];
-                } else if ($detailData['tr_type'] === 'SD') {
+        } else if ($detailData['tr_type'] === 'SD') {
             $ivtBal = IvtBal::where('matl_id', $detailData['matl_id'])
                 ->where('matl_uom', $detailData['matl_uom'])
                 ->where('wh_id', $detailData['wh_id'])
@@ -170,21 +153,22 @@ class DeliveryService
                     'trdtl_id' => $detailData['id'],
                 ];
                 if ($bal->qty_oh >= $qty_remaining) {
-                    $pickingData[count($pickingData)-1]['qty'] = $qty_remaining;
+                    $pickingData[count($pickingData) - 1]['qty'] = $qty_remaining;
                     $qty_remaining = 0;
                     break;
                 } else {
-                    $pickingData[count($pickingData)-1]['qty'] = $bal->qty_oh;
+                    $pickingData[count($pickingData) - 1]['qty'] = $bal->qty_oh;
                     $qty_remaining  -= $bal->qty_oh;
                 }
             }
             if ($qty_remaining > 0) {
-                throw new Exception('Tidak cukup stok untuk picking. Qty yang diminta: ' . $detailData['qty'] . ', Qty yang tersedia: ' . ($detailData['qty'] - $qty_remaining));
+                throw new Exception('Tidak cukup stok untuk picking. Qty yang diminta: ' . $detailData['qty'] . ',
+                Qty yang tersedia: ' . ($detailData['qty'] - $qty_remaining));
             }
         }
 
         $picking_ids = [];
-        $existingPickings = DelivPicking::withTrashed()->where('trpacking_id', $detailData['id'])->get();
+        $existingPickings = DelivPicking::where('trpacking_id', $detailData['id'])->get();
         foreach ($pickingData as $key => $detail) {
             $picking = $existingPickings
                 ->where('trpacking_id', $detail['trpacking_id'])
@@ -194,7 +178,7 @@ class DeliveryService
                 ->where('batch_code', $detail['batch_code'])
                 ->first();
             if (!$picking) {
-                $detail['tr_seq'] = $this->getNextSequence('DelivPicking',$detailData['id']);
+                $detail['tr_seq'] = DelivPicking::getNextTrSeq($detailData['id']);
                 $picking = new DelivPicking();
                 $picking->fill($detail);
                 $picking->save();
@@ -215,7 +199,6 @@ class DeliveryService
                 }
                 $picking_ids[] = $picking->id;
             }
-
         }
         foreach ($existingPickings as $existing) {
             if (!in_array($existing->id, $picking_ids)) {
@@ -224,64 +207,30 @@ class DeliveryService
             }
         }
         return true;
-
     }
 
-    private function getNextSequence($model,int $keyId): int
+    #region Delete Delivery
+    public function delDelivery(int $delivId)
     {
-        if ($model === 'DelivPacking') {
-            $max = DelivPacking::where('trhdr_id', $keyId)->max('tr_seq');
-        } else if ($model === 'DelivPicking') {
-            $max = DelivPicking::where('trpacking_id', $keyId)->max('tr_seq');
-        }
-        return ($max ?? 0) + 1;
+        $this->deleteDetail($delivId);
+        $this->inventoryService->delIvtLog($delivId);
+        $this->deleteHeader($delivId);
     }
 
     private function deleteHeader(int $delivId): bool
     {
-        $delivHdr = DelivHdr::findOrFail($delivId);
-        return (bool) $delivHdr->forceDelete();
+        return (bool) DelivHdr::where('id', $delivId)->forceDelete();
     }
 
-    private function deletePacking(int $trHdrId): void
+    private function deleteDetail(int $delivId): bool
     {
         // Get existing packings
-        $existingPackings = DelivPacking::where('trhdr_id', $trHdrId)->get();
-
-        // Delete pickings for each packing
-        foreach ($existingPackings as $packing) {
-            $existingPickings = DelivPicking::where('trpacking_id', $packing->id)->get();
-
-            // Delete onhand and reservation for each picking
-            foreach ($existingPickings as $picking) {
-                // Kembalikan qty_reff di OrderDtl
-                if ($picking->reffdtl_id) {
-                    $this->orderService->updOrderQtyReff('-', $picking->qty, $picking->reffdtl_id);
-                }
-                $picking->forceDelete();
-            }
-
-            $packing->forceDelete();
+        $dbDelivPacking = DelivPacking::where('trhdr_id', $delivId)->get();
+        foreach ($dbDelivPacking as $packing) {
+            OrderDtl::updateQtyReff(-$packing->qty, $packing->reffdtl_id);
+            DelivPicking::where('trpacking_id', $packing->id)->delete();
+            $packing->Delete();
         }
-
-        // Hapus log inventory berdasarkan trhdr_id
-        $this->inventoryService->delIvtLog($trHdrId);
+        return true;
     }
-
-    public function updDelivQtyReff(string $mode, float $qty, int $dlvpicking_id)
-    {
-        // Update qty_reff di DelivPicking
-        $delivPicking = DelivPicking::find($dlvpicking_id);
-        if ($delivPicking) {
-            if ($mode === '+') {
-                $delivPicking->qty_reff = ($delivPicking->qty_reff ?? 0) + $qty;
-            } else if ($mode === '-') {
-                $delivPicking->qty_reff = ($delivPicking->qty_reff ?? 0) - $qty;
-            }
-            $delivPicking->save();
-        }
-    }
-
-    #endregion
-
 }

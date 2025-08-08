@@ -15,29 +15,17 @@ class InventoryService
 
     public function addReservation(array $headerData, array $detailData)
     {
-        // dd($headerData, $detailData);
-        // Hitung price dan amount
-        $price = 0;
-        $trAmt = 0;
-        $trQty = 0;
+        $trQty = $detailData['qty'];
         $qty = 0;
         if ($headerData['tr_type'] === 'PO' || $headerData['tr_type'] === 'SO') {
-            $trQty = $detailData['qty'];
             $qty = $trQty;
-            $price = $detailData['amt_beforetax'] / $detailData['qty'];
-            $trAmt = $detailData['amt_beforetax'];
+            $priceBeforeTax = $detailData['price_beforetax'];
         } else if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD') {
-            $trQty = $detailData['qty'];
             $qty = -$trQty;
             $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
-            if (!$orderDtl) {
-                throw new Exception('Order Detail nomor: ' . $detailData['reffhdr_id']);
-            }
-            $price = $orderDtl->price_beforetax;
-            $trAmt = $price * $trQty;
+            $priceBeforeTax = $orderDtl->price_beforetax;
         }
         // dd($detailData);
-
         $ivtBal = IvtBal::updateOrCreate(
             [
                 'matl_id' => $detailData['matl_id'],
@@ -59,15 +47,13 @@ class InventoryService
 
         // Tentukan tr_type untuk log
         $trType = $headerData['tr_type'] . 'R';
-
-        // dd($headerData);
-        // Siapkan data log
         $logData = [
+            'tr_date' => $headerData['tr_date'],
+            'trdtl_id' => $detailData['id'],
             'trhdr_id' => $detailData['trhdr_id'],
             'tr_type' => $trType,
             'tr_code' => $detailData['tr_code'],
             'tr_seq' => $detailData['tr_seq'],
-            'trdtl_id' => $detailData['id'],
             'ivt_id' => $ivtBal->id,
             'matl_id' => $detailData['matl_id'],
             'matl_code' => $detailData['matl_code'] ?? '',
@@ -75,14 +61,13 @@ class InventoryService
             'wh_id' => 0,
             'wh_code' => '',
             'batch_code' => '',
-            'reff_id' => 0,
-            'tr_date' => $headerData['tr_date'],
-            'qty' => $qty,
-            'price_beforetax' => $price,
             'tr_qty' => $trQty,
-            'tr_desc' => 'RESERVASI ' . $headerData['tr_type'] . ' ' . $detailData['tr_code'],
+            'qty' => $qty,
+            'price_beforetax' => $priceBeforeTax,
             'price_cogs' => 0,
             'qty_running' => 0,
+            'tr_desc' => 'RESERVASI ' . $headerData['tr_type'] . ' ' . $detailData['tr_code'],
+            'reff_id' => 0,
             'process_flag' => '',
         ];
         // dd($logData);
@@ -96,14 +81,9 @@ class InventoryService
     {
         // dd($detailData);
         $price = 0;
-        $amt = 0;
         $qty = 0;
         $trDesc = '';
         if ($headerData['tr_type'] === 'PD' || $headerData['tr_type'] === 'SD') {
-            // $orderHdr = OrderHdr::find($detailData['reffhdr_id']);
-            // if (!$orderHdr) {
-            //     throw new Exception('Order header tidak ditemukan: ' . $detailData['reffhdr_id']);
-            // }
             $orderDtl = OrderDtl::find($detailData['reffdtl_id']);
             if (!$orderDtl) {
                 throw new Exception('Order detail tidak ditemukan: ' . $detailData['reffdtl_id']);
@@ -174,8 +154,7 @@ class InventoryService
             'qty_running' => 0,
             'process_flag' => ''
         ];
-        IvtLog::create($logData);
-
+        $ivtLog = IvtLog::create($logData);
         return $ivtBal->id;
     }
 
