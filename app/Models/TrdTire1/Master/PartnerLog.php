@@ -43,9 +43,4 @@ class PartnerLog extends BaseModel
     {
         return $this->orderBy('code', 'asc')->get();
     }
-
-    public function delivDtl()
-    {
-        return $this->belongsTo(DelivDtl::class, 'trdtl_id');
-    }
 }

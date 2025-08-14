@@ -75,6 +75,7 @@ class DeliveryService
             // dd($detail);
             if (!isset($detail['id']) || empty($detail['id'])) {
                 $detail['tr_seq'] = DelivPacking::getNextTrSeq($headerData['id']);
+
                 $packing = new DelivPacking();
                 $packing->fill($detail);
                 $packing->save();
@@ -178,7 +179,9 @@ class DeliveryService
                 ->where('batch_code', $detail['batch_code'])
                 ->first();
             if (!$picking) {
-                $detail['tr_seq'] = DelivPicking::getNextTrSeq($detailData['id']);
+                $detail['tr_seq'] = DelivPacking::where('id', $detailData['id'])->value('tr_seq');
+                $detail['tr_seq2'] = DelivPicking::getNextTrSeq($detailData['id']);
+
                 $picking = new DelivPicking();
                 $picking->fill($detail);
                 $picking->save();
@@ -190,6 +193,8 @@ class DeliveryService
             } else {
                 $detail['id'] = $picking->id;
                 $detail['tr_seq'] = $picking->tr_seq;
+                $detail['tr_seq2'] = $picking->tr_seq2;
+
                 $picking->fill($detail);
                 if ($picking->isDirty()) {
                     $this->inventoryService->delIvtLog(0, $picking->id);

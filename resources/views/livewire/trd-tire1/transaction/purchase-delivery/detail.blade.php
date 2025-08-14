@@ -36,7 +36,7 @@
                                         onChanged="whCodeOnChanged($event.target.value)" />
                                     <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
                                         model="inputs.reffhdrtr_code" :options="$purchaseOrders" required="true"
-                                        :action="$actionValue" onChanged="onPurchaseOrderChanged($event.target.value)" />
+                                        :action="$actionValue" onChanged="onPurchaseOrderChanged($event.target.value)" :enabled="$isPanelEnabled"/>
                                     {{-- @dump($inputs['reffhdrtr_code']) --}}
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
@@ -62,8 +62,8 @@
                                 <!-- Define table rows -->
                                 <x-slot name="rows">
                                     @foreach ($input_details as $key => $input_detail)
-                                        <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
-                                            <td style="text-align: center;">{{ $loop->iteration }}</td>
+                                    <tr wire:key="list{{ $input_detail['id'] ?? $key }}-{{ $inputs['reffhdrtr_code']}}">
+                                        <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
                                                 <x-ui-dropdown-search model="input_details.{{ $key }}.matl_id"
                                                     query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"

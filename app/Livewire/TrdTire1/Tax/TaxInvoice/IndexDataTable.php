@@ -70,9 +70,9 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans('amt'), 'total_amt')
+            Column::make($this->trans('amt'), 'amt')
                 ->label(function ($row) {
-                    return rupiah($row->total_amt);
+                    return rupiah($row->amt);
                 })
                 ->sortable(),
             Column::make($this->trans('dpp'), 'dpp')
@@ -259,12 +259,12 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
             ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'total_amt'])
+            ->get(['id', 'tr_code', 'partner_id', 'amt'])
             ->map(function ($order) {
                 return [
                     'nomor_nota' => $order->tr_code,
                     'nama' => $order->Partner ? $order->Partner->name : '',
-                    'total_amt' => rupiah($order->total_amt),
+                    'total_amt' => rupiah($order->amt),
                 ];
             })
             ->toArray();
@@ -282,12 +282,12 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
             ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'total_amt'])
+            ->get(['id', 'tr_code', 'partner_id', 'amt'])
             ->map(function ($order) {
                 return [
                     'nomor_nota' => $order->tr_code,
                     'nama' => $order->Partner ? $order->Partner->name : '',
-                    'total_amt' => rupiah($order->total_amt),
+                    'total_amt' => rupiah($order->amt),
                 ];
             })
             ->toArray();
@@ -304,12 +304,12 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
             ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'total_amt'])
+            ->get(['id', 'tr_code', 'partner_id', 'amt'])
             ->map(function ($order) {
                 return [
                     'nomor_nota' => $order->tr_code,
                     'nama' => $order->Partner ? $order->Partner->name : '',
-                    'total_amt' => rupiah($order->total_amt),
+                    'total_amt' => rupiah($order->amt),
                 ];
             })
             ->toArray();

@@ -148,6 +148,12 @@ class Detail extends BaseComponent
     }
     public function openItemDialogBox()
     {
+        // Validasi: Pastikan field Merk sudah diisi terlebih dahulu
+        if (empty($this->filterBrand)) {
+            $this->dispatch('error', 'Silakan pilih Merk terlebih dahulu sebelum menambahkan multiple items.');
+            return;
+        }
+
         $this->searchTerm = '';
         $this->materialList = [];
         $this->selectedMaterials = [];
@@ -155,6 +161,8 @@ class Detail extends BaseComponent
         $this->selectedSalesRewardItems = []; // Reset selected sales reward items
         $this->selectAll = false; // Reset select all
         $this->isEditMode = false; // Reset mode edit
+        $this->filterCategory = ''; // Reset category filter
+        $this->filterType = ''; // Reset type filter
         $this->dispatch('openItemDialogBox');
     }
 
@@ -264,12 +272,50 @@ class Detail extends BaseComponent
     }
     public function searchMaterials()
     {
-        // Jika ada data dari sales reward yang dipilih atau mode edit, jangan ganggu
-        if (!empty($this->selectedSalesRewardItems)) {
-            $this->dispatch('info', 'Data sudah dimuat. Silakan pilih item yang diinginkan.');
-            return;
+        // Jika ada Kode Program yang dipilih, gunakan material list dari sales reward tersebut
+        if (!empty($this->selectedSalesRewardCode)) {
+            // Ambil data sales reward berdasarkan kode yang dipilih
+            $salesRewards = SalesReward::where('code', $this->selectedSalesRewardCode)->get();
+
+            if ($salesRewards->count() > 0) {
+                $materialIds = $salesRewards->pluck('matl_id')->toArray();
+
+                // Query material berdasarkan ID yang ada di sales reward
+                $query = Material::whereIn('id', $materialIds);
+
+                // Apply search filters pada material list yang sudah difilter
+                if (!empty($this->searchTerm)) {
+                    $searchTermUpper = strtoupper($this->searchTerm);
+                    $query->where(function ($query) use ($searchTermUpper) {
+                        $query
+                            ->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                            ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
+                    });
+                }
+
+                // Apply additional filters
+                if (!empty($this->filterCategory)) {
+                    $query->where('category', $this->filterCategory);
+                }
+                if (!empty($this->filterBrand)) {
+                    $query->where('brand', $this->filterBrand);
+                }
+                if (!empty($this->filterType)) {
+                    $query->where('type_code', $this->filterType);
+                }
+
+                $this->materialList = $query->get();
+
+                // Reset selected materials dan select all
+                $this->selectedMaterials = [];
+                $this->selectAll = false;
+
+                $this->dispatch('success', 'Pencarian dilakukan pada material list dari Kode Program: ' . $this->selectedSalesRewardCode);
+                return;
+            }
         }
 
+        // Jika tidak ada Kode Program yang dipilih, gunakan pencarian normal
         $query = Material::query();
 
         if (!empty($this->searchTerm)) {
@@ -293,6 +339,10 @@ class Detail extends BaseComponent
         }
 
         $this->materialList = $query->get();
+
+        // Reset selected materials dan select all
+        $this->selectedMaterials = [];
+        $this->selectAll = false;
     }
     public function selectMaterial($materialID)
     {
@@ -327,32 +377,25 @@ class Detail extends BaseComponent
             // Cari data dari selectedSalesRewardItems jika ada
             $salesRewardItem = collect($this->selectedSalesRewardItems)->firstWhere('matl_id', $matl_id);
 
-            if ($salesRewardItem) {
-                // Gunakan data dari sales reward yang dipilih
-                $key = count($this->input_details);
-                $this->input_details[] = [
-                    'matl_id' => $salesRewardItem['matl_id'],
-                    'grp' => $salesRewardItem['grp'],
-                    'qty' => $salesRewardItem['qty'],
-                    'reward' => $salesRewardItem['reward'],
-                    'price' => 0.0
-                ];
-            } else {
-                // Gunakan data dari input form (groupInput, qtyInput, rewardInput)
-                $key = count($this->input_details);
-                $this->input_details[] = [
-                    'matl_id' => $matl_id,
-                    'grp' => $this->groupInput,
-                    'qty' => $this->qtyInput,
-                    'reward' => $this->rewardInput,
-                    'price' => 0.0
-                ];
-            }
+            // Tentukan nilai untuk grp, qty, dan reward
+            // Prioritas: input form > data sales reward > default
+            $grp = !empty($this->groupInput) ? $this->groupInput : ($salesRewardItem['grp'] ?? '');
+            $qty = !empty($this->qtyInput) ? $this->qtyInput : ($salesRewardItem['qty'] ?? 0);
+            $reward = !empty($this->rewardInput) ? $this->rewardInput : ($salesRewardItem['reward'] ?? 0);
+
+            $key = count($this->input_details);
+            $this->input_details[] = [
+                'matl_id' => $matl_id,
+                'grp' => $grp,
+                'qty' => $qty,
+                'reward' => $reward,
+                'price' => 0.0
+            ];
 
             $this->onMaterialChanged($key, $matl_id);
         }
 
-        $this->dispatch('success', 'Item berhasil dipilih.');
+        $this->dispatch('success', 'Item berhasil dipilih. Nilai Group, Qty, dan Reward yang diisi di form telah diterapkan.');
         $this->dispatch('closeItemDialogBox');
     }
     public function onMaterialChanged($key, $matl_id)
@@ -502,7 +545,7 @@ class Detail extends BaseComponent
             $this->selectedMaterials = collect($this->materialList)->pluck('id')->toArray();
             $this->selectAll = true;
 
-            $this->dispatch('success', 'Data sales reward berhasil dimuat ke dialog box dan semua item telah dipilih.');
+            $this->dispatch('success', 'Material list dari Kode Program: ' . $this->selectedSalesRewardCode . ' berhasil dimuat. Sekarang Anda dapat melakukan pencarian pada material list ini.');
         } else {
             $this->dispatch('error', 'Tidak ada data sales reward untuk kode tersebut.');
         }
@@ -519,7 +562,10 @@ class Detail extends BaseComponent
         $this->selectedMaterials = [];
         $this->selectAll = false;
         $this->isEditMode = false; // Reset mode edit
-        $this->dispatch('success', 'Data sales reward telah dibersihkan.');
+        $this->searchTerm = ''; // Reset search term
+        $this->filterCategory = ''; // Reset category filter
+        $this->filterType = ''; // Reset type filter
+        $this->dispatch('success', 'Filter Kode Program telah dibersihkan. Sekarang Anda dapat melakukan pencarian normal.');
     }
 
     /**
