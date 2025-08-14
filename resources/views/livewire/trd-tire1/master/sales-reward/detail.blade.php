@@ -75,6 +75,11 @@
             onOpened="openItemDialogBox" onClosed="closeItemDialogBox">
             <x-slot name="body">
                 <div class="row">
+                    <x-ui-dropdown-select label="Kode Program" model="selectedSalesRewardCode" :options="$salesRewardOptions"
+                        onChanged="onSalesRewardCodeChanged"
+                        placeholder="Pilih kode program untuk memuat data sebelumnya" />
+                </div>
+                <div class="row">
                     <x-ui-text-field type="text" label="Search Code/Nama" model="searchTerm" :action="$actionValue"
                         enabled="true" clickEvent="" buttonName="" />
                     <x-ui-text-field-search label="Category" model="filterCategory" :options="$kategoriOptions" onChanged="" />
@@ -82,11 +87,6 @@
                 </div>
 
                 <!-- Dropdown Kode Program untuk memuat data sebelumnya -->
-                <div class="row">
-                    <x-ui-dropdown-select label="Kode Program" model="selectedSalesRewardCode" :options="$salesRewardOptions"
-                        onChanged="onSalesRewardCodeChanged"
-                        placeholder="Pilih kode program untuk memuat data sebelumnya" />
-                </div>
 
                 <x-ui-button clickEvent="searchMaterials" cssClass="btn btn-primary" button-name="Search" />
                 <div class="row mt-2">

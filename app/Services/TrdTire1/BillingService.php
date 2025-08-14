@@ -53,17 +53,19 @@ class BillingService
         // dd($dataBillingHdr);
         if (!$dataBillingHdr['id']) {
             $billingHdr = new BillingHdr();
-            // dd('tes');
-        } else {
-            $billingHdr = BillingHdr::findOrFail($dataBillingHdr['id']);
-        }
-        $billingHdr->fill($dataBillingHdr);
-        if ($billingHdr->isDirty()){
+            $billingHdr->fill($dataBillingHdr);
             $billingHdr->save();
             $dataBillingHdr['id'] = $billingHdr->id;
+            // Hanya panggil updFromBilling saat create billing baru
             $partnerBalId = $this->partnerBalanceService->updFromBilling($dataBillingHdr);
             $billingHdr->partnerbal_id = $partnerBalId;
             $billingHdr->save();
+        } else {
+            $billingHdr = BillingHdr::findOrFail($dataBillingHdr['id']);
+            $billingHdr->fill($dataBillingHdr);
+            if ($billingHdr->isDirty()){
+                $billingHdr->save();
+            }
         }
         return $billingHdr;
     }
@@ -120,7 +122,7 @@ class BillingService
                 $detail['trhdr_id'] = $dataBillingHdr['id'];
 
                 // Generate the next sequence number for this billing header
-                $detail['tr_seq'] = BillingOrder::getNextTrSeq($detail['trhdr_id'])->get();
+                $detail['tr_seq'] = BillingOrder::getNextTrSeq($detail['trhdr_id']);
 
                 $billingOrder = new BillingOrder();
                 $billingOrder->fill($detail);
@@ -378,7 +380,7 @@ class BillingService
     {
         $this->partnerBalanceService->delPartnerLog($billingId);
         $billingHdr = BillingHdr::findOrFail($billingId);
-        $billingHdr->delete();
+        $billingHdr->forceDelete();
     }
 
     private function deleteDetail(int $billingId)

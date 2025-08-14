@@ -95,6 +95,7 @@ class Detail extends BaseComponent
             'inputs.tr_code'      => $this->trans('tr_code'),
             'inputs.partner_id'   => $this->trans('partner_id'),
             'inputs.send_to_name' => $this->trans('send_to_name'),
+            'inputs.payment_term' => $this->trans('Termin Pembayaran'),
         ];
 
         $this->orderService = app(OrderService::class);
@@ -112,23 +113,24 @@ class Detail extends BaseComponent
                 $this->inputs = $this->object->toArray();
                 $this->inputs['status_code_text'] = $this->object->status_Code_text;
                 $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
+                $this->onTaxDocFlagChanged();
+                $this->inputs['tr_code'] = $this->object->tr_code;
+                $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
                 $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
+                $this->onPartnerChanged();
 
                 // Pastikan print_remarks adalah string/float, bukan array/object
+                $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
+                $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
+                    ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
+                    : ($trDate ? $trDate->format('Y-m-d') : null);
+
                 $printRemarks = $this->object->getDisplayFormat();
                 if (is_array($printRemarks)) {
                     $this->inputs['print_remarks'] = isset($printRemarks['nota']) ? $printRemarks['nota'] : '0.0';
                 } else {
                     $this->inputs['print_remarks'] = $printRemarks;
                 }
-                // Hitung due_date berdasarkan tr_date dan payment_due_days
-                $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
-                $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
-                $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
-                    ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
-                    : ($trDate ? $trDate->format('Y-m-d') : null);
-                $this->onPartnerChanged();
-                $this->salesTypeOnChanged();
                 $this->loadDetails();
             } else {
                 // Jika object tidak ditemukan, buat instance baru dan tampilkan error
@@ -214,7 +216,7 @@ class Detail extends BaseComponent
         }
         $this->redirectToEdit();
     }
-  
+
     private function prepareHeaderData()
     {
         $headerData = $this->inputs;
@@ -250,6 +252,8 @@ class Detail extends BaseComponent
             $detail['tr_seq'] = $trSeq++;
             $detail['qty_uom'] = 'PCS';
             $detail['price_uom'] = 'PCS';
+            $detail['price_curr'] = $detail['price'];
+            $detail['price_base'] = 1;
             $detail['qty_base'] = 1;
             if ($this->actionValue === 'Create') {
                 $detail['status_code'] = Status::OPEN;
@@ -290,10 +294,11 @@ class Detail extends BaseComponent
             $this->dispatch('error', $e->getMessage());
         }
     }
-    
+
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
+        $this->inputs['tr_code'] = '';
     }
 
     public function onPaymentTermChanged()
@@ -313,6 +318,7 @@ class Detail extends BaseComponent
     {
         $salesType = $this->inputs['sales_type'] ?? null;
         $this->input_details = [];
+        $this->inputs['tr_code'] = '';
 
         if (!$salesType) {
             $this->materials = [];
@@ -372,6 +378,8 @@ class Detail extends BaseComponent
         try {
             $this->input_details[] = populateArrayFromModel(new OrderDtl());
             $key = count($this->input_details) - 1;
+            $this->input_details[$key]['disc_pct'] = 0;
+            $this->input_details[$key]['disc_amt'] = 0;
             $this->input_details[$key]['gt_process_date'] = null;
             // dd($this->input_details);
             // $this->input_details[] = [
@@ -403,6 +411,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['matl_uom'] = $material->uom;
                 $this->input_details[$key]['matl_descr'] = $material->name;
                 $this->input_details[$key]['disc_pct'] = 0;
+                $this->input_details[$key]['disc_amt'] = 0;
 
                 // Set harga berdasarkan data UOM jika ditemukan
                 if ($matlUom) {
@@ -466,20 +475,20 @@ class Detail extends BaseComponent
             $this->total_discount = 0;
             $this->total_dpp = 0;
             $this->total_tax = 0;
-            $inputs['amt'] = 0;
-            $inputs['amt_beforetax'] = 0;
-            $inputs['amt_tax'] = 0;
-            $inputs['amt_adjustdtl'] = 0;
+            $this->inputs['amt'] = 0;
+            $this->inputs['amt_beforetax'] = 0;
+            $this->inputs['amt_tax'] = 0;
+            $this->inputs['amt_adjustdtl'] = 0;
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
-                $this->total_amount += $detail['amt'];
-                $this->total_discount += $detail['disc_amt'];
-                $this->total_dpp += $detail['amt_beforetax'];
-                $this->total_tax += $detail['amt_tax'];
-                $inputs['amt'] += $detail['amt'];
-                $inputs['amt_beforetax'] += $detail['disc_amt'];
-                $inputs['amt_tax'] += $detail['amt_tax'];
-                $inputs['amt_adjustdtl'] += $detail['amt_adjustdtl'];
+                $this->total_amount += $detail['amt'] ?? 0;
+                $this->total_discount += $detail['disc_amt'] ?? 0;
+                $this->total_dpp += $detail['amt_beforetax'] ?? 0;
+                $this->total_tax += $detail['amt_tax'] ?? 0;
+                $this->inputs['amt'] += $detail['amt'] ?? 0;
+                $this->inputs['amt_beforetax'] += $detail['disc_amt'] ?? 0;
+                $this->inputs['amt_tax'] += $detail['amt_tax'] ?? 0;
+                $this->inputs['amt_adjustdtl'] += $detail['amt_adjustdtl'] ?? 0;
             }
             // Format as Rupiah
             $this->total_amount = rupiah($this->total_amount);

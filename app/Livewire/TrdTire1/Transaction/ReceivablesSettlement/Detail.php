@@ -826,6 +826,9 @@ class Detail extends BaseComponent
                 'wh_id' => $this->inputs['wh_id'] ?? 0, // berikan default value
                 'wh_code' => $this->inputs['wh_code'] ?? '', // berikan default value
                 'amt' => $this->normalizeAmount(array_sum(array_column($this->input_details, 'amt'))), // tambahkan total amount
+                'curr_id' => $this->inputs['curr_id'],
+                'curr_code' => $this->inputs['curr_code'],
+                'curr_rate' => $this->inputs['curr_rate'],
             ];
             // dd($headerData, $this->inputs);
 

@@ -54,6 +54,10 @@ class Detail extends BaseComponent
     public $materialCategory = null; // Tambahan: untuk menyimpan category hasil mapping sales_type
     public $materialQuery = "";
 
+    // Properties untuk komponen dropdown search multiple select
+    public $items = [];
+    public $selectedItems = [];
+
     protected $masterService;
     protected $orderService;
     protected $inventoryService;
@@ -116,6 +120,18 @@ class Detail extends BaseComponent
         // if (!empty($this->inputs['sales_type'])) {
         //     $this->salesTypeOnChanged();
         // }
+
+        // Data dummy untuk komponen dropdown search multiple select
+        $this->items = [
+            '1' => 'Ban Michelin 205/55R16',
+            '2' => 'Ban Bridgestone 195/65R15',
+            '3' => 'Ban Goodyear 225/45R17',
+            '4' => 'Ban Dunlop 185/70R14',
+            '5' => 'Ban Yokohama 215/60R16',
+            '6' => 'Ban Pirelli 235/40R18',
+        ];
+
+        $this->selectedItems = [''];
 
         if ($this->isEditOrView()) {
             // dd($this->objectIdValue);

@@ -53,7 +53,7 @@
                                         <x-ui-dropdown-select label="{{ $this->trans('Pajak') }}"
                                             model="inputs.tax_code" :options="$SOTax" required="true"
                                             :action="$actionValue" onChanged="onSOTaxChange" />
-                                        <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
+                                        <x-ui-dropdown-select label="{{ $this->trans('Termin Pembayaran') }}"
                                             model="inputs.payment_term_id" :options="$paymentTerms" required="true"
                                             :action="$actionValue" onChanged="onPaymentTermChanged" :enabled="$isPanelEnabled" />
                                         <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"

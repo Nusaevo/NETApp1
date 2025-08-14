@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\PurchaseInvoice;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking};
+use App\Models\TrdTire1\Transaction\{BillingHdr, BillingOrder};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\Status;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    protected $model = DelivHdr::class;
+    protected $model = BillingHdr::class;
     public function mount(): void
     {
         $this->setSearchDisabled();
@@ -23,11 +23,11 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return DelivHdr::with(['DelivPacking', 'Partner'])
-            ->where('deliv_hdrs.tr_type', 'PD')
+        return BillingHdr::with(['BillingOrder', 'Partner'])
+            ->where('billing_hdrs.tr_type', 'APB')
             ->where(function ($query) {
-                $query->where('deliv_hdrs.status_code', Status::OPEN)
-                      ->orWhere('deliv_hdrs.status_code', Status::ACTIVE);
+                $query->where('billing_hdrs.status_code', Status::OPEN)
+                      ->orWhere('billing_hdrs.status_code', Status::ACTIVE);
             });
     }
     public function columns(): array
@@ -44,13 +44,13 @@ class IndexDataTable extends BaseDataTableComponent
             //     ->sortable(),
             Column::make($this->trans("tr_code"), "tr_code")
                 ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
+                    return '<a href="' . route($this->appCode . '.Transaction.PurchaseInvoice.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
                         'objectId' => encryptWithSessionKey((string)$row->id)  // Ensure it's a string
                     ]) . '">' . $row->tr_code . '</a>';
                 })
                 ->html(),
-            Column::make($this->trans("Tanggal Surat Jalan"), "tr_date")
+            Column::make($this->trans("Tanggal Invoice"), "tr_date")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("supplier"), "partner_id")
@@ -65,15 +65,20 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans('Kode Barang'), 'kode_barang')
                 ->label(function ($row) {
-                    // Ambil semua kode barang dari DelivPacking, pisahkan dengan koma
-                    $matlCodes = DelivPacking::where('tr_code', $row->tr_code)->pluck('matl_descr');
+                    // Ambil semua kode barang dari BillingOrder, pisahkan dengan koma
+                    $matlCodes = BillingOrder::where('trhdr_id', $row->id)->pluck('matl_descr');
                     return $matlCodes->isNotEmpty() ? $matlCodes->implode(', ') : '-';
                 })
                 ->sortable(),
             Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
-                    $totalQty = DelivPacking::where('tr_code', $row->tr_code)->sum('qty');
+                    $totalQty = BillingOrder::where('trhdr_id', $row->id)->sum('qty');
                     return round($totalQty);
+                })
+                ->sortable(),
+            Column::make($this->trans('Total Amount'), 'amt')
+                ->format(function ($value, $row) {
+                    return number_format($row->amt, 0, ',', '.');
                 })
                 ->sortable(),
             Column::make($this->trans('action'), 'id')
@@ -84,7 +89,7 @@ class IndexDataTable extends BaseDataTableComponent
                         'custom_actions' => [
                             // [
                             //     'label' => 'Print',
-                            //     'route' => route('TrdTire1..PurchaseDelivery.PrintPdf', [
+                            //     'route' => route('TrdTire1..PurchaseInvoice.PrintPdf', [
                             //         'action' => encryptWithSessionKey('Edit'),
                             //         'objectId' => encryptWithSessionKey($row->id)
                             //     ]),
@@ -106,10 +111,10 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Terima Barang')->filter(function (Builder $builder, string $value) {
-                $builder->where('deliv_hdrs.tr_date', '=', $value);
+            DateFilter::make('Tanggal Invoice')->filter(function (Builder $builder, string $value) {
+                $builder->where('billing_hdrs.tr_date', '=', $value);
             }),
-            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Invoice', 'tr_code', 'Cari Nomor Invoice', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
@@ -117,13 +122,13 @@ class IndexDataTable extends BaseDataTableComponent
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
-            $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
+            $this->createTextFilter('Material', 'matl_descr', 'Cari Kode Material', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
-                        ->from('deliv_packings')
-                        ->whereRaw('deliv_packings.tr_code = deliv_hdrs.tr_code')
-                        ->where(DB::raw('UPPER(deliv_packings.matl_descr)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('deliv_packings.tr_type', 'PD');
+                        ->from('billing_orders')
+                        ->whereRaw('billing_orders.trhdr_id = billing_hdrs.id')
+                        ->where(DB::raw('UPPER(billing_orders.matl_descr)'), 'like', '%' . strtoupper($value) . '%')
+                        ->where('billing_orders.tr_type', 'APB');
                 });
             }),
         ];

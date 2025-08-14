@@ -28,10 +28,11 @@ class PaymentService
             $this->savePaymentDtl($headerData, $detailData);
 
             $this->savePaymentSrc($headerData, $sourceData);
-            
+
             $this->savePaymentAdv($headerData, $advanceData);
-            
+
             $this->saveOverPayment($headerData, $overAmt); // Pass empty array untuk advanceData
+            // dd($headerData, $detailData);
 
             return $paymentHdr;
        } catch (Exception $e) {
@@ -99,7 +100,7 @@ class PaymentService
             $detail['trhdr_id'] = $headerData["id"];
             $detail['tr_type'] = $headerData["tr_type"];
             $detail['tr_code'] = $headerData["tr_code"];
-            
+
             if (!isset($detail['id']) || empty($detail['id'])) {
                 $detail['tr_seq'] = PaymentDtl::getNextTrSeq($headerData['id']);
                 $paymentDtl = new PaymentDtl($detail);
@@ -110,7 +111,7 @@ class PaymentService
                 $detail['id'] = $paymentDtl->id;
                 $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $detail);
                 $detail['partnerbal_id'] = $partnerBalId;
-                $paymentDtl->partnerbal_id = $partnerBalId; 
+                $paymentDtl->partnerbal_id = $partnerBalId;
                 $paymentDtl->save();
             } else {
                 $paymentDtl = $dbPaymentDtl->where('billhdr_id', $detail['billhdr_id'])->first();
@@ -125,11 +126,11 @@ class PaymentService
                         $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $detail);
                         $detail['partnerbal_id'] = $partnerBalId;
                         $paymentDtl->partnerbal_id = $partnerBalId;
-                        $paymentDtl->save(); 
+                        $paymentDtl->save();
                     }
                 }
             }
-            $savedIds[] = $detail['id'];           
+            $savedIds[] = $detail['id'];
         }
         unset($detail);
 
@@ -160,12 +161,12 @@ class PaymentService
             if (!isset($source['id']) || empty($source['id'])) {
                 $source['tr_seq'] = PaymentSrc::getNextTrSeq($headerData['id']);
                 $paymentSrc = new PaymentSrc($source);
-                $$paymentSrc->fill($source);
-                $$paymentSrc->save();
+                $paymentSrc->fill($source);
+                $paymentSrc->save();
 
                 $source['id'] = $paymentSrc->id;
                 $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $source);
-                $paymentSrc->partnerbal_id = $partnerBalId; 
+                $paymentSrc->partnerbal_id = $partnerBalId;
                 $paymentSrc->save();
             } else {
                 $paymentSrc = $dbPaymentSrc->where('partner_id', $source['bank_id'])->first();
@@ -173,14 +174,14 @@ class PaymentService
                     $paymentSrc->fill($source);
                     if ($paymentSrc->isDirty()) {
                         $this->partnerBalanceService->delPartnerLog(0 , $source['id']);
-                        $$paymentSrc->save();
+                        $paymentSrc->save();
                         $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $source);
                         $paymentSrc->partnerbal_id = $partnerBalId;
-                        $paymentSrc->save(); 
+                        $paymentSrc->save();
                     }
                 }
             }
-            $savedIds[] = $source['id'];           
+            $savedIds[] = $source['id'];
         }
         unset($source);
 
@@ -190,9 +191,9 @@ class PaymentService
                 $dbData->delete();
             }
         }
-        return true;      
-    }    
-    
+        return true;
+    }
+
     public function savePaymentAdv(array $headerData, array $advanceData)
     {
         // Pastikan headerData memiliki id
@@ -206,8 +207,8 @@ class PaymentService
             $advance['trhdr_id'] = $headerData['id'];
             $advance['tr_type'] = $headerData['tr_type'] . 'A';
             $advance['tr_code'] = $headerData['tr_code'];
-            $advance['adv_type_code'] = 'ARADVPAY',
-            $advance['adv_type_id'] = app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
+            $advance['adv_type_code'] = 'ARADVPAY';
+            $advance['adv_type_id'] = app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY');
             if (!isset($advance['id']) || empty($advance['id'])) {
                 $advance['tr_seq'] = PaymentAdv::getNextTrSeq($headerData['id']);
                 $paymentAdv = new PaymentAdv($advance);
@@ -216,7 +217,7 @@ class PaymentService
 
                 $advance['id'] = $paymentAdv->id;
                 $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $advance);
-                $paymentAdv->partnerbal_id = $partnerBalId; 
+                $paymentAdv->partnerbal_id = $partnerBalId;
                 $paymentAdv->save();
             } else {
                 $paymentAdv = $dbPaymentAdv->where('partnerbal_id', $advance['partnerbal_id'])->first();
@@ -227,11 +228,11 @@ class PaymentService
                         $paymentAdv->save();
                         $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $advance);
                         $paymentAdv->partnerbal_id = $partnerBalId;
-                        $paymentAdv->save(); 
+                        $paymentAdv->save();
                     }
                 }
             }
-            $savedIds[] = $advance['id'];           
+            $savedIds[] = $advance['id'];
         }
         unset($advance);
 
@@ -255,9 +256,11 @@ class PaymentService
             $dbPaymentAdv = PaymentAdv::where('trhdr_id', $headerData['id'])
                 ->where('reff_id',$headerData['id'])
                 ->get();
-            if ($dbPaymentAdv) {
-                $this->partnerBalanceService->delPartnerLog(0 , $dbPaymentAdv->id);
-                $dbPaymentAdv->delete();
+            if ($dbPaymentAdv->count() > 0) {
+                foreach ($dbPaymentAdv as $paymentAdv) {
+                    $this->partnerBalanceService->delPartnerLog(0 , $paymentAdv->id);
+                    $paymentAdv->delete();
+                }
             }
             return;
         }
@@ -278,14 +281,14 @@ class PaymentService
         $dbPaymentAdv = PaymentAdv::where('trhdr_id', $headerData['id'])
             ->where('reff_id',$headerData['id'])
             ->get();
-        
+
         if (!$dbPaymentAdv) {
             $paymentAdv = new PaymentAdv();
             $paymentAdv->fill($overPaymentData);
             $paymentAdv->save();
             $overPaymentData['id'] = $paymentAdv->id;
             $partnerBalId = $this->partnerBalanceService->updFromOverPayment($headerData, $overPaymentData);
-            $paymentAdv->partnerbal_id = $partnerBalId; 
+            $paymentAdv->partnerbal_id = $partnerBalId;
             $paymentAdv->save();
         } else {
             $paymentAdv = $dbPaymentAdv->first();
@@ -294,12 +297,12 @@ class PaymentService
                 $this->partnerBalanceService->delPartnerLog(0 , $paymentAdv->id);
                 $paymentAdv->save();
                 $partnerBalId = $this->partnerBalanceService->updFromOverPayment($headerData, $overPaymentData);
-                $paymentAdv->partnerbal_id = $partnerBalId; 
+                $paymentAdv->partnerbal_id = $partnerBalId;
                 $paymentAdv->save();
             }
         }
     }
-    
+
     public function delPayment(int $paymentId)
     {
         // Hapus header langsung

@@ -165,14 +165,14 @@ class Index extends BaseComponent
                 $this->dispatch('error', implode(', ', $errorMessages));
             }
 
-            // $this->dispatch('close-modal-delivery-date');
-            // $this->dispatch('refreshDatatable');
-            // $this->dispatch('refresh-page');
+            $this->dispatch('close-modal-delivery-date');
+            $this->dispatch('refreshDatatable');
+            $this->dispatch('refresh-page');
 
         } catch (Exception $e) {
             Log::error('Error creating Sales Delivery: ' . $e->getMessage());
             $this->dispatch('error', 'Gagal membuat Sales Delivery: ' . $e->getMessage());
-            // $this->dispatch('refresh-page');
+            $this->dispatch('refresh-page');
         }
     }
 

@@ -12,20 +12,29 @@ class PartnerBalanceService
     public function updFromBilling(array $headerData)
     {
         try{
-            $partnerBal = PartnerBal::updateOrCreate(
-                [
+            // Cari partner balance berdasarkan partner_id saja
+            $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
+
+            if (!$partnerBal) {
+                // Jika belum ada, buat baru
+                $partnerBal = PartnerBal::create([
                     'partner_id' => $headerData['partner_id'],
-                    'reff_id' => $headerData['id'],
-                ],
-                [
                     'partner_code' => $headerData['partner_code'],
                     'reff_type' => $headerData['tr_type'],
                     'reff_code' => $headerData['tr_code'],
+                    'reff_id' => $headerData['id'],
                     'amt_bal' => 0,
                     'amt_adv' => 0,
                     'note' => '',
-                ]
-            );
+                ]);
+            } else {
+                // Jika sudah ada, update reff info dan balance
+                $partnerBal->partner_code = $headerData['partner_code'];
+                $partnerBal->reff_type = $headerData['tr_type'];
+                $partnerBal->reff_code = $headerData['tr_code'];
+                $partnerBal->reff_id = $headerData['id'];
+            }
+
             $amt = $headerData['amt'] + $headerData['amt_adjusthdr'] + $headerData['amt_shipcost'];
             $partnerBal->amt_bal += $amt;
             $partnerBal->save();
@@ -190,8 +199,8 @@ class PartnerBalanceService
             ],
             [
                 'partner_code' => $headerData['partner_code'],
-                'reff_type' => $detailData['reff_type']e,
-                'reff_code' => $detailData['reff_code']e,
+                'reff_type' => $detailData['reff_type'],
+                'reff_code' => $detailData['reff_code'],
            ]
         );
 
