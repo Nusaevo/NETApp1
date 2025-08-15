@@ -11,7 +11,7 @@
         /* Print-specific styles to maintain layout and styling */
         @media print {
             @page {
-                size: landscape;
+                size: A5 landscape;
                 margin: 10mm;
             }
 

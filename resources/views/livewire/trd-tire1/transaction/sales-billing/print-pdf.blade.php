@@ -33,12 +33,12 @@
                 @php $grandTotal = 0; @endphp
                 @foreach ($orders as $i => $order)
                     @php $grandTotal += $order->amt; @endphp
-                    <tr>
-                        <td style="padding: 0 0 0 5px;">{{ $i + 1 }}.</td>
-                        <td style="padding: 0 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}</td>
-                        <td style="padding: 0 5px;">No. {{ $order->tr_code }}</td>
-                        <td style="padding: 0 5px; text-align: right;">Rp.</td>
-                        <td style="padding: 0 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}</td>
+                    <tr style="height: 25px;">
+                        <td style="padding: 2px 0 2px 5px;">{{ $i + 1 }}.</td>
+                        <td style="padding: 2px 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}</td>
+                        <td style="padding: 2px 5px;">No. {{ $order->tr_code }}</td>
+                        <td style="padding: 2px 5px; text-align: right;">Rp.</td>
+                        <td style="padding: 2px 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}</td>
                     </tr>
                 @endforeach
             </table>
@@ -59,7 +59,7 @@
     </div>
 
     <!-- Area print tetap tampil saat print -->
-    <div id="print" class="d-none d-print-block">
+    <div id="print" class="d-none d-print-block p-20">
         <div style="max-width: 700px; margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 16px;">
             <div style="display: flex; justify-content: flex-end;">
                 <div style="text-align: right;">
@@ -77,12 +77,12 @@
                 @php $grandTotal = 0; @endphp
                 @foreach ($orders as $i => $order)
                     @php $grandTotal += $order->amt; @endphp
-                    <tr>
-                        <td style="padding: 0 0 0 5px;">{{ $i + 1 }}.</td>
-                        <td style="padding: 0 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}</td>
-                        <td style="padding: 0 5px;">No. {{ $order->tr_code }}</td>
-                        <td style="padding: 0 5px; text-align: right;">Rp.</td>
-                        <td style="padding: 0 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}</td>
+                    <tr style="height: 25px;">
+                        <td style="padding: 2px 0 2px 5px;">{{ $i + 1 }}.</td>
+                        <td style="padding: 2px 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}</td>
+                        <td style="padding: 2px 5px;">No. {{ $order->tr_code }}</td>
+                        <td style="padding: 2px 5px; text-align: right;">Rp.</td>
+                        <td style="padding: 2px 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}</td>
                     </tr>
                 @endforeach
             </table>
