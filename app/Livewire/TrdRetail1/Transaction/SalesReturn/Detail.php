@@ -1,0 +1,691 @@
+<?php
+
+namespace App\Livewire\TrdRetail1\Transaction\SalesReturn;
+
+use App\Livewire\Component\BaseComponent;
+use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdRetail1\Master\{Partner, Material, MatlUom};
+use App\Models\SysConfig1\ConfigConst;
+use App\Enums\Status;
+use App\Services\TrdRetail1\Master\MasterService;
+use Exception;
+
+class Detail extends BaseComponent
+{
+    #region Constant Variables
+    public $object_detail;
+    public $inputs = [];
+    public $input_details = []; // Items yang diretur (return items)
+    public $exchange_details = []; // Items yang ditukar (exchange items)
+
+    public $customers = [];
+    public $partners = [];
+    public $partnerSearchText = '';
+    public $selectedPartners = [];
+    public $isPrint = false;
+
+    public $warehouses;
+    public $deletedItems = [];
+    public $newItems = [];
+    public $trType = 'SR'; // Sales Return
+
+    public $matl_action = 'Create';
+    public $matl_objectId = null;
+    public $currency = [];
+
+    public $currencyRate = 0;
+    public $barcode = '';
+    protected $masterService;
+    public $isPanelEnabled = 'true';
+    public $total_amount = 0;
+    public $materialList = [];
+    public $exchangeMaterialList = [];
+    public $searchTerm = '';
+    public $exchangeSearchTerm = '';
+    public $selectedMaterials = [];
+    public $selectedExchangeMaterials = [];
+    public $materialCategories = [];
+    public $filterCategory = '';
+    public $filterBrand = '';
+    public $filterType = '';
+    public $exchangeFilterCategory = '';
+    public $exchangeFilterBrand = '';
+    public $exchangeFilterType = '';
+    public $kategoriOptions = '';
+    public $brandOptions = '';
+    public $typeOptions = '';
+
+    public $warehouseOptions = [];
+    public $uomOptions = [];
+    public $payments;
+
+    public $materials;
+    public $wh_code = '';
+
+    public $rules = [
+        'inputs.tr_date' => 'required',
+        'inputs.partner_id' => 'required',
+        'inputs.payment_term_id' => 'required',
+        'input_details.*.qty' => 'required|numeric|min:1',
+        'input_details.*.matl_id' => 'required',
+        'exchange_details.*.qty' => 'required|numeric|min:1',
+        'exchange_details.*.matl_id' => 'required',
+        'wh_code' => 'required',
+        'input_details.*.matl_uom' => 'required',
+        'exchange_details.*.matl_uom' => 'required',
+    ];
+
+    protected $messages = [
+        'input_details.*.qty.min' => 'Isi Qty Return',
+        'exchange_details.*.qty.min' => 'Isi Qty Exchange',
+    ];
+
+    protected $listeners = [
+        'changeStatus' => 'changeStatus',
+        'delete' => 'delete'
+    ];
+    #endregion
+
+    #region Populate Data methods
+    protected function onPreRender()
+    {
+        $this->customValidationAttributes = [
+            'inputs.tr_date' => $this->trans('tr_date'),
+            'inputs.partner_id' => $this->trans('customer'),
+            'wh_code' => $this->trans('warehouse'),
+        ];
+
+        $this->masterService = new MasterService();
+        $this->payments = $this->masterService->getPaymentTerm();
+        $this->warehouses = $this->masterService->getWarehouse();
+        $this->partners = $this->masterService->getCustomers();
+
+        $this->materials = $this->masterService->getMaterials();
+        $this->kategoriOptions = $this->masterService->getMatlCategoryData();
+        $this->brandOptions = $this->masterService->getMatlBrandData();
+        $this->typeOptions = $this->masterService->getMatlTypeData();
+        $this->warehouseOptions = $this->masterService->getWarehouseData();
+        $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
+        $this->uomOptions = $this->masterService->getMatlUOMData();
+
+        if ($this->isEditOrView()) {
+            $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
+            $this->inputs = populateArrayFromModel($this->object);
+            $this->inputs['status_code_text'] = $this->object->status_Code_text;
+            $this->inputs['partner_name'] = $this->object->Partner->code . ' - ' . $this->object->Partner->name;
+            $this->loadDetails();
+        }
+        if (!empty($this->input_details) || !empty($this->exchange_details)) {
+            $this->isPanelEnabled = 'false';
+        }
+    }
+
+    public function onReset()
+    {
+        $this->reset('inputs');
+        $this->reset('input_details');
+        $this->reset('exchange_details');
+        $this->object = new OrderHdr();
+        $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['tr_date'] = date('Y-m-d');
+        $this->inputs['tr_type'] = $this->trType;
+        $this->inputs['curr_id'] = ConfigConst::CURRENCY_RUPIAH_ID;
+        $this->inputs['curr_code'] = 'IDR';
+    }
+
+    public function render()
+    {
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
+    }
+    #endregion
+
+    #region CRUD Methods
+    public function onValidateAndSave()
+    {
+        // Jika mode edit dan order sudah completed, tampilkan peringatan dan hentikan proses.
+        if ($this->actionValue === 'Edit') {
+            if ($this->object->isOrderCompleted()) {
+                throw new Exception('Nota ini tidak bisa di edit, karena status sudah Completed');
+            }
+        }
+
+        if (!isNullOrEmptyNumber($this->inputs['partner_id']) && $this->inputs['partner_id'] > 0) {
+            $partner = Partner::find($this->inputs['partner_id']);
+            $this->inputs['partner_code'] = $partner ? $partner->code : '';
+        } else {
+            $this->addError('partner_id', 'Customer tidak ditemukan');
+            throw new Exception('Harap isi Customer terlebih dahulu');
+        }
+
+        // Initialize payment term data
+        if (!isNullOrEmptyNumber($this->inputs['payment_term_id']) && $this->inputs['payment_term_id'] > 0) {
+            $this->masterService = new MasterService();
+            $paymentTerm = $this->masterService->getPaymentTermById($this->inputs['payment_term_id']);
+            $this->inputs['payment_term'] = $paymentTerm ?? '';
+        } else {
+            $this->inputs['payment_term_id'] = 0;
+            $this->inputs['payment_term'] = '';
+        }
+
+        // Ensure all required fields are properly initialized
+        $this->inputs['reff_code'] = $this->inputs['reff_code'] ?? '';
+        $this->inputs['sales_id'] = $this->inputs['sales_id'] ?? 0;
+        $this->inputs['sales_code'] = $this->inputs['sales_code'] ?? '';
+        $this->inputs['deliv_by'] = $this->inputs['deliv_by'] ?? '';
+        $this->inputs['curr_rate'] = $this->inputs['curr_rate'] ?? 0;
+        $this->inputs['print_settings'] = $this->inputs['print_settings'] ?? '';
+        $this->inputs['print_remarks'] = $this->inputs['print_remarks'] ?? '';
+
+        // Convert any array values to strings or appropriate types
+        foreach ($this->inputs as $key => $value) {
+            if (is_array($value)) {
+                $this->inputs[$key] = json_encode($value);
+            } elseif (is_object($value)) {
+                $this->inputs[$key] = (string) $value;
+            }
+        }
+
+        // Prepare return items (input_details)
+        $returnItems = [];
+        foreach ($this->input_details as $index => $detail) {
+            $detail['tr_seq'] = $index + 1;
+            $detail['tr_id'] = $this->object->tr_id;
+            $detail['trhdr_id'] = $this->object->id;
+            $detail['tr_type'] = $this->trType;
+            $detail['wh_code'] = $this->wh_code;
+
+            // Cari konfigurasi warehouse jika diperlukan.
+            $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
+                ->where('str1', $detail['wh_code'] ?? '')
+                ->first();
+            $detail['wh_id'] = $configConst ? $configConst->id : null;
+
+            // Ambil data material untuk mendapatkan material code.
+            $material = Material::withTrashed()->find($detail['matl_id'] ?? null);
+            $detail['matl_code'] = $material ? $material->code : '';
+
+            // Ensure numeric fields are properly typed
+            $detail['qty'] = -abs((float) ($detail['qty'] ?? 0)); // Negative for returns
+            $detail['price'] = 0;
+            $detail['amt'] = 0;
+            $detail['matl_id'] = (int) ($detail['matl_id'] ?? 0);
+
+            // Remove any array or object fields that might cause issues
+            unset($detail['image_url']);
+            unset($detail['matl_descr']);
+
+            $returnItems[] = $detail;
+        }
+
+        // Prepare exchange items (exchange_details)
+        $exchangeItems = [];
+        foreach ($this->exchange_details as $index => $detail) {
+            $detail['tr_seq'] = count($returnItems) + $index + 1;
+            $detail['tr_id'] = $this->object->tr_id;
+            $detail['trhdr_id'] = $this->object->id;
+            $detail['tr_type'] = $this->trType;
+            $detail['wh_code'] = $this->wh_code;
+
+            // Cari konfigurasi warehouse jika diperlukan.
+            $configConst = ConfigConst::where('const_group', 'MWAREHOUSE_LOCL1')
+                ->where('str1', $detail['wh_code'] ?? '')
+                ->first();
+            $detail['wh_id'] = $configConst ? $configConst->id : null;
+
+            // Ambil data material untuk mendapatkan material code.
+            $material = Material::withTrashed()->find($detail['matl_id'] ?? null);
+            $detail['matl_code'] = $material ? $material->code : '';
+
+            // Ensure numeric fields are properly typed
+            $detail['qty'] = (float) ($detail['qty'] ?? 0); // Positive for exchange
+            $detail['price'] = (float) ($detail['price'] ?? 0);
+            $detail['amt'] = (float) ($detail['amt'] ?? 0);
+            $detail['matl_id'] = (int) ($detail['matl_id'] ?? 0);
+
+            // Remove any array or object fields that might cause issues
+            unset($detail['image_url']);
+            unset($detail['matl_descr']);
+
+            $exchangeItems[] = $detail;
+        }
+
+        // Combine both arrays
+        $allItems = array_merge($returnItems, $exchangeItems);
+
+        // Simpan header dan detail secara terpadu menggunakan method saveOrder.
+        $this->object->saveOrder($this->trType, $this->inputs, $allItems, true);
+
+        // Redirect bila aksi adalah Create, atau lakukan tindakan lanjutan sesuai kebutuhan.
+        if ($this->actionValue === 'Create') {
+            return redirect()->route($this->appCode . '.Transaction.SalesReturn.Detail', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id),
+            ]);
+        }
+        if ($this->isPrint) {
+            return redirect()->route($this->appCode . '.Transaction.SalesReturn.PrintPdf', [
+                'action' => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id),
+            ]);
+        }
+    }
+
+    public function SaveAndPrint()
+    {
+        $this->isPrint = true;
+        $this->Save();
+    }
+
+    public function delete()
+    {
+        try {
+            if ($this->object->isOrderCompleted()) {
+                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
+                return;
+            }
+
+            if (!$this->object->isOrderEnableToDelete()) {
+                $this->dispatch('warning', 'Nota ini tidak bisa delete, karena memiliki material yang sudah dijual.');
+                return;
+            }
+
+            if (isset($this->object->status_code)) {
+                $this->object->status_code = Status::NONACTIVE;
+            }
+            $this->object->save();
+            $this->object->delete();
+            $messageKey = 'generic.string.disable';
+            $this->dispatch('success', __($messageKey));
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+        }
+
+        return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
+    }
+    #endregion
+
+    #region Component Events
+    public function scanBarcode()
+    {
+        $cleanBarcode = trim($this->barcode);
+        $uom = MatlUom::where('barcode', $cleanBarcode)->first();
+
+        if (!$uom) {
+            $this->dispatch('error', 'Kode batang tidak ditemukan, mohon scan ulang!');
+        } else {
+            // Cari index yang match di return items
+            $index = collect($this->input_details)->search(function ($d) use ($uom) {
+                return ($d['matl_id'] ?? null) === $uom->matl_id && ($d['matl_uom'] ?? null) === $uom->matl_uom;
+            });
+
+            if ($index !== false) {
+                // Kalau sudah ada, tambah qty-nya
+                $this->input_details[$index]['qty'] += 1;
+                $this->dispatch('success', 'Qty berhasil ditambah untuk item return ini.');
+            } else {
+                // Kalau belum ada, tambahkan item baru
+                $newIndex = count($this->input_details);
+                $this->addItem();
+
+                $this->onMaterialChanged($newIndex, $uom->matl_id);
+                $this->onUomChanged($newIndex, $uom->matl_uom);
+
+                $this->input_details[$newIndex]['qty'] = 1;
+
+                $this->dispatch('success', 'Item berhasil ditambahkan melalui scan barcode.');
+            }
+        }
+
+        // Clear input scanner dan kembalikan fokus
+        $this->dispatch('barcode-processed');
+        $this->barcode = '';
+    }
+
+    // Return Items Management
+    public function addItem()
+    {
+        $this->input_details[] = [
+            'matl_id' => null,
+            'qty' => null,
+            'price' => 0.0,
+            'amt' => 0.0
+        ];
+    }
+
+    public function deleteItem($index)
+    {
+        try {
+            unset($this->input_details[$index]);
+            $this->input_details = array_values($this->input_details);
+            $this->dispatch('success', __('generic.string.delete_item'));
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function onMaterialChanged($key, $matl_id)
+    {
+        if ($matl_id) {
+            $duplicate = collect($this->input_details)->contains(function ($detail, $index) use ($key, $matl_id) {
+                return $index != $key && isset($detail['matl_id']) && $detail['matl_id'] == $matl_id;
+            });
+
+            if ($duplicate) {
+                $this->dispatch('error', 'Material sudah ada dalam daftar.');
+                return;
+            }
+
+            $material = Material::find($matl_id);
+            if ($material) {
+                $this->input_details[$key]['matl_id'] = $material->id;
+                $this->input_details[$key]['matl_code'] = $material->code;
+                $this->input_details[$key]['price'] = 0; // Return items don't have price
+                $this->input_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
+                $this->input_details[$key]['matl_descr'] = $material->name;
+                $attachment = optional($material->Attachment)->first();
+                $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
+            } else {
+                $this->dispatch('error', 'Material_not_found');
+            }
+        }
+    }
+
+    public function onUomChanged($key, $uomId)
+    {
+        // For return items, no price calculation needed
+    }
+
+    // Exchange Items Management (Tukar Barang)
+    public function addExchangeItem()
+    {
+        $this->exchange_details[] = [
+            'matl_id' => null,
+            'qty' => null,
+            'price' => 0.0,
+            'amt' => 0.0
+        ];
+    }
+
+    public function deleteExchangeItem($index)
+    {
+        try {
+            unset($this->exchange_details[$index]);
+            $this->exchange_details = array_values($this->exchange_details);
+            $this->dispatch('success', __('generic.string.delete_item'));
+            $this->recalculateTotals();
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function onExchangeMaterialChanged($key, $matl_id)
+    {
+        if ($matl_id) {
+            $duplicate = collect($this->exchange_details)->contains(function ($detail, $index) use ($key, $matl_id) {
+                return $index != $key && isset($detail['matl_id']) && $detail['matl_id'] == $matl_id;
+            });
+
+            if ($duplicate) {
+                $this->dispatch('error', 'Material sudah ada dalam daftar exchange.');
+                return;
+            }
+
+            $material = Material::find($matl_id);
+            if ($material) {
+                $this->exchange_details[$key]['matl_id'] = $material->id;
+                $this->exchange_details[$key]['matl_code'] = $material->code;
+                $this->exchange_details[$key]['price'] = $material->selling_price;
+                $this->exchange_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
+                $this->exchange_details[$key]['matl_descr'] = $material->name;
+                $this->exchange_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0;
+                $attachment = optional($material->Attachment)->first();
+                $this->exchange_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
+                $this->updateExchangeItemAmount($key);
+            } else {
+                $this->dispatch('error', 'Material_not_found');
+            }
+        }
+    }
+
+    public function onExchangeUomChanged($key, $uomId)
+    {
+        $materialId = $this->exchange_details[$key]['matl_id'] ?? null;
+
+        if ($materialId) {
+            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uomId)->first();
+
+            if ($matlUom) {
+                $this->exchange_details[$key]['price'] = $matlUom->selling_price;
+            }
+        }
+        $this->updateExchangeItemAmount($key);
+    }
+
+    public function updateExchangeItemAmount($key)
+    {
+        if (!empty($this->exchange_details[$key]['qty']) && !empty($this->exchange_details[$key]['price'])) {
+            $amount = $this->exchange_details[$key]['qty'] * $this->exchange_details[$key]['price'];
+            $this->exchange_details[$key]['amt'] = $amount;
+        } else {
+            $this->exchange_details[$key]['amt'] = 0;
+        }
+        $this->exchange_details[$key]['amt_idr'] = rupiah($this->exchange_details[$key]['amt']);
+
+        // Update totals immediately
+        $this->recalculateTotals();
+    }
+
+    public function recalculateTotals()
+    {
+        $this->total_amount = array_sum(
+            array_map(function ($detail) {
+                $qty = $detail['qty'] ?? 0;
+                $price = $detail['price'] ?? 0;
+                $amount = $qty * $price;
+                return $amount;
+            }, $this->exchange_details),
+        );
+
+        $this->total_amount = round($this->total_amount, 2);
+    }
+
+    protected function loadDetails()
+    {
+        if (!empty($this->object)) {
+            $this->object_detail = OrderDtl::GetByOrderHdr($this->object->id, $this->object->tr_type)->orderBy('tr_seq')->get();
+
+            // Separate return and exchange items
+            $this->input_details = [];
+            $this->exchange_details = [];
+
+            foreach ($this->object_detail as $key => $detail) {
+                $detailArray = populateArrayFromModel($detail);
+                $detailArray['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
+
+                $material = Material::withTrashed()->find($detail->matl_id);
+                if ($material) {
+                    $attachment = optional($material->Attachment)->first();
+                    $detailArray['image_url'] = $attachment ? $attachment->getUrl() : '';
+                } else {
+                    $detailArray['image_url'] = '';
+                }
+
+                // Negative qty = return items, Positive qty = exchange items
+                if ($detail->qty < 0) {
+                    $detailArray['qty'] = abs($detail->qty); // Show as positive in UI
+                    $this->input_details[] = $detailArray;
+                } else {
+                    $this->exchange_details[] = $detailArray;
+                    $this->updateExchangeItemAmount(count($this->exchange_details) - 1);
+                }
+            }
+        }
+    }
+
+    // Material Search Functions (same as Sales Order)
+    public function searchMaterials()
+    {
+        $query = Material::query()
+            ->leftJoin('matl_uoms', function($join) {
+                $join->on('materials.id', '=', 'matl_uoms.matl_id');
+            })
+            ->select('materials.*',
+                     'matl_uoms.buying_price as buying_price',
+                     'matl_uoms.selling_price as selling_price');
+
+        if (!empty($this->searchTerm)) {
+            $searchTermUpper = strtoupper($this->searchTerm);
+            $query->where(function ($query) use ($searchTermUpper) {
+                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
+            });
+        }
+
+        // Apply filters
+        if (!empty($this->filterCategory)) {
+            $query->where('materials.category', $this->filterCategory);
+        }
+        if (!empty($this->filterBrand)) {
+            $query->where('materials.brand', $this->filterBrand);
+        }
+        if (!empty($this->filterType)) {
+            $query->where('materials.class_code', $this->filterType);
+        }
+
+        $this->materialList = $query->get();
+    }
+
+    // Exchange Materials Search (same logic as regular materials)
+    public function searchExchangeMaterials()
+    {
+        $query = Material::query()
+            ->leftJoin('matl_uoms', function($join) {
+                $join->on('materials.id', '=', 'matl_uoms.matl_id');
+            })
+            ->select('materials.*',
+                     'matl_uoms.buying_price as buying_price',
+                     'matl_uoms.selling_price as selling_price');
+
+        if (!empty($this->exchangeSearchTerm)) {
+            $searchTermUpper = strtoupper($this->exchangeSearchTerm);
+            $query->where(function ($query) use ($searchTermUpper) {
+                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
+                      ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
+            });
+        }
+
+        // Apply filters
+        if (!empty($this->exchangeFilterCategory)) {
+            $query->where('materials.category', $this->exchangeFilterCategory);
+        }
+        if (!empty($this->exchangeFilterBrand)) {
+            $query->where('materials.brand', $this->exchangeFilterBrand);
+        }
+        if (!empty($this->exchangeFilterType)) {
+            $query->where('materials.class_code', $this->exchangeFilterType);
+        }
+
+        $this->exchangeMaterialList = $query->get();
+    }
+
+    public function selectMaterial($materialID)
+    {
+        $key = array_search($materialID, $this->selectedMaterials);
+
+        if ($key !== false) {
+            unset($this->selectedMaterials[$key]);
+            $this->selectedMaterials = array_values($this->selectedMaterials);
+        } else {
+            $this->selectedMaterials[] = $materialID;
+        }
+    }
+
+    public function selectExchangeMaterial($materialID)
+    {
+        $key = array_search($materialID, $this->selectedExchangeMaterials);
+
+        if ($key !== false) {
+            unset($this->selectedExchangeMaterials[$key]);
+            $this->selectedExchangeMaterials = array_values($this->selectedExchangeMaterials);
+        } else {
+            $this->selectedExchangeMaterials[] = $materialID;
+        }
+    }
+
+    public function confirmSelection()
+    {
+        if (empty($this->selectedMaterials)) {
+            $this->dispatch('error', 'Silakan pilih setidaknya satu material terlebih dahulu.');
+            return;
+        }
+
+        foreach ($this->selectedMaterials as $matl_id) {
+            $exists = collect($this->input_details)->contains('matl_id', $matl_id);
+
+            if ($exists) {
+                $this->dispatch('error', "Material dengan ID $matl_id sudah ada dalam daftar.");
+                continue;
+            }
+
+            // Jika tidak duplikat, tambahkan ke daftar
+            $key = count($this->input_details);
+            $this->input_details[] = [
+                'matl_id' => $matl_id,
+                'qty' => null,
+                'price' => 0.0,
+            ];
+            $this->onMaterialChanged($key, $matl_id);
+        }
+
+        $this->dispatch('success', 'Item berhasil dipilih.');
+        $this->dispatch('closeItemDialogBox');
+    }
+
+    public function confirmExchangeSelection()
+    {
+        if (empty($this->selectedExchangeMaterials)) {
+            $this->dispatch('error', 'Silakan pilih setidaknya satu material terlebih dahulu.');
+            return;
+        }
+
+        foreach ($this->selectedExchangeMaterials as $matl_id) {
+            $exists = collect($this->exchange_details)->contains('matl_id', $matl_id);
+
+            if ($exists) {
+                $this->dispatch('error', "Material dengan ID $matl_id sudah ada dalam daftar exchange.");
+                continue;
+            }
+
+            // Jika tidak duplikat, tambahkan ke daftar
+            $key = count($this->exchange_details);
+            $this->exchange_details[] = [
+                'matl_id' => $matl_id,
+                'qty' => null,
+                'price' => 0.0,
+            ];
+            $this->onExchangeMaterialChanged($key, $matl_id);
+        }
+
+        $this->dispatch('success', 'Exchange item berhasil dipilih.');
+        $this->dispatch('closeExchangeItemDialogBox');
+    }
+
+    public function openItemDialogBox()
+    {
+        $this->searchTerm = '';
+        $this->materialList = [];
+        $this->selectedMaterials = [];
+        $this->dispatch('openItemDialogBox');
+    }
+
+    public function openExchangeItemDialogBox()
+    {
+        $this->exchangeSearchTerm = '';
+        $this->exchangeMaterialList = [];
+        $this->selectedExchangeMaterials = [];
+        $this->dispatch('openExchangeItemDialogBox');
+    }
+
+    #endregion
+}
