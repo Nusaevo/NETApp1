@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\PurchaseDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\Status;
@@ -23,7 +23,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return DelivHdr::with(['DelivPacking', 'Partner'])
+        return DelivHdr::with(['DelivPacking.DelivPickings', 'Partner'])
             ->where('deliv_hdrs.tr_type', 'PD')
             ->where(function ($query) {
                 $query->where('deliv_hdrs.status_code', Status::OPEN)
@@ -65,8 +65,10 @@ class IndexDataTable extends BaseDataTableComponent
                 ->html(),
             Column::make($this->trans('Kode Barang'), 'kode_barang')
                 ->label(function ($row) {
-                    // Ambil semua kode barang dari DelivPacking, pisahkan dengan koma
-                    $matlCodes = DelivPacking::where('tr_code', $row->tr_code)->pluck('matl_descr');
+                    // Ambil semua kode barang dari DelivPicking melalui relasi DelivPacking
+                    $matlCodes = DelivPicking::whereHas('DelivPacking', function($query) use ($row) {
+                        $query->where('trhdr_id', $row->id);
+                    })->pluck('matl_code');
                     return $matlCodes->isNotEmpty() ? $matlCodes->implode(', ') : '-';
                 })
                 ->sortable(),

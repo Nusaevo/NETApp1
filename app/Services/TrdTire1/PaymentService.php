@@ -19,8 +19,12 @@ class PaymentService
 
     public function addPayment(array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt)
     {
+
+
         // dd($headerData, $detailData, $sourceData, $advanceData, $overAmt);
         try {
+            // Mulai database transaction
+            DB::beginTransaction();
             // Simpan header
             $paymentHdr = $this->saveHeader($headerData);
             $headerData['id'] = $paymentHdr->id;
@@ -34,44 +38,17 @@ class PaymentService
             $this->saveOverPayment($headerData, $overAmt); // Pass empty array untuk advanceData
             // dd($headerData, $detailData);
 
+            // Commit transaction
+            DB::commit();
+
             return $paymentHdr;
-       } catch (Exception $e) {
+               } catch (Exception $e) {
+            // Rollback transaction
+            DB::rollBack();
+
             throw new Exception('Error adding payment: ' . $e->getMessage());
         }
     }
-
-    // public function updPayment(int $paymentId, array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt = 0.0)
-    // {
-    //     try {
-    //         // Cek apakah payment header ada
-    //         $paymentHdr = PaymentHdr::find($paymentId);
-    //         if (!$paymentHdr) {
-    //             throw new Exception('Payment header tidak ditemukan');
-    //         }
-
-    //         // Update header
-    //         $paymentHdr->update($headerData);
-    //         $headerData['id'] = $paymentHdr->id;
-
-    //         // Set header ID ke detail data
-    //         // Hapus detail dan payment lama
-    //         $this->deleteDetail($paymentId);
-
-
-    //         $this->savePaymentDetail($headerData, $detailData);
-    //         $this->savePaymentSrc($headerData, $sourceData);
-    //         if (!empty($advanceData)) {
-    //             $this->savePaymentAdv($headerData, $advanceData);
-    //         }
-    //         if ($overAmt > 0) {
-    //             $this->overPayment($headerData, $overAmt); // Pass empty array untuk advanceData
-    //         }
-
-    //         return $paymentHdr;
-    //     } catch (Exception $e) {
-    //         throw $e;
-    //     }
-    // }
 
     private function saveHeader(array $headerData): PaymentHdr
     {
@@ -196,6 +173,7 @@ class PaymentService
 
     public function savePaymentAdv(array $headerData, array $advanceData)
     {
+
         // Pastikan headerData memiliki id
         if (!isset($headerData['id'])) {
             throw new Exception('Header ID tidak tersedia untuk menyimpan PaymentAdv');
@@ -207,8 +185,14 @@ class PaymentService
             $advance['trhdr_id'] = $headerData['id'];
             $advance['tr_type'] = $headerData['tr_type'] . 'A';
             $advance['tr_code'] = $headerData['tr_code'];
+            $advance['reff_id'] = $headerData['id']; // Set reff_id ke payment header ID
+            $advance['reff_type'] = $headerData['tr_type']; // Set reff_type ke payment header type
+            $advance['reff_code'] = $headerData['tr_code']; // Set reff_code ke payment header code
             $advance['adv_type_code'] = 'ARADVPAY';
             $advance['adv_type_id'] = app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY');
+            // Buat amt menjadi negatif agar menjadi positive saat updfromPayment
+            $advance['amt'] = -abs($advance['amt']);
+
             if (!isset($advance['id']) || empty($advance['id'])) {
                 $advance['tr_seq'] = PaymentAdv::getNextTrSeq($headerData['id']);
                 $paymentAdv = new PaymentAdv($advance);
@@ -216,9 +200,18 @@ class PaymentService
                 $paymentAdv->save();
 
                 $advance['id'] = $paymentAdv->id;
-                $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $advance);
+
+                try {
+                    $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $advance);
+                } catch (Exception $e) {
+                    throw $e;
+                }
+
                 $paymentAdv->partnerbal_id = $partnerBalId;
                 $paymentAdv->save();
+
+                // Set ID untuk savedIds
+                $advance['id'] = $paymentAdv->id;
             } else {
                 $paymentAdv = $dbPaymentAdv->where('partnerbal_id', $advance['partnerbal_id'])->first();
                 if ($paymentAdv) {
@@ -232,8 +225,12 @@ class PaymentService
                     }
                 }
             }
-            $savedIds[] = $advance['id'];
-        }
+
+            // Pastikan ID ada sebelum menambahkan ke savedIds
+            if (isset($advance['id']) && !empty($advance['id'])) {
+                $savedIds[] = $advance['id'];
+            }
+                }
         unset($advance);
 
         foreach ($dbPaymentAdv as $dbData) {
@@ -247,20 +244,28 @@ class PaymentService
 
     private function saveOverPayment(array $headerData, float $overAmt): void
     {
+        // dd($headerData, $overAmt);
         // Pastikan headerData memiliki id
         if (!isset($headerData['id'])) {
             throw new Exception('Header ID tidak tersedia untuk menyimpan overPayment');
         }
 
         if ($overAmt == 0) {
+            // Hanya hapus record over payment (yang dibuat oleh saveOverPayment), bukan record advance payment
+            // Record advance payment memiliki amt negatif, record over payment memiliki amt positif
             $dbPaymentAdv = PaymentAdv::where('trhdr_id', $headerData['id'])
-                ->where('reff_id',$headerData['id'])
+                ->where('reff_id', $headerData['id'])
+                ->where('tr_type', $headerData['tr_type'] . 'A')
+                ->where('amt', '>', 0) // Hanya record dengan amt positif (over payment)
                 ->get();
+
             if ($dbPaymentAdv->count() > 0) {
                 foreach ($dbPaymentAdv as $paymentAdv) {
                     $this->partnerBalanceService->delPartnerLog(0 , $paymentAdv->id);
                     $paymentAdv->delete();
                 }
+            } else {
+                Log::info('No over payment records found to delete');
             }
             return;
         }
@@ -275,14 +280,16 @@ class PaymentService
             'reff_id' => $headerData['id'],
             'reff_type' => $headerData['tr_type'],
             'reff_code' => $headerData['tr_code'],
-            'amt' => $overAmt, // Pakai negatif agar menjadi positive saat updfromPayment
+            'amt' => $overAmt, // Pakai positif untuk over payment (sisa pembayaran)
         ];
 
         $dbPaymentAdv = PaymentAdv::where('trhdr_id', $headerData['id'])
-            ->where('reff_id',$headerData['id'])
+            ->where('reff_id', $headerData['id'])
+            ->where('amt', '>', 0) // Hanya record over payment (amt positif)
             ->get();
 
-        if (!$dbPaymentAdv) {
+        if ($dbPaymentAdv->count() == 0) {
+            // Jika tidak ada data existing, buat baru
             $paymentAdv = new PaymentAdv();
             $paymentAdv->fill($overPaymentData);
             $paymentAdv->save();
@@ -291,14 +298,17 @@ class PaymentService
             $paymentAdv->partnerbal_id = $partnerBalId;
             $paymentAdv->save();
         } else {
+            // Jika ada data existing, update yang pertama
             $paymentAdv = $dbPaymentAdv->first();
-            $paymentAdv->fill($overPaymentData);
-            if ($paymentAdv->isDirty()) {
-                $this->partnerBalanceService->delPartnerLog(0 , $paymentAdv->id);
-                $paymentAdv->save();
-                $partnerBalId = $this->partnerBalanceService->updFromOverPayment($headerData, $overPaymentData);
-                $paymentAdv->partnerbal_id = $partnerBalId;
-                $paymentAdv->save();
+            if ($paymentAdv) {
+                $paymentAdv->fill($overPaymentData);
+                if ($paymentAdv->isDirty()) {
+                    $this->partnerBalanceService->delPartnerLog(0 , $paymentAdv->id);
+                    $paymentAdv->save();
+                    $partnerBalId = $this->partnerBalanceService->updFromOverPayment($headerData, $overPaymentData);
+                    $paymentAdv->partnerbal_id = $partnerBalId;
+                    $paymentAdv->save();
+                }
             }
         }
     }

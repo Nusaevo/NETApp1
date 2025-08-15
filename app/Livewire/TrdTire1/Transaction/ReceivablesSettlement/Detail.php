@@ -693,10 +693,13 @@ class Detail extends BaseComponent
 
             // Load advance (lebih bayar) yang sudah pernah digunakan
             $advances = PaymentAdv::where('trhdr_id', $this->object->id)->get();
+
+
             $this->input_advance = [];
-            // Hanya tampilkan PaymentAdv yang hasil pemakaian advance (bukan overpayment)
+            // Tampilkan PaymentAdv yang hasil pemakaian advance (amt negatif) dan bukan overpayment (amt positif)
             foreach ($advances as $adv) {
-                if (!empty($adv->partnerbal_id) && $adv->reff_id != $adv->trhdr_id) {
+                // Hanya load PaymentAdv dengan amt negatif (penggunaan advance), bukan amt positif (overpayment)
+                if (!empty($adv->partnerbal_id) && $adv->amt < 0) {
                     $this->input_advance[] = [
                         'partnerbal_id' => $adv->partnerbal_id,
                         'partner_code' => $adv->partner_code ?? '',
@@ -705,7 +708,6 @@ class Detail extends BaseComponent
                     ];
                 }
             }
-
             // Perbaiki perhitungan advanceBalance:
             // Setelah save (edit mode), advanceBalance harus 0 jika seluruh advance sudah digunakan (sudah masuk ke total pembayaran)
             $this->advanceBalance = round($this->totalPaymentAmount - $this->totalNotaAmount, 2);
@@ -905,6 +907,7 @@ class Detail extends BaseComponent
             // Siapkan data advance
             $advanceData = [];
             foreach ($this->input_advance as $key => $advance) {
+
                 if (!empty($advance['partnerbal_id']) && !empty($advance['amt'])) {
                     $advanceData[] = [
                         'tr_seq' => $key + 1,
@@ -916,9 +919,10 @@ class Detail extends BaseComponent
                         'reff_type' => $this->trType,
                         'reff_code' => $headerData['tr_code'],
                     ];
+                } else {
                 }
             }
-
+            
             // Check if detailData is empty after all processing
             if (empty($detailData)) {
                 $this->dispatch('error', 'Tidak ada detail pembayaran yang valid untuk disimpan. Pastikan Anda telah memilih nota yang valid.');
@@ -926,20 +930,19 @@ class Detail extends BaseComponent
             }
 
             try {
-                if ($this->actionValue == 'Create') {
-                    $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
-
-                    if (!$result || !isset($result->id)) {
-                        throw new Exception('Failed to create payment: Invalid result returned from addPayment service');
-                    }
-
-                    $this->objectIdValue = $result->id;
-                    $this->actionValue = 'Edit';
-                } else {
-                    // For Edit mode, ID already exists
+                // Untuk mode Edit, set ID ke headerData
+                if ($this->actionValue == 'Edit') {
                     $headerData['id'] = $this->objectIdValue;
-                    $this->paymentService->updPayment($this->objectIdValue, $headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
                 }
+
+                $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
+
+                if (!$result || !isset($result->id)) {
+                    throw new Exception('Failed to save payment: Invalid result returned from addPayment service');
+                }
+
+                $this->objectIdValue = $result->id;
+                $this->actionValue = 'Edit';
             } catch (\Exception $e) {
                 Log::error('Error saving payment: ' . $e->getMessage(), [
                     'trace' => $e->getTraceAsString(),

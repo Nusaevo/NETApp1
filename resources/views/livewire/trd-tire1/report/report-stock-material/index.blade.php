@@ -11,7 +11,7 @@
                     <div class="row align-items-end">
                         <div class="col-md-4">
                             <x-ui-dropdown-select label="Brand" model="brand" :options="$brandOptions" action="Edit" />
-                            @dump($brandOptions)
+                            {{-- @dump($brandOptions) --}}
                         </div>
                         <div class="col-md-2">
                             <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
@@ -52,6 +52,28 @@
                     }
                     .no-border {
                         border: none !important;
+                    }
+
+                    /* CSS untuk print */
+                    @media print {
+                        .card.mb-4,
+                        x-ui-page-card {
+                            display: none !important;
+                        }
+
+                        #print {
+                            display: block !important;
+                        }
+
+                        body {
+                            margin: 0;
+                            padding: 0;
+                        }
+
+                        .print-page {
+                            box-shadow: none !important;
+                            border: none !important;
+                        }
                     }
                 </style>
                 <div class="card print-page laporan-stok">
@@ -124,7 +146,28 @@
 </div>
 <script>
 function printReport() {
+    // Sembunyikan elemen yang tidak ingin di-print
+    const filterCard = document.querySelector('.card.mb-4');
+    const pageCard = document.querySelector('x-ui-page-card');
+    const printArea = document.getElementById('print');
+
+    // Pastikan area print terlihat
+    if (printArea) {
+        printArea.style.display = 'block';
+    }
+
+    // Sembunyikan elemen yang tidak perlu di-print
+    if (filterCard) filterCard.style.display = 'none';
+    if (pageCard) pageCard.style.display = 'none';
+
+    // Print hanya bagian yang diinginkan
     window.print();
+
+    // Tampilkan kembali elemen setelah print
+    setTimeout(() => {
+        if (filterCard) filterCard.style.display = 'block';
+        if (pageCard) pageCard.style.display = 'block';
+    }, 100);
 }
 </script>
 
