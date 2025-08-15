@@ -467,6 +467,7 @@ class Detail extends BaseComponent
         $this->selectedSalesRewardCode = '';
         $this->selectedSalesRewardItems = [];
         $this->loadSalesRewardOptions();
+        // dd($this->salesRewardOptions);
     }
 
     /**
@@ -495,6 +496,7 @@ class Detail extends BaseComponent
         }
 
         $this->salesRewardOptions = $options;
+        // dd($this->salesRewardOptions);
     }
 
     /**
@@ -512,7 +514,7 @@ class Detail extends BaseComponent
         }
 
         // Ambil data sales reward berdasarkan kode yang dipilih
-        $salesRewards = SalesReward::where('code', $this->selectedSalesRewardCode)->get();
+        $salesRewards = SalesReward::where('brand', $this->filterBrand)->get();
 
         if ($salesRewards->count() > 0) {
             // Reset selected items
@@ -544,6 +546,7 @@ class Detail extends BaseComponent
             // Setelah semua data dimuat, otomatis select all
             $this->selectedMaterials = collect($this->materialList)->pluck('id')->toArray();
             $this->selectAll = true;
+            // dd($this->selectedMaterials);
 
             $this->dispatch('success', 'Material list dari Kode Program: ' . $this->selectedSalesRewardCode . ' berhasil dimuat. Sekarang Anda dapat melakukan pencarian pada material list ini.');
         } else {

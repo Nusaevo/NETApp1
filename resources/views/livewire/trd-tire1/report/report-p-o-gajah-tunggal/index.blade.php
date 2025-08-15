@@ -4,7 +4,7 @@
             <div class="container mb-2 mt-2">
                 <div class="row align-items-end">
                     <div class="col-md-3">
-                        <x-ui-dropdown-select label="Kode Program" model="selectedRewardCode" :options="$rewardOptions" action="Edit" />
+                        <x-ui-dropdown-select label="Kode Program" model="selectedRewardCode" :options="$rewardOptions" action="Edit" onChanged="onSrCodeChanged" />
                     </div>
                     <div class="col-md-3">
                         <x-ui-text-field label="Tanggal Awal" model="startPrintDate" type="date" action="Edit" />

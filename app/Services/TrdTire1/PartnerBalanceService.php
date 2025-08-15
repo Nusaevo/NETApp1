@@ -73,7 +73,6 @@ class PartnerBalanceService
 
     public function updFromPayment( array $headerData, array $detailData)
     {
-        // dd( $headerData);
         try {
             if (!isset($headerData['id'])) {
                 throw new Exception('Header ID (id) is required');
@@ -105,6 +104,7 @@ class PartnerBalanceService
                 $trDesc =  'PayRcvd To ' . $detailData['bank_code'];
 
             } else if ($detailData['tr_type'] === 'ARPA') {
+
                 $partnerId = $headerData['partner_id'];
                 $partnerCode = $headerData['partner_code'];
                 $reffId = $detailData['reff_id'];
@@ -131,7 +131,6 @@ class PartnerBalanceService
                     'note' => $trDesc,
                 ]
             );
-
 
             $partnerBal->amt_bal += $amtBal;
             $partnerBal->amt_adv += $amtAdv;
@@ -173,9 +172,13 @@ class PartnerBalanceService
                 'curr_rate' => $headerData['curr_rate'],
                 'tr_desc' => $trDesc,
         ];
-            // dd($logData, $amtBal);
-            PartnerLog::create($logData);
-            // dd($logData);
+
+            try {
+                PartnerLog::create($logData);
+            } catch (Exception $e) {
+                throw $e;
+            }
+
             return $partnerBal->id;
         } catch (Exception $e) {
             throw new Exception('Error deleting order: ' . $e->getMessage());
@@ -231,9 +234,7 @@ class PartnerBalanceService
             'curr_rate' => $headerData['curr_rate'],
             'tr_desc' => $trDesc,
      ];
-        // dd($logData, $amtBal);
         PartnerLog::create($logData);
-        // dd($logData);
         return $partnerBal->id;
     }
 

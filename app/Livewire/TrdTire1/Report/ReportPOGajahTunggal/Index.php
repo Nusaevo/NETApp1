@@ -68,10 +68,11 @@ class Index extends BaseComponent
             ->toArray();
         $this->categoryOptions = array_map(fn($v) => (array)$v, $this->categoryOptions);
 
-        // Ambil kode program (sales reward) untuk dropdown
+        // Ambil kode program (sales reward) untuk dropdown dengan tanggal
         $this->rewardOptions = SalesReward::query()
-            ->selectRaw('DISTINCT code, descrs')
+            ->selectRaw('code, descrs, beg_date, end_date')
             ->whereNull('deleted_at')
+            ->groupBy('code', 'descrs', 'beg_date', 'end_date')
             ->orderBy('code')
             ->get()
             ->map(function ($item) {
@@ -79,6 +80,8 @@ class Index extends BaseComponent
                 return [
                     'value' => $item->code,
                     'label' => $label,
+                    'beg_date' => $item->beg_date,
+                    'end_date' => $item->end_date,
                 ];
             })
             ->toArray();
@@ -88,9 +91,18 @@ class Index extends BaseComponent
         $this->resetFilters();
     }
 
-    // public function onSrCodeChanged() {
-    //     // Method ini sudah tidak dipakai karena dropdown diganti menjadi tanggal tagih
-    // }
+    public function onSrCodeChanged()
+    {
+        $salesReward = SalesReward::where('code', $this->selectedRewardCode)->first();
+        if ($salesReward) {
+            $this->startPrintDate = $salesReward->beg_date ? date('Y-m-d', strtotime($salesReward->beg_date)) : '';
+            $this->endPrintDate = $salesReward->end_date ? date('Y-m-d', strtotime($salesReward->end_date)) : '';
+        } else {
+            $this->startPrintDate = '';
+            $this->endPrintDate = '';
+            $this->dispatch('error', 'Sales Reward tidak ditemukan.');
+        }
+    }
 
     public function search()
     {
@@ -126,8 +138,9 @@ class Index extends BaseComponent
             FROM deliv_packings dp
             JOIN deliv_hdrs dh ON dh.id = dp.trhdr_id AND dh.tr_type = 'PD'
             JOIN partners p ON p.id = dh.partner_id
-            JOIN sales_rewards sr ON sr.code = '{$rewardCode}' AND sr.matl_code = dp.matl_descr
-            JOIN materials m ON m.id = dp.matl_id AND m.brand = sr.brand
+            JOIN deliv_pickings dpi ON dpi.trpacking_id = dp.id
+            JOIN sales_rewards sr ON sr.code = '{$rewardCode}' AND sr.matl_code = dpi.matl_code
+            JOIN materials m ON m.id = dpi.matl_id AND m.brand = sr.brand
             WHERE dp.tr_type = 'PD'
                 AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$brandFilter}
@@ -177,7 +190,7 @@ class Index extends BaseComponent
         $matlCondition = '';
         if ($matlId !== null) {
             $matlId = (int) $matlId;
-            $matlCondition = "AND dp.matl_id = {$matlId}";
+            $matlCondition = "AND dpi.matl_id = {$matlId}";
         }
 
         $query = "
@@ -192,15 +205,16 @@ class Index extends BaseComponent
                 p.city AS partner_city,
                 dp.id AS deliv_dtl_id,
                 dp.tr_seq AS seq_no,
-                dp.matl_id,
+                dpi.matl_id,
                 dp.matl_descr,
                 dp.qty,
                 m.name AS material_name,
                 m.descr AS material_description
             FROM deliv_hdrs dh
             JOIN deliv_packings dp ON dp.trhdr_id = dh.id AND dp.tr_type = dh.tr_type
+            JOIN deliv_pickings dpi ON dpi.trpacking_id = dp.id
             LEFT JOIN partners p ON p.id = dh.partner_id
-            LEFT JOIN materials m ON m.id = dp.matl_id
+            LEFT JOIN materials m ON m.id = dpi.matl_id
             WHERE dh.tr_type = 'PD'
                 AND dh.deleted_at IS NULL
                 AND dp.deleted_at IS NULL
@@ -227,7 +241,7 @@ class Index extends BaseComponent
             ->whereBetween('reff_date', [$startDate, $endDate]);
 
         if ($matlId !== null) {
-            $query->whereHas('DelivPacking', function ($q) use ($matlId) {
+            $query->whereHas('DelivPacking.DelivPickings', function ($q) use ($matlId) {
                 $q->where('matl_id', $matlId);
             });
         }
