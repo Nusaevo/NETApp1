@@ -25,7 +25,7 @@ class PartnerBalanceService
                     'reff_id' => $headerData['id'],
                     'amt_bal' => 0,
                     'amt_adv' => 0,
-                    'note' => '',
+                    'note' => null,
                 ]);
             } else {
                 // Jika sudah ada, update reff info dan balance

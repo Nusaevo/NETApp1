@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{DelivPacking, OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -75,6 +75,12 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans('Total Barang'), 'total_qty')
                 ->label(function ($row) {
                     return $row->total_qty;
+                })
+                ->sortable(),
+            Column::make($this->trans('Total Dikirim'), 'total_qty')
+                ->label(function ($row) {
+                    $totalQty = DelivPacking::where('reffhdr_id', $row->id)->sum('qty');
+                    return round($totalQty);
                 })
                 ->sortable(),
             Column::make($this->trans('amt'), 'total_amt')

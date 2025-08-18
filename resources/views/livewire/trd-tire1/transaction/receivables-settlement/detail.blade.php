@@ -24,10 +24,10 @@
                                         optionLabel="code,name" placeHolder="Type to search custommer..."
                                         :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         type="int" onChanged="onPartnerChange" /> --}}
-                                    <x-ui-dropdown-search label="Supplier" model="inputs.partner_id"
+                                    <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
                                         query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
                                         optionValue="id" optionLabel="code,name,address,city"
-                                        placeHolder="Type to search supplier..." :selectedValue="$inputs['partner_id']" required="true"
+                                        placeHolder="Type to search custommer..." :selectedValue="$inputs['partner_id']" required="true"
                                         :action="$actionValue" :enabled="$isPanelEnabled" type="int"
                                         onChanged="onPartnerChange" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
