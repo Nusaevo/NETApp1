@@ -68,6 +68,7 @@ class Detail extends BaseComponent
     public $codeBill;
     public $input_details = [];
     public $input_advance = [];
+    public $isDataLoaded = false; // Flag untuk mencegah auto pelunasan saat data dimuat
 
     public $rules  = [
         'inputs.partner_id' => 'required',
@@ -92,7 +93,8 @@ class Detail extends BaseComponent
     public function boot()
     {
         $this->paymentService = app(PaymentService::class);
-    }    public function getTransactionCode()
+    }
+    public function getTransactionCode()
     {
         $tax_doc_flag = !empty($this->inputs['tax_doc_flag']);
         $tr_type = $this->trType;
@@ -116,8 +118,9 @@ class Detail extends BaseComponent
             $configSnum->last_cnt = $proposedTrId;
             $configSnum->save();
 
-            // Generate the transaction code with the new sequence (8 digits)
-            $this->inputs['tr_code'] = sprintf('%08d', $proposedTrId);
+            // Generate the transaction code with format R+YEAR+ARP_LASTID
+            $year = date('y'); // Menggunakan 2 digit tahun terakhir
+            $this->inputs['tr_code'] = 'R' . $year . sprintf('%08d', $proposedTrId);
         } else {
             // Fallback to the original method if ConfigSnum not found
             $this->inputs['tr_code'] = PaymentHdr::generateTransactionId($tr_type, $tax_doc_flag);
@@ -290,6 +293,9 @@ class Detail extends BaseComponent
             if (abs($this->advanceBalance) < 0.01) {
                 $this->advanceBalance = 0;
             }
+
+            // Set flag bahwa data sudah dimuat untuk mode edit
+            $this->isDataLoaded = true;
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
@@ -463,9 +469,12 @@ class Detail extends BaseComponent
                     'amtbill'         => $amtbill,
                     'outstanding_amt' => $outstanding_amt,
                     'amt'             => $detail->amt ?? null,
+                    'is_selected'     => !empty($detail->amt), // Centang jika ada pembayaran
                 ];
             }
 
+            // Set flag bahwa data sudah dimuat
+            $this->isDataLoaded = true;
         }
     }
     #endregion
@@ -922,7 +931,7 @@ class Detail extends BaseComponent
                 } else {
                 }
             }
-            
+
             // Check if detailData is empty after all processing
             if (empty($detailData)) {
                 $this->dispatch('error', 'Tidak ada detail pembayaran yang valid untuk disimpan. Pastikan Anda telah memilih nota yang valid.');
@@ -1107,6 +1116,7 @@ class Detail extends BaseComponent
                             'amtbill'         => $item->outstanding_amt, // atau field lain sesuai kebutuhan
                             'outstanding_amt' => $item->outstanding_amt,
                             'amt'             => 0,
+                            'is_selected'     => false, // Tambahkan property untuk checkbox
                         ];
                     })->toArray();
             }
@@ -1129,6 +1139,9 @@ class Detail extends BaseComponent
 
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
+
+            // Set flag bahwa data sudah dimuat
+            $this->isDataLoaded = true;
         }
     }
 
@@ -1175,8 +1188,142 @@ class Detail extends BaseComponent
         }
     }
 
-    // Membagi amt pembayaran ke setiap nota secara merata
+        // Method untuk menangani perubahan seleksi nota
+    public function onNotaSelectionChanged()
+    {
+        // Jangan lakukan auto pelunasan jika data belum selesai dimuat atau mode edit
+        if (!$this->isDataLoaded || $this->actionValue === 'Edit') {
+            return;
+        }
+
+        // Reset semua amt nota terlebih dahulu
+        foreach ($this->input_details as $key => $detail) {
+            $this->input_details[$key]['amt'] = 0;
+        }
+
+        // Hitung berapa nota yang dipilih
+        $selectedNotas = 0;
+        foreach ($this->input_details as $detail) {
+            if (!empty($detail['is_selected'])) {
+                $selectedNotas++;
+            }
+        }
+
+        // Jika ada nota yang dipilih, lakukan auto pelunasan hanya untuk nota yang dipilih
+        if ($selectedNotas > 0) {
+            $this->paySelectedNotas();
+        }
+    }
+
+    // Membagi amt pembayaran ke nota yang dipilih atau semua nota jika tidak ada yang dipilih
     public function payItem()
+    {
+        // Hitung berapa nota yang dipilih
+        $selectedNotas = 0;
+        foreach ($this->input_details as $detail) {
+            if (!empty($detail['is_selected'])) {
+                $selectedNotas++;
+            }
+        }
+
+        // Jika ada nota yang dipilih, lakukan auto pelunasan hanya untuk nota yang dipilih
+        if ($selectedNotas > 0) {
+            $this->paySelectedNotas();
+        } else {
+            // Jika tidak ada nota yang dipilih, lakukan auto pelunasan untuk semua nota berdasarkan due date
+            $this->payAllNotasByDueDate();
+        }
+    }
+
+    // Method untuk membayar hanya nota yang dipilih
+    private function paySelectedNotas()
+    {
+        // 1. Hitung total advance yang tersedia
+        $totalAdvance = 0;
+        foreach ($this->input_advance as $advance) {
+            if (!empty($advance['amtAdvBal']) && is_numeric($advance['amtAdvBal'])) {
+                $totalAdvance += (float)$advance['amtAdvBal'];
+            }
+        }
+
+        // 2. Hitung total pembayaran yang diinput user pada payment
+        $totalPayment = 0;
+        foreach ($this->input_payments as $payment) {
+            if (!empty($payment['amt'])) {
+                $amtValue = str_replace('.', '', $payment['amt']);
+                $totalPayment += is_numeric($amtValue) ? (float)$amtValue : 0;
+            }
+        }
+
+        // 3. Total yang tersedia untuk pelunasan = advance + payment
+        $totalAvailable = $totalAdvance + $totalPayment;
+
+        // 4. Urutkan nota yang dipilih berdasarkan due_date
+        $selectedDetails = [];
+        foreach ($this->input_details as $key => $detail) {
+            if (!empty($detail['is_selected'])) {
+                $selectedDetails[] = [
+                    'key' => $key,
+                    'due_date' => isset($detail['due_date']) ? strtotime($detail['due_date']) : 0,
+                    'outstanding_amt' => (isset($detail['outstanding_amt']) && is_numeric($detail['outstanding_amt'])) ? (float)$detail['outstanding_amt'] : 0,
+                ];
+            }
+        }
+        usort($selectedDetails, function($a, $b) {
+            return $a['due_date'] <=> $b['due_date'];
+        });
+
+        // 5. Reset amt semua nota dan advance
+        foreach ($this->input_details as $key => $detail) {
+            $this->input_details[$key]['amt'] = 0;
+        }
+        foreach ($this->input_advance as $key => $advance) {
+            $this->input_advance[$key]['amt'] = 0;
+        }
+
+        // 6. Distribusi pembayaran hanya ke nota yang dipilih
+        $remaining = $totalAvailable;
+        $advanceUsed = 0;
+
+        foreach ($selectedDetails as $item) {
+            $key = $item['key'];
+            $outstanding = $item['outstanding_amt'];
+            if ($remaining <= 0) {
+                $this->input_details[$key]['amt'] = 0;
+            } else {
+                $toPay = min($outstanding, $remaining);
+                $this->input_details[$key]['amt'] = round($toPay, 2);
+                $remaining -= $toPay;
+
+                // Track berapa advance yang sudah digunakan
+                if ($advanceUsed < $totalAdvance) {
+                    $advanceForThisNote = min($toPay, $totalAdvance - $advanceUsed);
+                    $advanceUsed += $advanceForThisNote;
+                }
+            }
+        }
+
+        // 7. Update advance amt sesuai yang sudah digunakan
+        $remainingAdvanceUsed = $advanceUsed;
+        foreach ($this->input_advance as $key => $advance) {
+            if ($remainingAdvanceUsed <= 0) break;
+
+            $amtAdvBal = !empty($advance['amtAdvBal']) && is_numeric($advance['amtAdvBal'])
+                ? (float)$advance['amtAdvBal'] : 0;
+
+            if ($amtAdvBal > 0) {
+                $useFromThisAdvance = min($amtAdvBal, $remainingAdvanceUsed);
+                $this->input_advance[$key]['amt'] = $useFromThisAdvance;
+                $remainingAdvanceUsed -= $useFromThisAdvance;
+            }
+        }
+
+        $this->updateSummary();
+        // $this->dispatch('success', 'Pembayaran berhasil dibagi ke nota yang dipilih menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
+    }
+
+    // Method untuk membayar semua nota berdasarkan due date (logika original)
+    private function payAllNotasByDueDate()
     {
         // 1. Hitung total advance yang tersedia
         $totalAdvance = 0;
@@ -1257,7 +1404,13 @@ class Detail extends BaseComponent
             }
         }
 
-        // 8. Update summary footer
+        $this->updateSummary();
+        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
+    }
+
+    // Method untuk update summary footer
+    private function updateSummary()
+    {
         // Total advance yang digunakan
         $totalAdvanceUsed = 0.0;
         $totalAmtAdvBal = 0.0;
@@ -1290,8 +1443,6 @@ class Detail extends BaseComponent
         } else {
             $this->advanceBalance = $this->totalPaymentAmount - $this->totalNotaAmount;
         }
-
-        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
     }
 
     public function addAdvanceItem()

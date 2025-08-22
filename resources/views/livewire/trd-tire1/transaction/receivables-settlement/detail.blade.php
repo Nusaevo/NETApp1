@@ -40,6 +40,7 @@
                     </div>
                 </div>
             </div>
+            @if (!empty($input_advance) && is_array($input_advance) && count($input_advance) > 0)
             <br>
             <div class="col-md-12">
                 <x-ui-card title="Saldo Lebih Bayar">
@@ -84,6 +85,7 @@
                     </x-ui-table>
                 </x-ui-card>
             </div>
+            @endif
             <br>
             <div class="col-md-12">
                 <x-ui-card title="Pembayaran">
@@ -138,7 +140,7 @@
                     <x-ui-table id="Table">
                         <!-- Define table headers -->
                         <x-slot name="headers">
-                            <th style="width: 50px; text-align: center;">No</th>
+                            <th style="width: 50px; text-align: center;">Select</th>
                             <th style="width: 150px; text-align: center;">Nomor Nota</th>
                             <th style="width: 150px; text-align: center;">Tanggal Jatuh tempo</th>
                             <th style="width: 50px; text-align: center;">Total Piutang</th>
@@ -150,7 +152,13 @@
                         <x-slot name="rows">
                             @foreach ($input_details as $key => $input_detail)
                                 <tr wire:key="detail-{{ $input_detail['billhdr_id'] ?? $key }}">
-                                    <td style="text-align: center;">{{ $loop->iteration }}</td>
+                                    <td style="text-align: center;">
+                                        <input type="checkbox"
+                                               wire:model="input_details.{{ $key }}.is_selected"
+                                               wire:change="onNotaSelectionChanged"
+                                               {{ $actionValue === 'Edit' ? 'disabled' : '' }}
+                                               style="width: 18px; height: 18px; cursor: {{ $actionValue === 'Edit' ? 'not-allowed' : 'pointer' }};">
+                                    </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
                                             label="" :action="$actionValue" enabled="false" type="text" />

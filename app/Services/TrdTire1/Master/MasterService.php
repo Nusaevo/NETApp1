@@ -239,6 +239,18 @@ class MasterService extends BaseService
         })->toArray();
         return $payments;
     }
+    public function getChequeType()
+    {
+        $data = $this->getConfigData('CHEQUE_TRANSACTION');
+
+        $payments = $data->map(function ($item) {
+            return [
+                'label' => $item->str1 . " - " . $item->str2,
+                'value' => $item->id,
+            ];
+        })->toArray();
+        return $payments;
+    }
     // public function getSuppliers()
     // {
     //     $suppliersData = Partner::GetByGrp(Partner::SUPPLIER);
