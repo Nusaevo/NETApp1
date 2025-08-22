@@ -20,7 +20,7 @@
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('Tipe transaksi') }}"
                                         model="inputs.tr_type" :options="$warehousesType" required="true" :action="$actionValue"
-                                        onChanged="onTypeChanged($event.target.value)" />
+                                        onChanged="onTypeChanged($event.target.value)" :enabled="$isPanelEnabled"/>
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
