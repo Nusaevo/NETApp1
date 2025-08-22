@@ -189,114 +189,97 @@ class InventoryService
         }
     }
 
-
-
-    public function addInventory(array $headerData, array $detailData): IvttrHdr
+    public function saveInventoryTrx(array $headerData, array $detailData)
     {
         if (empty($headerData) || empty($detailData)) {
             throw new Exception('Header data or detail data is empty');
         }
         try {
-            $ivttrHdr = $this->saveHeader($headerData);
-            $headerData['id'] = $ivttrHdr->id;
+            $header = $this->saveHeaderTrx($headerData);
+            $headerData['id'] = $header->id;
 
-            $this->saveDetails($headerData, $detailData);
+            $detail = $this->saveDetailTrx($headerData, $detailData);
 
-            return $ivttrHdr;
+            return [
+                'header' => $header,
+                'detail' => $detail,
+            ];
+
         } catch (Exception $e) {
             throw new Exception('Error updating order: ' . $e->getMessage());
         }
     }
 
-    public function updInventory(array $headerData, array $detailData, int $ivttrId): IvttrHdr
+    #region saveHeader
+    private function saveHeaderTrx(array $headerData)
     {
-        // Validasi headerData dan detailData
-        if (empty($headerData) || empty($detailData)) {
-            throw new Exception('Header data or detail data is empty');
+        if (!isset($headerData['id']) || empty($headerData['id'])) {
+            $ivttrHdr = IvttrHdr::create($headerData);
+        } else {
+            $ivttrHdr = IvttrHdr::findOrFail($headerData['id']);
+            $ivttrHdr->fill($headerData);
+            if ($ivttrHdr->isDirty()) {
+                $ivttrHdr->save();
+            }
         }
-        try {
-            $ivttrHdr = $this->saveHeader($headerData);
-            $headerData['id'] = $ivttrHdr->id;
+        return $ivttrHdr;
+    }
+    #endregion
 
-            $this->deleteDetails($ivttrId);
+    private function saveDetailTrx(array $headerData, array $detailData)
+    {
+        // Hanya ada ADD tidak diperbolehkan UPDATE
 
-            $this->saveDetails($headerData, $detailData);
+        foreach ($detailData as &$detail) {
+            $detail['trhdr_id'] = $headerData['id'];
+            $detail['tr_type'] =  $headerData['tr_type'];
+            $detail['tr_code'] = $headerData['tr_code'];
 
-            return $ivttrHdr;
-        } catch (Exception $e) {
-            throw $e;
+            if ($detail['tr_type'] === 'IA') {
+                if (!isset($detail['id']) || empty($detail['id'])) {
+                    $detail['tr_seq'] = IvttrDtl::getNextTrSeq($headerData['id']);
+
+                    $ivttrDtl = new IvttrDtl();
+                    $ivttrDtl->fill($detail);
+                    $ivttrDtl->save();
+
+                    $detail['id'] = $ivttrDtl->id;
+                    $this->addOnhand($headerData, $detail);
+                }
+            } else if ($detail['tr_type'] === 'TW') {
+                if (!isset($detail['id']) || empty($detail['id'])) {
+                    $detail['tr_seq'] = IvttrDtl::getNextTrSeq($headerData['id']);
+
+                    $detail1 = $detail;
+                    $detail1['tr_seq'] = -$detail['tr_seq'];
+                    $detail1['qty'] = -$detail['qty'];
+                    $ivttrDtl = new IvttrDtl();
+                    $ivttrDtl->fill($detail1);
+                    $ivttrDtl->save();
+                    $detail['id'] = $ivttrDtl->id;
+                    $this->addOnhand($headerData, $detail1);
+
+                    $detail2 = $detail;
+                    $detail2['wh_id'] = $detail['wh_id2'];
+                    $detail2['wh_code'] = $detail['wh_code2'];
+                    $ivttrDtl = new IvttrDtl();
+                    $ivttrDtl->fill($detail2);
+                    $ivttrDtl->save();
+                    $detail['id2'] = $ivttrDtl->id;
+                    $this->addOnhand($headerData, $detail2);
+               }
+            }
         }
+        unset($detail);
+
+        return true;
+
     }
 
     public function delInventory(int $ivttrId): void
     {
         $this->deleteDetails($ivttrId);
         $this->deleteHeader($ivttrId);
-    }
-
-    #region saveHeader
-    private function saveHeader(array $headerData)
-    {
-        if ($headerData['id']) {
-            $ivttrHdr = IvttrHdr::findOrFail($headerData['id']);
-            $ivttrHdr->update($headerData);
-        } else {
-            $ivttrHdr = IvttrHdr::create($headerData);
-        }
-        return $ivttrHdr;
-    }
-    #endregion
-
-    private function saveDetails(array $headerData, array $detailData): array
-    {
-        // dd('Saving details', $headerData, $detailData);
-        if (!isset($headerData['id']) || empty($headerData['id'])) {
-            throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
-        }
-
-        $trSeq = 1;
-        $savedDetails = [];
-        foreach ($detailData as $detail) {
-            $detail['trhdr_id'] = $headerData['id'];
-            $detail['tr_type'] =  $headerData['tr_type'];
-            $detail['tr_code'] = $headerData['tr_code'];
-
-            if ($detail['tr_type'] === 'TW') {
-                $detail1 = $detail;
-                $detail1['tr_seq'] = -$detail['tr_seq'];
-                $detail1['qty'] = -$detail['qty'];
-                $savedDetail = IvttrDtl::create($detail1);
-                $savedDetails = $savedDetail->toArray();
-                $savedDetails['tr_seq'] = $trSeq;
-                $ivtId = $this->addOnhand($headerData, $savedDetails);
-                $savedDetail->ivt_id = $ivtId;
-                $savedDetail->save();
-                $trSeq++;
-
-                $detail2 = $detail;
-                $detail2['wh_id'] = $detail['wh_id2'];
-                $detail2['wh_code'] = $detail['wh_code2'];
-                $savedDetail = IvttrDtl::create($detail2);
-                $savedDetails = $savedDetail->toArray();
-                $savedDetails['tr_seq'] = $trSeq;
-                $ivtId = $this->addOnhand($headerData, $savedDetails);
-                $savedDetail->ivt_id = $ivtId;
-                $savedDetail->save();
-                $trSeq++;
-            } else if ($detail['tr_type'] === 'IA') {
-                $detail['tr_seq'] = $trSeq;
-                $savedDetail = IvttrDtl::create($detail);
-                $detail['id'] = $savedDetail->id; // <-- tambahkan baris ini!
-                $ivtId = $this->addOnhand($headerData, $detail);
-                $savedDetail->ivt_id = $ivtId;
-                $savedDetail->save();
-                $trSeq++;
-            }
-
-
-            // dd('Detail saved successfully', $savedDetail->toArray());
-        }
-        return $savedDetails;
     }
 
     private function deleteHeader(int $ivttrId)
@@ -306,9 +289,8 @@ class InventoryService
 
     private function deleteDetails(int $ivttrId): void
     {
-        // Hapus detail
-        IvttrDtl::where('trhdr_id', $ivttrId)->delete();
         $this->delIvtLog($ivttrId);
+        IvttrDtl::where('trhdr_id', $ivttrId)->delete();
     }
     #endregion
 }

@@ -210,7 +210,6 @@ class PartnerBalanceService
         $partnerBal->amt_adv += $detailData['amt'];
         $partnerBal->save();
 
-
         $logData = [
             'tr_date' => $headerData['tr_date'],
             'trhdr_id' => $detailData['trhdr_id'],
@@ -233,10 +232,75 @@ class PartnerBalanceService
             'curr_code' => $headerData['curr_code'],
             'curr_rate' => $headerData['curr_rate'],
             'tr_desc' => $trDesc,
-     ];
+        ];
         PartnerLog::create($logData);
         return $partnerBal->id;
     }
+
+    public function updFromPartnerTrx(array $headerData, array $detailData)
+    {
+        if (!isset($headerData['id'])) {
+            throw new Exception('Header ID (id) is required');
+        }
+
+        
+        // Cari atau buat partner balance berdasarkan partner_id
+        $partnerBal = PartnerBal::updateOrCreate(
+            [
+                'partner_id' => $detailData['partner_id'],
+                'reff_id' => $detailData['reff_id'],
+            ],
+            [
+                'partner_code' => $detailData['partner_code'],
+                'reff_type' => $detailData['reff_type'],
+                'reff_code' => $detailData['reff_code'],
+                ]
+            );    
+        $partnerBal->amt_bal += $detailData['amt'];
+        $partnerBal->save();
+            
+        if ($detailData['tr_type'] === 'CQDEP'){
+            if ($detailData['tr_seq'] < 0) {
+                $trDesc = 'Setor Giro ' . $detailData['tr_descr'];
+           } else {
+                $trDesc = 'Terima Setoran Giro ' . $detailData['tr_descr'];
+            }
+        } else if ($detailData['tr_type'] === 'CQREJ') {
+            if ($detailData['tr_seq'] < 0) {
+                $trDesc = 'Tolakan Giro ' . $detailData['tr_descr'];
+            } else {
+                $trDesc = 'Terima Tolakan Giro ' . $detailData['tr_descr'];
+            }
+        } else {
+            $trDesc = 'Transaksi ' . $detailData['tr_type'] . ' ' . $detailData['tr_code'];
+        }
+
+        $logData = [
+            'tr_date' => $headerData['tr_date'],
+            'trdtl_id' => $detailData['id'],
+            'trhdr_id' => $detailData['trhdr_id'],
+            'tr_type' => $detailData['tr_type'],
+            'tr_code' => $detailData['tr_code'],
+            'tr_seq' => $detailData['tr_seq'],
+            'partnerbal_id' => $partnerBal->id,
+            'partner_id' => $detailData['partner_id'],
+            'partner_code' => $detailData['partner_code'],
+            'reff_id' => $detailData['reff_id'],
+            'reff_type' => $detailData['reff_type'],
+            'reff_code' => $detailData['reff_code'],
+            'tr_amt' => $detailData['amt'],
+            'tramt_adjusthdr' => 0,
+            'tramt_shipcost' => 0,
+            'partnerbal_id' => $partnerBal->id,
+            'amt' => $detailData['amt'],
+            'curr_id' => $headerData['curr_id'],
+            'curr_code' => $headerData['curr_code'],
+            'curr_rate' => $headerData['curr_rate'],
+            'tr_desc' => $trDesc,
+        ];
+        PartnerLog::create($logData);
+        return $partnerBal->id;
+     }
 
     public function delPartnerLog(int $trHdrId, ?int $trDtlId = null)
     {
