@@ -1,14 +1,12 @@
 <?php
 
-namespace App\Models\TrdTire1\Transaction;
+namespace App\Models;
 
 use App\Models\Base\BaseModel;
-use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class PartnertrDtl extends BaseModel
 {
-    // use SoftDeletes;
-
     protected $fillable = [
         'trhdr_id',
         'tr_type',
@@ -24,4 +22,3 @@ class PartnertrDtl extends BaseModel
         'tr_descr',
     ];
 }
-

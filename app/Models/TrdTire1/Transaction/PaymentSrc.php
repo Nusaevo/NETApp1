@@ -58,6 +58,7 @@ class PaymentSrc extends BaseModel
         $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
         return ($lastSeq ?? 0) + 1;
     }
+
     #endregion
 
 

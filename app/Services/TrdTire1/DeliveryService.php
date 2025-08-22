@@ -13,12 +13,10 @@ use App\Services\TrdTire1\{OrderService, InventoryService, MasterService, Config
 class DeliveryService
 {
     protected $inventoryService;
-    protected $orderService;
 
-    public function __construct(InventoryService $inventoryService, OrderService $orderService)
+    public function __construct(InventoryService $inventoryService)
     {
         $this->inventoryService = $inventoryService;
-        $this->orderService = $orderService;
     }
 
     #region Save Delivery
