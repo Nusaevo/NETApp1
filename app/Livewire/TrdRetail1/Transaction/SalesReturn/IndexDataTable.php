@@ -4,7 +4,7 @@ namespace App\Livewire\TrdRetail1\Transaction\SalesReturn;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\TextFilter};
-use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl, ReturnHdr, ReturnDtl};
 use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    protected $model = OrderHdr::class;
+    protected $model = ReturnHdr::class;
 
     public function mount(): void
     {
@@ -23,9 +23,9 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::with('OrderDtl', 'Partner')
-            ->where('order_hdrs.tr_type', 'SR')
-            ->where('order_hdrs.status_code', Status::OPEN);
+        return ReturnHdr::with('ReturnDtl', 'Partner', 'ExchangeOrder')
+            ->where('return_hdrs.tr_type', 'SR')
+            ->where('return_hdrs.status_code', Status::OPEN);
     }
 
     public function columns(): array
@@ -57,44 +57,27 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
              Column::make($this->trans('matl_code'), 'id')
-                ->format(function ($value, $row) {
-                    // Ambil orderDtl untuk return items (qty negatif)
-                    $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
-                        ->where('tr_type', $row->tr_type)
-                        ->where('qty', '<', 0) // Return items have negative qty
-                        ->orderBy('id')
-                        ->get();
-
-                    // Ambil cuma matl_code
-                    $matlCodes = $orderDtl->pluck('matl_code');
-
-                    // Gabungkan pakai koma
-                    return $matlCodes->implode(', ');
+                ->label(function ($row) {
+                    return $row->matl_codes;
                 }),
             Column::make($this->trans("return_qty"), "total_qty")
                 ->label(function ($row) {
-                    // Hitung total qty return (absolute value dari qty negatif)
-                    $returnQty = OrderDtl::where('tr_id', $row->tr_id)
-                        ->where('tr_type', $row->tr_type)
-                        ->where('qty', '<', 0)
-                        ->sum(DB::raw('ABS(qty)'));
-                    return $returnQty;
+                    return $row->total_qty;
                 })
                 ->sortable(),
-            Column::make($this->trans("exchange_qty"), "exchange_qty")
-                ->label(function ($row) {
-                    // Hitung total qty exchange (qty positif)
-                    $exchangeQty = OrderDtl::where('tr_id', $row->tr_id)
-                        ->where('tr_type', $row->tr_type)
-                        ->where('qty', '>', 0)
-                        ->sum('qty');
-                    return $exchangeQty;
-                }),
-            Column::make($this->trans("amt"), "total_amt")
+            Column::make($this->trans("return_amt"), "total_amt")
                 ->label(function ($row) {
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
+            Column::make($this->trans("exchange_qty"), "id")
+                ->label(function ($row) {
+                    return $row->exchange_qty;
+                }),
+            Column::make($this->trans("exchange_amt"), "id")
+                ->label(function ($row) {
+                    return rupiah($row->exchange_amt);
+                }),
             Column::make($this->trans('status'), "status_code")
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {
@@ -137,21 +120,20 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Barang Return', 'matl_code', 'Cari Barang Return', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
-                        ->from('order_dtls')
-                        ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
-                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('order_dtls.tr_type', 'SR')
-                        ->where('order_dtls.qty', '<', 0); // Return items
+                        ->from('return_dtls')
+                        ->whereRaw('return_dtls.return_hdr_id = return_hdrs.id')
+                        ->where(DB::raw('UPPER(return_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
             $this->createTextFilter('Barang Exchange', 'exchange_matl_code', 'Cari Barang Exchange', function (Builder $builder, string $value) {
                 $builder->whereExists(function ($query) use ($value) {
                     $query->select(DB::raw(1))
                         ->from('order_dtls')
-                        ->whereRaw('order_dtls.tr_id = order_hdrs.tr_id')
-                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('order_dtls.tr_type', 'SR')
-                        ->where('order_dtls.qty', '>', 0); // Exchange items
+                        ->join('order_hdrs', 'order_hdrs.id', '=', 'order_dtls.trhdr_id')
+                        ->where('order_hdrs.tr_type', 'SOR')
+                        ->whereRaw('order_hdrs.partner_id = return_hdrs.partner_id')
+                        ->whereRaw('order_hdrs.tr_date = return_hdrs.tr_date')
+                        ->where(DB::raw('UPPER(order_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
         ];
