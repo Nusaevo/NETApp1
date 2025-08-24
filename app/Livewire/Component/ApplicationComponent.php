@@ -30,31 +30,73 @@ class ApplicationComponent extends Component
         if (!empty($sessionValue)) {
             $this->selectedApplication = $sessionValue;
         } else {
-            if (!empty($applicationsData[0])) {
-                Session::put('app_code', $applicationsData[0]->code);
-                Session::put('database', $applicationsData[0]->db_name);
+            if (!empty($applicationsData) && $applicationsData->count() > 0) {
+                $firstApp = $applicationsData->first();
+                $this->selectedApplication = $firstApp->code;
+                Session::put('app_code', $firstApp->code);
+                Session::put('database', $firstApp->db_name);
+                Session::put('app_id', $firstApp->id);
             }
         }
     }
 
     public function configApplicationChanged($selectedApplication)
     {
-        $selectedApp = ConfigAppl::where('code', $selectedApplication)->first();
+        try {
+            \Log::info('ApplicationComponent: Switch requested for app: ' . $selectedApplication);
 
-        if ($selectedApp) {
-            Session::put('app_id', $selectedApp->id);
-            Session::put('app_code', $selectedApplication);
-            Session::put('database', $selectedApp->db_name);
-            $user = ConfigUser::find(Auth::id());
+            $selectedApp = ConfigAppl::where('code', $selectedApplication)->first();
 
-            if ($user) {
-                $groupCodes = $user->getGroupCodesBySessionAppCode();
-                Session::put('group_codes', $groupCodes);
+            if ($selectedApp) {
+                \Log::info('ApplicationComponent: Found app data', ['app' => $selectedApp->toArray()]);
+
+                // Update session values
+                Session::put('app_id', $selectedApp->id);
+                Session::put('app_code', $selectedApplication);
+                Session::put('database', $selectedApp->db_name);
+
+                // Update component property
+                $this->selectedApplication = $selectedApplication;
+
+                $user = ConfigUser::find(Auth::id());
+                if ($user) {
+                    $groupCodes = $user->getGroupCodesBySessionAppCode();
+                    Session::put('group_codes', $groupCodes);
+                    \Log::info('ApplicationComponent: Updated group codes', ['codes' => $groupCodes]);
+                }
+
+                // Save session to ensure it's persisted
+                Session::save();
+
+                \Log::info('ApplicationComponent: Session updated, doing direct redirect');
+
+                // Build the home path based on the application
+                $homePath = '/' . $selectedApplication . '/Home';
+
+                \Log::info('ApplicationComponent: Built home path: ' . $homePath);
+
+                // Direct redirect without JavaScript event - for testing
+                return redirect()->to($homePath);
+
+            } else {
+                \Log::error('ApplicationComponent: Application not found: ' . $selectedApplication);
+
+                $this->dispatch('notify-swal', [
+                    'type' => 'error',
+                    'message' => 'Application not found: ' . $selectedApplication
+                ]);
             }
-            return redirect('/' . $selectedApplication . '/Home');
-        }
+        } catch (\Exception $e) {
+            \Log::error('ApplicationComponent: Switch error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
 
-        return redirect('/');
+            $this->dispatch('notify-swal', [
+                'type' => 'error',
+                'message' => 'Failed to switch application: ' . $e->getMessage()
+            ]);
+        }
     }
 
 

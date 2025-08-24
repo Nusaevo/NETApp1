@@ -1,176 +1,75 @@
-/* Input dan textarea */
 
-.form-floating input,
-.form-floating textarea {
-    font-family: 'Arial', sans-serif;
-    line-height: 1 !important;
-    /* Kontrol tinggi teks */
-    border-radius: 4px;
-    /* Sesuaikan dengan kebutuhan */
-}
+ /* Global dropdown fixes */
 
 
-/* Floating label */
+        /* Select2 Bootstrap Integration - Match form-select height */
+        .select2-container--default .select2-selection--single {
+            height: calc(2.25rem + 2px) !important; /* Match Bootstrap form-select height */
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+            padding: 0.375rem 0.75rem !important;
+            line-height: 1.5 !important;
+            background-color: #fff !important;
+        }
 
-.form-floating label {
-    font-family: 'Arial', sans-serif;
-    color: #666;
-    /* Warna teks */
-    line-height: 1 !important;
-    top: 0.5rem;
-    /* Posisi awal lebih kecil */
-    left: 8px;
-    /* Jarak dari kiri */
-}
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #212529 !important;
+            line-height: 1.5 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
 
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #6c757d !important;
+        }
 
-/* Select dalam form-floating */
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: calc(2.25rem) !important;
+            right: 10px !important;
+        }
 
-.form-floating .form-select {
-    font-family: 'Arial', sans-serif;
-    border-radius: 4px;
-    /* Border bulat kecil */
-}
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single {
+            border-color: #86b7fe !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+        }
 
+        /* Select2 dropdown positioning */
+        .select2-dropdown {
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        }
 
-/* Hover dan focus effect */
-
-.form-floating input:focus,
-.form-floating textarea:focus,
-.form-floating .form-select:focus {
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5) !important;
-    /* Highlight border */
-    border-color: #007bff !important;
-}
-
-
-/* DataTable Styles */
-
-.data-table {
-    border-collapse: collapse;
-    width: 100%;
-    border: 1px solid #ddd;
-    font-family: 'Arial', sans-serif;
-    font-size: 14px;
-    color: #333;
-}
-
-.data-table thead {
-    background-color: #f5f5f5;
-}
-
-.data-table td {
-    padding-left: 10px !important;
-    padding-bottom: 0px !important;
-}
-
-.data-table th {
-    background-color: #4CAF50;
-    color: white;
-    font-weight: bold;
-    text-align: center;
-}
-
-.data-table-header th {
-    text-align: center;
-}
-
-.data-table-header div {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.data-table tbody tr:nth-child(even) {
-    background-color: #f2f2f2;
-    /* Warna latar belakang yang sedikit lebih terang untuk baris genap */
-}
-
-.data-table tbody tr:nth-child(odd) {
-    background-color: #ffffff;
-    /* Warna latar belakang untuk baris ganjil */
-}
-
-.data-table tbody tr:hover {
-    background-color: #cccccc;
-    /* Warna latar belakang yang lebih gelap saat hover */
-}
-
-
-/* Text Alignment */
-
-.text-center {
-    text-align: center;
-}
-
-.text-right {
-    text-align: right;
-}
-
-.text-left {
-    text-align: left;
-}
-
-
-/* Additional Enhancements */
-
-.data-table-wrapper {
-    margin: 20px 0;
-    overflow-x: auto;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-}
-
-.data-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-
-.data-table th:first-child,
-.data-table td:first-child {
-    border-left: none;
-}
-
-.data-table th:last-child,
-.data-table td:last-child {
-    border-right: none;
-}
+        /* Match disabled state */
+        .select2-container--default .select2-selection--single.select2-selection--disabled {
+            background-color: #e9ecef !important;
+            color: #6c757d !important;
+        }
 
 .subdomain-text {
     padding-top: 20px;
 }
 
-@media (max-width: 767px) {
-    /* Ukuran layar untuk mode mobile */
+@media (max-width: 767px) { /* Ukuran layar untuk mode mobile */
     .subdomain-text {
-        text-align: center;
-        /* Pusatkan teks untuk mobile */
+        text-align: center; /* Pusatkan teks untuk mobile */
     }
+
     .header-container {
-        justify-content: center;
-        /* Center the container content in mobile view */
+        justify-content: center; /* Center the container content in mobile view */
     }
 }
 
 
 /*Loader css*/
-
 .table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    /* Smooth scrolling on iOS */
-    background: #ffffff;
-    /* Latar belakang putih */
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-top: 1rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    /* Efek bayangan lembut */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    position: relative;
+    overflow: visible;
 }
-
-.wrapper {
+.wrapper{
     padding-top: 50px !important;
 }
 
@@ -213,10 +112,7 @@
 .form-select {
     font-size: 0.9rem;
 }
-
-
 /* Photo Upload Styles */
-
 .photo-upload-container {
     position: relative;
     text-align: left;
@@ -284,7 +180,6 @@
 div[wire\:loading].loading-overlay {
     display: flex;
 }
-
 .error-message {
     position: absolute;
     bottom: -12px;
@@ -300,28 +195,31 @@ div[wire\:loading].loading-overlay {
     font-style: italic;
     font-size: 0.75rem;
 }
-
 @media (max-width: 767px) {
+
     .responsive-label {
         text-align: left;
     }
     .responsive-input {
         flex: 1;
     }
+
     .btn-sm {
         flex: none;
         margin-left: 5px;
     }
+
     .half-width {
         width: 100%;
     }
+
     .custom-modal .modal-dialog {
         width: 100%;
         /* Full width on smaller screens */
     }
 }
-
 @media (min-width: 768px) {
+
     .responsive-field {
         position: relative;
         display: flex;
@@ -330,49 +228,58 @@ div[wire\:loading].loading-overlay {
         padding-bottom: 5px;
         min-height: 65px;
     }
+
     .responsive-input-container {
         flex: 1;
         display: flex;
         flex-direction: column;
     }
+
     .text-field-container {
         display: flex;
         align-items: center;
         justify-content: flex-start;
         width: 100%;
     }
+
     .btn-sm {
         margin-left: 5px;
     }
+
     .responsive-field[span="HalfWidth"] {
         width: 50%;
-        padding-right: 15px;
-        /* Add padding to separate the fields */
+        padding-right: 15px; /* Add padding to separate the fields */
         height: 65px;
     }
+
     .responsive-field[span="Half"] {
         width: 50%;
         float: left;
         box-sizing: border-box;
         height: 65px;
     }
+
     /* Untuk elemen genap tidak ada padding */
     .responsive-field[span="Half"]:nth-of-type(2n) {
         padding-right: 15px;
     }
+
     /* Untuk elemen ganjil tetap ada padding */
     .responsive-field[span="Half"]:nth-of-type(2n+1) {
         padding-right: 15px;
     }
+
     .responsive-field[span="Full"] {
         width: 100%;
         clear: both;
         float: none;
         box-sizing: border-box;
     }
-    .responsive-field[span="Full"]+.responsive-field {
+
+    .responsive-field[span="Full"] + .responsive-field {
         clear: both;
     }
+
     .custom-modal .modal-dialog {
         max-width: none;
         width: 1000px !important;
@@ -382,16 +289,13 @@ div[wire\:loading].loading-overlay {
 
 
 /*UISeparator css*/
-
 .col {
     display: flex;
     align-items: center;
     margin-bottom: 15px;
 }
 
-
 /* Styles for the separator */
-
 .styled-separator {
     display: flex;
     align-items: center;
@@ -399,9 +303,7 @@ div[wire\:loading].loading-overlay {
     position: relative;
 }
 
-
 /* Horizontal separator */
-
 .styled-separator.horizontal {
     height: 1px;
     /* Adjust the height for the thickness of the separator */
@@ -409,9 +311,7 @@ div[wire\:loading].loading-overlay {
     /* Separator color */
 }
 
-
 /* Vertical separator */
-
 .styled-separator.vertical {
     width: 1px;
     /* Adjust the width for the thickness of the separator */
@@ -421,9 +321,7 @@ div[wire\:loading].loading-overlay {
     /* Separator color */
 }
 
-
 /* Title (caption) */
-
 .styled-separator h5 {
     margin: 0;
     font-size: 1rem;
@@ -436,9 +334,7 @@ div[wire\:loading].loading-overlay {
     text-overflow: ellipsis;
 }
 
-
 /* Orientation styles */
-
 .styled-separator.left h5 {
     margin-right: auto;
 }
@@ -473,17 +369,13 @@ div[wire\:loading].loading-overlay {
     font-weight: bold;
     font-size: 16px;
 }
-
 .checkbox-list {
     position: absolute;
-    top: 10px;
-    /* Adjust the padding as needed */
-    left: 10px;
-    /* Adjust the padding as needed */
+    top: 10px; /* Adjust the padding as needed */
+    left: 10px; /* Adjust the padding as needed */
     width: 24px;
     height: 24px;
-    background-color: #fff;
-    /* Change color as needed */
+    background-color: #fff; /* Change color as needed */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -495,6 +387,7 @@ div[wire\:loading].loading-overlay {
     width: 16px;
     height: 16px;
 }
+
 
 .material-info-container {
     margin-bottom: 150px;
@@ -561,16 +454,19 @@ div[wire\:loading].loading-overlay {
 }
 
 @media (max-width: 768px) {
+
     .multiple-photo-container,
     .button-container {
         float: none;
         width: 100%;
     }
+
     .photo-box {
         margin-right: 0;
         margin-bottom: 20px;
     }
 }
+
 
 .main-content {
     display: grid;
@@ -593,13 +489,11 @@ div[wire\:loading].loading-overlay {
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
-    width: 100%;
-    /* Ensure full width */
-    max-width: 300px;
-    /* Limit maximum width */
-    overflow: hidden;
-    /* Hide overflow content */
+    width: 100%; /* Ensure full width */
+    max-width: 300px; /* Limit maximum width */
+    overflow: hidden; /* Hide overflow content */
 }
+
 
 .list-catalogue-item:hover {
     transform: translateY(-5px);
@@ -608,8 +502,7 @@ div[wire\:loading].loading-overlay {
 .image-container {
     width: 100%;
     height: 200px;
-    overflow: hidden;
-    /* Ensure image overflow is hidden */
+    overflow: hidden; /* Ensure image overflow is hidden */
 }
 
 .image-container img {
@@ -630,12 +523,10 @@ div[wire\:loading].loading-overlay {
     display: flex;
     justify-content: space-between;
 }
-
 .camera-box {
     flex: 1;
     margin-right: 10px;
 }
-
 .camera-box:last-child {
     margin-right: 0;
 }
@@ -652,7 +543,6 @@ div[wire\:loading].loading-overlay {
 .text-center {
     text-align: center;
 }
-
 .pagination {
     display: flex;
     justify-content: center;
@@ -695,60 +585,37 @@ div[wire\:loading].loading-overlay {
     cursor: not-allowed;
 }
 
-
 /* Base styling for all pagination buttons */
-
 .dataTables_paginate .fg-button.ui-button {
-    background-color: #007bff !important;
-    /* Blue background */
-    color: white !important;
-    /* White text */
-    border: 1px solid #007bff !important;
-    /* Blue border */
-    margin-right: 4px !important;
-    /* Spacing between buttons */
-    border-radius: 4px !important;
-    /* Rounded corners */
-    padding: 5px 10px !important;
-    /* Padding inside buttons */
-    text-decoration: none !important;
-    /* Remove underline from links */
+    background-color: #007bff !important; /* Blue background */
+    color: white !important; /* White text */
+    border: 1px solid #007bff !important; /* Blue border */
+    margin-right: 4px !important; /* Spacing between buttons */
+    border-radius: 4px !important; /* Rounded corners */
+    padding: 5px 10px !important; /* Padding inside buttons */
+    text-decoration: none !important; /* Remove underline from links */
 }
-
 
 /* Styling for buttons on hover */
-
 .dataTables_paginate .fg-button.ui-button:hover {
-    background-color: #0056b3 !important;
-    /* Darker blue background on hover */
-    border-color: #0056b3 !important;
-    /* Darker blue border on hover */
+    background-color: #0056b3 !important; /* Darker blue background on hover */
+    border-color: #0056b3 !important; /* Darker blue border on hover */
 }
-
 
 /* Styling for disabled buttons */
-
 .dataTables_paginate .fg-button.ui-button.ui-state-disabled {
-    background-color: #cccccc !important;
-    /* Gray background for disabled buttons */
-    border-color: #cccccc !important;
-    /* Gray border for disabled buttons */
-    color: #666666 !important;
-    /* Dark gray text for disabled buttons */
-    cursor: not-allowed !important;
-    /* Show 'not-allowed' cursor for disabled buttons */
+    background-color: #cccccc !important; /* Gray background for disabled buttons */
+    border-color: #cccccc !important; /* Gray border for disabled buttons */
+    color: #666666 !important; /* Dark gray text for disabled buttons */
+    cursor: not-allowed !important; /* Show 'not-allowed' cursor for disabled buttons */
 }
 
-
 /* Remove the focus outline for a cleaner look */
-
 .dataTables_paginate .fg-button.ui-button:focus {
     outline: none !important;
 }
 
-
 /* CSS untuk tombol */
-
 .btn-custom {
     display: inline-block;
     font-weight: 400;
@@ -761,18 +628,12 @@ div[wire\:loading].loading-overlay {
     font-size: 1rem;
     line-height: 1.5;
     border-radius: .25rem;
-    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
-
 /* CSS untuk warna tombol */
-
-
 /* Mengganti warna tombol primary */
-
-
 /* Mengganti warna tombol primary */
-
 .btn-primary {
     color: #fff !important;
     background-color: #007bff !important;
@@ -786,9 +647,7 @@ div[wire\:loading].loading-overlay {
     border-color: #0062cc !important;
 }
 
-
 /* Mengganti warna tombol secondary */
-
 .btn-secondary {
     color: #fff !important;
     background-color: #6c757d !important;
@@ -808,48 +667,33 @@ div[wire\:loading].loading-overlay {
     border-color: #007bff !important;
     padding: 5px !important;
 }
-
 .btn-danger {
     padding: 5px !important;
 }
 
-.btn-success {
-    padding: 5px !important;
-}
 
 .select2-container--bootstrap5 .select2-selection--single {
-    height: 1.35rem;
-    /* Adjust the height as needed */
-    font-size: 1rem;
-    /* Adjust the font size as needed */
-    line-height: 1.5;
-    /* Adjust the line height as needed */
-    border-radius: 0.25rem;
-    /* Adjust the border radius as needed */
-    border: 1px solid #ced4da;
-    /* Adjust the border style as needed */
-    background-color: #fff;
-    /* Set background color */
+    height: 1.35rem; /* Adjust the height as needed */
+    font-size: 1rem; /* Adjust the font size as needed */
+    line-height: 1.5; /* Adjust the line height as needed */
+    border-radius: 0.25rem; /* Adjust the border radius as needed */
+    border: 1px solid #ced4da; /* Adjust the border style as needed */
+    background-color: #fff; /* Set background color */
 }
 
 .select2-container--bootstrap5 .select2-selection__arrow {
     height: calc(1.35rem);
 }
-
 .select2-container--bootstrap5 .select2-selection__arrow b {
     border-width: 0 0.3rem 0.3rem 0.3rem;
 }
-
 .select2-container--bootstrap5 .select2-selection--single .select2-selection__rendered {
     color: #6c757d;
 }
 
-
 /* Gallery */
-
 .dialog-box-body {
-    max-height: 500px;
-    /* Adjust as needed */
+    max-height: 500px; /* Adjust as needed */
     overflow-y: auto;
     padding: 10px;
 }
@@ -881,38 +725,17 @@ div[wire\:loading].loading-overlay {
     width: 100%;
 }
 
-
-/* File Name (Hidden by Default, Shown on Hover) */
-
 .gallery-image-container {
     position: relative;
+    width: 100%;
+    padding-top: 100%; /* 1:1 Aspect Ratio */
     overflow: hidden;
-}
-
-.gallery-file-name {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 0.85em;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.6);
-    /* Semi-transparent background */
-    padding: 5px;
-    word-wrap: break-word;
-    border-radius: 0 0 8px 8px;
-    opacity: 1;
-    /* opacity: 0;
-    transition: opacity 0.3s ease-in-out; */
-    z-index: 2;
-}
-
-
-/* Show File Name on Hover */
-
-.gallery-image-container:hover .gallery-file-name {
-    opacity: 1;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .gallery-photo-box-image {
@@ -924,8 +747,7 @@ div[wire\:loading].loading-overlay {
     object-fit: cover;
 }
 
-.gallery-btn-select,
-.gallery-btn-delete {
+.gallery-btn-select, .gallery-btn-delete {
     position: absolute;
     top: 10px;
     padding: 5px 10px;
@@ -971,23 +793,24 @@ div[wire\:loading].loading-overlay {
     display: none;
 }
 
-
 /* Media Queries */
-
 @media (max-width: 768px) {
     .gallery-header {
         justify-content: space-between;
         padding: 0 10px;
     }
+
     .button-group {
         flex-direction: column;
         gap: 5px;
     }
+
     .gallery-main-content {
         padding: 10px;
         gap: 10px;
     }
 }
+
 
 .image-button-container {
     position: relative;
@@ -996,15 +819,13 @@ div[wire\:loading].loading-overlay {
 
 .popup {
     position: absolute;
-    top: 50px;
-    /* Adjust based on the height of the button */
+    top: 50px; /* Adjust based on the height of the button */
     right: 0;
     background-color: white;
     border: 1px solid #ccc;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     z-index: 1000;
-    width: 200px;
-    /* Adjust width as needed */
+    width: 200px; /* Adjust width as needed */
     padding: 10px;
 }
 
@@ -1025,12 +846,9 @@ div[wire\:loading].loading-overlay {
 .popup button i {
     margin-right: 10px;
 }
-
-
 /* Add this to your CSS file or within a <style> tag in your blade template */
-
 .filter-width {
-    width: 150px !important;
+    width: 150px  !important;
 }
 
 .dropdown-toggle::after {
@@ -1042,8 +860,7 @@ div[wire\:loading].loading-overlay {
     flex-direction: column;
     padding: 10px;
     margin: 10px 0;
-    overflow-x: auto;
-    /* Mengaktifkan scroll horizontal */
+    overflow-x: auto; /* Mengaktifkan scroll horizontal */
 }
 
 .list-group-item .d-flex {
@@ -1051,15 +868,13 @@ div[wire\:loading].loading-overlay {
     justify-content: flex-start;
     align-items: flex-start;
     flex-wrap: nowrap;
-    width: 100%;
-    /* Pastikan d-flex mengambil lebar penuh */
+    width: 100%; /* Pastikan d-flex mengambil lebar penuh */
 }
 
 .list-group-item .col-md-2 {
     flex: 0 0 200px;
     max-width: 200px;
-    margin-right: 30px;
-    /* Memberi jarak antara gambar dan elemen di sebelah kanan */
+    margin-right: 30px; /* Memberi jarak antara gambar dan elemen di sebelah kanan */
 }
 
 .list-group-item .col-md-2 img {
@@ -1067,28 +882,23 @@ div[wire\:loading].loading-overlay {
     height: auto;
 }
 
-.list-group-item .col-md-9,
-.list-group-item .col-md-12 {
+.list-group-item .col-md-9, .list-group-item .col-md-12 {
     flex: 1;
     padding: 10px;
-    min-width: 300px;
-    /* Mengatur lebar minimum untuk kolom lainnya */
+    min-width: 300px; /* Mengatur lebar minimum untuk kolom lainnya */
 }
-
 
 /* Tambahkan media query untuk menyesuaikan tampilan pada layar yang lebih kecil */
-
 @media (max-width: 768px) {
     .list-group-item .d-flex {
-        flex-wrap: nowrap;
-        /* Pastikan elemen tidak terbungkus */
+        flex-wrap: nowrap; /* Pastikan elemen tidak terbungkus */
     }
-    .list-group-item .col-md-9,
-    .list-group-item .col-md-12 {
-        min-width: 250px;
-        /* Lebar minimum untuk tampilan mobile */
+
+    .list-group-item .col-md-9, .list-group-item .col-md-12 {
+        min-width: 250px; /* Lebar minimum untuk tampilan mobile */
     }
 }
+
 
 .print-options {
     width: 100%;
@@ -1099,8 +909,7 @@ div[wire\:loading].loading-overlay {
     border-collapse: collapse;
 }
 
-.print-options th,
-.print-options td {
+.print-options th, .print-options td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
@@ -1121,15 +930,12 @@ div[wire\:loading].loading-overlay {
     margin-bottom: 5px;
 }
 
-
 /* For devices with a width of 768px or more */
-
 @media (min-width: 1300px) {
     .print-options {
         width: 50%;
     }
 }
-
 .custom-loading-container {
     position: fixed;
     top: 0;
@@ -1144,55 +950,51 @@ div[wire\:loading].loading-overlay {
 }
 
 .lds-ripple {
-    display: inline-block;
-    position: relative;
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ripple div {
+  position: absolute;
+  border: 4px solid #1c4c5b;
+  opacity: 1;
+  border-radius: 50%;
+  animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+.lds-ripple div:nth-child(2) {
+  animation-delay: -0.5s;
+}
+@keyframes lds-ripple {
+  0% {
+    top: 36px;
+    left: 36px;
+    width: 8px;
+    height: 8px;
+    opacity: 0;
+  }
+  4.9% {
+    top: 36px;
+    left: 36px;
+    width: 8px;
+    height: 8px;
+    opacity: 0;
+  }
+  5% {
+    top: 36px;
+    left: 36px;
+    width: 8px;
+    height: 8px;
+    opacity: 1;
+  }
+  100% {
+    top: 0;
+    left: 0;
     width: 80px;
     height: 80px;
+    opacity: 0;
+  }
 }
-
-.lds-ripple div {
-    position: absolute;
-    border: 4px solid #1c4c5b;
-    opacity: 1;
-    border-radius: 50%;
-    animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-
-.lds-ripple div:nth-child(2) {
-    animation-delay: -0.5s;
-}
-
-@keyframes lds-ripple {
-    0% {
-        top: 36px;
-        left: 36px;
-        width: 8px;
-        height: 8px;
-        opacity: 0;
-    }
-    4.9% {
-        top: 36px;
-        left: 36px;
-        width: 8px;
-        height: 8px;
-        opacity: 0;
-    }
-    5% {
-        top: 36px;
-        left: 36px;
-        width: 8px;
-        height: 8px;
-        opacity: 1;
-    }
-    100% {
-        top: 0;
-        left: 0;
-        width: 80px;
-        height: 80px;
-        opacity: 0;
-    }
-}
-
 @media (max-width: 576px) {
     .dropdown {
         display: none;
@@ -1208,10 +1010,10 @@ div[wire\:loading].loading-overlay {
     }
 }
 
+
 .ui-table-container {
     width: 100%;
-    overflow-x: auto;
-    /* Enables horizontal scrolling */
+    overflow-x: auto; /* Enables horizontal scrolling */
 }
 
 .ui-table {
@@ -1219,8 +1021,7 @@ div[wire\:loading].loading-overlay {
     border-collapse: collapse;
 }
 
-.ui-table th,
-.ui-table td {
+.ui-table th, .ui-table td {
     border: 1px solid #dee2e6;
     padding: 12px;
     text-align: left;
@@ -1250,10 +1051,11 @@ div[wire\:loading].loading-overlay {
         margin-right: 30px;
         margin-bottom: 20px;
     }
-    #print,
-    #print * {
+
+    #print, #print * {
         visibility: visible;
     }
+
     #print {
         position: absolute;
         left: 0;
@@ -1263,189 +1065,12 @@ div[wire\:loading].loading-overlay {
         box-sizing: border-box;
         overflow-x: visible;
     }
+
     .ui-table-container {
         overflow-x: visible;
     }
+
     .ui-table {
         width: 100%;
     }
-}
-
-
-/* Ensure the dropdown menu adjusts to text content */
-
-.dropdown-menu {
-    min-width: auto !important;
-    /* Allows width to adapt to content */
-    padding: 0.5rem 1rem !important;
-    /* Adds sufficient space inside */
-    box-sizing: border-box !important;
-    /* Includes padding in the width calculation */
-    white-space: nowrap !important;
-    /* Prevents text from wrapping */
-}
-
-
-/* Specific adjustments for dropdown-menu-end */
-
-.dropdown-menu.dropdown-menu-end {
-    max-width: none !important;
-    /* Remove any restrictions on max width */
-    width: auto !important;
-    /* Let the width adapt to content */
-    text-align: left !important;
-    /* Ensure proper text alignment */
-}
-
-
-/* Container Floating Buttons */
-
-.floating-buttons-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 12px 16px;
-    z-index: 1050;
-    text-align: center;
-    border: 1px solid #e0e0e0;
-    max-width: 200px;
-}
-
-
-/* Judul Floating Button Container */
-
-.floating-buttons-title {
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #333;
-    text-align: center;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 4px;
-}
-
-
-/* Tombol Floating */
-
-.floating-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-
-/* Styling Tombol Floating */
-
-.floating-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    /* Jarak antara ikon dan teks */
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, background-color 0.2s;
-    cursor: pointer;
-    text-align: center;
-}
-
-
-/* Hover Effect */
-
-.floating-btn:hover {
-    transform: scale(1.05);
-}
-
-
-/* Warna Khusus untuk Tombol */
-
-.floating-btn.btn-primary {
-    background-color: #007bff;
-    color: #fff;
-}
-
-.floating-btn.btn-danger {
-    background-color: #dc3545;
-    color: #fff;
-}
-
-.floating-btn.btn-success {
-    background-color: #28a745;
-    color: #fff;
-}
-
-
-/* State Disabled */
-
-.floating-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    transform: none;
-}
-
-
-/* Responsif untuk Mobile */
-
-@media (max-width: 768px) {
-    .floating-buttons-container {
-        right: 10px;
-        bottom: 10px;
-        max-width: 150px;
-    }
-    .floating-buttons-title {
-        font-size: 12px;
-    }
-    .floating-btn {
-        font-size: 12px;
-        padding: 6px 10px;
-    }
-}
-
-
-/* Dropdown Container */
-
-.relative {
-    position: relative;
-}
-
-.absolute {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    z-index: 10;
-}
-
-
-/* Dropdown Option */
-
-.cursor-pointer {
-    cursor: pointer;
-}
-
-.hover\:bg-indigo-500:hover {
-    background-color: #6366f1;
-    color: #ffffff;
-}
-
-.hover\:text-white:hover {
-    color: #ffffff;
-}
-
-
-/* Highlighted Option */
-
-.bg-indigo-500 {
-    background-color: #6366f1;
-    color: #ffffff;
 }

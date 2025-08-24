@@ -18,16 +18,10 @@
     $url = $qs ? $baseUrl . '?' . $qs : $baseUrl;
   @endphp
 
-  <div style="padding:5px">
-    <x-ui-button
-      :visible="true"
-      :enabled="true"
-      clickEvent="{{ $url }}"
-      cssClass="btn btn-primary mb-5"
-      type="Route"
-      :loading="false"
-      iconPath=""
-      button-name="Create"
-    />
+  <div class="create-button-wrapper mb-3">
+    <a href="{{ $url }}" class="btn-create">
+      <i class="bi bi-plus-circle me-2"></i>
+      Create New Record
+    </a>
   </div>
 @endif
