@@ -1,3 +1,200 @@
+/* =======================================================
+   CLEAN APPLICATION STYLES - Bootstrap 5 Compatible
+   ======================================================= */
+
+/* Select2 Bootstrap Integration */
+.select2-container--default .select2-selection--single {
+    height: calc(2.25rem + 2px) !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    padding: 0.375rem 0.75rem !important;
+    line-height: 1.5 !important;
+    background-color: #fff !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #212529 !important;
+    line-height: 1.5 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #6c757d !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: calc(2.25rem) !important;
+    right: 10px !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.select2-dropdown {
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.select2-container--default .select2-selection--single.select2-selection--disabled {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+}
+
+/* Simple Table Styling */
+.table {
+    --bs-table-bg: #fff;
+    --bs-table-accent-bg: transparent;
+    --bs-table-striped-bg: rgba(0, 0, 0, 0.05);
+    --bs-table-hover-bg: rgba(0, 0, 0, 0.075);
+    background-color: var(--bs-table-bg);
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.75rem;
+    background-color: var(--bs-table-bg);
+    border-bottom-width: 1px;
+    box-shadow: inset 0 0 0 9999px var(--bs-table-accent-bg);
+}
+
+/* Clean table headers */
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Livewire Tables specific - keep it simple */
+.livewire-tables-wrapper {
+    background: #fff;
+}
+
+.livewire-tables-wrapper .table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+}
+
+.livewire-tables-wrapper .table thead th a,
+.livewire-tables-wrapper .table thead th button {
+    color: #495057;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.livewire-tables-wrapper .table thead th a:hover,
+.livewire-tables-wrapper .table thead th button:hover {
+    color: #0d6efd;
+}
+
+/* Form controls consistency */
+.form-control, .form-select {
+    font-size: 0.9rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Button consistency */
+.btn {
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-success:hover {
+    background-color: #157347;
+    border-color: #146c43;
+}
+
+/* Card consistency */
+.card {
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+/* Loading states */
+[wire\:loading] {
+    opacity: 0.7;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: 0;
+    }
+
+    .btn-sm {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Clean dropdown styling */
+.dropdown-menu {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+    color: #212529;
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+    background-color: #e9ecef;
+    color: #1e2125;
+}
+
+/* Status badges */
+.badge {
+    font-weight: 500;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+    color: #000 !important;
+}
 
  /* Global dropdown fixes */
 

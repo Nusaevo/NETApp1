@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    <!-- Bootstrap CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -14,231 +17,47 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Custom CSS -->
-    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/pagebase.css') }}">
+    <!-- Core Libraries -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
-    <!-- DataTable Custom Styles -->
-    <link rel="stylesheet" type="text/css" href="{{ asset('css/datatable-custom.css') }}">
-
-    <!-- Global Table Overflow Fix for Dropdowns -->
+    <!-- Minimal Custom Styles -->
     <style>
         /* Fix mobile offcanvas backdrop issues */
-        .offcanvas-backdrop {
-            z-index: 1040;
-        }
-
-        /* Ensure only one backdrop can exist */
         .offcanvas-backdrop + .offcanvas-backdrop {
             display: none !important;
         }
 
-        /* Single Application Component - Adaptive Styling */
-        .application-selector-container {
-            display: block !important;
-            width: 100% !important;
+        /* Scrolltop button */
+        .scrolltop {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--bs-primary);
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
         }
 
-        .app-dropdown-container {
-            position: relative !important;
-            width: 100% !important;
+        .scrolltop.show {
+            display: flex;
         }
 
-        .app-dropdown-trigger {
-            width: 100% !important;
-            cursor: pointer !important;
-        }
-
-        /* Desktop Sidebar Styling */
-        @media (min-width: 992px) {
-            #sidebarFixed .application-selector-container {
-                padding: 0;
-                margin: 0;
-            }
-
-            #sidebarFixed .app-dropdown-trigger {
-                min-height: 40px;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Mobile Offcanvas Styling */
-        @media (max-width: 991.98px) {
-            .offcanvas-title .application-selector-container {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-            }
-
-            .offcanvas-title .app-dropdown-trigger {
-                min-height: 36px !important;
-                font-size: 0.85rem !important;
-                padding: 6px 10px !important;
-                border: 1px solid var(--bs-border-color) !important;
-                background-color: var(--bs-body-bg) !important;
-                text-align: left !important;
-            }
-
-            /* Mobile dropdown positioning */
-            .offcanvas .app-dropdown-container .dropdown-menu {
-                position: absolute !important;
-                top: 100% !important;
-                left: 0 !important;
-                right: 0 !important;
-                z-index: 1056 !important;
-                width: 100% !important;
-                max-height: 250px !important;
-                overflow-y: auto !important;
-                box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-                border-radius: 0.375rem !important;
-                animation: dropdownFadeIn 0.2s ease-out;
-            }
-
-            /* Auto-close dropdown when switching apps in mobile */
-            .offcanvas .dropdown-menu.show {
-                display: block !important;
-            }
-        }
-
-        @keyframes dropdownFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Additional dropdown fixes */
-        .dropdown-menu {
-            z-index: 1050 !important;
-        }
-
-        .dropdown.show .dropdown-menu,
-        .btn-group.show .dropdown-menu {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        .dropdown-toggle::after {
-            display: inline-block !important;
-            margin-left: 0.255em;
-            vertical-align: 0.255em;
-            content: "";
-            border-top: 0.3em solid;
-            border-right: 0.3em solid transparent;
-            border-bottom: 0;
-            border-left: 0.3em solid transparent;
-        }
-
-        /* FORCE Mobile Application Component Visibility - CSS Only Solution */
-        @media (max-width: 991.98px) {
-            /* Force visibility in mobile offcanvas header */
-            #mobileSidebar .offcanvas-header .w-100 {
-                display: block !important;
-                width: 100% !important;
-                flex: 1 !important;
-            }
-
-            #mobileSidebar .application-selector-container {
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                width: 100% !important;
-                height: auto !important;
-                min-height: 40px !important;
-                position: relative !important;
-                z-index: 1 !important;
-                background-color: #fff !important;
-                border: 1px solid #dee2e6 !important;
-                border-radius: 0.375rem !important;
-                padding: 5px !important;
-                margin: 0 !important;
-            }
-
-            #mobileSidebar .app-dropdown-container {
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                width: 100% !important;
-                position: relative !important;
-            }
-
-            #mobileSidebar .app-dropdown-trigger {
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                width: 100% !important;
-                min-height: 36px !important;
-                padding: 6px 10px !important;
-                cursor: pointer !important;
-                background-color: #fff !important;
-                border: 1px solid #ced4da !important;
-                border-radius: 0.375rem !important;
-                color: #212529 !important;
-                font-size: 0.875rem !important;
-                text-align: left !important;
-            }
-
-            #mobileSidebar .app-dropdown-trigger:hover {
-                background-color: #f8f9fa !important;
-                border-color: #0d6efd !important;
-            }
-
-            #mobileSidebar .current-app-logo {
-                width: 20px !important;
-                height: 20px !important;
-                display: inline-block !important;
-                margin-right: 8px !important;
-            }
-
-            #mobileSidebar .current-app-name {
-                display: inline-block !important;
-                font-size: 0.875rem !important;
-                color: #212529 !important;
-            }
-
-            #mobileSidebar .dropdown-menu {
-                position: absolute !important;
-                top: 100% !important;
-                left: 0 !important;
-                right: 0 !important;
-                z-index: 1056 !important;
-                width: 100% !important;
-                max-height: 250px !important;
-                overflow-y: auto !important;
-                background-color: #fff !important;
-                border: 1px solid rgba(0,0,0,.15) !important;
-                border-radius: 0.375rem !important;
-                box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15) !important;
-                margin-top: 2px !important;
-            }
-
-            #mobileSidebar .dropdown-menu.show {
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-            }
-
-            /* Force all child elements to be visible */
-            #mobileSidebar .application-selector-container * {
-                visibility: visible !important;
-                opacity: 1 !important;
-            }
-
-            /* Force Livewire component to be visible */
-            #mobileSidebar [wire\\:id] {
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-            }
+        .scrolltop:hover {
+            background: var(--bs-primary);
+            transform: translateY(-2px);
         }
     </style>
 
     <!-- External Libraries -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -259,11 +78,8 @@
     <!-- ApexCharts for charting -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@latest"></script>
 
-    <!-- Bootstrap JS (CDN fallback so offcanvas works without Vite build) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-
-    <!-- Vite Assets -->
-    @vite(['resources/bootstrap/app.scss', 'resources/bootstrap/app.js'])
+    <!-- Clean Application Styles -->
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/app.css') }}">
 
     @livewireStyles
 </head>
@@ -345,7 +161,7 @@
                             <p class="mb-0 text-muted small">© {{ date('Y') }} {{ config('app.name', 'Laravel') }}. All rights reserved.</p>
                         </div>
                         <div class="col-md-6 text-md-end">
-                            <p class="mb-0 text-muted small">Version {{ config('app.version', '1.0.0') }}</p>
+                            <p class="mb-0 text-muted small">Version 1.0.0</p>
                         </div>
                     </div>
                 </div>
@@ -520,72 +336,6 @@
 
             window.addEventListener('resize', adjustLayout);
             adjustLayout();
-
-            // Mobile App Component Management
-            function initializeMobileAppSwitcher() {
-                const mobileSidebar = document.getElementById('mobileSidebar');
-                const mobileProfile = document.getElementById('mobileProfile');
-
-                if (mobileSidebar) {
-                    // Handle app switching in mobile - auto-close dropdown and sidebar
-                    mobileSidebar.addEventListener('click', function(event) {
-                        // If clicking on an app option, close both dropdown and sidebar
-                        if (event.target.closest('.app-option')) {
-                            setTimeout(() => {
-                                // Close any open dropdowns
-                                const openDropdowns = mobileSidebar.querySelectorAll('.dropdown-menu.show');
-                                openDropdowns.forEach(menu => menu.classList.remove('show'));
-
-                                // Close the sidebar after app switch
-                                const offcanvasInstance = bootstrap.Offcanvas.getInstance(mobileSidebar);
-                                if (offcanvasInstance) {
-                                    offcanvasInstance.hide();
-                                }
-                            }, 500); // Small delay to allow Livewire to process
-                        }
-                    });
-
-                    // Ensure dropdown closes when sidebar closes
-                    mobileSidebar.addEventListener('hide.bs.offcanvas', function() {
-                        const openDropdowns = mobileSidebar.querySelectorAll('.dropdown-menu.show');
-                        openDropdowns.forEach(menu => {
-                            menu.classList.remove('show');
-                            const container = menu.closest('.dropdown');
-                            if (container) container.classList.remove('show');
-                        });
-                    });
-
-                    // Clean backdrop on close
-                    mobileSidebar.addEventListener('hidden.bs.offcanvas', function() {
-                        setTimeout(() => {
-                            const backdrops = document.querySelectorAll('.offcanvas-backdrop');
-                            backdrops.forEach(backdrop => backdrop.remove());
-
-                            // Restore body state
-                            document.body.classList.remove('modal-open');
-                            document.body.style.overflow = '';
-                            document.body.style.paddingRight = '';
-                        }, 100);
-                    });
-                }
-
-                // Same for profile offcanvas
-                if (mobileProfile) {
-                    mobileProfile.addEventListener('hidden.bs.offcanvas', function() {
-                        setTimeout(() => {
-                            const backdrops = document.querySelectorAll('.offcanvas-backdrop');
-                            backdrops.forEach(backdrop => backdrop.remove());
-
-                            document.body.classList.remove('modal-open');
-                            document.body.style.overflow = '';
-                            document.body.style.paddingRight = '';
-                        }, 100);
-                    });
-                }
-            }
-
-            // Initialize mobile handling
-            initializeMobileAppSwitcher();
 
             // Expose loading functions globally for manual control
             window.NextjsLoader = {
@@ -828,111 +578,6 @@
     </style>
 
     @livewireScripts
-    <script>
-        // Ensure mobile offcanvas instances are initialized and provide debug logs
-        document.addEventListener('DOMContentLoaded', function() {
-            // Bootstrap and Dropdown Debugging
-
-            // Global dropdown debugging
-            function debugAllDropdowns() {
-                const allDropdowns = document.querySelectorAll('.dropdown-toggle, [data-bs-toggle="dropdown"]');
-
-                allDropdowns.forEach((trigger, index) => {
-                    // Silent initialization check
-                });
-            }
-
-            // Force initialize all dropdowns
-            function forceInitializeDropdowns() {
-                const allTriggers = document.querySelectorAll('.dropdown-toggle, [data-bs-toggle="dropdown"]');
-
-                allTriggers.forEach((trigger) => {
-                    try {
-                        // Dispose existing instance
-                        const existingInstance = bootstrap.Dropdown.getInstance(trigger);
-                        if (existingInstance) {
-                            existingInstance.dispose();
-                        }
-
-                        // Create new instance
-                        const newInstance = new bootstrap.Dropdown(trigger);
-
-                        // Add manual click handler as fallback
-                        trigger.addEventListener('click', function(e) {
-                            const menu = trigger.nextElementSibling;
-                            if (menu && menu.classList.contains('dropdown-menu')) {
-                                const isVisible = menu.classList.contains('show');
-
-                                // Toggle manually if Bootstrap fails
-                                if (!isVisible) {
-                                    // Hide all other dropdowns first
-                                    document.querySelectorAll('.dropdown-menu.show').forEach(otherMenu => {
-                                        otherMenu.classList.remove('show');
-                                        const otherContainer = otherMenu.closest('.dropdown');
-                                        if (otherContainer) otherContainer.classList.remove('show');
-                                    });
-
-                                    // Show this dropdown
-                                    menu.classList.add('show');
-                                    const container = trigger.closest('.dropdown');
-                                    if (container) container.classList.add('show');
-                                } else {
-                                    // Hide this dropdown
-                                    menu.classList.remove('show');
-                                    const container = trigger.closest('.dropdown');
-                                    if (container) container.classList.remove('show');
-                                }
-                            }
-                        });
-
-                    } catch (error) {
-                        console.error('Error initializing dropdown:', error, trigger);
-                    }
-                });
-            }            // Close dropdowns when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.dropdown')) {
-                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                        menu.classList.remove('show');
-                        const container = menu.closest('.dropdown');
-                        if (container) container.classList.remove('show');
-                    });
-                }
-            });
-
-            // Listen for reinit requests from components
-            document.addEventListener('reinitDropdowns', function() {
-                setTimeout(() => {
-                    forceInitializeDropdowns();
-                }, 100);
-            });
-
-            // Run debugging after DOM is ready
-            setTimeout(() => {
-                debugAllDropdowns();
-                forceInitializeDropdowns();
-            }, 500);
-
-            try {
-                const mobileSidebarEl = document.getElementById('mobileSidebar');
-                const mobileProfileEl = document.getElementById('mobileProfile');
-                if (mobileSidebarEl) {
-                    // Initialize if not already
-                    if (!bootstrap.Offcanvas.getInstance(mobileSidebarEl)) {
-                        new bootstrap.Offcanvas(mobileSidebarEl);
-                    }
-                }
-
-                if (mobileProfileEl) {
-                    if (!bootstrap.Offcanvas.getInstance(mobileProfileEl)) {
-                        new bootstrap.Offcanvas(mobileProfileEl);
-                    }
-                }
-            } catch (err) {
-                console.error('Error initializing mobile offcanvas', err);
-            }
-        });
-    </script>
 
     {{-- Custom Scripts Stack --}}
     @stack('scripts')
