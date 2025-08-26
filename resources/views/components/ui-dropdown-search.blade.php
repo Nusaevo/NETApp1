@@ -161,53 +161,53 @@
                     $(selectElement).off('select2:select');
                     $(selectElement).off('select2:clear');
 
-                    // Ensure placeholder is visible initially
-                    if (!$(selectElement).val() || $(selectElement).val() === '{{ $blankValue }}') {
-                        $(selectElement).val(null).trigger('change');
-                    }
+                        // Ensure placeholder is visible initially
+                        if (!$(selectElement).val() || $(selectElement).val() === '{{ $blankValue }}') {
+                            $(selectElement).val(null).trigger('change');
+                        }
 
-                    // Bind select event
-                    $(selectElement).on('select2:select', function () {
-                        const value = $(this).val();
-                        @this.set('{{ $model }}', value);
+                        // Bind select event
+                        $(selectElement).on('select2:select', function () {
+                            const value = $(this).val();
+                            @this.set('{{ $model }}', value);
 
-                        @if (isset($onChanged) && $onChanged)
-                            let onChanged = '{{ $onChanged }}';
-                            if (onChanged.includes('$event.target.value')) {
-                                onChanged = onChanged.replace('$event.target.value', value);
-                            }
-                            if (onChanged.includes('(')) {
-                                const matches = onChanged.match(/^([\w.]+)\((.*)\)$/);
-                                if (matches) {
-                                    const methodName = matches[1];
-                                    const params = matches[2]
-                                        .split(',')
-                                        .map(param => param.trim())
-                                        .filter(param => param !== '');
-
-                                    // Replace parameter values
-                                    const processedParams = params.map(param => {
-                                        if (param === '$event.target.value') {
-                                            return value;
-                                        }
-                                        return param;
-                                    });
-
-                                    $wire.call(methodName, ...processedParams);
-                                } else {
-                                    console.error(`Invalid onChanged format: ${onChanged}`);
+                            @if (isset($onChanged) && $onChanged)
+                                let onChanged = '{{ $onChanged }}';
+                                if (onChanged.includes('$event.target.value')) {
+                                    onChanged = onChanged.replace('$event.target.value', value);
                                 }
-                            } else {
-                                $wire.call(onChanged, value);
-                            }
-                        @endif
-                    });
+                                if (onChanged.includes('(')) {
+                                    const matches = onChanged.match(/^([\w.]+)\((.*)\)$/);
+                                    if (matches) {
+                                        const methodName = matches[1];
+                                        const params = matches[2]
+                                            .split(',')
+                                            .map(param => param.trim())
+                                            .filter(param => param !== '');
 
-                    // Bind clear event
-                    $(selectElement).on('select2:clear', function () {
-                        const blankValue = '{{ $blankValue }}';
-                        @this.set('{{ $model }}', blankValue);
-                    });
+                                        // Replace parameter values
+                                        const processedParams = params.map(param => {
+                                            if (param === '$event.target.value') {
+                                                return value;
+                                            }
+                                            return param;
+                                        });
+
+                                        $wire.call(methodName, ...processedParams);
+                                    } else {
+                                        console.error(`Invalid onChanged format: ${onChanged}`);
+                                    }
+                                } else {
+                                    $wire.call(onChanged, value);
+                                }
+                            @endif
+                        });
+
+                        // Bind clear event
+                        $(selectElement).on('select2:clear', function () {
+                            const blankValue = '{{ $blankValue }}';
+                            @this.set('{{ $model }}', blankValue);
+                        });
 
                     console.log(`Select2 initialized for #{{ $id }}`, {
                         connection: '{{ $dbConnection }}',
@@ -218,69 +218,70 @@
                     // Restore existing value if present
                     const existingValue = '{{ $selectedValue ?? '' }}' || '{{ $this->$model ?? '' }}';
                     if (existingValue && existingValue !== '{{ $blankValue }}') {
-                        // Fetch display text for existing value using the correct endpoint
-                        const endpoint = '/search-dropdown';
+                            // Fetch display text for existing value using the correct endpoint
+                            const endpoint = '/search-dropdown';
 
-                        // Use the same query from the data attribute
-                        const queryParam = document.getElementById('{{ $id }}').getAttribute('data-query');
+                            // Use the same query from the data attribute
+                            const queryParam = document.getElementById('{{ $id }}').getAttribute('data-query');
 
-                        // Use URLSearchParams to encode parameters properly
-                        const params = new URLSearchParams();
-                        params.append('connection', '{{ $dbConnection }}');
-                        params.append('query', queryParam);
-                        params.append('option_value', '{{ $optionValue }}');
-                        params.append('option_label', '{{ $optionLabel }}');
-                        params.append('id', existingValue);
-                        params.append('preserve_existing', 'true');  // Flag for existing value lookup
-                        params.append('bypass_filters', 'true');    // Bypass business logic filters
+                            // Use URLSearchParams to encode parameters properly
+                            const params = new URLSearchParams();
+                            params.append('connection', '{{ $dbConnection }}');
+                            params.append('query', queryParam);
+                            params.append('option_value', '{{ $optionValue }}');
+                            params.append('option_label', '{{ $optionLabel }}');
+                            params.append('id', existingValue);
+                            params.append('preserve_existing', 'true');  // Flag for existing value lookup
+                            params.append('bypass_filters', 'true');    // Bypass business logic filters
 
-                        console.log('Fetching existing value with params:', params.toString());
+                            console.log('Fetching existing value with params:', params.toString());
 
-                        fetch(`${endpoint}?${params.toString()}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data && data.results && data.results.length > 0) {
-                                    const item = data.results[0];
-                                    
-                                    // Build display text with status indicators
-                                    let displayText = item.text;
-                                    const indicators = [];
-                                    
-                                    if (item.is_deleted) indicators.push('Deleted');
-                                    if (item.is_out_of_stock) indicators.push('Out of Stock');
-                                    if (item.is_inactive) indicators.push('Inactive');
-                                    if (item.is_expired) indicators.push('Expired');
-                                    if (item.custom_status) indicators.push(item.custom_status);
-                                    
-                                    if (indicators.length > 0) {
-                                        displayText += ` (${indicators.join(', ')})`;
+                            fetch(`${endpoint}?${params.toString()}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data && data.results && data.results.length > 0) {
+                                        const item = data.results[0];
+
+                                        // Build display text with status indicators
+                                        let displayText = item.text;
+                                        const indicators = [];
+
+                                        if (item.is_deleted) indicators.push('Deleted');
+                                        if (item.is_out_of_stock) indicators.push('Out of Stock');
+                                        if (item.is_inactive) indicators.push('Inactive');
+                                        if (item.is_expired) indicators.push('Expired');
+                                        if (item.custom_status) indicators.push(item.custom_status);
+
+                                        if (indicators.length > 0) {
+                                            displayText += ` (${indicators.join(', ')})`;
+                                        }
+
+                                        const option = new Option(displayText, item.id, true, true);
+
+                                        // Add appropriate CSS classes for styling
+                                        if (item.is_deleted) $(option).addClass('deleted-option');
+                                        if (item.is_out_of_stock) $(option).addClass('out-of-stock-option');
+                                        if (item.is_inactive) $(option).addClass('inactive-option');
+                                        if (item.is_expired) $(option).addClass('expired-option');
+
+                                        $(selectElement).append(option).trigger('change');
+                                    } else {
+                                        // If no result found, create a placeholder option
+                                        console.warn('No display text found for existing value, creating placeholder');
+                                        const option = new Option(`ID: ${existingValue} (Not Found)`, existingValue, true, true);
+                                        $(option).addClass('missing-option');
+                                        $(selectElement).append(option).trigger('change');
                                     }
-                                    
-                                    const option = new Option(displayText, item.id, true, true);
-                                    
-                                    // Add appropriate CSS classes for styling
-                                    if (item.is_deleted) $(option).addClass('deleted-option');
-                                    if (item.is_out_of_stock) $(option).addClass('out-of-stock-option');
-                                    if (item.is_inactive) $(option).addClass('inactive-option');
-                                    if (item.is_expired) $(option).addClass('expired-option');
-                                    
+                                })
+                                .catch(error => {
+                                    console.warn('Failed to restore selected value:', error);
+                                    // Create a fallback option
+                                    const option = new Option(`ID: ${existingValue} (Error Loading)`, existingValue, true, true);
+                                    $(option).addClass('error-option');
                                     $(selectElement).append(option).trigger('change');
-                                } else {
-                                    // If no result found, create a placeholder option
-                                    console.warn('No display text found for existing value, creating placeholder');
-                                    const option = new Option(`ID: ${existingValue} (Not Found)`, existingValue, true, true);
-                                    $(option).addClass('missing-option');
-                                    $(selectElement).append(option).trigger('change');
-                                }
-                            })
-                            .catch(error => {
-                                console.warn('Failed to restore selected value:', error);
-                                // Create a fallback option
-                                const option = new Option(`ID: ${existingValue} (Error Loading)`, existingValue, true, true);
-                                $(option).addClass('error-option');
-                                $(selectElement).append(option).trigger('change');
-                            });
-                    }
+                                });
+                        }
+
                 };
 
                 // Initialize Select2 when component is created
