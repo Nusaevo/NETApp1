@@ -503,7 +503,6 @@
     <div class="loader-overlay" id="loaderOverlay">
         <div style="text-align: center;">
             <div class="loader"></div>
-            <div class="loader-text">Authenticating...</div>
         </div>
     </div>
 

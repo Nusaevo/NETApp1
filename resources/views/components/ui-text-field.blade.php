@@ -9,14 +9,15 @@
     $inputClass = $hasLabel ? 'form-control' : 'form-control form-control-sm';
 
     // Set textarea class with appropriate styling
-    $textareaClass = $hasLabel ? 'form-control' : 'form-control mb-5';
+    $textareaClass = $hasLabel ? 'form-control' : 'form-control mb-4';
 
     // Set column class with bottom margin when label is present
-    $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
+    $colClass = 'col-sm' . (!empty($label) ? ' mb-4' : '');
 @endphp
 
 <div class="{{ $colClass }}" @if(isset($span)) span="{{ $span }}" @endif @if(isset($visible) && $visible === 'false') style="display: none;" @endif>
-    <div class="d-flex align-items-center">
+
+    <div class="input-group">
         <div class="{{ !empty($label) ? 'form-floating' : '' }} flex-grow-1">
             @if(isset($type) && $type === 'textarea')
                 <textarea style="min-height: 80px;" wire:model="{{ $model }}" id="{{ $id }}" rows="{{ isset($rows) ? $rows : '10' }}" class="{{ $textareaClass }} @error($model) is-invalid @enderror"
@@ -740,17 +741,8 @@
 
         <!-- Refresh Button -->
         @if (isset($clickEvent) && $clickEvent !== '')
-            <div class="d-flex align-items-center ms-2">
-                <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
-                    <button type="button" class="btn btn-secondary" wire:click="{{ $clickEvent }}"
-                            @if ((isset($action) && $action === 'View') || (isset($buttonEnabled) && $buttonEnabled === 'false')) disabled @endif>
-                        {{ $buttonName }}
-                    </button>
-                </span>
-                <span wire:loading wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
-                    <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
-                </span>
-            </div>
+            <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary"
+                :buttonName="$buttonName" :action="$action" :enabled="$buttonEnabled" loading="true" />
         @endif
     </div>
 </div>

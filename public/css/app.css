@@ -1368,3 +1368,222 @@ div[wire\:loading].loading-overlay {
         width: 100%;
     }
 }
+
+/* Loading state for content (subtle fade effect) */
+.page-transition {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.page-transition.loading {
+    opacity: 0.95; /* Very subtle fade, doesn't disable interaction */
+}
+
+/* Next.js Style Loading Spinner - Bottom Right Corner */
+.nextjs-loading-spinner {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nextjs-loading-spinner.show {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+/* Loading Icon - Gear/Cog Style */
+.nextjs-loading-icon {
+    width: 32px;
+    height: 32px;
+    color: #0070f3;
+    animation: nextjs-icon-spin 1.5s linear infinite;
+    filter: drop-shadow(0 0 8px rgba(0, 112, 243, 0.5));
+}
+
+/* Alternative: Circular Dots Loading */
+.nextjs-loading-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.nextjs-loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #0070f3, #00d4aa);
+    animation: nextjs-dot-bounce 1.4s ease-in-out infinite both;
+}
+
+.nextjs-loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.nextjs-loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.nextjs-loading-dot:nth-child(3) { animation-delay: 0s; }
+
+@keyframes nextjs-icon-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes nextjs-dot-bounce {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+/* Loading Text */
+.nextjs-loading-text {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Scrolltop Button Enhancement */
+.scrolltop {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0070f3, #0056b3);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
+    font-size: 1.2rem;
+}
+
+.scrolltop.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scrolltop:hover {
+    background: linear-gradient(135deg, #0056b3, #003d82);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 112, 243, 0.4);
+}
+
+.scrolltop:active {
+    transform: translateY(0);
+}
+
+/* Modern Toast Notification Styling */
+#toast-container {
+    pointer-events: none;
+}
+
+#toast-container > div {
+    pointer-events: auto;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: none;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.4;
+    min-height: auto;
+    background-clip: padding-box;
+}
+
+/* Remove all pseudo-elements from toast notifications */
+#toast-container .toast-success::before,
+#toast-container .toast-success::after,
+#toast-container .toast-error::before,
+#toast-container .toast-error::after,
+#toast-container .toast-warning::before,
+#toast-container .toast-warning::after,
+#toast-container .toast-info::before,
+#toast-container .toast-info::after {
+    display: none !important;
+    content: none !important;
+}
+
+/* Clean toast styling without icons */
+#toast-container .toast-success {
+    background-color: #10b981;
+    color: white;
+}
+
+#toast-container .toast-error {
+    background-color: #ef4444;
+    color: white;
+}
+
+#toast-container .toast-warning {
+    background-color: #f59e0b;
+    color: white;
+}
+
+#toast-container .toast-info {
+    background-color: #3b82f6;
+    color: white;
+}
+
+/* Toast progress bar styling */
+#toast-container .toast-progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 0 0 8px 8px;
+}
+
+/* Toast close button */
+#toast-container .toast-close-button {
+    position: relative;
+    right: 0;
+    top: 0;
+    float: right;
+    font-size: 18px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: none;
+    opacity: 1;
+    line-height: 1;
+    margin-left: 15px;
+}
+
+#toast-container .toast-close-button:hover {
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+    opacity: 1;
+}

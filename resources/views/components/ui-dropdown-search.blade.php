@@ -1,7 +1,7 @@
 @php
     $id = str_replace(['.', '[', ']'], '_', $model);
     $blankValue = isset($type) && $type === 'int' ? '0' : '';
-    $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
+    $colClass = 'col-sm' . (!empty($label) ? ' mb-4' : '');
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
     // Determine enabled state externally.
     $isEnabled = isset($enabled) && ($enabled === 'always' || $enabled === 'true');

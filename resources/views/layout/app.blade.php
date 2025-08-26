@@ -6,6 +6,18 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    <!-- Dynamic Favicon from SysConfig1 Application Logo -->
+    @php
+        $appCode = Session::get('app_code', 'default');
+        $faviconPath = 'customs/logos/SysConfig1.png';
+        // Fallback ke favicon default jika logo aplikasi tidak ada
+        if (!file_exists(public_path($faviconPath))) {
+            $faviconPath = 'favicon.ico';
+        }
+    @endphp
+    <link rel="shortcut icon" href="{{ asset($faviconPath) }}" type="image/png">
+    <link rel="icon" href="{{ asset($faviconPath) }}" type="image/png">
+
     <!-- Bootstrap CSS via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
@@ -20,42 +32,6 @@
     <!-- Core Libraries -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-
-    <!-- Minimal Custom Styles -->
-    <style>
-        /* Fix mobile offcanvas backdrop issues */
-        .offcanvas-backdrop + .offcanvas-backdrop {
-            display: none !important;
-        }
-
-        /* Scrolltop button */
-        .scrolltop {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            width: 50px;
-            height: 50px;
-            background: var(--bs-primary);
-            color: white;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .scrolltop.show {
-            display: flex;
-        }
-
-        .scrolltop:hover {
-            background: var(--bs-primary);
-            transform: translateY(-2px);
-        }
-    </style>
 
     <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
@@ -84,33 +60,83 @@
     <!-- Clean Application Styles -->
     <link rel="stylesheet" type="text/css" href="{{ asset('css/app.css') }}">
 
+    <!-- Enhanced DataTable Styles -->
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/datatable-enhanced.css') }}">
+
     @livewireStyles
+
 </head>
-<body style="font-family: 'Inter', sans-serif;">
-    <div class="d-flex min-vh-100" id="app_root">
+<body>
+    <div class="d-flex min-vh-100" id="app_root" style="padding-top: 0; margin-top: 0;">`
         <!-- Sidebar (offcanvas on small screens, fixed on large) -->
         <div class="bg-white border-end shadow-sm position-fixed top-0 start-0 h-100 d-none d-lg-block" style="width: 280px; z-index: 1000;" id="sidebarFixed">
             <!-- Application Selector at top -->
-            <div class="p-3 border-bottom">
+            <div class="p-3 border-bottom" style="position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
                 @livewire('component.application-component')
             </div>
 
-            <div class="p-3">
+            <!-- Menu content - scrollable area -->
+            <div class="p-3 overflow-auto" style="position: absolute; top: 80px; left: 0; right: 0; bottom: 120px;">
                 @livewire('component.sidebar-menu')
+            </div>
+
+            <!-- Sidebar Footer with Nusavo Branding - Always at bottom -->
+            <div class="p-3 border-top" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #f8f9fa, #e9ecef);">
+                <div class="text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        @php
+                            $logoPath = 'customs/logos/SysConfig1.png';
+                            $hasLogo = file_exists(public_path($logoPath));
+                        @endphp
+                        @if($hasLogo)
+                            <img src="{{ asset($logoPath) }}" alt="Logo" class="me-2" style="width: 20px; height: 20px; object-fit: contain;">
+                        @else
+                            <i class="bi bi-shield-check text-primary me-2" style="font-size: 1.2rem;"></i>
+                        @endif
+                        <span class="fw-bold text-primary" style="font-size: 1.1rem; letter-spacing: 0.5px;">NusaEvo</span>
+                    </div>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        Powered by Advanced Technology
+                    </small>
+                </div>
             </div>
         </div>
 
         <!-- Offcanvas Sidebar for mobile (left) -->
         <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
-            <div class="offcanvas-header border-bottom">
-                <div class="w-100">
+            <div class="offcanvas-header border-bottom p-3">
+                <div class="w-100 me-3">
                     <!-- Mobile Application Component -->
                     @livewire('component.application-component')
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                <button type="button" class="btn-close flex-shrink-0" data-bs-dismiss="offcanvas" aria-label="Close" style="position: relative; z-index: 10;"></button>
             </div>
-            <div class="offcanvas-body">
-                @livewire('component.sidebar-menu')
+            <div class="offcanvas-body p-0" style="position: relative; height: 100%;">
+                <!-- Menu content - scrollable area -->
+                <div class="overflow-auto p-3" style="position: absolute; top: 0; left: 0; right: 0; bottom: 120px;">
+                    @livewire('component.sidebar-menu')
+                </div>
+
+                <!-- Mobile Sidebar Footer with Nusavo Branding - Always at bottom -->
+                <div class="p-3 border-top" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #f8f9fa, #e9ecef);">
+                    <div class="text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            @php
+                                $logoPath = 'customs/logos/SysConfig1.png';
+                                $hasLogo = file_exists(public_path($logoPath));
+                            @endphp
+                            @if($hasLogo)
+                                <img src="{{ asset($logoPath) }}" alt="Logo" class="me-2" style="width: 20px; height: 20px; object-fit: contain;">
+                            @else
+                                <i class="bi bi-shield-check text-primary me-2" style="font-size: 1.2rem;"></i>
+                            @endif
+                            <span class="fw-bold text-primary" style="font-size: 1.1rem; letter-spacing: 0.5px;">NusaEvo</span>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                            Powered by Advanced Technology
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -145,7 +171,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-fill d-flex flex-column" id="mainContent" style="margin-left: 0;">
+        <div class="flex-fill d-flex flex-column" id="mainContent" style="margin-left: 280px;">
             <!-- Header -->
             @include('layout.bootstrap.header')
 
@@ -156,8 +182,8 @@
                 </div>
             </main>
 
-            <!-- Footer -->
-            <footer class="bg-white border-top py-3">
+            <!-- Footer - Always at bottom -->
+            <footer class="bg-white border-top py-3 mt-auto">
                 <div class="container-fluid px-4">
                     <div class="row align-items-center">
                         <div class="col-md-6">
@@ -172,9 +198,14 @@
         </div>
     </div>
 
-    <!-- Next.js Style Loading Bar -->
-    <div id="nextjs-loading-bar" class="nextjs-loading-bar" style="display: none;">
-        <div class="nextjs-progress"></div>
+    <!-- Next.js Style Loading Spinner - Bottom Right -->
+    <div id="nextjs-loading-spinner" class="nextjs-loading-spinner">
+        <!-- Loading Dots Animation (most recognizable loading pattern) -->
+        <div class="nextjs-loading-dots">
+            <div class="nextjs-loading-dot"></div>
+            <div class="nextjs-loading-dot"></div>
+            <div class="nextjs-loading-dot"></div>
+        </div>
     </div>
 
     <!-- Scrolltop Button -->
@@ -204,33 +235,17 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Next.js Style Loading Bar Implementation
-            const loadingBar = document.getElementById('nextjs-loading-bar');
-            const progressBar = loadingBar.querySelector('.nextjs-progress');
+            // Next.js Style Loading Spinner Implementation
+            const loadingSpinner = document.getElementById('nextjs-loading-spinner');
             const mainContent = document.getElementById('mainContent');
 
-            let loadingInterval;
-            let currentProgress = 0;
-
-            // Loading Bar Functions
+            // Loading Functions
             function startLoading() {
-                if (loadingBar) {
-                    loadingBar.style.display = 'block';
-                    loadingBar.classList.add('loading');
-                    currentProgress = 0;
-                    progressBar.style.width = '0%';
-
-                    // Simulate progressive loading
-                    loadingInterval = setInterval(() => {
-                        if (currentProgress < 90) {
-                            currentProgress += Math.random() * 15;
-                            currentProgress = Math.min(currentProgress, 90);
-                            progressBar.style.width = currentProgress + '%';
-                        }
-                    }, 200);
+                // Show loading spinner
+                if (loadingSpinner) {
+                    loadingSpinner.classList.add('show');
                 }
 
                 // Add subtle fade to content
@@ -240,20 +255,11 @@
             }
 
             function finishLoading() {
-                if (loadingInterval) {
-                    clearInterval(loadingInterval);
-                }
-
-                if (loadingBar && progressBar) {
-                    currentProgress = 100;
-                    progressBar.style.width = '100%';
-
-                    // Hide loading bar after animation
+                // Hide loading spinner
+                if (loadingSpinner) {
                     setTimeout(() => {
-                        loadingBar.style.display = 'none';
-                        loadingBar.classList.remove('loading');
-                        progressBar.style.width = '0%';
-                    }, 500);
+                        loadingSpinner.classList.remove('show');
+                    }, 300);
                 }
 
                 // Remove content fade
@@ -273,6 +279,21 @@
             } else {
                 finishLoading();
             }
+
+            // Test spinner manually (temporary for debugging)
+            setTimeout(() => {
+                console.log('Testing spinner visibility...');
+                if (loadingSpinner) {
+                    loadingSpinner.classList.add('show');
+                    console.log('Spinner should be visible now');
+
+                    // Hide after 3 seconds for testing
+                    setTimeout(() => {
+                        loadingSpinner.classList.remove('show');
+                        console.log('Spinner hidden');
+                    }, 3000);
+                }
+            }, 1000);
 
             // Intercept form submissions and links for loading bar
             document.addEventListener('click', function(e) {
@@ -370,6 +391,62 @@
             window.print();
         }
 
+        // Initialize modern toastr settings with different durations for success and error
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": true,
+            "onclick": null,
+            "showDuration": "400",
+            "hideDuration": "1000",
+            "timeOut": "3000", // Default timeout
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "slideDown",
+            "hideMethod": "slideUp"
+        };
+
+        // Custom toast functions with different durations and colors
+        function showToastSuccess(message, title = 'Berhasil') {
+            toastr.success(message, title, {
+                "timeOut": "5000", // Success toast: 2 detik (lebih pendek)
+                "extendedTimeOut": "500",
+                "progressBar": true,
+                "closeButton": true
+            });
+        }
+
+        function showToastError(message, title = 'Gagal') {
+            toastr.error(message, title, {
+                "timeOut": "10000", // Error toast: 6 detik (lebih lama)
+                "extendedTimeOut": "2000",
+                "progressBar": true,
+                "closeButton": true
+            });
+        }
+
+        function showToastWarning(message, title = 'Peringatan') {
+            toastr.warning(message, title, {
+                "timeOut": "5000", // Warning toast: 4 detik
+                "extendedTimeOut": "1500",
+                "progressBar": true,
+                "closeButton": true
+            });
+        }
+
+        function showToastInfo(message, title = 'Info') {
+            toastr.info(message, title, {
+                "timeOut": "5000", // Info toast: 3 detik
+                "extendedTimeOut": "1000",
+                "progressBar": true,
+                "closeButton": true
+            });
+        }
+
         // Livewire event listeners
         document.addEventListener('livewire:init', () => {
             // Integrate Next.js loader with Livewire
@@ -398,35 +475,22 @@
                 }
             });
 
-            // Show loading bar for any Livewire requests
-            Livewire.hook('request', ({ uri, options, payload, respond, succeed, fail }) => {
-                if (window.NextjsLoader) {
-                    window.NextjsLoader.start();
-                }
 
-                succeed(({ status, json }) => {
-                    if (window.NextjsLoader) {
-                        setTimeout(() => window.NextjsLoader.finish(), 200);
-                    }
-                });
-
-                fail(({ status, json }) => {
-                    if (window.NextjsLoader) {
-                        setTimeout(() => window.NextjsLoader.finish(), 200);
-                    }
-                });
-            });
 
             Livewire.on('success', (message) => {
-                if (typeof toastr !== 'undefined') {
-                    toastr.success(message);
-                }
+                showToastSuccess(message, 'Berhasil');
             });
 
             Livewire.on('error', (message) => {
-                if (typeof toastr !== 'undefined') {
-                    toastr.error(message);
-                }
+                showToastError(message, 'Gagal');
+            });
+
+            Livewire.on('warning', (message) => {
+                showToastWarning(message, 'Peringatan');
+            });
+
+            Livewire.on('info', (message) => {
+                showToastInfo(message, 'Informasi');
             });
 
             Livewire.on('notify-swal', (dataArray) => {
@@ -498,87 +562,6 @@
             });
         });
     </script>
-
-    <!-- Next.js Style Loading Bar Styles -->
-    <style>
-        .nextjs-loading-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            z-index: 9999;
-            background: transparent;
-        }
-
-        .nextjs-progress {
-            height: 100%;
-            background: linear-gradient(90deg, #495057 0%, #6c757d 50%, #495057 100%);
-            background-size: 200% 100%;
-            border-radius: 0 3px 3px 0;
-            box-shadow: 0 0 8px rgba(73, 80, 87, 0.6);
-            width: 0%;
-            transition: width 0.3s ease;
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        .nextjs-loading-bar.loading .nextjs-progress {
-            animation: shimmer 2s infinite, loadingPulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes loadingPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
-        /* Smooth fade for page transitions */
-        .page-transition {
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        .page-transition.loading {
-            opacity: 0.95;
-        }
-
-        /* Loading overlay for specific actions (optional) */
-        .content-loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(248, 249, 250, 0.8);
-            backdrop-filter: blur(2px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            border-radius: 8px;
-        }
-
-        .content-loading-overlay.show {
-            display: flex;
-        }
-
-        .mini-spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid #e9ecef;
-            border-top: 3px solid #495057;
-            border-radius: 50%;
-            animation: miniSpin 1s linear infinite;
-        }
-
-        @keyframes miniSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 
     @livewireScripts
 
