@@ -37,6 +37,8 @@ class BaseComponent extends Component
     public $isComponent = false;
     public bool $hasChanges = false;
 
+    public $enableVersioning = true;
+
     public $versionNumber = 1;
     protected $versionSessionKey = 'session_version_number';
     protected $permissionSessionKey = 'session_permissions';
@@ -335,7 +337,7 @@ class BaseComponent extends Component
 
     protected function updateVersionNumber()
     {
-        if ($this->isComponent || $this->actionValue !== 'Edit' || !isset($this->object->id)) {
+        if ($this->isComponent || $this->actionValue !== 'Edit' || !isset($this->object->id) || $this->enableVersioning == false) {
             return;
         }
 

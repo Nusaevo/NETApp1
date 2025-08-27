@@ -76,8 +76,14 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->permissions = Session::get($this->permissionSessionKey, []);
         $this->initialQueryString = $this->captureOriginalQueryFromReferer();
         $this->setPrimaryKey('id');
+
+        // Apply custom CSS classes for modern styling
+        $this->setTableWrapperAttributes([
+            'class' => 'datatable-wrapper',
+        ]);
+
         $this->setTableAttributes([
-            'class' => 'data-table',
+            'class' => 'table data-table',
         ]);
 
         $this->setTheadAttributes([
@@ -87,13 +93,21 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->setTbodyAttributes([
             'class' => 'data-table-body',
         ]);
+
+        // Custom toolbar classes
+        $this->setToolbarAttributes([
+            'class' => 'datatable-toolbar',
+        ]);
+
+        // Custom search attributes
+        $this->setSearchFieldAttributes([
+            'class' => 'form-control datatable-search-input',
+            'placeholder' => 'Search records...',
+        ]);
         $this->setTdAttributes(function (Column $column, $row, $columnIndex, $rowIndex) {
-            if ($column->isField('deleted_at')) {
-                return [
-                    'class' => 'text-center',
-                ];
-            }
-            return [];
+            return [
+                'class' => 'align-middle',
+            ];
         });
         $this->setConfigurableAreas([
             'toolbar-left-start' => [
@@ -195,13 +209,10 @@ abstract class BaseDataTableComponent extends DataTableComponent
 
     public function createTextFilter($name, $field, $placeholder, $filterCallback)
     {
-        return TextFilter::make($name, $field)
-            ->config([
-                'placeholder' => $placeholder,
-                'maxlength' => '500',
-            ])
-            ->filter($filterCallback)
-            ->setWireLive();
+        return TextFilter::make($name)
+            ->filter(function(\Illuminate\Database\Eloquent\Builder $builder, string $value) use ($filterCallback) {
+                return $filterCallback($builder, $value);
+            });
     }
 
     protected function notify($type, $message)

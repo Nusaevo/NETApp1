@@ -1,51 +1,42 @@
-<div class="text-center position-relative">
+<div class="text-center">
     @if($enable_this_row)
-    <div class="btn-group dropup d-none d-md-inline-block">
+    <div class="dropdown">
         <button class="btn btn-primary btn-sm dropdown-toggle" type="button"
-            id="dropdownMenuButton{{ $row->id }}" data-bs-toggle="dropdown" data-bs-display="static"
-            aria-expanded="false">
+            id="dropdownMenuButton{{ $row->id }}" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi bi-three-dots-vertical"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ $row->id }}">
             @if($allow_details && isset($permissions['read']) && $permissions['read'])
-            <li>
-                <a class="dropdown-item btn btn-sm" href="#" wire:click="viewData({{ $row->id }})">
-                    <i class="bi bi-eye"></i> Detil
-                </a>
-            </li>
+            <li><a class="dropdown-item" href="#" wire:click="viewData({{ $row->id }})">
+                <i class="bi bi-eye me-2"></i>Detil
+            </a></li>
             @endif
             @if($allow_edit && (isset($permissions['read']) && $permissions['read'] || isset($permissions['update']) && $permissions['update']))
-            <li>
-                <a class="dropdown-item btn btn-sm" href="#" wire:click="editData({{ $row->id }})">
-                    <i class="bi bi-pencil"></i> Edit
-                </a>
-            </li>
+            <li><a class="dropdown-item" href="#" wire:click="editData({{ $row->id }})">
+                <i class="bi bi-pencil me-2"></i>Edit
+            </a></li>
             @endif
             @if($allow_delete && isset($permissions['delete']) && $permissions['delete'])
-            <li>
-                <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
-                    <i class="bi bi-trash"></i> Delete
-                </a>
-            </li>
+            <li><a class="dropdown-item text-danger btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
+                <i class="bi bi-trash me-2"></i>Delete
+            </a></li>
             @endif
             @if($allow_disable && isset($permissions['delete']) && $permissions['delete'])
-            <li>
-                <a class="dropdown-item btn btn-sm btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
-                    <i class="bi bi-x-circle"></i> Disable
-                </a>
-            </li>
+            <li><a class="dropdown-item text-warning btn-dialog-box" href="#" wire:click="selectData({{ $row->id }})">
+                <i class="bi bi-x-circle me-2"></i>Disable
+            </a></li>
             @endif
             @if($custom_actions && isset($custom_actions))
             @foreach ($custom_actions as $action)
                 @if(!isset($action['condition']) || $action['condition'])
                     <li>
                         @if(isset($action['onClick']))
-                            <a class="dropdown-item btn btn-sm" href="#" wire:click="{{ $action['onClick'] }}">
-                                <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
+                            <a class="dropdown-item" href="#" wire:click="{{ $action['onClick'] }}">
+                                <i class="{{ $action['icon'] }} me-2"></i>{{ $action['label'] }}
                             </a>
                         @else
-                            <a class="dropdown-item btn btn-sm" href="{{ $action['route'] }}" style="text-decoration: none;">
-                                <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
+                            <a class="dropdown-item" href="{{ $action['route'] }}">
+                                <i class="{{ $action['icon'] }} me-2"></i>{{ $action['label'] }}
                             </a>
                         @endif
                     </li>
@@ -54,42 +45,53 @@
             @endif
         </ul>
     </div>
-    <div class="mobile-button">
-        @if($allow_details && isset($permissions['read']) && $permissions['read'])
-        <button class="btn btn-primary btn-sm" wire:click="viewData({{ $row->id }})">
-            <i class="bi bi-eye"></i> Detil
-        </button>
-        @endif
-        @if($allow_edit && (isset($permissions['read']) && $permissions['read'] || isset($permissions['update']) && $permissions['update']))
-        <button class="btn btn-secondary btn-sm" wire:click="editData({{ $row->id }})">
-            <i class="bi bi-pencil"></i> Edit
-        </button>
-        @endif
-        @if($allow_delete && isset($permissions['delete']) && $permissions['delete'])
-        <button class="btn btn-danger btn-sm btn-dialog-box" wire:click="selectData({{ $row->id }})">
-            <i class="bi bi-trash"></i> Delete
-        </button>
-        @endif
-        @if($allow_disable && isset($permissions['delete']) && $permissions['delete'])
-        <button class="btn btn-warning btn-sm btn-dialog-box" wire:click="selectData({{ $row->id }})">
-            <i class="bi bi-x-circle"></i> Disable
-        </button>
-        @endif
-        @if($custom_actions && isset($custom_actions))
-        @foreach ($custom_actions as $action)
-            @if(!isset($action['condition']) || $action['condition'])
-                @if(isset($action['onClick']))
-                    <button class="btn btn-info btn-sm" wire:click="{{ $action['onClick'] }}">
-                        <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
-                    </button>
-                @else
-                    <button class="btn btn-info btn-sm" onclick="window.location='{{ $action['route'] }}'">
-                        <i class="{{ $action['icon'] }}"></i> {{ $action['label'] }}
-                    </button>
-                @endif
-            @endif
-        @endforeach
-        @endif
-    </div>
     @endif
 </div>
+
+@push('styles')
+<style>
+/* CLEAN DROPDOWN ACTION - NO TABLE INTERFERENCE */
+.text-center .dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.text-center .dropdown .btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-center .dropdown .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    margin-top: 2px;
+    min-width: 150px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* ACTION COLUMN FIXED WIDTH */
+td:has(.dropdown) {
+    width: 60px;
+    padding: 0.5rem 0.25rem;
+    vertical-align: middle;
+}
+
+/* PREVENT ROW LAYOUT CHANGES */
+.data-table-body tr,
+.table tbody tr {
+    position: static;
+}
+
+.data-table-body td,
+.table tbody td {
+    overflow: visible;
+}
+</style>
+@endpush

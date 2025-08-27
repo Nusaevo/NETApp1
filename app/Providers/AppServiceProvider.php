@@ -22,6 +22,11 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         registerDynamicConnections();
+
+        // Register Bootstrap theme
+        $this->app->singleton(\App\Core\BootstrapTheme::class, function ($app) {
+            return new \App\Core\BootstrapTheme();
+        });
     }
 
     /**
@@ -34,6 +39,12 @@ class AppServiceProvider extends ServiceProvider
         // Update defaultStringLength
         Builder::defaultStringLength(191);
 
-        KTBootstrap::init();
+        // Initialize Bootstrap theme instead of Metronic
+        if (class_exists(\App\Core\BootstrapTheme::class)) {
+            // Theme initialization for Bootstrap
+            $theme = app(\App\Core\BootstrapTheme::class);
+            $theme->addHtmlClass('body', 'd-flex flex-column min-vh-100');
+            $theme->addHtmlAttribute('body', 'style', 'font-family: "Inter", sans-serif;');
+        }
     }
 }

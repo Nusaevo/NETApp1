@@ -8,7 +8,7 @@ return [
         'system' => \App\Core\Bootstrap\BootstrapSystem::class,
     ],
 
-    'KT_THEME' => 'metronic',
+    'KT_THEME' => 'bootstrap',
 
     # Theme layout templates directory
 

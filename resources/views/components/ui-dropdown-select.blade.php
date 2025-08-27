@@ -3,7 +3,7 @@
     $blankValue = isset($type) && $type === 'int' ? '0' : '';
 
     // Menentukan class untuk kolom dan form-floating
-    $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
+    $colClass = 'col-sm' . (!empty($label) ? ' mb-4' : '');
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
 
     // Determine input class based on whether there's a label

@@ -1,27 +1,41 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" {!! printHtmlAttributes('html') !!}>
-<!--begin::Head-->
-
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <base href="" />
-    <title>{{ config('app.name', 'Laravel') }}</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="utf-8" />
-    <meta name="description" content="" />
-    <meta name="keywords" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:type" content="article" />
-    <meta property="og:title" content="" />
-    <link rel="canonical" href="" />
-    <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/pagebase.css') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Dynamic Favicon from SysConfig1 Application Logo -->
+    @php
+        $appCode = Session::get('app_code', 'default');
+        $faviconPath = 'customs/logos/SysConfig1.png';
+        // Fallback ke favicon default jika logo aplikasi tidak ada
+        if (!file_exists(public_path($faviconPath))) {
+            $faviconPath = 'favicon.ico';
+        }
+    @endphp
+    <link rel="shortcut icon" href="{{ asset($faviconPath) }}" type="image/png">
+    <link rel="icon" href="{{ asset($faviconPath) }}" type="image/png">
 
+    <!-- Bootstrap CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Core Libraries -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+    <!-- External Libraries -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/barcodes/JsBarcode.code128.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
@@ -32,242 +46,526 @@
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <!-- Select2 Latest Version (Fixed compatibility issues) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/inputmask/5.0.8/inputmask.min.js"></script>
-    <script>
-        var myJQuery = jQuery;
-    </script>
-    {!! includeFavicon() !!}
 
-    <!--begin::Fonts-->
-    {!! includeFonts() !!}
-    <!--end::Fonts-->
+    <!-- ApexCharts for charting -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@latest"></script>
 
-    <!--begin::Global Stylesheets Bundle(used by all pages)-->
-    @foreach (getGlobalAssets('css') as $path)
-        {!! sprintf(
-            '
-                                                            <link rel="stylesheet" href="%s">',
-            asset($path),
-        ) !!}
-    @endforeach
-    <!--end::Global Stylesheets Bundle-->
+    <!-- Clean Application Styles -->
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/app.css') }}">
 
-    <!--begin::Vendor Stylesheets(used by this page)-->
-    @foreach (getVendors('css') as $path)
-        {!! sprintf(
-            '
-                                                            <link rel="stylesheet" href="%s">',
-            asset($path),
-        ) !!}
-    @endforeach
-    <!--end::Vendor Stylesheets-->
-
-    <!--begin::Custom Stylesheets(optional)-->
-    @foreach (getCustomCss() as $path)
-        {!! sprintf(
-            '
-                                                            <link rel="stylesheet" href="%s">',
-            asset($path),
-        ) !!}
-    @endforeach
-    <!--end::Custom Stylesheets-->
+    <!-- Enhanced DataTable Styles -->
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/datatable-enhanced.css') }}">
 
     @livewireStyles
+
 </head>
-<!--end::Head-->
-
-<!--begin::Body-->
-
-<body {!! printHtmlClasses('body') !!} {!! printHtmlAttributes('body') !!}>
-
-    @include('partials/theme-mode/_init')
-
-    <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
-        <!--begin::Page-->
-        <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
-            @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_header')
-            <!--begin::Wrapper-->
-            <div class="app-wrapper flex-column flex-row-fluid" id="kt_app_wrapper">
-                @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_sidebar')
-                <!--begin::Main-->
-                <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-                    <!--begin::Content wrapper-->
-                    <div class="d-flex flex-column flex-column-fluid">
-                        {{-- @include(config('settings.KT_THEME_LAYOUT_DIR').'/partials/sidebar-layout/_toolbar') --}}
-                        <!--begin::Content-->
-                        <div id="kt_app_content" class="app-content flex-column-fluid">
-                            <!--begin::Content container-->
-                            <div id="kt_app_content_container" class="app-container container-fluid">
-                                {{ $slot }}
-                            </div>
-                            <!--end::Content container-->
-                        </div>
-                        <!--end::Content-->
-                    </div>
-                    <!--end::Content wrapper-->
-                    @include(config('settings.KT_THEME_LAYOUT_DIR') . '/partials/sidebar-layout/_footer')
-                </div>
-                <!--end:::Main-->
+<body>
+    <div class="d-flex min-vh-100" id="app_root" style="padding-top: 0; margin-top: 0;">`
+        <!-- Sidebar (offcanvas on small screens, fixed on large) -->
+        <div class="bg-white border-end shadow-sm position-fixed top-0 start-0 h-100 d-none d-lg-block" style="width: 280px; z-index: 1000;" id="sidebarFixed">
+            <!-- Application Selector at top -->
+            <div class="p-3 border-bottom" style="position: absolute; top: 0; left: 0; right: 0; z-index: 10;">
+                @livewire('component.application-component')
             </div>
-            <!--end::Wrapper-->
+
+            <!-- Menu content - scrollable area -->
+            <div class="p-3 overflow-auto" style="position: absolute; top: 80px; left: 0; right: 0; bottom: 120px;">
+                @livewire('component.sidebar-menu')
+            </div>
+
+            <!-- Sidebar Footer with Nusavo Branding - Always at bottom -->
+            <div class="p-3 border-top" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #f8f9fa, #e9ecef);">
+                <div class="text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        @php
+                            $logoPath = 'customs/logos/SysConfig1.png';
+                            $hasLogo = file_exists(public_path($logoPath));
+                        @endphp
+                        @if($hasLogo)
+                            <img src="{{ asset($logoPath) }}" alt="Logo" class="me-2" style="width: 20px; height: 20px; object-fit: contain;">
+                        @else
+                            <i class="bi bi-shield-check text-primary me-2" style="font-size: 1.2rem;"></i>
+                        @endif
+                        <span class="fw-bold text-primary" style="font-size: 1.1rem; letter-spacing: 0.5px;">NusaEvo</span>
+                    </div>
+                    <small class="text-muted" style="font-size: 0.75rem;">
+                        Powered by Advanced Technology
+                    </small>
+                </div>
+            </div>
         </div>
-        <!--end::Page-->
-    </div>
-    <!--end::App-->
 
-    {{-- @include('partials/_drawers')
+        <!-- Offcanvas Sidebar for mobile (left) -->
+        <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+            <div class="offcanvas-header border-bottom p-3">
+                <div class="w-100 me-3">
+                    <!-- Mobile Application Component -->
+                    @livewire('component.application-component')
+                </div>
+                <button type="button" class="btn-close flex-shrink-0" data-bs-dismiss="offcanvas" aria-label="Close" style="position: relative; z-index: 10;"></button>
+            </div>
+            <div class="offcanvas-body p-0" style="position: relative; height: 100%;">
+                <!-- Menu content - scrollable area -->
+                <div class="overflow-auto p-3" style="position: absolute; top: 0; left: 0; right: 0; bottom: 120px;">
+                    @livewire('component.sidebar-menu')
+                </div>
 
-@include('partials/_modals')
+                <!-- Mobile Sidebar Footer with Nusavo Branding - Always at bottom -->
+                <div class="p-3 border-top" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #f8f9fa, #e9ecef);">
+                    <div class="text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            @php
+                                $logoPath = 'customs/logos/SysConfig1.png';
+                                $hasLogo = file_exists(public_path($logoPath));
+                            @endphp
+                            @if($hasLogo)
+                                <img src="{{ asset($logoPath) }}" alt="Logo" class="me-2" style="width: 20px; height: 20px; object-fit: contain;">
+                            @else
+                                <i class="bi bi-shield-check text-primary me-2" style="font-size: 1.2rem;"></i>
+                            @endif
+                            <span class="fw-bold text-primary" style="font-size: 1.1rem; letter-spacing: 0.5px;">NusaEvo</span>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                            Powered by Advanced Technology
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-@include('partials/_scrolltop') --}}
+        <!-- Offcanvas Profile for mobile (right) -->
+        <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="mobileProfile" aria-labelledby="mobileProfileLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="mobileProfileLabel">Account</h5>
+                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body">
+                <div class="text-center mb-4">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle text-primary" style="font-size: 5rem;"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1">{{ Auth::user()->name ?? 'User' }}</h6>
+                    <small class="text-muted">{{ Auth::user()->email ?? '' }}</small>
+                </div>
 
+                <div class="list-group list-group-flush">
+                    <a href="{{ url('/SysConfig1/ConfigUser/Detail/' . encryptWithSessionKey('Edit') . '/' . encryptWithSessionKey(Auth::id())) }}" class="list-group-item list-group-item-action border-0 py-3">
+                        <i class="bi bi-person me-3"></i>Edit Profile
+                    </a>
+                    <div class="border-top my-2"></div>
+                    <form method="POST" action="{{ route('logout') }}" class="mb-0">
+                        @csrf
+                        <button type="submit" class="list-group-item list-group-item-action border-0 py-3 text-danger">
+                            <i class="bi bi-box-arrow-right me-3"></i>Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
 
-    <div id="custom-loading-container" class="custom-loading-container" style="display: none;">
-        <div class="custom-loading-spinner lds-ripple">
-            <div></div>
-            <div></div>
+        <!-- Main Content -->
+        <div class="flex-fill d-flex flex-column" id="mainContent" style="margin-left: 280px;">
+            <!-- Header -->
+            @include('layout.bootstrap.header')
+
+            <!-- Content -->
+            <main class="flex-fill" style="background-color: #f8f9fa;">
+                <div class="container-fluid p-4">
+                    {{ $slot }}
+                </div>
+            </main>
+
+            <!-- Footer - Always at bottom -->
+            <footer class="bg-white border-top py-3 mt-auto">
+                <div class="container-fluid px-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <p class="mb-0 text-muted small">© {{ date('Y') }} {{ config('app.name', 'Laravel') }}. All rights reserved.</p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <p class="mb-0 text-muted small">Version 1.0.0</p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
     </div>
 
-    <!-- Modal Preview Image -->
-    <x-ui-dialog-box id="imagePreviewModal" title="Image Preview" width="800px" height="800px"
-        onOpened="openImageFullScreenDialogBox" onClosed="closeImageFullScreenDialogBox">
-        <x-slot name="body">
-            <img id="previewImage" src="" alt="Image Preview" style="width: 100%; height: auto;">
-        </x-slot>
-        <x-slot name="footer">
-            <button type="button" class="btn btn-secondary" id="closeModalButton">Close</button>
-        </x-slot>
-    </x-ui-dialog-box>
+    <!-- Next.js Style Loading Spinner - Bottom Right -->
+    <div id="nextjs-loading-spinner" class="nextjs-loading-spinner">
+        <!-- Loading Dots Animation (most recognizable loading pattern) -->
+        <div class="nextjs-loading-dots">
+            <div class="nextjs-loading-dot"></div>
+            <div class="nextjs-loading-dot"></div>
+            <div class="nextjs-loading-dot"></div>
+        </div>
+    </div>
+
+    <!-- Scrolltop Button -->
+    <div class="scrolltop" id="scrolltop">
+        <i class="bi bi-arrow-up"></i>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Image Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="previewImage" src="" alt="Image Preview" class="img-fluid rounded">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 & Toastr -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const modalId = '#imagePreviewModal';
-            document.getElementById('closeModalButton').addEventListener('click', function() {
-                window.dispatchEvent(new Event('closeImageFullScreenDialogBox'));
+            // Next.js Style Loading Spinner Implementation
+            const loadingSpinner = document.getElementById('nextjs-loading-spinner');
+            const mainContent = document.getElementById('mainContent');
+
+            // Loading Functions
+            function startLoading() {
+                // Show loading spinner
+                if (loadingSpinner) {
+                    loadingSpinner.classList.add('show');
+                }
+
+                // Add subtle fade to content
+                if (mainContent) {
+                    mainContent.classList.add('page-transition', 'loading');
+                }
+            }
+
+            function finishLoading() {
+                // Hide loading spinner
+                if (loadingSpinner) {
+                    setTimeout(() => {
+                        loadingSpinner.classList.remove('show');
+                    }, 300);
+                }
+
+                // Remove content fade
+                if (mainContent) {
+                    setTimeout(() => {
+                        mainContent.classList.remove('loading');
+                    }, 300);
+                }
+            }
+
+            // Show loading on initial page load
+            startLoading();
+
+            // Hide loading when page is fully loaded
+            if (document.readyState === 'loading') {
+                window.addEventListener('load', finishLoading);
+            } else {
+                finishLoading();
+            }
+
+            // Test spinner manually (temporary for debugging)
+            setTimeout(() => {
+                console.log('Testing spinner visibility...');
+                if (loadingSpinner) {
+                    loadingSpinner.classList.add('show');
+                    console.log('Spinner should be visible now');
+
+                    // Hide after 3 seconds for testing
+                    setTimeout(() => {
+                        loadingSpinner.classList.remove('show');
+                        console.log('Spinner hidden');
+                    }, 3000);
+                }
+            }, 1000);
+
+            // Intercept form submissions and links for loading bar
+            document.addEventListener('click', function(e) {
+                // Check if it's a link that will navigate away
+                if (e.target.tagName === 'A' && e.target.href &&
+                    !e.target.href.startsWith('javascript:') &&
+                    !e.target.href.startsWith('#') &&
+                    !e.target.hasAttribute('download') &&
+                    !e.target.target === '_blank') {
+
+                    // Only show loading if it's an internal link
+                    if (e.target.href.includes(window.location.origin)) {
+                        startLoading();
+                    }
+                }
             });
+
+            // Handle form submissions
+            document.addEventListener('submit', function(e) {
+                // Don't show loading for logout forms or external forms
+                if (!e.target.action || e.target.action.includes(window.location.origin)) {
+                    startLoading();
+                }
+            });
+
+            // Scrolltop functionality
+            const scrolltopButton = document.getElementById('scrolltop');
+            if (scrolltopButton) {
+                window.addEventListener('scroll', function() {
+                    if (window.pageYOffset > 300) {
+                        scrolltopButton.classList.add('show');
+                    } else {
+                        scrolltopButton.classList.remove('show');
+                    }
+                });
+
+                scrolltopButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            // Responsive sidebar for mobile (offcanvas) and fixed for large screens
+            const sidebarFixed = document.getElementById('sidebarFixed');
+            const mobileSidebarEl = document.getElementById('mobileSidebar');
+            const mainContentEl = document.getElementById('mainContent');
+
+            function adjustLayout() {
+                if (window.innerWidth <= 991.98) {
+                    if (sidebarFixed) sidebarFixed.style.display = 'none';
+                    if (mainContentEl) mainContentEl.style.marginLeft = '0';
+                } else {
+                    if (sidebarFixed) sidebarFixed.style.display = 'block';
+                    if (mainContentEl) mainContentEl.style.marginLeft = '280px';
+                    // ensure offcanvas is hidden when switching to large
+                    try {
+                        if (mobileSidebarEl) {
+                            const bs = bootstrap.Offcanvas.getInstance(mobileSidebarEl);
+                            if (bs) bs.hide();
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+            }
+
+            window.addEventListener('resize', adjustLayout);
+            adjustLayout();
+
+            // Expose loading functions globally for manual control
+            window.NextjsLoader = {
+                start: startLoading,
+                finish: finishLoading,
+
+                // Helper function for AJAX requests
+                wrapRequest: function(requestFunction, ...args) {
+                    startLoading();
+                    return requestFunction(...args).finally(() => {
+                        setTimeout(finishLoading, 100);
+                    });
+                }
+            };
         });
-    </script>
 
-    <!--begin::Javascript-->
-    <!--begin::Global Javascript Bundle(mandatory for all pages)-->
-    @foreach (getGlobalAssets() as $path)
-        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
-    @endforeach
-    <!--end::Global Javascript Bundle-->
+        // Image preview function
+        function showImagePreview(imageUrl) {
+            const previewImage = document.getElementById('previewImage');
+            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+            if (previewImage) {
+                previewImage.src = imageUrl;
+                modal.show();
+            }
+        }
 
-    <!--begin::Vendors Javascript(used by this page)-->
-    @foreach (getVendors('js') as $path)
-        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
-    @endforeach
-    <!--end::Vendors Javascript-->
+        // Print function
+        function printReport() {
+            window.print();
+        }
 
-    <!--begin::Custom Javascript(optional)-->
-    @foreach (getCustomJs() as $path)
-        {!! sprintf('<script src="%s"></script>', asset($path)) !!}
-    @endforeach
-    <!--end::Custom Javascript-->
-    @stack('scripts')
-    <!--end::Javascript-->
+        // Initialize modern toastr settings with different durations for success and error
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": true,
+            "onclick": null,
+            "showDuration": "400",
+            "hideDuration": "1000",
+            "timeOut": "3000", // Default timeout
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "slideDown",
+            "hideMethod": "slideUp"
+        };
 
-    <script>
-        document.addEventListener('livewire:init', () => {
-            Livewire.on('success', (message) => {
-                toastr.success(message);
+        // Custom toast functions with different durations and colors
+        function showToastSuccess(message, title = 'Berhasil') {
+            toastr.success(message, title, {
+                "timeOut": "5000", // Success toast: 2 detik (lebih pendek)
+                "extendedTimeOut": "500",
+                "progressBar": true,
+                "closeButton": true
             });
+        }
+
+        function showToastError(message, title = 'Gagal') {
+            toastr.error(message, title, {
+                "timeOut": "10000", // Error toast: 6 detik (lebih lama)
+                "extendedTimeOut": "2000",
+                "progressBar": true,
+                "closeButton": true
+            });
+        }
+
+        function showToastWarning(message, title = 'Peringatan') {
+            toastr.warning(message, title, {
+                "timeOut": "5000", // Warning toast: 4 detik
+                "extendedTimeOut": "1500",
+                "progressBar": true,
+                "closeButton": true
+            });
+        }
+
+        function showToastInfo(message, title = 'Info') {
+            toastr.info(message, title, {
+                "timeOut": "5000", // Info toast: 3 detik
+                "extendedTimeOut": "1000",
+                "progressBar": true,
+                "closeButton": true
+            });
+        }
+
+        // Livewire event listeners
+        document.addEventListener('livewire:init', () => {
+            // Integrate Next.js loader with Livewire
+            Livewire.on('loading', () => {
+                if (window.NextjsLoader) {
+                    window.NextjsLoader.start();
+                }
+            });
+
+            Livewire.on('loaded', () => {
+                if (window.NextjsLoader) {
+                    setTimeout(() => window.NextjsLoader.finish(), 200);
+                }
+            });
+
+            // Hook into Livewire's loading states
+            document.addEventListener('livewire:navigating', () => {
+                if (window.NextjsLoader) {
+                    window.NextjsLoader.start();
+                }
+            });
+
+            document.addEventListener('livewire:navigated', () => {
+                if (window.NextjsLoader) {
+                    setTimeout(() => window.NextjsLoader.finish(), 300);
+                }
+            });
+
+
+
+            Livewire.on('success', (message) => {
+                showToastSuccess(message, 'Berhasil');
+            });
+
             Livewire.on('error', (message) => {
-                toastr.error(message);
+                showToastError(message, 'Gagal');
+            });
+
+            Livewire.on('warning', (message) => {
+                showToastWarning(message, 'Peringatan');
+            });
+
+            Livewire.on('info', (message) => {
+                showToastInfo(message, 'Informasi');
             });
 
             Livewire.on('notify-swal', (dataArray) => {
-                // console.log('alert event triggered'); // Debugging
-                // console.log('Event data:', dataArray); // Debugging
+                if (typeof Swal !== 'undefined') {
+                    let data = dataArray[0];
+                    let message = data.message || '';
+                    let icon = data.type || 'success';
+                    let confirmButtonText = 'Ok';
 
-                // Assuming the data is an array, get the first item
-                let data = dataArray[0];
-                let message = data.message || '';
-                let icon = data.type || 'success';
-                let confirmButtonText = 'Ok';
-
-                Swal.fire({
-                    html: message,
-                    icon: icon,
-                    buttonsStyling: false,
-                    confirmButtonText: confirmButtonText,
-                    customClass: {
-                        confirmButton: 'btn btn-primary'
-                    }
-                });
+                    Swal.fire({
+                        html: message,
+                        icon: icon,
+                        buttonsStyling: false,
+                        confirmButtonText: confirmButtonText,
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        }
+                    });
+                }
             });
 
             Livewire.on('open-print-tab', (data) => {
-                let url = data[0].url || '';
+                let url = data[0]?.url || '';
                 if (url) {
                     window.open(url, '_blank');
+                }
+            });
+
+            Livewire.on('full-page-reload', (data) => {
+                let url = data[0]?.url || data.url || '';
+                if (url) {
+                    if (window.NextjsLoader) {
+                        window.NextjsLoader.start();
+                    }
+                    setTimeout(() => {
+                        window.location.href = url;
+                    }, 200);
                 } else {
-                    console.error('URL is not provided or is empty.');
+                    console.error('App.blade: No URL provided in full-page-reload event');
                 }
             });
 
             Livewire.on('open-confirm-dialog', (dataArray) => {
-                let data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
-                let title = data.title || 'Confirm Action';
-                let message = data.message || 'Are you sure?';
-                let icon = data.icon || 'warning';
-                let confirmMethod = data.confirmMethod || '';
-                let confirmParams = data.confirmParams || null;
-                let confirmButtonText = data.confirmButtonText || 'Yes, confirm';
+                if (typeof Swal !== 'undefined') {
+                    let data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
+                    let title = data.title || 'Confirm Action';
+                    let message = data.message || 'Are you sure?';
+                    let icon = data.icon || 'warning';
+                    let confirmMethod = data.confirmMethod || '';
+                    let confirmParams = data.confirmParams || null;
+                    let confirmButtonText = data.confirmButtonText || 'Yes, confirm';
 
-                Swal.fire({
-                    title: title,
-                    text: message,
-                    icon: icon,
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: confirmButtonText
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        Livewire.dispatch(confirmMethod, {
-                            data: confirmParams
-                        });
-                    }
-                });
+                    Swal.fire({
+                        title: title,
+                        text: message,
+                        icon: icon,
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: confirmButtonText
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            Livewire.dispatch(confirmMethod, {
+                                data: confirmParams
+                            });
+                        }
+                    });
+                }
             });
         });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            //console.log('DOMContentLoaded event fired');
-            var loadingContainer = document.getElementById('custom-loading-container');
-            loadingContainer.style.display = 'flex';
-            //console.log('Loading container displayed');
-
-            window.addEventListener('load', function() {
-                //console.log('Window load event fired');
-                loadingContainer.style.display = 'none';
-                //console.log('Loading container hidden');
-            });
-        });
-    </script>
-    <script>
-        function showImagePreview(imageUrl) {
-            const previewImage = document.getElementById('previewImage');
-            previewImage.src = imageUrl;
-            $('#imagePreviewModal').modal('show');
-        }
-    </script>
-    <script type="text/javascript">
-        function printReport() {
-            window.print();
-        }
     </script>
 
     @livewireScripts
-</body>
-<!--end::Body-->
 
+    {{-- Custom Scripts Stack --}}
+    @stack('scripts')
+</body>
 </html>

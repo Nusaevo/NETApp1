@@ -1,15 +1,17 @@
-<div class="d-flex align-items-center " id="kt_header_user_menu_toggle" style="padding-top: 1rem; padding-right: 1rem; padding-left: 1rem;">
-    <!--begin::Menu wrapper-->
-    <div class="cursor-pointer position-relative symbol" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end" style="width: 40px; height: 40px; line-height: 40px;">
-        <!-- Cart icon with adjusted font size and position -->
-        <a href="{{ route('TrdJewel1.Transaction.CartOrder') }}" class="menu-link px-5">
-            <i class="fas fa-shopping-cart" style="font-size: 24px;"></i>
-        </a>
+<div class="cart-component-container position-relative">
+    <a href="{{ route('TrdJewel1.Transaction.CartOrder') }}"
+       class="btn btn-outline-secondary position-relative d-flex align-items-center justify-content-center"
+       style="width: 40px; height: 40px;"
+       title="Shopping Cart">
+        <!-- Cart icon using Bootstrap Icons -->
+        <i class="bi bi-cart3" style="font-size: 1.2rem;"></i>
 
-        <!-- Number badge -->
-        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            {{ $cartCount }}
+        <!-- Cart count badge -->
+        @if($cartCount > 0)
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+              style="font-size: 0.75rem; min-width: 20px; height: 20px; line-height: 18px;">
+            {{ $cartCount > 99 ? '99+' : $cartCount }}
         </span>
-    </div>
-    <!--end::Menu wrapper-->
+        @endif
+    </a>
 </div>

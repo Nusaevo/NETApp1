@@ -9,20 +9,42 @@
 </span>
 @elseif(isset($type) && $type == 'Back')
 <div id="backButtonContainer">
-    <a class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backButton" wire:click="goBack" wire:loading.attr="disabled">
-        <i class="bi bi-arrow-left-circle fs-2 me-1"></i>
-        <span id="backButtonText" style="font-size: 12px;" wire:loading.remove>Back</span>
-        <span class="spinner-border spinner-border-sm" id="backButtonLoading" role="status" aria-hidden="true" wire:loading></span>
-    </a>
+    <button type="button" id="backButton" class="btn btn-outline-primary d-inline-flex align-items-center me-3 mb-2" wire:click="goBack" wire:loading.attr="disabled" title="Go back" aria-label="Go back to previous page">
+        <i class="bi bi-arrow-left-circle-fill fs-5 me-2" aria-hidden="true"></i>
+        <span class="d-none d-sm-inline" id="backButtonText" wire:loading.remove>Back</span>
+        <span class="spinner-border spinner-border-sm ms-2 visually-hidden" id="backButtonLoading" role="status" aria-hidden="true" wire:loading></span>
+    </button>
 </div>
 
 @elseif(isset($type) && $type == 'BackManual')
 <div id="backManualButtonContainer">
-    <a href="{{ isset($clickEvent) ? $clickEvent : '#' }}" class="btn btn-link btn-color-info btn-active-color-primary me-3 mb-2" id="backManualButton">
-        <i class="bi bi-arrow-left-circle fs-2 me-1"></i> <span id="backManualButtonText" style="font-size: 12px;">Back</span>
-        <span class="spinner-border spinner-border-sm" id="backManualButtonLoading" role="status" aria-hidden="true" style="display: none;"></span>
+    <a href="{{ isset($clickEvent) ? $clickEvent : '#' }}" id="backManualButton" class="btn btn-outline-primary d-inline-flex align-items-center me-3 mb-2" onclick="handleBackManualClick(event, this)" title="Go back">
+        <i class="bi bi-arrow-left-circle-fill fs-5 me-2" aria-hidden="true"></i>
+        <span class="d-none d-sm-inline" id="backManualButtonText">Back</span>
+        <span class="spinner-border spinner-border-sm ms-2 visually-hidden" id="backManualButtonLoading" role="status" aria-hidden="true"></span>
     </a>
 </div>
+
+<script>
+    // Small helper to show a spinner and navigate for manual back links
+    function handleBackManualClick(e, el) {
+        e.preventDefault();
+        const spinner = el.querySelector('.spinner-border');
+        const txt = el.querySelector('#backManualButtonText');
+        if (spinner) spinner.classList.remove('visually-hidden');
+        if (txt) txt.classList.add('visually-hidden');
+
+        const href = el.getAttribute('href');
+        setTimeout(() => {
+            if (!href || href === '#') {
+                if (history.length > 1) history.back();
+                else window.location.href = '/';
+            } else {
+                window.location.href = href;
+            }
+        }, 80);
+    }
+</script>
 @elseif(isset($type) && $type == 'InputButton')
     @if (isset($loading) && $loading === 'true')
     <button type="button"

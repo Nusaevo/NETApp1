@@ -1,162 +1,202 @@
 <div>
-
-    <div class="custom-header-search">
-        <div class="d-flex align-items-center" id="kt_header_user_menu_toggle" style="padding-top: 1rem; padding-right: 1rem; padding-left: 1rem;">
-            <!--begin::Menu wrapper-->
-            <div class="cursor-pointer position-relative symbol" style="width: 40px; height: 40px; line-height: 40px;">
-                <!-- Search toggle button -->
-                <div id='custom_search_toggle' class="btn btn-icon btn-custom btn-icon-muted btn-active-light btn-active-color-primary w-35px h-35px w-md-40px h-md-40px">
-                    {!! getIcon('magnifier', 'fs-2') !!}
-                </div>
-            </div>
-            <!--end::Menu wrapper-->
+    <div class="search-menu-wrapper">
+        <div class="d-flex align-items-center">
+            <!-- Search toggle button - sama ukuran dengan cart -->
+            <button type="button"
+                    id="custom_search_toggle"
+                    class="btn btn-outline-secondary d-flex align-items-center justify-content-center"
+                    style="width: 40px; height: 40px;"
+                    title="Search Menu">
+                <i class="bi bi-search" style="font-size: 1.2rem;"></i>
+            </button>
         </div>
 
         <!-- Search results container -->
-        <div id="custom_search_content" class="menu menu-sub menu-sub-dropdown p-7 w-325px w-md-375px" wire:ignore.self>
-            <!--begin::Wrapper-->
-            <div>
-                <input type="text" class="form-control" placeholder="Search Menu..." wire:model="searchTerm" wire:keydown="onSearchChanged">
+        <div id="custom_search_content" class="search-dropdown" wire:ignore.self>
+            <div class="search-content">
+                <input type="text"
+                       class="form-control mb-3"
+                       placeholder="Search Menu..."
+                       wire:model.live="searchTerm"
+                       wire:keydown="onSearchChanged">
 
                 <div id="custom_search_results">
                     @if(!empty($results))
-                    <div class="scroll-y mh-200px mh-lg-350px">
-                        @foreach($results as $result)
-                        <a href="{{ route(str_replace('/', '.', $result->menu_link)) }}" class="d-flex text-gray-900 text-hover-primary align-items-center mb-5">
-                            @if(!isNullOrEmptyString($result->menu_header))
-                            {{ $result->menu_header }} /
-                            @endif
-                            {{ $result->menu_caption }}
-                        </a>
-                        @endforeach
-
-                    </div>
+                        <div class="search-results">
+                            @foreach($results as $result)
+                                <a href="{{ route(str_replace('/', '.', $result->menu_link)) }}"
+                                   class="search-result-item">
+                                    <div class="search-result-content">
+                                        @if(!isNullOrEmptyString($result->menu_header))
+                                            <span class="search-breadcrumb">{{ $result->menu_header }} /</span>
+                                        @endif
+                                        <span class="search-title">{{ $result->menu_caption }}</span>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    @elseif(!empty($searchTerm))
+                        <p class="text-muted text-center py-3">No results found for "{{ $searchTerm }}"</p>
                     @else
-                    <p class="text-muted">No results found.</p>
+                        <p class="text-muted text-center py-3">Start typing to search menu...</p>
                     @endif
                 </div>
             </div>
-            <!--end::Wrapper-->
         </div>
-        <!--end::Search content-->
     </div>
 
     <script>
-        document.getElementById('custom_search_toggle').addEventListener('click', function() {
-            var searchContent = document.getElementById('custom_search_content');
-            searchContent.classList.toggle('active'); // Toggle the active class to slide in/out
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchToggle = document.getElementById('custom_search_toggle');
+            const searchContent = document.getElementById('custom_search_content');
+            const searchInput = searchContent.querySelector('input');
 
+            searchToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                searchContent.classList.toggle('show');
+
+                if (searchContent.classList.contains('show')) {
+                    setTimeout(() => {
+                        searchInput.focus();
+                    }, 100);
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchContent.contains(e.target) && !searchToggle.contains(e.target)) {
+                    searchContent.classList.remove('show');
+                }
+            });
+
+            // Prevent closing when clicking inside dropdown
+            searchContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
     </script>
 
-
     <style>
-        /* Overall Search Container */
-        .custom-header-search {
+        .search-menu-wrapper {
             position: relative;
             display: inline-block;
-            align-items: center;
         }
 
-        /* Search Results Container */
-        #custom_search_content {
+        .search-dropdown {
             position: absolute;
-            top: 100%;
-            right: -50px;
-            transform: translateX(100%);
-            width: 325px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            padding: 10px;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 350px;
+            background-color: var(--bs-body-bg);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.5rem;
+            box-shadow: 0 8px 30px var(--page-shadow);
+            z-index: 1050;
             opacity: 0;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            display: none;
-            /* Ensure it's hidden initially */
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
         }
 
-        /* Activate the search content on toggle */
-        #custom_search_content.active {
-            display: block;
-            transform: translateX(0);
+        .search-dropdown.show {
             opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
         }
 
-        /* Search Input */
-        #custom_search_content .form-control {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 10px;
+        .search-content {
+            padding: 1rem;
         }
 
-        /* Search Results List */
-        .scroll-y {
-            max-height: 350px;
+        .search-results {
+            max-height: 300px;
             overflow-y: auto;
         }
 
-        .scroll-y::-webkit-scrollbar {
+        .search-results::-webkit-scrollbar {
             width: 6px;
         }
 
-        .scroll-y::-webkit-scrollbar-thumb {
-            background-color: #c1c7d0;
+        .search-results::-webkit-scrollbar-thumb {
+            background-color: var(--bs-secondary-bg);
             border-radius: 3px;
         }
 
-        .scroll-y::-webkit-scrollbar-track {
-            background-color: #f1f3f5;
+        .search-results::-webkit-scrollbar-track {
+            background-color: var(--bs-light-bg-subtle);
         }
 
-        /* Individual Result Items */
-        #custom_search_content .d-flex {
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f1f1;
+        .search-result-item {
+            display: block;
+            padding: 0.75rem;
+            margin-bottom: 0.25rem;
+            border-radius: 0.375rem;
             text-decoration: none;
+            color: var(--bs-body-color);
+            background-color: var(--bs-body-bg);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
         }
 
-        #custom_search_content .d-flex:hover {
-            background-color: #f3f6f9;
+        .search-result-item:hover {
+            background-color: var(--bs-primary-bg-subtle);
+            border-color: var(--bs-primary);
+            color: var(--bs-primary);
+            transform: translateX(4px);
         }
 
-        #custom_search_content .symbol {
+        .search-result-content {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            overflow: hidden;
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
-        #custom_search_content .symbol img {
-            width: 100%;
-            height: auto;
+        .search-breadcrumb {
+            font-size: 0.75rem;
+            color: var(--bs-secondary-color);
+            opacity: 0.8;
         }
 
-        /* Text and Icon Styling */
-        #custom_search_content .fs-6 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
+        .search-title {
+            font-weight: 500;
+            font-size: 0.875rem;
         }
 
-        #custom_search_content .fs-7 {
-            font-size: 12px;
-            color: #999;
+        /* Form control styling for search input */
+        .search-dropdown .form-control {
+            border-radius: 0.5rem;
+            border: 1px solid var(--bs-border-color);
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
         }
 
-        /* No Results Text */
-        .text-muted {
-            font-size: 14px;
-            color: #999;
-            text-align: center;
-            margin-top: 20px;
+        .search-dropdown .form-control:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
         }
 
+        /* Dark theme adjustments */
+        [data-bs-theme="dark"] .search-dropdown {
+            background-color: var(--bs-dark);
+            border-color: var(--bs-border-color);
+        }
+
+        [data-bs-theme="dark"] .search-result-item {
+            background-color: var(--bs-dark);
+        }
+
+        [data-bs-theme="dark"] .search-result-item:hover {
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 767.98px) {
+            .search-dropdown {
+                width: 90vw;
+                right: -50px;
+            }
+        }
     </style>
-
-
 </div>
 
