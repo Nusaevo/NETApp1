@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Livewire;
+namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 
 use Livewire\Component;
 
