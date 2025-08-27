@@ -6,7 +6,7 @@ use Exception;
 use Illuminate\Support\Facades\{DB, Log};
 use App\Models\TrdTire1\Master\PartnerBal;
 use App\Services\SysConfig1\ConfigService;
-use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl, PaymentAdv};
+use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl, PartnertrHdr, PaymentAdv};
 
 class PaymentService
 {
@@ -17,14 +17,10 @@ class PaymentService
         $this->partnerBalanceService = $partnerBalanceService;
     }
 
-    public function addPayment(array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt)
+    public function savePayment(array $headerData, array $detailData, array $sourceData, array $advanceData, float $overAmt)
     {
-
-
         // dd($headerData, $detailData, $sourceData, $advanceData, $overAmt);
         try {
-            // Mulai database transaction
-            DB::beginTransaction();
             // Simpan header
             $paymentHdr = $this->saveHeader($headerData);
             $headerData['id'] = $paymentHdr->id;
@@ -35,7 +31,7 @@ class PaymentService
 
             $this->savePaymentAdv($headerData, $advanceData);
 
-            $this->saveOverPayment($headerData, $overAmt); // Pass empty array untuk advanceData
+            $this->saveOverPayment($headerData, $overAmt);
             // dd($headerData, $detailData);
 
             // Commit transaction
@@ -315,8 +311,18 @@ class PaymentService
 
     public function delPayment(int $paymentId)
     {
+        // Ambil payment header untuk mendapatkan tr_code
+        $paymentHdr = PaymentHdr::findOrFail($paymentId);
+        $paymentTrCode = $paymentHdr->tr_code;
+
+        // Hapus partner transaction adjustment jika ada
+        $adjustmentHeader = PartnertrHdr::where('tr_code', $paymentTrCode . '_ADJ')->first();
+        if ($adjustmentHeader) {
+            app(PartnerTrxService::class)->delPartnerTrx($adjustmentHeader->id);
+        }
+
         // Hapus header langsung
-        PaymentHdr::findOrFail($paymentId)->forceDelete();
+        $paymentHdr->forceDelete();
 
         // Update billing & hapus detail
         PaymentDtl::where('trhdr_id', $paymentId)

@@ -25,7 +25,8 @@
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-dropdown-select label="{{ $this->trans('Rekening Bank') }}"
-                                        model="inputs.tr_type" :options="$chequeType" required="true" :action="$actionValue" />
+                                        model="inputs.partner_code" :options="$partnerOptions" required="true"
+                                        :action="$actionValue" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.note"
@@ -52,34 +53,17 @@
                                     <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
-                                            <x-ui-dropdown-search label=""
-                                                model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
-                                                optionValue="id" optionLabel="code,name"
-                                                placeHolder="Select material..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
+                                            <x-ui-dropdown-select label=""
+                                                model="input_details.{{ $key }}.bank_code" :options="$giroOptions"
+                                               :selectedValue="$input_details[$key]['bank_code'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
-                                                onChanged="matlIdOnChanged({{ $key }}, $event.target.value)"
-                                                type="int" :enabled="$isDeliv ? 'false' : 'true'" />
-                                        </td>
-                                        <td style="text-align: center;">
-                                            <x-ui-text-field model="input_details.{{ $key }}.price"
-                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'" type="number"
-                                                onChanged="priceOnChanged({{ $key }})" decimalPlaces="2" />
-                                        </td>
-                                        <td style="text-align: center;">
-                                            <x-ui-text-field model="input_details.{{ $key }}.qty"
-                                                label="" :enabled="$isDeliv ? 'false' : 'true'" :action="$actionValue"
-                                                onChanged="qtyOnChanged({{ $key }})" type="number"
-                                                required="true" />
-                                        </td>
-                                        <td style="text-align: center;">
-                                            <x-ui-text-field model="input_details.{{ $key }}.disc_pct"
-                                                label="" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
-                                                onChanged="discPctOnChanged({{ $key }})" type="number" />
+                                                onChanged="giroOnChanged({{ $key }}, $event.target.value)"
+                                                :enabled="$isDeliv ? 'false' : 'true'" />
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-text-field model="input_details.{{ $key }}.amt"
-                                                label="" :action="$actionValue" type="text" enabled="false"
-                                                type="number" />
+                                                label="" :action="$actionValue" type="number" :enabled="$isDeliv ? 'false' : 'true'"
+                                                onChanged="amtOnChanged({{ $key }})"/>
                                         </td>
                                         <td style="text-align: center;">
                                             <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
@@ -91,7 +75,7 @@
                             </x-slot>
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItemOnClick" cssClass="btn btn-primary" iconPath="add.svg"
-                                    button-name="Tambah" :enabled="$isDeliv ? 'false' : 'true'" />
+                                    button-name="Tambah" />
                             </x-slot>
                         </x-ui-table>
                     </x-ui-card>

@@ -33,13 +33,13 @@
                         {{-- <label for="amt_shipcost">Biaya Pengiriman</label> --}}
                         {{-- <input type="number" class="form-control @error('inputs.amt_shipcost') is-invalid @enderror"
                             id="amt_shipcost" wire:model="inputs.amt_shipcost" placeholder="Masukkan biaya pengiriman"> --}}
-                        <x-ui-text-field label="Biaya pengiriman" model="inputs.amt_shipcost" type="number"
+                        {{-- <x-ui-text-field label="Biaya pengiriman" model="inputs.amt_shipcost" type="number"
                             :action="$actionValue" required="false" enabled="true" />
                         @error('inputs.amt_shipcost')
                             <div class="invalid-feedback">
                                 {{ $message }}
                             </div>
-                        @enderror
+                        @enderror --}}
                     </div>
                 </div>
                 <x-ui-table id="selectedItemsTable" padding="0px" margin="0px">

@@ -10,7 +10,7 @@ use App\Enums\Status;
 use App\Services\SysConfig1\ConfigService;
 use App\Services\TrdTire1\OrderService;
 use App\Services\TrdTire1\Master\MasterService;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Log};
 use Exception;
 
 class Detail extends BaseComponent
@@ -65,6 +65,13 @@ class Detail extends BaseComponent
     protected $masterService;
     protected $orderService;
 
+    // Property untuk dialog box NPWP
+    public $npwpDetails = [
+        'npwp' => '',
+        'wp_name' => '',
+        'wp_location' => '',
+    ];
+
     // Gabungan validasi untuk header dan detail (item)
     public $rules  = [
         'inputs.tr_code'       => 'required',
@@ -86,7 +93,153 @@ class Detail extends BaseComponent
         'updateAmount'  => 'updateAmount',
         // 'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
         'refreshData'   => 'refreshData',
+        'onTaxPayerChanged' => 'onTaxPayerChanged',
     ];
+    public function openNpwpDialogBox()
+    {
+        $this->dispatch('openNpwpDialogBox');
+    }
+
+    public function closeNpwpDialogBox()
+    {
+        $this->dispatch('closeNpwpDialogBox');
+
+        // Refresh NPWP options ketika dialog ditutup
+        $this->refreshNpwpOptions();
+    }
+
+    public function saveNpwp()
+    {
+        // Validasi input
+        $this->validate([
+            'npwpDetails.npwp' => 'required',
+            'npwpDetails.wp_name' => 'required',
+            'npwpDetails.wp_location' => 'required',
+        ], [
+            'npwpDetails.npwp.required' => 'NPWP/NIK harus diisi',
+            'npwpDetails.wp_name.required' => 'Nama WP harus diisi',
+            'npwpDetails.wp_location.required' => 'Alamat WP harus diisi',
+        ]);
+
+        try {
+            // Ambil partner yang sedang dipilih
+            $partner = Partner::find($this->inputs['partner_id']);
+            if (!$partner) {
+                throw new Exception('Partner tidak ditemukan');
+            }
+
+            // Ambil atau buat PartnerDetail
+            $partnerDetail = $partner->PartnerDetail;
+            if (!$partnerDetail) {
+                $partnerDetail = new \App\Models\TrdTire1\Master\PartnerDetail();
+                $partnerDetail->partner_id = $partner->id;
+                $partnerDetail->partner_grp = $partner->grp;
+                $partnerDetail->partner_code = $partner->code;
+            }
+
+            // Ambil data wp_details yang sudah ada
+            $wpDetails = $partnerDetail->wp_details ?? [];
+            if (is_string($wpDetails)) {
+                $wpDetails = json_decode($wpDetails, true);
+            }
+            if (!is_array($wpDetails)) {
+                $wpDetails = [];
+            }
+
+            // Tambahkan data NPWP baru
+            $wpDetails[] = [
+                'npwp' => $this->npwpDetails['npwp'],
+                'wp_name' => $this->npwpDetails['wp_name'],
+                'wp_location' => $this->npwpDetails['wp_location'],
+            ];
+
+            // Debug: cek data yang akan disimpan
+            Log::info('NPWP Data to be saved:', [
+                'new_npwp' => $this->npwpDetails,
+                'all_wp_details' => $wpDetails
+            ]);
+
+            // Simpan ke database
+            $partnerDetail->wp_details = $wpDetails;
+            $result = $partnerDetail->save();
+
+            // Debug: cek hasil penyimpanan
+            Log::info('NPWP Save result:', [
+                'save_result' => $result,
+                'partner_detail_id' => $partnerDetail->id,
+                'wp_details_after_save' => $partnerDetail->wp_details
+            ]);
+
+            // Debug: cek data yang tersimpan ke database
+            Log::info('NPWP Data saved to database:', [
+                'partner_id' => $partner->id,
+                'wp_details_before_save' => $wpDetails,
+                'partner_detail_id' => $partnerDetail->id
+            ]);
+
+            // Refresh data dari database untuk memastikan data ter-update
+            $partnerDetail->refresh();
+            $wpDetails = $partnerDetail->wp_details;
+            if (is_string($wpDetails)) {
+                $wpDetails = json_decode($wpDetails, true);
+            }
+
+            // Debug: cek data yang tersimpan
+            Log::info('NPWP Data after save:', [
+                'partner_id' => $partner->id,
+                'wp_details' => $wpDetails,
+                'npwpOptions_count' => count($this->npwpOptions ?? [])
+            ]);
+
+            // Update npwpOptions dengan data yang sudah di-refresh
+            if (is_array($wpDetails) && !empty($wpDetails)) {
+                $this->npwpOptions = array_map(function ($item) {
+                    return [
+                        'label' => $item['npwp'] . ' - ' . $item['wp_name'] . ' - ' . $item['wp_location'],
+                        'value' => $item['npwp'],
+                        'name' => $item['wp_name'],
+                        'address' => $item['wp_location'],
+                    ];
+                }, $wpDetails);
+            } else {
+                $this->npwpOptions = [];
+            }
+
+            // Debug: cek npwpOptions setelah update
+            Log::info('NPWP Options after update:', [
+                'npwpOptions' => $this->npwpOptions
+            ]);
+
+            // Set NPWP yang baru ditambahkan sebagai yang aktif
+            $this->inputs['npwp_code'] = $this->npwpDetails['npwp'];
+            $this->inputs['npwp_name'] = $this->npwpDetails['wp_name'];
+            $this->inputs['npwp_addr'] = $this->npwpDetails['wp_location'];
+
+            // Reset npwpDetails
+            $this->npwpDetails['npwp'] = '';
+            $this->npwpDetails['wp_name'] = '';
+            $this->npwpDetails['wp_location'] = '';
+
+            // Tutup dialog box
+            $this->closeNpwpDialogBox();
+
+            // Refresh NPWP options dari database
+            $this->refreshNpwpOptions();
+
+            // Debug: cek npwpOptions setelah refresh
+            Log::info('NPWP Options after refreshNpwpOptions:', [
+                'npwpOptions' => $this->npwpOptions,
+                'count' => count($this->npwpOptions ?? [])
+            ]);
+
+            // Dispatch event untuk refresh Select2
+            $this->dispatch('refreshSelect2', 'inputs_npwp_code');
+
+            $this->dispatch('success', 'Data NPWP berhasil disimpan');
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Gagal menyimpan data NPWP: ' . $e->getMessage());
+        }
+    }
 
     protected function onPreRender()
     {
@@ -152,7 +305,7 @@ class Detail extends BaseComponent
 
     public function onReset()
     {
-        $this->reset('inputs', 'input_details');
+        $this->reset('inputs', 'input_details', 'npwpDetails');
         $this->object = new OrderHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tax_process_date'] = null;
@@ -164,6 +317,13 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
+
+        // Reset npwpDetails
+        $this->npwpDetails = [
+            'npwp' => '',
+            'wp_name' => '',
+            'wp_location' => '',
+        ];
     }
 
     public function onValidateAndSave()
@@ -299,6 +459,41 @@ class Detail extends BaseComponent
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
         $this->inputs['tr_code'] = '';
+
+        // Jika tax_doc_flag aktif dan ada partner_id, muat data NPWP
+        if (!empty($this->inputs['tax_doc_flag']) && !empty($this->inputs['partner_id'])) {
+            $partner = Partner::find($this->inputs['partner_id']);
+            if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+                $wpDetails = $partner->PartnerDetail->wp_details;
+                if (is_string($wpDetails)) {
+                    $wpDetails = json_decode($wpDetails, true);
+                }
+                if (is_array($wpDetails) && !empty($wpDetails)) {
+                    $this->npwpOptions = array_map(function ($item) {
+                        return [
+                            'label' => $item['npwp'] . ' - ' . $item['wp_name'] . ' - ' . $item['wp_location'],
+                            'value' => $item['npwp'],
+                            'name' => $item['wp_name'],
+                            'address' => $item['wp_location'],
+                        ];
+                    }, $wpDetails);
+
+                    // Isi default NPWP dari opsi pertama
+                    $first = reset($this->npwpOptions);
+                    $this->inputs['npwp_code'] = $first['value'] ?? '';
+                    $this->inputs['npwp_name'] = $first['name'] ?? '';
+                    $this->inputs['npwp_addr'] = $first['address'] ?? '';
+                }
+            }
+        } else {
+            // Reset NPWP jika tax_doc_flag tidak aktif
+            $this->inputs['npwp_code'] = '';
+            $this->inputs['npwp_name'] = '';
+            $this->inputs['npwp_addr'] = '';
+        }
+
+        // Dispatch event untuk refresh Select2
+        $this->dispatch('refreshSelect2', 'inputs_npwp_code');
     }
 
     public function onPaymentTermChanged()
@@ -337,11 +532,16 @@ class Detail extends BaseComponent
         $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
         $this->materialQuery = "
-            SELECT id, code, name
-            FROM materials
-            WHERE status_code = 'A'
-            AND deleted_at IS NULL
-            AND category IN ($categoryList)
+            SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
+            FROM materials m
+            LEFT OUTER JOIN (
+                select matl_id, SUM(qty_oh)::int as qty_oh,SUM(qty_fgi)::int as qty_fgi
+                from ivt_bals
+                group by matl_id
+                ) b on b.matl_id = m.id
+            WHERE m.status_code = 'A'
+            AND m.deleted_at IS NULL
+            AND m.category IN ($categoryList)
         ";
 
         // Jika dalam mode edit, jangan reset input_details
@@ -654,12 +854,6 @@ class Detail extends BaseComponent
             $this->inputs['ship_to_addr'] = '';
             $this->shipOptions = [];
 
-            // Reset NPWP info
-            $this->inputs['npwp_code'] = '';
-            $this->inputs['npwp_name'] = '';
-            $this->inputs['npwp_addr'] = '';
-            $this->npwpOptions = [];
-
             // Handle Shipping Options
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
                 $shipDetail = $partner->PartnerDetail->shipping_address;
@@ -682,30 +876,126 @@ class Detail extends BaseComponent
                 }
             }
 
-            // Handle NPWP Options if tax_doc_flag is set
-            if (!empty($this->inputs['tax_doc_flag'])) {
-                if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
-                    $wpDetails = $partner->PartnerDetail->wp_details;
-                    if (is_string($wpDetails)) {
-                        $wpDetails = json_decode($wpDetails, true);
-                    }
-                    if (is_array($wpDetails) && !empty($wpDetails)) {
-                        $this->npwpOptions = array_map(function ($item) {
-                            return [
-                                'label' => $item['npwp'] . ' - ' . $item['wp_name'] . ' - ' . $item['wp_location'],
-                                'value' => $item['npwp'],
-                                'name' => $item['wp_name'],
-                                'address' => $item['wp_location'],
-                            ];
-                        }, $wpDetails);
+            // Handle NPWP Options - selalu muat data wp_details dari partner yang dipilih
+            if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+                $wpDetails = $partner->PartnerDetail->wp_details;
+                if (is_string($wpDetails)) {
+                    $wpDetails = json_decode($wpDetails, true);
+                }
 
-                        // Selalu isi default NPWP dari opsi pertama jika ada
+                // Debug: cek data wp_details yang di-load
+                Log::info('NPWP Data loaded from partner:', [
+                    'partner_id' => $partner->id,
+                    'wp_details' => $wpDetails
+                ]);
+
+                if (is_array($wpDetails) && !empty($wpDetails)) {
+                    $this->npwpOptions = array_map(function ($item) {
+                        return [
+                            'label' => $item['npwp'] . ' - ' . $item['wp_name'] . ' - ' . $item['wp_location'],
+                            'value' => $item['npwp'],
+                            'name' => $item['wp_name'],
+                            'address' => $item['wp_location'],
+                        ];
+                    }, $wpDetails);
+
+                    // Debug: cek npwpOptions yang dibuat
+                    Log::info('NPWP Options created:', [
+                        'npwpOptions' => $this->npwpOptions
+                    ]);
+
+                    if (!empty($this->inputs['tax_doc_flag'])) {
                         $first = reset($this->npwpOptions);
                         $this->inputs['npwp_code'] = $first['value'] ?? '';
                         $this->inputs['npwp_name'] = $first['name'] ?? '';
                         $this->inputs['npwp_addr'] = $first['address'] ?? '';
                     }
                 }
+            } else {
+                // Reset NPWP options jika partner tidak memiliki wp_details
+                $this->npwpOptions = [];
+                $this->inputs['npwp_code'] = '';
+                $this->inputs['npwp_name'] = '';
+                $this->inputs['npwp_addr'] = '';
+
+                // Debug: partner tidak memiliki wp_details
+                Log::info('Partner has no wp_details:', [
+                    'partner_id' => $partner->id,
+                    'has_partner_detail' => $partner->PartnerDetail ? 'yes' : 'no',
+                    'wp_details' => $partner->PartnerDetail ? $partner->PartnerDetail->wp_details : 'no partner detail'
+                ]);
+            }
+
+            // Dispatch event untuk refresh Select2
+            $this->dispatch('refreshSelect2', 'inputs_npwp_code');
+        }
+    }
+
+    public function onTaxPayerChanged()
+    {
+        $partner = Partner::find($this->inputs['partner_id']);
+        if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+            $wpDetails = $partner->PartnerDetail->wp_details;
+            if (is_string($wpDetails)) {
+                $wpDetails = json_decode($wpDetails, true);
+            }
+            if (is_array($wpDetails)) {
+                foreach ($wpDetails as $detail) {
+                    if ($detail['npwp'] == $this->inputs['npwp_code']) {
+                        $this->inputs['npwp_code'] = $detail['npwp'];
+                        $this->inputs['npwp_name'] = $detail['wp_name'];
+                        $this->inputs['npwp_addr'] = $detail['wp_location'];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public function onNpwpSelectionChanged($npwpCode)
+    {
+        $partner = Partner::find($this->inputs['partner_id']);
+        if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+            $wpDetails = $partner->PartnerDetail->wp_details;
+            if (is_string($wpDetails)) {
+                $wpDetails = json_decode($wpDetails, true);
+            }
+            if (is_array($wpDetails)) {
+                foreach ($wpDetails as $detail) {
+                    if ($detail['npwp'] == $npwpCode) {
+                        $this->inputs['npwp_code'] = $detail['npwp'];
+                        $this->inputs['npwp_name'] = $detail['wp_name'];
+                        $this->inputs['npwp_addr'] = $detail['wp_location'];
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public function refreshNpwpOptions()
+    {
+        if (!empty($this->inputs['partner_id'])) {
+            $partner = Partner::find($this->inputs['partner_id']);
+            if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
+                $wpDetails = $partner->PartnerDetail->wp_details;
+                if (is_string($wpDetails)) {
+                    $wpDetails = json_decode($wpDetails, true);
+                }
+                if (is_array($wpDetails) && !empty($wpDetails)) {
+                    $this->npwpOptions = array_map(function ($item) {
+                        return [
+                            'label' => $item['npwp'] . ' - ' . $item['wp_name'] . ' - ' . $item['wp_location'],
+                            'value' => $item['npwp'],
+                            'name' => $item['wp_name'],
+                            'address' => $item['wp_location'],
+                        ];
+                    }, $wpDetails);
+                } else {
+                    $this->npwpOptions = [];
+                }
+            } else {
+                $this->npwpOptions = [];
             }
         }
     }

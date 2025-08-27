@@ -92,11 +92,12 @@
                     <x-ui-table id="Table">
                         <!-- Define table headers -->
                         <x-slot name="headers">
-                            <th style="width: 50px; text-align: center;">No</th>
-                            <th style="width: 150px; text-align: center;">Tipe Pembayaran</th>
-                            <th style="width: 150px; text-align: center;">Keterangan</th>
+                            <th style="width: 25px; text-align: center;">No</th>
+                            <th style="width: 150px; text-align: center;">Rekening Tujuan</th>
                             <th style="width: 150px; text-align: center;">Amount</th>
-                            <th style="width: 70px; text-align: center;">Actions</th>
+                            <th style="width: 150px; text-align: center;">Keterangan (Bank+Nomor Giro)</th>
+                            <th style="width: 150px; text-align: center;">Tanggal</th>
+                            <th style="width: 40px; text-align: center;"></th>
                         </x-slot>
                         <!-- Define table rows -->
                         <x-slot name="rows">
@@ -104,21 +105,22 @@
                                 <tr wire:key="list{{ $input_payment['id'] ?? $key }}">
                                     <td style="text-align: center;">{{ $loop->iteration }}</td>
                                     <td>
-                                        <x-ui-dropdown-select model="input_payments.{{ $key }}.pay_type_code"
-                                            :options="$PaymentType" required="true" :action="$actionValue" enabled="false" />
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <x-ui-text-field model="input_payments.{{ $key }}.bank_reff"
-                                            label="" :action="$actionValue" enabled="false" type="text" />
+                                        <x-ui-dropdown-select model="input_payments.{{ $key }}.bank_code"
+                                            :options="$partnerOptions" required="true" :action="$actionValue" enabled="true" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_payments.{{ $key }}.amt"
-                                            label="" :action="$actionValue" enabled="false" type="number" />
+                                            label="" :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-button :clickEvent="'openPaymentDialog(' . $key . ')'" button-name="" loading="true"
-                                            :action="$actionValue" cssClass="btn-secondary text-light"
-                                            iconPath="edit.svg" />
+                                        <x-ui-text-field model="input_payments.{{ $key }}.bank_reff"
+                                            label="" :action="$actionValue" enabled="true" type="text" />
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_payments.{{ $key }}.bank_date"
+                                            label="" :action="$actionValue" enabled="true" type="date" />
+                                    </td>
+                                    <td style="text-align: center;">
                                         <x-ui-button :clickEvent="'deletePaymentItem(' . $key . ')'" button-name="" loading="true"
                                             :action="$actionValue" cssClass="btn-danger text-danger"
                                             iconPath="delete.svg" />
@@ -140,12 +142,13 @@
                     <x-ui-table id="Table">
                         <!-- Define table headers -->
                         <x-slot name="headers">
-                            <th style="width: 50px; text-align: center;">Select</th>
+                            <th style="width: 25px; text-align: center;"></th>
                             <th style="width: 150px; text-align: center;">Nomor Nota</th>
                             <th style="width: 150px; text-align: center;">Tanggal Jatuh tempo</th>
                             <th style="width: 50px; text-align: center;">Total Piutang</th>
+                            <th style="width: 30px; text-align: center;">Adjustment</th>
                             <th style="width: 90px; text-align: center;">Total Bayar</th>
-                            <th style="width: 70px; text-align: center;">Actions</th>
+                            <th style="width: 40px; text-align: center;"></th>
                         </x-slot>
 
                         <!-- Define table rows -->
@@ -172,13 +175,17 @@
                                             label="" :action="$actionValue" enabled="false" type="number"/>
                                     </td>
                                     <td style="text-align: center;">
+                                        <x-ui-text-field model="input_details.{{ $key }}.amt_adjustment" label=""
+                                            :action="$actionValue" enabled="false" type="number" />
+                                    </td>
+                                    <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
                                             :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
-                                            :action="$actionValue" cssClass="btn-danger text-danger"
-                                            iconPath="delete.svg" />
+                                        <x-ui-button :clickEvent="'payAdjustment(' . $key . ')'" button-name="Lunas" loading="true"
+                                            :action="$actionValue" cssClass="btn-primary"
+                                            iconPath="" />
                                     </td>
                                 </tr>
                             @endforeach
@@ -214,95 +221,12 @@
     <x-ui-footer>
         <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true" :action="$actionValue"
             cssClass="btn-danger" iconPath="delete.svg" />
-        <x-ui-button clickEvent="SaveAll" button-name="Save" loading="true" :action="$actionValue"
+        <x-ui-button clickEvent="onValidateAndSave" button-name="Save" loading="true" :action="$actionValue"
             cssClass="btn-primary" iconPath="save.svg" />
     </x-ui-footer>
     <br>
 
-    <x-ui-dialog-box id="PaymentDialogBox" title="Set Payment" width="600px" height="400px"
-        onOpened="openPaymentDialogBox" onClosed="closePaymentDialogBox">
-        <x-slot name="body">
-            <div class="row">
-                <div class="col-md-6">
-                    @if (isset($activePaymentItemKey))
-                        <x-ui-dropdown-select label="{{ $this->trans('Tipe Pembayaran') }}"
-                            model="input_payments.{{ $activePaymentItemKey }}.pay_type_code" :options="$PaymentType"
-                            required="true" :action="$actionValue" onChanged="onPaymentTypeChange" />
-                    @endif
-                </div>
-            </div>
-            <!-- Row untuk tipe CASH (Tunai) -->
-            @if ($isCash === 'true')
-                <div class="row" title="Tunai">
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.amt_tunai"
-                            label="Total Uang" :action="$actionValue" type="number" :enabled="$isCash" />
-                    </div>
-                </div>
-            @endif
-            <!-- Row untuk tipe GIRO -->
-            @if ($isGiro === 'true')
-                <div class="row" title="bank">
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.amt_giro" label="Nilai"
-                            :action="$actionValue" type="number" :enabled="$isGiro" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-dropdown-select model="input_payments.{{ $activePaymentItemKey }}.bank_reff_giro"
-                            label="Bank" :options="$partnerOptions" :action="$actionValue" :enabled="$isGiro" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_reff_no_giro"
-                            label="Nomor" :action="$actionValue" type="text" :enabled="$isGiro" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_duedt_giro"
-                            label="Tanggal" :action="$actionValue" type="date" :enabled="$isGiro" />
-                    </div>
-                </div>
-            @endif
 
-            <!-- Row untuk tipe TRD (Transfer) -->
-            @if ($isTrf === 'true')
-                <div class="row" title="Transfer">
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.amt_trf"
-                            label="Total Transfer" :action="$actionValue" type="number" :enabled="$isTrf" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_reff_transfer"
-                            label="Bank Penerima" :action="$actionValue" type="text" :enabled="$isTrf" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_reff_no_transfer"
-                            label="Nomor Reff" :action="$actionValue" type="text" :enabled="$isTrf" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_duedt_transfer"
-                            label="Tanggal Transfer" :action="$actionValue" type="date" :enabled="$isTrf" />
-                    </div>
-                </div>
-            @endif
-            <!-- Row untuk tipe ADV (Advance) -->
-            @if ($isAdv === 'true')
-                <div class="row" title="Advance">
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.bank_note" label="Advance"
-                            :action="$actionValue" type="text" :enabled="$isAdv" />
-                    </div>
-                    <div class="col-md-3">
-                        <x-ui-text-field model="input_payments.{{ $activePaymentItemKey }}.amt_advance"
-                            label="Amount" :action="$actionValue" type="number" :enabled="$isAdv" />
-                    </div>
-                </div>
-            @endif
-        </x-slot>
-        <x-slot name="footer">
-
-            <x-ui-button clickEvent="confirmPayment" button-name="Save" loading="true" :action="$actionValue"
-                cssClass="btn-primary" />
-        </x-slot>
-    </x-ui-dialog-box>
 </div>
 
 <script>
