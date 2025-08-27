@@ -3,7 +3,7 @@
 namespace App\Models\Base;
 
 use Illuminate\Database\Eloquent\{Model, Factories\HasFactory};
-use Illuminate\Support\Facades\{Schema, Session};
+use Illuminate\Support\Facades\{Schema, Session, Auth};
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\Base\{Attachment};
 use App\Traits\BaseTrait;
@@ -29,7 +29,7 @@ class BaseModel extends Model
     protected static function boot()
     {
         parent::boot();
-        self::bootUpdatesCreatedByAndUpdatedAt();
+        // No longer need to call this manually - Laravel will auto-call bootBaseTrait()
     }
 
     public function getAllColumns()
