@@ -29,7 +29,7 @@
                                     <div class="row">
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                             type="code" :action="$actionValue" required="true" clickEvent="trCodeOnClick"
-                                            buttonName="Nomor Baru" enabled="true" :buttonEnabled="$isPanelEnabled" />
+                                            buttonName="Nomor Baru" enabled="false" :buttonEnabled="$isPanelEnabled" />
                                         <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                             :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     </div>
@@ -42,25 +42,90 @@
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
                                             model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
-                                            required="true" :action="$actionValue"/>
+                                            required="true" :action="$actionValue" />
                                     </div>
                                     <div class="row">
-                                        <x-ui-dropdown-select label="{{ $this->trans('tax_payer') }}" clickEvent=""
-                                            model="inputs.npwp_code" :selectedValue="$inputs['npwp_code']" :options="$npwpOptions"
-                                            required="false" :action="$actionValue" :enabled="$payer" />
+                                        <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}"
+                                            model="inputs.npwp_code" type="string" :selectedValue="$inputs['npwp_code']"
+                                            :options="$npwpOptions" required="false" :action="$actionValue"
+                                            clickEvent="openNpwpDialogBox" buttonName="+"
+                                            onChanged="onTaxPayerChanged" />
+
+                                        <!-- Debug: tampilkan jumlah options -->
+                                        @if (config('app.debug'))
+                                            <div style="font-size: 10px; color: #666;">
+                                                Debug: NPWP Options count: {{ count($npwpOptions ?? []) }}
+                                                @if (!empty($npwpOptions))
+                                                    <br>Options: {{ json_encode($npwpOptions) }}
+                                                @endif
+                                                <br>Selected NPWP: {{ $inputs['npwp_code'] ?? 'none' }}
+                                                <br>Partner ID: {{ $inputs['partner_id'] ?? 'none' }}
+                                            </div>
+                                        @endif
+                                        <script>
+                                            document.addEventListener('livewire:init', () => {
+                                                Livewire.on('refreshSelect2', (event) => {
+                                                    const elementId = event[0];
+                                                    const selectElement = document.getElementById(elementId);
+                                                    if (selectElement) {
+                                                        // Destroy existing Select2 instance
+                                                        if ($(selectElement).hasClass('select2-hidden-accessible')) {
+                                                            $(selectElement).select2('destroy');
+                                                        }
+                                                        // Reinitialize Select2
+                                                        $(selectElement).select2();
+                                                        console.log('Select2 refreshed for:', elementId);
+                                                    }
+                                                });
+
+                                                // Listen for Livewire updates
+                                                Livewire.hook('morph.updated', () => {
+                                                    const selectElement = document.getElementById('inputs_npwp_code');
+                                                    if (selectElement && !$(selectElement).hasClass('select2-hidden-accessible')) {
+                                                        $(selectElement).select2();
+                                                        console.log('Select2 reinitialized after morph update');
+                                                    }
+                                                });
+                                            });
+                                        </script>
+                                        <x-ui-dialog-box id="NpwpDialogBox" title="Form Jenis" width="600px"
+                                            height="400px" onOpened="openNpwpDialogBox" onClosed="closeNpwpDialogBox">
+                                            <x-slot name="body">
+                                                <div class="row">
+                                                    <x-ui-text-field label="{{ $this->trans('NPWP/NIK') }}"
+                                                        model="npwpDetails.npwp" type="text" :action="$actionValue"
+                                                        required="true" capslockMode="true" />
+                                                    <x-ui-text-field label="{{ $this->trans('Nama WP') }}"
+                                                        model="npwpDetails.wp_name" type="text" :action="$actionValue"
+                                                        required="true" capslockMode="true" />
+                                                </div>
+                                                <div class="row">
+                                                    <x-ui-text-field label="{{ $this->trans('Alamat WP') }}"
+                                                        model="npwpDetails.wp_location" type="textarea"
+                                                        :action="$actionValue" required="true" />
+                                                </div>
+                                            </x-slot>
+                                            <x-slot name="footer">
+                                                <x-ui-button clickEvent="saveNpwp" button-name="Save" loading="true"
+                                                    :action="$actionValue" cssClass="btn-primary" iconPath="save.svg" />
+                                            </x-slot>
+                                        </x-ui-dialog-box>
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('Pajak') }}"
                                             model="inputs.tax_code" :options="$SOTax" required="true"
                                             :action="$actionValue" onChanged="onSOTaxChange" />
-                                        <x-ui-dropdown-select label="{{ $this->trans('payment_term') }}"
+                                        <x-ui-dropdown-select label="{{ $this->trans('Termin Pembayaran') }}"
                                             model="inputs.payment_term_id" :options="$paymentTerms" required="true"
                                             :action="$actionValue" onChanged="onPaymentTermChanged" :enabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="{{ $this->trans('due_date') }}" model="inputs.due_date"
-                                            type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                                        <x-ui-text-field label="{{ $this->trans('due_date') }}"
+                                            model="inputs.due_date" type="date" :action="$actionValue" required="true"
+                                            :enabled="$isPanelEnabled" />
                                         <x-ui-text-field label="{{ $this->trans('reff_code') }}"
                                             model="inputs.reff_code" type="text" :action="$actionValue"
                                             required="false" />
+                                        <x-ui-text-field label="Biaya pengiriman" model="inputs.amt_shipcost"
+                                            type="number" :action="$actionValue" required="false" enabled="true" />
                                     </div>
                                 </div>
                             </x-ui-padding>
@@ -90,7 +155,7 @@
                                         <td>
                                             <x-ui-dropdown-search label=""
                                                 model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
-                                                optionValue="id" optionLabel="code,name"
+                                                optionValue="id" optionLabel="code,name,qty_oh,qty_fgi"
                                                 placeHolder="Select material..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
@@ -150,22 +215,22 @@
                     </x-ui-card>
                     <br>
                     <x-ui-footer>
-                        @if($actionValue !== 'Create' && isset($object->id))
-                        <x-ui-button :action="$actionValue"
-                            clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                                'action' => encryptWithSessionKey('Edit'),
-                                'objectId' => encryptWithSessionKey($object->id),
-                            ]) }}"
-                            cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
-                            iconPath="print.svg" />
+                        @if ($actionValue !== 'Create' && isset($object->id))
+                            <x-ui-button :action="$actionValue"
+                                clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($object->id),
+                                ]) }}"
+                                cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
+                                iconPath="print.svg" />
 
-                        <x-ui-button :action="$actionValue"
-                            clickEvent="{{ route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
-                                'action' => encryptWithSessionKey('Edit'),
-                                'objectId' => encryptWithSessionKey($object->id),
-                            ]) }}"
-                            cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
-                            iconPath="print.svg" />
+                            <x-ui-button :action="$actionValue"
+                                clickEvent="{{ route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($object->id),
+                                ]) }}"
+                                cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
+                                iconPath="print.svg" />
                         @endif
 
                         <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"

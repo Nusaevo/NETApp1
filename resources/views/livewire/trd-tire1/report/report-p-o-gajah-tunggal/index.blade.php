@@ -4,20 +4,14 @@
             <div class="container mb-2 mt-2">
                 <div class="row align-items-end">
                     <div class="col-md-3">
-                        <x-ui-dropdown-select label="Kode Program" model="selectedRewardCode" :options="$rewardOptions" action="Edit" />
-                    </div>
-                    <div class="col-md-3">
                         <x-ui-text-field label="Tanggal Awal" model="startPrintDate" type="date" action="Edit" />
                     </div>
                     <div class="col-md-3">
                         <x-ui-text-field label="Tanggal Akhir" model="endPrintDate" type="date" action="Edit" />
                     </div>
-                    {{-- <div class="col-md-3">
-                        <x-ui-dropdown-select label="Brand" model="selectedBrand" :options="$brandOptions" action="Edit" />
-                    </div>
                     <div class="col-md-3">
-                        <x-ui-dropdown-select label="Category" model="selectedCategory" :options="$categoryOptions" action="Edit" />
-                    </div> --}}
+                        <x-ui-dropdown-select label="Kode Program" model="selectedRewardCode" :options="$rewardOptions" action="Edit" onChanged="onSrCodeChanged" />
+                    </div>
                     <div class="col-md-2">
                         <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit" cssClass="btn-primary w-100 mb-2" />
                         <button type="button" class="btn btn-light text-capitalize border-0 w-100" onclick="printReport()">

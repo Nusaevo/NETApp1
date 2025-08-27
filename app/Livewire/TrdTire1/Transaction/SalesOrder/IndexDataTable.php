@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{DelivPacking, OrderHdr, OrderDtl};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -72,7 +72,7 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                     return '-';
                 }),
-            Column::make($this->trans('Total Barang'), 'total_qty')
+            Column::make($this->trans('Qty Barang'), 'total_qty')
                 ->label(function ($row) {
                     return $row->total_qty;
                 })
@@ -86,9 +86,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row) {
                     $statusMap = [
                         Status::OPEN => 'Open',
-                        Status::PRINT => 'Print',
-                        Status::SHIP => 'Ship',
-                        Status::CANCEL => 'Cancel',
+                        Status::PRINT => 'Tercetak',
+                        Status::SHIP => 'Terkirim',
+                        Status::CANCEL => 'Batal',
                     ];
                     return $statusMap[$value] ?? 'Unknown';
                 }),

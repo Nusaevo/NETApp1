@@ -415,7 +415,7 @@ class Detail extends BaseComponent
             // $this->inputs['id'] dan tr_code sudah di-set di atas
 
             $detailData = $this->prepareBatchCode();
-            // dd($detailData);
+            dd($detailData);
 
             if ($this->actionValue == 'Edit') {
                 app(InventoryService::class)->updInventory($this->inputs, $detailData, $this->object->id);
@@ -535,6 +535,7 @@ class Detail extends BaseComponent
 
             if ($tr_type === 'IA') {
                 $result[] = [
+                    // 'id'        => 0,
                     'tr_seq'    => $seq,
                     'matl_id'   => $matlId,
                     'matl_code' => $matlCode,
@@ -546,6 +547,8 @@ class Detail extends BaseComponent
                 ];
             } else {
                 $result[] = [
+                    // 'id'        => 0,
+                    // 'id2'       => 0,
                     'tr_seq'    => $seq,
                     'matl_id'   => $matlId,
                     'matl_code' => $matlCode,

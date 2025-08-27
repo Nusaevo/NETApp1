@@ -1,0 +1,1550 @@
+/* Enhanced DataTable UI Styles dengan tema konsisten */
+
+:root {
+    --dt-primary: #495057;
+    --dt-primary-hover: #343a40;
+    --dt-secondary: #6c757d;
+    --dt-accent: #007bff;
+    --dt-accent-hover: #0056b3;
+    --dt-success: #28a745;
+    --dt-danger: #dc3545;
+    --dt-warning: #ffc107;
+    --dt-light: #f8f9fa;
+    --dt-border: #dee2e6;
+    --dt-border-light: #f1f3f4;
+}
+
+/* Main datatable wrapper */
+.datatable-wrapper {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    border: 1px solid var(--dt-border-light);
+}
+
+/* Table styling dengan jarak row yang dikurangi */
+.table.data-table {
+    margin: 0;
+    border: none;
+    font-size: 0.875rem;
+    background: #fff;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.data-table th,
+.data-table td {
+    border: none;
+    border-bottom: 1px solid var(--dt-border-light);
+    padding: 0.2rem 0.5rem; /* Dikurangi lebih kecil lagi dari 0.6rem ke 0.4rem */
+    vertical-align: middle;
+    line-height: 0.75; /* Lebih compact line height */
+}
+
+/* Enhanced toolbar - single row layout */
+.datatable-toolbar {
+    background: #fff;
+    border-bottom: 1px solid #f1f3f4;
+    padding: 1rem 1.5rem;
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 65px;
+}
+
+/* Force all direct children to be in same row */
+.datatable-toolbar > .d-md-flex {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    margin-bottom: 0 !important;
+}
+
+/* Left section - Create, Filter, Bulk Actions, Column Selector */
+.datatable-toolbar > .d-md-flex:first-child {
+    flex: 1;
+    justify-content: flex-start;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Right section - Per Page selector */
+.datatable-toolbar > .d-md-flex:last-child {
+    gap: 0.75rem;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Force all toolbar items to be inline */
+.datatable-toolbar .mb-3,
+.datatable-toolbar .mb-md-0 {
+    margin-bottom: 0 !important;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Input group styling in toolbar */
+.datatable-toolbar .input-group {
+    display: flex !important;
+    align-items: center;
+    gap: 0;
+    flex-shrink: 0;
+    width: auto !important;
+}
+
+/* Fix dropdown button groups to be inline */
+.datatable-toolbar .btn-group {
+    display: flex !important;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.datatable-toolbar .btn-group .dropdown {
+    display: flex !important;
+    align-items: center;
+}
+
+/* Create button enhancement dengan tema konsisten */
+.datatable-toolbar .btn-primary {
+    background: linear-gradient(45deg, var(--dt-primary), var(--dt-primary-hover));
+    border: none;
+    border-radius: 8px;
+    padding: 0.625rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(73, 80, 87, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: none;
+    letter-spacing: 0.025em;
+}
+
+.datatable-toolbar .btn-primary:hover {
+    background: linear-gradient(45deg, var(--dt-primary-hover), #212529);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(73, 80, 87, 0.4);
+    color: #ffffff;
+}
+
+.datatable-toolbar .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(73, 80, 87, 0.3);
+}
+
+/* Secondary buttons (Edit, View, Delete) dengan warna tema */
+.datatable-wrapper .btn-success {
+    background: linear-gradient(45deg, var(--dt-success), #1e7e34);
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25);
+}
+
+.datatable-wrapper .btn-success:hover {
+    background: linear-gradient(45deg, #1e7e34, #155724);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.datatable-wrapper .btn-info {
+    background: linear-gradient(45deg, var(--dt-accent), var(--dt-accent-hover));
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.25);
+}
+
+.datatable-wrapper .btn-info:hover {
+    background: linear-gradient(45deg, var(--dt-accent-hover), #004085);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.datatable-wrapper .btn-danger {
+    background: linear-gradient(45deg, var(--dt-danger), #c82333);
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+}
+
+.datatable-wrapper .btn-danger:hover {
+    background: linear-gradient(45deg, #c82333, #bd2130);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.datatable-wrapper .btn-warning {
+    background: linear-gradient(45deg, var(--dt-warning), #e0a800);
+    border: none;
+    color: #212529;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.25);
+}
+
+.datatable-wrapper .btn-warning:hover {
+    background: linear-gradient(45deg, #e0a800, #d39e00);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+}
+
+.datatable-wrapper .btn-secondary {
+    background: linear-gradient(45deg, var(--dt-secondary), #545b62);
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.25);
+}
+
+.datatable-wrapper .btn-secondary:hover {
+    background: linear-gradient(45deg, #545b62, #484e53);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+}
+
+/* Outline buttons dengan tema */
+.datatable-wrapper .btn-outline-primary {
+    border: 2px solid var(--dt-primary);
+    color: var(--dt-primary);
+    background: transparent;
+}
+
+.datatable-wrapper .btn-outline-primary:hover {
+    background: var(--dt-primary);
+    border-color: var(--dt-primary);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.datatable-wrapper .btn-outline-secondary {
+    border: 2px solid var(--dt-secondary);
+    color: var(--dt-secondary);
+    background: transparent;
+}
+
+.datatable-wrapper .btn-outline-secondary:hover {
+    background: var(--dt-secondary);
+    border-color: var(--dt-secondary);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* Filter button styling dengan tema */
+.datatable-toolbar .dropdown-toggle {
+    background: var(--dt-light);
+    border: 1px solid var(--dt-border);
+    color: var(--dt-primary);
+    border-radius: 8px;
+    padding: 0.625rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-width: 100px;
+    white-space: nowrap;
+}
+
+.datatable-toolbar .dropdown-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+}
+
+.datatable-toolbar .dropdown-toggle:hover {
+    background: var(--dt-primary);
+    border-color: var(--dt-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(73, 80, 87, 0.25);
+    color: #ffffff;
+}
+
+.datatable-toolbar .dropdown-toggle:hover::before {
+    left: 100%;
+}
+
+/* Bulk Actions dropdown styling - make it wider */
+.datatable-toolbar .dropdown .dropdown-menu {
+    min-width: 220px !important;
+    width: auto !important;
+    border: none;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    padding: 0.75rem 0;
+    margin-top: 0.5rem;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+    transform: none !important;
+    z-index: 1050;
+}
+
+/* Override Bootstrap dropdown-menu-end positioning */
+.datatable-toolbar .dropdown-menu.dropdown-menu-end {
+    min-width: 280px !important;
+    left: 0 !important;
+    right: auto !important;
+    transform: none !important;
+    position: absolute !important;
+    top: 100% !important;
+}
+
+/* Column selector dropdown - make it wider too */
+.datatable-toolbar .dropdown-menu {
+    min-width: 200px !important;
+    max-height: 300px;
+    overflow-y: auto;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    transform: none !important;
+    margin-top: 0.25rem !important;
+}
+
+/* Fix dropdown positioning for both types */
+.datatable-toolbar .dropdown {
+    position: relative !important;
+}
+
+.datatable-toolbar .dropdown .dropdown-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+    right: auto !important;
+    transform: none !important;
+    margin-top: 0 !important;
+    z-index: 1060;
+}
+
+/* Bulk actions dropdown items */
+.datatable-toolbar .dropdown-item {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.datatable-toolbar .dropdown-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+    transition: left 0.3s;
+}
+
+/* Disabled hover effects for dropdown items */
+/*
+.datatable-toolbar .dropdown-item:hover {
+    background: linear-gradient(135deg, #f8f9fb 0%, #e3f2fd 100%);
+    color: #007bff;
+    padding-left: 2rem;
+    transform: translateX(8px);
+}
+
+.datatable-toolbar .dropdown-item:hover::before {
+    left: 100%;
+}
+*/
+
+/* Column selector form checks in toolbar dropdown */
+.datatable-toolbar .dropdown-menu .form-check {
+    padding: 0.625rem 1.25rem;
+    margin: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.datatable-toolbar .dropdown-menu .form-check::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+    transition: left 0.3s;
+}
+
+/* Disabled hover effects for form-check items */
+/*
+.datatable-toolbar .dropdown-menu .form-check:hover {
+    background: linear-gradient(135deg, #f8f9fb 0%, #e3f2fd 100%);
+    transform: translateX(4px);
+}
+
+.datatable-toolbar .dropdown-menu .form-check:hover::before {
+    left: 100%;
+}
+*/
+
+.datatable-toolbar .dropdown-menu .form-check-input {
+    margin-top: 0.3125rem;
+    border-radius: 4px;
+    border: 2px solid #ced4da;
+    transition: all 0.3s ease;
+}
+
+.datatable-toolbar .dropdown-menu .form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+.datatable-toolbar .dropdown-menu .form-check-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+/* Disabled hover effect for form-check label */
+/*
+.datatable-toolbar .dropdown-menu .form-check:hover .form-check-label {
+    color: #007bff;
+}
+*/
+
+/* Column selector button */
+.datatable-toolbar .dropdown:nth-child(2) .dropdown-toggle {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.datatable-toolbar .dropdown:nth-child(2) .dropdown-toggle:hover {
+    background: #ffeaa7;
+    border-color: #ffdd57;
+}
+
+/* Per-page selector */
+.datatable-toolbar .form-select {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 0.625rem 2.5rem 0.625rem 1rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 100px;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 12px 12px;
+}
+
+.datatable-toolbar .form-select:focus {
+    border-color: var(--dt-accent);
+    box-shadow: 0 0 0 3px rgba(73, 80, 87, 0.15);
+    transform: translateY(-1px);
+    background-color: #fff;
+}
+
+.datatable-toolbar .form-select:hover {
+    border-color: var(--dt-secondary);
+    background-color: var(--dt-light);
+}
+
+/* Filter panel styling */
+.datatable-filters {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+.datatable-filters .container {
+    max-width: 100%;
+}
+
+.datatable-filters .form-control,
+.datatable-filters .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+    font-size: 0.875rem;
+}
+
+.datatable-filters .form-control:focus,
+.datatable-filters .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.datatable-filters label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Table styling */
+.laravel-livewire-table {
+    margin: 0;
+    border: none;
+    font-size: 0.875rem;
+}
+
+/* Header styling dengan tema konsisten */
+.data-table-header {
+    background: linear-gradient(135deg, var(--dt-light) 0%, #e9ecef 100%);
+    border-bottom: 2px solid var(--dt-border);
+}
+
+.data-table-header th {
+    background: linear-gradient(135deg, var(--dt-light) 0%, #e9ecef 100%);
+    border: none;
+    border-bottom: 2px solid var(--dt-border);
+    padding: 0.5rem 0.75rem; /* Dikurangi dari 0.75rem ke 0.5rem */
+    font-weight: 600;
+    color: var(--dt-primary);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    transition: all 0.3s ease;
+    line-height: 1.2; /* Lebih compact */
+}
+
+.data-table-header th:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, var(--dt-border) 100%);
+    color: var(--dt-accent);
+}
+
+/* Sortable column styling dengan tema */
+.laravel-livewire-tables-cursor {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.laravel-livewire-tables-cursor:hover {
+    color: var(--dt-accent);
+}
+
+/* Row styling dengan jarak yang dikurangi */
+.data-table-body tr {
+    border: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    min-height: 40px; /* Dikurangi dari 45px ke 40px untuk lebih compact */
+}
+
+.data-table-body tr:hover {
+    background: linear-gradient(135deg, #f8f9fb 0%, #e3f2fd 100%) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(73, 80, 87, 0.1);
+    z-index: 1;
+}
+
+.data-table-body td {
+    border: none;
+    padding: 0.4rem 0.75rem; /* Dikurangi dari 0.5rem ke 0.4rem */
+    vertical-align: middle;
+    border-bottom: 1px solid var(--dt-border-light);
+    transition: all 0.3s ease;
+    line-height: 1.3; /* Compact line spacing */
+}
+
+.data-table-body tr:hover td {
+    border-bottom-color: rgba(73, 80, 87, 0.2);
+}
+
+/* Striped rows enhancement */
+.rappasoft-striped-row.bg-white {
+    background: #ffffff !important;
+}
+
+.rappasoft-striped-row.bg-light {
+    background: #f8f9fa !important;
+}
+
+/* Links in table dengan tema */
+.data-table-body a {
+    color: var(--dt-accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+}
+
+.data-table-body a:hover {
+    color: var(--dt-accent-hover);
+    background: rgba(73, 80, 87, 0.1);
+    text-decoration: none;
+}
+
+/* Status icons enhancement */
+.text-success {
+    color: #28a745 !important;
+    filter: drop-shadow(0 1px 2px rgba(40, 167, 69, 0.25));
+}
+
+/* Pagination styling */
+.pagination {
+    margin: 0;
+    gap: 0.25rem;
+}
+
+.pagination .page-item .page-link {
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin: 0 0.125rem;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(45deg, var(--dt-primary), var(--dt-primary-hover));
+    border-color: var(--dt-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(73, 80, 87, 0.25);
+}
+
+.pagination .page-item:not(.active) .page-link:hover {
+    background: var(--dt-light);
+    border-color: var(--dt-secondary);
+    color: var(--dt-accent);
+    transform: translateY(-1px);
+}
+
+.pagination .page-item.disabled .page-link {
+    background: var(--dt-light);
+    border-color: #e9ecef;
+    color: var(--dt-secondary);
+}
+
+/* Pagination info text dengan tema */
+.datatable-wrapper .text-muted {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dt-secondary) !important;
+}
+
+.datatable-wrapper strong {
+    color: var(--dt-primary);
+    font-weight: 600;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+    .datatable-toolbar {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+        padding: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .datatable-toolbar > .d-md-flex {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .datatable-toolbar .mb-3,
+    .datatable-toolbar .mb-md-0 {
+        width: auto !important;
+        flex: 0 0 auto;
+    }
+
+    .datatable-toolbar .dropdown,
+    .datatable-toolbar .input-group {
+        min-width: 120px;
+    }
+
+    .datatable-filters .row > div {
+        margin-bottom: 1rem;
+    }
+
+    .data-table-header th,
+    .data-table-body td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Desktop specific improvements */
+@media (min-width: 769px) {
+    .datatable-toolbar {
+        flex-wrap: nowrap;
+    }
+
+    .datatable-toolbar > .d-md-flex:first-child {
+        display: flex !important;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+        flex-wrap: nowrap;
+    }
+
+    .datatable-toolbar > .d-md-flex:last-child {
+        display: flex !important;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+        flex-wrap: nowrap;
+    }
+
+    /* Ensure all items in left section are inline */
+    .datatable-toolbar > .d-md-flex:first-child > * {
+        flex-shrink: 0;
+        margin-bottom: 0 !important;
+    }
+}
+
+/* Loading states */
+.datatable-wrapper [wire\:loading] {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.datatable-wrapper [wire\:loading]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Enhanced opacity transitions */
+.opacity-50 {
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth hover effects for all buttons */
+.datatable-wrapper .btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.datatable-wrapper .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.datatable-wrapper .btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.datatable-wrapper .btn:not(:hover) {
+    transform: translateY(0);
+}
+
+.datatable-wrapper .btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Enhanced single-row toolbar layout */
+.datatable-toolbar {
+    background: #fff;
+    border-bottom: 1px solid #f1f3f4;
+    padding: 1rem 1.5rem;
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 65px;
+}
+
+/* Critical: Override Livewire's default flexbox behavior */
+.datatable-toolbar .d-md-flex {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 0 !important;
+    gap: 1rem;
+    flex-wrap: nowrap;
+}
+
+/* Left toolbar section - all action buttons */
+.datatable-toolbar > .d-md-flex:first-child {
+    flex: 1;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+    order: 1;
+}
+
+/* Right toolbar section - per page selector */
+.datatable-toolbar > .d-md-flex:last-child {
+    gap: 0.75rem;
+    justify-content: flex-end;
+    align-items: center;
+    order: 2;
+    flex-shrink: 0;
+}
+
+/* Force all child elements to be inline */
+.datatable-toolbar .mb-3,
+.datatable-toolbar .mb-md-0 {
+    margin-bottom: 0 !important;
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    height: 38px; /* Fixed height for alignment */
+}
+
+/* Input group fixes */
+.datatable-toolbar .input-group {
+    display: flex !important;
+    align-items: center;
+    gap: 0;
+    width: auto !important;
+    flex: 0 0 auto;
+}
+
+/* Dropdown containers */
+.datatable-toolbar .dropdown {
+    display: flex !important;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+/* Bulk Actions specific styling - wider dropdown */
+.datatable-toolbar .dropdown:has([id*="bulkActions"]) .dropdown-menu,
+.datatable-toolbar .dropdown:has(.dropdown-toggle:contains("Aksi")) .dropdown-menu {
+    min-width: 280px !important;
+    width: auto !important;
+}
+
+/* Filter button with badge */
+.datatable-toolbar .dropdown-toggle .badge {
+    margin-left: 0.5rem;
+    background: #007bff;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+}
+
+/* Per page selector in right section */
+.datatable-toolbar .ms-0.ms-md-2 {
+    margin-left: 0 !important;
+    display: flex;
+    align-items: center;
+}
+
+/* Enhanced search input in toolbar */
+.datatable-search-input {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    min-width: 200px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff;
+}
+
+.datatable-search-input:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    background: #fff;
+    transform: translateY(-1px);
+}
+
+.datatable-search-input::placeholder {
+    color: #6c757d;
+    opacity: 0.8;
+}
+
+/* Filter section when expanded */
+.datatable-filters {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 200px;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+}
+
+/* Enhanced form elements in filters */
+.datatable-filters .form-control,
+.datatable-filters .form-select {
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.datatable-filters .form-control:focus,
+.datatable-filters .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    background: #fff;
+}
+
+/* Better spacing for filter items */
+.datatable-filters .space-y-1 {
+    margin-bottom: 1.5rem;
+}
+
+.datatable-filters .space-y-1:last-child {
+    margin-bottom: 0;
+}
+
+/* Pagination styling */
+.pagination {
+    margin: 0;
+    gap: 0.25rem;
+}
+
+.pagination .page-item .page-link {
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 0.625rem 0.875rem;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 0 0.125rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.pagination .page-item .page-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+    transition: left 0.3s;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border-color: #007bff;
+    color: white;
+    box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+    background: #f8f9fb;
+    border-color: #80bdff;
+    color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.pagination .page-item:not(.active):not(.disabled) .page-link:hover::before {
+    left: 100%;
+}
+
+.pagination .page-item.disabled .page-link {
+    background: #f8f9fa;
+    border-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Improve table footer */
+.datatable-wrapper .row.mt-3 {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    margin: 0;
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid #f1f3f4;
+}
+
+/* Enhanced typography */
+.datatable-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Icon styling */
+.datatable-wrapper .bi {
+    vertical-align: -0.125em;
+}
+
+/* Loading states */
+.datatable-wrapper [wire\:loading] {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Better visual hierarchy - tombol kecil dengan tema */
+.datatable-wrapper .btn-sm {
+    padding: 0.25rem 0.5rem; /* Lebih compact */
+    font-size: 0.75rem;
+    border-radius: 6px;
+    font-weight: 500;
+    min-width: 32px;
+    height: 32px; /* Fixed height untuk konsistensi */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Smooth hover effects for all buttons dengan tema */
+.datatable-wrapper .btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.datatable-wrapper .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Enhanced dropdown states dengan tema */
+.datatable-toolbar .dropdown.show .dropdown-toggle {
+    background: var(--dt-primary);
+    border-color: var(--dt-primary);
+    box-shadow: 0 2px 8px rgba(73, 80, 87, 0.25);
+    color: #ffffff;
+}
+
+/* Better visual feedback dengan tema */
+.datatable-wrapper .form-check-input:checked {
+    background-color: var(--dt-accent);
+    border-color: var(--dt-accent);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.25);
+}
+
+/* ACTION BUTTONS di dalam table rows */
+.data-table-body .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    font-weight: 500;
+    min-width: 28px;
+    height: 28px;
+    margin: 0 1px;
+    border: 1px solid transparent;
+}
+
+/* Edit button - Success theme */
+.data-table-body .btn-success.btn-sm {
+    background: linear-gradient(45deg, var(--dt-success), #1e7e34);
+    border: none;
+    color: #ffffff;
+}
+
+.data-table-body .btn-success.btn-sm:hover {
+    background: linear-gradient(45deg, #1e7e34, #155724);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* View button - Info theme */
+.data-table-body .btn-info.btn-sm {
+    background: linear-gradient(45deg, var(--dt-accent), var(--dt-accent-hover));
+    border: none;
+    color: #ffffff;
+}
+
+.data-table-body .btn-info.btn-sm:hover {
+    background: linear-gradient(45deg, var(--dt-accent-hover), #004085);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Delete button - Danger theme */
+.data-table-body .btn-danger.btn-sm {
+    background: linear-gradient(45deg, var(--dt-danger), #c82333);
+    border: none;
+    color: #ffffff;
+}
+
+.data-table-body .btn-danger.btn-sm:hover {
+    background: linear-gradient(45deg, #c82333, #bd2130);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 3px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Secondary action buttons */
+.data-table-body .btn-secondary.btn-sm {
+    background: linear-gradient(45deg, var(--dt-secondary), #545b62);
+    border: none;
+    color: #ffffff;
+}
+
+.data-table-body .btn-secondary.btn-sm:hover {
+    background: linear-gradient(45deg, #545b62, #484e53);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 3px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* Outline buttons di table */
+.data-table-body .btn-outline-primary.btn-sm {
+    border: 1.5px solid var(--dt-primary);
+    color: var(--dt-primary);
+    background: transparent;
+}
+
+.data-table-body .btn-outline-primary.btn-sm:hover {
+    background: var(--dt-primary);
+    border-color: var(--dt-primary);
+    color: #ffffff;
+}
+
+.data-table-body .btn-outline-danger.btn-sm {
+    border: 1.5px solid var(--dt-danger);
+    color: var(--dt-danger);
+    background: transparent;
+}
+
+.data-table-body .btn-outline-danger.btn-sm:hover {
+    background: var(--dt-danger);
+    border-color: var(--dt-danger);
+    color: #ffffff;
+}
+
+/* Consistent spacing */
+.datatable-wrapper .mb-3,
+.datatable-wrapper .mb-md-0 {
+    margin-bottom: 1rem !important;
+}
+
+@media (min-width: 768px) {
+    .datatable-wrapper .mb-md-0 {
+        margin-bottom: 0 !important;
+    }
+}
+
+/* Additional enhancements for modern UI */
+
+/* Better button groups in toolbar */
+.datatable-toolbar .btn-group {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.datatable-toolbar .btn-group .btn {
+    border-radius: 0;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.datatable-toolbar .btn-group .btn:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.datatable-toolbar .btn-group .btn:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-right: none;
+}
+
+/* Enhanced focus states for accessibility */
+.datatable-wrapper .btn:focus,
+.datatable-wrapper .form-control:focus,
+.datatable-wrapper .form-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15) !important;
+    z-index: 2;
+    position: relative;
+}
+
+/* Custom scrollbar for table */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #ced4da, #adb5bd);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #adb5bd, #6c757d);
+}
+
+/* SUPER AGGRESSIVE DROPDOWN POSITIONING OVERRIDE */
+
+/* Override any possible CSS property that could affect dropdown position */
+.datatable-toolbar .dropdown-menu,
+.datatable-toolbar .dropdown-menu.show,
+.datatable-toolbar .dropdown-menu.dropdown-menu-end {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    translate: none !important;
+    inset: 0 auto auto 0 !important;
+    margin: 4px 0 0 0 !important;
+    z-index: 1060 !important;
+}
+
+/* Override inline styles with maximum specificity */
+.datatable-toolbar .dropdown-menu[style],
+.datatable-toolbar .dropdown-menu.show[style],
+.datatable-toolbar .dropdown-menu.dropdown-menu-end[style] {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    translate: none !important;
+    inset: 0 auto auto 0 !important;
+    margin: 4px 0 0 0 !important;
+}
+
+/* Force reset of Popper.js attributes */
+.datatable-toolbar .dropdown[data-popper-reference-hidden] .dropdown-menu,
+.datatable-toolbar .dropdown[data-popper-escaped] .dropdown-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Status icons enhancement */
+.text-success {
+    color: #28a745 !important;
+    filter: drop-shadow(0 1px 2px rgba(40, 167, 69, 0.25));
+    transition: all 0.3s ease;
+}
+
+.text-success:hover {
+    filter: drop-shadow(0 2px 4px rgba(40, 167, 69, 0.4));
+    transform: scale(1.05);
+}
+
+/* Icon styling */
+.datatable-wrapper .bi {
+    vertical-align: -0.125em;
+    transition: all 0.3s ease;
+}
+
+.datatable-wrapper .btn:hover .bi {
+    transform: scale(1.1);
+}
+
+/* Enhanced typography for modern look */
+.datatable-wrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Better visual hierarchy in toolbar */
+.datatable-toolbar .btn-sm {
+    padding: 0.4375rem 0.875rem;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* Micro-interactions for better UX */
+.datatable-wrapper .btn,
+.datatable-wrapper .form-control,
+.datatable-wrapper .form-select {
+    will-change: transform, box-shadow;
+}
+
+/* Enhanced loading state with pulse effect */
+.datatable-wrapper [wire\:loading] {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.datatable-wrapper [wire\:loading]::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Pulse animation for active states */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+}
+
+.datatable-wrapper .btn:active {
+    animation: pulse 0.3s;
+}
+
+/* CSS OVERRIDES untuk memaksa dropdown positioning */
+
+/* Target semua kemungkinan selector dropdown dalam datatable toolbar */
+.datatable-toolbar .dropdown-menu,
+.datatable-toolbar .btn-group .dropdown-menu,
+.datatable-toolbar [class*="dropdown-menu"] {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(0, 4px) !important;
+    translate: none !important;
+    inset: auto !important;
+    margin: 0 !important;
+    z-index: 1060 !important;
+    width: auto !important;
+    min-width: 200px !important;
+}
+
+/* Khusus untuk bulk actions yang lebih lebar */
+.datatable-toolbar .dropdown-menu.dropdown-menu-end,
+.datatable-toolbar [aria-labelledby*="bulkActions"] {
+    min-width: 280px !important;
+    max-width: 350px !important;
+}
+
+/* Override SEMUA inline styles yang mungkin dari JavaScript */
+.datatable-toolbar .dropdown-menu[style*="transform"],
+.datatable-toolbar .dropdown-menu[style*="translate3d"],
+.datatable-toolbar .dropdown-menu[style*="inset"],
+.datatable-toolbar .dropdown-menu[style*="position"],
+.datatable-toolbar .dropdown-menu[data-popper-placement] {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(0, 4px) !important;
+    translate: none !important;
+    inset: auto !important;
+    margin: 0 !important;
+}
+
+/* Paksa dropdown container untuk relative positioning */
+.datatable-toolbar .dropdown {
+    position: relative !important;
+    display: inline-block !important;
+}
+
+.datatable-toolbar .dropdown.show {
+    position: relative !important;
+}
+
+/* Override Bootstrap CSS dengan specificity tinggi */
+.datatable-toolbar .dropdown.show .dropdown-menu.show {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+    transform: translate(0, 4px) !important;
+    inset: auto !important;
+}
+
+/* CRITICAL OVERRIDES for Perfect Toolbar Alignment */
+
+/* Force all toolbar items to be on same line */
+.datatable-toolbar > .d-md-flex > * {
+    margin-bottom: 0 !important;
+    align-self: center;
+    display: flex !important;
+    align-items: center;
+}
+
+/* Specific targeting for problematic elements */
+.datatable-toolbar .input-group > div {
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Force buttons to same height */
+.datatable-toolbar .btn,
+.datatable-toolbar .dropdown-toggle,
+.datatable-toolbar .form-select {
+    height: 38px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-sizing: border-box;
+}
+
+/* Remove any unwanted spacing */
+.datatable-toolbar .input-group > div > span {
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+}
+
+/* Fix dropdown positioning for both types */
+.datatable-toolbar .dropdown {
+    position: relative !important;
+}
+
+/* Per page selector styling */
+.datatable-toolbar .form-select {
+    min-width: 80px !important;
+    max-width: 100px;
+}
+
+/* Flexbox fixes for perfect alignment */
+.datatable-toolbar {
+    align-items: center !important;
+}
+
+.datatable-toolbar > .d-md-flex {
+    align-items: center !important;
+    height: 38px;
+}
+
+/* Remove Bootstrap's default margins that cause misalignment */
+.datatable-toolbar .me-3,
+.datatable-toolbar .me-md-3,
+.datatable-toolbar .ms-0,
+.datatable-toolbar .ms-md-2 {
+    margin: 0 !important;
+}
+
+/* ULTIMATE DROPDOWN POSITIONING FIX */
+
+/* Force override ANY inline styles from JavaScript */
+.datatable-toolbar .dropdown-menu {
+    transform: none !important;
+    will-change: auto !important;
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    right: auto !important;
+    inset: auto !important;
+    margin: 0 !important;
+}
+
+/* Nuclear option - override ALL possible JS positioning */
+.datatable-toolbar .dropdown-menu[style] {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    translate: none !important;
+    inset: auto !important;
+    margin: 0 !important;
+}
+
+/* Prevent Popper.js or Bootstrap from overriding */
+.datatable-toolbar .dropdown-menu[data-popper-placement],
+.datatable-toolbar .dropdown-menu[style*="position"],
+.datatable-toolbar .dropdown-menu[style*="transform"],
+.datatable-toolbar .dropdown-menu[style*="translate3d"],
+.datatable-toolbar .dropdown-menu[style*="inset"],
+.datatable-toolbar .dropdown-menu[style*="top"],
+.datatable-toolbar .dropdown-menu[style*="left"],
+.datatable-toolbar .dropdown-menu[style*="right"],
+.datatable-toolbar .dropdown-menu[style*="bottom"] {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    translate: none !important;
+    inset: auto !important;
+    margin: 0 !important;
+}
+
+/* Specific fix for bulk actions dropdown-menu-end with Popper */
+.datatable-toolbar .dropdown-menu-end,
+.datatable-toolbar .dropdown-menu.dropdown-menu-end {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    translate: none !important;
+    inset: auto !important;
+    margin: 0 !important;
+}
+
+/* Force dropdown container to be relative positioned */
+.datatable-toolbar .dropdown.show {
+    position: relative !important;
+}
+
+/* Override Bootstrap 5 dropdown positioning classes */
+.datatable-toolbar .dropdown-menu.show {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    translate: none !important;
+    inset: auto !important;
+}

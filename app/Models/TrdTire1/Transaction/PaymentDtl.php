@@ -49,6 +49,12 @@ class PaymentDtl extends BaseModel
         return $query->where('trhdr_id', $id)
             ->where('tr_type', $trType);
     }
+
+    public static function getNextTrSeq(int $trhdrId): int
+    {
+        $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
+        return ($lastSeq ?? 0) + 1;
+    }
     #endregion
 
 

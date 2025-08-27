@@ -55,7 +55,7 @@ class MasterService extends BaseService
 
     public function getWarehouse()
     {
-        $data = $this->getConfigData('WAREHOUSE_LOC', null);
+        $data = $this->getConfigData('MWAREHOUSE_LOCL1', null);
         return $this->mapData($data);
     }
 
@@ -172,6 +172,7 @@ class MasterService extends BaseService
             ];
         })->toArray();
     }
+
     public function getPaymentTerm()
     {
         $data = $this->getConfigData('MPAYMENT_TERMS');
@@ -184,6 +185,7 @@ class MasterService extends BaseService
         })->toArray();
         return $payments;
     }
+
     public function getPaymentTermById($id)
     {
         $data = $this->mainConnection

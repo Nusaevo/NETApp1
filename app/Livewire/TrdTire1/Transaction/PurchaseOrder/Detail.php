@@ -54,6 +54,10 @@ class Detail extends BaseComponent
     public $materialCategory = null; // Tambahan: untuk menyimpan category hasil mapping sales_type
     public $materialQuery = "";
 
+    // Properties untuk komponen dropdown search multiple select
+    public $items = [];
+    public $selectedItems = [];
+
     protected $masterService;
     protected $orderService;
     protected $inventoryService;
@@ -117,6 +121,18 @@ class Detail extends BaseComponent
         //     $this->salesTypeOnChanged();
         // }
 
+        // Data dummy untuk komponen dropdown search multiple select
+        $this->items = [
+            '1' => 'Ban Michelin 205/55R16',
+            '2' => 'Ban Bridgestone 195/65R15',
+            '3' => 'Ban Goodyear 225/45R17',
+            '4' => 'Ban Dunlop 185/70R14',
+            '5' => 'Ban Yokohama 215/60R16',
+            '6' => 'Ban Pirelli 235/40R18',
+        ];
+
+        $this->selectedItems = [''];
+
         if ($this->isEditOrView()) {
             // dd($this->objectIdValue);
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -150,6 +166,7 @@ class Detail extends BaseComponent
         $this->reset('inputs', 'input_details');
         $this->object = new OrderHdr();
         $this->inputs = populateArrayFromModel($this->object);
+        $this->inputs['tax_process_date'] = null;
         $this->inputs['tr_date'] = date('Y-m-d');
         $this->inputs['due_date'] = date('Y-m-d');
         $this->inputs['tr_type'] = $this->trType;
@@ -228,18 +245,11 @@ class Detail extends BaseComponent
         $detailData = $this->input_details;
 
         $trSeq = 1;
-        foreach ($detailData as $i => &$detail) {
-            // $detail['tr_seq'] = $trSeq++;
+        foreach ($detailData as &$detail) {
+            $detail['price_curr'] = $detail['price'];
             $detail['qty_uom'] = 'PCS';
             $detail['price_uom'] = 'PCS';
             $detail['qty_base'] = 1;
-            // Pastikan disc_pct selalu default 0 jika belum ada
-            if (!isset($detail['disc_pct']) || $detail['disc_pct'] === null) {
-                $detail['disc_pct'] = 0;
-            }
-            if ($this->actionValue === 'Create') {
-                $detail['status_code'] = Status::OPEN;
-            }
         }
         unset($detail);
         return $detailData;
@@ -259,10 +269,11 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah terkirim.');
                 return;
             }
-            $item = populateArrayFromModel(new OrderDtl());
-            $item['disc_pct'] = 0;
-            $item['price_base'] = 1;
-            $this->input_details[] = $item;
+            $this->input_details[] = populateArrayFromModel(new OrderDtl());
+            $key = count($this->input_details) - 1;
+            $this->input_details[$key]['gt_process_date'] = null;
+            $this->input_details[$key]['disc_pct'] = 0;
+            $this->input_details[$key]['price_base'] = 1;
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }

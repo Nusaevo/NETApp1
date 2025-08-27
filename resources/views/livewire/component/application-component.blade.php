@@ -1,103 +1,76 @@
 <div>
-    <div class="aside-menu flex-column-fluid" style="width: 100%;">
-        <select id="applicationSelect" class="custom-select application-select" style="color: grey; width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: #f8f9fa;" wire:loading.attr="disabled" wire:loading.class="select2-loading">
+    <div class="application-selector-container">
+        @php
+            $selectedApp = collect($applications)->firstWhere('value', $selectedApplication);
+            $selectedImagePath = 'customs/logos/' . ($selectedApp['value'] ?? 'default') . '.png';
+        @endphp
+
+        <!-- Dropdown Container -->
+        <div class="app-dropdown-container dropdown w-100">
+            <!-- Current Selected Application with Logo (Clickable) -->
+            <button type="button"
+                    class="app-dropdown-trigger btn btn-light current-app-display mb-2 py-2 px-3 rounded w-100 text-start"
+                    style="background-color: var(--bs-light-bg-subtle); border: 1px solid var(--bs-border-color); min-height: 40px;"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                <div class="d-flex align-items-center">
+                    <img src="{{ asset($selectedImagePath) }}"
+                         alt="{{ $selectedApp['label'] ?? 'App' }}"
+                         class="current-app-logo me-3"
+                         style="height: 28px; width: 28px; object-fit: contain; border-radius: 0.25rem; border: 1px solid var(--bs-border-color);"
+                         onerror="this.src='{{ asset('customs/logos/default.png') }}'; this.onerror=null;">
+                    <div class="flex-fill">
+                        <div class="fw-semibold text-dark current-app-name" style="font-size: 0.9rem; line-height: 1.3;">{{ $selectedApp['label'] ?? 'Application' }}</div>
+                    </div>
+                    <i class="bi bi-chevron-down text-muted" style="font-size: 0.6rem;"></i>
+                </div>
+            </button>
+
+            <!-- Dropdown Menu with App List -->
+            <ul class="dropdown-menu w-100 shadow-lg" style="max-height: 280px; overflow-y: auto;">
+                @foreach($applications as $application)
+                    @php
+                        $imagePath = 'customs/logos/' . $application['value'] . '.png';
+                    @endphp
+                    <li>
+                        <a class="dropdown-item app-option py-2 px-3"
+                           href="#"
+                           wire:click="configApplicationChanged('{{ $application['value'] }}')"
+                           onclick="console.log('ApplicationComponent: Livewire click on:', '{{ $application['value'] }}');">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ asset($imagePath) }}"
+                                     alt="{{ $application['label'] }}"
+                                     class="me-3"
+                                     style="height: 28px; width: 28px; object-fit: contain; border-radius: 0.25rem; border: 1px solid var(--bs-border-color);"
+                                     onerror="this.src='{{ asset('customs/logos/default.png') }}'; this.onerror=null;">
+                                <div class="flex-fill">
+                                    <div class="fw-medium" style="font-size: 0.9rem; line-height: 1.3;">{{ $application['label'] }}</div>
+                                </div>
+                                @if($selectedApplication == $application['value'])
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 0.9rem;"></i>
+                                @endif
+                            </div>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+
+        <!-- Hidden Select (backup) -->
+        <select id="applicationSelect"
+                class="form-select d-none"
+                wire:change="configApplicationChanged($event.target.value)"
+                wire:loading.attr="disabled">
             @foreach($applications as $application)
                 @php
                     $imagePath = 'customs/logos/' . $application['value'] . '.png';
                 @endphp
-                <option value="{{ $application['value'] }}" @if($selectedApplication == $application['value']) selected @endif data-image="{{ asset($imagePath) }}">{{ $application['label'] }}</option>
+                <option value="{{ $application['value'] }}"
+                        @if($selectedApplication == $application['value']) selected @endif
+                        data-image="{{ asset($imagePath) }}">
+                    {{ $application['label'] }}
+                </option>
             @endforeach
         </select>
     </div>
-
-@push('scripts')
-<script>
-
-document.addEventListener('livewire:init', () => {
-    function formatState(state) {
-        if (!state.id) {
-            return state.text;
-        }
-        var baseUrl = state.element.getAttribute('data-image');
-        var $state = $(
-            '<span><img src="' + baseUrl + '" class="img-flag" style="width: 20px; height: auto; margin-right: 10px;" /> ' + state.text + '</span>'
-        );
-        return $state;
-    }
-
-    function initializeSelect2() {
-        $('#applicationSelect').select2({
-            templateResult: formatState,
-            templateSelection: formatState,
-            width: '100%',
-            dropdownAutoWidth: true,
-            minimumResultsForSearch: Infinity, // Disable search feature
-            dropdownCssClass: 'hide-search-box' // Add CSS class to hide search input
-        });
-
-        $('#applicationSelect').on('change', function(e) {
-            var selectedValue = $(this).val();
-            Livewire.dispatch('configApplicationChanged', { selectedApplication: selectedValue } );
-        });
-    }
-
-    initializeSelect2();
-
-    Livewire.hook('message.processed', (message, component) => {
-        $('#applicationSelect').select2('destroy'); // Destroy existing Select2
-        initializeSelect2(); // Reinitialize Select2
-    });
-});
-
-</script>
-@endpush
-<style>
-    .aside-menu img {
-        height: 30px; /* Sesuaikan dengan kebutuhan Anda */
-        width: auto;
-        margin-right: 10px;
-    }
-
-    /* Gaya untuk elemen application-select */
-    #applicationSelect + .select2-container .select2-selection--single {
-        height: 50px; /* Sesuaikan dengan kebutuhan Anda */
-        display: flex;
-        align-items: center;
-    }
-
-    #applicationSelect + .select2-container .select2-selection--single .select2-selection__rendered {
-        line-height: 28px; /* Menyesuaikan teks secara vertikal */
-        padding-left: 40px; /* Menambahkan padding untuk gambar */
-    }
-
-    #applicationSelect + .select2-container .select2-selection--single .select2-selection__arrow {
-        height: 50px; /* Menyamakan tinggi dengan container */
-    }
-
-    #applicationSelect + .select2-container .select2-selection--single .select2-selection__rendered img {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 20px; /* Sesuaikan dengan kebutuhan Anda */
-        height: auto;
-    }
-
-    #applicationSelect + .select2-container .select2-results__option .img-flag {
-        width: 30px; /* Sesuaikan dengan kebutuhan Anda */
-        height: 30px;
-        margin-right: 10px;
-        vertical-align: middle;
-    }
-
-    /* Menyembunyikan input pencarian */
-    #applicationSelect + .select2-container .select2-search--dropdown {
-        display: none;
-    }
-
-    #applicationSelect + .select2-container .hide-search-box .select2-search--dropdown {
-        display: none !important;
-    }
-</style>
-
 </div>

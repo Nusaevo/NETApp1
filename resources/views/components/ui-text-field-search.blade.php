@@ -1,6 +1,5 @@
 @php
-    $id = str_replace(['.', '[', ']'], '_', $model);
-    $blankValue = isset($type) && $type === 'int' ? '0' : '';
+     $blankValue = isset($type) && $type === 'int' ? '0' : '';
     $colClass = 'col-sm' . (!empty($label) ? ' mb-5' : '');
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
     // Determine enabled state externally.
@@ -10,7 +9,7 @@
 <div wire:key="{{ $id }}-select2"   class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
     <!-- Make the container position relative so the overlay positions correctly -->
-    <div class="input-group position-relative">
+    <div class="input-group">
         <!-- This container is ignored by Livewire for select2 handling -->
         <div wire:ignore class="{{ $containerClass }}" x-data x-init="() => {
                 const initSelect2 = () => {
@@ -64,7 +63,7 @@
             }">
 
             <select id="{{ $id }}"
-                class="form-select responsive-input @error($model) is-invalid @enderror
+                class="form-select  @error($model) is-invalid @enderror
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                 wire:model="{{ $model }}"
                 wire:loading.attr="disabled">
@@ -108,7 +107,7 @@
                     z-index: 10;">
             </div>
         @endif
-
+    <!-- Button for Click Event -->
         @if (isset($clickEvent) && $clickEvent !== '')
             <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary"
                 :buttonName="$buttonName" :action="$action" :enabled="$buttonEnabled" loading="true" />

@@ -19,6 +19,7 @@ class PaymentSrc extends BaseModel
     protected $fillable = [
         'trhdr_id',
         'tr_type',
+        'tr_code',
         'tr_seq',
         'pay_type_id',
         'pay_type_code',
@@ -51,6 +52,12 @@ class PaymentSrc extends BaseModel
     public function paymentHdr()
     {
         return $this->belongsTo(PaymentHdr::class, 'trhdr_id', 'id');
+    }
+
+    public static function getNextTrSeq(int $trhdrId): int
+    {
+        $lastSeq = self::where('trhdr_id', $trhdrId)->max('tr_seq');
+        return ($lastSeq ?? 0) + 1;
     }
 
     #endregion

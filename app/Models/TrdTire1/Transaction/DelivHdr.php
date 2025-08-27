@@ -84,10 +84,13 @@ class DelivHdr extends BaseModel
         return implode(', ', $matlCodes);
     }
     #endregion
-    public function updateBillHdrId(int $delivId, int $billHdrId)
+    public static function updateBillHdrId(int $delivId, int $billHdrId)
     {
-        $delivHdr = self::findOrFail($delivId);
-        $delivHdr->billhdr_id = $billHdrId;
-        $delivHdr->save();
+        $delivHdr = self::find($delivId);
+        if ($delivHdr) {
+            $delivHdr->billhdr_id = $billHdrId;
+            $delivHdr->save();
+        }
     }
+
 }

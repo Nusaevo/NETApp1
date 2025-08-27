@@ -122,22 +122,25 @@ class Index extends BaseComponent
                     COALESCE(b.qty_beli, 0) AS qty_beli,
                     COALESCE(j.qty_jual, 0) AS qty_jual
                 FROM (
-                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_beli
+                    SELECT od.matl_id, m.code, m.name, SUM(dp.qty) qty_beli
                     FROM deliv_hdrs dh
-                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
-                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    JOIN deliv_packings dp ON dp.trhdr_id = dh.id
+                    JOIN order_dtls od ON od.id = dp.reffdtl_id
+                    JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
                     WHERE dh.tr_type = 'PD'
                         $whereDate
-                    GROUP BY dd.matl_id, m.code, m.name
+                    GROUP BY od.matl_id, m.code, m.name
                 ) b
                 LEFT JOIN (
-                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_jual
+                    SELECT dpi.matl_id, m.code, m.name, SUM(dpi.qty) qty_jual
                     FROM deliv_hdrs dh
-                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
-                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    JOIN deliv_pickings dpi ON dpi.trpacking_id IN (
+                        SELECT id FROM deliv_packings WHERE trhdr_id = dh.id
+                    )
+                    JOIN materials m ON m.id = dpi.matl_id AND m.brand = :brand
                     WHERE dh.tr_type = 'SD'
                         $whereDate
-                    GROUP BY dd.matl_id, m.code, m.name
+                    GROUP BY dpi.matl_id, m.code, m.name
                 ) j ON j.matl_id = b.matl_id
 
                 UNION
@@ -149,22 +152,25 @@ class Index extends BaseComponent
                     0 AS qty_beli,
                     j.qty_jual
                 FROM (
-                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_jual
+                    SELECT dpi.matl_id, m.code, m.name, SUM(dpi.qty) qty_jual
                     FROM deliv_hdrs dh
-                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
-                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    JOIN deliv_pickings dpi ON dpi.trpacking_id IN (
+                        SELECT id FROM deliv_packings WHERE trhdr_id = dh.id
+                    )
+                    JOIN materials m ON m.id = dpi.matl_id AND m.brand = :brand
                     WHERE dh.tr_type = 'SD'
                         $whereDate
-                    GROUP BY dd.matl_id, m.code, m.name
+                    GROUP BY dpi.matl_id, m.code, m.name
                 ) j
                 LEFT JOIN (
-                    SELECT dd.matl_id, m.code, m.name, SUM(dd.qty) qty_beli
+                    SELECT od.matl_id, m.code, m.name, SUM(dp.qty) qty_beli
                     FROM deliv_hdrs dh
-                    JOIN deliv_dtls dd ON dd.trhdr_id = dh.id
-                    JOIN materials m ON m.id = dd.matl_id AND m.brand = :brand
+                    JOIN deliv_packings dp ON dp.trhdr_id = dh.id
+                    JOIN order_dtls od ON od.id = dp.reffdtl_id
+                    JOIN materials m ON m.id = od.matl_id AND m.brand = :brand
                     WHERE dh.tr_type = 'PD'
                         $whereDate
-                    GROUP BY dd.matl_id, m.code, m.name
+                    GROUP BY od.matl_id, m.code, m.name
                 ) b ON b.matl_id = j.matl_id
                 WHERE b.matl_id IS NULL
             ) t

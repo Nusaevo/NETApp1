@@ -13,7 +13,9 @@ use App\Services\TrdTire1\OrderService;
 use Exception;
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\TrdTire1\DeliveryService;
+use App\Services\TrdTire1\BillingService;
 
 class Detail extends BaseComponent
 {
@@ -187,6 +189,8 @@ class Detail extends BaseComponent
 
     public function onPurchaseOrderChanged($value)
     {
+        $this->input_details = [];
+
         if ($value) {
             // $this->loadPurchaseOrderDetails($value);
             $orderDetail = OrderDtl::selectRaw('
@@ -298,49 +302,43 @@ class Detail extends BaseComponent
                 return;
             }
 
-            // Update data partner jika ada
-            // if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            //     $partner = Partner::find($this->inputs['partner_id']);
-            //     $this->inputs['partner_code'] = $partner->code;
-            // }
-            // $this->inputs['tr_type'] = $this->trType;
-            // dd($this->inputs['wh_id']);
-
             if ($this->object->isNew()) {
                 $this->object->status_code = Status::OPEN;
             }
 
-            // dd($this->input_details);
-            // dd($this->inputs, $this->input_details);
-            // Persiapkan data untuk service
-            // $orderHdr = OrderHdr::where('tr_code', $this->inputs['reffhdrtr_code'])->first();
-            // $headerData = array_merge($this->inputs, [
-            //     'status_code' => $this->object->status_code,
-            //     // 'reff_code' => $orderHdr ? $orderHdr->id : null,
-            //     // 'reffhdrtr_id' => $orderHdr ? $orderHdr->id : null,
-            // ]);
-            // dd($headerData);
-
-            // if ($this->actionValue === 'Edit') {
-            //     $headerData['id'] = $this->object->id;
-            // }
-
             $headerData = $this->inputs;
             $detailData = $this->input_details;
 
-            // dd($headerData, $detailData);
-
-            // Panggil service untuk memproses purchase delivery
             $deliveryService = app(DeliveryService::class);
-
-            // dd($headerData, $detailData);
-            // if ($this->actionValue === 'Create') {
             $result = $deliveryService->saveDelivery($headerData, $detailData);
-            // dd($result);
             $this->object = $result['header'];
 
-            // dd($this->object);
-            // DB::commit();
+            // Hanya buat billing baru saat create
+            if ($this->actionValue === 'Create') {
+                $billingService = app(BillingService::class);
+                $billingHeaderData = [
+                    'id' => 0,
+                    'tr_type' => 'APB',
+                    'tr_code' => $this->inputs['tr_code'],
+                    'tr_date' => $this->inputs['tr_date'],
+                ];
+                // Ambil delivery_id dari hasil saveDelivery
+                $deliveryDetails = [];
+                if (!empty($result['header'])) {
+                    $deliveryDetails[] = [
+                        'deliv_id' => $result['header']->id,
+                    ];
+                }
+
+                $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
+
+                // Cek hasil billing
+                if (!empty($billingResult['billing_hdr'])) {
+                    // Billing berhasil dibuat
+                } else {
+                    $this->dispatch('error', 'Gagal membuat Billing untuk delivery order ' . $this->inputs['tr_code']);
+                }
+            }
 
             $this->dispatch('success', 'Purchase Delivery berhasil ' .
                 ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
@@ -388,11 +386,21 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
+            // Validasi apakah object masih ada sebelum dihapus
+            if (!$this->object || !$this->object->id) {
+                $this->dispatch('error', 'Data Purchase Delivery tidak ditemukan.');
+                return;
+            }
 
-            // Panggil service untuk hapus delivery beserta detail dan inventory
+            // Panggil service untuk hapus billing terlebih dahulu
+            $billingService = app(BillingService::class);
+            $billingService->delBilling($this->object->billhdr_id);
+
+            // Kemudian hapus delivery
             $deliveryService = app(DeliveryService::class);
             $deliveryService->delDelivery($this->object->id);
 
+            $this->dispatch('success', 'Purchase Delivery berhasil dihapus.');
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus data: ' . $e->getMessage());

@@ -3,69 +3,67 @@
 namespace App\Livewire\TrdRetail1\Inventory\InventoryAdjustment;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdRetail1\Inventories\IvttrHdr;
-use App\Models\TrdRetail1\Master\{Partner, Material};
-use App\Models\SysConfig1\ConfigConst;
+use App\Models\TrdRetail1\Inventories\{IvttrHdr, IvttrDtl, IvtBal};
+use App\Models\TrdRetail1\Master\{Material, MatlUom};
+use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
 use App\Enums\Status;
 use App\Services\TrdRetail1\Master\MasterService;
-use App\Models\TrdRetail1\Inventories\IvtBal;
-use App\Models\TrdRetail1\Inventories\IvttrDtl;
 use App\Services\TrdRetail1\InventoryService;
 use Illuminate\Support\Facades\{Session, DB};
 use Exception;
 
 class Detail extends BaseComponent
 {
-    #region Constant Variables
+    // Header properties
     public $inputs = [];
-    public $paymentTerms = [];
-    public $partnerSearchText = '';
-    public $selectedPartners = [];
-    public $warehouses;
-    public $warehousesType;
-    public $partners;
-    public $transaction_id;
-    public $payments;
-    public $trType;
-    public $deletedItems = [];
-    public $newItems = [];
-
-    public $matl_action = 'Create';
-    public $matl_objectId = null;
-    public $currency = [];
-
-    public $returnIds = [];
-    public $currencyRate = 0;
-    protected $masterService;
-    public $isPanelEnabled = "false";
-    public $isEdit = "false";
-
-    // Material List Component Properties
-    public $materials;
-    public $object_detail;
-    public $trhdr_id;
-    public $tr_seq;
-    public $tr_code;
     public $input_details = [];
-    public $wh_code;
-    public $isEditWhCode2 = "false";
-    public $matl_id;
-    public $qty;
+    public $warehouses = [];
+    public $warehousesType = [];
 
-    public $rules  = [
+    // Material search properties
+    public $materialQuery = "";
+    public $materials = [];
+    public $materialList = [];
+    public $searchTerm = '';
+    public $selectedMaterials = [];
+    public $materialCategories = [];
+    public $filterCategory = '';
+    public $filterBrand = '';
+    public $filterType = '';
+
+    // Dynamic material query for dropdown search
+    public $materialSearchQuery = "";
+
+    // Component properties
+    public $trType = 'SA'; // Stock Adjustment
+    public $isPanelEnabled = "false";
+    public $isEdit = "false"; // For edit mode state
+    public $total_qty_adjustment = 0;
+    public $total_items = 0;
+
+    // Options
+    public $warehouseOptions = [];
+    public $adjustmentTypes = [];
+    public $categoryOptions = [];
+    public $brandOptions = [];
+    public $typeOptions = [];
+
+    protected $masterService;
+    protected $inventoryService;
+
+    // Validation rules
+    public $rules = [
         'inputs.tr_date' => 'required',
-        'input_details.*.qty' => 'required',
+        'inputs.wh_code' => 'required',
+        'inputs.tr_type' => 'required',
         'input_details.*.matl_id' => 'required',
+        'input_details.*.qty_adjustment' => 'required|numeric',
     ];
+
     protected $listeners = [
-        'changeStatus'  => 'changeStatus',
+        'changeStatus' => 'changeStatus',
         'delete' => 'delete',
-        'updateAmount' => 'updateAmount',
-        'updateDiscount' => 'updateDiscount',
-        'updateDPP' => 'updateDPP',
-        'updatePPN' => 'updatePPN',
-        'updateTotalTax' => 'updateTotalTax',
-        'toggleWarehouseDropdown' => 'toggleWarehouseDropdown',
+        'refreshData' => 'refreshData',
     ];
     #endregion
 
@@ -91,7 +89,7 @@ class Detail extends BaseComponent
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['tr_type'] = $this->object->tr_type;
             $this->inputs['tr_date'] = $this->object->tr_date;
-            $this->inputs['tr_code'] = $this->object->tr_code;
+            $this->inputs['tr_id'] = $this->object->tr_id;
             $this->inputs['wh_code'] = $this->object->IvttrDtl->first()->wh_code ?? null;
             $this->inputs['tr_descr'] = $this->object->IvttrDtl->first()->tr_descr ?? null;
 
@@ -101,18 +99,25 @@ class Detail extends BaseComponent
 
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
-        }
 
-        // Set warehouse dropdown state based on tr_type
-        if (isset($this->inputs['tr_type']) && $this->inputs['tr_type'] === 'TW') {
-            $this->isEditWhCode2 = 'true';
-        } else {
-            $this->isEditWhCode2 = 'false';
+            // Set default warehouse if not already set
+            if (empty($this->inputs['wh_code']) && !empty($this->warehouses)) {
+                $defaultWarehouse = collect($this->warehouses)->first();
+                if ($defaultWarehouse) {
+                    $this->inputs['wh_code'] = $defaultWarehouse['value'];
+                }
+            }
         }
 
         // Load materials based on warehouse
         if (!empty($this->inputs['wh_code'])) {
             $this->loadMaterialsByWarehouse($this->inputs['wh_code']);
+            $this->updateMaterialSearchQuery($this->inputs['wh_code']);
+        }
+
+        if($this->actionValue == 'Edit')
+        {
+            $this->actionValue = "View";
         }
     }
 
@@ -139,30 +144,77 @@ class Detail extends BaseComponent
     public function addItem()
     {
         if (empty($this->inputs['wh_code'])) {
-            $this->dispatch('error', 'Mohon pilih gudang terlebih dahulu.');
+            $this->dispatch('error', 'Silakan pilih warehouse terlebih dahulu.');
             return;
         }
-        $this->input_details[] = [
-            'matl_id'     => null,
-            'qty'         => null,
-            'wh_code'     => $this->inputs['wh_code'],
-            'is_editable' => true,
-        ];
-        $this->onWarehouseChanged($this->inputs['wh_code']);
+
+        try {
+            $this->input_details[] = [
+                'matl_id'        => null,
+                'matl_code'      => '',
+                'matl_name'      => '',
+                'qty_adjustment' => 0,
+                'current_stock'  => 0,
+                'wh_code'        => $this->inputs['wh_code'],
+                'is_editable'    => true,
+            ];
+        } catch (Exception $e) {
+            $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
+        }
+    }
+
+    public function onMaterialChanged($index, $materialId)
+    {
+        if (empty($materialId)) {
+            return;
+        }
+
+        try {
+            $material = Material::find($materialId);
+            if (!$material) {
+                $this->dispatch('error', 'Material tidak ditemukan.');
+                return;
+            }
+
+            // Get current stock from inventory balance
+            $currentStock = IvtBal::where('matl_id', $materialId)
+                ->where('wh_code', $this->inputs['wh_code'])
+                ->sum('qty_oh');
+            // Update the material details
+            $this->input_details[$index]['matl_id'] = $materialId;
+            $this->input_details[$index]['matl_code'] = $material->code;
+            $this->input_details[$index]['matl_name'] = $material->name;
+            $this->input_details[$index]['current_stock'] = $currentStock;
+            $this->input_details[$index]['qty_adjustment'] = 0;
+            $this->input_details[$index]['final_stock'] = $currentStock;
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Error loading material: ' . $e->getMessage());
+        }
     }
 
     public function updateItemAmount($key)
     {
-        if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
-            $discountPercent = $this->input_details[$key]['disc_pct'] ?? 0;
-            $discountAmount = $amount * ($discountPercent / 100);
-            $this->input_details[$key]['amt'] = $amount - $discountAmount;
-        } else {
-            $this->input_details[$key]['amt'] = 0;
+        if (isset($this->input_details[$key]['current_stock']) && isset($this->input_details[$key]['qty_adjustment'])) {
+            $currentStock = floatval($this->input_details[$key]['current_stock']);
+            $adjustment = floatval($this->input_details[$key]['qty_adjustment']);
+            $this->input_details[$key]['final_stock'] = $currentStock + $adjustment;
         }
 
-        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
+        // Update totals
+        $this->calculateTotals();
+    }
+
+    protected function calculateTotals()
+    {
+        $this->total_qty_adjustment = 0;
+        $this->total_items = count($this->input_details);
+
+        foreach ($this->input_details as $detail) {
+            if (isset($detail['qty_adjustment'])) {
+                $this->total_qty_adjustment += floatval($detail['qty_adjustment']);
+            }
+        }
     }
 
     public function deleteItem($index)
@@ -197,49 +249,32 @@ class Detail extends BaseComponent
     protected function loadDetails()
     {
         if (!empty($this->object)) {
-            // Ambil detail transaksi tujuan (tr_seq positif)
-            $destinationDetails = IvttrDtl::where('trhdr_id', $this->object->id)
-                ->where('tr_seq', '>', 0)
+            // Ambil detail transaksi inventory adjustment
+            $inventoryDetails = IvttrDtl::where('trhdr_id', $this->object->id)
                 ->orderBy('tr_seq')
                 ->get();
 
-            // Grouping berdasarkan matl_id untuk menggabungkan record yang berbeda (misal karena beda batch_code)
-            $grouped = $destinationDetails->groupBy('matl_id');
             $this->input_details = [];
-            foreach ($grouped as $matlId => $details) {
-                $firstDetail = $details->first();
-                $totalQty = $details->sum('qty');
+            foreach ($inventoryDetails as $detail) {
+                // Ambil data material
+                $material = Material::find($detail->matl_id);
 
-                // Ambil data material (opsional, untuk menampilkan kode/nama material)
-                $material = Material::find($matlId);
+                // Get current stock from inventory balance
+                $currentStock = IvtBal::where('matl_id', $detail->matl_id)
+                    ->where('wh_code', $detail->wh_code)
+                    ->sum('qty_oh');
 
                 $this->input_details[] = [
-                    'matl_id'    => $matlId,
-                    'matl_code'  => $material->code ?? $firstDetail->matl_code,
-                    'matl_name'  => $material->name ?? '',
-                    'qty'        => $totalQty,
-                    'is_editable' => false,
+                    'id'             => $detail->id,
+                    'matl_id'        => $detail->matl_id,
+                    'matl_code'      => $material->code ?? $detail->matl_code,
+                    'matl_name'      => $material->name ?? '',
+                    'qty_adjustment' => $detail->qty,
+                    'current_stock'  => 0,
+                    'final_stock'    => $currentStock,
+                    'wh_code'        => $detail->wh_code,
+                    'is_editable'    => false,
                 ];
-            }
-
-            // Ambil detail transaksi sumber (tr_seq negatif) untuk mendapatkan wh_code asal
-            $sourceDetail = IvttrDtl::where('trhdr_id', $this->object->id)
-                ->where('tr_seq', '<', 0)
-                ->first();
-            if ($sourceDetail) {
-                $this->inputs['wh_code'] = $sourceDetail->wh_code;
-            }
-
-            // Ambil wh_code tujuan dari transaksi sisi tujuan
-            if ($destinationDetails->count() > 0) {
-                $destRecord = $destinationDetails->first()->wh_code;
-                // Jika format wh_code tujuan adalah "G02 (from G01)", ambil bagian sebelum " (from "
-                if (strpos($destRecord, ' (from ') !== false) {
-                    $parts = explode(' (from ', $destRecord);
-                    $this->inputs['wh_code2'] = trim($parts[0]);
-                } else {
-                    $this->inputs['wh_code2'] = $destRecord;
-                }
             }
         }
     }
@@ -248,11 +283,33 @@ class Detail extends BaseComponent
     {
         $this->inputs['wh_code'] = $whCode;
         $this->loadMaterialsByWarehouse($whCode);
+        $this->updateMaterialSearchQuery($whCode);
 
         if (!empty($this->input_details)) {
             $lastIndex = count($this->input_details) - 1;
-            $this->input_details[$lastIndex]['matl_id'] = $this->materials->first()->value ?? null;
+            $firstMaterial = collect($this->materials)->first();
+            $this->input_details[$lastIndex]['matl_id'] = $firstMaterial['value'] ?? null;
         }
+    }
+
+    protected function updateMaterialSearchQuery($whCode)
+    {
+        if (empty($whCode)) {
+            $this->materialSearchQuery = "";
+            return;
+        }
+
+        // Get materials that exist in the selected warehouse
+        $this->materialSearchQuery = "
+            SELECT DISTINCT m.id, m.code, m.name, m.category, m.brand
+            FROM materials m
+            INNER JOIN ivt_bals ib ON m.id = ib.matl_id
+            WHERE m.status_code = 'A'
+            AND m.deleted_at IS NULL
+            AND ib.wh_code = '$whCode'
+            AND ib.qty > 0
+            ORDER BY m.code, m.name
+        ";
     }
 
     protected function loadMaterialsByWarehouse($whCode)
@@ -263,11 +320,6 @@ class Detail extends BaseComponent
                 'value' => $m->id,
                 'label' => $m->code . " - " . $m->name,
             ]);
-    }
-
-    public function toggleWarehouseDropdown($enabled)
-    {
-        $this->isEditWhCode2 = $enabled ? 'true' : 'false';
     }
 
     #endregion
@@ -289,36 +341,71 @@ class Detail extends BaseComponent
             $this->inputs['tr_type'] = $warehouseType->str1;
         }
 
-        // Ambil detailData dari prepareBatchCode
+        if ($this->actionValue == 'Create') {
+            // Generate proper transaction ID using the same method
+            $trId = IvttrHdr::generateInventoryTransactionId();
 
+            // Create inventory transaction header
+            $ivtHdr = IvttrHdr::create([
+                'tr_id' => $trId,
+                'tr_type' => 'IA',
+                'tr_date' => $this->inputs['tr_date'] ?? date('Y-m-d'),
+                'remark' => $this->inputs['remark'] ?? '',
+            ]);
 
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'IVT_LASTID');
-
-        // Ambil ulang object agar tr_code terisi
-        $this->object->refresh();
-        $this->inputs['id'] = $this->object->id;
-        $this->inputs['tr_code'] = $this->object->tr_code;
-
-        // Setelah header tersimpan, periksa tr_type
-        if ($this->inputs['tr_type'] === 'TW') {
-            // Convert warehouse codes to IDs
-            $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
-            $warehouse2 = ConfigConst::where('str1', $this->inputs['wh_code2'])->first();
-
-            $this->inputs['wh_id'] = $warehouse ? $warehouse->id : null;
-            $this->inputs['wh_id2'] = $warehouse2 ? $warehouse2->id : null;
-            $this->inputs['id'] = $this->object->id;
-
-            // dd('tes');
-            $detailData = $this->prepareBatchCode();
-            // dd($detailData);
-
-            if ($this->actionValue == 'Edit') {
-                app(InventoryService::class)->updInventory($this->inputs, $detailData, $this->object->id);
-            } else {
-                app(InventoryService::class)->addInventory($this->inputs, $detailData);
-            }
+            // Set the object to the newly created header
+            $this->object = $ivtHdr;
+            $this->inputs['id'] = $ivtHdr->id;
+            $this->inputs['tr_id'] = $ivtHdr->tr_id;
         } else {
+            // For Edit: Update existing header
+            $this->object->update([
+                'tr_date' => $this->inputs['tr_date'] ?? date('Y-m-d'),
+                'remark' => $this->inputs['remark'] ?? '',
+            ]);
+
+            // Delete existing details to recreate them
+            IvttrDtl::where('trhdr_id', $this->object->id)->delete();
+
+            $trId = $this->object->tr_id;
+        }
+
+        $seq = 1;
+        // Save inventory adjustment details based on input_details
+        foreach ($this->input_details as $detail) {
+            if (!empty($detail['matl_id']) && isset($detail['qty_adjustment']) && $detail['qty_adjustment'] != 0) {
+                // Get material info for matl_code
+                $material = Material::find($detail['matl_id']);
+                $matlCode = $material ? $material->code : '';
+
+                IvttrDtl::create([
+                    'trhdr_id' => $this->object->id,
+                    'tr_id' => $trId,
+                    'tr_seq' => $seq++,
+                    'matl_id' => $detail['matl_id'],
+                    'matl_code' => $matlCode,
+                    'wh_code' => $this->inputs['wh_code'],
+                    'qty' => $detail['qty_adjustment'],
+                    'tr_descr' => $this->inputs['remark'] ?? 'Stock Adjustment',
+                    'tr_type' => 'IA',
+                ]);
+
+                // Update inventory balance
+                $balance = IvtBal::where('matl_id', $detail['matl_id'])
+                    ->where('wh_code', $this->inputs['wh_code'])
+                    ->first();
+
+                if ($balance) {
+                    $balance->qty_oh += $detail['qty_adjustment'];
+                    $balance->save();
+                } else {
+                    IvtBal::create([
+                        'matl_id' => $detail['matl_id'],
+                        'wh_code' => $this->inputs['wh_code'],
+                        'qty_oh' => $detail['qty_adjustment'],
+                    ]);
+                }
+            }
         }
 
         if ($this->actionValue == 'Create') {
@@ -328,7 +415,6 @@ class Detail extends BaseComponent
             ]);
         }
     }
-
 
     public function delete()
     {
@@ -371,8 +457,6 @@ class Detail extends BaseComponent
     public function onTypeChanged($value)
     {
         $this->inputs['tr_type'] = $value;
-        $enabled = $value === 'TW';
-        $this->dispatch('toggleWarehouseDropdown', $enabled);
     }
 
     public function isEditOrView() {

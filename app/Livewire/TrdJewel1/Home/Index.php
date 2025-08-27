@@ -27,6 +27,7 @@ class Index extends BaseComponent
 
     public function fetchData() {
         $today = Carbon::today()->toDateString();
+
         $currencyRatesData = GoldPriceLog::orderBy('log_date', 'desc')
             ->take(30)
             ->get(['log_date', 'curr_rate'])
@@ -41,19 +42,34 @@ class Index extends BaseComponent
         $this->currencyRates = $currencyRatesData->map(function ($item) {
             return [
                 'log_date' => Carbon::parse($item->log_date)->format('Y-m-d'),
-                'curr_rate' => $item->curr_rate
+                'curr_rate' => (float) $item->curr_rate // Ensure numeric value
             ];
         })->values()->toArray();
 
         $this->goldPrices = $goldPricesData->map(function ($item) {
             return [
                 'log_date' => Carbon::parse($item->log_date)->format('Y-m-d'),
-                'goldprice_basecurr' => $item->goldprice_basecurr
+                'goldprice_basecurr' => (float) $item->goldprice_basecurr // Ensure numeric value
             ];
         })->values()->toArray();
+
+        // Debug logging
+        \Log::info('TrdJewel1 Home - Currency Rates Data:', [
+            'count' => count($this->currencyRates),
+            'sample' => array_slice($this->currencyRates, 0, 3)
+        ]);
+
+        \Log::info('TrdJewel1 Home - Gold Prices Data:', [
+            'count' => count($this->goldPrices),
+            'sample' => array_slice($this->goldPrices, 0, 3)
+        ]);
+
         // Fetch today's rate if available
-        $this->todayCurrencyRate = rupiah($currencyRatesData->firstWhere('log_date', $today)?->curr_rate);
-        $this->todayGoldPrice = rupiah($goldPricesData->firstWhere('log_date', $today)?->goldprice_basecurr);
+        $todayRate = $currencyRatesData->firstWhere('log_date', $today);
+        $todayGold = $goldPricesData->firstWhere('log_date', $today);
+
+        $this->todayCurrencyRate = $todayRate ? rupiah($todayRate->curr_rate) : null;
+        $this->todayGoldPrice = $todayGold ? rupiah($todayGold->goldprice_basecurr) : null;
     }
 
     public function render()

@@ -3,7 +3,7 @@
 namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 
 use App\Livewire\Component\BaseComponent;
-use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PaymentDtl, PaymentSrc, BillingDtl, BillingHdr, PaymentAdv};
+use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PaymentDtl, PaymentSrc, BillingHdr, PaymentAdv, PartnertrDtl};
 use App\Models\TrdTire1\Master\{Partner, Material, PartnerBal};
 use App\Models\SysConfig1\{ConfigConst, ConfigSnum};
 use App\Enums\Status;
@@ -19,6 +19,7 @@ class Detail extends BaseComponent
 {
     #region Constant Variables
     protected $paymentService;
+    protected $partnerTrxService;
     public $inputs = [];
     public $suppliers = [];
     public $selectedPartners = [];
@@ -56,23 +57,17 @@ class Detail extends BaseComponent
     public $advanceOptions = [];
 
     // Properties untuk Payment List
-    public $PaymentType = [];
     public $input_payments = [];
-    public $activePaymentItemKey = null;
-    public $isCash = "false";
-    public $isGiro = "false";
-    public $isTrf = "false";
-    public $isAdv = "false";
 
     // Properties untuk Debt List
     public $codeBill;
     public $input_details = [];
     public $input_advance = [];
+    public $isDataLoaded = false; // Flag untuk mencegah auto pelunasan saat data dimuat
 
     public $rules  = [
         'inputs.partner_id' => 'required',
         'input_details.*.amt' => 'required',
-        'input_payments.*.pay_type_code' => 'required',
     ];
 
     protected $listeners = [
@@ -92,7 +87,9 @@ class Detail extends BaseComponent
     public function boot()
     {
         $this->paymentService = app(PaymentService::class);
-    }    public function getTransactionCode()
+        $this->partnerTrxService = app(\App\Services\TrdTire1\PartnerTrxService::class);
+    }
+    public function getTransactionCode()
     {
         $tax_doc_flag = !empty($this->inputs['tax_doc_flag']);
         $tr_type = $this->trType;
@@ -116,8 +113,9 @@ class Detail extends BaseComponent
             $configSnum->last_cnt = $proposedTrId;
             $configSnum->save();
 
-            // Generate the transaction code with the new sequence (8 digits)
-            $this->inputs['tr_code'] = sprintf('%08d', $proposedTrId);
+            // Generate the transaction code with format R+YEAR+ARP_LASTID
+            // $year = date('y'); // Menggunakan 2 digit tahun terakhir
+            $this->inputs['tr_code'] = 'R' .  $proposedTrId;
         } else {
             // Fallback to the original method if ConfigSnum not found
             $this->inputs['tr_code'] = PaymentHdr::generateTransactionId($tr_type, $tax_doc_flag);
@@ -240,7 +238,6 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
         $this->partners = $this->masterService->getCustomers();
         $this->warehouses = $this->masterService->getWarehouse();
-        $this->PaymentType = $this->masterService->getPaymentTypeData();
         $this->codeBill = $this->masterService->getBillCode();
 
         // Tidak otomatis populate advance items saat Create mode
@@ -272,8 +269,7 @@ class Detail extends BaseComponent
             $this->totalPaymentAmount = 0;
             $totalFromPayments = 0;
             foreach ($this->input_payments as $payment) {
-                $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
-                $totalFromPayments += is_numeric($amtValue) ? (float)$amtValue : 0;
+                $totalFromPayments += is_numeric($payment['amt']) ? (float)$payment['amt'] : 0;
             }
             $totalAdvanceUsed = 0.0;
             foreach ($this->input_advance as $advance) {
@@ -290,6 +286,9 @@ class Detail extends BaseComponent
             if (abs($this->advanceBalance) < 0.01) {
                 $this->advanceBalance = 0;
             }
+
+            // Set flag bahwa data sudah dimuat untuk mode edit
+            $this->isDataLoaded = true;
         }
         if (!$this->isEditOrView()) {
             $this->isPanelEnabled = "true";
@@ -345,6 +344,112 @@ class Detail extends BaseComponent
 
     }
 
+    /**
+     * Get bank ID by bank name
+     */
+    private function getBankIdByName($bankName)
+    {
+        $partner = Partner::where('grp', Partner::BANK)
+            ->where('name', $bankName)
+            ->first();
+        return $partner ? $partner->id : null;
+    }
+
+    /**
+     * Handle amt_adjustment by calling savePartnerTrx
+     */
+    private function handleAmtAdjustment($headerData, $detailData)
+    {
+        $adjustmentDetails = [];
+
+        foreach ($detailData as $detail) {
+            $amtAdjustment = $detail['amt_adjustment'];
+
+            if ($amtAdjustment != 0) {
+                $adjustmentDetails[] = [
+                    'tr_type' => 'ARA',
+                    'tr_code' => $headerData['tr_code'],
+                    'tr_date' => $headerData['tr_date'],
+                    'partner_id' => $headerData['partner_id'],
+                    'partner_code' => $headerData['partner_code'],
+                    'reff_id' => $detail['billhdr_id'],
+                    'reff_type' => $detail['billhdrtr_type'],
+                    'reff_code' => $detail['billhdrtr_code'],
+                    'amt' => $amtAdjustment,
+                    'tr_descr' => 'Adjustment from Payment ' . $headerData['tr_code'] . ' for Bill ' . $detail['billhdrtr_code'],
+                    'curr_id' => $headerData['curr_id'],
+                    'curr_code' => $headerData['curr_code'] ?? 'IDR',
+                    'curr_rate' => $headerData['curr_rate'],
+                ];
+            }
+        }
+
+        if (!empty($adjustmentDetails)) {
+            try {
+                // Buat header data untuk partner transaction
+                $partnerHeaderData = [
+                    'tr_type' => 'ARA',
+                    'tr_code' => 'ARA' . $headerData['tr_code'],
+                    'tr_date' => $headerData['tr_date'],
+                    'partner_id' => $headerData['partner_id'],
+                    'partner_code' => $headerData['partner_code'],
+                    'curr_id' => $headerData['curr_id'],
+                    'curr_code' => $headerData['curr_code'],
+                    'curr_rate' => $headerData['curr_rate'],
+                    'amt' => array_sum(array_column($adjustmentDetails, 'amt')),
+                ];
+
+                // Simpan partner transaction
+                $this->partnerTrxService->savePartnerTrx($partnerHeaderData, $adjustmentDetails);
+
+                Log::info('Partner transaction created for amt_adjustment', [
+                    'header' => $partnerHeaderData,
+                    'details' => $adjustmentDetails
+                ]);
+            } catch (Exception $e) {
+                Log::error('Failed to create partner transaction for amt_adjustment: ' . $e->getMessage());
+                // Tidak throw exception karena ini bukan critical error
+            }
+        }
+    }
+
+    /**
+     * Delete partner transaction for adjustment when nota is deleted
+     */
+    private function deletePartnerTrxForAdjustment($deletedItem)
+    {
+        try {
+            // Cari partner transaction yang terkait dengan adjustment ini
+            $partnerTrxDetails = \App\Models\TrdTire1\Transaction\PartnertrDtl::where('tr_type', 'ARA')
+                ->where('reff_id', $deletedItem['billhdr_id'] ?? 0)
+                ->where('reff_type', $deletedItem['billhdrtr_type'] ?? '')
+                ->where('reff_code', $deletedItem['billhdrtr_code'] ?? '')
+                ->where('amt', $deletedItem['amt_adjustment'] ?? 0)
+                ->get();
+
+            foreach ($partnerTrxDetails as $detail) {
+                // Hapus partner transaction detail
+                $detail->delete();
+
+                // Hapus partner transaction header jika tidak ada detail lagi
+                $remainingDetails = \App\Models\TrdTire1\Transaction\PartnertrDtl::where('trhdr_id', $detail->trhdr_id)->count();
+                if ($remainingDetails == 0) {
+                    \App\Models\TrdTire1\Transaction\PartnertrHdr::where('id', $detail->trhdr_id)->delete();
+                }
+            }
+
+            Log::info('Partner transaction deleted for adjustment', [
+                'billhdr_id' => $deletedItem['billhdr_id'] ?? 0,
+                'billhdrtr_code' => $deletedItem['billhdrtr_code'] ?? '',
+                'amt_adjustment' => $deletedItem['amt_adjustment'] ?? 0,
+                'deleted_count' => $partnerTrxDetails->count()
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to delete partner transaction for adjustment: ' . $e->getMessage());
+            // Tidak throw exception karena ini bukan critical error
+        }
+    }
+
     public function onReset()
     {
         $this->reset('inputs', 'input_details', 'input_payments', 'input_advance');
@@ -366,7 +471,16 @@ class Detail extends BaseComponent
                 throw new Exception(__('generic.error.delete_item', ['message' => 'Item not found.']));
             }
 
+            // Ambil data nota yang akan dihapus
+            $deletedItem = $this->input_details[$index];
+
+            // Hapus nota dari array
             array_splice($this->input_details, $index, 1);
+
+            // Jika ada amt_adjustment, hapus juga data partnertrx yang terkait
+            if (!empty($deletedItem['amt_adjustment']) && $deletedItem['amt_adjustment'] > 0) {
+                $this->deletePartnerTrxForAdjustment($deletedItem);
+            }
 
             $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
@@ -456,6 +570,19 @@ class Detail extends BaseComponent
                     $due_date = $tr_date->format('Y-m-d');
                 }
 
+                // Ambil amt_adjustment dari PartnertrDtl berdasarkan partnerbal_id
+                $amt_adjustment = 0;
+                if (!empty($detail->partnerbal_id)) {
+                    $partnerTrxDtl = PartnertrDtl::where('partnerbal_id', $detail->partnerbal_id)
+                        ->where('tr_type', 'ARA')
+                        ->where('reff_id', $billhdr_id)
+                        ->first();
+
+                    if ($partnerTrxDtl) {
+                        $amt_adjustment = $partnerTrxDtl->amt ?? 0;
+                    }
+                }
+
                 $this->input_details[] = [
                     'billhdr_id'      => $billhdr_id, // id BillingHdr untuk proses simpan
                     'billhdrtr_code'  => $billhdrtr_code, // kode nota untuk tampilan
@@ -463,48 +590,28 @@ class Detail extends BaseComponent
                     'amtbill'         => $amtbill,
                     'outstanding_amt' => $outstanding_amt,
                     'amt'             => $detail->amt ?? null,
+                    'amt_adjustment'  => $amt_adjustment, // Tambahkan amt_adjustment
+                    'is_selected'     => !empty($detail->amt), // Centang jika ada pembayaran
                 ];
             }
 
+            // Set flag bahwa data sudah dimuat
+            $this->isDataLoaded = true;
         }
     }
     #endregion
 
     #region Payment List Methods
-    // Handler untuk hapus row kosong jika modal ditutup tanpa klik Save
-    public function closePaymentDialogBox()
-    {
-        if ($this->activePaymentItemKey !== null && isset($this->input_payments[$this->activePaymentItemKey]) && empty($this->input_payments[$this->activePaymentItemKey]['pay_type_code'])) {
-            unset($this->input_payments[$this->activePaymentItemKey]);
-            $this->input_payments = array_values($this->input_payments);
-        }
-        $this->activePaymentItemKey = null;
-    }
     public function addPaymentItem()
     {
         try {
             $newItem = [
-                'tr_type' => '',
-                'pay_type_code' => '',
-                'pay_type_id' => null,
-                'amt_tunai' => null,
-                'amt_giro' => null,
-                'bank_reff_giro' => null,
-                'bank_reff_no_giro' => null,
-                'bank_duedt_giro' => null,
-                'amt_trf' => null,
-                'bank_reff_transfer' => null,
-                'bank_reff_no_transfer' => null,
-                'bank_duedt_transfer' => null,
-                'amt_advance' => null,
-                'bank_note' => null,
+                'bank_code' => 'TRF', // Default bank_code = 'TRF' (Transfer)
+                'bank_reff' => '',
                 'amt' => 0,
+                'bank_date' => date('Y-m-d'),
             ];
             $this->input_payments[] = $newItem;
-
-            $newKey = array_key_last($this->input_payments);
-            $this->activePaymentItemKey = $newKey;
-            $this->dispatch('openPaymentDialogBox');
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }
@@ -530,119 +637,6 @@ class Detail extends BaseComponent
         }
     }
 
-    public function openPaymentDialog($key)
-    {
-        if (!isset($this->input_payments[$key])) {
-            $this->dispatch('error', 'Data payment tidak ditemukan.');
-            return;
-        }
-
-        $this->activePaymentItemKey = $key;
-        if (!empty($this->input_payments[$key]['pay_type_code'])) {
-            $this->onPaymentTypeChange();
-        } else {
-            $this->isCash = $this->isGiro = $this->isTrf = $this->isAdv = "false";
-        }
-
-        $this->dispatch('openPaymentDialogBox');
-    }
-
-    public function confirmPayment()
-    {
-        if ($this->activePaymentItemKey === null) {
-            $this->dispatch('error', __('No active item selected.'));
-            return;
-        }
-        $key = $this->activePaymentItemKey;
-        $this->validate([
-            "input_payments.$key.pay_type_code" => 'required',
-        ]);
-        $payTypeCode = $this->input_payments[$key]['pay_type_code'] ?? '';
-
-        $payType = ConfigConst::where('str1', $payTypeCode)->first();
-        $this->input_payments[$key]['pay_type_id'] = $payType ? $payType->id : null;
-        $this->input_payments[$key]['pay_type_code'] = $payTypeCode;
-
-        // Update the table fields directly
-        $this->input_payments[$key]['amt'] = $this->input_payments[$key]['amt_tunai'] ??
-            $this->input_payments[$key]['amt_giro'] ??
-            $this->input_payments[$key]['amt_trf'] ??
-            $this->input_payments[$key]['amt_advance'] ?? 0;
-
-        // Handle bank_reff concatenation
-        $bankReffGiro = trim(($this->input_payments[$key]['bank_reff_giro'] ?? '') . ' - ' . ($this->input_payments[$key]['bank_reff_no_giro'] ?? ''));
-        $bankReffTransfer = trim(($this->input_payments[$key]['bank_reff_transfer'] ?? '') . ' - ' . ($this->input_payments[$key]['bank_reff_no_transfer'] ?? ''));
-        $bankNote = $this->input_payments[$key]['bank_note'] ?? '';
-        $this->input_payments[$key]['bank_reff'] = $bankReffGiro !== ' - ' ? $bankReffGiro : ($bankReffTransfer !== ' - ' ? $bankReffTransfer : ($bankNote !== '' ? $bankNote : ''));
-
-        // Ensure bank_reff is set to bank_note for CASH and ADV
-        if ($payTypeCode === 'CASH' || $payTypeCode === 'ADV') {
-            $this->input_payments[$key]['bank_reff'] = $bankNote;
-        }
-        $this->dispatch('closePaymentDialogBox');
-        // $this->activePaymentItemKey = null;
-    }
-
-    public function onPaymentTypeChange()
-    {
-        $key = $this->activePaymentItemKey;
-        $newType = $this->input_payments[$key]['pay_type_code'] ?? null;
-        $oldType = $this->input_payments[$key]['current_type'] ?? null;
-        $this->input_payments[$key]['tr_type'] = $newType;
-
-        $paymentTypes = [
-            'CASH' => [
-                'fields'    => ['bank_code_tunai', 'amt_tunai'],
-                'flag'      => 'isCash',
-                'backupKey' => 'cash_backup'
-            ],
-            'GIRO' => [
-                'fields'    => ['amt_giro', 'bank_reff_giro', 'bank_reff_no_giro', 'bank_duedt_giro'],
-                'flag'      => 'isGiro',
-                'backupKey' => 'giro_backup'
-            ],
-            'TRF' => [
-                'fields'    => ['bank_code_transfer', 'bank_id_transfer', 'bank_reff_transfer', 'bank_duedt_transfer'],
-                'flag'      => 'isTrf',
-                'backupKey' => 'trf_backup'
-            ],
-            'ADV' => [
-                'fields'    => ['bank_code_advance', 'amt_advance'],
-                'flag'      => 'isAdv',
-                'backupKey' => 'adv_backup'
-            ]
-        ];
-
-        foreach ($paymentTypes as $type => $config) {
-            if ($oldType === $type && $newType !== $type) {
-                $backup = [];
-                foreach ($config['fields'] as $field) {
-                    $backup[$field] = $this->input_payments[$key][$field] ?? null;
-                }
-                $this->input_payments[$key][$config['backupKey']] = $backup;
-            }
-        }
-
-        foreach ($paymentTypes as $type => $config) {
-            if ($newType === $type) {
-                $this->{$config['flag']} = "true";
-                if (isset($this->input_payments[$key][$config['backupKey']])) {
-                    foreach ($config['fields'] as $field) {
-                        $this->input_payments[$key][$field] = $this->input_payments[$key][$config['backupKey']][$field]
-                            ?? $this->input_payments[$key][$field];
-                    }
-                }
-            } else {
-                $this->{$config['flag']} = "false";
-                foreach ($config['fields'] as $field) {
-                    $this->input_payments[$key][$field] = null;
-                }
-            }
-        }
-
-        $this->input_payments[$key]['current_type'] = $newType;
-    }
-
     protected function loadPaymentDetails()
     {
         if (!empty($this->object)) {
@@ -654,38 +648,10 @@ class Detail extends BaseComponent
             if (!empty($this->object_detail)) {
                 foreach ($this->object_detail as $key => $detail) {
                     $this->input_payments[$key] = populateArrayFromModel($detail);
-
-                    if (!isset($this->input_payments[$key]['tr_type'])) {
-                        $this->input_payments[$key]['tr_type'] = $detail->pay_type_code;
-                    }
-
-                    $this->input_payments[$key]['pay_type_code'] = $detail->pay_type_code;
-                    $this->input_payments[$key]['pay_type_id'] = $detail->pay_type_id;
-
-                    switch ($detail->pay_type_code) {
-                        case 'TRF':
-                            $parts = explode(' - ', $detail->bank_reff);
-                            $this->input_payments[$key]['bank_reff_transfer'] = $parts[0] ?? '';
-                            $this->input_payments[$key]['bank_reff_no_transfer'] = $parts[1] ?? '';
-                            $this->input_payments[$key]['amt_trf'] = $detail->amt;
-                            $this->input_payments[$key]['bank_duedt_transfer'] = $detail->bank_duedt;
-                            break;
-                        case 'GIRO':
-                            $parts = explode(' - ', $detail->bank_reff);
-                            $this->input_payments[$key]['bank_reff_giro'] = $parts[0] ?? '';
-                            $this->input_payments[$key]['bank_reff_no_giro'] = $parts[1] ?? '';
-                            $this->input_payments[$key]['amt_giro'] = $detail->amt;
-                            $this->input_payments[$key]['bank_duedt_giro'] = $detail->bank_duedt;
-                            break;
-                        case 'CASH':
-                            $this->input_payments[$key]['amt_tunai'] = $detail->amt;
-                            $this->input_payments[$key]['bank_reff'] = $detail->bank_note ?? '';
-                            break;
-                        case 'ADV':
-                            $this->input_payments[$key]['amt_advance'] = $detail->amt;
-                            $this->input_payments[$key]['bank_reff'] = $detail->bank_note ?? '';
-                            break;
-                    }
+                    $this->input_payments[$key]['bank_code'] = $detail->bank_code ?? '';
+                    $this->input_payments[$key]['bank_reff'] = $detail->bank_reff ?? '';
+                    $this->input_payments[$key]['amt'] = $detail->amt ?? 0;
+                    $this->input_payments[$key]['bank_date'] = $detail->bank_duedt ?? date('Y-m-d');
                 }
             } else {
                 $this->input_payments = [];
@@ -693,10 +659,12 @@ class Detail extends BaseComponent
 
             // Load advance (lebih bayar) yang sudah pernah digunakan
             $advances = PaymentAdv::where('trhdr_id', $this->object->id)->get();
+
             $this->input_advance = [];
-            // Hanya tampilkan PaymentAdv yang hasil pemakaian advance (bukan overpayment)
+            // Tampilkan PaymentAdv yang hasil pemakaian advance (amt negatif) dan bukan overpayment (amt positif)
             foreach ($advances as $adv) {
-                if (!empty($adv->partnerbal_id) && $adv->reff_id != $adv->trhdr_id) {
+                // Hanya load PaymentAdv dengan amt negatif (penggunaan advance), bukan amt positif (overpayment)
+                if (!empty($adv->partnerbal_id) && $adv->amt < 0) {
                     $this->input_advance[] = [
                         'partnerbal_id' => $adv->partnerbal_id,
                         'partner_code' => $adv->partner_code ?? '',
@@ -705,7 +673,6 @@ class Detail extends BaseComponent
                     ];
                 }
             }
-
             // Perbaiki perhitungan advanceBalance:
             // Setelah save (edit mode), advanceBalance harus 0 jika seluruh advance sudah digunakan (sudah masuk ke total pembayaran)
             $this->advanceBalance = round($this->totalPaymentAmount - $this->totalNotaAmount, 2);
@@ -736,35 +703,6 @@ class Detail extends BaseComponent
     #endregion
 
     #region CRUD Methods
-    public function onValidateAndSave()
-    {
-        if ($this->actionValue == 'Edit') {
-            if ($this->object->isOrderCompleted()) {
-                $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
-                return;
-            }
-        }
-
-        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-            $partner = Partner::find($this->inputs['partner_id']);
-            $this->inputs['partner_code'] = $partner->code;
-        }
-
-        // Ensure payment_term is set
-        if (!empty($this->inputs['payment_term_id'])) {
-            $paymentTerm = ConfigConst::find($this->inputs['payment_term_id']);
-            $this->inputs['payment_term'] = $paymentTerm->str1;
-            $this->inputs['payment_due_days'] = $paymentTerm->num1;
-        }
-
-        $this->object->saveOrderHeader($this->appCode, $this->trType, $this->inputs, 'ReceivablesSettlement_LASTID');
-
-        // Jika dalam mode 'Create', perbarui objectIdValue agar detail bisa disimpan
-        if ($this->actionValue == 'Create') {
-            $this->objectIdValue = $this->object->id;
-            $this->actionValue = 'Edit'; // Ubah actionValue ke Edit setelah membuat header
-        }
-    }
 
     public function deleteTransaction()
     {
@@ -808,214 +746,160 @@ class Detail extends BaseComponent
     }
     #endregion
 
-    public function SaveAll()
+    public function onValidateAndSave()
     {
-        try {
-            // Generate tr_code jika dalam mode create
-            if ($this->actionValue == 'Create') {
-                $this->getTransactionCode();
+        // Generate transaction code untuk mode Create
+        if ($this->actionValue == 'Create') {
+            $this->getTransactionCode();
+        }
+
+        // Prepare header data
+        $headerData = [
+            'tr_code' => $this->inputs['tr_code'],
+            'tr_type' => $this->trType,
+            'tr_date' => $this->inputs['tr_date'],
+            'partner_id' => $this->inputs['partner_id'],
+            'partner_code' => $this->inputs['partner_code'],
+            'status_code' => Status::OPEN,
+            'process_flag' => 'N',
+            'wh_id' => $this->inputs['wh_id'] ?? 0,
+            'wh_code' => $this->inputs['wh_code'] ?? '',
+            'amt' => array_sum(array_column($this->input_details, 'amt')),
+            'curr_id' => $this->inputs['curr_id'],
+            'curr_code' => $this->inputs['curr_code'] ?? 'IDR',
+            'curr_rate' => $this->inputs['curr_rate'],
+        ];
+
+        // Validate partner wajib dipilih
+        if (empty($headerData['partner_id']) || empty($headerData['partner_code'])) {
+            $this->dispatch('error', 'Partner wajib dipilih!');
+            return;
+        }
+
+        // Prepare detail data
+        $detailData = [];
+        foreach ($this->input_details as $key => $detail) {
+            if (empty($detail['billhdr_id']) || empty($detail['amt'])) {
+                continue;
             }
-            $headerData = [
-                'tr_code' => $this->inputs['tr_code'],
-                'tr_type' => $this->trType,
-                'tr_date' => $this->inputs['tr_date'],
-                'partner_id' => $this->inputs['partner_id'],
-                'partner_code' => $this->inputs['partner_code'],
-                'status_code' => Status::OPEN,
-                'process_flag' => 'N',
-                'wh_id' => $this->inputs['wh_id'] ?? 0, // berikan default value
-                'wh_code' => $this->inputs['wh_code'] ?? '', // berikan default value
-                'amt' => $this->normalizeAmount(array_sum(array_column($this->input_details, 'amt'))), // tambahkan total amount
+
+            $billingHdr = BillingHdr::find($detail['billhdr_id']);
+            if (!$billingHdr) {
+                continue;
+            }
+
+            $detailData[] = [
+                'tr_seq' => $key + 1,
+                'amt' => $detail['amt'],
+                'amt_adjustment' => $detail['amt_adjustment'],
+                'billhdrtr_code' => $billingHdr->tr_code,
+                'billhdrtr_type' => $billingHdr->tr_type,
+                'billhdr_id' => $billingHdr->id,
+                'tr_code' => $headerData['tr_code'],
             ];
-            // dd($headerData, $this->inputs);
+        }
 
-            // Validasi partner wajib dipilih
-            if (empty($headerData['partner_id']) || empty($headerData['partner_code'])) {
-                $this->dispatch('error', 'Partner wajib dipilih!');
+        // Validate detail data tidak boleh kosong
+        if (empty($detailData)) {
+            $this->dispatch('error', 'Tidak ada detail pembayaran yang valid untuk disimpan. Pastikan Anda telah memilih nota yang valid.');
+            return;
+        }
+
+        // Prepare payment data
+        $paymentData = [];
+        foreach ($this->input_payments as $key => $payment) {
+            $amt = $payment['amt'] ?? 0;
+            if ($amt <= 0) {
+                continue;
+            }
+
+            if (!isset($payment['bank_code'])) {
+                Log::error("Missing bank_code in payment at index {$key}", $payment);
+                $this->dispatch('error', "Payment data incomplete: missing bank_code");
                 return;
             }
 
-            // Validasi input detail
-            $hasValidDetails = false;
-            foreach ($this->input_details as $detail) {
-                if (!empty($detail['billhdr_id']) && !empty($detail['amt'])) {
-                    $hasValidDetails = true;
-                    break;
-                }
-            }
+            $paymentData[] = [
+                'tr_seq' => count($paymentData) + 1,
+                'pay_type_id' => 1,
+                'pay_type_code' => 'TRF',
+                'bank_id' => $this->getBankIdByName($payment['bank_code']),
+                'bank_code' => $payment['bank_code'],
+                'bank_note' => $payment['bank_reff'],
+                'amt' => $amt,
+                'bank_reff' => $payment['bank_reff'],
+                'bank_duedt' => $payment['bank_date'] ?? date('Y-m-d'),
+            ];
+        }
 
-            if (!$hasValidDetails) {
-                $this->dispatch('error', 'Silakan tambahkan dan pilih setidaknya satu nota yang valid dengan jumlah yang tidak kosong.');
-                return;
-            }
+        // Normalize payment data dengan default values
+        foreach ($paymentData as $index => $payment) {
+            $paymentData[$index] = array_merge([
+                'bank_code' => 'TRF',
+                'bank_reff' => '',
+                'bank_duedt' => date('Y-m-d'),
+                'bank_note' => '',
+                'pay_type_code' => 'TRF',
+                'pay_type_id' => 1,
+                'bank_id' => null,
+                'amt' => 0,
+            ], $payment);
+        }
 
-            // Siapkan data detail
-            $detailData = [];
-            foreach ($this->input_details as $key => $detail) {
-                if (empty($detail['billhdr_id']) || empty($detail['amt'])) {
-                    continue; // Skip detail yang tidak lengkap
-                }
-                $billingHdr = BillingHdr::find($detail['billhdr_id']); // Ambil berdasarkan id
-                if ($billingHdr) {
-                    // Normalisasi format angka untuk amt
-                    $amt = $this->normalizeAmount($detail['amt']);
-
-                    $detailData[] = [
-                        'tr_seq' => $key + 1,
-                        'amt' => $amt,
-                        'billhdrtr_code' => $billingHdr->tr_code, // Simpan tr_code ke database
-                        'billhdrtr_type' => $billingHdr->tr_type,
-                        'billhdr_id' => $billingHdr->id, // Simpan juga id BillingHdr
-                        'tr_code' => $headerData['tr_code'], // Tambahkan tr_code dari header
-                    ];
-                } else {
-                    // Jika tidak ditemukan, skip
-                    continue;
-                }
-            }
-
-
-
-
-            // Siapkan data pembayaran
-            $paymentData = [];
-            foreach ($this->input_payments as $key => $payment) {
-                $payType = ConfigConst::where('str1', $payment['pay_type_code'])->first();
-
-                // Normalisasi format angka untuk amt
-                $amt = $payment['amt_tunai'] ?? $payment['amt_giro'] ?? $payment['amt_trf'] ?? $payment['amt_advance'] ?? 0;
-                $amt = $this->normalizeAmount($amt);
-
-                $paymentData[] = [
+        // Prepare advance data
+        $advanceData = [];
+        foreach ($this->input_advance as $key => $advance) {
+            if (!empty($advance['partnerbal_id']) && !empty($advance['amt'])) {
+                $advanceData[] = [
                     'tr_seq' => $key + 1,
-                    'pay_type_id' => $payType ? $payType->id : null,
-                    'pay_type_code' => $payment['pay_type_code'],
-                    'bank_id' => $payType ? $payType->id : null,
-                    'bank_code' => $payment['pay_type_code'],
-                    'bank_note' => $payment['bank_note'] ?? '',
-                    'amt' => $amt,
-                    'bank_reff' => $this->getBankReff($payment),
-                    'bank_duedt' => $this->getBankDate($payment),
+                    'partnerbal_id' => $advance['partnerbal_id'],
+                    'amt' => $advance['amt'],
+                    'adv_type_code' => 'ARADVPAY',
+                    'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
+                    'reff_id' => null,
+                    'reff_type' => $this->trType,
+                    'reff_code' => $headerData['tr_code'],
                 ];
             }
+        }
 
-            // Siapkan data advance
-            $advanceData = [];
-            foreach ($this->input_advance as $key => $advance) {
-                if (!empty($advance['partnerbal_id']) && !empty($advance['amt'])) {
-                    $advanceData[] = [
-                        'tr_seq' => $key + 1,
-                        'partnerbal_id' => $advance['partnerbal_id'],
-                        'amt' => $this->normalizeAmount($advance['amt']),
-                        'adv_type_code' => 'ARADVPAY',
-                        'adv_type_id' => app(ConfigService::class)->getConstIdByStr1('TRX_PAYMENT_TYPE_ADVS', 'ARADVPAY'),
-                        'reff_id' => null, // akan diisi di service
-                        'reff_type' => $this->trType,
-                        'reff_code' => $headerData['tr_code'],
-                    ];
-                }
+        // Process save dengan error handling
+        try {
+            // Set ID untuk mode Edit
+            if ($this->actionValue == 'Edit') {
+                $headerData['id'] = $this->objectIdValue;
             }
 
-            // Check if detailData is empty after all processing
-            if (empty($detailData)) {
-                $this->dispatch('error', 'Tidak ada detail pembayaran yang valid untuk disimpan. Pastikan Anda telah memilih nota yang valid.');
-                return;
+            // Save payment
+            $result = $this->paymentService->savePayment($headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
+
+            if (!$result || !isset($result->id)) {
+                throw new Exception('Failed to save payment: Invalid result returned from addPayment service');
             }
 
-            try {
-                if ($this->actionValue == 'Create') {
-                    $result = $this->paymentService->addPayment($headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
+            // Update state
+            $this->objectIdValue = $result->id;
+            $this->actionValue = 'Edit';
 
-                    if (!$result || !isset($result->id)) {
-                        throw new Exception('Failed to create payment: Invalid result returned from addPayment service');
-                    }
+            // Handle adjustment
+            $this->handleAmtAdjustment($headerData, $detailData);
 
-                    $this->objectIdValue = $result->id;
-                    $this->actionValue = 'Edit';
-                } else {
-                    // For Edit mode, ID already exists
-                    $headerData['id'] = $this->objectIdValue;
-                    $this->paymentService->updPayment($this->objectIdValue, $headerData, $detailData, $paymentData, $advanceData, $this->advanceBalance);
-                }
-            } catch (\Exception $e) {
-                Log::error('Error saving payment: ' . $e->getMessage(), [
-                    'trace' => $e->getTraceAsString(),
-                    'detailData' => $detailData
-                ]);
-                $this->dispatch('error', 'Error saving payment: ' . $e->getMessage());
-                return;
-            }
-
+            // Success response
             $this->dispatch('disable-onbeforeunload');
             $this->dispatch('success', __('Data berhasil disimpan.'));
+
             return redirect()->route('TrdTire1.Transaction.ReceivablesSettlement.Detail', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->objectIdValue)
             ]);
+
         } catch (Exception $e) {
-            $this->dispatch('error', __('Error: ' . $e->getMessage()));
+            $this->dispatch('error', 'Error saving payment: ' . $e->getMessage());
+            return;
         }
     }
 
-    private function getBankReff($payment)
-    {
-        switch ($payment['pay_type_code']) {
-            case 'GIRO':
-                return trim($payment['bank_reff_giro'] . ' - ' . $payment['bank_reff_no_giro']);
-            case 'TRF':
-                return trim($payment['bank_reff_transfer'] . ' - ' . $payment['bank_reff_no_transfer']);
-            case 'CASH':
-            case 'ADV':
-                return $payment['bank_note'] ?? '';
-            default:
-                return '';
-        }
-    }
 
-    private function getBankDate($payment)
-    {
-        switch ($payment['pay_type_code']) {
-            case 'GIRO':
-                return $payment['bank_duedt_giro'] ?? '1900-01-01';
-            case 'TRF':
-                return $payment['bank_duedt_transfer'] ?? '1900-01-01';
-            default:
-                return '1900-01-01';
-        }
-    }
-
-    /**
-     * Normalisasi format angka dari format Indonesia (dengan titik sebagai pemisah ribuan)
-     * ke format numerik yang bisa disimpan ke database
-     */
-    private function normalizeAmount($amount)
-    {
-        if (empty($amount)) {
-            return 0;
-        }
-
-        // Jika sudah berupa angka, return langsung
-        if (is_numeric($amount)) {
-            return (float)$amount;
-        }
-
-        // Jika berupa string, hapus semua karakter non-digit kecuali titik dan koma
-        $cleaned = preg_replace('/[^0-9.,]/', '', $amount);
-
-        // Jika ada koma sebagai pemisah desimal, ganti dengan titik
-        $cleaned = str_replace(',', '.', $cleaned);
-
-        // Hapus semua titik kecuali yang terakhir (untuk desimal)
-        $parts = explode('.', $cleaned);
-        if (count($parts) > 2) {
-            // Ada lebih dari satu titik, berarti ada pemisah ribuan
-            $decimal = array_pop($parts); // Ambil bagian terakhir sebagai desimal
-            $integer = implode('', $parts); // Gabungkan semua bagian lain
-            $cleaned = $integer . '.' . $decimal;
-        }
-
-        return (float)$cleaned;
-    }
 
     public function render()
     {
@@ -1101,6 +985,7 @@ class Detail extends BaseComponent
                             'amtbill'         => $item->outstanding_amt, // atau field lain sesuai kebutuhan
                             'outstanding_amt' => $item->outstanding_amt,
                             'amt'             => 0,
+                            'is_selected'     => false, // Tambahkan property untuk checkbox
                         ];
                     })->toArray();
             }
@@ -1123,6 +1008,9 @@ class Detail extends BaseComponent
 
             $this->dispatch('success', "Custommer berhasil dipilih.");
             $this->dispatch('closePartnerDialogBox');
+
+            // Set flag bahwa data sudah dimuat
+            $this->isDataLoaded = true;
         }
     }
 
@@ -1169,8 +1057,144 @@ class Detail extends BaseComponent
         }
     }
 
-    // Membagi amt pembayaran ke setiap nota secara merata
+        // Method untuk menangani perubahan seleksi nota
+    public function onNotaSelectionChanged()
+    {
+        // Jangan lakukan auto pelunasan jika data belum selesai dimuat atau mode edit
+        if (!$this->isDataLoaded || $this->actionValue === 'Edit') {
+            return;
+        }
+
+        // Reset semua amt nota terlebih dahulu
+        foreach ($this->input_details as $key => $detail) {
+            $this->input_details[$key]['amt'] = 0;
+        }
+
+        // Hitung berapa nota yang dipilih
+        $selectedNotas = 0;
+        foreach ($this->input_details as $detail) {
+            if (!empty($detail['is_selected'])) {
+                $selectedNotas++;
+            }
+        }
+
+        // Jika ada nota yang dipilih, lakukan auto pelunasan hanya untuk nota yang dipilih
+        if ($selectedNotas > 0) {
+            $this->paySelectedNotas();
+        }
+    }
+
     public function payItem()
+    {
+        // Hitung berapa nota yang dipilih
+        $selectedNotas = 0;
+        foreach ($this->input_details as $detail) {
+            if (!empty($detail['is_selected'])) {
+                $selectedNotas++;
+            }
+        }
+
+        // Jika ada nota yang dipilih, lakukan auto pelunasan hanya untuk nota yang dipilih
+        if ($selectedNotas > 0) {
+            $this->paySelectedNotas();
+        } else {
+            // Jika tidak ada nota yang dipilih, lakukan auto pelunasan untuk semua nota berdasarkan due date
+            $this->payAllNotasByDueDate();
+        }
+    }
+
+    // Untuk Adjustment - hitung amt_adjustment = outstanding_amt - amt
+    public function payAdjustment($key)
+    {
+        if (isset($this->input_details[$key])) {
+            $outstanding_amt = isset($this->input_details[$key]['outstanding_amt']) ? (float)$this->input_details[$key]['outstanding_amt'] : 0;
+            $amt = isset($this->input_details[$key]['amt']) ? (float)$this->input_details[$key]['amt'] : 0;
+
+            // Hitung amt_adjustment = outstanding_amt - amt
+            $this->input_details[$key]['amt_adjustment'] = $amt - $outstanding_amt;
+        }
+
+        $this->updateSummary();
+    }
+
+    private function paySelectedNotas()
+    {
+        $totalAdvance = 0;
+        foreach ($this->input_advance as $advance) {
+            if (!empty($advance['amtAdvBal']) && is_numeric($advance['amtAdvBal'])) {
+                $totalAdvance += (float)$advance['amtAdvBal'];
+            }
+        }
+
+        $totalPayment = 0;
+        foreach ($this->input_payments as $payment) {
+            $totalPayment += is_numeric($payment['amt']) ? (float)$payment['amt'] : 0;
+        }
+
+        $totalAvailable = $totalAdvance + $totalPayment;
+
+        $selectedDetails = [];
+        foreach ($this->input_details as $key => $detail) {
+            if (!empty($detail['is_selected'])) {
+                $selectedDetails[] = [
+                    'key' => $key,
+                    'due_date' => isset($detail['due_date']) ? strtotime($detail['due_date']) : 0,
+                    'outstanding_amt' => (isset($detail['outstanding_amt']) && is_numeric($detail['outstanding_amt'])) ? (float)$detail['outstanding_amt'] : 0,
+                ];
+            }
+        }
+        usort($selectedDetails, function($a, $b) {
+            return $a['due_date'] <=> $b['due_date'];
+        });
+
+        foreach ($this->input_details as $key => $detail) {
+            $this->input_details[$key]['amt'] = 0;
+        }
+        foreach ($this->input_advance as $key => $advance) {
+            $this->input_advance[$key]['amt'] = 0;
+        }
+
+        $remaining = $totalAvailable;
+        $advanceUsed = 0;
+
+        foreach ($selectedDetails as $item) {
+            $key = $item['key'];
+            $outstanding = $item['outstanding_amt'];
+            if ($remaining <= 0) {
+                $this->input_details[$key]['amt'] = 0;
+            } else {
+                $toPay = min($outstanding, $remaining);
+                $this->input_details[$key]['amt'] = round($toPay, 2);
+                $remaining -= $toPay;
+
+                // Track berapa advance yang  digunakan
+                if ($advanceUsed < $totalAdvance) {
+                    $advanceForThisNote = min($toPay, $totalAdvance - $advanceUsed);
+                    $advanceUsed += $advanceForThisNote;
+                }
+            }
+        }
+
+        $remainingAdvanceUsed = $advanceUsed;
+        foreach ($this->input_advance as $key => $advance) {
+            if ($remainingAdvanceUsed <= 0) break;
+
+            $amtAdvBal = !empty($advance['amtAdvBal']) && is_numeric($advance['amtAdvBal'])
+                ? (float)$advance['amtAdvBal'] : 0;
+
+            if ($amtAdvBal > 0) {
+                $useFromThisAdvance = min($amtAdvBal, $remainingAdvanceUsed);
+                $this->input_advance[$key]['amt'] = $useFromThisAdvance;
+                $remainingAdvanceUsed -= $useFromThisAdvance;
+            }
+        }
+
+        $this->updateSummary();
+        // $this->dispatch('success', 'Pembayaran berhasil dibagi ke nota yang dipilih menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
+    }
+
+    // Method untuk membayar semua nota berdasarkan due date (logika original)
+    private function payAllNotasByDueDate()
     {
         // 1. Hitung total advance yang tersedia
         $totalAdvance = 0;
@@ -1183,10 +1207,7 @@ class Detail extends BaseComponent
         // 2. Hitung total pembayaran yang diinput user pada payment
         $totalPayment = 0;
         foreach ($this->input_payments as $payment) {
-            if (!empty($payment['amt'])) {
-                $amtValue = str_replace('.', '', $payment['amt']);
-                $totalPayment += is_numeric($amtValue) ? (float)$amtValue : 0;
-            }
+            $totalPayment += is_numeric($payment['amt']) ? (float)$payment['amt'] : 0;
         }
 
         // 3. Total yang tersedia untuk pelunasan = advance + payment
@@ -1251,7 +1272,13 @@ class Detail extends BaseComponent
             }
         }
 
-        // 8. Update summary footer
+        $this->updateSummary();
+        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
+    }
+
+    // Method untuk update summary footer
+    private function updateSummary()
+    {
         // Total advance yang digunakan
         $totalAdvanceUsed = 0.0;
         $totalAmtAdvBal = 0.0;
@@ -1263,8 +1290,7 @@ class Detail extends BaseComponent
         // Total dari input_payments
         $totalFromPayments = 0;
         foreach ($this->input_payments as $payment) {
-            $amtValue = str_replace('.', '', $payment['amt'] ?? 0);
-            $totalFromPayments += is_numeric($amtValue) ? (float)$amtValue : 0;
+            $totalFromPayments += is_numeric($payment['amt']) ? (float)$payment['amt'] : 0;
         }
 
         // Total pembayaran = advance yang digunakan + payment amounts
@@ -1284,8 +1310,6 @@ class Detail extends BaseComponent
         } else {
             $this->advanceBalance = $this->totalPaymentAmount - $this->totalNotaAmount;
         }
-
-        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
     }
 
     public function addAdvanceItem()
@@ -1331,3 +1355,4 @@ class Detail extends BaseComponent
         $this->input_advance = array_values($this->input_advance);
     }
 }
+

@@ -12,20 +12,29 @@ class PartnerBalanceService
     public function updFromBilling(array $headerData)
     {
         try{
-            $partnerBal = PartnerBal::updateOrCreate(
-                [
+            // Cari partner balance berdasarkan partner_id saja
+            $partnerBal = PartnerBal::where('partner_id', $headerData['partner_id'])->first();
+
+            if (!$partnerBal) {
+                // Jika belum ada, buat baru
+                $partnerBal = PartnerBal::create([
                     'partner_id' => $headerData['partner_id'],
-                    'reff_id' => $headerData['id'],
-                ],
-                [
                     'partner_code' => $headerData['partner_code'],
                     'reff_type' => $headerData['tr_type'],
                     'reff_code' => $headerData['tr_code'],
+                    'reff_id' => $headerData['id'],
                     'amt_bal' => 0,
                     'amt_adv' => 0,
-                    'note' => '',
-                ]
-            );
+                    'note' => null,
+                ]);
+            } else {
+                // Jika sudah ada, update reff info dan balance
+                $partnerBal->partner_code = $headerData['partner_code'];
+                $partnerBal->reff_type = $headerData['tr_type'];
+                $partnerBal->reff_code = $headerData['tr_code'];
+                $partnerBal->reff_id = $headerData['id'];
+            }
+
             $amt = $headerData['amt'] + $headerData['amt_adjusthdr'] + $headerData['amt_shipcost'];
             $partnerBal->amt_bal += $amt;
             $partnerBal->save();
@@ -50,7 +59,7 @@ class PartnerBalanceService
                 'curr_id' => $headerData['curr_id'],
                 'curr_code' => $headerData['curr_code'],
                 'curr_rate' => $headerData['curr_rate'],
-                'tr_desc' => 'Billing ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'],
+                'tr_descr' => 'Billing ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'],
             ];
             // Selalu buat log baru untuk delivery
             // dd($logData, $amtBal);
@@ -64,7 +73,6 @@ class PartnerBalanceService
 
     public function updFromPayment( array $headerData, array $detailData)
     {
-        // dd( $headerData);
         try {
             if (!isset($headerData['id'])) {
                 throw new Exception('Header ID (id) is required');
@@ -75,8 +83,8 @@ class PartnerBalanceService
 
             if ($detailData['tr_type'] === 'ARP') {
                 $partnerId = $headerData['partner_id'];
-                $reffId = $detailData['billhdr_id'];
                 $partnerCode = $headerData['partner_code'];
+                $reffId = $detailData['billhdr_id'];
                 $reffType = $detailData['billhdrtr_type'];
                 $reffCode = $detailData['billhdrtr_code'];
 
@@ -85,20 +93,21 @@ class PartnerBalanceService
                 $trDesc = 'Payment ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'];
 
             } else if ($detailData['tr_type'] === 'ARPS') {
-                $partnerId = $detailData['bank_id'] ;
-                $reffId = 0;
+                $partnerId = $detailData['bank_id'] ?? null;
                 $partnerCode = $detailData['bank_code'];
-                $reffType = '';
-                $reffCode = '';
+                $reffId = $detailData['reff_id'] ?? 0;
+                $reffType = $detailData['reff_type'] ?? '';
+                $reffCode = $detailData['reff_code'] ?? '';
 
                 $amtBal = $detailData['amt'];
                 $trAmt = $detailData['amt'];
-                $trDesc =  'PayRcvd To ' . $detailData['bank_code'];
+                $trDesc =  'PayRcvd To ' . ($detailData['bank_code']);
 
             } else if ($detailData['tr_type'] === 'ARPA') {
+
                 $partnerId = $headerData['partner_id'];
-                $reffId = $detailData['reff_id'];
                 $partnerCode = $headerData['partner_code'];
+                $reffId = $detailData['reff_id'];
                 $reffType = $detailData['reff_type'];
                 $reffCode = $detailData['reff_code'];
 
@@ -117,16 +126,21 @@ class PartnerBalanceService
                     'partner_code' => $partnerCode,
                     'reff_type' => $reffType,
                     'reff_code' => $reffCode,
-                    'amt_bal' => 0,
-                    'amt_adv' => 0,
-                    'note' => $trDesc,
+                    // 'amt_bal' => 0,
+                    // 'amt_adv' => 0,
+                    // 'note' => $trDesc,
                 ]
             );
 
-
             $partnerBal->amt_bal += $amtBal;
             $partnerBal->amt_adv += $amtAdv;
-            $partnerBal->note = $trDesc; // update note setiap kali update
+            if (isset($detailData['bank_code']) && $detailData['bank_code'] == 'GIRO BELUM DISETOR'){
+                $bankDuedt = $detailData['bank_duedt'] ?? null;
+                $timestamp = is_string($bankDuedt) ? strtotime($bankDuedt) : ($bankDuedt ?: time());
+                $partnerBal->descr = ($detailData['bank_reff'] ?? '') . ' - ' . date('d-m-Y', $timestamp);
+            } else {
+                $partnerBal->descr = $trDesc;
+            }
             $partnerBal->save();
 
             // Jika ARPA, kurangi juga amt_adv dari PartnerBal lama (saldo sebelumnya)
@@ -142,99 +156,174 @@ class PartnerBalanceService
             // }
 
             $logData = [
+                'tr_date' => $headerData['tr_date'],
+                'trdtl_id' => $detailData['id'],
                 'trhdr_id' => $detailData['trhdr_id'],
                 'tr_type' => $detailData['tr_type'],
                 'tr_code' => $detailData['tr_code'],
-                'tr_date' => $headerData['tr_date'],
                 'tr_seq' => $detailData['tr_seq'],
-                'trdtl_id' => $detailData['id'],
+                'partnerbal_id' => $partnerBal->id,
                 'partner_id' => $partnerId,
                 'partner_code' => $partnerCode,
-                'partnerbal_id' => $partnerBal->id,
-                'amt' => $amtBal != 0 ? $amtBal : $amtAdv,
+                'reff_id' => $reffId,
+                'reff_type' => $reffType,
+                'reff_code' => $reffCode,
                 'tr_amt' => $trAmt,
-                'tr_desc' => $trDesc,
-            ];
-            // dd($logData, $amtBal);
-            PartnerLog::create($logData);
-            // dd($logData);
+                'tramt_adjusthdr' => 0,
+                'tramt_shipcost' => 0,
+                'amt' => $amtBal != 0 ? $amtBal : $amtAdv,
+                'curr_id' => $headerData['curr_id'],
+                'curr_code' => $headerData['curr_code'],
+                'curr_rate' => $headerData['curr_rate'],
+                'tr_descr' => $trDesc,
+        ];
+
+            try {
+                PartnerLog::create($logData);
+            } catch (Exception $e) {
+                throw $e;
+            }
+
             return $partnerBal->id;
         } catch (Exception $e) {
             throw new Exception('Error deleting order: ' . $e->getMessage());
         }
     }
+
     public function updFromOverPayment( array $headerData, array $detailData)
     {
         // dd( $headerData);
-        try {
-            if (!isset($headerData['id'])) {
-                throw new Exception('Header ID (id) is required');
-            }
-
-            $amtAdv = 0;
-
-            $partnerId = $headerData['partner_id'];
-            $reffId = $detailData['reff_id'];
-            $partnerCode = $headerData['partner_code'];
-            $reffType = $detailData['reff_type'];
-            $reffCode = $detailData['reff_code'];
-
-            $amtAdv = $detailData['amt'];
-            $trAmt = $detailData['amt'];
-            $trDesc = 'Advance Usage from ' . $detailData['reff_type'] . ' ' . $detailData['reff_code'];
-
-            // Cari atau buat partner balance berdasarkan partner_id
-            $partnerBal = PartnerBal::updateOrCreate(
-                [
-                    'partner_id' => $partnerId,
-                    'reff_id' => $reffId,
-                ],
-                [
-                    'partner_code' => $partnerCode,
-                    'reff_type' => $reffType,
-                    'reff_code' => $reffCode,
-                    'amt_bal' => 0,
-                    'amt_adv' => 0,
-                    'note' => '',
-                ]
-            );
-
-            $partnerBal->amt_adv += $amtAdv;
-            $partnerBal->save();
-
-
-            $logData = [
-                'tr_date' => $headerData['tr_date'],
-                'trhdr_id' => $detailData['trhdr_id'],
-                'tr_type' => $detailData['tr_type'],
-                'tr_code' => $detailData['tr_code'],
-                'tr_seq' => $detailData['tr_seq'],
-                'trdtl_id' => $detailData['id'],
-                'partner_id' => $partnerId,
-                'partner_code' => $partnerCode,
-                'partnerbal_id' => $partnerBal->id,
-                'amt' => $amtAdv,
-                'tr_amt' => $trAmt,
-                'tr_desc' => $trDesc,
-            ];
-            // dd($logData, $amtBal);
-            PartnerLog::create($logData);
-            // dd($logData);
-            return $partnerBal->id;
-        } catch (Exception $e) {
-            throw new Exception('Error deleting order: ' . $e->getMessage());
+        if (!isset($headerData['id'])) {
+            throw new Exception('Header ID (id) is required');
         }
+
+        $trDesc = 'Advance Usage from ' . $detailData['reff_type'] . ' ' . $detailData['reff_code'];
+
+        // Cari atau buat partner balance berdasarkan partner_id
+        $partnerBal = PartnerBal::updateOrCreate(
+            [
+                'partner_id' => $headerData['partner_id'],
+                'reff_id' => $detailData['reff_id'],
+            ],
+            [
+                'partner_code' => $headerData['partner_code'],
+                'reff_type' => $detailData['reff_type'],
+                'reff_code' => $detailData['reff_code'],
+           ]
+        );
+
+        $partnerBal->amt_adv += $detailData['amt'];
+        $partnerBal->save();
+
+        $logData = [
+            'tr_date' => $headerData['tr_date'],
+            'trhdr_id' => $detailData['trhdr_id'],
+            'tr_type' => $detailData['tr_type'],
+            'tr_code' => $detailData['tr_code'],
+            'tr_seq' => $detailData['tr_seq'],
+            'trdtl_id' => $detailData['id'],
+            'partner_id' => $headerData['partner_id'],
+            'partner_code' => $headerData['partner_code'],
+            'partnerbal_id' => $partnerBal->id,
+            'reff_id' => $detailData['reff_id'],
+            'reff_type' => $detailData['reff_type'],
+            'reff_code' => $detailData['reff_code'],
+            'tr_amt' => $detailData['amt'],
+            'tramt_adjusthdr' => 0,
+            'tramt_shipcost' => 0,
+            'partnerbal_id' => $partnerBal->id,
+            'amt' => $detailData['amt'],
+            'curr_id' => $headerData['curr_id'],
+            'curr_code' => $headerData['curr_code'],
+            'curr_rate' => $headerData['curr_rate'],
+            'tr_descr' => $trDesc,
+        ];
+        PartnerLog::create($logData);
+        return $partnerBal->id;
     }
 
-    public function delPartnerLog(int $trHdrId)
+    public function updFromPartnerTrx(array $headerData, array $detailData)
     {
-        // Hapus semua log partner terkait trHdrId secara permanen
-        $logs = PartnerLog::where('trhdr_id','=', $trHdrId)->get();
+        if (!isset($headerData['id'])) {
+            throw new Exception('Header ID (id) is required');
+        }
+
+        $reffType = $detailData['reff_type'];
+        $reffCode = $detailData['reff_code'];
+        $reffId = $detailData['reff_id'];
+        if ($detailData['tr_type'] === 'CQDEP'){
+            if ($detailData['tr_seq'] < 0) {
+                $trDesc = 'Setor Giro ' . $detailData['tr_descr'];
+           } else {
+                $trDesc = 'Terima Setoran Giro ' . $detailData['tr_descr'];
+                $reffType = '';
+                $reffCode = '';
+                $reffId = 0;
+            }
+        } else if ($detailData['tr_type'] === 'CQREJ') {
+            if ($detailData['tr_seq'] < 0) {
+                $trDesc = 'Tolakan Giro ' . $detailData['tr_descr'];
+                $reffType = '';
+                $reffCode = '';
+                $reffId = 0;
+            } else {
+                $trDesc = 'Terima Tolakan Giro ' . $detailData['tr_descr'];
+            }
+        } else {
+            $trDesc = 'Transaksi ' . $detailData['tr_type'] . ' ' . $detailData['tr_code'];
+        }
+
+        // Cari atau buat partner balance berdasarkan partner_id
+        $partnerBal = PartnerBal::updateOrCreate(
+            [
+                'partner_id' => $detailData['partner_id'],
+                'reff_id' => $detailData['reff_id'],
+            ],
+            [
+                'partner_code' => $detailData['partner_code'],
+                'reff_type' => $detailData['reff_type'],
+                'reff_code' => $detailData['reff_code'],
+                ]
+            );
+        $partnerBal->amt_bal += $detailData['amt'];
+        $partnerBal->save();
+
+        $logData = [
+            'tr_date' => $headerData['tr_date'],
+            'trdtl_id' => $detailData['id'],
+            'trhdr_id' => $detailData['trhdr_id'],
+            'tr_type' => $detailData['tr_type'],
+            'tr_code' => $detailData['tr_code'],
+            'tr_seq' => $detailData['tr_seq'],
+            'partnerbal_id' => $partnerBal->id,
+            'partner_id' => $detailData['partner_id'],
+            'partner_code' => $detailData['partner_code'],
+            'reff_id' => $reffId,
+            'reff_type' => $reffType,
+            'reff_code' => $reffCode,
+            'tr_amt' => $detailData['amt'],
+            'tramt_adjusthdr' => 0,
+            'tramt_shipcost' => 0,
+            'amt' => $detailData['amt'],
+            'curr_id' => $headerData['curr_id'],
+            'curr_code' => $headerData['curr_code'],
+            'curr_rate' => $headerData['curr_rate'],
+            'tr_descr' => $trDesc,
+        ];
+        PartnerLog::create($logData);
+        return $partnerBal->id;
+     }
+
+    public function delPartnerLog(int $trHdrId, ?int $trDtlId = null)
+    {
+        if ($trDtlId !== null) {
+            $logs = PartnerLog::where('trdtl_id', '=', $trDtlId)->get();
+        } else {
+            $logs = PartnerLog::where('trhdr_id', '=', $trHdrId)->get();
+        }
 
         foreach ($logs as $log) {
-            // Update PartnerBal jika perlu
-            $partnerBal = PartnerBal::where('id', '=',$log->partnerbal_id)->first();
-            // dd($partnerBal);
+            $partnerBal = PartnerBal::find($log->partnerbal_id);
             if ($partnerBal) {
                 if ($log->tr_type === 'ARPA' or $log->tr_type === 'APPA') {
                     // Jika log adalah untuk pembayaran, kurangi dari amt_adv

@@ -3,10 +3,10 @@
 namespace App\Models\TrdRetail1\Transaction;
 
 use App\Models\Base\BaseModel;
-use App\Models\TrdRetail1\Master\Partner;
-use App\Models\TrdRetail1\Master\Material;
-use App\Models\TrdRetail1\Inventories\IvtBal;
-use App\Models\TrdRetail1\Inventories\IvtBalUnit;
+use App\Models\TrdRetail1\Master\{Partner, Material, MatlUom};
+use App\Models\TrdRetail1\Inventories\{IvtBal, IvtBalUnit, IvtLog};
+use App\Models\TrdRetail1\Transaction\{DelivDtl, BillingDtl};
+use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
 use App\Traits\BaseTrait;
@@ -17,73 +17,73 @@ class ReturnDtl extends BaseModel
     protected static function boot()
     {
         parent::boot();
-        // static::creating(function ($delivDtl) {
-        //     $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
-        //         ->where('wh_id', $delivDtl->wh_code)
-        //         ->first();
-        //     $qtyChange = (float)$delivDtl->qty;
-        //     if ($delivDtl->tr_type === 'BB') {
-        //         $qtyChange = -$qtyChange;
-        //     }
 
-        //     if ($existingBal) {
-        //         $existingBalQty = $existingBal->qty_oh;
-        //         $newQty = $existingBalQty + $qtyChange;
-        //         $existingBal->qty_oh = $newQty;
-        //         $existingBal->save();
+        // When return detail is saved, calculate amount automatically
+        static::saving(function ($returnDtl) {
+            $qty = $returnDtl->qty ?? 0;
+            $price = $returnDtl->price ?? 0;
+            $returnDtl->amt = $qty * $price;
+        });
 
-        //         // Update corresponding record in IvtBalUnit
-        //         $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
-        //             ->where('wh_id', $delivDtl->wh_code)
-        //             ->first();
-        //         if ($existingBalUnit) {
-        //             $existingBalUnitQty = $existingBalUnit->qty_oh;
-        //             $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
-        //             $existingBalUnit->save();
-        //         }
-        //     } else {
-        //         $inventoryBalData = [
-        //             'matl_id' => $delivDtl->matl_id,
-        //             'matl_code' => $delivDtl->matl_code,
-        //             'matl_uom' => $delivDtl->matl_uom,
-        //             'matl_descr' => $delivDtl->matl_descr,
-        //             'wh_id' => $delivDtl->wh_code,
-        //             'wh_code' => $delivDtl->wh_code,
-        //             'qty_oh' => $qtyChange,
-        //         ];
-        //         $newIvtBal = IvtBal::create($inventoryBalData);
-        //         $inventoryBalUnitsData = [
-        //             'ivt_id' => $newIvtBal->id,
-        //             'matl_id' => $delivDtl->matl_id,
-        //             'wh_id' => $delivDtl->wh_code,
-        //             'matl_uom' => $delivDtl->matl_uom,
-        //             'unit_code' => $delivDtl->matl_uom,
-        //             'qty_oh' => $qtyChange,
-        //         ];
-        //         IvtBalUnit::create($inventoryBalUnitsData);
-        //     }
-        // });
-        // static::created(function ($returnDtl) {
-        //     $OrderDtl = $returnDtl->OrderDtl;  // Assuming the relation method name is OrderDtl
-        //     if ($OrderDtl) {
-        //         $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
-        //         $returnQty = ceil($OrderDtl->qty);
-        //         $newQtyReff = $OrderDtlQtyReff - $returnQty;
-        //         $OrderDtl->qty_reff = number_format($newQtyReff, 2);
-        //         $OrderDtl->save();
-        //     }
-        // });
+        // When return detail is deleted, reverse the stock increase (reduce stock)
+        static::deleted(function ($returnDtl) {
+            $values = $returnDtl->getReturnTrTypeValues($returnDtl->tr_type);
 
-        // static::deleting(function ($returnDtl) {
-        //         $OrderDtl = $returnDtl->OrderDtl;
-        //         if ($OrderDtl) {
-        //             $OrderDtlQtyReff = ceil($OrderDtl->qty_reff);
-        //             $returnQty =  ceil($OrderDtl->qty);
-        //             $newQtyReff = $OrderDtlQtyReff + $returnQty;
-        //             $OrderDtl->qty_reff = number_format($newQtyReff, 2);
-        //             $OrderDtl->save();
-        //         }
-        // });
+            // Find related delivery details (Return Delivery - RD)
+            $delivDtls = DelivDtl::where('tr_id', $returnDtl->tr_id)
+                ->where('tr_seq', $returnDtl->tr_seq)
+                ->where('tr_type', $values['delivTrType'])
+                ->get();
+
+            foreach ($delivDtls as $delivDtl) {
+                // Ensure warehouse ID is set
+                if (empty($delivDtl->wh_id)) {
+                    $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
+                    if ($warehouse) {
+                        $delivDtl->wh_id = $warehouse->id;
+                    }
+                }
+
+                // Find existing inventory balance
+                $existingBal = IvtBal::where([
+                    'matl_id' => $delivDtl->matl_id,
+                    'wh_id' => $delivDtl->wh_id,
+                    'matl_uom' => $delivDtl->matl_uom,
+                    'batch_code' => $delivDtl->batch_code,
+                ])->first();
+
+                if ($existingBal) {
+                    // For return deletion: REDUCE stock (reverse the return increase)
+                    $qtyRevert = match ($delivDtl->tr_type) {
+                        'RD' => -$delivDtl->qty,  // Return Delivery deletion reduces stock
+                        default => 0,
+                    };
+
+                    if ($qtyRevert != 0) {
+                        $existingBal->increment('qty_oh', $qtyRevert);
+
+                        // Remove inventory log if exists
+                        IvtLog::removeIvtLogIfExists(
+                            $delivDtl->trhdr_id,
+                            $delivDtl->tr_type,
+                            $delivDtl->tr_seq
+                        );
+                    }
+                }
+
+                // Recalculate material UOM quantity on hand
+                MatlUom::recalcMatlUomQtyOh($delivDtl->matl_id, $delivDtl->matl_uom);
+
+                // Force delete the delivery detail
+                $delivDtl->forceDelete();
+            }
+
+            // Delete related billing details
+            BillingDtl::where('tr_id', $returnDtl->tr_id)
+                ->where('tr_seq', $returnDtl->tr_seq)
+                ->where('tr_type', $values['billingTrType'])
+                ->forceDelete();
+        });
     }
 
     protected $fillable = [
@@ -126,6 +126,21 @@ class ReturnDtl extends BaseModel
         return $this->belongsTo(Material::class, 'matl_id');
     }
     #endregion
+
+    /**
+     * Get transaction type values for Return Delivery, Billing, and Payment.
+     *
+     * @param string $trType
+     * @return array Example: ['delivTrType' => 'RD', 'billingTrType' => 'RB']
+     */
+    private function getReturnTrTypeValues($trType)
+    {
+        // For Sales Return (SR), related records are Return Delivery (RD), Return Billing (RB)
+        return [
+            'delivTrType'   => 'RD',  // Return Delivery
+            'billingTrType' => 'RB',  // Return Billing
+        ];
+    }
 
 
     public function scopeGetByOrderHdr($query, $id, $trType)

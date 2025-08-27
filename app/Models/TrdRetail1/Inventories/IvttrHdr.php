@@ -6,6 +6,7 @@ use App\Models\TrdRetail1\Transaction\DelivDtl;
 use App\Enums\Constant;
 use App\Models\Base\BaseModel;
 
+use App\Models\SysConfig1\ConfigSnum;
 class IvttrHdr extends BaseModel
 {
     protected $table = 'ivttr_hdrs';
@@ -35,22 +36,31 @@ class IvttrHdr extends BaseModel
         return $this->hasMany(IvttrDtl::class, 'trhdr_id');
     }
 
-    public function saveOrderHeader($appCode, $trType, $inputs, $lastIdKey)
+     public function saveOrderHeader($appCode, $trType, $inputs, $lastIdKey)
     {
-        // Implement the logic to save the order header
-        // Example:
         $this->fill($inputs);
 
-        // Generate tr_id with incremented value only if it's a new record
+        // Generate tr_code dengan ConfigSnum hanya jika record baru
         if (!$this->exists) {
-            $lastRecord = self::orderBy('tr_id', 'desc')->first();
-            $lastId = $lastRecord ? intval($lastRecord->tr_id) : 0;
-            $this->tr_id = str_pad($lastId + 1, 3, '0', STR_PAD_LEFT);
+            $this->tr_id = self::generateInventoryTransactionId();
         }
 
-        // $this->tr_type = $inputs['tr_type'];
         $this->save();
     }
+
+    public static function generateInventoryTransactionId()
+    {
+        $configSnum = ConfigSnum::where('code', 'IVT_LASTID')->first();
+        $stepCnt = $configSnum->step_cnt;
+        $proposedTrId = $configSnum->last_cnt + $stepCnt;
+        if ($proposedTrId > $configSnum->wrap_high) {
+            $proposedTrId = $configSnum->wrap_low;
+        }
+        $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+        $configSnum->update(['last_cnt' => $proposedTrId]);
+        return $proposedTrId;
+    }
+
     public function getTrIdAttribute($value)
     {
         return sprintf('%03d', $value);

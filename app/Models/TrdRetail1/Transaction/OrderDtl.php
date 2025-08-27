@@ -7,6 +7,7 @@ use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\{ConfigSnum, ConfigConst};
 use App\Models\TrdRetail1\Inventories\IvtBal;
 use App\Models\TrdRetail1\Inventories\IvtBalUnit;
+use App\Models\TrdRetail1\Transaction\{DelivDtl, BillingDtl};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
@@ -19,8 +20,8 @@ class OrderDtl extends BaseModel
     {
         parent::boot();
         static::saving(function ($orderDtl) {
-            $qty = $orderDtl->qty;
-            $price = $orderDtl->price;
+            $qty = $orderDtl->qty ?? 0;
+            $price = $orderDtl->price ?? 0;
             $orderDtl->amt = $qty * $price;
         });
         static::saved(function ($orderDtl) {
@@ -58,8 +59,10 @@ class OrderDtl extends BaseModel
 
                 if ($existingBal) {
                     $qtyRevert = match ($delivDtl->tr_type) {
-                        'PD' => -$delivDtl->qty,
-                        'SD' => $delivDtl->qty,
+                        'PD' => -$delivDtl->qty,  // Purchase Delivery: reduce stock on deletion
+                        'SD' => ($orderDtl->tr_type === 'SOR')
+                            ? -$delivDtl->qty  // SOR deletion: increase stock (reverse exchange effect)
+                            : $delivDtl->qty,  // Regular SO deletion: increase stock
                         default => 0,
                     };
 
@@ -88,6 +91,7 @@ class OrderDtl extends BaseModel
     /**
      * Decide Deliv & Billing tr_type based on $trType.
      * E.g. if $trType='PO', we might say DelivHdr has 'PD' and BillingHdr has 'APB'.
+     * For SOR (Sales Order Return/Exchange), DelivDtl has 'SD' and BillingDtl has 'ARB'.
      *
      * @param  string $trType
      * @return array  [ 'delivTrType' => 'PD', 'billingTrType' => 'APB' ]
@@ -98,6 +102,12 @@ class OrderDtl extends BaseModel
             return [
                 'delivTrType' => 'PD',
                 'billingTrType' => 'APB',
+            ];
+        } elseif ($trType === 'SOR') {
+            // Sales Order Return/Exchange - uses same delivery/billing types as regular SO
+            return [
+                'delivTrType' => 'SD',
+                'billingTrType' => 'ARB',
             ];
         } else {
             // For 'SO' or other

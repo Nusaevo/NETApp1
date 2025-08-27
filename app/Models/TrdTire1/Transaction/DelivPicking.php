@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class DelivPicking extends BaseModel
 {
-    use SoftDeletes;
-
     protected $table = 'deliv_pickings';
     protected $fillable = [
         'trpacking_id',
@@ -88,5 +86,11 @@ class DelivPicking extends BaseModel
     {
         return $query->where('trpacking_id', $id);
     }
-}
 
+    public static function getNextTrSeq(int $trpackingId):int
+    {
+        $lastSeq = self::where('trpacking_id', $trpackingId)->max('tr_seq');
+        return ($lastSeq ?? 0) + 1;
+    }
+
+}

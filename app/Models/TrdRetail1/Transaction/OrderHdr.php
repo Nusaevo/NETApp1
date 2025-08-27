@@ -157,30 +157,33 @@ class OrderHdr extends BaseModel
     }
 
     /**
-     * Generate tr_id jika record baru.
+     * Generate tr_id jika record baru dan tr_id belum ada.
      *
      * @param string $trType
      */
     private function generateTransactionId($trType)
     {
+        // Jika tr_id sudah ada (tidak null dan tidak kosong), tidak perlu generate lagi
+        if (!empty($this->tr_id) && $this->tr_id !== null && $this->tr_id != 0) {
+            return;
+        }
+
         $configCode = $trType === 'PO' ? 'PURCHORDER_LASTID' : 'SALESORDER_LASTID';
 
-        if ($this->tr_id === null || $this->tr_id == 0) {
-            $configSnum = ConfigSnum::where('code', '=', $configCode)->first();
-            if ($configSnum) {
-                $stepCnt = $configSnum->step_cnt;
-                $proposedTrId = $configSnum->last_cnt + $stepCnt;
+        $configSnum = ConfigSnum::where('code', '=', $configCode)->first();
+        if ($configSnum) {
+            $stepCnt = $configSnum->step_cnt;
+            $proposedTrId = $configSnum->last_cnt + $stepCnt;
 
-                if ($proposedTrId > $configSnum->wrap_high) {
-                    $proposedTrId = $configSnum->wrap_low;
-                }
-                $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
-
-                $configSnum->last_cnt = $proposedTrId;
-                $configSnum->save();
-
-                $this->tr_id = $proposedTrId;
+            if ($proposedTrId > $configSnum->wrap_high) {
+                $proposedTrId = $configSnum->wrap_low;
             }
+            $proposedTrId = max($proposedTrId, $configSnum->wrap_low);
+
+            $configSnum->last_cnt = $proposedTrId;
+            $configSnum->save();
+
+            $this->tr_id = $proposedTrId;
         }
     }
 

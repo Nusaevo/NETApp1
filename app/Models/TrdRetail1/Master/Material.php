@@ -569,8 +569,7 @@ class Material extends BaseModel
             }
 
             if (!empty($ivtDetails)) {
-                $maxTrId = IvttrHdr::max('tr_id');
-                $nextTrId = $maxTrId ? $maxTrId + 1 : 1;
+                $nextTrId = IvttrHdr::generateInventoryTransactionId();
 
                 $ivtHdr = IvttrHdr::create([
                     'tr_id'   => $nextTrId,
