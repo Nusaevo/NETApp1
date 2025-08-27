@@ -63,6 +63,77 @@
     <!-- Enhanced DataTable Styles -->
     <link rel="stylesheet" type="text/css" href="{{ asset('css/datatable-enhanced.css') }}">
 
+    <!-- Custom Mobile Profile Styles -->
+    <style>
+        .bg-light-hover:hover {
+            background-color: #f8f9fa !important;
+            transform: translateX(2px);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .offcanvas-body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .list-group-item {
+            border: none !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .list-group-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .rounded-circle {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .list-group-item:hover .rounded-circle {
+            transform: scale(1.05);
+        }
+
+        /* Profile gradient animation */
+        .bg-primary.bg-gradient {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-primary.bg-gradient::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Badge styling */
+        .badge.bg-light {
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Online indicator animation */
+        .position-absolute .bg-success {
+            animation: pulse-online 2s infinite;
+        }
+
+        @keyframes pulse-online {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+
     @livewireStyles
 
 </head>
@@ -142,31 +213,64 @@
 
         <!-- Offcanvas Profile for mobile (right) -->
         <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="mobileProfile" aria-labelledby="mobileProfileLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="mobileProfileLabel">Account</h5>
+            <div class="offcanvas-header border-bottom bg-light">
+                <h5 class="offcanvas-title fw-bold text-primary" id="mobileProfileLabel">
+                    <i class="bi bi-person-circle me-2"></i>Account
+                </h5>
                 <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-            <div class="offcanvas-body">
-                <div class="text-center mb-4">
+            <div class="offcanvas-body p-0">
+                <!-- User Profile Section -->
+                <div class="bg-primary bg-gradient text-white p-4 text-center">
                     <div class="mb-3">
-                        <i class="bi bi-person-circle text-primary" style="font-size: 5rem;"></i>
+                        <div class="position-relative d-inline-block">
+                            <i class="bi bi-person-circle" style="font-size: 4.5rem; opacity: 0.9;"></i>
+                            <div class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" style="width: 20px; height: 20px;">
+                                <div class="bg-white rounded-circle" style="width: 12px; height: 12px;"></div>
+                            </div>
+                        </div>
                     </div>
-                    <h6 class="fw-bold mb-1">{{ Auth::user()->name ?? 'User' }}</h6>
-                    <small class="text-muted">{{ Auth::user()->email ?? '' }}</small>
+                    <h6 class="fw-bold mb-1" style="font-size: 1.1rem;">{{ Auth::user()->name ?? 'User' }}</h6>
+                    <small class="opacity-75" style="font-size: 0.9rem;">{{ Auth::user()->email ?? 'user@example.com' }}</small>
+
                 </div>
 
-                <div class="list-group list-group-flush">
-                    <a href="{{ url('/SysConfig1/ConfigUser/Detail/' . encryptWithSessionKey('Edit') . '/' . encryptWithSessionKey(Auth::id())) }}" class="list-group-item list-group-item-action border-0 py-3">
-                        <i class="bi bi-person me-3"></i>Edit Profile
-                    </a>
-                    <div class="border-top my-2"></div>
-                    <form method="POST" action="{{ route('logout') }}" class="mb-0">
-                        @csrf
-                        <button type="submit" class="list-group-item list-group-item-action border-0 py-3 text-danger">
-                            <i class="bi bi-box-arrow-right me-3"></i>Logout
-                        </button>
-                    </form>
+                <!-- Menu Section -->
+                <div class="p-3">
+                    <div class="list-group list-group-flush">
+                        <!-- Edit Profile -->
+                        <a href="{{ url('/SysConfig1/AccountSetting/Detail/' . encryptWithSessionKey('Edit') . '/' . encryptWithSessionKey(Auth::id())) }}"
+                           class="list-group-item list-group-item-action border-0 py-3 d-flex align-items-center rounded-3 mb-2 bg-light-hover">
+                            <div class="d-flex align-items-center justify-content-center me-3 bg-primary bg-opacity-10 rounded-circle" style="width: 40px; height: 40px;">
+                                <i class="bi bi-person-gear text-primary" style="font-size: 1.1rem;"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-dark">Edit Profile</div>
+                                <small class="text-muted">Update your personal information</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+
+                        <!-- Divider -->
+                        <div class="border-top my-3"></div>
+
+                        <!-- Logout -->
+                        <form method="POST" action="{{ route('logout') }}" class="mb-0">
+                            @csrf
+                            <button type="submit" class="list-group-item list-group-item-action border-0 py-3 d-flex align-items-center w-100 text-start rounded-3 bg-light-hover">
+                                <div class="d-flex align-items-center justify-content-center me-3 bg-danger bg-opacity-10 rounded-circle" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-box-arrow-right text-danger" style="font-size: 1.1rem;"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold text-danger">Sign Out</div>
+                                    <small class="text-muted">Logout from your account</small>
+                                </div>
+                                <i class="bi bi-chevron-right text-muted"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
+
             </div>
         </div>
 
