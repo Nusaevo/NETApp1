@@ -66,12 +66,12 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                     return '-';
                 }),
-            Column::make($this->trans('Total Barang'), 'total_qty')
+            Column::make($this->trans('Qty Barang'), 'total_qty')
                 ->label(function ($row) {
                     return $row->total_qty;
                 })
                 ->sortable(),
-            Column::make($this->trans('Total Akan Dikirim'), 'total_qty')
+            Column::make($this->trans('Qty Diterima'), 'total_qty')
                 ->label(function ($row) {
                     $totalQty = DelivPacking::where('reffhdr_id', $row->id)->sum('qty');
                     return round($totalQty);

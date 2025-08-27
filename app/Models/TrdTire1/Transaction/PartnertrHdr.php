@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\TrdTire1\Transaction;
 
 use App\Models\Base\BaseModel;
 

@@ -17,7 +17,14 @@ class PartnerBal extends BaseModel
         'reff_id',
         'reff_type',
         'reff_code',
+        'amt_bal',
+        'amt_adv',
+        'descr',
+    ];
 
+    protected $casts = [
+        'amt_bal' => 'float',
+        'amt_adv' => 'float',
     ];
 
     protected $primaryKey = 'id';

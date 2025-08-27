@@ -59,7 +59,7 @@ class PartnerBalanceService
                 'curr_id' => $headerData['curr_id'],
                 'curr_code' => $headerData['curr_code'],
                 'curr_rate' => $headerData['curr_rate'],
-                'tr_desc' => 'Billing ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'],
+                'tr_descr' => 'Billing ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'],
             ];
             // Selalu buat log baru untuk delivery
             // dd($logData, $amtBal);
@@ -93,15 +93,15 @@ class PartnerBalanceService
                 $trDesc = 'Payment ' . $headerData['tr_type'] . ' ' . $headerData['tr_code'];
 
             } else if ($detailData['tr_type'] === 'ARPS') {
-                $partnerId = $detailData['bank_id'] ;
+                $partnerId = $detailData['bank_id'] ?? null;
                 $partnerCode = $detailData['bank_code'];
-                $reffId = 0;
-                $reffType = '';
-                $reffCode = '';
+                $reffId = $detailData['reff_id'] ?? 0;
+                $reffType = $detailData['reff_type'] ?? '';
+                $reffCode = $detailData['reff_code'] ?? '';
 
                 $amtBal = $detailData['amt'];
                 $trAmt = $detailData['amt'];
-                $trDesc =  'PayRcvd To ' . $detailData['bank_code'];
+                $trDesc =  'PayRcvd To ' . ($detailData['bank_code']);
 
             } else if ($detailData['tr_type'] === 'ARPA') {
 
@@ -126,15 +126,21 @@ class PartnerBalanceService
                     'partner_code' => $partnerCode,
                     'reff_type' => $reffType,
                     'reff_code' => $reffCode,
-                    'amt_bal' => 0,
-                    'amt_adv' => 0,
-                    'note' => $trDesc,
+                    // 'amt_bal' => 0,
+                    // 'amt_adv' => 0,
+                    // 'note' => $trDesc,
                 ]
             );
 
             $partnerBal->amt_bal += $amtBal;
             $partnerBal->amt_adv += $amtAdv;
-            $partnerBal->note = $trDesc; // update note setiap kali update
+            if (isset($detailData['bank_code']) && $detailData['bank_code'] == 'GIRO BELUM DISETOR'){
+                $bankDuedt = $detailData['bank_duedt'] ?? null;
+                $timestamp = is_string($bankDuedt) ? strtotime($bankDuedt) : ($bankDuedt ?: time());
+                $partnerBal->descr = ($detailData['bank_reff'] ?? '') . ' - ' . date('d-m-Y', $timestamp);
+            } else {
+                $partnerBal->descr = $trDesc;
+            }
             $partnerBal->save();
 
             // Jika ARPA, kurangi juga amt_adv dari PartnerBal lama (saldo sebelumnya)
@@ -165,12 +171,11 @@ class PartnerBalanceService
                 'tr_amt' => $trAmt,
                 'tramt_adjusthdr' => 0,
                 'tramt_shipcost' => 0,
-                'partnerbal_id' => $partnerBal->id,
                 'amt' => $amtBal != 0 ? $amtBal : $amtAdv,
                 'curr_id' => $headerData['curr_id'],
                 'curr_code' => $headerData['curr_code'],
                 'curr_rate' => $headerData['curr_rate'],
-                'tr_desc' => $trDesc,
+                'tr_descr' => $trDesc,
         ];
 
             try {
@@ -231,7 +236,7 @@ class PartnerBalanceService
             'curr_id' => $headerData['curr_id'],
             'curr_code' => $headerData['curr_code'],
             'curr_rate' => $headerData['curr_rate'],
-            'tr_desc' => $trDesc,
+            'tr_descr' => $trDesc,
         ];
         PartnerLog::create($logData);
         return $partnerBal->id;
@@ -243,7 +248,31 @@ class PartnerBalanceService
             throw new Exception('Header ID (id) is required');
         }
 
-        
+        $reffType = $detailData['reff_type'];
+        $reffCode = $detailData['reff_code'];
+        $reffId = $detailData['reff_id'];
+        if ($detailData['tr_type'] === 'CQDEP'){
+            if ($detailData['tr_seq'] < 0) {
+                $trDesc = 'Setor Giro ' . $detailData['tr_descr'];
+           } else {
+                $trDesc = 'Terima Setoran Giro ' . $detailData['tr_descr'];
+                $reffType = '';
+                $reffCode = '';
+                $reffId = 0;
+            }
+        } else if ($detailData['tr_type'] === 'CQREJ') {
+            if ($detailData['tr_seq'] < 0) {
+                $trDesc = 'Tolakan Giro ' . $detailData['tr_descr'];
+                $reffType = '';
+                $reffCode = '';
+                $reffId = 0;
+            } else {
+                $trDesc = 'Terima Tolakan Giro ' . $detailData['tr_descr'];
+            }
+        } else {
+            $trDesc = 'Transaksi ' . $detailData['tr_type'] . ' ' . $detailData['tr_code'];
+        }
+
         // Cari atau buat partner balance berdasarkan partner_id
         $partnerBal = PartnerBal::updateOrCreate(
             [
@@ -255,25 +284,9 @@ class PartnerBalanceService
                 'reff_type' => $detailData['reff_type'],
                 'reff_code' => $detailData['reff_code'],
                 ]
-            );    
+            );
         $partnerBal->amt_bal += $detailData['amt'];
         $partnerBal->save();
-            
-        if ($detailData['tr_type'] === 'CQDEP'){
-            if ($detailData['tr_seq'] < 0) {
-                $trDesc = 'Setor Giro ' . $detailData['tr_descr'];
-           } else {
-                $trDesc = 'Terima Setoran Giro ' . $detailData['tr_descr'];
-            }
-        } else if ($detailData['tr_type'] === 'CQREJ') {
-            if ($detailData['tr_seq'] < 0) {
-                $trDesc = 'Tolakan Giro ' . $detailData['tr_descr'];
-            } else {
-                $trDesc = 'Terima Tolakan Giro ' . $detailData['tr_descr'];
-            }
-        } else {
-            $trDesc = 'Transaksi ' . $detailData['tr_type'] . ' ' . $detailData['tr_code'];
-        }
 
         $logData = [
             'tr_date' => $headerData['tr_date'],
@@ -285,18 +298,17 @@ class PartnerBalanceService
             'partnerbal_id' => $partnerBal->id,
             'partner_id' => $detailData['partner_id'],
             'partner_code' => $detailData['partner_code'],
-            'reff_id' => $detailData['reff_id'],
-            'reff_type' => $detailData['reff_type'],
-            'reff_code' => $detailData['reff_code'],
+            'reff_id' => $reffId,
+            'reff_type' => $reffType,
+            'reff_code' => $reffCode,
             'tr_amt' => $detailData['amt'],
             'tramt_adjusthdr' => 0,
             'tramt_shipcost' => 0,
-            'partnerbal_id' => $partnerBal->id,
             'amt' => $detailData['amt'],
             'curr_id' => $headerData['curr_id'],
             'curr_code' => $headerData['curr_code'],
             'curr_rate' => $headerData['curr_rate'],
-            'tr_desc' => $trDesc,
+            'tr_descr' => $trDesc,
         ];
         PartnerLog::create($logData);
         return $partnerBal->id;
