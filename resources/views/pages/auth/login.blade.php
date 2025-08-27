@@ -11,9 +11,7 @@
         body {
             min-height: 100vh;
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f1f3f4 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 20s ease infinite;
+            background: #f8f9fa;
             position: relative;
             overflow-x: hidden;
         }
@@ -39,7 +37,7 @@
             z-index: 0;
         }
 
-        /* Floating geometric shapes */
+        /* Remove moving pattern animation */
         body::after {
             content: '';
             position: absolute;
@@ -51,7 +49,6 @@
                 linear-gradient(45deg, transparent 49%, rgba(108, 117, 125, 0.02) 50%, transparent 51%),
                 linear-gradient(-45deg, transparent 49%, rgba(73, 80, 87, 0.02) 50%, transparent 51%);
             background-size: 30px 30px;
-            animation: movePattern 30s linear infinite;
             z-index: 0;
         }
 
@@ -73,15 +70,9 @@
             z-index: 1;
         }
 
-        /* Floating particles */
+        /* Floating particles - disabled for stability */
         .floating-particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: 0;
-            pointer-events: none;
+            display: none;
         }
 
         .particle {
@@ -202,26 +193,19 @@
         }
 
         .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(108, 117, 125, 0.05), transparent);
-            transition: left 0.8s;
+            display: none;
         }
 
         .login-card:hover::before {
-            left: 100%;
+            display: none;
         }
 
         .login-card:hover {
-            transform: translateY(-5px);
+            transform: none;
             box-shadow:
-                0 20px 40px rgba(0, 0, 0, 0.15),
-                0 5px 15px rgba(0, 0, 0, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                0 2px 8px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
 
         .logo-section {
@@ -329,28 +313,21 @@
         }
 
         .btn-login::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.6s;
+            display: none;
         }
 
         .btn-login:hover::before {
-            left: 100%;
+            display: none;
         }
 
         .btn-login:hover {
             background: #343a40;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(73, 80, 87, 0.4);
+            transform: none;
+            box-shadow: 0 2px 8px rgba(73, 80, 87, 0.2);
         }
 
         .btn-login:active {
-            transform: translateY(0);
+            transform: none;
         }
 
         .btn-login:disabled {
