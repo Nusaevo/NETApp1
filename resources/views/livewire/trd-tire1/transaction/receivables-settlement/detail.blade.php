@@ -148,7 +148,7 @@
                             <th style="width: 50px; text-align: center;">Total Piutang</th>
                             <th style="width: 30px; text-align: center;">Adjustment</th>
                             <th style="width: 90px; text-align: center;">Total Bayar</th>
-                            <th style="width: 40px; text-align: center;"></th>
+                            <th style="width: 40px; text-align: center;">Lunas</th>
                         </x-slot>
 
                         <!-- Define table rows -->
@@ -183,9 +183,14 @@
                                             :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-button :clickEvent="'payAdjustment(' . $key . ')'" button-name="Lunas" loading="true"
-                                            :action="$actionValue" cssClass="btn-primary"
-                                            iconPath="" />
+                                        <x-ui-toggle-switch
+                                            model="input_details.{{ $key }}.is_lunas"
+                                            onChanged="toggleLunas({{ $key }})"
+                                            :action="$actionValue"
+                                            enabled="true"
+                                            :showLabel="false"
+                                            :label="$input_detail['is_lunas'] ? 'Lunas' : 'Belum Lunas'"
+                                        />
                                     </td>
                                 </tr>
                             @endforeach

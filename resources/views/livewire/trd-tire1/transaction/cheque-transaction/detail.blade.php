@@ -54,8 +54,8 @@
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
                                             <x-ui-dropdown-select label=""
-                                                model="input_details.{{ $key }}.bank_code" :options="$giroOptions"
-                                               :selectedValue="$input_details[$key]['bank_code'] ?? ''" required="true"
+                                                model="input_details.{{ $key }}.bank_reff" :options="$giroOptions"
+                                               :selectedValue="$input_details[$key]['bank_reff'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="giroOnChanged({{ $key }}, $event.target.value)"
                                                 :enabled="$isDeliv ? 'false' : 'true'" />

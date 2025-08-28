@@ -28,9 +28,11 @@ class PaymentSrc extends BaseModel
         'bank_reff',
         'bank_duedt',
         'bank_note',
-        'amt',
-        // baru
         'partnerbal_id',
+        'reff_id',
+        'reff_type',
+        'reff_code',
+        'amt',
         'amt_base'
     ];
 

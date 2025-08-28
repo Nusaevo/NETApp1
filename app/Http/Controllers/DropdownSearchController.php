@@ -270,40 +270,160 @@ class DropdownSearchController extends Controller
     /**
      * Format the display text based on the option label format
      *
+     * Enhanced to support template placeholders:
+     * - Use {} for dynamic field replacement: "Kode : {m.code}; Nama :{m.name}"
+     * - Text outside {} is displayed as-is
+     * - Text inside {} is replaced with field values
+     *
+     * Separator rules:
+     * - Use semicolon (;) for line breaks: "code;name" → "ABC123\nProduct Name"
+     * - Use comma (,) for dash separator: "code,name" → "ABC123 - Product Name"
+     *
      * @param object $item
      * @param string $optionLabel
      * @return string
      */
     private function formatDisplayText($item, $optionLabel)
     {
-        // Support multiple labels separated by comma
-        $labels = explode(',', $optionLabel);
+        // Check if the optionLabel contains placeholders {}
+        if (preg_match('/\{[^}]+\}/', $optionLabel)) {
+            // Handle template format with placeholders
+            return $this->formatDisplayTextWithPlaceholders($item, $optionLabel);
+        }
+
+        // Use the original logic for simple field names
+        // Determine separator and split accordingly
+        $useSemicolon = strpos($optionLabel, ';') !== false;
+        $separator = $useSemicolon ? ';' : ',';
+        $labels = explode($separator, $optionLabel);
+
         $displayText = '';
         $foundAny = false;
 
         foreach ($labels as $index => $label) {
             $label = trim($label);
+
+            // Handle table aliases: if label contains dot (e.g., "m.code"), extract just the column name
+            if (strpos($label, '.') !== false) {
+                $parts = explode('.', $label);
+                $label = end($parts); // Get the column name part after the dot
+            }
+
             if ($label && property_exists($item, $label) && $item->{$label} !== null) {
                 if ($index > 0 && $foundAny) {
-                    $displayText .= ' - ';
+                    if ($useSemicolon) {
+                        // Use line break for semicolon separator
+                        $displayText .= "\n";
+                    } else {
+                        // Use dash for comma separator
+                        $displayText .= ' - ';
+                    }
                 }
                 $displayText .= $item->{$label};
                 $foundAny = true;
+            } else {
+                \Log::debug('Field not found in item:', [
+                    'original_label' => $labels[$index],
+                    'processed_label' => $label,
+                    'available_fields' => array_keys(get_object_vars($item)),
+                    'item_values' => get_object_vars($item)
+                ]);
             }
         }
 
         // If no labels were found, try to use just the first one or return a default
         if (!$foundAny && !empty($labels)) {
             $firstLabel = trim($labels[0]);
+
+            // Handle table aliases for fallback too
+            if (strpos($firstLabel, '.') !== false) {
+                $parts = explode('.', $firstLabel);
+                $firstLabel = end($parts);
+            }
+
             if (property_exists($item, $firstLabel) && $item->{$firstLabel} !== null) {
                 $displayText = $item->{$firstLabel};
             } else {
-                $displayText = '[No Label]';
+                $displayText = '[No Label Available]';
                 \Log::warning('No display labels found for item', [
-                    'requestedLabels' => $optionLabel,
-                    'availableFields' => array_keys(get_object_vars($item))
+                    'requested_labels' => $optionLabel,
+                    'available_fields' => array_keys(get_object_vars($item)),
+                    'processed_first_label' => $firstLabel
                 ]);
             }
+        }
+
+        return $displayText;
+    }
+
+    /**
+     * Format display text with template placeholders
+     * Handles format like "Kode : {m.code}; Nama :{m.name}"
+     *
+     * @param object $item
+     * @param string $optionLabel
+     * @return string
+     */
+    private function formatDisplayTextWithPlaceholders($item, $optionLabel)
+    {
+        // Determine separator for line breaks
+        $useSemicolon = strpos($optionLabel, ';') !== false;
+        $separator = $useSemicolon ? ';' : ',';
+        $segments = explode($separator, $optionLabel);
+
+        $displayText = '';
+        $foundAny = false;
+
+        foreach ($segments as $index => $segment) {
+            $segment = trim($segment);
+            $processedSegment = '';
+
+            // Process placeholders in this segment
+            $processedSegment = preg_replace_callback('/\{([^}]+)\}/', function($matches) use ($item) {
+                $fieldName = trim($matches[1]);
+
+                // Handle table aliases: if field contains dot (e.g., "m.code"), extract just the column name
+                if (strpos($fieldName, '.') !== false) {
+                    $parts = explode('.', $fieldName);
+                    $fieldName = end($parts);
+                }
+
+                // Return field value if it exists, otherwise return the placeholder as-is
+                if (property_exists($item, $fieldName) && $item->{$fieldName} !== null) {
+                    return $item->{$fieldName};
+                } else {
+                    \Log::debug('Placeholder field not found:', [
+                        'original_field' => $matches[1],
+                        'processed_field' => $fieldName,
+                        'available_fields' => array_keys(get_object_vars($item))
+                    ]);
+                    return '[' . $matches[1] . ']'; // Return placeholder in brackets if field not found
+                }
+            }, $segment);
+
+            // Only add this segment if it contains some actual field data (not just text)
+            if (preg_match('/\{[^}]+\}/', $segment)) {
+                if ($index > 0 && $foundAny) {
+                    if ($useSemicolon) {
+                        // Use line break for semicolon separator
+                        $displayText .= "\n";
+                    } else {
+                        // Use space for comma separator in template mode
+                        $displayText .= ' ';
+                    }
+                }
+                $displayText .= $processedSegment;
+                $foundAny = true;
+            }
+        }
+
+        // If no segments with placeholders were processed, return a fallback
+        if (!$foundAny) {
+            \Log::warning('No valid placeholders found in template', [
+                'template' => $optionLabel,
+                'available_fields' => array_keys(get_object_vars($item))
+            ]);
+            return '[No Valid Template]';
         }
 
         return $displayText;
@@ -447,16 +567,8 @@ class DropdownSearchController extends Controller
 
         // Use optionLabel fields as searchable fields
         // These are the fields that are shown in the dropdown, so they should be searched
-        $optionLabelFields = explode(',', $optionLabel ?? '');
-
-        // Trim and clean up the field names
-        $searchableFields = [];
-        foreach ($optionLabelFields as $field) {
-            $field = trim($field);
-            if (!empty($field)) {
-                $searchableFields[] = $field;
-            }
-        }
+        // Support both comma and semicolon as separators, and handle placeholders {}
+        $searchableFields = $this->extractSearchableFields($optionLabel);
 
         // If no searchable fields from optionLabel, use defaults or detect from query
         if (empty($searchableFields)) {
@@ -547,6 +659,59 @@ class DropdownSearchController extends Controller
             // Add new WHERE clause with ID filter
             return $sqlQuery . " WHERE " . $optionValue . " = '" . addslashes($id) . "'";
         }
+    }
+
+    /**
+     * Extract searchable fields from optionLabel, handling both simple fields and placeholders
+     *
+     * @param string $optionLabel
+     * @return array
+     */
+    private function extractSearchableFields($optionLabel)
+    {
+        $searchableFields = [];
+
+        if (empty($optionLabel)) {
+            return $searchableFields;
+        }
+
+        // Check if optionLabel contains placeholders {}
+        if (preg_match_all('/\{([^}]+)\}/', $optionLabel, $matches)) {
+            // Extract field names from placeholders
+            foreach ($matches[1] as $field) {
+                $field = trim($field);
+
+                // Handle table aliases: if field contains dot (e.g., "m.code"), extract just the column name
+                if (strpos($field, '.') !== false) {
+                    $parts = explode('.', $field);
+                    $field = end($parts);
+                }
+
+                if (!empty($field)) {
+                    $searchableFields[] = $field;
+                }
+            }
+        } else {
+            // Use original logic for simple field names
+            // Support both comma and semicolon as separators
+            $separator = strpos($optionLabel, ';') !== false ? ';' : ',';
+            $optionLabelFields = explode($separator, $optionLabel);
+
+            // Trim and clean up the field names
+            foreach ($optionLabelFields as $field) {
+                $field = trim($field);
+                if (!empty($field)) {
+                    // Handle table aliases: if field contains dot (e.g., "m.code"), extract just the column name
+                    if (strpos($field, '.') !== false) {
+                        $parts = explode('.', $field);
+                        $field = end($parts);
+                    }
+                    $searchableFields[] = $field;
+                }
+            }
+        }
+
+        return array_unique($searchableFields); // Remove duplicates
     }
 
     /**

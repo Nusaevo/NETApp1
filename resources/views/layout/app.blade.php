@@ -232,11 +232,7 @@
                     </div>
                     <h6 class="fw-bold mb-1" style="font-size: 1.1rem;">{{ Auth::user()->name ?? 'User' }}</h6>
                     <small class="opacity-75" style="font-size: 0.9rem;">{{ Auth::user()->email ?? 'user@example.com' }}</small>
-                    <div class="mt-3">
-                        <span class="badge bg-light text-primary px-3 py-2 rounded-pill">
-                            <i class="bi bi-shield-check me-1"></i>Active User
-                        </span>
-                    </div>
+
                 </div>
 
                 <!-- Menu Section -->
@@ -275,18 +271,6 @@
                     </div>
                 </div>
 
-                <!-- Footer Info -->
-                <div class="p-3 mt-auto border-top bg-light">
-                    <div class="text-center">
-                        <small class="text-muted d-block mb-2">
-                            <i class="bi bi-clock me-1"></i>Last login: {{ date('M d, Y') }}
-                        </small>
-                        <div class="d-flex align-items-center justify-content-center">
-                            <img src="{{ asset('customs/logos/SysConfig1.png') }}" alt="Logo" class="me-2" style="width: 16px; height: 16px; object-fit: contain;">
-                            <small class="text-muted fw-medium">NusaEvo System</small>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 

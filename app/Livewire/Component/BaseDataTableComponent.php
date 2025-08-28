@@ -222,6 +222,68 @@ abstract class BaseDataTableComponent extends DataTableComponent
             'message' => $message,
         ]);
     }
+
+    /**
+     * Determine if reorder button should be shown
+     * Override this method in child classes to enable reordering
+     */
+    public function showReorderButton(): bool
+    {
+        return false;
+    }
+    /**
+     * Determine if actions should be shown in toolbar left
+     * Override this method in child classes if needed
+     */
+    public function showActionsInToolbarLeft(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Determine if actions should be shown in toolbar right
+     * Override this method in child classes if needed
+     */
+    public function showActionsInToolbarRight(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Determine if search field should be shown
+     * Override this method in child classes if needed
+     */
+    public function showSearchField(): bool
+    {
+        return !$this->searchIsDisabled();
+    }
+
+    /**
+     * Determine if filters button should be shown
+     * Override this method in child classes if needed
+     */
+    public function showFiltersButton(): bool
+    {
+        return $this->filtersAreEnabled() && $this->hasFilters();
+    }
+
+    /**
+     * Determine if bulk actions dropdown should be shown
+     * Override this method in child classes if needed
+     */
+    public function showBulkActionsDropdownAlpine(): bool
+    {
+        return $this->bulkActionsAreEnabled();
+    }
+
+    /**
+     * Determine if pagination dropdown should be shown
+     * Override this method in child classes if needed
+     */
+    public function showPaginationDropdown(): bool
+    {
+        return $this->paginationIsEnabled();
+    }
     // public function bulkActions(): array
     // {
     //     return [
