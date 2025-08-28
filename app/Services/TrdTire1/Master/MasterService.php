@@ -246,7 +246,7 @@ class MasterService extends BaseService
         $payments = $data->map(function ($item) {
             return [
                 'label' => $item->str1 . " - " . $item->str2,
-                'value' => $item->id,
+                'value' => $item->str1,
             ];
         })->toArray();
         return $payments;

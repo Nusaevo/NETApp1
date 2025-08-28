@@ -518,14 +518,13 @@ class Detail extends BaseComponent
 
                 // Ambil BillingHdr id dari billdtl_id jika ada
                 if ($detail->billdtl_id) {
-                    $billingDtl = BillingDtl::find($detail->billdtl_id);
-                    if ($billingDtl) {
-                        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);                        if ($billingHdr) {
-                            $amtbill = $billingHdr->amt ?? 0;
-                            $billhdr_id = $billingHdr->id;
-                            $billhdrtr_code = $billingHdr->tr_code;
-                            $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
-                        }
+                    // Langsung ambil dari billhdr_id jika tersedia
+                    $billingHdr = BillingHdr::find($detail->billhdr_id);
+                    if ($billingHdr) {
+                        $amtbill = $billingHdr->amt ?? 0;
+                        $billhdr_id = $billingHdr->id;
+                        $billhdrtr_code = $billingHdr->tr_code;
+                        $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
                     }
                 }
 
@@ -583,15 +582,28 @@ class Detail extends BaseComponent
                     }
                 }
 
+                // Cek apakah ada data adjustment di PartnertrDtl untuk nota ini
+                $hasAdjustment = false;
+                if ($billhdr_id) {
+                    $partnerTrxDtl = PartnertrDtl::where('tr_type', 'ARA')
+                        ->where('reff_id', $billhdr_id)
+                        ->where('reff_type', $billingHdr->tr_type ?? '')
+                        ->where('reff_code', $billhdrtr_code)
+                        ->first();
+
+                    $hasAdjustment = $partnerTrxDtl ? true : false;
+                }
+
                 $this->input_details[] = [
-                    'billhdr_id'      => $billhdr_id, // id BillingHdr untuk proses simpan
-                    'billhdrtr_code'  => $billhdrtr_code, // kode nota untuk tampilan
-                    'due_date'        => $due_date, // tanggal jatuh tempo (Y-m-d agar cocok input type="date")
+                    'billhdr_id'      => $billhdr_id,
+                    'billhdrtr_code'  => $billhdrtr_code,
+                    'due_date'        => $due_date,
                     'amtbill'         => $amtbill,
                     'outstanding_amt' => $outstanding_amt,
                     'amt'             => $detail->amt ?? null,
-                    'amt_adjustment'  => $amt_adjustment, // Tambahkan amt_adjustment
-                    'is_selected'     => !empty($detail->amt), // Centang jika ada pembayaran
+                    'amt_adjustment'  => $amt_adjustment,
+                    'is_selected'     => !empty($detail->amt),
+                    'is_lunas'        => $hasAdjustment, // Toggle lunas jika ada data di PartnertrDtl
                 ];
             }
 
@@ -760,7 +772,6 @@ class Detail extends BaseComponent
             'tr_date' => $this->inputs['tr_date'],
             'partner_id' => $this->inputs['partner_id'],
             'partner_code' => $this->inputs['partner_code'],
-            'status_code' => Status::OPEN,
             'process_flag' => 'N',
             'wh_id' => $this->inputs['wh_id'] ?? 0,
             'wh_code' => $this->inputs['wh_code'] ?? '',
@@ -769,6 +780,11 @@ class Detail extends BaseComponent
             'curr_code' => $this->inputs['curr_code'] ?? 'IDR',
             'curr_rate' => $this->inputs['curr_rate'],
         ];
+
+        // Set status_code untuk mode Create
+        if ($this->actionValue === 'Create') {
+            $headerData['status_code'] = Status::OPEN;
+        }
 
         // Validate partner wajib dipilih
         if (empty($headerData['partner_id']) || empty($headerData['partner_code'])) {
@@ -881,6 +897,15 @@ class Detail extends BaseComponent
             $this->objectIdValue = $result->id;
             $this->actionValue = 'Edit';
 
+            // Set status_code langsung pada object jika baru dibuat
+            if ($result && $this->actionValue === 'Edit') {
+                // Pastikan status_code tidak null
+                if (empty($result->status_code)) {
+                    $result->status_code = Status::OPEN;
+                    $result->save();
+                }
+            }
+
             // Handle adjustment
             $this->handleAmtAdjustment($headerData, $detailData);
 
@@ -986,6 +1011,8 @@ class Detail extends BaseComponent
                             'outstanding_amt' => $item->outstanding_amt,
                             'amt'             => 0,
                             'is_selected'     => false, // Tambahkan property untuk checkbox
+                            'is_lunas'        => false, // Toggle lunas default false untuk mode Create
+                            'amt_adjustment'  => 0, // Default adjustment 0
                         ];
                     })->toArray();
             }
@@ -1103,15 +1130,23 @@ class Detail extends BaseComponent
         }
     }
 
-    // Untuk Adjustment - hitung amt_adjustment = outstanding_amt - amt
-    public function payAdjustment($key)
+
+    // Toggle lunas untuk mengatur amt_adjustment
+    public function toggleLunas($key)
     {
         if (isset($this->input_details[$key])) {
+            $isLunas = $this->input_details[$key]['is_lunas'] ?? false;
             $outstanding_amt = isset($this->input_details[$key]['outstanding_amt']) ? (float)$this->input_details[$key]['outstanding_amt'] : 0;
             $amt = isset($this->input_details[$key]['amt']) ? (float)$this->input_details[$key]['amt'] : 0;
 
-            // Hitung amt_adjustment = outstanding_amt - amt
-            $this->input_details[$key]['amt_adjustment'] = $amt - $outstanding_amt;
+            if ($isLunas) {
+                // Jika toggle aktif (lunas), isi amt_adjustment dengan selisih outstanding_amt - amt
+                // Ini akan membuat total bayar = outstanding_amt (lunas)
+                $this->input_details[$key]['amt_adjustment'] = $amt - $outstanding_amt;
+            } else {
+                // Jika toggle tidak aktif (belum lunas), hapus amt_adjustment
+                $this->input_details[$key]['amt_adjustment'] = 0;
+            }
         }
 
         $this->updateSummary();

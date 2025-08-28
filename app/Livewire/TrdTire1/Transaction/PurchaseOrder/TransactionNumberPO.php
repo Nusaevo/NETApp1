@@ -1,5 +1,5 @@
 <?php
-
+/*
 namespace App\Livewire\TrdTire1\Transaction\PurchaseOrder;
 
 use Livewire\Component;
@@ -49,3 +49,4 @@ class TransactionNumberPO extends Component
         return view('livewire.transaction-number');
     }
 }
+*/

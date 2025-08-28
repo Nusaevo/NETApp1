@@ -39,7 +39,7 @@ class Detail extends BaseComponent
         'inputs.partner_code' => 'required',
         'inputs.tr_type' => 'required',
         'inputs.tr_date' => 'required',
-        'input_details.*.bank_code' => 'required',
+        'input_details.*.bank_reff' => 'required', // Ubah dari bank_code ke bank_reff
         'input_details.*.amt' => 'required|numeric|min:0',
     ];
 
@@ -67,15 +67,12 @@ class Detail extends BaseComponent
 
     protected function onPreRender()
     {
-        // Pastikan services sudah diinisialisasi
-        // $this->initializeServices();
-
         $this->customValidationAttributes = [
             'inputs.tr_code' => $this->trans('tr_code'),
             'inputs.partner_code' => $this->trans('partner_code'),
             'inputs.tr_type' => $this->trans('tr_type'),
             'inputs.tr_date' => $this->trans('tr_date'),
-            'input_details.*.bank_code' => $this->trans('giro'),
+            'input_details.*.bank_reff' => $this->trans('giro'), // Ubah dari bank_code ke bank_reff
             'input_details.*.amt' => $this->trans('amount'),
         ];
 
@@ -94,21 +91,16 @@ class Detail extends BaseComponent
             })->toArray();
 
         if ($this->isEditOrView()) {
-            // dd($this->objectIdValue);
             $this->object = PartnertrHdr::withTrashed()->find($this->objectIdValue);
             $this->inputs = $this->object->toArray();
             $this->inputs['tr_code'] = $this->object->tr_code;
             $this->inputs['tr_date'] = $this->object->tr_date;
             $this->inputs['tr_type'] = $this->object->tr_type;
             $this->inputs['note'] = $this->object->note ?? '';
-            // dd($this->inputs);
             $this->loadDetails();
-            // dd($this->input_details);
         } else {
             $this->isPanelEnabled = "true";
         }
-
-        // dd($this->input_details);
     }
 
     public function onReset()
@@ -117,33 +109,29 @@ class Detail extends BaseComponent
         $this->object = new PartnertrHdr();
         $this->inputs = populateArrayFromModel($this->object);
         $this->inputs['tr_date'] = date('Y-m-d');
-        $this->inputs['tr_type'] = 'CQDEP';
+        // $this->inputs['tr_type'] = 'CQDEP';
         $this->inputs['curr_id'] = 1;
         $this->inputs['curr_rate'] = 1.00;
         $this->isDeliv = false;
     }
 
-     public function onValidateAndSave()
+    public function onValidateAndSave()
     {
-        // dd($this->input_details,$this->inputs);
-        // throw new Exception('Gagal menyimpan detail pesanan. Periksa data yang diberikan.');
+        // dd($this->input_details, $this->inputs);
         if (!$this->partnerTrxService) {
             $this->partnerTrxService = app(PartnerTrxService::class);
         }
 
         // Jika sudah ada delivery, hanya boleh update header
         if ($this->isDeliv) {
-            // Prepare data header saja
             $headerData = $this->preparePartnerHeaderData();
             $detailData = []; // Kosongkan detail agar tidak diubah
 
-            // Simpan hanya header (tanpa update detail)
             try {
                 $result = $this->partnerTrxService->savePartnerTrx($headerData, $detailData);
                 if (!$result) {
                     throw new Exception('Gagal mengubah Cheque Transaction.');
                 }
-                // $this->dispatch('success', 'Header berhasil diperbarui. Detail tidak diubah karena sudah ada delivery.');
                 return $this->redirectToEdit();
             } catch (Exception $e) {
                 $this->dispatch('error', $e->getMessage());
@@ -177,7 +165,7 @@ class Detail extends BaseComponent
     {
         $headerData = [
             'tr_date' => $this->inputs['tr_date'] ?? date('Y-m-d'),
-            'tr_type' => $this->inputs['tr_type'] ?? 'CQDEP',
+            'tr_type' => $this->inputs['tr_type'],
             'tr_code' => $this->inputs['tr_code'] ?? '',
             'reff_code' => $this->inputs['reff_code'] ?? '',
             'curr_id' => $this->inputs['curr_id'] ?? 1,
@@ -205,60 +193,83 @@ class Detail extends BaseComponent
             $partnerCode = $this->inputs['partner_code'] ?? '';
             $partner = Partner::where('name', $partnerCode)->first();
 
-            $detailItem = [
-                'trhdr_id' => $this->object->id ?? null,
-                'tr_type' => $this->inputs['tr_type'] ?? 'CQDEP',
-                'tr_code' => $this->inputs['tr_code'] ?? '',
-                'tr_seq' => $key + 1,
-                'pay_type_code' => 'GIRO', // Default untuk giro
-                'bank_code' => $detail['bank_code'] ?? '',
-                'amt' => $detail['amt'] ?? 0,
-                'partnerbal_id' => null, // akan diisi oleh service
-                'amt_base' => $detail['amt'] ?? 0,
-            ];
+            // Ambil data giro dari PaymentSrc berdasarkan bank_reff yang dipilih
+            $giroData = PaymentSrc::where('bank_reff', $detail['bank_reff'])
+                ->where('amt', '>', 0)
+                ->first();
 
-            // Jika ada ID (untuk edit), set ID
-            if (isset($detail['id']) && !empty($detail['id'])) {
-                $detailItem['id'] = $detail['id'];
+            if ($giroData && $partner) {
+                // Detail 1: Debit dari PaymentSrc (tr_seq negatif)
+                $detailData[] = [
+                    'trhdr_id' => $this->object->id ?? null,
+                    'tr_type' => $this->inputs['tr_type'],
+                    'tr_code' => $this->inputs['tr_code'] ?? '',
+                    'tr_seq' => -($key + 1), // Negative sequence untuk debit
+                    'partnerbal_id' => $giroData->partnerbal_id ?? null,
+                    'partner_id' => $giroData->bank_id ?? null, // ID dari PaymentSrc
+                    'partner_code' => $giroData->bank_code ?? '', // Gunakan bank_code dari PaymentSrc
+                    'reff_id' => $giroData->id, // ID dari payment_srcs
+                    'reff_type' => $giroData->reff_type ?? '',
+                    'reff_code' => $giroData->reff_code ?? '',
+                    'amt' => -$detail['amt'], // Negative karena debit
+                    'tr_descr' => $giroData->bank_reff,
+                ];
+
+                // Detail 2: Kredit ke rekening bank yang dipilih (tr_seq positif)
+                $detailData[] = [
+                    'trhdr_id' => $this->object->id ?? null,
+                    'tr_type' => $this->inputs['tr_type'],
+                    'tr_code' => $this->inputs['tr_code'] ?? '',
+                    'tr_seq' => $key + 1, // Positive sequence untuk kredit
+                    'partnerbal_id' => null, // Akan diisi oleh service
+                    'partner_id' => $partner->id ?? null,
+                    'partner_code' => $partner->name ?? '',
+                    'reff_id' => $giroData->id, // ID dari payment_srcs
+                    'reff_type' => $giroData->reff_type ?? '',
+                    'reff_code' => $giroData->reff_code ?? '',
+                    'amt' => $detail['amt'], // Positive karena kredit
+                    'tr_descr' => 'Setor ' . $giroData->bank_reff,
+                ];
             }
-
-            $detailData[] = $detailItem;
         }
 
         return $detailData;
     }
 
-   public function addItemOnClick()
+    public function addItemOnClick()
     {
-        // Validasi: partner_code harus dipilih dulu
-        // if (empty($this->inputs['partner_code'])) {
-        //     $this->dispatch('error', 'Silakan pilih Rekening Bank terlebih dahulu.');
-        //     return;
-        // }
-
         try {
             // Check if can add new item
             if ($this->isDeliv) {
                 $this->dispatch('error', 'Tidak dapat menambah item baru karena ada item yang sudah terkirim.');
                 return;
             }
-            $this->input_details[] = populateArrayFromModel(new PaymentSrc());
-            $key = count($this->input_details) - 1;
-            $this->input_details[$key]['amt'] = 0;
-            $this->input_details[$key]['bank_code'] = '';
-            $this->input_details[$key]['pay_type_code'] = 'GIRO'; // Default untuk giro
-            $this->input_details[$key]['bank_reff'] = '';
-            $this->input_details[$key]['bank_duedt'] = date('Y-m-d');
+
+            // Gunakan struktur PartnertrDtl bukan PaymentSrc
+            $this->input_details[] = [
+                'id' => null,
+                'trhdr_id' => null,
+                'tr_type' => $this->inputs['tr_type'] ?? '',
+                'tr_code' => $this->inputs['tr_code'] ?? '',
+                'tr_seq' => 0,
+                'partnerbal_id' => null,
+                'partner_id' => null,
+                'partner_code' => '',
+                'reff_id' => null,
+                'reff_type' => '',
+                'reff_code' => '',
+                'amt' => 0,
+                'tr_descr' => '',
+                // Tambahan field untuk referensi giro
+                'bank_duedt' => date('Y-m-d'),
+            ];
+
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }
     }
 
-
-
-
-
-     public function amtOnChanged($key)
+    public function amtOnChanged($key)
     {
         $this->calcItemAmount($key);
     }
@@ -267,12 +278,23 @@ class Detail extends BaseComponent
     {
         // Handle perubahan giro dan set amount berdasarkan giro yang dipilih
         if (isset($this->input_details[$key])) {
-            $this->input_details[$key]['bank_code'] = $value;
+            $this->input_details[$key]['bank_reff'] = $value; // Set bank_reff untuk referensi
 
-            // Set amount berdasarkan giro yang dipilih
-            // Anda bisa menyesuaikan logika ini sesuai dengan data giro yang tersedia
-            $amount = $this->getAmountByGiro($value);
-            $this->input_details[$key]['amt'] = $amount;
+            // Ambil data giro dari PaymentSrc
+            $giroData = PaymentSrc::where('bank_reff', $value)
+                ->where('amt', '>', 0)
+                ->first();
+
+            if ($giroData) {
+                // Set data dari PaymentSrc ke input_details
+                $this->input_details[$key]['partner_id'] = $giroData->bank_id ?? null;
+                $this->input_details[$key]['partner_code'] = $giroData->bank_code ?? '';
+                $this->input_details[$key]['reff_id'] = $giroData->id; // ID dari PaymentSrc asal
+                $this->input_details[$key]['reff_type'] = $giroData->tr_type ?? ''; // tr_type dari PaymentSrc asal
+                $this->input_details[$key]['reff_code'] = $giroData->tr_code ?? ''; // tr_code dari PaymentSrc asal
+                $this->input_details[$key]['amt'] = $giroData->amt;
+                $this->input_details[$key]['tr_descr'] = $giroData->bank_reff;
+            }
 
             // Recalculate total
             $this->calcItemAmount($key);
@@ -281,70 +303,21 @@ class Detail extends BaseComponent
 
     private function getGiroOptions()
     {
-        // Ambil data giro dari PaymentSrc atau sumber data lainnya
-        // Contoh: ambil giro yang belum digunakan atau giro yang tersedia
-        $giros = PaymentSrc::where('pay_type_code', 'GIRO')
-            ->where('amt', '>', 0)
+        // Ambil semua data dari PaymentSrc yang memiliki amount > 0
+        $giros = PaymentSrc::where('amt', '>', 0)
             ->select('bank_code', 'bank_reff', 'amt')
             ->get()
             ->map(function($giro) {
                 return [
-                    'label' => $giro->bank_code . ' - ' . $giro->bank_reff . ' (Rp ' . number_format($giro->amt, 0, ',', '.') . ')',
-                    'value' => $giro->bank_code,
-                    'amount' => $giro->amt
+                    'label' => $giro->bank_reff . ' (Rp ' . number_format($giro->amt, 0, ',', '.') . ')',
+                    'value' => $giro->bank_reff, // Gunakan bank_reff sebagai value
+                    'amount' => $giro->amt,
+                    'bank_code' => $giro->bank_code // Simpan bank_code untuk referensi
                 ];
-            })->toArray();
-
-        // Jika tidak ada data dari database, gunakan data dummy untuk testing
-        // if (empty($giros)) {
-        //     $giros = [
-        //         [
-        //             'label' => 'BCA - Giro 001 (Rp 5.000.000)',
-        //             'value' => 'BCA001',
-        //             'amount' => 5000000
-        //         ],
-        //         [
-        //             'label' => 'Mandiri - Giro 002 (Rp 3.500.000)',
-        //             'value' => 'MDR002',
-        //             'amount' => 3500000
-        //         ],
-        //         [
-        //             'label' => 'BNI - Giro 003 (Rp 7.200.000)',
-        //             'value' => 'BNI003',
-        //             'amount' => 7200000
-        //         ],
-        //         [
-        //             'label' => 'BRI - Giro 004 (Rp 2.800.000)',
-        //             'value' => 'BRI004',
-        //             'amount' => 2800000
-        //         ]
-        //     ];
-        // }
+            })
+            ->toArray();
 
         return $giros;
-    }
-
-    private function getAmountByGiro($bankCode)
-    {
-        // Ambil amount berdasarkan bank_code dari giro
-        $giro = PaymentSrc::where('pay_type_code', 'GIRO')
-            ->where('bank_code', $bankCode)
-            ->where('amt', '>', 0)
-            ->first();
-
-        if ($giro) {
-            return $giro->amt;
-        }
-
-        // Jika tidak ada data dari database, gunakan data dummy
-        // $dummyGiros = [
-        //     'BCA001' => 5000000,
-        //     'MDR002' => 3500000,
-        //     'BNI003' => 7200000,
-        //     'BRI004' => 2800000
-        // ];
-
-        return $dummyGiros[$bankCode] ?? 0;
     }
 
     public function calcItemAmount($key)
@@ -378,8 +351,6 @@ class Detail extends BaseComponent
 
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
-
-            // $this->dispatch('success', __('generic.string.delete_item'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
@@ -394,7 +365,6 @@ class Detail extends BaseComponent
                 ->get();
 
             $this->input_details = $this->object_detail->toArray();
-            // dd($this->input_details);
             foreach ($this->input_details as $key => &$detail) {
                 if (!isset($detail['amt'])) $detail['amt'] = 0;
                 $this->calcItemAmount($key);
@@ -472,7 +442,7 @@ class Detail extends BaseComponent
             return;
         }
 
-        // Simpan data PaymentSrc
+        // Simpan data PaymentSrc berdasarkan input_details
         foreach ($this->input_details as $key => $detail) {
             $tr_seq = intval($key) + 1;
 
@@ -481,15 +451,19 @@ class Detail extends BaseComponent
                 'tr_type' => $this->object->tr_type,
                 'tr_code' => $this->object->tr_code,
                 'tr_seq' => $tr_seq,
-                'pay_type_id' => $detail['pay_type_id'] ?? null,
-                'pay_type_code' => $detail['pay_type_code'] ?? 'GIRO',
-                'bank_id' => $detail['bank_id'] ?? null,
-                'bank_code' => $detail['bank_code'] ?? '',
+                'pay_type_id' => null,
+                'pay_type_code' => 'GIRO', // Default untuk giro
+                'bank_id' => $detail['partner_id'] ?? null,
+                'bank_code' => $detail['partner_code'] ?? '',
                 'bank_reff' => $detail['bank_reff'] ?? '',
                 'bank_duedt' => $detail['bank_duedt'] ?? date('Y-m-d'),
-                'bank_note' => $detail['bank_note'] ?? '',
+                'bank_note' => '',
                 'amt' => $detail['amt'] ?? 0,
                 'amt_base' => $detail['amt'] ?? 0,
+                // Tambahkan field referensi
+                'reff_id' => $detail['reff_id'], // ID dari PaymentSrc asal
+                'reff_type' => $detail['reff_type'], // tr_type dari PaymentSrc asal atau current tr_type
+                'reff_code' => $detail['reff_code'], // tr_code dari PaymentSrc asal atau current tr_code
             ];
 
             PaymentSrc::updateOrCreate(

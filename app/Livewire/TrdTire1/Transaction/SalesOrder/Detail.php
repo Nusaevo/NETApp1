@@ -334,6 +334,10 @@ class Detail extends BaseComponent
 
         $this->validate();
 
+        if ($this->actionValue === 'Create') {
+            $this->inputs['status_code'] = Status::OPEN;
+        }
+
         // Jika sudah ada delivery, hanya boleh update header
         if ($this->isDeliv && $this->actionValue !== 'Create') {
             // Prepare data header saja
@@ -344,6 +348,12 @@ class Detail extends BaseComponent
                 if (!$result) {
                     throw new Exception('Gagal mengubah Sales Order.');
                 }
+
+                // Update object dengan hasil terbaru
+                if ($result['header']) {
+                    $this->object = $result['header'];
+                }
+
                 $this->dispatch('warning', 'Ada pengiriman (delivery) pada salah satu item. Hanya header yang bisa diupdate.');
                 // return $this->redirectToEdit();
             } catch (Exception $e) {
@@ -368,10 +378,21 @@ class Detail extends BaseComponent
                 throw new Exception('Gagal membuat Nota penjualan');
             }
             $this->object = $result['header']; // Ambil header object dari hasil array
+
+            // Set status_code langsung pada object jika baru dibuat
+            if ($this->object && $this->actionValue === 'Create') {
+                $this->object->status_code = Status::OPEN;
+                $this->object->save();
+            }
         } else {
             $result = $this->orderService->saveOrder($headerData, $detailData);
             if (!$result) {
                 throw new Exception('Gagal mengubah Nota penjualan');
+            }
+
+            // Update object dengan hasil terbaru
+            if ($result['header']) {
+                $this->object = $result['header'];
             }
         }
         $this->redirectToEdit();
@@ -532,7 +553,7 @@ class Detail extends BaseComponent
         $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
         $this->materialQuery = "
-            SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
+            SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qtyoh, coalesce(b.qty_fgi,0) qtyfgi
             FROM materials m
             LEFT OUTER JOIN (
                 select matl_id, SUM(qty_oh)::int as qty_oh,SUM(qty_fgi)::int as qty_fgi

@@ -22,6 +22,7 @@ class PartnerTrxService
         $header = $this->saveHeaderTrx($headerData);
         $headerData['id'] = $header->id;
 
+        // dd($headerData, $detailData);
         $details = $this->saveDetailTrx($headerData, $detailData);
 
         return [
