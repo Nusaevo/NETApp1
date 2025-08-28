@@ -39,6 +39,20 @@
 @endphp
 
 <!-- Custom styles moved to pagebase.css -->
+<style>
+    /* Multi-line support for dropdown results */
+    .select2-container .select2-results__option {
+        white-space: pre-line; /* Preserve line breaks */
+        line-height: 1.4;
+    }
+
+    /* Selected value styling - more compact */
+    .select2-container .select2-selection__rendered {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
 
 <div wire:key="{{ $id }}-dropdown-search" class="{{ $colClass }}"
     @if (isset($span)) span="{{ $span }}" @endif
@@ -73,8 +87,27 @@
                                 return $('<span>' + data.text + '</span>');
                             }
 
-                            // For non-empty values, show the clear button
-                            return $('<span>' + data.text + '</span>');
+                            // Handle line breaks in selected value - convert to spaces for compact display
+                            var displayText = data.text;
+                            if (displayText && displayText.includes('\n')) {
+                                displayText = displayText.replace(/\n/g, ' | ');
+                            }
+
+                            return $('<span>' + displayText + '</span>');
+                        },
+                        templateResult: function(data) {
+                            if (data.loading) {
+                                return data.text;
+                            }
+
+                            // Convert line breaks to HTML breaks for display
+                            var displayText = data.text;
+                            if (displayText && displayText.includes('\n')) {
+                                displayText = displayText.replace(/\n/g, '<br>');
+                                return $('<div>' + displayText + '</div>');
+                            }
+
+                            return $('<div>' + displayText + '</div>');
                         },
                         ajax: {
                             url: '/search-dropdown',
