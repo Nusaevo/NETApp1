@@ -358,7 +358,7 @@ class DropdownSearchController extends Controller
 
     /**
      * Format display text with template placeholders
-     * Handles format like "Kode : {m.code}; Nama :{m.name}"
+     * Handles format like "Kode : {m.code}; Nama :{m.name}" or "Kode{m.code},Nama{m.name}"
      *
      * @param object $item
      * @param string $optionLabel
@@ -408,8 +408,8 @@ class DropdownSearchController extends Controller
                         // Use line break for semicolon separator
                         $displayText .= "\n";
                     } else {
-                        // Use space for comma separator in template mode
-                        $displayText .= ' ';
+                        // Use dash for comma separator - same as original format
+                        $displayText .= ' - ';
                     }
                 }
                 $displayText .= $processedSegment;
