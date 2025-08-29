@@ -154,16 +154,8 @@
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
                                             <x-ui-dropdown-search label=""
-                                                model="input_details.{{ $key }}.matl_id" query="SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qtyoh, coalesce(b.qty_fgi,0) qtyfgi
-                                                FROM materials m
-                                                LEFT OUTER JOIN (
-                                                    select matl_id, SUM(qty_oh)::int as qty_oh,SUM(qty_fgi)::int as qty_fgi
-                                                    from ivt_bals
-                                                    group by matl_id
-                                                    ) b on b.matl_id = m.id
-                                                WHERE m.status_code = 'A'
-                                                AND m.deleted_at IS NULL"
-                                                optionValue="id" optionLabel="Kode{m.code}, Nama{m.name}"
+                                                model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
+                                                optionValue="id" optionLabel="{code};{name};Stok: {qty_oh};Rsv: {qty_fgi}"
                                                 placeHolder="Select material..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"

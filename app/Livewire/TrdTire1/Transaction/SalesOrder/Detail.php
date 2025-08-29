@@ -91,9 +91,9 @@ class Detail extends BaseComponent
         'changeStatus'  => 'changeStatus',
         'delete'        => 'delete',
         'updateAmount'  => 'updateAmount',
-        // 'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
         'refreshData'   => 'refreshData',
         'onTaxPayerChanged' => 'onTaxPayerChanged',
+        'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
     ];
     public function openNpwpDialogBox()
     {
@@ -259,20 +259,19 @@ class Detail extends BaseComponent
         $this->paymentTerms = $this->masterService->getPaymentTerm();
         // $this->warehouses = $this->masterService->getWarehouse();
 
-        // --- Perbaikan urutan: panggil salesTypeOnChanged() sebelum loadDetails() ---
         if ($this->isEditOrView()) {
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
             if ($this->object) {
                 $this->inputs = $this->object->toArray();
-                $this->inputs['status_code_text'] = $this->object->status_Code_text;
-                $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
+                // dd($this->inputs);
+                // $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
                 $this->onTaxDocFlagChanged();
                 $this->inputs['tr_code'] = $this->object->tr_code;
-                $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
                 $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
                 $this->onPartnerChanged();
 
                 // Pastikan print_remarks adalah string/float, bukan array/object
+                $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
                 $paymentDueDays = is_numeric($this->object->payment_due_days) ? (int)$this->object->payment_due_days : 0;
                 $this->inputs['due_date'] = ($trDate && $paymentDueDays > 0)
                     ? $trDate->copy()->addDays($paymentDueDays)->format('Y-m-d')
@@ -284,6 +283,9 @@ class Detail extends BaseComponent
                 } else {
                     $this->inputs['print_remarks'] = $printRemarks;
                 }
+
+                // dd($this->materialQuery);
+                $this->salesTypeOnChanged();
                 $this->loadDetails();
             } else {
                 // Jika object tidak ditemukan, buat instance baru dan tampilkan error
@@ -552,8 +554,21 @@ class Detail extends BaseComponent
 
         $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
+        // $this->materialQuery = "SELECT id, code, name
+        // FROM materials
+        // WHERE status_code = 'A' AND deleted_at IS NULL AND category IN ($categoryList)";
+
+        // $this->materialQuery = "SELECT id, code, name, qty_oh, qty_fgi FROM (
+        //     SELECT m.id, m.code, m.name, coalesce(sum(b.qty_oh),0) qty_oh, coalesce(sum(b.qty_fgi),0) qty_fgi
+        //     FROM materials m
+        //     LEFT OUTER JOIN ivt_bals b on b.matl_id = m.id
+        //     WHERE m.status_code = 'A'
+        //     AND m.deleted_at IS NULL
+        //     AND m.category IN ($categoryList)
+        //     GROUP BY m.id, m.code, m.name) as t";
+
         $this->materialQuery = "
-            SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qtyoh, coalesce(b.qty_fgi,0) qtyfgi
+            SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
             FROM materials m
             LEFT OUTER JOIN (
                 select matl_id, SUM(qty_oh)::int as qty_oh,SUM(qty_fgi)::int as qty_fgi
@@ -564,11 +579,6 @@ class Detail extends BaseComponent
             AND m.deleted_at IS NULL
             AND m.category IN ($categoryList)
         ";
-
-        // Jika dalam mode edit, jangan reset input_details
-        if (!$this->isEditOrView()) {
-            $this->input_details = [];
-        }
     }
 
     public function isItemEditable($key)
@@ -746,6 +756,7 @@ class Detail extends BaseComponent
 
             $this->input_details = $this->object_detail->toArray();
             foreach ($this->object_detail as $key => $detail) {
+                $this->input_details[$key]['matl_id'] = $detail->matl_id;
                 $this->calcItemAmount($key);
             }
             $this->checkDeliveryStatus();
@@ -1052,7 +1063,7 @@ class Detail extends BaseComponent
     // Livewire lifecycle hooks
     public function updated($propertyName)
     {
-        $this->validateOnly($propertyName);
+        // $this->validateOnly($propertyName);
         if ($propertyName === 'input_details') {
             $this->checkDeliveryStatus();
         }

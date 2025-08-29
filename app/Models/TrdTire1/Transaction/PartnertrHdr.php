@@ -3,10 +3,13 @@
 namespace App\Models\TrdTire1\Transaction;
 
 use App\Models\Base\BaseModel;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class PartnertrHdr extends BaseModel
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'tr_date',
         'tr_type',
@@ -14,7 +17,15 @@ class PartnertrHdr extends BaseModel
         'reff_code',
         'curr_id',
         'curr_rate',
+        'curr_code',
         'amt',
         'amt_base',
     ];
+
+    #region Relations
+    public function PartnertrDtl()
+    {
+        return $this->hasMany(PartnertrDtl::class, 'trhdr_id', 'id');
+    }
+    #endregion
 }

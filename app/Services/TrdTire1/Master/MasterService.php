@@ -241,7 +241,7 @@ class MasterService extends BaseService
     }
     public function getChequeType()
     {
-        $data = $this->getConfigData('CHEQUE_TRANSACTION');
+        $data = $this->getConfigData('TRX_PARTNER_TYPES');
 
         $payments = $data->map(function ($item) {
             return [

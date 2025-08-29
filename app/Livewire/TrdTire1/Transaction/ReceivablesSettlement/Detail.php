@@ -356,6 +356,47 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Get pay_type_code and pay_type_id based on partner name
+     */
+    private function getPayTypeByPartnerName($payType)
+    {
+        // dd($payType);
+        $payTypeCode = null;
+        $payTypeId = 0;
+
+        if ($payType == 'GIRO BELUM DISETOR') {
+            $config = ConfigConst::where('const_group', 'APP_ENV')
+                ->where('str1', 'CHEQUE_DEPOSIT')
+                ->first();
+                // dd($config);
+            if ($config) {
+                $payTypeCode = $config->str2;
+                $payTypeId = (int)$config->id;
+            }
+            // dd($payTypeCode, $payTypeId);
+        } elseif ($payType == 'KAS') {
+            $config = ConfigConst::where('const_group', 'APP_ENV')
+                ->where('str1', 'CASH_DEPOSIT')
+                ->first();
+            if ($config) {
+                $payTypeCode = $config->str2;
+                $payTypeId = (int)$config->id;
+            }
+        } else {
+            // Jika bukan GIRO atau KAS, ambil dari partner
+            $partner = Partner::where('name', $payType)->first();
+            $payTypeCode = $partner->name;
+            $payTypeId = (int)$partner->id;
+        }
+
+        // dd($payTypeCode, $payTypeId);
+        return [
+            'pay_type_code' => $payTypeCode,
+            'pay_type_id' => $payTypeId
+        ];
+    }
+
+    /**
      * Handle amt_adjustment by calling savePartnerTrx
      */
     private function handleAmtAdjustment($headerData, $detailData)
@@ -829,34 +870,41 @@ class Detail extends BaseComponent
                 continue;
             }
 
-            if (!isset($payment['bank_code'])) {
-                Log::error("Missing bank_code in payment at index {$key}", $payment);
-                $this->dispatch('error', "Payment data incomplete: missing bank_code");
-                return;
-            }
+            // Get pay_type_code and pay_type_id based on partner name (bank_code)
+            $payTypeData = $this->getPayTypeByPartnerName($payment['bank_code']);
+            $payTypeCode = $payTypeData['pay_type_code'];
+            $payTypeId = $payTypeData['pay_type_id'];
 
             $paymentData[] = [
                 'tr_seq' => count($paymentData) + 1,
-                'pay_type_id' => 1,
-                'pay_type_code' => 'TRF',
+                'pay_type_id' => $payTypeId,
+                'pay_type_code' => $payTypeCode,
                 'bank_id' => $this->getBankIdByName($payment['bank_code']),
                 'bank_code' => $payment['bank_code'],
                 'bank_note' => $payment['bank_reff'],
                 'amt' => $amt,
                 'bank_reff' => $payment['bank_reff'],
                 'bank_duedt' => $payment['bank_date'] ?? date('Y-m-d'),
+                'reff_id' => 0,
+                'reff_type' => $this->trType,
+                'reff_code' => $headerData['tr_code'],
             ];
         }
 
         // Normalize payment data dengan default values
         foreach ($paymentData as $index => $payment) {
+            // Get pay_type_code and pay_type_id based on partner name (bank_code)
+            $payTypeData = $this->getPayTypeByPartnerName($payment['bank_code']);
+            $payTypeCode = $payTypeData['pay_type_code'];
+            $payTypeId = $payTypeData['pay_type_id'];
+
             $paymentData[$index] = array_merge([
                 'bank_code' => 'TRF',
                 'bank_reff' => '',
                 'bank_duedt' => date('Y-m-d'),
                 'bank_note' => '',
-                'pay_type_code' => 'TRF',
-                'pay_type_id' => 1,
+                'pay_type_code' => $payTypeCode,
+                'pay_type_id' => $payTypeId,
                 'bank_id' => null,
                 'amt' => 0,
             ], $payment);
@@ -1388,6 +1436,22 @@ class Detail extends BaseComponent
             $this->dispatch('error', 'Partner balance tidak ditemukan.');
         }
         $this->input_advance = array_values($this->input_advance);
+    }
+
+    public function onBankCodeChanged($key, $bankCode)
+    {
+        // Update pay_type_code and pay_type_id based on bank_code (partner name)
+        $payTypeData = $this->getPayTypeByPartnerName($bankCode);
+        $payTypeCode = $payTypeData['pay_type_code'];
+        $payTypeId = $payTypeData['pay_type_id'];
+
+        // Log untuk debugging
+        Log::info('Bank code changed', [
+            'key' => $key,
+            'bank_code' => $bankCode,
+            'pay_type_code' => $payTypeCode,
+            'pay_type_id' => $payTypeId
+        ]);
     }
 }
 
