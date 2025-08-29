@@ -21,7 +21,7 @@
                                     {{-- <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
                                         searchModel="App\Models\TrdTire1\Master\Partner"
                                         searchWhereCondition="deleted_at=null&grp=C" optionValue="id"
-                                        optionLabel="code,name" placeHolder="Type to search custommer..."
+                                         optionLabel="{code},{name}" placeHolder="Type to search custommer..."
                                         :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         type="int" onChanged="onPartnerChange" /> --}}
                                     <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"

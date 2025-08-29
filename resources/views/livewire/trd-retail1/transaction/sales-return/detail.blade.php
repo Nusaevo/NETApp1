@@ -18,7 +18,7 @@
                             query="SELECT id, code, name FROM partners WHERE deleted_at IS NULL AND grp='C'"
                             connection="Default"
                             optionValue="id"
-                            optionLabel="code,name"
+                             optionLabel="{code},{name}"
                             placeHolder="Type to search customers..."
                             :selectedValue="$inputs['partner_id']"
                             required="true"
@@ -63,7 +63,7 @@
                                                 query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"
                                                 connection="Default"
                                                 optionValue="id"
-                                                optionLabel="code,name"
+                                                 optionLabel="{code},{name}"
                                                 placeHolder="Search materials..."
                                                 :selectedValue="$input_details[$key]['matl_id'] ?? ''"
                                                 required="true"
@@ -138,7 +138,7 @@
                                             query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_CATEGL1' AND deleted_at IS NULL"
                                             connection="Default"
                                             optionValue="str1"
-                                            optionLabel="str2"
+                                            optionLabel="{str2}"
                                             placeHolder="Select category..."
                                             type="string" />
                                     </div>
@@ -149,7 +149,7 @@
                                             query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_BRAND' AND deleted_at IS NULL"
                                             connection="Default"
                                             optionValue="str1"
-                                            optionLabel="str2"
+                                            optionLabel="{str2}"
                                             placeHolder="Select brand..."
                                             type="string" />
                                         <x-ui-dropdown-search
@@ -158,7 +158,7 @@
                                             query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_TYPE' AND deleted_at IS NULL"
                                             connection="Default"
                                             optionValue="str1"
-                                            optionLabel="str2"
+                                            optionLabel="{str2}"
                                             placeHolder="Select type..."
                                             type="string" />
                                     </div>
@@ -248,7 +248,7 @@
                                         query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"
                                         connection="Default"
                                         optionValue="id"
-                                        optionLabel="code,name"
+                                         optionLabel="{code},{name}"
                                         placeHolder="Search materials..."
                                         :selectedValue="$exchange_details[$key]['matl_id'] ?? ''"
                                         required="true"
