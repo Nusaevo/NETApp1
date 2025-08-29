@@ -106,7 +106,8 @@
                                     <td style="text-align: center;">{{ $loop->iteration }}</td>
                                     <td>
                                         <x-ui-dropdown-select model="input_payments.{{ $key }}.bank_code"
-                                            :options="$partnerOptions" required="true" :action="$actionValue" enabled="true" />
+                                            :options="$partnerOptions" required="true" :action="$actionValue" enabled="true"
+                                            onChanged="onBankCodeChanged({{ $key }}, $event.target.value)" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_payments.{{ $key }}.amt"

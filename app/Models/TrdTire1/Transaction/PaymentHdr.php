@@ -28,6 +28,7 @@ class PaymentHdr extends BaseModel
         'partner_code',
         'curr_id',
         'curr_rate',
+        'curr_code',
         'amt_srcs',
         'amt_advs',
         'amt_dtls',

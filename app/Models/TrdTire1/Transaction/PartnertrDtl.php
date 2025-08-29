@@ -22,6 +22,13 @@ class PartnertrDtl extends BaseModel
         'tr_descr',
     ];
 
+    #region Relations
+    public function PaymentSrc()
+    {
+        return $this->belongsTo(PaymentSrc::class, 'reff_id', 'id');
+    }
+    #endregion
+
     public static function getNextTrSeq(int $trhdrId): int
     {
         $maxSeq = self::where('trhdr_id', $trhdrId)
