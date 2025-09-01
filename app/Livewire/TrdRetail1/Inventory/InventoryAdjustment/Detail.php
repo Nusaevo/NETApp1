@@ -57,7 +57,8 @@ class Detail extends BaseComponent
         'inputs.wh_code' => 'required',
         'inputs.tr_type' => 'required',
         'input_details.*.matl_id' => 'required',
-        'input_details.*.qty_adjustment' => 'required|numeric',
+        'input_details.*.qty_add' => 'nullable|numeric|min:0',
+        'input_details.*.qty_subtract' => 'nullable|numeric|min:0',
     ];
 
     protected $listeners = [
@@ -153,8 +154,10 @@ class Detail extends BaseComponent
                 'matl_id'        => null,
                 'matl_code'      => '',
                 'matl_name'      => '',
-                'qty_adjustment' => 0,
+                'qty_add'        => 0,
+                'qty_subtract'   => 0,
                 'current_stock'  => 0,
+                'final_stock'    => 0,
                 'wh_code'        => $this->inputs['wh_code'],
                 'is_editable'    => true,
             ];
@@ -185,7 +188,8 @@ class Detail extends BaseComponent
             $this->input_details[$index]['matl_code'] = $material->code;
             $this->input_details[$index]['matl_name'] = $material->name;
             $this->input_details[$index]['current_stock'] = $currentStock;
-            $this->input_details[$index]['qty_adjustment'] = 0;
+            $this->input_details[$index]['qty_add'] = 0;
+            $this->input_details[$index]['qty_subtract'] = 0;
             $this->input_details[$index]['final_stock'] = $currentStock;
 
         } catch (Exception $e) {
@@ -195,10 +199,18 @@ class Detail extends BaseComponent
 
     public function updateItemAmount($key)
     {
-        if (isset($this->input_details[$key]['current_stock']) && isset($this->input_details[$key]['qty_adjustment'])) {
+        if (isset($this->input_details[$key]['current_stock']) &&
+            (isset($this->input_details[$key]['qty_add']) || isset($this->input_details[$key]['qty_subtract']))) {
+
             $currentStock = floatval($this->input_details[$key]['current_stock']);
-            $adjustment = floatval($this->input_details[$key]['qty_adjustment']);
-            $this->input_details[$key]['final_stock'] = $currentStock + $adjustment;
+            $qtyAdd = floatval($this->input_details[$key]['qty_add'] ?? 0);
+            $qtySubtract = floatval($this->input_details[$key]['qty_subtract'] ?? 0);
+
+            // Calculate final stock: current + addition - subtraction
+            $this->input_details[$key]['final_stock'] = $currentStock + $qtyAdd - $qtySubtract;
+
+            // Calculate net adjustment for backward compatibility
+            $this->input_details[$key]['qty_adjustment'] = $qtyAdd - $qtySubtract;
         }
 
         // Update totals
@@ -211,9 +223,10 @@ class Detail extends BaseComponent
         $this->total_items = count($this->input_details);
 
         foreach ($this->input_details as $detail) {
-            if (isset($detail['qty_adjustment'])) {
-                $this->total_qty_adjustment += floatval($detail['qty_adjustment']);
-            }
+            $qtyAdd = floatval($detail['qty_add'] ?? 0);
+            $qtySubtract = floatval($detail['qty_subtract'] ?? 0);
+            $netAdjustment = $qtyAdd - $qtySubtract;
+            $this->total_qty_adjustment += $netAdjustment;
         }
     }
 
@@ -264,13 +277,20 @@ class Detail extends BaseComponent
                     ->where('wh_code', $detail->wh_code)
                     ->sum('qty_oh');
 
+                // Convert qty_adjustment back to qty_add or qty_subtract
+                $qtyAdjustment = $detail->qty;
+                $qtyAdd = $qtyAdjustment > 0 ? $qtyAdjustment : 0;
+                $qtySubtract = $qtyAdjustment < 0 ? abs($qtyAdjustment) : 0;
+
                 $this->input_details[] = [
                     'id'             => $detail->id,
                     'matl_id'        => $detail->matl_id,
                     'matl_code'      => $material->code ?? $detail->matl_code,
                     'matl_name'      => $material->name ?? '',
-                    'qty_adjustment' => $detail->qty,
-                    'current_stock'  => 0,
+                    'qty_add'        => $qtyAdd,
+                    'qty_subtract'   => $qtySubtract,
+                    'qty_adjustment' => $qtyAdjustment, // Keep for backward compatibility
+                    'current_stock'  => $currentStock - $qtyAdjustment, // Reverse calculation
                     'final_stock'    => $currentStock,
                     'wh_code'        => $detail->wh_code,
                     'is_editable'    => false,
@@ -373,7 +393,12 @@ class Detail extends BaseComponent
         $seq = 1;
         // Save inventory adjustment details based on input_details
         foreach ($this->input_details as $detail) {
-            if (!empty($detail['matl_id']) && isset($detail['qty_adjustment']) && $detail['qty_adjustment'] != 0) {
+            $qtyAdd = floatval($detail['qty_add'] ?? 0);
+            $qtySubtract = floatval($detail['qty_subtract'] ?? 0);
+            $netAdjustment = $qtyAdd - $qtySubtract;
+
+            // Only save if there's an actual adjustment and material is selected
+            if (!empty($detail['matl_id']) && $netAdjustment != 0) {
                 // Get material info for matl_code
                 $material = Material::find($detail['matl_id']);
                 $matlCode = $material ? $material->code : '';
@@ -385,7 +410,7 @@ class Detail extends BaseComponent
                     'matl_id' => $detail['matl_id'],
                     'matl_code' => $matlCode,
                     'wh_code' => $this->inputs['wh_code'],
-                    'qty' => $detail['qty_adjustment'],
+                    'qty' => $netAdjustment, // Store net adjustment (positive or negative)
                     'tr_descr' => $this->inputs['remark'] ?? 'Stock Adjustment',
                     'tr_type' => 'IA',
                 ]);
@@ -396,13 +421,13 @@ class Detail extends BaseComponent
                     ->first();
 
                 if ($balance) {
-                    $balance->qty_oh += $detail['qty_adjustment'];
+                    $balance->qty_oh += $netAdjustment;
                     $balance->save();
                 } else {
                     IvtBal::create([
                         'matl_id' => $detail['matl_id'],
                         'wh_code' => $this->inputs['wh_code'],
-                        'qty_oh' => $detail['qty_adjustment'],
+                        'qty_oh' => $netAdjustment,
                     ]);
                 }
             }

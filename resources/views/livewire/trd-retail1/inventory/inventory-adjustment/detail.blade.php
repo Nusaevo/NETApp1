@@ -43,7 +43,8 @@
                                     <th style="width: 50px; text-align: center;">No</th>
                                     <th style="width: 200px; text-align: center;">Material</th>
                                     <th style="width: 100px; text-align: center;">Stock Saat Ini</th>
-                                    <th style="width: 100px; text-align: center;">Penyesuaian (+ tambah / - kurangi)</th>
+                                    <th style="width: 100px; text-align: center;">Penambahan (+)</th>
+                                    <th style="width: 100px; text-align: center;">Pengurangan (-)</th>
                                     <th style="width: 100px; text-align: center;">Stock Akhir</th>
                                     <th style="width: 70px; text-align: center;">Actions</th>
                                 </x-slot>
@@ -73,10 +74,16 @@
                                                     type="text" required="false" enabled="false" />
                                             </td>
                                             <td style="text-align: center;">
-                                                <x-ui-text-field model="input_details.{{ $key }}.qty_adjustment"
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_add"
                                                     label="" :enabled="$isPanelEnabled" :action="$actionValue"
                                                     onChanged="updateItemAmount({{ $key }})" type="number"
-                                                    required="true" />
+                                                    placeHolder="0" min="0" />
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_subtract"
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
+                                                    onChanged="updateItemAmount({{ $key }})" type="number"
+                                                    placeHolder="0" min="0" />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.final_stock"
