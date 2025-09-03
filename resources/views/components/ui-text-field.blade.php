@@ -88,8 +88,6 @@
                                 init() {
                                     // Watch for external model changes from Livewire
                                     this.$wire.$watch('{{ $model }}', (value) => {
-                                        console.log('=== CURRENCY MODEL WATCH ===');
-                                        console.log('New model value:', value);
                                         this.rawValue = value;
                                         this.updateDisplay();
                                     });
@@ -187,12 +185,7 @@
 
                                     return isNaN(number) ? null : number;
                                 },                                updateDisplay() {
-                                    console.log('=== CURRENCY updateDisplay ===');
-                                    console.log('rawValue:', this.rawValue);
-                                    console.log('rawValue type:', typeof this.rawValue);
-
                                     if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
-                                        console.log('=== CURRENCY CLEARING DISPLAY ===');
                                         this.displayValue = '';
                                         if (this.$el) {
                                             this.$el.value = '';
@@ -326,27 +319,17 @@
 
                                 syncWithLivewire() {
                                     let valueToSync = this.rawValue;
-                                    console.log('=== syncWithLivewire DEBUG ===');
-                                    console.log('original rawValue:', this.rawValue);
                                     if (typeof valueToSync === 'string') {
                                         valueToSync = this.parseNumber(valueToSync);
                                     }
-                                    console.log('valueToSync:', valueToSync);
-                                    console.log('valueToSync type:', typeof valueToSync);
                                     $wire.set('{{ $model }}', valueToSync);
                                 }
                             }"
-                            x-init="console.log('=== CURRENCY INIT DEBUG ===');
-                                     init();
+                            x-init="init();
                                      updateDisplay();
                                      $watch('rawValue', (value, oldValue) => {
-                                         console.log('=== CURRENCY WATCH DEBUG ===');
-                                         console.log('oldValue:', oldValue);
-                                         console.log('newValue:', value);
-
                                          // Handle reset case - when value becomes null/undefined/empty, clear display
                                          if (value === null || value === undefined || value === '') {
-                                             console.log('=== CURRENCY CLEARING FROM WATCH ===');
                                              displayValue = '';
                                              if ($el) {
                                                  $el.value = '';
@@ -390,8 +373,6 @@
                             init() {
                                 // Watch for external model changes from Livewire
                                 this.$wire.$watch('{{ $model }}', (value) => {
-                                    console.log('=== NON-CURRENCY MODEL WATCH ===');
-                                    console.log('New model value:', value);
                                     this.rawValue = value;
                                     this.updateDisplay();
                                 });
@@ -489,12 +470,7 @@
 
                                 return isNaN(number) ? null : number;
                             },                            updateDisplay() {
-                                console.log('=== NON-CURRENCY updateDisplay ===');
-                                console.log('rawValue:', this.rawValue);
-                                console.log('rawValue type:', typeof this.rawValue);
-
                                 if (this.rawValue === null || this.rawValue === undefined || this.rawValue === '') {
-                                    console.log('=== NON-CURRENCY CLEARING DISPLAY ===');
                                     this.displayValue = '';
                                     if (this.$el) {
                                         this.$el.value = '';
@@ -637,27 +613,17 @@
 
                             syncWithLivewire() {
                                 let valueToSync = this.rawValue;
-                                console.log('=== NON-CURRENCY syncWithLivewire DEBUG ===');
-                                console.log('original rawValue:', this.rawValue);
                                 if (typeof valueToSync === 'string') {
                                     valueToSync = this.parseNumber(valueToSync);
                                 }
-                                console.log('valueToSync:', valueToSync);
-                                console.log('valueToSync type:', typeof valueToSync);
                                 $wire.set('{{ $model }}', valueToSync);
                             }
                         }"
-                        x-init="console.log('=== NON-CURRENCY INIT DEBUG ===');
-                                 init();
+                        x-init="init();
                                  updateDisplay();
                                  $watch('rawValue', (value, oldValue) => {
-                                     console.log('=== NON-CURRENCY WATCH DEBUG ===');
-                                     console.log('oldValue:', oldValue);
-                                     console.log('newValue:', value);
-
                                      // Handle reset case - when value becomes null/undefined/empty, clear display
                                      if (value === null || value === undefined || value === '') {
-                                         console.log('=== NON-CURRENCY CLEARING FROM WATCH ===');
                                          displayValue = '';
                                          if ($el) {
                                              $el.value = '';

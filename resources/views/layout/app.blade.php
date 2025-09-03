@@ -175,7 +175,7 @@
         </div>
 
         <!-- Offcanvas Sidebar for mobile (left) -->
-        <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+        <div class="offcanvas offcanvas-start d-lg-none"  id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
             <div class="offcanvas-header border-bottom p-3">
                 <div class="w-100 me-3">
                     <!-- Mobile Application Component -->
@@ -213,7 +213,7 @@
         </div>
 
         <!-- Offcanvas Profile for mobile (right) -->
-        <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="mobileProfile" aria-labelledby="mobileProfileLabel">
+        <div class="offcanvas offcanvas-end d-lg-none"  id="mobileProfile" aria-labelledby="mobileProfileLabel">
             <div class="offcanvas-header border-bottom bg-light">
                 <h5 class="offcanvas-title fw-bold text-primary" id="mobileProfileLabel">
                     <i class="bi bi-person-circle me-2"></i>Account
@@ -319,7 +319,7 @@
     </div>
 
     <!-- Image Preview Modal -->
-    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="imagePreviewModal"  aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
