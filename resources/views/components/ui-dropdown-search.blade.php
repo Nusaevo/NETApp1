@@ -27,7 +27,7 @@
 
     // Ensure we never have empty query in the output
     if (empty($sqlQuery)) {
-        \Log::warning('Empty SQL query in dropdown', ['component_id' => $id]);
+        // \Log::warning('Empty SQL query in dropdown', ['component_id' => $id]);
     }
 
     // Handle model-based params (backward compatibility)
@@ -39,6 +39,20 @@
 @endphp
 
 <!-- Custom styles moved to pagebase.css -->
+<style>
+    /* Multi-line support for dropdown results */
+    .select2-container .select2-results__option {
+        white-space: pre-line; /* Preserve line breaks */
+        line-height: 1.4;
+    }
+
+    /* Selected value styling - more compact */
+    .select2-container .select2-selection__rendered {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
 
 <div wire:key="{{ $id }}-dropdown-search" class="{{ $colClass }}"
     @if (isset($span)) span="{{ $span }}" @endif
@@ -51,7 +65,7 @@
                 const initSelect2 = () => {
                     const selectElement = document.getElementById('{{ $id }}');
                     if (!selectElement) {
-                        console.warn(`Element #{{ $id }} not found.`);
+                        // console.warn(`Element #{{ $id }} not found.`);
                         return;
                     }
 
@@ -73,8 +87,27 @@
                                 return $('<span>' + data.text + '</span>');
                             }
 
-                            // For non-empty values, show the clear button
-                            return $('<span>' + data.text + '</span>');
+                            // Handle line breaks in selected value - convert to spaces for compact display
+                            var displayText = data.text;
+                            if (displayText && displayText.includes('\n')) {
+                                displayText = displayText.replace(/\n/g, ' | ');
+                            }
+
+                            return $('<span>' + displayText + '</span>');
+                        },
+                        templateResult: function(data) {
+                            if (data.loading) {
+                                return data.text;
+                            }
+
+                            // Convert line breaks to HTML breaks for display
+                            var displayText = data.text;
+                            if (displayText && displayText.includes('\n')) {
+                                displayText = displayText.replace(/\n/g, '<br>');
+                                return $('<div>' + displayText + '</div>');
+                            }
+
+                            return $('<div>' + displayText + '</div>');
                         },
                         ajax: {
                             url: '/search-dropdown',
@@ -91,17 +124,17 @@
                                     textarea.innerHTML = queryValue;
                                     queryValue = textarea.value;
 
-                                    console.log('Decoded query value:', queryValue);
+                                    // console.log('Decoded query value:', queryValue);
                                 } catch (e) {
-                                    console.error('Error decoding query:', e);
+                                    // console.error('Error decoding query:', e);
                                 }
 
                                 // Log raw value for debugging
-                                console.log('Raw query value from data attribute:', queryValue);
+                                // console.log('Raw query value from data attribute:', queryValue);
 
                                 // Check if query is empty
                                 if (!queryValue || queryValue.trim() === '') {
-                                    console.error('QUERY IS EMPTY! Component:', selectElement.id);
+                                    // console.error('QUERY IS EMPTY! Component:', selectElement.id);
                                 }
 
                                 // Only include the query parameter, not both query and sqlQuery
@@ -116,26 +149,26 @@
                                 // ENHANCED DEBUGGING - check if query is properly set
                                 const hasQuery = queryValue && queryValue.trim().length > 0;
                                 if (!hasQuery) {
-                                    console.error(`ERROR: Empty query for dropdown ${selectElement.id}!`, {
-                                        'data-query': $(selectElement).attr('data-query'),
-                                        'data-connection': $(selectElement).attr('data-connection')
-                                    });
+                                    // console.error(`ERROR: Empty query for dropdown ${selectElement.id}!`, {
+                                    //     'data-query': $(selectElement).attr('data-query'),
+                                    //     'data-connection': $(selectElement).attr('data-connection')
+                                    // });
                                 }
 
-                                console.debug(`Sending dropdown params for ${selectElement.id}:`, {
-                                    queryValue: queryValue,
-                                    queryValueLength: queryValue ? queryValue.length : 0,
-                                    connection: $(selectElement).data('connection')
-                                });
+                                // console.debug(`Sending dropdown params for ${selectElement.id}:`, {
+                                //     queryValue: queryValue,
+                                //     queryValueLength: queryValue ? queryValue.length : 0,
+                                //     connection: $(selectElement).data('connection')
+                                // });
 
-                                console.log('Dropdown search params:', data);
+                                // console.log('Dropdown search params:', data);
                                 return data;
                             },
                             processResults: function (data) {
                                 if (data && data.results) {
                                     return { results: data.results };
                                 } else {
-                                    console.error('Invalid response format for {{ $id }}:', data);
+                                    // console.error('Invalid response format for {{ $id }}:', data);
                                     return { results: [] };
                                 }
                             },
@@ -195,7 +228,7 @@
 
                                         $wire.call(methodName, ...processedParams);
                                     } else {
-                                        console.error(`Invalid onChanged format: ${onChanged}`);
+                                        // console.error(`Invalid onChanged format: ${onChanged}`);
                                     }
                                 } else {
                                     $wire.call(onChanged, value);
@@ -209,11 +242,11 @@
                             @this.set('{{ $model }}', blankValue);
                         });
 
-                    console.log(`Select2 initialized for #{{ $id }}`, {
-                        connection: '{{ $dbConnection }}',
-                        query: document.getElementById('{{ $id }}').getAttribute('data-query'),
-                        hasQueryParam: {{ $hasQueryParam ? 'true' : 'false' }},
-                    });
+                    // console.log(`Select2 initialized for #{{ $id }}`, {
+                    //     connection: '{{ $dbConnection }}',
+                    //     query: document.getElementById('{{ $id }}').getAttribute('data-query'),
+                    //     hasQueryParam: {{ $hasQueryParam ? 'true' : 'false' }},
+                    // });
 
                     // Restore existing value if present
                     const existingValue = '{{ $selectedValue ?? '' }}' || '{{ $this->$model ?? '' }}';
@@ -234,7 +267,7 @@
                             params.append('preserve_existing', 'true');  // Flag for existing value lookup
                             params.append('bypass_filters', 'true');    // Bypass business logic filters
 
-                            console.log('Fetching existing value with params:', params.toString());
+                            // console.log('Fetching existing value with params:', params.toString());
 
                             fetch(`${endpoint}?${params.toString()}`)
                                 .then(response => response.json())
@@ -267,14 +300,14 @@
                                         $(selectElement).append(option).trigger('change');
                                     } else {
                                         // If no result found, create a placeholder option
-                                        console.warn('No display text found for existing value, creating placeholder');
+                                        // console.warn('No display text found for existing value, creating placeholder');
                                         const option = new Option(`ID: ${existingValue} (Not Found)`, existingValue, true, true);
                                         $(option).addClass('missing-option');
                                         $(selectElement).append(option).trigger('change');
                                     }
                                 })
                                 .catch(error => {
-                                    console.warn('Failed to restore selected value:', error);
+                                    // console.warn('Failed to restore selected value:', error);
                                     // Create a fallback option
                                     const option = new Option(`ID: ${existingValue} (Error Loading)`, existingValue, true, true);
                                     $(option).addClass('error-option');
@@ -344,14 +377,14 @@ Features:
 - Real-time AJAX search with Select2
 - Multi-label display:
   * Separate multiple fields with comma (,)
-  * Example: optionLabel="code,name" displays "ABC123 - Product Name"
+  * Example:  optionLabel="{code},{name}" displays "ABC123 - Product Name"
 
 Example usage:
 <x-ui-dropdown-search
     label="Search Brand"
     model="selectedBrandId"
     optionValue="str1"
-    optionLabel="str2"
+    optionLabel="{str2}"
     query="SELECT str1, str2 FROM config_const WHERE const_group='MMATL_BRAND' AND deleted_at IS NULL"
     connection="Default"
     placeHolder="Type to search brands..."

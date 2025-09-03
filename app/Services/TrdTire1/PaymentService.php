@@ -130,6 +130,7 @@ class PaymentService
             $source['trhdr_id'] = $headerData["id"];
             $source['tr_type'] = $headerData["tr_type"] . 'S'; // Gunakan tr_type dari header
             $source['tr_code'] = $headerData["tr_code"];
+            // $source['reff_id'] = $headerData['id'];
 
             if (!isset($source['id']) || empty($source['id'])) {
                 $source['tr_seq'] = PaymentSrc::getNextTrSeq($headerData['id']);
@@ -140,6 +141,8 @@ class PaymentService
                 $source['id'] = $paymentSrc->id;
                 $partnerBalId = $this->partnerBalanceService->updFromPayment($headerData, $source);
                 $paymentSrc->partnerbal_id = $partnerBalId;
+                $paymentSrc->save();
+                $paymentSrc->reff_id = $paymentSrc->id;
                 $paymentSrc->save();
             } else {
                 $paymentSrc = $dbPaymentSrc->where('partner_id', $source['bank_id'])->first();

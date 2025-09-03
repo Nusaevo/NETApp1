@@ -21,7 +21,7 @@
                                     {{-- <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
                                         searchModel="App\Models\TrdTire1\Master\Partner"
                                         searchWhereCondition="deleted_at=null&grp=C" optionValue="id"
-                                        optionLabel="code,name" placeHolder="Type to search custommer..."
+                                         optionLabel="{code},{name}" placeHolder="Type to search custommer..."
                                         :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         type="int" onChanged="onPartnerChange" /> --}}
                                     <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
@@ -106,7 +106,8 @@
                                     <td style="text-align: center;">{{ $loop->iteration }}</td>
                                     <td>
                                         <x-ui-dropdown-select model="input_payments.{{ $key }}.bank_code"
-                                            :options="$partnerOptions" required="true" :action="$actionValue" enabled="true" />
+                                            :options="$partnerOptions" required="true" :action="$actionValue" enabled="true"
+                                            onChanged="onBankCodeChanged({{ $key }}, $event.target.value)" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_payments.{{ $key }}.amt"
@@ -148,7 +149,7 @@
                             <th style="width: 50px; text-align: center;">Total Piutang</th>
                             <th style="width: 30px; text-align: center;">Adjustment</th>
                             <th style="width: 90px; text-align: center;">Total Bayar</th>
-                            <th style="width: 40px; text-align: center;"></th>
+                            <th style="width: 40px; text-align: center;">Lunas</th>
                         </x-slot>
 
                         <!-- Define table rows -->
@@ -183,9 +184,14 @@
                                             :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-button :clickEvent="'payAdjustment(' . $key . ')'" button-name="Lunas" loading="true"
-                                            :action="$actionValue" cssClass="btn-primary"
-                                            iconPath="" />
+                                        <x-ui-toggle-switch
+                                            model="input_details.{{ $key }}.is_lunas"
+                                            onChanged="toggleLunas({{ $key }})"
+                                            :action="$actionValue"
+                                            enabled="true"
+                                            :showLabel="false"
+                                            :label="$input_detail['is_lunas'] ? 'Lunas' : 'Belum Lunas'"
+                                        />
                                     </td>
                                 </tr>
                             @endforeach

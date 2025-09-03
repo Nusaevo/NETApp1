@@ -356,6 +356,47 @@ class Detail extends BaseComponent
     }
 
     /**
+     * Get pay_type_code and pay_type_id based on partner name
+     */
+    private function getPayTypeByPartnerName($payType)
+    {
+        // dd($payType);
+        $payTypeCode = null;
+        $payTypeId = 0;
+
+        if ($payType == 'GIRO BELUM DISETOR') {
+            $config = ConfigConst::where('const_group', 'APP_ENV')
+                ->where('str1', 'CHEQUE_DEPOSIT')
+                ->first();
+                // dd($config);
+            if ($config) {
+                $payTypeCode = $config->str2;
+                $payTypeId = (int)$config->id;
+            }
+            // dd($payTypeCode, $payTypeId);
+        } elseif ($payType == 'KAS') {
+            $config = ConfigConst::where('const_group', 'APP_ENV')
+                ->where('str1', 'CASH_DEPOSIT')
+                ->first();
+            if ($config) {
+                $payTypeCode = $config->str2;
+                $payTypeId = (int)$config->id;
+            }
+        } else {
+            // Jika bukan GIRO atau KAS, ambil dari partner
+            $partner = Partner::where('name', $payType)->first();
+            $payTypeCode = $partner->name;
+            $payTypeId = (int)$partner->id;
+        }
+
+        // dd($payTypeCode, $payTypeId);
+        return [
+            'pay_type_code' => $payTypeCode,
+            'pay_type_id' => $payTypeId
+        ];
+    }
+
+    /**
      * Handle amt_adjustment by calling savePartnerTrx
      */
     private function handleAmtAdjustment($headerData, $detailData)
@@ -518,14 +559,13 @@ class Detail extends BaseComponent
 
                 // Ambil BillingHdr id dari billdtl_id jika ada
                 if ($detail->billdtl_id) {
-                    $billingDtl = BillingDtl::find($detail->billdtl_id);
-                    if ($billingDtl) {
-                        $billingHdr = BillingHdr::find($billingDtl->trhdr_id);                        if ($billingHdr) {
-                            $amtbill = $billingHdr->amt ?? 0;
-                            $billhdr_id = $billingHdr->id;
-                            $billhdrtr_code = $billingHdr->tr_code;
-                            $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
-                        }
+                    // Langsung ambil dari billhdr_id jika tersedia
+                    $billingHdr = BillingHdr::find($detail->billhdr_id);
+                    if ($billingHdr) {
+                        $amtbill = $billingHdr->amt ?? 0;
+                        $billhdr_id = $billingHdr->id;
+                        $billhdrtr_code = $billingHdr->tr_code;
+                        $tr_date = $billingHdr->tr_date ? Carbon::parse($billingHdr->tr_date)->format('d-m-Y') : Carbon::now()->format('d-m-Y');
                     }
                 }
 
@@ -583,15 +623,28 @@ class Detail extends BaseComponent
                     }
                 }
 
+                // Cek apakah ada data adjustment di PartnertrDtl untuk nota ini
+                $hasAdjustment = false;
+                if ($billhdr_id) {
+                    $partnerTrxDtl = PartnertrDtl::where('tr_type', 'ARA')
+                        ->where('reff_id', $billhdr_id)
+                        ->where('reff_type', $billingHdr->tr_type ?? '')
+                        ->where('reff_code', $billhdrtr_code)
+                        ->first();
+
+                    $hasAdjustment = $partnerTrxDtl ? true : false;
+                }
+
                 $this->input_details[] = [
-                    'billhdr_id'      => $billhdr_id, // id BillingHdr untuk proses simpan
-                    'billhdrtr_code'  => $billhdrtr_code, // kode nota untuk tampilan
-                    'due_date'        => $due_date, // tanggal jatuh tempo (Y-m-d agar cocok input type="date")
+                    'billhdr_id'      => $billhdr_id,
+                    'billhdrtr_code'  => $billhdrtr_code,
+                    'due_date'        => $due_date,
                     'amtbill'         => $amtbill,
                     'outstanding_amt' => $outstanding_amt,
                     'amt'             => $detail->amt ?? null,
-                    'amt_adjustment'  => $amt_adjustment, // Tambahkan amt_adjustment
-                    'is_selected'     => !empty($detail->amt), // Centang jika ada pembayaran
+                    'amt_adjustment'  => $amt_adjustment,
+                    'is_selected'     => !empty($detail->amt),
+                    'is_lunas'        => $hasAdjustment, // Toggle lunas jika ada data di PartnertrDtl
                 ];
             }
 
@@ -760,7 +813,6 @@ class Detail extends BaseComponent
             'tr_date' => $this->inputs['tr_date'],
             'partner_id' => $this->inputs['partner_id'],
             'partner_code' => $this->inputs['partner_code'],
-            'status_code' => Status::OPEN,
             'process_flag' => 'N',
             'wh_id' => $this->inputs['wh_id'] ?? 0,
             'wh_code' => $this->inputs['wh_code'] ?? '',
@@ -769,6 +821,11 @@ class Detail extends BaseComponent
             'curr_code' => $this->inputs['curr_code'] ?? 'IDR',
             'curr_rate' => $this->inputs['curr_rate'],
         ];
+
+        // Set status_code untuk mode Create
+        if ($this->actionValue === 'Create') {
+            $headerData['status_code'] = Status::OPEN;
+        }
 
         // Validate partner wajib dipilih
         if (empty($headerData['partner_id']) || empty($headerData['partner_code'])) {
@@ -813,34 +870,41 @@ class Detail extends BaseComponent
                 continue;
             }
 
-            if (!isset($payment['bank_code'])) {
-                Log::error("Missing bank_code in payment at index {$key}", $payment);
-                $this->dispatch('error', "Payment data incomplete: missing bank_code");
-                return;
-            }
+            // Get pay_type_code and pay_type_id based on partner name (bank_code)
+            $payTypeData = $this->getPayTypeByPartnerName($payment['bank_code']);
+            $payTypeCode = $payTypeData['pay_type_code'];
+            $payTypeId = $payTypeData['pay_type_id'];
 
             $paymentData[] = [
                 'tr_seq' => count($paymentData) + 1,
-                'pay_type_id' => 1,
-                'pay_type_code' => 'TRF',
+                'pay_type_id' => $payTypeId,
+                'pay_type_code' => $payTypeCode,
                 'bank_id' => $this->getBankIdByName($payment['bank_code']),
                 'bank_code' => $payment['bank_code'],
                 'bank_note' => $payment['bank_reff'],
                 'amt' => $amt,
                 'bank_reff' => $payment['bank_reff'],
                 'bank_duedt' => $payment['bank_date'] ?? date('Y-m-d'),
+                'reff_id' => 0,
+                'reff_type' => $this->trType,
+                'reff_code' => $headerData['tr_code'],
             ];
         }
 
         // Normalize payment data dengan default values
         foreach ($paymentData as $index => $payment) {
+            // Get pay_type_code and pay_type_id based on partner name (bank_code)
+            $payTypeData = $this->getPayTypeByPartnerName($payment['bank_code']);
+            $payTypeCode = $payTypeData['pay_type_code'];
+            $payTypeId = $payTypeData['pay_type_id'];
+
             $paymentData[$index] = array_merge([
                 'bank_code' => 'TRF',
                 'bank_reff' => '',
                 'bank_duedt' => date('Y-m-d'),
                 'bank_note' => '',
-                'pay_type_code' => 'TRF',
-                'pay_type_id' => 1,
+                'pay_type_code' => $payTypeCode,
+                'pay_type_id' => $payTypeId,
                 'bank_id' => null,
                 'amt' => 0,
             ], $payment);
@@ -880,6 +944,15 @@ class Detail extends BaseComponent
             // Update state
             $this->objectIdValue = $result->id;
             $this->actionValue = 'Edit';
+
+            // Set status_code langsung pada object jika baru dibuat
+            if ($result && $this->actionValue === 'Edit') {
+                // Pastikan status_code tidak null
+                if (empty($result->status_code)) {
+                    $result->status_code = Status::OPEN;
+                    $result->save();
+                }
+            }
 
             // Handle adjustment
             $this->handleAmtAdjustment($headerData, $detailData);
@@ -986,6 +1059,8 @@ class Detail extends BaseComponent
                             'outstanding_amt' => $item->outstanding_amt,
                             'amt'             => 0,
                             'is_selected'     => false, // Tambahkan property untuk checkbox
+                            'is_lunas'        => false, // Toggle lunas default false untuk mode Create
+                            'amt_adjustment'  => 0, // Default adjustment 0
                         ];
                     })->toArray();
             }
@@ -1103,15 +1178,23 @@ class Detail extends BaseComponent
         }
     }
 
-    // Untuk Adjustment - hitung amt_adjustment = outstanding_amt - amt
-    public function payAdjustment($key)
+
+    // Toggle lunas untuk mengatur amt_adjustment
+    public function toggleLunas($key)
     {
         if (isset($this->input_details[$key])) {
+            $isLunas = $this->input_details[$key]['is_lunas'] ?? false;
             $outstanding_amt = isset($this->input_details[$key]['outstanding_amt']) ? (float)$this->input_details[$key]['outstanding_amt'] : 0;
             $amt = isset($this->input_details[$key]['amt']) ? (float)$this->input_details[$key]['amt'] : 0;
 
-            // Hitung amt_adjustment = outstanding_amt - amt
-            $this->input_details[$key]['amt_adjustment'] = $amt - $outstanding_amt;
+            if ($isLunas) {
+                // Jika toggle aktif (lunas), isi amt_adjustment dengan selisih outstanding_amt - amt
+                // Ini akan membuat total bayar = outstanding_amt (lunas)
+                $this->input_details[$key]['amt_adjustment'] = $amt - $outstanding_amt;
+            } else {
+                // Jika toggle tidak aktif (belum lunas), hapus amt_adjustment
+                $this->input_details[$key]['amt_adjustment'] = 0;
+            }
         }
 
         $this->updateSummary();
@@ -1353,6 +1436,22 @@ class Detail extends BaseComponent
             $this->dispatch('error', 'Partner balance tidak ditemukan.');
         }
         $this->input_advance = array_values($this->input_advance);
+    }
+
+    public function onBankCodeChanged($key, $bankCode)
+    {
+        // Update pay_type_code and pay_type_id based on bank_code (partner name)
+        $payTypeData = $this->getPayTypeByPartnerName($bankCode);
+        $payTypeCode = $payTypeData['pay_type_code'];
+        $payTypeId = $payTypeData['pay_type_id'];
+
+        // Log untuk debugging
+        Log::info('Bank code changed', [
+            'key' => $key,
+            'bank_code' => $bankCode,
+            'pay_type_code' => $payTypeCode,
+            'pay_type_id' => $payTypeId
+        ]);
     }
 }
 

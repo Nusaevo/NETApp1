@@ -121,18 +121,6 @@ class Detail extends BaseComponent
         //     $this->salesTypeOnChanged();
         // }
 
-        // Data dummy untuk komponen dropdown search multiple select
-        $this->items = [
-            '1' => 'Ban Michelin 205/55R16',
-            '2' => 'Ban Bridgestone 195/65R15',
-            '3' => 'Ban Goodyear 225/45R17',
-            '4' => 'Ban Dunlop 185/70R14',
-            '5' => 'Ban Yokohama 215/60R16',
-            '6' => 'Ban Pirelli 235/40R18',
-        ];
-
-        $this->selectedItems = [''];
-
         if ($this->isEditOrView()) {
             // dd($this->objectIdValue);
             $this->object = OrderHdr::withTrashed()->find($this->objectIdValue);
@@ -641,21 +629,8 @@ class Detail extends BaseComponent
 
         $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
 
-        // Ambil semua matl_id yang sedang dipilih di input_details
-        $selectedMatlIds = collect($this->input_details)->pluck('matl_id')->filter()->unique()->toArray();
-        $selectedMatlIdsStr = '';
-        if (!empty($selectedMatlIds)) {
-            $selectedMatlIdsStr = implode(',', $selectedMatlIds);
-        }
+        $this->materialQuery = "SELECT id, code, name FROM materials WHERE status_code = 'A' AND deleted_at IS NULL AND category IN ($categoryList)";
 
-        $mainQuery = "SELECT id, code, name FROM materials WHERE status_code = 'A' AND deleted_at IS NULL AND category IN ($categoryList)";
-        // Jika ada matl_id yang tidak ada di hasil utama, tambahkan dengan UNION
-        if (!empty($selectedMatlIdsStr)) {
-            $unionQuery = "SELECT id, code, name FROM materials WHERE id IN ($selectedMatlIdsStr)";
-            $this->materialQuery = "$mainQuery UNION $unionQuery";
-        } else {
-            $this->materialQuery = $mainQuery;
-        }
     }
 
     public function checkDeliveryStatus()

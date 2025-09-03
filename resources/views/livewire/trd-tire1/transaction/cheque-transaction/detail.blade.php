@@ -54,8 +54,8 @@
                                         <td style="text-align: center;">{{ $loop->iteration }}</td>
                                         <td>
                                             <x-ui-dropdown-select label=""
-                                                model="input_details.{{ $key }}.bank_code" :options="$giroOptions"
-                                               :selectedValue="$input_details[$key]['bank_code'] ?? ''" required="true"
+                                                model="input_details.{{ $key }}.bank_reff" :options="$giroOptions"
+                                               :selectedValue="$input_details[$key]['bank_reff'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="giroOnChanged({{ $key }}, $event.target.value)"
                                                 :enabled="$isDeliv ? 'false' : 'true'" />
@@ -89,39 +89,6 @@
 
                     </x-ui-footer>
                 </div>
-                {{-- <x-ui-table id="SummaryTable">
-                    <x-slot name="headers">
-                        <th style="width: 150px; text-align: center;">Total Discount</th>
-                        <th style="width: 150px; text-align: center;">DPP</th>
-                        <th style="width: 150px; text-align: center;">PPN</th>
-                        <th style="width: 150px; text-align: center;">Total Amount</th>
-                        <th style="width: 150px; text-align: center;">Versi</th>
-                    </x-slot>
-                    <x-slot name="rows">
-                        <tr>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="total_discount" label="" :action="$actionValue"
-                                    enabled="false" type="text" :value="$total_discount" placeHolder="Total Discount" />
-                            </td>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="total_dpp" label="" :action="$actionValue" enabled="false"
-                                    type="text" :value="$total_dpp" />
-                            </td>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="total_tax" label="" :action="$actionValue" enabled="false"
-                                    type="text" :value="$total_tax" />
-                            </td>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="total_amount" label="" :action="$actionValue"
-                                    enabled="false" type="text" :value="$total_amount" />
-                            </td>
-                            <td style="text-align: center;">
-                                <x-ui-text-field model="versionNumber" label="" :action="$actionValue"
-                                    enabled="false" type="text" />
-                            </td>
-                        </tr>
-                    </x-slot>
-                </x-ui-table> --}}
                 <br>
 
             </div>

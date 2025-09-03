@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\ChequeTransaction;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivPacking, OrderHdr, OrderDtl, PartnertrHdr};
+use App\Models\TrdTire1\Transaction\{DelivPacking, OrderHdr, OrderDtl, PartnertrHdr, PartnertrDtl};
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -22,9 +22,10 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->where('order_hdrs.tr_type', 'PO')
-            ->orderBy('order_hdrs.tr_date', 'desc');
+        return PartnertrHdr::with(['PartnertrDtl'])
+            ->where('partnertr_hdrs.tr_type', 'CQDEP')
+            ->orWhere('partnertr_hdrs.tr_type', 'CQREJ')
+            ->orderBy('partnertr_hdrs.tr_date', 'desc');
     }
     public function columns(): array
     {
@@ -33,81 +34,48 @@ class IndexDataTable extends BaseDataTableComponent
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")
-                ->hideIf(true)
-                ->sortable(),
-            Column::make('currency', "curr_rate")
-                ->hideIf(true)
                 ->sortable(),
             Column::make($this->trans("tr_code"), "tr_code")
                 ->format(function ($value, $row) {
-                    if ($row->partner_id) {
-                        return '<a href="' . route($this->appCode . '.Transaction.PurchaseOrder.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->id)
-                        ]) . '">' . $row->tr_code . '</a>';
-                    } else {
-                        return '';
-                    }
-                })
-                ->html(),
-            Column::make($this->trans("supplier"), "partner_id")
-                ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                    return '<a href="' . route($this->appCode . '.Transaction.ChequeTransaction.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->partner_id)
-                    ]) . '">' . $row->Partner->name . '</a>';
+                        'objectId' => encryptWithSessionKey($row->id)
+                    ]) . '">' . $row->tr_code . '</a>';
                 })
                 ->html(),
-            Column::make('Kode Barang', 'orderdtl_codes')
+            Column::make($this->trans("Bank"), "partner_code")
                 ->label(function ($row) {
-                    // Ambil semua kode barang dari OrderDtl, pisahkan dengan koma
-                    if ($row->OrderDtl && $row->OrderDtl->count() > 0) {
-                        return $row->OrderDtl->pluck('matl_code')->implode(', ');
+                    // Ambil partner_code dari detail pertama (tr_seq positif)
+                    $firstDetail = $row->PartnertrDtl->where('tr_seq', '>', 0)->first();
+                    return $firstDetail ? $firstDetail->partner_code : '-';
+                }),
+            Column::make($this->trans("Giro"), "bank_reff")
+                ->label(function ($row) {
+                    // Ambil bank_reff dari detail pertama
+                    $firstDetail = $row->PartnertrDtl->where('tr_seq', '>', 0)->first();
+                    if ($firstDetail) {
+                        // Ambil data giro dari PaymentSrc berdasarkan reff_id
+                        $giroData = \App\Models\TrdTire1\Transaction\PaymentSrc::where('id', $firstDetail->reff_id)->first();
+                        return $giroData ? $giroData->bank_reff : '-';
                     }
                     return '-';
                 }),
-            Column::make($this->trans('Total Barang'), 'total_qty')
+            Column::make($this->trans('Jumlah Item'), 'item_count')
                 ->label(function ($row) {
-                    return $row->total_qty;
+                    return $row->PartnertrDtl->where('tr_seq', '>', 0)->count();
                 })
                 ->sortable(),
-            Column::make($this->trans('Total Akan Dikirim'), 'total_qty')
+            Column::make($this->trans("Note"), "tr_descr")
                 ->label(function ($row) {
-                    $totalQty = DelivPacking::where('reffhdr_id', $row->id)->sum('qty');
-                    return round($totalQty);
-                })
-                ->sortable(),
-            Column::make($this->trans('amt'), 'total_amt')
-                ->label(function ($row) {
-                    return rupiah($row->total_amt , false);
-                })
-                ->sortable(),
-            Column::make($this->trans("Status"), "status_code")
-                ->format(function ($value, $row) {
-                    $statusMap = [
-                        Status::OPEN => 'Open',
-                        Status::PRINT => 'Print',
-                        Status::SHIP => 'Ship',
-                        Status::CANCEL => 'Cancel',
-                        Status::ACTIVE => 'Active',
-                    ];
-                    return $statusMap[$value] ?? 'Unknown';
+                    // Ambil note dari detail pertama
+                    $firstDetail = $row->PartnertrDtl->where('tr_seq', '>', 0)->first();
+                    return $firstDetail ? $firstDetail->tr_descr : '-';
                 }),
             Column::make($this->trans('action'), 'id')
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
-                        'row' => $row,
-                        'custom_actions' => [
-                            // [
-                            //     'label' => 'Print',
-                            //     'route' => route('TrdTire1.Procurement.PurchaseOrder.PrintPdf', [
-                            //         'action' => encryptWithSessionKey('Edit'),
-                            //         'objectId' => encryptWithSessionKey($row->id)
-                            //     ]),
-                            //     'icon' => 'bi bi-printer'
-                            // ],
-                        ],
+                        'custom_actions' => [],
                         'enable_this_row' => true,
                         'allow_details' => false,
                         'allow_edit' => true,
@@ -116,50 +84,40 @@ class IndexDataTable extends BaseDataTableComponent
                         'permissions' => $this->permissions
                     ]);
                 }),
-
         ];
     }
 
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '=', $value);
+            DateFilter::make('Tanggal Transaksi')->filter(function (Builder $builder, string $value) {
+                $builder->where('partnertr_hdrs.tr_date', '=', $value);
             }),
-            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
+            $this->createTextFilter('Nomor Transaksi', 'tr_code', 'Cari Nomor Transaksi', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(partnertr_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+            $this->createTextFilter('Bank', 'partner_code', 'Cari Bank', function (Builder $builder, string $value) {
+                $builder->whereHas('PartnertrDtl', function ($query) use ($value) {
+                    $query->where('tr_seq', '>', 0)
+                          ->where(DB::raw('UPPER(partner_code)'), 'like', '%' . strtoupper($value) . '%');
                 });
             }),
-            // Filter kode barang (matl_code) pada OrderDtl
-            $this->createTextFilter('Kode Barang', 'matl_code', 'Cari Kode Barang', function (Builder $builder, string $value) {
-                $builder->whereHas('OrderDtl', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(matl_code)'), 'like', '%' . strtoupper($value) . '%');
+            $this->createTextFilter('Giro', 'bank_reff', 'Cari Giro', function (Builder $builder, string $value) {
+                $builder->whereHas('PartnertrDtl', function ($query) use ($value) {
+                    $query->where('tr_seq', '>', 0);
                 });
             }),
-            SelectFilter::make('Status', 'status_code')
+            SelectFilter::make('Tipe Transaksi', 'tr_type')
                 ->options([
-                    '' => 'All', // Tambahkan opsi "All" dengan nilai kosong
-                    Status::ACTIVE => 'Active',
-                    Status::OPEN => 'Open',
-                    Status::PRINT => 'Print',
-                    Status::SHIP => 'Ship',
-                    Status::CANCEL => 'Cancel',
+                    '' => 'All',
+                    'CQDEP' => 'Cheque Deposit',
+                    'CQREJ' => 'Cheque Reject',
                 ])
                 ->filter(function ($builder, $value) {
-                    if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
-                        $builder->where('order_hdrs.status_code', $value);
+                    if ($value !== '') {
+                        $builder->where('partnertr_hdrs.tr_type', $value);
                     }
                 }),
-            // DateFilter::make('Tanggal Awal')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '>=', $value);
-            // }),
-            // DateFilter::make('Tanggal Akhir')->filter(function (Builder $builder, string $value) {
-            //     $builder->where('order_hdrs.tr_date', '<=', $value);
-            // }),
         ];
     }
 }

@@ -35,7 +35,19 @@ class DropdownSearchController extends Controller
     public function search(Request $request)
     {
         try {
-            $searchTerm = $request->get('q', '');
+            // Get and sanitize search term - trim spaces and prevent space-only searches
+            $rawSearchTerm = $request->get('q', '');
+            $searchTerm = trim($rawSearchTerm);
+
+            // Log search term processing for debugging
+            // if ($rawSearchTerm !== $searchTerm) {
+            //     \Log::debug('Search term trimmed:', [
+            //         'original' => $rawSearchTerm,
+            //         'trimmed' => $searchTerm,
+            //         'had_spaces' => $rawSearchTerm !== $searchTerm
+            //     ]);
+            // }
+
             $optionValue = $request->get('option_value', 'id');
             $optionLabel = $request->get('option_label', 'name');
             $specificId = $request->get('id'); // For value restoration
@@ -43,7 +55,7 @@ class DropdownSearchController extends Controller
             $bypassFilters = $request->get('bypass_filters', false);
 
             // Debug all request parameters
-            \Log::debug('All dropdown search parameters:', $request->all());
+            // \Log::debug('All dropdown search parameters:', $request->all());
 
             // Get SQL query - check all possible parameter names with more detail
             $sqlQuery = $request->input('query');
@@ -51,36 +63,36 @@ class DropdownSearchController extends Controller
             // Use the sanitizer helper to clean and validate the query
             $sqlQuery = $this->sanitizeSqlQuery($sqlQuery);
 
-            \Log::debug('Initial query parameter processing:', [
-                'query_value' => $sqlQuery,
-                'query_type' => gettype($sqlQuery),
-                'query_length' => $sqlQuery ? strlen($sqlQuery) : 0
-            ]);
+            // \Log::debug('Initial query parameter processing:', [
+            //     'query_value' => $sqlQuery,
+            //     'query_type' => gettype($sqlQuery),
+            //     'query_length' => $sqlQuery ? strlen($sqlQuery) : 0
+            // ]);
 
             // Try different methods to get the query parameter if empty
             if (empty($sqlQuery)) {
                 // Try getting directly from GET params
                 $rawQuery = $request->query('query');
                 $sqlQuery = $this->sanitizeSqlQuery($rawQuery);
-                \Log::debug('Trying query from query params:', ['value' => $sqlQuery]);
+                // \Log::debug('Trying query from query params:', ['value' => $sqlQuery]);
             }
 
             if (empty($sqlQuery)) {
                 // Try sqlQuery as a fallback parameter name
                 $rawQuery = $request->input('sqlQuery');
                 $sqlQuery = $this->sanitizeSqlQuery($rawQuery);
-                \Log::debug('Using sqlQuery as fallback:', ['value' => $sqlQuery]);
+                // \Log::debug('Using sqlQuery as fallback:', ['value' => $sqlQuery]);
             }
 
             // Final debug output of resolved query
-            \Log::info('Final SQL query:', [
-                'query' => $sqlQuery,
-                'length' => $sqlQuery ? strlen($sqlQuery) : 0,
-                'request_data' => $request->all(),
-                'preserve_existing' => $preserveExisting,
-                'bypass_filters' => $bypassFilters,
-                'specific_id' => $specificId
-            ]);
+            // \Log::info('Final SQL query:', [
+            //     'query' => $sqlQuery,
+            //     'length' => $sqlQuery ? strlen($sqlQuery) : 0,
+            //     'request_data' => $request->all(),
+            //     'preserve_existing' => $preserveExisting,
+            //     'bypass_filters' => $bypassFilters,
+            //     'specific_id' => $specificId
+            // ]);
 
             $requestConnection = $request->get('connection');
 
@@ -97,23 +109,23 @@ class DropdownSearchController extends Controller
 
             // If still empty, fail with a clear message
             if (!$connection) {
-                \Log::error('No database connection available', [
-                    'app_code' => Session::get('app_code'),
-                    'requestConnection' => $requestConnection
-                ]);
+                // \Log::error('No database connection available', [
+                //     'app_code' => Session::get('app_code'),
+                //     'requestConnection' => $requestConnection
+                // ]);
             }
 
             // Debug logging
-            \Log::info('Dropdown search request:', [
-                'searchTerm' => $searchTerm,
-                'sqlQuery' => $sqlQuery,
-                'requestedConnection' => $requestConnection,
-                'resolvedConnection' => $connection,
-                'app_code' => Session::get('app_code'),
-                'optionValue' => $optionValue,
-                'optionLabel' => $optionLabel,
-                'specificId' => $specificId
-            ]);
+            // \Log::info('Dropdown search request:', [
+            //     'searchTerm' => $searchTerm,
+            //     'sqlQuery' => $sqlQuery,
+            //     'requestedConnection' => $requestConnection,
+            //     'resolvedConnection' => $connection,
+            //     'app_code' => Session::get('app_code'),
+            //     'optionValue' => $optionValue,
+            //     'optionLabel' => $optionLabel,
+            //     'specificId' => $specificId
+            // ]);
 
             // Validate connection
             if (!$connection) {
@@ -270,40 +282,135 @@ class DropdownSearchController extends Controller
     /**
      * Format the display text based on the option label format
      *
+     * Enhanced to support template placeholders:
+     * - Use {} for dynamic field replacement: "Kode : {m.code}; Nama :{m.name}"
+     * - Text outside {} is displayed as-is
+     * - Text inside {} is replaced with field values
+     * - Simple formats like "m.code, m.name, qtyoh" are automatically converted to placeholder format
+     *
+     * Separator rules:
+     * - Use semicolon (;) for line breaks: "code;name" → "ABC123\nProduct Name"
+     * - Use comma (,) for dash separator: "code,name" → "ABC123 - Product Name"
+     *
      * @param object $item
      * @param string $optionLabel
      * @return string
      */
     private function formatDisplayText($item, $optionLabel)
     {
-        // Support multiple labels separated by comma
-        $labels = explode(',', $optionLabel);
+        // Check if the optionLabel contains placeholders {}
+        if (preg_match('/\{[^}]+\}/', $optionLabel)) {
+            // Handle template format with placeholders
+            return $this->formatDisplayTextWithPlaceholders($item, $optionLabel);
+        }
+
+        // Convert simple field format to placeholder format for consistent handling
+        $convertedLabel = $this->convertToPlaceholderFormat($optionLabel);
+        return $this->formatDisplayTextWithPlaceholders($item, $convertedLabel);
+    }
+
+    /**
+     * Convert simple field format to placeholder format
+     * Example: "m.code, m.name, qtyoh" becomes "{m.code}, {m.name}, {qtyoh}"
+     *
+     * @param string $optionLabel
+     * @return string
+     */
+    private function convertToPlaceholderFormat($optionLabel)
+    {
+        // Determine separator and split accordingly
+        $useSemicolon = strpos($optionLabel, ';') !== false;
+        $separator = $useSemicolon ? ';' : ',';
+        $labels = explode($separator, $optionLabel);
+
+        $convertedParts = [];
+        foreach ($labels as $label) {
+            $label = trim($label);
+            if (!empty($label)) {
+                $convertedParts[] = '{' . $label . '}';
+            }
+        }
+
+        return implode($separator, $convertedParts);
+    }
+
+    /**
+     * Format display text with template placeholders
+     * Handles format like "Kode : {m.code}; Nama :{m.name}" or "{m.code}, {m.name}, {qtyoh}"
+     *
+     * @param object $item
+     * @param string $optionLabel
+     * @return string
+     */
+    private function formatDisplayTextWithPlaceholders($item, $optionLabel)
+    {
+        // Determine separator for line breaks
+        $useSemicolon = strpos($optionLabel, ';') !== false;
+        $separator = $useSemicolon ? ';' : ',';
+        $segments = explode($separator, $optionLabel);
+
         $displayText = '';
         $foundAny = false;
 
-        foreach ($labels as $index => $label) {
-            $label = trim($label);
-            if ($label && property_exists($item, $label) && $item->{$label} !== null) {
-                if ($index > 0 && $foundAny) {
-                    $displayText .= ' - ';
+        foreach ($segments as $index => $segment) {
+            $segment = trim($segment);
+            $processedSegment = '';
+
+            // Process placeholders in this segment
+            $processedSegment = preg_replace_callback('/\{([^}]+)\}/', function($matches) use ($item) {
+                $fieldName = trim($matches[1]);
+
+                // Handle table aliases: if field contains dot (e.g., "m.code"), extract just the column name
+                if (strpos($fieldName, '.') !== false) {
+                    $parts = explode('.', $fieldName);
+                    $fieldName = end($parts);
                 }
-                $displayText .= $item->{$label};
+
+                // Return field value with null handling
+                if (property_exists($item, $fieldName)) {
+                    $value = $item->{$fieldName};
+                    // Convert null values to empty string for consistent UI display
+                    if ($value === null || $value === '') {
+                        \Log::debug('Null/empty field mapped to empty string:', [
+                            'field' => $fieldName,
+                            'original_value' => $value
+                        ]);
+                        return '';
+                    }
+                    return (string)$value; // Ensure string conversion for display
+                } else {
+                    \Log::debug('Placeholder field not found:', [
+                        'original_field' => $matches[1],
+                        'processed_field' => $fieldName,
+                        'available_fields' => array_keys(get_object_vars($item))
+                    ]);
+                    return ''; // Return empty string for missing fields
+                }
+            }, $segment);
+
+            // Add this segment if it has content (after placeholder replacement)
+            if (!empty($processedSegment)) {
+                if ($index > 0 && $foundAny) {
+                    if ($useSemicolon) {
+                        // Use line break for semicolon separator
+                        $displayText .= "\n";
+                    } else {
+                        // Use dash for comma separator - same as original format
+                        $displayText .= ' - ';
+                    }
+                }
+                $displayText .= $processedSegment;
                 $foundAny = true;
             }
         }
 
-        // If no labels were found, try to use just the first one or return a default
-        if (!$foundAny && !empty($labels)) {
-            $firstLabel = trim($labels[0]);
-            if (property_exists($item, $firstLabel) && $item->{$firstLabel} !== null) {
-                $displayText = $item->{$firstLabel};
-            } else {
-                $displayText = '[No Label]';
-                \Log::warning('No display labels found for item', [
-                    'requestedLabels' => $optionLabel,
-                    'availableFields' => array_keys(get_object_vars($item))
-                ]);
-            }
+        // If no segments with valid data were processed, return a fallback
+        if (!$foundAny) {
+            \Log::warning('No valid field values found in template', [
+                'template' => $optionLabel,
+                'available_fields' => array_keys(get_object_vars($item))
+            ]);
+            return '[No Data Available]';
         }
 
         return $displayText;
@@ -447,16 +554,8 @@ class DropdownSearchController extends Controller
 
         // Use optionLabel fields as searchable fields
         // These are the fields that are shown in the dropdown, so they should be searched
-        $optionLabelFields = explode(',', $optionLabel ?? '');
-
-        // Trim and clean up the field names
-        $searchableFields = [];
-        foreach ($optionLabelFields as $field) {
-            $field = trim($field);
-            if (!empty($field)) {
-                $searchableFields[] = $field;
-            }
-        }
+        // Support both comma and semicolon as separators, and handle placeholders {}
+        $searchableFields = $this->extractSearchableFields($optionLabel);
 
         // If no searchable fields from optionLabel, use defaults or detect from query
         if (empty($searchableFields)) {
@@ -488,18 +587,20 @@ class DropdownSearchController extends Controller
         //\Log::debug('Using searchable fields', ['fields' => $searchableFields]);
 
         // Build search conditions for all searchable fields using UPPER for case-insensitive search
+        // Cast all fields to text first to handle numeric fields
         $searchConditions = [];
         foreach ($searchableFields as $field) {
-            $searchConditions[] = "UPPER($field) LIKE '%{$escapedSearchTerm}%'";
+            $searchConditions[] = "UPPER(CAST($field AS TEXT)) LIKE '%{$escapedSearchTerm}%'";
         }
 
         $searchClause = '(' . implode(' OR ', $searchConditions) . ')';
 
-        // \Log::info('Generated search clause', [
-        //     'searchFields' => $searchableFields,
-        //     'clause' => $searchClause,
-        //     'uppercased_term' => $upperSearchTerm
-        // ]);
+        \Log::info('Generated search clause with table aliases and text casting', [
+            'searchFields' => $searchableFields,
+            'clause' => $searchClause,
+            'uppercased_term' => $upperSearchTerm,
+            'original_option_label' => $optionLabel
+        ]);
 
         // No search placeholders, we need to add the search condition
         if ($hasWhere) {
@@ -547,6 +648,51 @@ class DropdownSearchController extends Controller
             // Add new WHERE clause with ID filter
             return $sqlQuery . " WHERE " . $optionValue . " = '" . addslashes($id) . "'";
         }
+    }
+
+    /**
+     * Extract searchable fields from optionLabel, handling both simple fields and placeholders
+     * All fields are now treated as if they have {} placeholders for consistent search behavior
+     *
+     * @param string $optionLabel
+     * @return array
+     */
+    private function extractSearchableFields($optionLabel)
+    {
+        $searchableFields = [];
+
+        if (empty($optionLabel)) {
+            return $searchableFields;
+        }
+
+        // Check if optionLabel contains placeholders {}
+        if (preg_match_all('/\{([^}]+)\}/', $optionLabel, $matches)) {
+            // Extract field names from placeholders
+            foreach ($matches[1] as $field) {
+                $field = trim($field);
+
+                if (!empty($field)) {
+                    // Preserve full field name with table alias for search queries
+                    $searchableFields[] = $field;
+                }
+            }
+        } else {
+            // Convert simple field format to placeholder format for consistent handling
+            // Support both comma and semicolon as separators
+            $separator = strpos($optionLabel, ';') !== false ? ';' : ',';
+            $optionLabelFields = explode($separator, $optionLabel);
+
+            // Trim and clean up the field names, preserving table aliases
+            foreach ($optionLabelFields as $field) {
+                $field = trim($field);
+                if (!empty($field)) {
+                    // Preserve full field name with table alias for search queries
+                    $searchableFields[] = $field;
+                }
+            }
+        }
+
+        return array_unique($searchableFields); // Remove duplicates
     }
 
     /**

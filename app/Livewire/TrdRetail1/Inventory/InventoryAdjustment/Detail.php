@@ -57,7 +57,8 @@ class Detail extends BaseComponent
         'inputs.wh_code' => 'required',
         'inputs.tr_type' => 'required',
         'input_details.*.matl_id' => 'required',
-        'input_details.*.qty_adjustment' => 'required|numeric',
+        'input_details.*.qty_add' => 'nullable|numeric|min:0',
+        'input_details.*.qty_subtract' => 'nullable|numeric|min:0',
     ];
 
     protected $listeners = [
@@ -153,8 +154,10 @@ class Detail extends BaseComponent
                 'matl_id'        => null,
                 'matl_code'      => '',
                 'matl_name'      => '',
-                'qty_adjustment' => 0,
+                'qty_add'        => 0,
+                'qty_subtract'   => 0,
                 'current_stock'  => 0,
+                'final_stock'    => 0,
                 'wh_code'        => $this->inputs['wh_code'],
                 'is_editable'    => true,
             ];
@@ -185,7 +188,8 @@ class Detail extends BaseComponent
             $this->input_details[$index]['matl_code'] = $material->code;
             $this->input_details[$index]['matl_name'] = $material->name;
             $this->input_details[$index]['current_stock'] = $currentStock;
-            $this->input_details[$index]['qty_adjustment'] = 0;
+            $this->input_details[$index]['qty_add'] = 0;
+            $this->input_details[$index]['qty_subtract'] = 0;
             $this->input_details[$index]['final_stock'] = $currentStock;
 
         } catch (Exception $e) {
@@ -195,10 +199,18 @@ class Detail extends BaseComponent
 
     public function updateItemAmount($key)
     {
-        if (isset($this->input_details[$key]['current_stock']) && isset($this->input_details[$key]['qty_adjustment'])) {
+        if (isset($this->input_details[$key]['current_stock']) &&
+            (isset($this->input_details[$key]['qty_add']) || isset($this->input_details[$key]['qty_subtract']))) {
+
             $currentStock = floatval($this->input_details[$key]['current_stock']);
-            $adjustment = floatval($this->input_details[$key]['qty_adjustment']);
-            $this->input_details[$key]['final_stock'] = $currentStock + $adjustment;
+            $qtyAdd = floatval($this->input_details[$key]['qty_add'] ?? 0);
+            $qtySubtract = floatval($this->input_details[$key]['qty_subtract'] ?? 0);
+
+            // Calculate final stock: current + addition - subtraction
+            $this->input_details[$key]['final_stock'] = $currentStock + $qtyAdd - $qtySubtract;
+
+            // Calculate net adjustment for backward compatibility
+            $this->input_details[$key]['qty_adjustment'] = $qtyAdd - $qtySubtract;
         }
 
         // Update totals
@@ -211,9 +223,10 @@ class Detail extends BaseComponent
         $this->total_items = count($this->input_details);
 
         foreach ($this->input_details as $detail) {
-            if (isset($detail['qty_adjustment'])) {
-                $this->total_qty_adjustment += floatval($detail['qty_adjustment']);
-            }
+            $qtyAdd = floatval($detail['qty_add'] ?? 0);
+            $qtySubtract = floatval($detail['qty_subtract'] ?? 0);
+            $netAdjustment = $qtyAdd - $qtySubtract;
+            $this->total_qty_adjustment += $netAdjustment;
         }
     }
 
@@ -264,13 +277,20 @@ class Detail extends BaseComponent
                     ->where('wh_code', $detail->wh_code)
                     ->sum('qty_oh');
 
+                // Convert qty_adjustment back to qty_add or qty_subtract
+                $qtyAdjustment = $detail->qty;
+                $qtyAdd = $qtyAdjustment > 0 ? $qtyAdjustment : 0;
+                $qtySubtract = $qtyAdjustment < 0 ? abs($qtyAdjustment) : 0;
+
                 $this->input_details[] = [
                     'id'             => $detail->id,
                     'matl_id'        => $detail->matl_id,
                     'matl_code'      => $material->code ?? $detail->matl_code,
                     'matl_name'      => $material->name ?? '',
-                    'qty_adjustment' => $detail->qty,
-                    'current_stock'  => 0,
+                    'qty_add'        => $qtyAdd,
+                    'qty_subtract'   => $qtySubtract,
+                    'qty_adjustment' => $qtyAdjustment, // Keep for backward compatibility
+                    'current_stock'  => $currentStock - $qtyAdjustment, // Reverse calculation
                     'final_stock'    => $currentStock,
                     'wh_code'        => $detail->wh_code,
                     'is_editable'    => false,
@@ -328,6 +348,29 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        // Validasi setidaknya ada 1 item
+        if (empty($this->input_details)) {
+            $this->dispatch('warning', 'Tidak dapat menyimpan transaksi. Silakan tambahkan setidaknya 1 item adjustment.');
+            return;
+        }
+
+        // Validasi ada setidaknya 1 item dengan adjustment yang tidak nol
+        $hasValidAdjustment = false;
+        foreach ($this->input_details as $detail) {
+            $qtyAdd = floatval($detail['qty_add'] ?? 0);
+            $qtySubtract = floatval($detail['qty_subtract'] ?? 0);
+
+            if (!empty($detail['matl_id']) && ($qtyAdd > 0 || $qtySubtract > 0)) {
+                $hasValidAdjustment = true;
+                break;
+            }
+        }
+
+        if (!$hasValidAdjustment) {
+            $this->dispatch('warning', 'Tidak dapat menyimpan transaksi. Silakan masukkan qty penambahan atau pengurangan pada setidaknya 1 item.');
+            return;
+        }
+
         // dd($this->inputs, $this->input_details);
         if ($this->actionValue == 'Edit') {
             if ($this->object->isOrderCompleted()) {
@@ -351,6 +394,7 @@ class Detail extends BaseComponent
                 'tr_type' => 'IA',
                 'tr_date' => $this->inputs['tr_date'] ?? date('Y-m-d'),
                 'remark' => $this->inputs['remark'] ?? '',
+                'status_code' => Status::OPEN
             ]);
 
             // Set the object to the newly created header
@@ -373,7 +417,12 @@ class Detail extends BaseComponent
         $seq = 1;
         // Save inventory adjustment details based on input_details
         foreach ($this->input_details as $detail) {
-            if (!empty($detail['matl_id']) && isset($detail['qty_adjustment']) && $detail['qty_adjustment'] != 0) {
+            $qtyAdd = floatval($detail['qty_add'] ?? 0);
+            $qtySubtract = floatval($detail['qty_subtract'] ?? 0);
+            $netAdjustment = $qtyAdd - $qtySubtract;
+
+            // Only save if there's an actual adjustment and material is selected
+            if (!empty($detail['matl_id']) && $netAdjustment != 0) {
                 // Get material info for matl_code
                 $material = Material::find($detail['matl_id']);
                 $matlCode = $material ? $material->code : '';
@@ -385,7 +434,7 @@ class Detail extends BaseComponent
                     'matl_id' => $detail['matl_id'],
                     'matl_code' => $matlCode,
                     'wh_code' => $this->inputs['wh_code'],
-                    'qty' => $detail['qty_adjustment'],
+                    'qty' => $netAdjustment, // Store net adjustment (positive or negative)
                     'tr_descr' => $this->inputs['remark'] ?? 'Stock Adjustment',
                     'tr_type' => 'IA',
                 ]);
@@ -396,13 +445,13 @@ class Detail extends BaseComponent
                     ->first();
 
                 if ($balance) {
-                    $balance->qty_oh += $detail['qty_adjustment'];
+                    $balance->qty_oh += $netAdjustment;
                     $balance->save();
                 } else {
                     IvtBal::create([
                         'matl_id' => $detail['matl_id'],
                         'wh_code' => $this->inputs['wh_code'],
-                        'qty_oh' => $detail['qty_adjustment'],
+                        'qty_oh' => $netAdjustment,
                     ]);
                 }
             }
@@ -515,5 +564,185 @@ class Detail extends BaseComponent
         }
         return $result;
     }
+
+    #region Add Multiple Items Methods
+
+    public function openItemDialogBox()
+    {
+        $this->searchTerm = '';
+        $this->filterCategory = '';
+        $this->filterBrand = '';
+        $this->filterType = '';
+        $this->materialList = [];
+        $this->selectedMaterials = [];
+
+        // Load initial materials for the selected warehouse
+        if (!empty($this->inputs['wh_code'])) {
+            $this->searchMaterials();
+        }
+    }
+
+    public function closeItemDialogBox()
+    {
+        $this->searchTerm = '';
+        $this->filterCategory = '';
+        $this->filterBrand = '';
+        $this->filterType = '';
+        $this->materialList = [];
+        $this->selectedMaterials = [];
+    }
+
+    public function searchMaterials()
+    {
+        if (empty($this->inputs['wh_code'])) {
+            $this->dispatch('warning', 'Please select a warehouse first.');
+            return;
+        }
+
+        try {
+            $query = Material::query()
+                ->leftJoin('ivt_bals', function($join) {
+                    $join->on('materials.id', '=', 'ivt_bals.matl_id')
+                         ->where('ivt_bals.wh_code', $this->inputs['wh_code']);
+                })
+                ->leftJoin('matl_uoms', function($join) {
+                    $join->on('materials.id', '=', 'matl_uoms.matl_id');
+                })
+                ->where('materials.status_code', 'A')
+                ->whereNull('materials.deleted_at')
+                ->select([
+                    'materials.id',
+                    'materials.code',
+                    'materials.name',
+                    'materials.category',
+                    'materials.brand',
+                    'materials.class_code as type', // Gunakan class_code sebagai type
+                    'matl_uoms.buying_price',
+                    'matl_uoms.selling_price',
+                    DB::raw('COALESCE(SUM(ivt_bals.qty_oh), 0) as current_stock')
+                ])
+                ->groupBy(
+                    'materials.id',
+                    'materials.code',
+                    'materials.name',
+                    'materials.category',
+                    'materials.brand',
+                    'materials.class_code',
+                    'matl_uoms.buying_price',
+                    'matl_uoms.selling_price'
+                );
+
+            // Apply search filters
+            if (!empty($this->searchTerm)) {
+                $searchTerm = '%' . strtoupper($this->searchTerm) . '%';
+                $query->where(function($q) use ($searchTerm) {
+                    $q->whereRaw('UPPER(materials.code) LIKE ?', [$searchTerm])
+                      ->orWhereRaw('UPPER(materials.name) LIKE ?', [$searchTerm]);
+                });
+            }
+
+            if (!empty($this->filterCategory)) {
+                $query->where('materials.category', $this->filterCategory);
+            }
+
+            if (!empty($this->filterBrand)) {
+                $query->where('materials.brand', $this->filterBrand);
+            }
+
+            if (!empty($this->filterType)) {
+                $query->where('materials.class_code', $this->filterType);
+            }
+
+            $materials = $query->limit(50)->get();
+
+            $this->materialList = $materials->map(function ($material) {
+                return [
+                    'id' => $material->id,
+                    'code' => $material->code,
+                    'name' => $material->name,
+                    'category' => $material->category,
+                    'brand' => $material->brand,
+                    'type' => $material->type,
+                    'buying_price' => $material->buying_price ?? 0,
+                    'selling_price' => $material->selling_price ?? 0,
+                    'current_stock' => number_format($material->current_stock, 2),
+                    'image_url' => null, // Add image logic if needed
+                ];
+            })->toArray();
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Error searching materials: ' . $e->getMessage());
+        }
+    }
+
+    public function selectMaterial($materialId)
+    {
+        if (in_array($materialId, $this->selectedMaterials)) {
+            // Remove from selection
+            $this->selectedMaterials = array_filter($this->selectedMaterials, function($id) use ($materialId) {
+                return $id != $materialId;
+            });
+        } else {
+            // Add to selection
+            $this->selectedMaterials[] = $materialId;
+        }
+    }
+
+    public function confirmSelection()
+    {
+        if (empty($this->selectedMaterials)) {
+            $this->dispatch('warning', 'Please select at least one material.');
+            return;
+        }
+
+        try {
+            foreach ($this->selectedMaterials as $materialId) {
+                // Check if material already exists in input_details
+                $exists = false;
+                foreach ($this->input_details as $detail) {
+                    if ($detail['matl_id'] == $materialId) {
+                        $exists = true;
+                        break;
+                    }
+                }
+
+                if (!$exists) {
+                    // Get material details
+                    $material = Material::find($materialId);
+                    if ($material) {
+                        // Get current stock
+                        $currentStock = IvtBal::where('matl_id', $materialId)
+                            ->where('wh_code', $this->inputs['wh_code'])
+                            ->sum('qty_oh');
+
+                        // Add to input_details
+                        $this->input_details[] = [
+                            'matl_id' => $materialId,
+                            'matl_code' => $material->code,
+                            'matl_name' => $material->name,
+                            'qty_add' => 0,
+                            'qty_subtract' => 0,
+                            'current_stock' => $currentStock,
+                            'final_stock' => $currentStock,
+                            'wh_code' => $this->inputs['wh_code'],
+                            'is_editable' => true,
+                        ];
+                    }
+                }
+            }
+
+            // Reset selection and close dialog
+            $this->selectedMaterials = [];
+            $this->materialList = [];
+
+            $this->dispatch('success', 'Selected materials added successfully!');
+            $this->dispatch('close-modal', 'itemDialogBox');
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Error adding materials: ' . $e->getMessage());
+        }
+    }
+
+    #endregion
     #endregion
 }

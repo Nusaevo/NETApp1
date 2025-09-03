@@ -23,7 +23,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return IvttrHdr::query()
             ->where('status_code', Status::OPEN)
-            ->orWhere('status_code', Status::ACTIVE); // Include non-active records
+            ->orWhere('status_code', Status::ACTIVE);
     }
 
     public function columns(): array

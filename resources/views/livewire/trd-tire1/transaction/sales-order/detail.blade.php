@@ -155,7 +155,7 @@
                                         <td>
                                             <x-ui-dropdown-search label=""
                                                 model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
-                                                optionValue="id" optionLabel="code,name,qty_oh,qty_fgi"
+                                                optionValue="id" optionLabel="{code};{name};Stok: {qty_oh};Rsv: {qty_fgi}"
                                                 placeHolder="Select material..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"

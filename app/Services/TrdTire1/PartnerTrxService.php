@@ -22,6 +22,7 @@ class PartnerTrxService
         $header = $this->saveHeaderTrx($headerData);
         $headerData['id'] = $header->id;
 
+        // dd($headerData, $detailData);
         $details = $this->saveDetailTrx($headerData, $detailData);
 
         return [
@@ -46,6 +47,7 @@ class PartnerTrxService
 
     private function saveDetailTrx(array $headerData, array $detailData)
     {
+        // dd($headerData, $detailData);
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID is required to save details');
         }
@@ -60,6 +62,11 @@ class PartnerTrxService
 
             if (!isset($detail['id']) || empty($detail['id'])) {
                 if ($detail['tr_type'] == 'CQDEP' || $detail['tr_type'] == 'CQREJ') {
+                    // Validasi data yang diperlukan untuk transaksi berpasangan
+                    if (!isset($detail['partner_id2']) || !isset($detail['partner_code2'])) {
+                        throw new Exception('partner_id2 dan partner_code2 diperlukan untuk transaksi CQDEP/CQREJ');
+                    }
+
                     $detail['tr_seq'] = PartnertrDtl::getNextTrSeq($headerData['id']);
 
                     $detail1 = $detail;
