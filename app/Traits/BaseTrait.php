@@ -15,7 +15,6 @@ trait BaseTrait
         // Single event to handle both CREATE and UPDATE operations
         static::saving(function ($model) {
             sanitizeModelAttributesAuto($model, $model->attributes);
-
             if ($model->timestamps !== false) {
                 $userId = Auth::check() ? Auth::user()->code : 'SYSTEM';
 
@@ -25,6 +24,7 @@ trait BaseTrait
                     $model->created_at = now();
                     $model->updated_by = $userId;
                     $model->updated_at = now();
+                    $model->setStatus(Status::ACTIVE);
 
                     // Initialize version number for new records
                     if (Schema::connection($model->getConnectionName())->hasColumn($model->getTable(), 'version_number')) {

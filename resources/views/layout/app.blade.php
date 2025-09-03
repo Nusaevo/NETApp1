@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="facebook-domain-verification" content="nrk61mmi9umrp43dddp99yron03921" />
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Dynamic Favicon from SysConfig1 Application Logo -->

@@ -348,6 +348,29 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
+        // Validasi setidaknya ada 1 item
+        if (empty($this->input_details)) {
+            $this->dispatch('warning', 'Tidak dapat menyimpan transaksi. Silakan tambahkan setidaknya 1 item adjustment.');
+            return;
+        }
+
+        // Validasi ada setidaknya 1 item dengan adjustment yang tidak nol
+        $hasValidAdjustment = false;
+        foreach ($this->input_details as $detail) {
+            $qtyAdd = floatval($detail['qty_add'] ?? 0);
+            $qtySubtract = floatval($detail['qty_subtract'] ?? 0);
+
+            if (!empty($detail['matl_id']) && ($qtyAdd > 0 || $qtySubtract > 0)) {
+                $hasValidAdjustment = true;
+                break;
+            }
+        }
+
+        if (!$hasValidAdjustment) {
+            $this->dispatch('warning', 'Tidak dapat menyimpan transaksi. Silakan masukkan qty penambahan atau pengurangan pada setidaknya 1 item.');
+            return;
+        }
+
         // dd($this->inputs, $this->input_details);
         if ($this->actionValue == 'Edit') {
             if ($this->object->isOrderCompleted()) {
@@ -371,6 +394,7 @@ class Detail extends BaseComponent
                 'tr_type' => 'IA',
                 'tr_date' => $this->inputs['tr_date'] ?? date('Y-m-d'),
                 'remark' => $this->inputs['remark'] ?? '',
+                'status_code' => Status::OPEN
             ]);
 
             // Set the object to the newly created header
@@ -540,5 +564,185 @@ class Detail extends BaseComponent
         }
         return $result;
     }
+
+    #region Add Multiple Items Methods
+
+    public function openItemDialogBox()
+    {
+        $this->searchTerm = '';
+        $this->filterCategory = '';
+        $this->filterBrand = '';
+        $this->filterType = '';
+        $this->materialList = [];
+        $this->selectedMaterials = [];
+
+        // Load initial materials for the selected warehouse
+        if (!empty($this->inputs['wh_code'])) {
+            $this->searchMaterials();
+        }
+    }
+
+    public function closeItemDialogBox()
+    {
+        $this->searchTerm = '';
+        $this->filterCategory = '';
+        $this->filterBrand = '';
+        $this->filterType = '';
+        $this->materialList = [];
+        $this->selectedMaterials = [];
+    }
+
+    public function searchMaterials()
+    {
+        if (empty($this->inputs['wh_code'])) {
+            $this->dispatch('warning', 'Please select a warehouse first.');
+            return;
+        }
+
+        try {
+            $query = Material::query()
+                ->leftJoin('ivt_bals', function($join) {
+                    $join->on('materials.id', '=', 'ivt_bals.matl_id')
+                         ->where('ivt_bals.wh_code', $this->inputs['wh_code']);
+                })
+                ->leftJoin('matl_uoms', function($join) {
+                    $join->on('materials.id', '=', 'matl_uoms.matl_id');
+                })
+                ->where('materials.status_code', 'A')
+                ->whereNull('materials.deleted_at')
+                ->select([
+                    'materials.id',
+                    'materials.code',
+                    'materials.name',
+                    'materials.category',
+                    'materials.brand',
+                    'materials.class_code as type', // Gunakan class_code sebagai type
+                    'matl_uoms.buying_price',
+                    'matl_uoms.selling_price',
+                    DB::raw('COALESCE(SUM(ivt_bals.qty_oh), 0) as current_stock')
+                ])
+                ->groupBy(
+                    'materials.id',
+                    'materials.code',
+                    'materials.name',
+                    'materials.category',
+                    'materials.brand',
+                    'materials.class_code',
+                    'matl_uoms.buying_price',
+                    'matl_uoms.selling_price'
+                );
+
+            // Apply search filters
+            if (!empty($this->searchTerm)) {
+                $searchTerm = '%' . strtoupper($this->searchTerm) . '%';
+                $query->where(function($q) use ($searchTerm) {
+                    $q->whereRaw('UPPER(materials.code) LIKE ?', [$searchTerm])
+                      ->orWhereRaw('UPPER(materials.name) LIKE ?', [$searchTerm]);
+                });
+            }
+
+            if (!empty($this->filterCategory)) {
+                $query->where('materials.category', $this->filterCategory);
+            }
+
+            if (!empty($this->filterBrand)) {
+                $query->where('materials.brand', $this->filterBrand);
+            }
+
+            if (!empty($this->filterType)) {
+                $query->where('materials.class_code', $this->filterType);
+            }
+
+            $materials = $query->limit(50)->get();
+
+            $this->materialList = $materials->map(function ($material) {
+                return [
+                    'id' => $material->id,
+                    'code' => $material->code,
+                    'name' => $material->name,
+                    'category' => $material->category,
+                    'brand' => $material->brand,
+                    'type' => $material->type,
+                    'buying_price' => $material->buying_price ?? 0,
+                    'selling_price' => $material->selling_price ?? 0,
+                    'current_stock' => number_format($material->current_stock, 2),
+                    'image_url' => null, // Add image logic if needed
+                ];
+            })->toArray();
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Error searching materials: ' . $e->getMessage());
+        }
+    }
+
+    public function selectMaterial($materialId)
+    {
+        if (in_array($materialId, $this->selectedMaterials)) {
+            // Remove from selection
+            $this->selectedMaterials = array_filter($this->selectedMaterials, function($id) use ($materialId) {
+                return $id != $materialId;
+            });
+        } else {
+            // Add to selection
+            $this->selectedMaterials[] = $materialId;
+        }
+    }
+
+    public function confirmSelection()
+    {
+        if (empty($this->selectedMaterials)) {
+            $this->dispatch('warning', 'Please select at least one material.');
+            return;
+        }
+
+        try {
+            foreach ($this->selectedMaterials as $materialId) {
+                // Check if material already exists in input_details
+                $exists = false;
+                foreach ($this->input_details as $detail) {
+                    if ($detail['matl_id'] == $materialId) {
+                        $exists = true;
+                        break;
+                    }
+                }
+
+                if (!$exists) {
+                    // Get material details
+                    $material = Material::find($materialId);
+                    if ($material) {
+                        // Get current stock
+                        $currentStock = IvtBal::where('matl_id', $materialId)
+                            ->where('wh_code', $this->inputs['wh_code'])
+                            ->sum('qty_oh');
+
+                        // Add to input_details
+                        $this->input_details[] = [
+                            'matl_id' => $materialId,
+                            'matl_code' => $material->code,
+                            'matl_name' => $material->name,
+                            'qty_add' => 0,
+                            'qty_subtract' => 0,
+                            'current_stock' => $currentStock,
+                            'final_stock' => $currentStock,
+                            'wh_code' => $this->inputs['wh_code'],
+                            'is_editable' => true,
+                        ];
+                    }
+                }
+            }
+
+            // Reset selection and close dialog
+            $this->selectedMaterials = [];
+            $this->materialList = [];
+
+            $this->dispatch('success', 'Selected materials added successfully!');
+            $this->dispatch('close-modal', 'itemDialogBox');
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Error adding materials: ' . $e->getMessage());
+        }
+    }
+
+    #endregion
     #endregion
 }
