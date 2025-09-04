@@ -63,8 +63,8 @@ class Index extends BaseComponent
     {
         $this->stockByCategory = DB::connection($this->connection)
             ->table('materials')
-            ->join('matl_uoms', 'matl_uoms.matl_code', '=', 'materials.code')
-            ->join('ivt_bals', function($join) {
+            ->leftjoin('matl_uoms', 'matl_uoms.matl_code', '=', 'materials.code')
+            ->leftjoin('ivt_bals', function($join) {
                 $join->on('ivt_bals.matl_code', '=', 'matl_uoms.matl_code')
                      ->on('ivt_bals.matl_uom', '=', 'matl_uoms.matl_uom');
             })

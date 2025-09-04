@@ -123,14 +123,15 @@ class Index extends BaseComponent
     {
         $this->stockByCategory = DB::connection($this->connection)
             ->table('materials')
+            ->leftJoin('matl_uoms', 'matl_uoms.matl_code', '=', 'materials.code')
+            ->leftjoin('ivt_bals', function($join) {
+                $join->on('ivt_bals.matl_id', '=', 'matl_uoms.matl_id')
             ->join('matl_uoms', 'matl_uoms.matl_code', '=', 'materials.code')
             ->join('ivt_bals', function($join) {
-                $join->on('ivt_bals.matl_id', '=', 'matl_uoms.id')
                      ->on('ivt_bals.matl_uom', '=', 'matl_uoms.matl_uom');
             })
             ->select('materials.jwl_category1 as category_name')
             ->selectRaw('SUM(ivt_bals.qty_oh) as total_qty')
-            ->selectRaw('COUNT(DISTINCT CONCAT(ivt_bals.matl_id, \'-\', ivt_bals.matl_uom)) as item_count')
             ->whereNull('materials.deleted_at')
             ->whereNull('matl_uoms.deleted_at')
             ->whereNotNull('materials.jwl_category1')
@@ -140,7 +141,7 @@ class Index extends BaseComponent
             ->map(function ($item) {
                 return [
                     'category_name' => $item->category_name,
-                    'item_count' => $item->item_count ?: 0,
+                    'item_count' => $item->total_qty ?: 0,
                 ];
             });
     }
