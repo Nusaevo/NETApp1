@@ -161,7 +161,7 @@ class IndexDataTable extends BaseDataTableComponent
                         ],
                         'enable_this_row' => true,
                         'allow_details' => false,
-                        'allow_edit' => true,
+                        'allow_edit' => false,
                         'allow_disable' => false,
                         'allow_delete' => false,
                         'permissions' => $this->permissions
@@ -343,12 +343,15 @@ class IndexDataTable extends BaseDataTableComponent
                 return;
             }
 
-            // Only pass selectedPrintDate and type, no orderIds
+            // Use array structure with JSON encoding
+            $paramArray = [
+                'selectedPrintDate' => $selectedPrintDate,
+                'type' => 'cetakProsesDate'
+            ];
             return redirect()->route('TrdTire1.Tax.TaxInvoice.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
-                // No single objectId; use additionalParam for print date only
                 'objectId' => encryptWithSessionKey(''),
-                'additionalParam' => '?selectedPrintDate=' . $selectedPrintDate . '&type=cetakProsesDate',
+                'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),
             ]);
         }
         $this->dispatch('error', 'Tanggal proses belum dipilih.');
@@ -369,11 +372,16 @@ class IndexDataTable extends BaseDataTableComponent
                 return;
             }
 
-            // Only pass selectedMasa and type, no orderIds
+            // Use array structure with JSON encoding
+            $paramArray = [
+                'selectedMasa' => $selectedMasa,
+                'type' => 'cetakLaporanPenjualan'
+            ];
+
             return redirect()->route('TrdTire1.Transaction.PurchaseDelivery.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey(''),
-                'additionalParam' => '?selectedMasa=' . $selectedMasa . '&type=cetakLaporanPenjualan',
+                'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),
             ]);
         }
         $this->dispatch('error', 'Masa belum dipilih.');
