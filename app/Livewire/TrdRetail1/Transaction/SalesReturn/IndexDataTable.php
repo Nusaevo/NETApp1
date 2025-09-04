@@ -25,7 +25,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return ReturnHdr::with('ReturnDtl', 'Partner', 'ExchangeOrder')
             ->where('return_hdrs.tr_type', 'SR')
-            ->where('return_hdrs.status_code', Status::OPEN);
+            ->where('return_hdrs.status_code', Status::OPEN)
+            ->orderBy('tr_date', 'desc')
+            ->orderBy('tr_id', 'desc');
     }
 
     public function columns(): array
