@@ -14,7 +14,7 @@
                 <div class="row d-flex align-items-baseline">
                     <div class="col-xl-9">
                         <p style="color: #7e8d9f; font-size: 20px;">
-                            LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($masa)->translatedFormat('F Y')) }}
+                            LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($this->masa)->translatedFormat('F Y')) }}
                         </p>
                     </div>
                     <div class="col-xl-3 float-end">
@@ -28,7 +28,7 @@
                 <div id="print">
                     <div class="invoice-box page" style="max-width: 2480px; margin: auto; padding: 20px;">
                         {{-- yang di print --}}
-                        <h3 class="text-center" style="text-decoration: underline;">LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($masa)->translatedFormat('F Y')) }}</h3>
+                        <h3 class="text-center" style="text-decoration: underline;">LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($this->masa)->translatedFormat('F Y')) }}</h3>
                         @if (!isset($orders) || count($orders) === 0)
                             <p class="text-center text-danger">Tidak ada data untuk ditampilkan.</p>
                         @else

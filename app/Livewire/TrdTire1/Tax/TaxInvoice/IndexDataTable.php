@@ -185,6 +185,7 @@ class IndexDataTable extends BaseDataTableComponent
 
         $masaOptions = OrderHdr::selectRaw("TO_CHAR(tr_date, 'YYYY-MM') as filter_value, TO_CHAR(tr_date, 'FMMonth-YYYY') as display_value") // Updated for PostgreSQL
             ->distinct()
+            ->orderByRaw("TO_CHAR(tr_date, 'YYYY-MM') DESC") // Sort by year-month descending (latest first)
             ->get()
             ->pluck('display_value', 'filter_value')
             ->toArray();
@@ -331,14 +332,23 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $selectedPrintDate = $this->filters['print_date'] ?? null;
         if ($selectedPrintDate) {
-            $orderIds = OrderHdr::where('print_date', $selectedPrintDate)
+            // Check if there are any orders for the selected print date
+            $orderCount = OrderHdr::where('print_date', $selectedPrintDate)
                 ->where('tr_type', 'SO')
-                ->pluck('id')
-                ->toArray();
+                ->whereNull('deleted_at')
+                ->count();
+
+            if ($orderCount === 0) {
+                $this->dispatch('error', 'Tidak ada data untuk tanggal proses yang dipilih.');
+                return;
+            }
+
+            // Only pass selectedPrintDate and type, no orderIds
             return redirect()->route('TrdTire1.Tax.TaxInvoice.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey(json_encode($orderIds)),
-                'additionalParam' => $selectedPrintDate,
+                // No single objectId; use additionalParam for print date only
+                'objectId' => encryptWithSessionKey(''),
+                'additionalParam' => '?selectedPrintDate=' . $selectedPrintDate . '&type=cetakProsesDate',
             ]);
         }
         $this->dispatch('error', 'Tanggal proses belum dipilih.');
@@ -348,15 +358,22 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $selectedMasa = $this->filters['masa'] ?? null;
         if ($selectedMasa) {
-            $orderIds = OrderHdr::whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$selectedMasa])
+            // Check if there are any orders for the selected masa
+            $orderCount = OrderHdr::whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$selectedMasa])
                 ->where('tr_type', 'SO')
-                ->pluck('id')
-                ->toArray();
+                ->whereNull('deleted_at')
+                ->count();
 
+            if ($orderCount === 0) {
+                $this->dispatch('error', 'Tidak ada data untuk masa yang dipilih.');
+                return;
+            }
+
+            // Only pass selectedMasa and type, no orderIds
             return redirect()->route('TrdTire1.Transaction.PurchaseDelivery.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey(json_encode($orderIds)),
-                'additionalParam' => $selectedMasa,
+                'objectId' => encryptWithSessionKey(''),
+                'additionalParam' => '?selectedMasa=' . $selectedMasa . '&type=cetakLaporanPenjualan',
             ]);
         }
         $this->dispatch('error', 'Masa belum dipilih.');
