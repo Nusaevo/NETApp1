@@ -17,15 +17,17 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
+        // Hapus duplicate sorting - hanya gunakan satu
         $this->setDefaultSort('tr_date', 'desc');
-        $this->setDefaultSort('tr_id', 'desc');
     }
 
     public function builder(): Builder
     {
         return OrderHdr::with('OrderDtl', 'Partner')
             ->where('order_hdrs.tr_type', 'SO')
-            ->where('order_hdrs.status_code', Status::OPEN);
+            ->where('order_hdrs.status_code', Status::OPEN)
+            ->orderBy('tr_date', 'desc')
+            ->orderBy('tr_id', 'desc');
     }
 
     public function columns(): array
