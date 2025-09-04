@@ -74,6 +74,7 @@ class Index extends BaseComponent
             ->whereNull('materials.deleted_at')
             ->whereNull('matl_uoms.deleted_at')
             ->whereNotNull('materials.category')
+             ->where('ivt_bals.qty_oh', '>', 0)
             ->groupBy('materials.category')
             ->orderBy('materials.category')
             ->get()

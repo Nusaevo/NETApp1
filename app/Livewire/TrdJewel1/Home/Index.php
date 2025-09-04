@@ -125,14 +125,15 @@ class Index extends BaseComponent
             ->table('materials')
             ->leftJoin('matl_uoms', 'matl_uoms.matl_code', '=', 'materials.code')
             ->leftJoin('ivt_bals', function($join) {
-                $join->on('ivt_bals.matl_id', '=', 'matl_uoms.matl_id')
-                     ->on('ivt_bals.matl_uom', '=', 'matl_uoms.matl_uom');
+                $join->on('ivt_bals.matl_id', '=', 'matl_uoms.matl_id');
             })
             ->select('materials.jwl_category1 as category_name')
             ->selectRaw('SUM(ivt_bals.qty_oh) as total_qty')
+             ->selectRaw('COUNT(ivt_bals.matl_id) as item_count')
             ->whereNull('materials.deleted_at')
             ->whereNull('matl_uoms.deleted_at')
             ->whereNotNull('materials.jwl_category1')
+             ->where('ivt_bals.qty_oh', '>', 0)
             ->groupBy('materials.jwl_category1')
             ->orderBy('materials.jwl_category1')
             ->get()
