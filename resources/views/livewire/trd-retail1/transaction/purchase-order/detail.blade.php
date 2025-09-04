@@ -130,12 +130,14 @@
 
                                     {{-- Material Selection Component --}}
                                     @livewire('trd-retail1.component.material-selection', [
-                                        'dialogId' => 'materialSelectionDialog',
+                                        'dialogId' => 'ItemDialogBox',
                                         'title' => 'Search Materials',
                                         'width' => '900px',
                                         'height' => '650px',
                                         'enableFilters' => true,
-                                        'multiSelect' => true
+                                        'multiSelect' => true,
+                                        'eventName' => 'materialsSelected',
+                                        'additionalParams' => []
                                     ])
 
                             </div>

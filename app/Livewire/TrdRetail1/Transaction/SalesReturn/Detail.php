@@ -28,6 +28,7 @@ class Detail extends BaseComponent
 
     public $warehouses;
     public $deletedItems = [];
+    public $deletedExchangeItems = []; // Track exchange items marked for deletion
     public $newItems = [];
     public $returnTrType = 'SR'; // Sales Return
     public $exchangeTrType = 'SOR'; // Sales Order Return (Exchange)
@@ -82,6 +83,8 @@ class Detail extends BaseComponent
     protected function onPreRender()
     {
         $this->customValidationAttributes = [
+            'input_details.*.qty' => 'Qty',
+            'exchange_details.*.qty' => 'Qty',
             'inputs.tr_date' => $this->trans('tr_date'),
             'inputs.partner_id' => $this->trans('customer'),
             'wh_code' => $this->trans('warehouse'),
@@ -179,15 +182,8 @@ class Detail extends BaseComponent
                 $this->inputs[$key] = (string) $value;
             }
         }
-        // 1. PROCESS RETURN ITEMS (ReturnHdr with tr_type = 'SR')
-        if (!empty($this->input_details)) {
-            $this->processReturnItems();
-        }
-
-        // 2. PROCESS EXCHANGE ITEMS (OrderHdr with tr_type = 'SOR')
-        if (!empty($this->exchange_details)) {
-            $this->processExchangeItems();
-        }
+       $this->processReturnItems();
+       $this->processExchangeItems();
 
         // Redirect handling
         if ($this->actionValue === 'Create') {
@@ -220,6 +216,11 @@ class Detail extends BaseComponent
         // Prepare return items for ReturnDtl
         $returnItems = [];
         foreach ($this->input_details as $index => $detail) {
+            // Skip null or invalid details
+            if (!$detail || !is_array($detail)) {
+                continue;
+            }
+
             $detail['tr_seq'] = $index + 1;
             $detail['tr_id'] = $this->inputs['tr_id'];
             $detail['trhdr_id'] = $this->object->id;
@@ -248,6 +249,19 @@ class Detail extends BaseComponent
 
             $returnItems[] = $detail;
         }
+
+        // Handle deleted items - force delete ReturnDtl records that were marked for deletion
+        if (!empty($this->deletedItems)) {
+            foreach ($this->deletedItems as $deletedId) {
+                $returnDtlToDelete = ReturnDtl::find($deletedId);
+                if ($returnDtlToDelete) {
+                    $returnDtlToDelete->forceDelete(); // This will trigger ReturnDtl::deleted event to handle stock adjustments
+                }
+            }
+            // Clear the deleted items array after processing
+            $this->deletedItems = [];
+        }
+
         // Save ReturnHdr and ReturnDtl (this will increase stock)
         $this->object->saveReturn($this->returnTrType, $this->inputs, $returnItems);
     }
@@ -273,6 +287,11 @@ class Detail extends BaseComponent
         // Prepare exchange items for OrderDtl
         $exchangeItems = [];
         foreach ($this->exchange_details as $index => $detail) {
+            // Skip null or invalid details
+            if (!$detail || !is_array($detail)) {
+                continue;
+            }
+
             $detail['tr_seq'] = $index + 1;
             $detail['tr_id'] = $this->inputs['tr_id']; // Use Sales Return tr_id
             $detail['trhdr_id'] = $this->exchange_object->id;
@@ -300,6 +319,18 @@ class Detail extends BaseComponent
             unset($detail['matl_descr']);
 
             $exchangeItems[] = $detail;
+        }
+
+        // Handle deleted exchange items - force delete OrderDtl records that were marked for deletion
+        if (!empty($this->deletedExchangeItems)) {
+            foreach ($this->deletedExchangeItems as $deletedId) {
+                $orderDtlToDelete = OrderDtl::find($deletedId);
+                if ($orderDtlToDelete) {
+                    $orderDtlToDelete->forceDelete(); // This will trigger OrderDtl::deleted event to handle stock adjustments
+                }
+            }
+            // Clear the deleted exchange items array after processing
+            $this->deletedExchangeItems = [];
         }
 
         // Save OrderHdr and OrderDtl (this will create delivery and decrease stock)
@@ -456,6 +487,7 @@ class Detail extends BaseComponent
     {
         $this->input_details[] = [
             'matl_id' => null,
+            'matl_uom' => 'PCS',
             'qty' => null,
             'price' => 0.0,
             'amt' => 0.0
@@ -465,9 +497,19 @@ class Detail extends BaseComponent
     public function deleteItem($index)
     {
         try {
+            // Check if this is an existing item (has ID) that needs to be marked for deletion
+            if (isset($this->input_details[$index]['id']) && !empty($this->input_details[$index]['id'])) {
+                // This is an existing record, add to deletedItems for database deletion
+                $this->deletedItems[] = $this->input_details[$index]['id'];
+            }
+
+            // Remove from UI array
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
-            $this->recalculateReturnTotals(); // Update totals when item is deleted
+
+            // Recalculate totals
+            $this->recalculateReturnTotals();
+
             $this->dispatch('warning', 'Item telah dihapus dari daftar. Tekan Simpan untuk menyimpan perubahan.');
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
@@ -490,12 +532,11 @@ class Detail extends BaseComponent
             if ($material) {
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
-                $this->input_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0; // Return items also have prices
-                $this->input_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
                 $this->input_details[$key]['matl_descr'] = $material->name;
+                $this->input_details[$key]['matl_uom'] = 'PCS'; // default UOM
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
-                $this->updateReturnItemAmount($key); // Update amount calculation
+                $this->updateMaterialUomData($key);
             } else {
                 $this->dispatch('error', 'Material_not_found');
             }
@@ -504,16 +545,28 @@ class Detail extends BaseComponent
 
     public function onUomChanged($key, $uomId)
     {
+        $this->input_details[$key]['matl_uom'] = $uomId;
+        $this->updateMaterialUomData($key);
+    }
+
+    private function updateMaterialUomData($key)
+    {
         $materialId = $this->input_details[$key]['matl_id'] ?? null;
+        $uom = $this->input_details[$key]['matl_uom'] ?? 'PCS';
 
         if ($materialId) {
-            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uomId)->first();
+            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uom)->first();
 
             if ($matlUom) {
                 $this->input_details[$key]['price'] = $matlUom->selling_price;
+            } else {
+                // fallback to material default price
+                $material = Material::find($materialId);
+                $this->input_details[$key]['price'] = $material->selling_price ?? 0;
             }
+
+            $this->updateReturnItemAmount($key);
         }
-        $this->updateReturnItemAmount($key);
     }
 
     public function updateReturnItemAmount($key)
@@ -523,11 +576,14 @@ class Detail extends BaseComponent
             return;
         }
 
-        if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
+        $qty = floatval($this->input_details[$key]['qty'] ?? 0);
+        $price = floatval($this->input_details[$key]['price'] ?? 0);
+
+        if ($qty > 0 && $price > 0) {
+            $amount = round($qty * $price, 2);
             $this->input_details[$key]['amt'] = $amount;
         } else {
-            $this->input_details[$key]['amt'] = 0;
+            $this->input_details[$key]['amt'] = 0.0;
         }
         $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
 
@@ -539,9 +595,10 @@ class Detail extends BaseComponent
     {
         $this->total_return_amount = array_sum(
             array_map(function ($detail) {
-                $qty = $detail['qty'] ?? 0;
-                $price = $detail['price'] ?? 0;
-                $amount = $qty * $price;
+                if (!$detail) return 0.0;
+                $qty = floatval($detail['qty'] ?? 0);
+                $price = floatval($detail['price'] ?? 0);
+                $amount = round($qty * $price, 2);
                 return $amount;
             }, $this->input_details),
         );
@@ -554,6 +611,7 @@ class Detail extends BaseComponent
     {
         $this->exchange_details[] = [
             'matl_id' => null,
+            'matl_uom' => 'PCS',
             'qty' => null,
             'price' => 0.0,
             'amt' => 0.0
@@ -563,10 +621,20 @@ class Detail extends BaseComponent
     public function deleteExchangeItem($index)
     {
         try {
+            // Check if this is an existing exchange item (has ID) that needs to be marked for deletion
+            if (isset($this->exchange_details[$index]['id']) && !empty($this->exchange_details[$index]['id'])) {
+                // This is an existing OrderDtl record, add to deletedExchangeItems for database deletion
+                $this->deletedExchangeItems[] = $this->exchange_details[$index]['id'];
+            }
+
+            // Remove from UI array
             unset($this->exchange_details[$index]);
             $this->exchange_details = array_values($this->exchange_details);
-            $this->dispatch('success', __('generic.string.delete_item'));
+
+            // Recalculate totals
             $this->recalculateTotals();
+
+           $this->dispatch('warning', 'Item telah dihapus dari daftar. Tekan Simpan untuk menyimpan perubahan.');
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
@@ -588,13 +656,11 @@ class Detail extends BaseComponent
             if ($material) {
                 $this->exchange_details[$key]['matl_id'] = $material->id;
                 $this->exchange_details[$key]['matl_code'] = $material->code;
-                $this->exchange_details[$key]['price'] = $material->selling_price;
-                $this->exchange_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
                 $this->exchange_details[$key]['matl_descr'] = $material->name;
-                $this->exchange_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0;
+                $this->exchange_details[$key]['matl_uom'] = 'PCS'; // default UOM
                 $attachment = optional($material->Attachment)->first();
                 $this->exchange_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
-                $this->updateExchangeItemAmount($key);
+                $this->updateExchangeMaterialUomData($key);
             } else {
                 $this->dispatch('error', 'Material_not_found');
             }
@@ -603,16 +669,28 @@ class Detail extends BaseComponent
 
     public function onExchangeUomChanged($key, $uomId)
     {
+        $this->exchange_details[$key]['matl_uom'] = $uomId;
+        $this->updateExchangeMaterialUomData($key);
+    }
+
+    private function updateExchangeMaterialUomData($key)
+    {
         $materialId = $this->exchange_details[$key]['matl_id'] ?? null;
+        $uom = $this->exchange_details[$key]['matl_uom'] ?? 'PCS';
 
         if ($materialId) {
-            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uomId)->first();
+            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uom)->first();
 
             if ($matlUom) {
                 $this->exchange_details[$key]['price'] = $matlUom->selling_price;
+            } else {
+                // fallback to material default price
+                $material = Material::find($materialId);
+                $this->exchange_details[$key]['price'] = $material->selling_price ?? 0;
             }
+
+            $this->updateExchangeItemAmount($key);
         }
-        $this->updateExchangeItemAmount($key);
     }
 
     public function updateExchangeItemAmount($key)
@@ -622,11 +700,14 @@ class Detail extends BaseComponent
             return;
         }
 
-        if (!empty($this->exchange_details[$key]['qty']) && !empty($this->exchange_details[$key]['price'])) {
-            $amount = $this->exchange_details[$key]['qty'] * $this->exchange_details[$key]['price'];
+        $qty = floatval($this->exchange_details[$key]['qty'] ?? 0);
+        $price = floatval($this->exchange_details[$key]['price'] ?? 0);
+
+        if ($qty > 0 && $price > 0) {
+            $amount = round($qty * $price, 2);
             $this->exchange_details[$key]['amt'] = $amount;
         } else {
-            $this->exchange_details[$key]['amt'] = 0;
+            $this->exchange_details[$key]['amt'] = 0.0;
         }
         $this->exchange_details[$key]['amt_idr'] = rupiah($this->exchange_details[$key]['amt']);
 
@@ -638,9 +719,10 @@ class Detail extends BaseComponent
     {
         $this->total_amount = array_sum(
             array_map(function ($detail) {
-                $qty = $detail['qty'] ?? 0;
-                $price = $detail['price'] ?? 0;
-                $amount = $qty * $price;
+                if (!$detail) return 0.0;
+                $qty = floatval($detail['qty'] ?? 0);
+                $price = floatval($detail['price'] ?? 0);
+                $amount = round($qty * $price, 2);
                 return $amount;
             }, $this->exchange_details),
         );
@@ -713,12 +795,12 @@ class Detail extends BaseComponent
 
     public function openItemDialogBox()
     {
-        $this->dispatch('openMaterialSelection');
+        $this->dispatch('openItemDialogBox');
     }
 
-    public function openExchangeItemDialogBox()
+    public function openExchangeMaterialDialogBox()
     {
-        $this->dispatch('openExchangeMaterialSelection');
+        $this->dispatch('openExchangeMaterialDialogBox');
     }
 
     public function handleMaterialsSelected($selectedMaterials)
@@ -729,7 +811,16 @@ class Detail extends BaseComponent
         }
 
         $addedCount = 0;
-        foreach ($selectedMaterials as $matl_id) {
+        foreach ($selectedMaterials as $selectedItem) {
+            // Handle both old format (just ID) and new format (array with matl_id and matl_uom)
+            if (is_array($selectedItem)) {
+                $matl_id = $selectedItem['matl_id'];
+                $matl_uom = $selectedItem['matl_uom'] ?? 'PCS';
+            } else {
+                $matl_id = $selectedItem;
+                $matl_uom = 'PCS';
+            }
+
             $exists = collect($this->input_details)->contains('matl_id', $matl_id);
 
             if ($exists) {
@@ -739,6 +830,7 @@ class Detail extends BaseComponent
             $key = count($this->input_details);
             $this->input_details[] = [
                 'matl_id' => $matl_id,
+                'matl_uom' => $matl_uom,
                 'qty' => null,
                 'price' => 0.0,
                 'amt' => 0.0
@@ -762,7 +854,16 @@ class Detail extends BaseComponent
         }
 
         $addedCount = 0;
-        foreach ($selectedMaterials as $matl_id) {
+        foreach ($selectedMaterials as $selectedItem) {
+            // Handle both old format (just ID) and new format (array with matl_id and matl_uom)
+            if (is_array($selectedItem)) {
+                $matl_id = $selectedItem['matl_id'];
+                $matl_uom = $selectedItem['matl_uom'] ?? 'PCS';
+            } else {
+                $matl_id = $selectedItem;
+                $matl_uom = 'PCS';
+            }
+
             $exists = collect($this->exchange_details)->contains('matl_id', $matl_id);
 
             if ($exists) {
@@ -772,6 +873,7 @@ class Detail extends BaseComponent
             $key = count($this->exchange_details);
             $this->exchange_details[] = [
                 'matl_id' => $matl_id,
+                'matl_uom' => $matl_uom,
                 'qty' => null,
                 'price' => 0.0,
                 'amt' => 0.0

@@ -10,11 +10,8 @@ class MaterialSelection extends Component
 {
     public $isOpen = false;
     public $materialList = [];
-    public $searchTerm = '';
     public $selectedMaterials = [];
-    public $filterCategory = '';
-    public $filterBrand = '';
-    public $filterType = '';
+    public $inputs = []; // Use inputs array with dynamic keys based on dialogId
 
     // Configuration props
     public $dialogId = 'materialSelectionDialog';
@@ -23,11 +20,16 @@ class MaterialSelection extends Component
     public $height = '600px';
     public $enableFilters = true;
     public $multiSelect = true;
+    public $eventName = 'materialsSelected'; // Configurable event name
+    public $additionalParams = []; // Additional parameters to send with event
 
-    protected $listeners = [
-        'openMaterialSelection' => 'open',
-        'closeMaterialSelection' => 'close'
-    ];
+    public function getListeners()
+    {
+        return [
+            'open' . ucfirst($this->dialogId) => 'open',
+            'close' . ucfirst($this->dialogId) => 'close'
+        ];
+    }
 
     public function mount(
         $dialogId = 'materialSelectionDialog',
@@ -35,7 +37,9 @@ class MaterialSelection extends Component
         $width = '800px',
         $height = '600px',
         $enableFilters = true,
-        $multiSelect = true
+        $multiSelect = true,
+        $eventName = 'materialsSelected',
+        $additionalParams = []
     ) {
         $this->dialogId = $dialogId;
         $this->title = $title;
@@ -43,6 +47,8 @@ class MaterialSelection extends Component
         $this->height = $height;
         $this->enableFilters = $enableFilters;
         $this->multiSelect = $multiSelect;
+        $this->eventName = $eventName;
+        $this->additionalParams = $additionalParams;
     }
 
     public function render()
@@ -50,31 +56,27 @@ class MaterialSelection extends Component
         return view('livewire.trd-retail1.component.material-selection');
     }
 
-    public function open()
-    {
-        $this->reset(['searchTerm', 'materialList', 'selectedMaterials', 'filterCategory', 'filterBrand', 'filterType']);
-        $this->isOpen = true;
-        $this->dispatch('open' . ucfirst($this->dialogId));
-    }
-
-    public function close()
-    {
-        $this->isOpen = false;
-        $this->dispatch('close' . ucfirst($this->dialogId));
-    }
 
     public function searchMaterials()
     {
         $query = Material::query()
             ->leftJoin('matl_uoms', function($join) {
-                $join->on('materials.id', '=', 'matl_uoms.matl_id');
+                $join->on('materials.id', '=', 'matl_uoms.matl_id')
+                     ->where('matl_uoms.matl_uom', '=', 'PCS'); // Default to PCS UOM for consistency
             })
             ->select('materials.*',
                      'matl_uoms.buying_price as buying_price',
-                     'matl_uoms.selling_price as selling_price');
+                     'matl_uoms.selling_price as selling_price',
+                     'matl_uoms.matl_uom as uom');
 
-        if (!empty($this->searchTerm)) {
-            $searchTermUpper = strtoupper($this->searchTerm);
+        // Get values from inputs array using dialogId prefix
+        $searchTerm = $this->inputs[$this->dialogId . '_searchTerm'] ?? '';
+        $filterCategory = $this->inputs[$this->dialogId . '_filterCategory'] ?? '';
+        $filterBrand = $this->inputs[$this->dialogId . '_filterBrand'] ?? '';
+        $filterType = $this->inputs[$this->dialogId . '_filterType'] ?? '';
+
+        if (!empty($searchTerm)) {
+            $searchTermUpper = strtoupper($searchTerm);
             $query->where(function ($query) use ($searchTermUpper) {
                 $query
                     ->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
@@ -84,37 +86,64 @@ class MaterialSelection extends Component
 
         // Apply filters if enabled
         if ($this->enableFilters) {
-            if (!empty($this->filterCategory)) {
-                $query->where('materials.category', $this->filterCategory);
+            if (!empty($filterCategory)) {
+                $query->where('materials.category', $filterCategory);
             }
-            if (!empty($this->filterBrand)) {
-                $query->where('materials.brand', $this->filterBrand);
+            if (!empty($filterBrand)) {
+                $query->where('materials.brand', $filterBrand);
             }
-            if (!empty($this->filterType)) {
-                $query->where('materials.class_code', $this->filterType);
+            if (!empty($filterType)) {
+                $query->where('materials.class_code', $filterType);
             }
         }
 
-        $this->materialList = $query->get();
+        $this->materialList = $query->limit(100)->get();
     }
 
-    public function selectMaterial($materialId)
+    public function selectMaterial($materialId, $matlUom = 'PCS')
     {
         if (!$this->multiSelect) {
-            // Single selection mode
-            $this->selectedMaterials = [$materialId];
+            // Single selection mode - store as array with material info
+            $this->selectedMaterials = [
+                [
+                    'matl_id' => $materialId,
+                    'matl_uom' => $matlUom
+                ]
+            ];
             return;
         }
 
-        // Multi selection mode
-        $key = array_search($materialId, $this->selectedMaterials);
+        // Multi selection mode - check if material already exists
+        $existingIndex = $this->findSelectedMaterialIndex($materialId, $matlUom);
 
-        if ($key !== false) {
-            unset($this->selectedMaterials[$key]);
+        if ($existingIndex !== false) {
+            // Remove if already selected
+            unset($this->selectedMaterials[$existingIndex]);
             $this->selectedMaterials = array_values($this->selectedMaterials);
         } else {
-            $this->selectedMaterials[] = $materialId;
+            // Add new material with UOM
+            $this->selectedMaterials[] = [
+                'matl_id' => $materialId,
+                'matl_uom' => $matlUom
+            ];
         }
+    }
+
+    private function findSelectedMaterialIndex($materialId, $matlUom = 'PCS')
+    {
+        foreach ($this->selectedMaterials as $index => $selected) {
+            if (is_array($selected)) {
+                if ($selected['matl_id'] == $materialId && $selected['matl_uom'] == $matlUom) {
+                    return $index;
+                }
+            } else {
+                // Backward compatibility - if it's just material ID
+                if ($selected == $materialId) {
+                    return $index;
+                }
+            }
+        }
+        return false;
     }
 
     public function confirmSelection()
@@ -124,14 +153,44 @@ class MaterialSelection extends Component
             return;
         }
 
-        // Dispatch event to parent component with selected materials
-        $this->dispatch('materialsSelected', $this->selectedMaterials);
+        // Prepare parameters array starting with selected materials
+        $params = [$this->selectedMaterials];
 
-        $this->close();
+        // Add additional parameters if provided
+        if (!empty($this->additionalParams)) {
+            $params = array_merge($params, $this->additionalParams);
+        }
+
+        // Dispatch event to parent component with flexible parameters
+        $this->dispatch($this->eventName, ...$params);
+
+        // Reset state and close dialog
+        $this->inputs[$this->dialogId . '_searchTerm'] = '';
+        $this->inputs[$this->dialogId . '_filterCategory'] = '';
+        $this->inputs[$this->dialogId . '_filterBrand'] = '';
+        $this->inputs[$this->dialogId . '_filterType'] = '';
+
+        $this->reset(['materialList', 'selectedMaterials']);
+        $this->isOpen = false;
+
+        // Dispatch close event to properly close the dialog
+        $this->dispatch('close' . ucfirst($this->dialogId));
     }
 
-    public function isSelected($materialId)
+    public function isSelected($materialId, $matlUom = 'PCS')
     {
-        return in_array($materialId, $this->selectedMaterials);
+        foreach ($this->selectedMaterials as $selected) {
+            if (is_array($selected)) {
+                if ($selected['matl_id'] == $materialId && $selected['matl_uom'] == $matlUom) {
+                    return true;
+                }
+            } else {
+                // Backward compatibility - if it's just material ID
+                if ($selected == $materialId) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

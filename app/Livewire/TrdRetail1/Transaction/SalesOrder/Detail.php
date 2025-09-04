@@ -340,6 +340,7 @@ class Detail extends BaseComponent
     {
         $this->input_details[] = [
             'matl_id' => null,
+            'matl_uom' => 'PCS',
             'qty' => null,
             'price' => 0.0,
             'amt' => 0.0
@@ -361,30 +362,41 @@ class Detail extends BaseComponent
             if ($material) {
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
-                $this->input_details[$key]['price'] = $material->selling_price;
-                $this->input_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
                 $this->input_details[$key]['matl_descr'] = $material->name;
-                $this->input_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0;
+                $this->input_details[$key]['matl_uom'] = 'PCS'; // default UOM
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
-                $this->updateItemAmount($key);
+                $this->updateMaterialUomData($key);
             } else {
                 $this->dispatch('error', 'Material_not_found');
             }
         }
     }
+
     public function onUomChanged($key, $uomId)
     {
+        $this->input_details[$key]['matl_uom'] = $uomId;
+        $this->updateMaterialUomData($key);
+    }
+
+    private function updateMaterialUomData($key)
+    {
         $materialId = $this->input_details[$key]['matl_id'] ?? null;
+        $uom = $this->input_details[$key]['matl_uom'] ?? 'PCS';
 
         if ($materialId) {
-            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uomId)->first();
+            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uom)->first();
 
             if ($matlUom) {
                 $this->input_details[$key]['price'] = $matlUom->selling_price;
+            } else {
+                // fallback to material default price
+                $material = Material::find($materialId);
+                $this->input_details[$key]['price'] = $material->selling_price ?? 0;
             }
+
+            $this->updateItemAmount($key);
         }
-        $this->updateItemAmount($key);
     }
 
     public function updateItemAmount($key)
@@ -449,7 +461,7 @@ class Detail extends BaseComponent
 
     public function openItemDialogBox()
     {
-        $this->dispatch('openMaterialSelection');
+        $this->dispatch('openItemDialogBox');
     }
 
     public function handleMaterialsSelected($selectedMaterials)
@@ -460,7 +472,16 @@ class Detail extends BaseComponent
         }
 
         $addedCount = 0;
-        foreach ($selectedMaterials as $matl_id) {
+        foreach ($selectedMaterials as $materialData) {
+            // Handle both old format (just ID) and new format (array with matl_id and matl_uom)
+            if (is_array($materialData)) {
+                $matl_id = $materialData['matl_id'];
+                $matl_uom = $materialData['matl_uom'] ?? 'PCS';
+            } else {
+                $matl_id = $materialData;
+                $matl_uom = 'PCS';
+            }
+
             $exists = collect($this->input_details)->contains('matl_id', $matl_id);
 
             if ($exists) {
@@ -472,6 +493,7 @@ class Detail extends BaseComponent
             $key = count($this->input_details);
             $this->input_details[] = [
                 'matl_id' => $matl_id,
+                'matl_uom' => $matl_uom,
                 'qty' => null,
                 'price' => 0.0,
                 'amt' => 0.0

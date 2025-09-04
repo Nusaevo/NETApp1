@@ -119,19 +119,21 @@
                             <x-slot name="button">
                                 <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                     button-name="Add Return Item" />
-                                <x-ui-button clickEvent="openMaterialDialog" cssClass="btn btn-primary"
+                                <x-ui-button clickEvent="openItemDialogBox" cssClass="btn btn-primary"
                                     iconPath="add.svg" button-name="Add Multiple Return Items" />
                             </x-slot>
                         </x-ui-table>
 
                         {{-- Material Selection Component for Return Items --}}
                         @livewire('trd-retail1.component.material-selection', [
-                            'dialogId' => 'returnMaterialDialog',
+                            'dialogId' => 'ItemDialogBox',
                             'title' => 'Search Return Items',
                             'width' => '900px',
                             'height' => '650px',
                             'enableFilters' => true,
-                            'multiSelect' => true
+                            'multiSelect' => true,
+                            'eventName' => 'materialsSelected',
+                            'additionalParams' => []
                         ])
                     </div>
                 </x-ui-card>
@@ -226,19 +228,20 @@
                     <x-slot name="button">
                         <x-ui-button clickEvent="addExchangeItem" cssClass="btn btn-primary" iconPath="add.svg"
                             button-name="Add Exchange Item" />
-                        <x-ui-button clickEvent="openMaterialDialog" cssClass="btn btn-primary"
+                        <x-ui-button clickEvent="openExchangeMaterialDialogBox" cssClass="btn btn-primary"
                             iconPath="add.svg" button-name="Add Multiple Exchange Items" />
                     </x-slot>
                 </x-ui-table>
-
                 {{-- Material Selection Component for Exchange Items --}}
                 @livewire('trd-retail1.component.material-selection', [
-                    'dialogId' => 'exchangeMaterialDialog',
+                    'dialogId' => 'ExchangeMaterialDialogBox',
                     'title' => 'Search Exchange Items',
                     'width' => '900px',
                     'height' => '650px',
                     'enableFilters' => true,
-                    'multiSelect' => true
+                    'multiSelect' => true,
+                    'eventName' => 'exchangeMaterialsSelected',
+                            'additionalParams' => []
                 ])
             </x-ui-card>
         </div>

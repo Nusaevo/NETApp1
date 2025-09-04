@@ -701,7 +701,7 @@
                 <div class="placeholder-text">{{ $placeHolder }}</div>
             @endif
             @error($model)
-                <div class="error-message">{{ $message }}</div>
+                <div class="error-message" style="position: relative; margin-top: 5px; font-size: 0.875em; color: #dc3545;">{{ $message }}</div>
             @enderror
         </div>
 

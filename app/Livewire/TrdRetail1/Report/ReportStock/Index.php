@@ -9,15 +9,17 @@ use App\Services\TrdRetail1\Master\MasterService;
 class Index extends BaseComponent
 {
     public $results = [];
-    public $merk;
-    public $jenis;
-    public $customer;
+    public $expandedRows = [];
+    public $rowDetails = [];
+
+    // Filter properties
+    public $filterCategory;
+    public $filterBrand;
+    public $filterType;
     public $startQty;
     public $endQty;
-
-    public $merkOptions = [];
-    public $jenisOptions = [];
-    public $customerOptions = [];
+    public $filterCode;
+    public $filterName;
 
     protected $masterService;
 
@@ -26,37 +28,49 @@ class Index extends BaseComponent
      */
     protected function onPreRender()
     {
-        // Siapkan service kalau perlu
         $this->masterService = new MasterService();
+    }
 
-        // Ambil data customer
-        $this->customerOptions = $this->masterService->getCustomers();
+    /**
+     * Toggle row details for material UOMs
+     */
+    public function toggleRowDetails($materialId)
+    {
+        $rowKey = $materialId;
 
-        // Ambil data Merk
-        $this->merkOptions = DB::connection(Session::get('app_code'))
-            ->table('materials')
-            ->whereNull('deleted_at')
-            ->whereNotNull('brand')
-            ->selectRaw('DISTINCT brand AS label, brand AS value')
-            ->get()
-            ->map(fn($item) => [
-                'label' => $item->label,
-                'value' => $item->value,
-            ])
-            ->toArray();
+        if (in_array($rowKey, $this->expandedRows)) {
+            // Remove from expanded rows
+            $this->expandedRows = array_filter($this->expandedRows, fn($key) => $key !== $rowKey);
+            unset($this->rowDetails[$rowKey]);
+        } else {
+            // Add to expanded rows and fetch details
+            $this->expandedRows[] = $rowKey;
+            $this->loadRowDetails($materialId);
+        }
+    }
 
-        // Ambil data Jenis
-        $this->jenisOptions = DB::connection(Session::get('app_code'))
-            ->table('materials')
-            ->whereNull('deleted_at')
-            ->whereNotNull('type_code')
-            ->selectRaw('DISTINCT type_code AS label, type_code AS value')
-            ->get()
-            ->map(fn($item) => [
-                'label' => $item->label,
-                'value' => $item->value,
-            ])
-            ->toArray();
+    /**
+     * Load UOM details for a specific material
+     */
+    private function loadRowDetails($materialId)
+    {
+        $query = "
+            SELECT
+                matl_uoms.matl_uom,
+                matl_uoms.qty_oh AS qty,
+                matl_uoms.selling_price AS price,
+                matl_uoms.buying_price AS cost,
+                matl_uoms.created_at
+            FROM matl_uoms
+            LEFT JOIN materials ON materials.id = matl_uoms.matl_id
+            WHERE matl_uoms.matl_id = ?
+              AND matl_uoms.deleted_at IS NULL
+              AND materials.deleted_at IS NULL
+            ORDER BY matl_uoms.matl_uom
+        ";
+
+        $details = DB::connection(Session::get('app_code'))->select($query, [$materialId]);
+        $this->rowDetails[$materialId] = $details;
     }
 
     /**
@@ -65,34 +79,37 @@ class Index extends BaseComponent
     public function search()
     {
         $params = [];
-        $where = "WHERE matl_uoms.deleted_at IS NULL AND materials.deleted_at IS NULL";
+        $where = "WHERE materials.deleted_at IS NULL";
 
-        // Filter Merk
-        if ($this->merk) {
-            $where .= " AND materials.brand ILIKE ?";
-            $params[] = '%' . $this->merk . '%';
+        // Filter Category
+        if ($this->filterCategory) {
+            $where .= " AND materials.category = ?";
+            $params[] = $this->filterCategory;
         }
 
-        // Filter Jenis
-        if ($this->jenis) {
-            $where .= " AND materials.type_code ILIKE ?";
-            $params[] = '%' . $this->jenis . '%';
+        // Filter Brand
+        if ($this->filterBrand) {
+            $where .= " AND materials.brand = ?";
+            $params[] = $this->filterBrand;
         }
 
-        // Filter Customer (opsional, kalau memang materials ada partner)
-        if ($this->customer) {
-            $where .= " AND partners.name ILIKE ?";
-            $params[] = '%' . $this->customer . '%';
+        // Filter Type
+        if ($this->filterType) {
+            $where .= " AND materials.type_code = ?";
+            $params[] = $this->filterType;
+        }
+        // Filter Material Code
+        if ($this->filterCode) {
+            $where .= " AND materials.code ILIKE ?";
+            $params[] = '%' . $this->filterCode . '%';
+        }
+        // Filter Material Name
+        if ($this->filterName) {
+            $where .= " AND materials.name ILIKE ?";
+            $params[] = '%' . $this->filterName . '%';
         }
 
-        // Filter Qty range
-        if ($this->startQty && $this->endQty) {
-            $where .= " AND matl_uoms.qty_oh BETWEEN ? AND ?";
-            $params[] = $this->startQty;
-            $params[] = $this->endQty;
-        }
-
-        // Query utamanya
+        // Query to list each material UOM without aggregation
         $query = "
             SELECT
                 materials.id AS material_id,
@@ -102,16 +119,30 @@ class Index extends BaseComponent
                 materials.specs->>'color_code' AS color_code,
                 materials.specs->>'color_name' AS color_name,
                 materials.code AS material_code,
+                materials.name AS material_name,
                 matl_uoms.matl_uom,
                 matl_uoms.qty_oh AS qty,
                 matl_uoms.selling_price AS price,
                 matl_uoms.buying_price AS cost
-            FROM matl_uoms
-            LEFT JOIN materials ON materials.id = matl_uoms.matl_id
+            FROM materials
+            LEFT JOIN matl_uoms ON matl_uoms.matl_id = materials.id
+                AND matl_uoms.deleted_at IS NULL
             $where
         ";
 
-        // Jalankan query
+        // Filter Qty range - apply after grouping
+        if ($this->startQty !== null && $this->endQty !== null) {
+            $query = "
+                SELECT * FROM ($query) AS grouped_materials
+                WHERE total_qty BETWEEN ? AND ?
+            ";
+            $params[] = $this->startQty;
+            $params[] = $this->endQty;
+        }
+
+        $query .= " ORDER BY materials.category, materials.brand, materials.type_code LIMIT 100";
+
+        // Execute query
         $this->results = DB::connection(Session::get('app_code'))->select($query, $params);
     }
 
@@ -120,14 +151,23 @@ class Index extends BaseComponent
      */
     public function resetFilters()
     {
-        $this->merk      = null;
-        $this->jenis     = null;
-        $this->customer  = null;
-        $this->startQty  = null;
-        $this->endQty    = null;
+        $this->filterCategory = null;
+        $this->filterBrand = null;
+        $this->filterType = null;
+        $this->startQty = null;
+        $this->endQty = null;
+        $this->filterCode = null;
+        $this->filterName = null;
 
-        // kosongkan results
+        // Reset expanded rows
+        $this->expandedRows = [];
+        $this->rowDetails = [];
+
+        // Clear results
         $this->results = [];
+
+        // Dispatch event to reset dropdowns
+        $this->dispatch('resetSelect2Dropdowns');
     }
 
     public function render()

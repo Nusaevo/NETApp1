@@ -404,6 +404,17 @@
                         }
                     });
                 }
+
+                // Add reset functionality - listen for Livewire dispatch events
+                document.addEventListener('livewire:initialized', () => {
+                    Livewire.on('resetSelect2Dropdowns', () => {
+                        const selectElement = document.getElementById('{{ $id }}');
+                        if (selectElement && $(selectElement).hasClass('select2-hidden-accessible')) {
+                            // Clear the value and trigger change
+                            $(selectElement).val('{{ $blankValue }}').trigger('change');
+                        }
+                    });
+                });
             }">
 
             <select id="{{ $id }}"

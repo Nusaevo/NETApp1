@@ -42,6 +42,7 @@
                                 <x-slot name="headers">
                                     <th style="width: 50px; text-align: center;">No</th>
                                     <th style="width: 200px; text-align: center;">Material</th>
+                                    <th style="width: 80px; text-align: center;">UOM</th>
                                     <th style="width: 100px; text-align: center;">Stock Saat Ini</th>
                                     <th style="width: 100px; text-align: center;">Penambahan (+)</th>
                                     <th style="width: 100px; text-align: center;">Pengurangan (-)</th>
@@ -51,7 +52,8 @@
                                 <!-- Define table rows -->
                                 <x-slot name="rows">
                                     @foreach ($input_details as $key => $input_detail)
-                                        <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
+                                        <tr wire:key="list{{ $input_detail['id'] ?? $key }}"
+                                            @if(!empty($input_detail['_delete'])) class="table-danger text-decoration-line-through" @endif>
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
                                                <x-ui-dropdown-search
@@ -67,6 +69,13 @@
                                                     enabled="{{ empty($input_details[$key]['id']) ? 'true' : 'false' }}"
                                                     onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                                     type="int" />
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <x-ui-dropdown-select
+                                                    model="input_details.{{ $key }}.matl_uom"
+                                                    :options="$uomOptions"
+                                                    onChanged="onUomChanged({{ $key }}, $event.target.value)"
+                                                />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.current_stock"
@@ -103,19 +112,21 @@
                                                                 <x-slot name="button">
                                     <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                         button-name="Add" :action="$actionValue" :enabled="$isPanelEnabled === 'true'"/>
-                                    <x-ui-button clickEvent="openMaterialDialog" cssClass="btn btn-primary" iconPath="add.svg"
+                                    <x-ui-button clickEvent="openItemDialogBox" cssClass="btn btn-primary" iconPath="add.svg"
                                         button-name="Add Multiple Items" :action="$actionValue" :enabled="$isPanelEnabled === 'true'"/>
                                 </x-slot>
                             </x-ui-table>
 
                             <!-- Add Multiple Items Dialog -->
                               @livewire('trd-retail1.component.material-selection', [
-                                        'dialogId' => 'materialSelectionDialog',
+                                        'dialogId' => 'ItemDialogBox',
                                         'title' => 'Search Materials',
                                         'width' => '900px',
                                         'height' => '650px',
                                         'enableFilters' => true,
-                                        'multiSelect' => true
+                                        'multiSelect' => true,
+                                        'eventName' => 'materialsSelected',
+                                        'additionalParams' => []
                                     ])
                         </x-ui-card>
                     </div>
