@@ -90,14 +90,14 @@ class IndexDataTable extends BaseDataTableComponent
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [
-                            // [
-                            //     'label' => 'Print',
-                            //     'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
-                            //         'action' => encryptWithSessionKey('Edit'),
-                            //         'objectId' => encryptWithSessionKey($row->id)
-                            //     ]),
-                            //     'icon' => 'bi bi-printer'
-                            // ],
+                            [
+                                'label' => 'Print',
+                                'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($row->id)
+                                ]),
+                                'icon' => 'bi bi-printer'
+                            ],
                         ],
                         'enable_this_row' => true,
                         'allow_details' => false,

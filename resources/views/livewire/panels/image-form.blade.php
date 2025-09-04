@@ -1,6 +1,6 @@
 <div>
     <!-- Modal -->
-    <div class="modal fade" id="attachmentModal" tabindex="-1" aria-labelledby="attachmentModalLabel" aria-hidden="true">
+    <div class="modal fade" id="attachmentModal"  aria-labelledby="attachmentModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">

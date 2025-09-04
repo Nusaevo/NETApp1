@@ -88,6 +88,16 @@ class ReturnHdr extends BaseModel
         return $this->ExchangeOrder ? $this->ExchangeOrder->total_amt : 0;
     }
 
+    public function getExchangeMatlCodesAttribute()
+    {
+        if (!$this->ExchangeOrder) {
+            return '';
+        }
+
+        $matlCodes = $this->ExchangeOrder->OrderDtl->pluck('matl_code')->toArray();
+        return implode(', ', $matlCodes);
+    }
+
     #endregion
 
     public function isOrderCompleted(): bool

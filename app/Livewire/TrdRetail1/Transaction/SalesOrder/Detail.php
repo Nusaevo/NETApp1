@@ -39,16 +39,6 @@ class Detail extends BaseComponent
     protected $masterService;
     public $isPanelEnabled = 'true';
     public $total_amount = 0;
-    public $materialList = [];
-    public $searchTerm = '';
-    public $selectedMaterials = [];
-    public $materialCategories = [];
-    public $filterCategory = '';
-    public $filterBrand = '';
-    public $filterType = '';
-    public $kategoriOptions = '';
-    public $brandOptions = '';
-    public $typeOptions = '';
 
     public $warehouseOptions = [];
     public $uomOptions = [];
@@ -70,7 +60,8 @@ class Detail extends BaseComponent
     ];
     protected $listeners = [
         'changeStatus' => 'changeStatus',
-        'delete' => 'delete'
+        'delete' => 'delete',
+        'materialsSelected' => 'handleMaterialsSelected'
     ];
     #endregion
 
@@ -89,9 +80,6 @@ class Detail extends BaseComponent
         $this->partners = $this->masterService->getCustomers();
 
         $this->materials = $this->masterService->getMaterials();
-        $this->kategoriOptions = $this->masterService->getMatlCategoryData();
-        $this->brandOptions = $this->masterService->getMatlBrandData();
-        $this->typeOptions = $this->masterService->getMatlTypeData();
         $this->warehouseOptions = $this->masterService->getWarehouseData();
         $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
         $this->uomOptions = $this->masterService->getMatlUOMData();
@@ -352,6 +340,7 @@ class Detail extends BaseComponent
     {
         $this->input_details[] = [
             'matl_id' => null,
+            'matl_uom' => 'PCS',
             'qty' => null,
             'price' => 0.0,
             'amt' => 0.0
@@ -373,30 +362,41 @@ class Detail extends BaseComponent
             if ($material) {
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
-                $this->input_details[$key]['price'] = $material->selling_price;
-                $this->input_details[$key]['matl_uom'] = $material->DefaultUom->matl_uom ?? null;
                 $this->input_details[$key]['matl_descr'] = $material->name;
-                $this->input_details[$key]['price'] = $material->DefaultUom->selling_price ?? 0;
+                $this->input_details[$key]['matl_uom'] = 'PCS'; // default UOM
                 $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
-                $this->updateItemAmount($key);
+                $this->updateMaterialUomData($key);
             } else {
                 $this->dispatch('error', 'Material_not_found');
             }
         }
     }
+
     public function onUomChanged($key, $uomId)
     {
+        $this->input_details[$key]['matl_uom'] = $uomId;
+        $this->updateMaterialUomData($key);
+    }
+
+    private function updateMaterialUomData($key)
+    {
         $materialId = $this->input_details[$key]['matl_id'] ?? null;
+        $uom = $this->input_details[$key]['matl_uom'] ?? 'PCS';
 
         if ($materialId) {
-            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uomId)->first();
+            $matlUom = MatlUom::where('matl_id', $materialId)->where('matl_uom', $uom)->first();
 
             if ($matlUom) {
                 $this->input_details[$key]['price'] = $matlUom->selling_price;
+            } else {
+                // fallback to material default price
+                $material = Material::find($materialId);
+                $this->input_details[$key]['price'] = $material->selling_price ?? 0;
             }
+
+            $this->updateItemAmount($key);
         }
-        $this->updateItemAmount($key);
     }
 
     public function updateItemAmount($key)
@@ -433,7 +433,7 @@ class Detail extends BaseComponent
             unset($this->input_details[$index]);
             $this->input_details = array_values($this->input_details);
 
-            $this->dispatch('success', __('generic.string.delete_item'));
+           $this->dispatch('warning', 'Item telah dihapus dari daftar. Tekan Simpan untuk menyimpan perubahan.');
             $this->recalculateTotals();
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
@@ -461,83 +461,52 @@ class Detail extends BaseComponent
 
     public function openItemDialogBox()
     {
-        $this->searchTerm = '';
-        $this->materialList = [];
-        $this->selectedMaterials = [];
         $this->dispatch('openItemDialogBox');
     }
 
-    public function searchMaterials()
+    public function handleMaterialsSelected($selectedMaterials)
     {
-        $query = Material::query()
-            ->leftJoin('matl_uoms', function($join) {
-                $join->on('materials.id', '=', 'matl_uoms.matl_id');
-            })
-            ->select('materials.*',
-                     'matl_uoms.buying_price as buying_price',
-                     'matl_uoms.selling_price as selling_price');
-
-        if (!empty($this->searchTerm)) {
-            $searchTermUpper = strtoupper($this->searchTerm);
-            $query->where(function ($query) use ($searchTermUpper) {
-                $query->whereRaw('UPPER(materials.code) LIKE ?', ['%' . $searchTermUpper . '%'])
-                      ->orWhereRaw('UPPER(materials.name) LIKE ?', ['%' . $searchTermUpper . '%']);
-            });
-        }
-
-        // Apply filters
-        if (!empty($this->filterCategory)) {
-            $query->where('materials.category', $this->filterCategory);
-        }
-        if (!empty($this->filterBrand)) {
-            $query->where('materials.brand', $this->filterBrand);
-        }
-        if (!empty($this->filterType)) {
-            $query->where('materials.class_code', $this->filterType);
-        }
-
-        $this->materialList = $query->get();
-    }
-
-    public function selectMaterial($materialID)
-    {
-        $key = array_search($materialID, $this->selectedMaterials);
-
-        if ($key !== false) {
-            unset($this->selectedMaterials[$key]);
-            $this->selectedMaterials = array_values($this->selectedMaterials);
-        } else {
-            $this->selectedMaterials[] = $materialID;
-        }
-    }
-
-    public function confirmSelection()
-    {
-        if (empty($this->selectedMaterials)) {
-            $this->dispatch('error', 'Silakan pilih setidaknya satu material terlebih dahulu.');
+        if (empty($selectedMaterials)) {
+            $this->dispatch('error', 'Tidak ada material yang dipilih.');
             return;
         }
 
-        foreach ($this->selectedMaterials as $matl_id) {
+        $addedCount = 0;
+        foreach ($selectedMaterials as $materialData) {
+            // Handle both old format (just ID) and new format (array with matl_id and matl_uom)
+            if (is_array($materialData)) {
+                $matl_id = $materialData['matl_id'];
+                $matl_uom = $materialData['matl_uom'] ?? 'PCS';
+            } else {
+                $matl_id = $materialData;
+                $matl_uom = 'PCS';
+            }
+
             $exists = collect($this->input_details)->contains('matl_id', $matl_id);
 
             if ($exists) {
-                $this->dispatch('error', "Material dengan ID $matl_id sudah ada dalam daftar.");
+                // Skip if already exists, but don't show error for each one
                 continue;
             }
 
-            // Jika tidak duplikat, tambahkan ke daftar
+            // Add to list if not duplicate
             $key = count($this->input_details);
             $this->input_details[] = [
                 'matl_id' => $matl_id,
+                'matl_uom' => $matl_uom,
                 'qty' => null,
                 'price' => 0.0,
+                'amt' => 0.0
             ];
             $this->onMaterialChanged($key, $matl_id);
+            $addedCount++;
         }
 
-        $this->dispatch('success', 'Item berhasil dipilih.');
-        $this->dispatch('closeItemDialogBox');
+        if ($addedCount > 0) {
+            $this->dispatch('success', "$addedCount material(s) berhasil ditambahkan.");
+        } else {
+            $this->dispatch('warning', 'Semua material yang dipilih sudah ada dalam daftar.');
+        }
     }
 
     #endregion

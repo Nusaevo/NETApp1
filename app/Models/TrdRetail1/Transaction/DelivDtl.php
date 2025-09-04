@@ -36,7 +36,8 @@ class DelivDtl extends BaseModel
                 ])->first();
 
                 if ($oldIvtBal) {
-                    $delta = $delivDtl->tr_type === 'PD' ? -$oldQty : $oldQty;
+                    // RD (Return Delivery) and PD (Purchase Delivery) increase stock, SD (Sales Delivery) decreases stock
+                    $delta = ($delivDtl->tr_type === 'PD' || $delivDtl->tr_type === 'RD') ? -$oldQty : $oldQty;
 
                     $oldIvtBal->increment('qty_oh', $delta);
 
@@ -52,6 +53,9 @@ class DelivDtl extends BaseModel
                 if ($oldMatlUomRec) {
                     if ($delivDtl->tr_type == 'PD') {
                         $oldMatlUomRec->increment('qty_fgr', $oldQty);
+                    } elseif ($delivDtl->tr_type == 'RD') {
+                        // Return Delivery - increase finished goods inventory (returned items)
+                        $oldMatlUomRec->increment('qty_fgi', $oldQty);
                     } elseif ($delivDtl->tr_type == 'SD') {
                         $oldMatlUomRec->decrement('qty_fgi', $oldQty);
                     }
@@ -77,7 +81,8 @@ class DelivDtl extends BaseModel
                     ],
                 );
 
-                $adjustment = $delivDtl->tr_type == 'PD' ? $delta : -$delta;
+                // RD (Return Delivery) and PD (Purchase Delivery) increase stock, SD (Sales Delivery) decreases stock
+                $adjustment = ($delivDtl->tr_type == 'PD' || $delivDtl->tr_type == 'RD') ? $delta : -$delta;
                 $ivtBal->increment('qty_oh', $adjustment);
 
                 $delivDtl->ivt_id = $ivtBal->id;
@@ -103,14 +108,19 @@ class DelivDtl extends BaseModel
                         'batch_code' => $delivDtl->batch_code ?? '',
                         'tr_date' => date('Y-m-d'),
                         'qty' => $newQty,
-                        'price' => $delivDtl->OrderDtl->price ?? 0,
-                        'amt' => $delivDtl->OrderDtl->amt,
+                        'price' => $delivDtl->getRelatedPrice(),
+                        'amt' => $delivDtl->getRelatedAmt(),
                         'tr_desc' => $delivDtl->matl_descr,
                     ],
                 );
             }
 
-            if ($delivDtl->relationLoaded('OrderDtl') && $delivDtl->OrderDtl && $delta != 0) {
+            // Update qty_reff on related detail record
+            if ($delivDtl->tr_type === 'RD' && $delivDtl->relationLoaded('ReturnDtl') && $delivDtl->ReturnDtl && $delta != 0) {
+                // For Return Delivery, update ReturnDtl
+                $delivDtl->ReturnDtl->increment('qty_reff', $delta);
+            } elseif ($delivDtl->relationLoaded('OrderDtl') && $delivDtl->OrderDtl && $delta != 0) {
+                // For regular deliveries, update OrderDtl
                 $delivDtl->OrderDtl->increment('qty_reff', $delta);
             }
         });
@@ -179,6 +189,43 @@ class DelivDtl extends BaseModel
     public function IvtBal()
     {
         return $this->hasOne(IvtBal::class, 'matl_id', 'matl_id')->where('wh_id', $this->wh_id);
+    }
+
+    public function ReturnDtl()
+    {
+        return $this->belongsTo(ReturnDtl::class, 'reffdtl_id', 'id')->where('tr_type', $this->reffhdrtr_type);
+    }
+    #endregion
+
+    #region Helper Methods
+    public function getRelatedPrice()
+    {
+        // For Return Delivery (RD), get from ReturnDtl
+        if ($this->tr_type === 'RD' && $this->ReturnDtl) {
+            return $this->ReturnDtl->price ?? 0;
+        }
+
+        // For regular deliveries (PD, SD), get from OrderDtl
+        if ($this->OrderDtl) {
+            return $this->OrderDtl->price ?? 0;
+        }
+
+        return 0;
+    }
+
+    public function getRelatedAmt()
+    {
+        // For Return Delivery (RD), get from ReturnDtl
+        if ($this->tr_type === 'RD' && $this->ReturnDtl) {
+            return $this->ReturnDtl->amt ?? 0;
+        }
+
+        // For regular deliveries (PD, SD), get from OrderDtl
+        if ($this->OrderDtl) {
+            return $this->OrderDtl->amt ?? 0;
+        }
+
+        return 0;
     }
     #endregion
 }

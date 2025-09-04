@@ -5,6 +5,7 @@ namespace App\Livewire\TrdRetail1\Transaction\SalesReturn;
 
 use Livewire\Component;
 use App\Livewire\Component\BaseComponent;
+use App\Models\TrdRetail1\Transaction\ReturnHdr;
 use App\Models\TrdRetail1\Transaction\OrderHdr;
 use App\Services\TrdRetail1\Master\MasterService;
 
@@ -18,7 +19,7 @@ class PrintPdf extends BaseComponent
 
     public function onPreRender()
     {
-        $this->object = OrderHdr::findOrFail($this->objectIdValue);
+        $this->object = ReturnHdr::findOrFail($this->objectIdValue);
 
     }
 

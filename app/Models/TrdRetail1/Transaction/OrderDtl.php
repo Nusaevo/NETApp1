@@ -42,7 +42,6 @@ class OrderDtl extends BaseModel
                 ->where('tr_seq', $orderDtl->tr_seq)
                 ->where('tr_type', $values['delivTrType'])
                 ->get();
-
             foreach ($delivDtls as $delivDtl) {
                 if (empty($delivDtl->wh_id)) {
                     $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
@@ -60,9 +59,8 @@ class OrderDtl extends BaseModel
                 if ($existingBal) {
                     $qtyRevert = match ($delivDtl->tr_type) {
                         'PD' => -$delivDtl->qty,  // Purchase Delivery: reduce stock on deletion
-                        'SD' => ($orderDtl->tr_type === 'SOR')
-                            ? -$delivDtl->qty  // SOR deletion: increase stock (reverse exchange effect)
-                            : $delivDtl->qty,  // Regular SO deletion: increase stock
+                        'RD' => -$delivDtl->qty,  // Return Delivery: reduce stock on deletion (reverse the stock increase)
+                        'SD' => $delivDtl->qty,   // Sales Delivery: increase stock on deletion
                         default => 0,
                     };
 
@@ -91,7 +89,7 @@ class OrderDtl extends BaseModel
     /**
      * Decide Deliv & Billing tr_type based on $trType.
      * E.g. if $trType='PO', we might say DelivHdr has 'PD' and BillingHdr has 'APB'.
-     * For SOR (Sales Order Return/Exchange), DelivDtl has 'SD' and BillingDtl has 'ARB'.
+     * For SOR (Sales Order Return), DelivDtl has 'RD' and BillingDtl has 'ARB'.
      *
      * @param  string $trType
      * @return array  [ 'delivTrType' => 'PD', 'billingTrType' => 'APB' ]

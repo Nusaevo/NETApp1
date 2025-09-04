@@ -1440,6 +1440,7 @@ class Detail extends BaseComponent
 
     public function onBankCodeChanged($key, $bankCode)
     {
+        // dd($bankCode, $key);
         // Update pay_type_code and pay_type_id based on bank_code (partner name)
         $payTypeData = $this->getPayTypeByPartnerName($bankCode);
         $payTypeCode = $payTypeData['pay_type_code'];

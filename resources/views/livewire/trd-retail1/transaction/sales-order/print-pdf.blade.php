@@ -21,8 +21,25 @@
                                 {{ $this->object->tr_id }}</strong></p>
                     </div>
                     <div class="col-xl-3 float-end">
-                        <button type="button" class="btn btn-light text-capitalize border-0" onclick="printInvoice()">
-                            <i class="fas fa-print text-primary"></i> Print
+                        <button type="button"
+                                style="background: linear-gradient(135deg, #007bff, #0056b3);
+                                       color: white;
+                                       border: none;
+                                       padding: 12px 20px;
+                                       border-radius: 8px;
+                                       font-size: 14px;
+                                       font-weight: 500;
+                                       cursor: pointer;
+                                       display: inline-flex;
+                                       align-items: center;
+                                       gap: 8px;
+                                       box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+                                       transition: all 0.2s ease;"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(0, 123, 255, 0.4)';"
+                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0, 123, 255, 0.3)';"
+                                onclick="printInvoice()">
+                            <i class="fas fa-print" style="font-size: 16px;"></i>
+                            <span>Print Nota</span>
                         </button>
                     </div>
                     <hr>
@@ -137,9 +154,6 @@
         function printInvoice() {
             window.print();
         }
-        window.addEventListener('load', function() {
-            printInvoice(); // Auto print on load
-        });
     </script>
     <style>
     @page { size: 80mm auto; margin: 2mm; }
