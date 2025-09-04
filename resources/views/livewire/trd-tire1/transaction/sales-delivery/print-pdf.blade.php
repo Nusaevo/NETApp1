@@ -87,7 +87,7 @@
                     <td style="text-align: right; padding-right: 10px; width: 5%;"></td>
                     <td style="text-align: right; padding-right: 10px; width: 15%;">TOTAL :</td>
                     <td style="border-top: 1px solid #000; border-left: 1px solid #000; border-bottom: 1px solid #000; text-align: right; padding-right: 10px; width: 25%;"></td>
-                    <td style="border: 1px solid #000; text-align: right; padding-right: 10px; width: 5%;">{{ $total_qty }}</td>
+                    <td style="border: 1px solid #000; text-align: right; width: 5%;">{{ $total_qty }}</td>
                     <td style="text-align: left; padding-left: 5px; width: auto;"></td>
                 </tr>
             </table>
@@ -199,7 +199,9 @@
                         <td style="text-align: right; padding-right: 10px; width: 5%;"></td>
                         <td style="text-align: right; padding-right: 10px; width: 15%;">TOTAL :</td>
                         <td style="border-top: 1px solid #000; border-left: 1px solid #000; border-bottom: 1px solid #000; text-align: right; padding-right: 10px; width: 25%;"></td>
-                        <td style="border: 1px solid #000; text-align: right; padding-right: 10px; width: 5%;">{{ $total_qty }}</td>
+                        <td style="border: 1px solid #000; text-align: right; width: 5%;">
+                            {{ $total_qty }}
+                        </td>
                         <td style="text-align: left; padding-left: 5px; width: auto;"></td>
                     </tr>
                 </table>
