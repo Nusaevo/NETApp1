@@ -19,6 +19,7 @@ class Index extends BaseComponent
 
     public function search()
     {
+        initDatabaseConnection();
         $query = "
         SELECT
             SUBSTRING(materials.code FROM 1 FOR 2) AS category,

@@ -126,6 +126,8 @@ class Index extends BaseComponent
             ->leftJoin('matl_uoms', 'matl_uoms.matl_code', '=', 'materials.code')
             ->leftjoin('ivt_bals', function($join) {
                 $join->on('ivt_bals.matl_id', '=', 'matl_uoms.matl_id')
+            ->join('matl_uoms', 'matl_uoms.matl_code', '=', 'materials.code')
+            ->join('ivt_bals', function($join) {
                      ->on('ivt_bals.matl_uom', '=', 'matl_uoms.matl_uom');
             })
             ->select('materials.jwl_category1 as category_name')
