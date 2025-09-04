@@ -58,20 +58,24 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-             Column::make($this->trans('matl_code'), 'id')
+           Column::make($this->trans("matl_code"), 'id')
                 ->format(function ($value, $row) {
-                    // Ambil orderDtl
                     $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
                         ->where('tr_type', $row->tr_type)
                         ->orderBy('id')
                         ->get();
 
-                    // Ambil cuma matl_code
-                    $matlCodes = $orderDtl->pluck('matl_code');
+                    $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
+                    $links = $matlCodes->map(function ($code, $id) {
+                        return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($id)
+                        ]) . '">' . $code . '</a>';
+                    });
 
-                    // Gabungkan pakai koma
-                    return $matlCodes->implode(', ');
-                }),
+                    return $links->implode(', ');
+                })
+                ->html(),
             Column::make($this->trans("qty"), "total_qty")
                 ->label(function ($row) {
                     return $row->total_qty;
