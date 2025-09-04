@@ -1,6 +1,7 @@
 @page {
     size: A5 portrait;
-    margin: 0; /* No margin */
+    margin: 0;
+    /* No margin */
 }
 
 body {
@@ -21,7 +22,8 @@ body {
 
 .invoice-box {
     width: 100%;
-    height: 50%; /* Each box takes half the height of the viewport */
+    height: 50%;
+    /* Each box takes half the height of the viewport */
     border: 1px solid #eee;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
     line-height: 24px;
@@ -30,7 +32,8 @@ body {
     box-sizing: border-box;
     page-break-inside: avoid;
     margin: 0;
-    padding: 5mm; /* Padding inside the box */
+    padding: 5mm;
+    /* Padding inside the box */
 }
 
 .invoice-box table {
@@ -82,7 +85,8 @@ body {
     body * {
         visibility: hidden;
     }
-    #print, #print * {
+    #print,
+    #print * {
         visibility: visible;
     }
     #print {
@@ -101,20 +105,24 @@ body {
         padding: 0;
         margin: 0;
     }
-    .btn, .d-flex {
+    .btn,
+    .d-flex {
         display: none;
     }
     .invoice-box {
         border: none;
         box-shadow: none;
         margin: 0;
-        padding: 5mm; /* Ensure padding inside the box */
-        height: 50%; /* Each box takes half the height of the viewport */
+        padding: 5mm;
+        /* Ensure padding inside the box */
+        height: 50%;
+        /* Each box takes half the height of the viewport */
     }
     .invoice-box-container {
         padding: 0;
         margin: 0;
-        height: 100%; /* Ensure container takes full height */
+        height: 100%;
+        /* Ensure container takes full height */
     }
     .invoice-box table {
         width: 100%;
