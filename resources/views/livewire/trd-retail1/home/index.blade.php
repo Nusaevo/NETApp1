@@ -5,8 +5,9 @@
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <h1 class="dashboard-title">
-                        <i class="fas fa-gem me-3"></i>Dashboard
+                        <i class="fas fa-chart-line me-3"></i>Dashboard
                     </h1>
+
                 </div>
 
             </div>
@@ -24,8 +25,8 @@
                                 <div class="stats-value">{{ $salesSummary['today_orders'] ?? 0 }}</div>
                                 <div class="stats-label">Total Order Hari Ini</div>
                                 <div class="stats-growth positive">
-                                    <i class="fas fa-shopping-bag"></i>
-                                    Transaksi
+                                    <i class="fas fa-arrow-up"></i>
+                                    Hari Ini
                                 </div>
                             </div>
                             <div class="stats-icon">
@@ -96,70 +97,17 @@
         </div>
     </div>
 
-    <!-- Charts Row -->
+    <!-- Main Content -->
     <div class="content-section">
         <div class="container-fluid">
             <div class="row g-4">
-                <div class="col-xxl-6">
-                    <!-- Currency Rate Widget -->
-                    <div class="modern-card">
-                        <div class="card-header-modern">
-                            <div class="card-title">
-                                <i class="fas fa-dollar-sign text-primary me-2"></i>
-                                Nilai Tukar Harian
-                            </div>
-                        </div>
-                        <div class="card-body-modern">
-                            <div class="chart-info mb-3">
-                                <div class="text-muted fs-7 fw-bold">Hari Ini: {{ $todayCurrencyRate ?? 'Tidak ada data untuk hari ini' }}</div>
-                            </div>
-                            <div class="trd-jewel1-chart card-rounded-bottom"
-                                 id="currencyRateChart"
-                                 data-kt-chart-title="Currency Rate"
-                                 data-kt-chart-color="primary"
-                                 data-kt-chart-data="{{ json_encode(array_column($currencyRates, 'curr_rate')) }}"
-                                 data-kt-chart-categories="{{ json_encode(array_column($currencyRates, 'log_date')) }}"
-                                 style="height: 300px;">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-xxl-6">
-                    <!-- Gold Price Widget -->
-                    <div class="modern-card">
-                        <div class="card-header-modern">
-                            <div class="card-title">
-                                <i class="fas fa-coins text-warning me-2"></i>
-                                Harga Emas Harian (Mata Uang Dasar)
-                            </div>
-                        </div>
-                        <div class="card-body-modern">
-                            <div class="chart-info mb-3">
-                                <div class="text-muted fs-7 fw-bold">Hari Ini: {{ $todayGoldPrice ?? 'Tidak ada data untuk hari ini' }}</div>
-                            </div>
-                            <div class="trd-jewel1-chart card-rounded-bottom"
-                                 id="goldPriceChart"
-                                 data-kt-chart-title="Gold Price"
-                                 data-kt-chart-color="warning"
-                                 data-kt-chart-data="{{ json_encode(array_column($goldPrices, 'goldprice_basecurr')) }}"
-                                 data-kt-chart-categories="{{ json_encode(array_column($goldPrices, 'log_date')) }}"
-                                 style="height: 300px;">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Analytics Row -->
-            <div class="row g-4 mt-2">
                 <!-- Top Products Chart -->
                 <div class="col-xl-8 col-lg-12">
                     <div class="modern-card">
                         <div class="card-header-modern">
                             <div class="card-title">
                                 <i class="fas fa-trophy text-warning me-2"></i>
-                                Produk Perhiasan Terpopuler
+                                Produk Terpopuler
                             </div>
                             <div class="card-actions">
                                 <button class="btn btn-sm btn-outline-secondary">
@@ -194,15 +142,15 @@
                                                 </td>
                                                 <td>
                                                     <div class="quantity-info">
-                                                        <div class="qty-number">{{ $product['total_qty'] }}</div>
-                                                        <div class="qty-unit">pcs</div>
+                                                        <span class="qty-number">{{ number_format($product['total_qty']) }}</span>
+                                                        <span class="qty-unit">units</span>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div class="performance-bar">
                                                         <div class="progress-modern">
                                                             <div class="progress-bar-modern"
-                                                                 style="width: {{ $product['total_qty'] > 0 ? min(100, ($product['total_qty'] / max(collect($topProducts)->max('total_qty'), 1)) * 100) : 0 }}%">
+                                                                 style="width: {{ $index === 0 ? 100 : max(20, 100 - ($index * 15)) }}%">
                                                             </div>
                                                         </div>
                                                         <span class="performance-text">{{ $product['order_count'] ?? 0 }} order</span>
@@ -288,7 +236,7 @@
                                     @foreach($stockByCategory as $category)
                                     <div class="category-card-modern">
                                         <div class="category-icon">
-                                            <i class="fas fa-gem"></i>
+                                            <i class="fas fa-box"></i>
                                         </div>
                                         <div class="category-info">
                                             <h6 class="category-name">{{ $category['category_name'] }}</h6>
@@ -362,8 +310,9 @@
         </div>
     </div>
 
+
     <style>
-    /* Modern Dashboard Styles for Jewel */
+    /* Modern Dashboard Styles */
     .modern-dashboard {
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         min-height: 100vh;
@@ -383,7 +332,7 @@
     .dashboard-title {
         font-size: 2.5rem;
         font-weight: 700;
-        background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -398,20 +347,20 @@
     }
 
     .btn-modern-primary {
-        background: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
-        color: #2d3748;
+        color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 50px;
         font-weight: 600;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .btn-modern-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
-        color: #2d3748;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
     }
 
     /* Stats Section */
@@ -478,8 +427,8 @@
     }
 
     .stats-growth.positive {
-        background: rgba(255, 215, 0, 0.1);
-        color: #b7791f;
+        background: rgba(72, 187, 120, 0.1);
+        color: #38a169;
     }
 
     .stats-growth.negative {
@@ -497,14 +446,14 @@
         opacity: 0.3;
     }
 
-    .stats-card-primary { border-left: 4px solid #ffd700; }
+    .stats-card-primary { border-left: 4px solid #667eea; }
     .stats-card-success { border-left: 4px solid #48bb78; }
     .stats-card-info { border-left: 4px solid #4299e1; }
     .stats-card-warning { border-left: 4px solid #ed8936; }
 
     .stats-sparkline {
         height: 4px;
-        background: linear-gradient(90deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.8));
+        background: linear-gradient(90deg, rgba(102, 126, 234, 0.2), rgba(102, 126, 234, 0.8));
     }
 
     /* Modern Cards */
@@ -542,10 +491,6 @@
         padding: 1.5rem 2rem 2rem;
     }
 
-    .chart-info {
-        text-align: center;
-    }
-
     /* Modern Table */
     .modern-table-container {
         overflow-x: auto;
@@ -558,7 +503,7 @@
     }
 
     .modern-table th {
-        background: rgba(255, 215, 0, 0.1);
+        background: rgba(102, 126, 234, 0.1);
         color: #4a5568;
         font-weight: 600;
         padding: 1rem;
@@ -575,7 +520,7 @@
     }
 
     .table-row-modern:hover {
-        background: rgba(255, 215, 0, 0.05);
+        background: rgba(102, 126, 234, 0.05);
     }
 
     .modern-table td {
@@ -648,7 +593,7 @@
     }
 
     .progress-bar-modern {
-        background: linear-gradient(90deg, #ffd700, #ffb347);
+        background: linear-gradient(90deg, #667eea, #764ba2);
         height: 100%;
         border-radius: 10px;
         transition: width 0.3s ease;
@@ -669,12 +614,12 @@
     .trend-item-modern {
         padding: 1rem;
         border-radius: 12px;
-        background: rgba(255, 215, 0, 0.05);
+        background: rgba(102, 126, 234, 0.05);
         transition: all 0.2s ease;
     }
 
     .trend-item-modern:hover {
-        background: rgba(255, 215, 0, 0.1);
+        background: rgba(102, 126, 234, 0.1);
         transform: translateX(5px);
     }
 
@@ -691,7 +636,7 @@
 
     .trend-value {
         font-weight: 700;
-        color: #b7791f;
+        color: #38a169;
         font-size: 0.875rem;
     }
 
@@ -707,7 +652,7 @@
     }
 
     .progress-fill {
-        background: linear-gradient(90deg, #ffd700, #ffb347);
+        background: linear-gradient(90deg, #48bb78, #38a169);
         height: 100%;
         border-radius: 4px;
         transition: width 0.3s ease;
@@ -729,14 +674,14 @@
         display: flex;
         align-items: center;
         padding: 1.5rem;
-        background: rgba(255, 215, 0, 0.05);
+        background: rgba(102, 126, 234, 0.05);
         border-radius: 12px;
         transition: all 0.2s ease;
-        border: 1px solid rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.1);
     }
 
     .category-card-modern:hover {
-        background: rgba(255, 215, 0, 0.1);
+        background: rgba(102, 126, 234, 0.1);
         transform: translateY(-2px);
     }
 
@@ -744,11 +689,11 @@
         width: 48px;
         height: 48px;
         border-radius: 12px;
-        background: linear-gradient(135deg, #ffd700, #ffb347);
+        background: linear-gradient(135deg, #667eea, #764ba2);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #2d3748;
+        color: white;
         font-size: 1.25rem;
         margin-right: 1rem;
     }
@@ -778,7 +723,7 @@
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: #ffd700;
+        background: #48bb78;
     }
 
     /* Orders Timeline */
@@ -793,13 +738,13 @@
         align-items: flex-start;
         padding: 1rem;
         border-radius: 12px;
-        background: rgba(255, 215, 0, 0.05);
+        background: rgba(72, 187, 120, 0.05);
         transition: all 0.2s ease;
-        border-left: 3px solid #ffd700;
+        border-left: 3px solid #48bb78;
     }
 
     .timeline-item:hover {
-        background: rgba(255, 215, 0, 0.1);
+        background: rgba(72, 187, 120, 0.1);
         transform: translateX(5px);
     }
 
@@ -807,7 +752,7 @@
         width: 12px;
         height: 12px;
         border-radius: 50%;
-        background: #ffd700;
+        background: #48bb78;
         margin-right: 1rem;
         margin-top: 0.25rem;
         flex-shrink: 0;
@@ -832,7 +777,7 @@
 
     .order-amount {
         font-weight: 700;
-        color: #b7791f;
+        color: #38a169;
         font-size: 0.875rem;
     }
 
@@ -861,8 +806,8 @@
     }
 
     .status-open {
-        background: rgba(255, 215, 0, 0.1);
-        color: #b7791f;
+        background: rgba(72, 187, 120, 0.1);
+        color: #38a169;
     }
 
     /* Empty States */
@@ -938,227 +883,3 @@
     }
     </style>
 </div>
-
-@push('scripts')
-<script>
-console.log('TrdJewel1 script loaded!');
-
-function initTrdJewel1Charts() {
-    console.log('=== Initializing TrdJewel1 charts ===');
-
-    // Check if ApexCharts is available
-    if (typeof ApexCharts === 'undefined') {
-        console.error('ApexCharts library not found!');
-        return;
-    } else {
-        console.log('ApexCharts is available');
-    }
-
-    var charts = document.querySelectorAll('.trd-jewel1-chart');
-    console.log('Found charts elements:', charts.length);
-
-    if (charts.length === 0) {
-        console.warn('No chart elements found with class .trd-jewel1-chart');
-        return;
-    }
-
-    [].slice.call(charts).forEach(function(element, index) {
-        console.log('Processing chart', index + 1, 'with ID:', element.id);
-
-        try {
-            // Get chart configuration from data attributes
-            var chartDataAttr = element.getAttribute('data-kt-chart-data');
-            var chartCategoriesAttr = element.getAttribute('data-kt-chart-categories');
-            var chartTitle = element.getAttribute('data-kt-chart-title') || 'Chart';
-            var color = element.getAttribute('data-kt-chart-color') || 'primary';
-
-            console.log('Raw chart data attribute:', chartDataAttr);
-            console.log('Raw categories attribute:', chartCategoriesAttr);
-
-            if (!chartDataAttr || !chartCategoriesAttr) {
-                console.error('Missing chart data or categories for:', chartTitle);
-                element.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100"><div class="text-muted">Data tidak tersedia</div></div>';
-                return;
-            }
-
-            var chartData, chartCategories;
-
-            try {
-                chartData = JSON.parse(chartDataAttr);
-                chartCategories = JSON.parse(chartCategoriesAttr);
-            } catch (parseError) {
-                console.error('Error parsing JSON data:', parseError);
-                element.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100"><div class="text-muted">Error parsing data</div></div>';
-                return;
-            }
-
-            console.log('Parsed chart data for ' + chartTitle + ':', chartData);
-            console.log('Parsed categories:', chartCategories);
-
-            if (!Array.isArray(chartData) || chartData.length === 0) {
-                console.warn('Empty or invalid chart data for:', chartTitle);
-                element.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100"><div class="text-muted">Tidak ada data untuk ditampilkan</div></div>';
-                return;
-            }
-
-            // Color scheme for jewel dashboard
-            var colorScheme = {
-                primary: '#007bff',
-                warning: '#ffc107',
-                success: '#28a745',
-                info: '#17a2b8',
-                gold: '#ffd700'
-            };
-
-            var chartColor = colorScheme[color] || colorScheme.primary;
-
-            var options = {
-                series: [{
-                    name: chartTitle,
-                    data: chartData.map(function(val) { return parseFloat(val) || 0; })
-                }],
-                chart: {
-                    type: 'area',
-                    height: 300,
-                    toolbar: {
-                        show: false
-                    },
-                    zoom: {
-                        enabled: false
-                    }
-                },
-                colors: [chartColor],
-                dataLabels: {
-                    enabled: false
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3
-                },
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.7,
-                        opacityTo: 0.1,
-                        stops: [0, 90, 100]
-                    }
-                },
-                xaxis: {
-                    categories: chartCategories,
-                    labels: {
-                        style: {
-                            colors: '#718096',
-                            fontSize: '12px'
-                        }
-                    }
-                },
-                yaxis: {
-                    labels: {
-                        style: {
-                            colors: '#718096',
-                            fontSize: '12px'
-                        },
-                        formatter: function(val) {
-                            return new Intl.NumberFormat('id-ID', {
-                                style: 'currency',
-                                currency: 'IDR',
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
-                            }).format(val);
-                        }
-                    }
-                },
-                grid: {
-                    borderColor: '#e0e6ed',
-                    strokeDashArray: 5
-                },
-                tooltip: {
-                    theme: 'light',
-                    y: {
-                        formatter: function(val) {
-                            return new Intl.NumberFormat('id-ID', {
-                                style: 'currency',
-                                currency: 'IDR',
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0
-                            }).format(val);
-                        }
-                    }
-                }
-            };
-
-            console.log('Creating chart with options:', options);
-
-            // Clear any existing content
-            element.innerHTML = '';
-
-            // Create and render chart
-            var chart = new ApexCharts(element, options);
-            console.log('Chart instance created, attempting render...');
-
-            chart.render().then(function() {
-                console.log('Chart rendered successfully for:', chartTitle);
-            }).catch(function(error) {
-                console.error('Error rendering chart:', error);
-                element.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100"><div class="text-muted">Error rendering chart: ' + error.message + '</div></div>';
-            });
-
-        } catch (error) {
-            console.error('Error initializing chart:', error);
-            element.innerHTML = '<div class="d-flex align-items-center justify-content-center h-100"><div class="text-muted">Error initializing chart: ' + error.message + '</div></div>';
-        }
-    });
-}
-
-console.log('Document readyState:', document.readyState);
-
-// Multiple initialization attempts
-setTimeout(function() {
-    console.log('Timeout 1000ms: Attempting to init charts');
-    initTrdJewel1Charts();
-}, 1000);
-
-setTimeout(function() {
-    console.log('Timeout 2000ms: Attempting to init charts');
-    initTrdJewel1Charts();
-}, 2000);
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, initializing TrdJewel1 charts...');
-        setTimeout(initTrdJewel1Charts, 100);
-    });
-} else {
-    console.log('DOM already loaded, initializing TrdJewel1 charts...');
-    setTimeout(initTrdJewel1Charts, 100);
-}
-
-// Reinitialize charts after Livewire updates
-document.addEventListener('livewire:navigated', function() {
-    console.log('Livewire navigated, reinitializing TrdJewel1 charts...');
-    setTimeout(initTrdJewel1Charts, 200);
-});
-
-// Also try to initialize on window load as backup
-window.addEventListener('load', function() {
-    console.log('Window loaded, checking charts...');
-    setTimeout(function() {
-        var charts = document.querySelectorAll('.trd-jewel1-chart');
-        console.log('Window load check - found charts:', charts.length);
-        var hasEmptyCharts = false;
-        charts.forEach(function(chart) {
-            if (!chart.innerHTML.trim() || chart.innerHTML.includes('Error') || chart.innerHTML.includes('No data')) {
-                hasEmptyCharts = true;
-            }
-        });
-
-        if (hasEmptyCharts) {
-            console.log('Found empty charts on window load, reinitializing...');
-            initTrdJewel1Charts();
-        }
-    }, 500);
-});
-</script>
-@endpush
