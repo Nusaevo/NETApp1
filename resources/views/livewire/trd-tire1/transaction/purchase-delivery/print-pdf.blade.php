@@ -7,6 +7,15 @@
     <!-- Include CSS Invoice -->
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
+    <!-- CSS untuk print - sembunyikan pagination controls -->
+    <style>
+        @media print {
+            .pagination-controls, .pagination-nav {
+                display: none !important;
+            }
+        }
+    </style>
+
     <div class="card">
         <div class="card-body">
             <div class="container mb-5 mt-3">
@@ -14,7 +23,7 @@
                 <div class="row d-flex align-items-baseline">
                     <div class="col-xl-9">
                         <p style="color: #7e8d9f; font-size: 20px;">
-                            LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($masa)->translatedFormat('F Y')) }}
+                            LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($this->masa)->translatedFormat('F Y')) }}
                         </p>
                     </div>
                     <div class="col-xl-3 float-end">
@@ -25,11 +34,28 @@
                     </div>
                     <hr>
                 </div>
+
+                <!-- Pagination Controls - Outside Print Area -->
+                @if (!$orders->isEmpty())
+                    <div class="pagination-controls d-flex justify-content-between align-items-center mb-3">
+                        <p class="text-muted">
+                            Showing {{ $orders->firstItem() }} to {{ $orders->lastItem() }} of {{ $orders->total() }} results
+                        </p>
+                        <div>
+                            <select wire:model.live="perPage" class="form-select form-select-sm" style="width: auto;">
+                                <option value="25">25 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                    </div>
+                @endif
+
                 <div id="print">
                     <div class="invoice-box page" style="max-width: 2480px; margin: auto; padding: 20px;">
                         {{-- yang di print --}}
-                        <h3 class="text-center" style="text-decoration: underline;">LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($masa)->translatedFormat('F Y')) }}</h3>
-                        @if (!isset($orders) || count($orders) === 0)
+                        <h3 class="text-center" style="text-decoration: underline;">LAPORAN PENJUALAN MASA {{ strtoupper(\Carbon\Carbon::parse($this->masa)->translatedFormat('F Y')) }}</h3>
+                        @if ($orders->isEmpty())
                             <p class="text-center text-danger">Tidak ada data untuk ditampilkan.</p>
                         @else
                             <table class="table table-bordered">
@@ -106,6 +132,15 @@
                         @endif
                     </div>
                 </div>
+
+                <!-- Pagination Navigation - Outside Print Area -->
+                @if (!$orders->isEmpty())
+                    <div class="pagination-nav d-flex justify-content-center mt-3" style="max-width: 100%;">
+                        <div style="max-width: 600px;">
+                            @include('components.ui-pagination', ['paginator' => $orders])
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

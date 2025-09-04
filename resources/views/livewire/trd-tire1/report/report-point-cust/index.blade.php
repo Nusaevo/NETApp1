@@ -36,42 +36,62 @@
         <div id="print">
             <div>
                 <br>
-                <link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}">
                 <style>
                     @media print {
                         body {
                             background: #fff !important;
+                            font-family: 'Calibri', Arial, sans-serif !important;
                         }
                         #print .card {
                             box-shadow: none !important;
                             border: none !important;
+                            background: transparent !important;
+                        }
+                        #print .card-body {
+                            padding: 0 !important;
                         }
                         #print .container {
                             margin: 0 auto !important;
                             padding: 0 !important;
+                            max-width: none !important;
                         }
                         #print table {
                             margin-left: auto !important;
                             margin-right: auto !important;
+                            border-collapse: collapse !important;
+                            width: 100% !important;
                         }
                         #print th, #print td {
-                            padding: 2px 4px !important;
+                            padding: 4px 6px !important;
                             font-size: 11px !important;
+                            border: 1px solid #000 !important;
+                            vertical-align: middle !important;
                         }
                         #print th {
                             background: #f9f9f9 !important;
+                            font-weight: bold !important;
+                            text-align: center !important;
                         }
-                        /* Padding top hanya di halaman pertama */
-                        #print .print-page {
-                            page-break-after: always;
-                            padding-top: 30px;
+                        #print h3, #print h4 {
+                            margin: 10px 0 !important;
+                            font-weight: bold !important;
                         }
-                        #print .print-page:not(:first-child) {
-                            padding-top: 0 !important;
+                        #print p {
+                            margin: 5px 0 !important;
                         }
                         /* Hilangkan margin/padding default print */
                         @page {
-                            margin: 10mm 10mm 10mm 10mm;
+                            margin: 1cm 1cm 2cm 1cm;
+                            size: A4 portrait;
+                        }
+                        /* Sembunyikan elemen yang tidak perlu di print */
+                        .btn, .card-header, .card-footer, .page-info {
+                            display: none !important;
+                        }
+                        /* Pastikan konten tidak terpotong */
+                        #print {
+                            font-family: 'Calibri', Arial, sans-serif !important;
+                            font-size: 14px !important;
                         }
                     }
                 </style>
@@ -133,16 +153,16 @@
                                         {{ $row->customer ?? '' }}
                                     @endforeach
                                 </pre> --}}
-                                <table style="width:100%;">
+                                <table style="width:100%; border-collapse:collapse;">
                                     <thead>
                                         <tr>
-                                            <th rowspan="2" style="border: 1px solid #000; text-align: center;">Custommer</th>
+                                            <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Customer</th>
                                             @foreach ($groupColumns as $col)
-                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000" rowspan="2">
+                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
                                                     {{ $col }}
                                                 </th>
                                             @endforeach
-                                            <th rowspan="2" style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000">Total</th>
+                                            <th rowspan="2" style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;">Total</th>
                                         </tr>
                                         {{-- Baris kedua header kosong karena header customer sudah dipecah --}}
                                     </thead>

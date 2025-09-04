@@ -7,6 +7,15 @@
     <!-- Include CSS Invoice -->
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
+    <!-- CSS untuk print - sembunyikan pagination controls -->
+    <style>
+        @media print {
+            .pagination-controls, .pagination-nav {
+                display: none !important;
+            }
+        }
+    </style>
+
     <div class="card">
         <div class="card-body">
             <div class="container mb-5 mt-3">
@@ -26,13 +35,30 @@
                     </div>
                     <hr>
                 </div>
+
+                <!-- Pagination Controls - Outside Print Area -->
+                @if (!$orders->isEmpty())
+                    <div class="pagination-controls d-flex justify-content-between align-items-center mb-3">
+                        <p class="text-muted">
+                            Showing {{ $orders->firstItem() }} to {{ $orders->lastItem() }} of {{ $orders->total() }} results
+                        </p>
+                        <div>
+                            <select wire:model.live="perPage" class="form-select form-select-sm" style="width: auto;">
+                                <option value="25">25 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                    </div>
+                @endif
+
                 <div id="print">
                     <div class="invoice-box page" style="max-width: 2480px; margin: auto; padding: 20px;">
                         {{-- yang di print --}}
                         <h3 class="text-left" style="text-decoration: underline;">Proses Faktur Pajak</h3>
                         <p class="text-left">Tanggal Proses:
                             {{ \Carbon\Carbon::parse($printDate)->format('d-M-Y') }}</p>
-                        @if (!isset($orders))
+                        @if ($orders->isEmpty())
                             <p class="text-center text-danger">Tidak ada data untuk ditampilkan.</p>
                         @else
                             <table class="table table-bordered">
@@ -106,9 +132,17 @@
                                     @endforeach
                                 </tbody>
                             </table>
+
                         @endif
                     </div>
                 </div>
+
+                <!-- Pagination Navigation - Outside Print Area -->
+                @if (!$orders->isEmpty())
+                    <div class="pagination-nav d-flex justify-content-center mt-3">
+                        @include('components.ui-pagination', ['paginator' => $orders])
+                    </div>
+                @endif
             </div>
         </div>
     </div>
