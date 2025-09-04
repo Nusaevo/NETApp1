@@ -40,84 +40,160 @@
         </div>
         {{-- End Filter Frame --}}
 
-        <div id="print">
-            <div>
-                <br>
-                {{-- <link rel="stylesheet" href="{{ asset('customs/css/invoice.css') }}"> --}}
-                <div class="card">
-                    <div class="card-body">
-                        <div class="container mb-5 mt-3">
-                            <div style="max-width:2480px; margin:auto; padding:20px;">
-                                <h4>TOKO BAN CAHAYA TERANG - SURABAYA</h4>
-                                <h3 style="text-decoration:underline; text-align:left;">
-                                    {!! $menuName !!}
-                                </h3>
-                                <p style="text-align:left; margin-bottom:0;">
-                                    <strong>Kode Program : {{ $category }}</strong>
-                                </p>
-                                <p style="text-align:left; margin-bottom:20px;">
-                                    Periode:
-                                    {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
-                                    s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
-                                </p>
-                                <table style="width:100%; border-collapse:collapse;">
-                                    <thead>
-                                        <tr>
-                                            <th style="text-align:left; padding:4px 8px; border:1px solid #000;">
-                                                Kode Brg.
-                                            </th>
-                                            <th style="text-align:left; padding:4px 8px; border:1px solid #000;">
-                                                Nama Barang
-                                            </th>
-                                            <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
-                                                Point
-                                            </th>
-                                            <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
-                                                Qty Beli
-                                            </th>
-                                            <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
-                                                Point Beli
-                                            </th>
-                                            <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
-                                                Qty Jual
-                                            </th>
-                                            <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
-                                                Point Jual
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php $no = 1; @endphp
-                                        @foreach ($results as $row)
-                                            <tr>
-                                                <td style="padding:4px 8px; border:1px solid #000;">
-                                                    {{ $row->kode_brg }}</td>
-                                                <td style="padding:4px 8px; border:1px solid #000;">
-                                                    {{ $row->nama_barang }}</td>
-                                                <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
-                                                    {{ fmod($row->point, 1) == 0 ? number_format($row->point, 0) : number_format($row->point, 3) }}
-                                                </td>
-                                                <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
-                                                    {{ fmod($row->qty_beli, 1) == 0 ? number_format($row->qty_beli, 0) : number_format($row->qty_beli, 2) }}
-                                                </td>
-                                                <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
-                                                    {{ fmod($row->point_beli, 1) == 0 ? number_format($row->point_beli, 0) : number_format($row->point_beli, 2) }}
-                                                </td>
-                                                <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
-                                                    {{ fmod($row->qty_jual, 1) == 0 ? number_format($row->qty_jual, 0) : number_format($row->qty_jual, 2) }}
-                                                </td>
-                                                <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
-                                                    {{ fmod($row->point_jual, 1) == 0 ? number_format($row->point_jual, 0) : number_format($row->point_jual, 2) }}
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Card hanya tampil di layar, tidak saat print -->
+    <div class="card d-print-none" style="width: 100%; margin: 30px auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 32px 32px 40px 32px;">
+        <div class="report-box" style="width: 100%; margin: auto; padding: 20px;">
+            <div style="width: 100%; margin: auto; padding: 20px; overflow-x: auto;">
+                <h4>TOKO BAN CAHAYA TERANG - SURABAYA</h4>
+                <h3 style="text-decoration:underline; text-align:left;">
+                    {!! $menuName !!}
+                </h3>
+                <p style="text-align:left; margin-bottom:0;">
+                    <strong>Kode Program : {{ $category }}</strong>
+                </p>
+                <p style="text-align:left; margin-bottom:20px;">
+                    Periode:
+                    {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
+                    s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
+                </p>
+                <table style="width:100%; border-collapse:collapse; table-layout: auto; min-width: 1000px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding:8px 12px; border:1px solid #000; width: 12%;">
+                                Kode Brg.
+                            </th>
+                            <th style="text-align:left; padding:8px 12px; border:1px solid #000; width: 30%;">
+                                Nama Barang
+                            </th>
+                            <th style="text-align:center; padding:8px 12px; border:1px solid #000; width: 10%;">
+                                Point
+                            </th>
+                            <th style="text-align:center; padding:8px 12px; border:1px solid #000; width: 12%;">
+                                Qty Beli
+                            </th>
+                            <th style="text-align:center; padding:8px 12px; border:1px solid #000; width: 12%;">
+                                Point Beli
+                            </th>
+                            <th style="text-align:center; padding:8px 12px; border:1px solid #000; width: 12%;">
+                                Qty Jual
+                            </th>
+                            <th style="text-align:center; padding:8px 12px; border:1px solid #000; width: 12%;">
+                                Point Jual
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $no = 1; @endphp
+                        @foreach ($results as $row)
+                            <tr>
+                                <td style="padding:8px 12px; border:1px solid #000;">
+                                    {{ $row->kode_brg }}</td>
+                                <td style="padding:8px 12px; border:1px solid #000;">
+                                    {{ $row->nama_barang }}</td>
+                                <td style="padding:8px 12px; text-align:center; border:1px solid #000;">
+                                    {{ fmod($row->point, 1) == 0 ? number_format($row->point, 0) : number_format($row->point, 3) }}
+                                </td>
+                                <td style="padding:8px 12px; text-align:center; border:1px solid #000;">
+                                    {{ fmod($row->qty_beli, 1) == 0 ? number_format($row->qty_beli, 0) : number_format($row->qty_beli, 2) }}
+                                </td>
+                                <td style="padding:8px 12px; text-align:center; border:1px solid #000;">
+                                    {{ fmod($row->point_beli, 1) == 0 ? number_format($row->point_beli, 0) : number_format($row->point_beli, 2) }}
+                                </td>
+                                <td style="padding:8px 12px; text-align:center; border:1px solid #000;">
+                                    {{ fmod($row->qty_jual, 1) == 0 ? number_format($row->qty_jual, 0) : number_format($row->qty_jual, 2) }}
+                                </td>
+                                <td style="padding:8px 12px; text-align:center; border:1px solid #000;">
+                                    {{ fmod($row->point_jual, 1) == 0 ? number_format($row->point_jual, 0) : number_format($row->point_jual, 2) }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Area print tetap tampil saat print -->
+    <div id="print" class="d-none d-print-block p-20">
+        <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
+            <div class="report-box" style="max-width: 1200px; margin: auto; padding: 20px;">
+                <div style="max-width:2480px; margin:auto; padding:20px;">
+                    <h4>TOKO BAN CAHAYA TERANG - SURABAYA</h4>
+                    <h3 style="text-decoration:underline; text-align:left;">
+                        {!! $menuName !!}
+                    </h3>
+                    <p style="text-align:left; margin-bottom:0;">
+                        <strong>Kode Program : {{ $category }}</strong>
+                    </p>
+                    <p style="text-align:left; margin-bottom:20px;">
+                        Periode:
+                        {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
+                        s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
+                    </p>
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left; padding:4px 8px; border:1px solid #000;">
+                                    Kode Brg.
+                                </th>
+                                <th style="text-align:left; padding:4px 8px; border:1px solid #000;">
+                                    Nama Barang
+                                </th>
+                                <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
+                                    Point
+                                </th>
+                                <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
+                                    Qty Beli
+                                </th>
+                                <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
+                                    Point Beli
+                                </th>
+                                <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
+                                    Qty Jual
+                                </th>
+                                <th style="text-align:center; padding:4px 8px; border:1px solid #000;">
+                                    Point Jual
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $no = 1; @endphp
+                            @foreach ($results as $row)
+                                <tr>
+                                    <td style="padding:4px 8px; border:1px solid #000;">
+                                        {{ $row->kode_brg }}</td>
+                                    <td style="padding:4px 8px; border:1px solid #000;">
+                                        {{ $row->nama_barang }}</td>
+                                    <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
+                                        {{ fmod($row->point, 1) == 0 ? number_format($row->point, 0) : number_format($row->point, 3) }}
+                                    </td>
+                                    <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
+                                        {{ fmod($row->qty_beli, 1) == 0 ? number_format($row->qty_beli, 0) : number_format($row->qty_beli, 2) }}
+                                    </td>
+                                    <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
+                                        {{ fmod($row->point_beli, 1) == 0 ? number_format($row->point_beli, 0) : number_format($row->point_beli, 2) }}
+                                    </td>
+                                    <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
+                                        {{ fmod($row->qty_jual, 1) == 0 ? number_format($row->qty_jual, 0) : number_format($row->qty_jual, 2) }}
+                                    </td>
+                                    <td style="padding:4px 8px; text-align:center; border:1px solid #000;">
+                                        {{ fmod($row->point_jual, 1) == 0 ? number_format($row->point_jual, 0) : number_format($row->point_jual, 2) }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
     </x-ui-page-card>
 </div>
+
+<script>
+    function printReport() {
+        setTimeout(function() {
+            window.print();
+        }, 1000);
+    }
+</script>
