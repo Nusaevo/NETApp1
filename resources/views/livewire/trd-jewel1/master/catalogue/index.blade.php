@@ -24,13 +24,11 @@
                     <div class="col">
                         <div class="card h-100 shadow-sm border-0 catalogue-item">
                             <div class="position-relative">
-
-                                     @php
-                                        $imagePath = isset($detail['image_path']) && !empty($detail['image_path']) ? $detail['image_path'] : 'https://via.placeholder.com/300';
-                                    @endphp
-                                    <img  src="{{ $imagePath }}"
-                                         alt="Test Material {{ $key + 1 }}"
-                                         class="card-img-top catalogue-image">
+                                 @if($material->Attachment->first())
+                                    <x-ui-image src="{{ $material->Attachment->first()->getUrl() }}"   class="card-img-top catalogue-image" />
+                                    @else
+                                    <img src="https://via.placeholder.com/300" alt="Material"  class="card-img-top catalogue-image">
+                                @endif
                             </div>
                             <div class="card-body d-flex flex-column p-4">
                                 <div class="d-flex justify-content-between align-items-start ">
