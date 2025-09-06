@@ -1601,13 +1601,6 @@ div[wire\:loading].loading-overlay {
     box-shadow: 0 12px 35px rgba(0,0,0,0.15) !important;
 }
 
-.catalogue-image {
-    height: 250px !important;
-    width: 100% !important;
-    object-fit: cover !important;
-    object-position: center !important;
-}
-
 .catalogue-item .card-body {
     height: 250px !important;
     padding: 1rem !important;
