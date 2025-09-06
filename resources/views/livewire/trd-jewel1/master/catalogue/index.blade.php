@@ -24,15 +24,13 @@
                     <div class="col">
                         <div class="card h-100 shadow-sm border-0 catalogue-item">
                             <div class="position-relative">
-                                @if($material->Attachment->first())
-                                    <x-ui-image  src="https://via.placeholder.com/300x250/f8f9fa/6c757d?text=No+Image"
-                                              class="card-img-top catalogue-image"
-                                              style="width: 600px; height: 400px; object-fit: cover;" />
+                                 @if($material->Attachment->first())
+                                    <x-ui-image src="{{ $material->Attachment->first()->getUrl() }}"
+                                              class="catalogue-image" width="400" height="600"/>
                                 @else
-                                    <img src="https://placehold.co/600x400"
+                                     <x-ui-image src="https://placehold.co/600x400"
                                          alt="Material"
-                                         class="card-img-top catalogue-image"
-                                         style="width: 100%; height: 250px; object-fit: cover;">
+                                         class="catalogue-image" width="400" height="600"/>
                                 @endif
                             </div>
                             <div class="card-body d-flex flex-column p-4">
