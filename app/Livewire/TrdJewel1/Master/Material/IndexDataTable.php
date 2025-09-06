@@ -5,7 +5,7 @@ namespace App\Livewire\TrdJewel1\Master\Material;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\TrdJewel1\Master\Material;
-use App\Models\SysConfig1\ConfigRight;
+use App\Models\SysConfig1\{ConfigRight, ConfigConst};
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -81,12 +81,76 @@ class IndexDataTable extends BaseDataTableComponent
         ];
     }
 
+    private function getCategory1Options(): array
+    {
+        $categories = ConfigConst::where('const_group', 'MMATL_CATEGL1')
+            ->whereNull('deleted_at')
+            ->orderBy('str2')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+            })
+            ->toArray();
+
+        // If no data found, try without deleted_at filter
+        if (empty($categories)) {
+            $categories = ConfigConst::where('const_group', 'MMATL_CATEGL1')
+                ->orderBy('str2')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+                })
+                ->toArray();
+        }
+
+        return ['' => 'All'] + $categories;
+    }
+
+    private function getCategory2Options(): array
+    {
+        $categories = ConfigConst::where('const_group', 'MMATL_CATEGL2')
+            ->whereNull('deleted_at')
+            ->orderBy('str2')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+            })
+            ->toArray();
+
+        // If no data found, try without deleted_at filter
+        if (empty($categories)) {
+            $categories = ConfigConst::where('const_group', 'MMATL_CATEGL2')
+                ->orderBy('str2')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+                })
+                ->toArray();
+        }
+
+        return ['' => 'All'] + $categories;
+    }
+
     public function filters(): array
     {
         return [
-            $this->createTextFilter('Barang', 'name', 'Cari Kode Barang', function (Builder $builder, string $value) {
+            $this->createTextFilter('Kode Barang', 'name', 'Cari Kode Barang', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(code)'), '=', strtoupper($value));
             }),
+            SelectFilter::make('Kategori 1', 'category1_filter')
+                ->options($this->getCategory1Options())
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('jwl_category1', $value);
+                    }
+                }),
+            SelectFilter::make('Kategori 2', 'category2_filter')
+                ->options($this->getCategory2Options())
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value !== '') {
+                        $builder->where('jwl_category2', $value);
+                    }
+                }),
             SelectFilter::make('Status', 'status_filter')
             ->options([
                 'active' => 'Active',
