@@ -133,14 +133,14 @@ class Index extends BaseComponent
             ->whereNull('materials.deleted_at')
             ->whereNull('matl_uoms.deleted_at')
             ->whereNotNull('materials.jwl_category1')
-             ->where('ivt_bals.qty_oh', '>', 0)
+             ->where('ivt_bals.qty_oh', '>=', 0)
             ->groupBy('materials.jwl_category1')
             ->orderBy('materials.jwl_category1')
             ->get()
             ->map(function ($item) {
                 return [
                     'category_name' => $item->category_name,
-                    'item_count' => $item->total_qty ?: 0,
+                    'item_count' => (int) $item->total_qty ?: 0,
                 ];
             });
     }
