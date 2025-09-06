@@ -24,8 +24,8 @@
                     <div class="col">
                         <div class="card h-100 shadow-sm border-0 catalogue-item">
                             <div class="position-relative">
-                                 @if($material->Attachment->first())
-                                    <x-ui-image src="{{ $material->Attachment->first()->getUrl() }}"   class="card-img-top catalogue-image" />
+                                    @if($material->Attachment->first())
+                                    <x-ui-image src="{{ $material->Attachment->first()->getUrl() }}"   class="card-img-top catalogue-image"  width="600px" height="600px" />
                                     @else
                                     <img src="https://via.placeholder.com/300" alt="Material"  class="card-img-top catalogue-image">
                                 @endif
