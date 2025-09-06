@@ -24,21 +24,11 @@
                     <div class="col">
                         <div class="card h-100 shadow-sm border-0 catalogue-item">
                             <div class="position-relative">
-                                    @php
-                                        // Random image sizes untuk testing
-                                        $imageSizes = [
-                                            '300x200',   // landscape
-                                            '200x300',   // portrait
-                                            '500x200',   // wide
-                                            '200x500',   // tall
-                                            '400x400',   // square
-                                            '800x600',   // large landscape
-                                            '150x300',   // narrow
-                                            '600x300'    // wide landscape
-                                        ];
-                                        $randomSize = $imageSizes[($key % count($imageSizes))];
+
+                                     @php
+                                        $imagePath = isset($detail['image_path']) && !empty($detail['image_path']) ? $detail['image_path'] : 'https://via.placeholder.com/300';
                                     @endphp
-                                    <img src="https://placehold.co/{{ $randomSize }}/{{ ['FF6B6B', '4ECDC4', '45B7D1', 'FFA07A', '98D8C8', 'F7DC6F', 'BB8FCE', '85C1E9'][($key % 8)] }}/FFFFFF?text=Test+{{ $key + 1 }}"
+                                    <img  src="{{ $imagePath }}"
                                          alt="Test Material {{ $key + 1 }}"
                                          class="card-img-top catalogue-image">
                             </div>
