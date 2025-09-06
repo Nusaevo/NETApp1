@@ -113,7 +113,7 @@ class Index extends BaseComponent
                 return [
                     'matl_code' => $item->matl_code,
                     'matl_descr' => $item->matl_descr,
-                    'total_qty' => $item->total_qty,
+                    'total_qty' => (int) $item->total_qty,
                     'order_count' => $item->order_count,
                 ];
             });

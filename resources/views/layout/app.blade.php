@@ -133,6 +133,14 @@
             50% { opacity: 0.7; }
             100% { opacity: 1; }
         }
+
+        /* Hide loading spinner when printing */
+        @media print {
+            .nextjs-loading-spinner {
+                display: none !important;
+                visibility: hidden !important;
+            }
+        }
     </style>
 
     @livewireStyles
