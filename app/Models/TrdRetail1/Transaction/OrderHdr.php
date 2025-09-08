@@ -5,8 +5,11 @@ namespace App\Models\TrdRetail1\Transaction;
 use App\Models\Base\BaseModel;
 use App\Models\TrdRetail1\Master\Partner;
 use App\Models\TrdRetail1\Master\Material;
+use App\Models\TrdRetail1\Master\MatlUom;
+use App\Models\TrdRetail1\Transaction\{DelivDtl, BillingDtl, DelivHdr, BillingHdr, PaymentHdr, PaymentDtl};
+use App\Models\TrdRetail1\Inventories\{IvtBal, IvtLog};
+use App\Models\SysConfig1\{ConfigSnum, ConfigConst};
 use App\Enums\Status;
-use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -29,35 +32,82 @@ class OrderHdr extends BaseModel
 
         // Cascade deletes untuk record terkait
         static::deleting(function ($orderHdr) {
-            // Hapus DelivHdr dan detail-nya
-            $delivHdr = $orderHdr->DelivHdr;
-            if ($delivHdr) {
-                foreach ($delivHdr->DelivDtl as $delivDtl) {
-                    $delivDtl->delete();
-                }
-                $delivHdr->delete();
-            }
+            DB::beginTransaction();
+            try {
+                // Delete related OrderDtl records first with inventory management
+                foreach ($orderHdr->OrderDtl as $orderDtl) {
+                    $values = $orderHdr->getTrTypeValues($orderDtl->tr_type);
 
-            // Hapus BillingHdr dan detail-nya
-            $billingHdr = $orderHdr->BillingHdr;
-            if ($billingHdr) {
-                foreach ($billingHdr->BillingDtl as $billingDtl) {
-                    $billingDtl->delete();
-                }
-                $billingHdr->delete();
-            }
+                    $delivDtls = DelivDtl::where('tr_id', $orderDtl->tr_id)
+                        ->where('tr_seq', $orderDtl->tr_seq)
+                        ->where('tr_type', $values['delivTrType'])
+                        ->get();
 
-            // Hapus OrderDtl
-            foreach ($orderHdr->OrderDtl as $orderDtl) {
-                $orderDtl->delete();
+                    foreach ($delivDtls as $delivDtl) {
+                        if (empty($delivDtl->wh_id)) {
+                            $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
+                            if ($warehouse) {
+                                $delivDtl->wh_id = $warehouse->id;
+                            }
+                        }
+                        $existingBal = IvtBal::where([
+                            'matl_id' => $delivDtl->matl_id,
+                            'wh_id' => $delivDtl->wh_id,
+                            'matl_uom' => $delivDtl->matl_uom,
+                            'batch_code' => $delivDtl->batch_code,
+                        ])->first();
+
+                        if ($existingBal) {
+                            $qtyRevert = match ($delivDtl->tr_type) {
+                                'PD' => -$delivDtl->qty,  // Purchase Delivery: reduce stock on deletion
+                                'RD' => -$delivDtl->qty,  // Return Delivery: reduce stock on deletion (reverse the stock increase)
+                                'SD' => $delivDtl->qty,   // Sales Delivery: increase stock on deletion
+                                default => 0,
+                            };
+
+                            if ($qtyRevert != 0) {
+                                $existingBal->increment('qty_oh', $qtyRevert);
+                                IvtLog::removeIvtLogIfExists(
+                                    $delivDtl->trhdr_id,
+                                    $delivDtl->tr_type,
+                                    $delivDtl->tr_seq
+                                );
+                            }
+                        }
+
+                        MatlUom::recalcMatlUomQtyOh($delivDtl->matl_id, $delivDtl->matl_uom);
+                        $delivDtl->delete();
+                    }
+
+                    BillingDtl::where('tr_id', $orderDtl->tr_id)
+                        ->where('tr_seq', $orderDtl->tr_seq)
+                        ->where('tr_type', $values['billingTrType'])
+                        ->delete();
+
+                    $orderDtl->delete();
+                }
+
+                // Delete related DelivHdr
+                $delivHdr = $orderHdr->DelivHdr;
+                if ($delivHdr) {
+                    $delivHdr->delete();
+                }
+
+                // Delete related BillingHdr
+                $billingHdr = $orderHdr->BillingHdr;
+                if ($billingHdr) {
+                    $billingHdr->delete();
+                }
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
             }
         });
 
         // Contoh: format goldprice_curr saat retrieval
         static::retrieved(function ($model) {
-            if (array_key_exists('goldprice_curr', $model->attributes)) {
-                $model->goldprice_curr = numberFormat($model->attributes['goldprice_curr'], 2);
-            }
         });
     }
 

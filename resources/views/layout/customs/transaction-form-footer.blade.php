@@ -20,18 +20,27 @@ $printPdfRoute = preg_replace('/\.[^.]+$/', '.PrintPdf', $baseRoute);
     $(document).on('click', '.btn-dialog-box', function(e) {
         e.preventDefault();
         Swal.fire({
-            title: "Apakah Anda Yakin ingin melanjutkannya?"
-            , text: ""
-            , icon: "question"
+            title: "Konfirmasi Penghapusan"
+            , text: "Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan."
+            , icon: "warning"
+            , iconColor: "#f27474"
+            , background: "#fff"
+            , backdrop: "rgba(0,0,0,0.4)"
             , buttonsStyling: false
             , showConfirmButton: true
             , showCancelButton: true
-            , confirmButtonText: "Yes"
-            , cancelButtonText: "No"
+            , confirmButtonText: "<i class='fas fa-trash me-1'></i>Ya, Hapus"
+            , cancelButtonText: "<i class='fas fa-times me-1'></i>Batal"
             , closeOnConfirm: false
+            , allowOutsideClick: false
+            , allowEscapeKey: true
             , customClass: {
-                confirmButton: "btn btn-primary"
-                , cancelButton: 'btn btn-secondary'
+                popup: "rounded-3 shadow-lg"
+                , title: "fw-bold text-dark fs-4 mb-3"
+                , htmlContainer: "text-muted fs-6 mb-4"
+                , confirmButton: "btn btn-danger me-3 px-4 py-2 rounded-pill"
+                , cancelButton: "btn btn-outline-secondary px-4 py-2 rounded-pill"
+                , actions: "gap-2 mt-4"
             }
         }).then(confirm => {
             if (confirm.isConfirmed) {

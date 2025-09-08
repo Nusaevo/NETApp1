@@ -3,10 +3,12 @@
 namespace App\Models\TrdRetail1\Transaction;
 
 use App\Models\Base\BaseModel;
-use App\Models\TrdRetail1\Master\Partner;
+use App\Models\TrdRetail1\Master\{Partner, MatlUom};
 use App\Models\TrdRetail1\Transaction\{ReturnDtl, OrderHdr, DelivHdr, DelivDtl, BillingHdr, BillingDtl, PaymentHdr, PaymentDtl};
+use App\Models\TrdRetail1\Inventories\{IvtBal, IvtLog};
+use App\Models\SysConfig1\{ConfigSnum, ConfigConst};
 use App\Enums\Status;
-use App\Models\SysConfig1\ConfigSnum;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\BaseTrait;
 use App\Enums\Constant;
@@ -18,8 +20,98 @@ class ReturnHdr extends BaseModel
     {
         parent::boot();
         static::deleting(function ($returnHdr) {
-            foreach ($returnHdr->ReturnDtl as $returnDtl) {
-                $returnDtl->delete();
+            DB::beginTransaction();
+            try {
+                // Delete related ReturnDtl records first with inventory management
+                foreach ($returnHdr->ReturnDtl as $returnDtl) {
+                    $values = $returnHdr->getReturnTrTypeValues($returnDtl->tr_type);
+
+                    // Find related delivery details (Return Delivery - RD)
+                    $delivDtls = DelivDtl::where('tr_id', $returnDtl->tr_id)
+                        ->where('tr_seq', $returnDtl->tr_seq)
+                        ->where('tr_type', $values['delivTrType'])
+                        ->get();
+
+                    foreach ($delivDtls as $delivDtl) {
+                        // Ensure warehouse ID is set
+                        if (empty($delivDtl->wh_id)) {
+                            $warehouse = ConfigConst::where('str1', $delivDtl->wh_code)->first();
+                            if ($warehouse) {
+                                $delivDtl->wh_id = $warehouse->id;
+                            }
+                        }
+
+                        // Find existing inventory balance
+                        $existingBal = IvtBal::where([
+                            'matl_id' => $delivDtl->matl_id,
+                            'wh_id' => $delivDtl->wh_id,
+                            'matl_uom' => $delivDtl->matl_uom,
+                            'batch_code' => $delivDtl->batch_code,
+                        ])->first();
+
+                        if ($existingBal) {
+                            // For return deletion: REDUCE stock (reverse the return increase)
+                            $qtyRevert = match ($delivDtl->tr_type) {
+                                'RD' => -$delivDtl->qty,  // Return Delivery deletion reduces stock
+                                default => 0,
+                            };
+
+                            if ($qtyRevert != 0) {
+                                $existingBal->increment('qty_oh', $qtyRevert);
+
+                                // Remove inventory log if exists
+                                IvtLog::removeIvtLogIfExists(
+                                    $delivDtl->trhdr_id,
+                                    $delivDtl->tr_type,
+                                    $delivDtl->tr_seq
+                                );
+                            }
+                        }
+
+                        // Recalculate material UOM quantity on hand
+                        MatlUom::recalcMatlUomQtyOh($delivDtl->matl_id, $delivDtl->matl_uom);
+
+                        // Force delete the delivery detail
+                        $delivDtl->forceDelete();
+                    }
+
+                    // Delete related billing details
+                    BillingDtl::where('tr_id', $returnDtl->tr_id)
+                        ->where('tr_seq', $returnDtl->tr_seq)
+                        ->where('tr_type', $values['billingTrType'])
+                        ->forceDelete();
+
+                    $returnDtl->forceDelete();
+                }
+
+                // Delete related DelivHdr (Return Delivery Header)
+                $delivHdr = DelivHdr::where('tr_id', $returnHdr->tr_id)
+                    ->where('tr_type', 'RD')
+                    ->first();
+                if ($delivHdr) {
+                    $delivHdr->forceDelete();
+                }
+
+                // Delete related BillingHdr (Return Billing Header)
+                $billingHdr = BillingHdr::where('tr_id', $returnHdr->tr_id)
+                    ->where('tr_type', 'RB')
+                    ->first();
+                if ($billingHdr) {
+                    $billingHdr->forceDelete();
+                }
+
+                // Delete related PaymentHdr (Return Payment Header)
+                $paymentHdr = PaymentHdr::where('tr_id', $returnHdr->tr_id)
+                    ->where('tr_type', 'RP')
+                    ->first();
+                if ($paymentHdr) {
+                    $paymentHdr->forceDelete();
+                }
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
             }
         });
     }

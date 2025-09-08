@@ -7,6 +7,8 @@ use App\Models\TrdJewel1\Master\Partner;
 use App\Models\TrdJewel1\Master\Material;
 use App\Enums\Status;
 use App\Models\SysConfig1\ConfigSnum;
+use App\Models\TrdJewel1\Transaction\{DelivDtl, BillingDtl, DelivHdr, BillingHdr};
+use App\Models\TrdJewel1\Inventories\{IvtBal, IvtBalUnit};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\Constant;
@@ -18,27 +20,63 @@ class OrderHdr extends BaseModel
     {
         parent::boot();
         static::deleting(function ($orderHdr) {
-            // Delete related DelivHdr and its DelivDtl
-            $delivHdr = $orderHdr->DelivHdr;
-            if ($delivHdr) {
-                foreach ($delivHdr->DelivDtl as $delivDtl) {
-                    $delivDtl->delete(); // Delete each DelivDtl
-                }
-                $delivHdr->delete(); // Delete the DelivHdr after its DelivDtl records are deleted
-            }
+            DB::beginTransaction();
+            try {
+                // Delete related OrderDtl records first with inventory management
+                foreach ($orderHdr->OrderDtl as $orderDtl) {
+                    $delivDtls = DelivDtl::where('trhdr_id', $orderDtl->trhdr_id)
+                        ->where('tr_seq', $orderDtl->tr_seq)
+                        ->get();
 
-            // Delete related BillingHdr and its BillingDtl
-            $billingHdr = $orderHdr->BillingHdr;
-            if ($billingHdr) {
-                foreach ($billingHdr->BillingDtl as $billingDtl) {
-                    $billingDtl->delete(); // Delete each BillingDtl
-                }
-                $billingHdr->delete(); // Delete the BillingHdr after its BillingDtl records are deleted
-            }
+                    foreach ($delivDtls as $delivDtl) {
+                        $existingBal = IvtBal::where('matl_id', $delivDtl->matl_id)
+                            ->where('wh_id', $delivDtl->wh_code)
+                            ->first();
+                        $qtyChange = (float)$delivDtl->qty;
+                        if ($delivDtl->tr_type === 'PD') {
+                            $qtyChange = -$qtyChange;
+                        }
+                        if ($existingBal) {
+                            $existingBalQty = $existingBal->qty_oh;
+                            $newQty = $existingBalQty + $qtyChange;
+                            $existingBal->qty_oh = $newQty;
+                            $existingBal->save();
+                            // Update corresponding record in IvtBalUnit
+                            $existingBalUnit = IvtBalUnit::where('matl_id', $delivDtl->matl_id)
+                                ->where('wh_id', $delivDtl->wh_code)
+                                ->first();
+                            if ($existingBalUnit) {
+                                $existingBalUnitQty = $existingBalUnit->qty_oh;
+                                $existingBalUnit->qty_oh = $existingBalUnitQty + $qtyChange;
+                                $existingBalUnit->save();
+                            }
+                        }
+                        $delivDtl->delete();
+                    }
 
-            // Delete related OrderDtl records
-            foreach ($orderHdr->OrderDtl as $orderDtl) {
-                $orderDtl->delete(); // Delete each OrderDtl
+                    BillingDtl::where('trhdr_id', $orderDtl->trhdr_id)
+                        ->where('tr_seq', $orderDtl->tr_seq)
+                        ->delete();
+
+                    $orderDtl->delete();
+                }
+
+                // Delete related DelivHdr
+                $delivHdr = $orderHdr->DelivHdr;
+                if ($delivHdr) {
+                    $delivHdr->delete();
+                }
+
+                // Delete related BillingHdr
+                $billingHdr = $orderHdr->BillingHdr;
+                if ($billingHdr) {
+                    $billingHdr->delete();
+                }
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
             }
         });
 
