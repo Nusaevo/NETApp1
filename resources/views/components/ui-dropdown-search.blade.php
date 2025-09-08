@@ -52,6 +52,42 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    /* Modal support - ensure Select2 dropdown appears above modal */
+    .modal .select2-container--default .select2-dropdown {
+        z-index: 1060 !important; /* Bootstrap modal z-index is 1050 */
+    }
+
+    /* Ensure dropdown can overflow modal boundaries */
+    .modal-body {
+        overflow: visible !important;
+    }
+
+    .modal-content {
+        overflow: visible !important;
+    }
+
+    .select2-dropdown {
+        z-index: 1060 !important;
+    }
+
+    .modal .select2-container--default .select2-selection--single {
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        min-height: calc(1.5em + 0.75rem + 2px);
+    }
+
+    .modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+        padding-left: 0.75rem;
+        padding-right: 2.25rem;
+        color: #495057;
+        line-height: calc(1.5em + 0.75rem);
+    }
+
+    .modal .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + 0.75rem);
+        right: 0.75rem;
+    }
 </style>
 
 <div wire:key="{{ $id }}-dropdown-search" class="{{ $colClass }}"
@@ -74,12 +110,13 @@
                         $(selectElement).select2('destroy');
                     }
 
-                    // Initialize Select2 with AJAX
+                    // Initialize Select2 with AJAX and modal support
                     $(selectElement).select2({
                         placeholder: '{{ $placeHolder ?? 'Select an option' }}',
                         allowClear: true,
                         minimumInputLength: 1,
                         width: '100%',
+                        dropdownParent: $(selectElement).closest('.modal').length > 0 ? $(selectElement).closest('.modal') : $('body'),
                         // Use standard size Select2 that matches form-select
                         // Show the clear button for all types
                         templateSelection: function(data) {
@@ -188,6 +225,28 @@
                                 return 'Searching...';
                             }
                         }
+                    });
+
+                    // Fix for modal compatibility - enable search input
+                    $(selectElement).on('select2:open', function () {
+                        // Enable typing in search field when in modal
+                        setTimeout(function() {
+                            const searchField = $('.select2-search__field');
+                            searchField.prop('disabled', false);
+                            searchField.attr('readonly', false);
+                            searchField.removeAttr('tabindex');
+
+                            // Focus on search field if in modal
+                            const isInModal = $(selectElement).closest('.modal').length > 0;
+                            if (isInModal) {
+                                searchField.focus();
+
+                                // Prevent modal from closing when clicking on dropdown
+                                $('.select2-dropdown').on('click', function(e) {
+                                    e.stopPropagation();
+                                });
+                            }
+                        }, 10);
                     });
 
                     // Remove duplicate event bindings
@@ -319,6 +378,43 @@
 
                 // Initialize Select2 when component is created
                 initSelect2();
+
+                // Re-initialize Select2 when modal is shown (if inside a modal)
+                const parentModal = document.getElementById('{{ $id }}').closest('.modal');
+                if (parentModal) {
+                    $(parentModal).on('shown.bs.modal', function () {
+                        // Small delay to ensure modal is fully rendered
+                        setTimeout(() => {
+                            initSelect2();
+
+                            // Enable search input if it was disabled
+                            const searchInput = $(parentModal).find('.select2-search__field');
+                            if (searchInput.length > 0) {
+                                searchInput.prop('disabled', false);
+                                searchInput.attr('readonly', false);
+                            }
+                        }, 100);
+                    });
+
+                    // Clean up when modal is hidden
+                    $(parentModal).on('hidden.bs.modal', function () {
+                        const selectElement = document.getElementById('{{ $id }}');
+                        if (selectElement && $(selectElement).hasClass('select2-hidden-accessible')) {
+                            $(selectElement).select2('close');
+                        }
+                    });
+                }
+
+                // Add reset functionality - listen for Livewire dispatch events
+                document.addEventListener('livewire:initialized', () => {
+                    Livewire.on('resetSelect2Dropdowns', () => {
+                        const selectElement = document.getElementById('{{ $id }}');
+                        if (selectElement && $(selectElement).hasClass('select2-hidden-accessible')) {
+                            // Clear the value and trigger change
+                            $(selectElement).val('{{ $blankValue }}').trigger('change');
+                        }
+                    });
+                });
             }">
 
             <select id="{{ $id }}"

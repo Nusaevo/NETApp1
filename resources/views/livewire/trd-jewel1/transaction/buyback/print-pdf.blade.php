@@ -98,7 +98,7 @@
         </div>
 
         <!-- Print Settings Modal -->
-        <div class="modal fade" id="printSettingsModal" tabindex="-1" aria-labelledby="printSettingsModalLabel" aria-hidden="true">
+        <div class="modal fade" id="printSettingsModal"  aria-labelledby="printSettingsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">

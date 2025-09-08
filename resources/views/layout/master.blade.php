@@ -6,6 +6,17 @@
 <head>
     <base href=""/>
     <title>{{ config('app.name', 'Laravel') }}</title>
+
+    <!-- Dynamic Favicon from SysConfig1 Application Logo -->
+    @php
+        $faviconPath = 'customs/logos/SysConfig1.png';
+        // Fallback ke favicon default jika logo aplikasi tidak ada
+        if (!file_exists(public_path($faviconPath))) {
+            $faviconPath = 'favicon.ico';
+        }
+    @endphp
+    <link rel="shortcut icon" href="{{ asset($faviconPath) }}" type="image/png">
+    <link rel="icon" href="{{ asset($faviconPath) }}" type="image/png">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="utf-8"/>
     <meta name="description" content=""/>
@@ -15,6 +26,7 @@
     <meta property="og:type" content="article"/>
     <meta property="og:title" content=""/>
     <link rel="canonical" href=""/>
+    <meta name="facebook-domain-verification" content="nrk61mmi9umrp43dddp99yron03921" />
 
     {!! includeFavicon() !!}
 

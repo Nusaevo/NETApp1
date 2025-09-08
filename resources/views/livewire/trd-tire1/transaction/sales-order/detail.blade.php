@@ -52,7 +52,7 @@
                                             onChanged="onTaxPayerChanged" />
 
                                         <!-- Debug: tampilkan jumlah options -->
-                                        @if (config('app.debug'))
+                                        {{-- @if (config('app.debug'))
                                             <div style="font-size: 10px; color: #666;">
                                                 Debug: NPWP Options count: {{ count($npwpOptions ?? []) }}
                                                 @if (!empty($npwpOptions))
@@ -87,7 +87,7 @@
                                                     }
                                                 });
                                             });
-                                        </script>
+                                        </script> --}}
                                         <x-ui-dialog-box id="NpwpDialogBox" title="Form Jenis" width="600px"
                                             height="400px" onOpened="openNpwpDialogBox" onClosed="closeNpwpDialogBox">
                                             <x-slot name="body">

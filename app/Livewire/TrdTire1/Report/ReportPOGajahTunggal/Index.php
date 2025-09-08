@@ -3,7 +3,7 @@
 namespace App\Livewire\TrdTire1\Report\ReportPOGajahTunggal;
 
 use App\Livewire\Component\BaseComponent;
-use Illuminate\Support\Facades\{DB, Session};
+use Illuminate\Support\Facades\{DB, Session, Log};
 use App\Services\TrdTire1\Master\MasterService;
 use App\Enums\Constant;
 use App\Models\TrdTire1\Master\SalesReward;
@@ -129,18 +129,21 @@ class Index extends BaseComponent
             SELECT
                 dh.reff_date AS tgl_sj,
                 dh.tr_code AS no_nota,
+                dpi.matl_code AS kode_brg,
                 dp.matl_descr AS nama_barang,
                 p.name AS nama_pelanggan,
                 p.city AS kota_pelanggan,
                 dp.qty AS total_ban,
-                sr.reward AS point,
-                (dp.qty * sr.reward) AS total_point
+                COALESCE(sr.reward, 0) AS point,
+                (dp.qty * COALESCE(sr.reward, 0)) AS total_point
             FROM deliv_packings dp
             JOIN deliv_hdrs dh ON dh.id = dp.trhdr_id AND dh.tr_type = 'PD'
             JOIN partners p ON p.id = dh.partner_id
             JOIN deliv_pickings dpi ON dpi.trpacking_id = dp.id
-            JOIN sales_rewards sr ON sr.code = '{$rewardCode}' AND sr.matl_code = dpi.matl_code
-            JOIN materials m ON m.id = dpi.matl_id AND m.brand = sr.brand
+            JOIN materials m ON m.id = dpi.matl_id
+            LEFT JOIN sales_rewards sr ON sr.code = '{$rewardCode}'
+                AND sr.matl_code = dpi.matl_code
+                AND sr.brand = m.brand
             WHERE dp.tr_type = 'PD'
                 AND dh.reff_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$brandFilter}
@@ -148,6 +151,90 @@ class Index extends BaseComponent
             ORDER BY p.name, dh.tr_code, dp.matl_descr
         ";
         $rows = DB::connection(Session::get('app_code'))->select($query);
+
+        // Debug: Cek data step by step
+        $deliveryCount = DB::connection(Session::get('app_code'))
+            ->table('deliv_hdrs')
+            ->where('tr_type', 'PD')
+            ->whereBetween('reff_date', [$startDate, $endDate])
+            ->count();
+
+        $rewardExists = DB::connection(Session::get('app_code'))
+            ->table('sales_rewards')
+            ->where('code', $rewardCode)
+            ->exists();
+
+        // Debug: Cek join step by step
+        $step1 = DB::connection(Session::get('app_code'))
+            ->table('deliv_packings as dp')
+            ->join('deliv_hdrs as dh', function($join) {
+                $join->on('dh.id', '=', 'dp.trhdr_id')
+                     ->where('dh.tr_type', '=', 'PD');
+            })
+            ->where('dp.tr_type', 'PD')
+            ->whereBetween('dh.reff_date', [$startDate, $endDate])
+            ->count();
+
+        $step2 = DB::connection(Session::get('app_code'))
+            ->table('deliv_packings as dp')
+            ->join('deliv_hdrs as dh', function($join) {
+                $join->on('dh.id', '=', 'dp.trhdr_id')
+                     ->where('dh.tr_type', '=', 'PD');
+            })
+            ->join('partners as p', 'p.id', '=', 'dh.partner_id')
+            ->where('dp.tr_type', 'PD')
+            ->whereBetween('dh.reff_date', [$startDate, $endDate])
+            ->count();
+
+        $step3 = DB::connection(Session::get('app_code'))
+            ->table('deliv_packings as dp')
+            ->join('deliv_hdrs as dh', function($join) {
+                $join->on('dh.id', '=', 'dp.trhdr_id')
+                     ->where('dh.tr_type', '=', 'PD');
+            })
+            ->join('partners as p', 'p.id', '=', 'dh.partner_id')
+            ->join('deliv_pickings as dpi', 'dpi.trpacking_id', '=', 'dp.id')
+            ->where('dp.tr_type', 'PD')
+            ->whereBetween('dh.reff_date', [$startDate, $endDate])
+            ->count();
+
+        // Cek sales rewards yang ada
+        $salesRewards = DB::connection(Session::get('app_code'))
+            ->table('sales_rewards')
+            ->where('code', $rewardCode)
+            ->get();
+
+        // Cek material codes yang ada di delivery pickings
+        $deliveryPickings = DB::connection(Session::get('app_code'))
+            ->table('deliv_packings as dp')
+            ->join('deliv_hdrs as dh', function($join) {
+                $join->on('dh.id', '=', 'dp.trhdr_id')
+                     ->where('dh.tr_type', '=', 'PD');
+            })
+            ->join('deliv_pickings as dpi', 'dpi.trpacking_id', '=', 'dp.id')
+            ->join('materials as m', 'm.id', '=', 'dpi.matl_id')
+            ->where('dp.tr_type', 'PD')
+            ->whereBetween('dh.reff_date', [$startDate, $endDate])
+            ->select('dpi.matl_code', 'm.brand', 'm.category')
+            ->get();
+
+        Log::info('Report PO Gajah Tunggal Debug:', [
+            'query' => $query,
+            'row_count' => count($rows),
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'reward_code' => $rewardCode,
+            'delivery_count' => $deliveryCount,
+            'reward_exists' => $rewardExists,
+            'step1_count' => $step1,
+            'step2_count' => $step2,
+            'step3_count' => $step3,
+            'sales_rewards' => $salesRewards->toArray(),
+            'delivery_pickings' => $deliveryPickings->toArray(),
+            'brand_filter' => $brandFilter,
+            'category_filter' => $categoryFilter
+        ]);
+
         // Grouping per customer
         $grouped = [];
         foreach ($rows as $row) {
@@ -163,6 +250,7 @@ class Index extends BaseComponent
             $grouped[$customerKey]['details'][] = [
                 'tgl_sj' => $row->tgl_sj,
                 'no_nota' => $row->no_nota,
+                'kode_brg' => $row->kode_brg,
                 'nama_barang' => $row->nama_barang,
                 'total_ban' => $row->total_ban,
                 'point' => $row->point,

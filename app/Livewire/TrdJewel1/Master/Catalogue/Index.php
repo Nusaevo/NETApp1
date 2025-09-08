@@ -70,12 +70,12 @@ class Index extends BaseComponent
 
     public function View($id)
     {
-        return redirect()->route('materials.detail', ['action' => Crypt::encryptString('View'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('materials.detail', ['action' => encryptWithSessionKey('View'), 'objectId' => encryptWithSessionKey($id)]);
     }
 
     public function Edit($id)
     {
-        return redirect()->route('materials.detail', ['action' => Crypt::encryptString('Edit'), 'objectId' => Crypt::encryptString($id)]);
+        return redirect()->route('materials.detail', ['action' => encryptWithSessionKey('Edit'), 'objectId' => encryptWithSessionKey($id)]);
     }
 
     public function search()

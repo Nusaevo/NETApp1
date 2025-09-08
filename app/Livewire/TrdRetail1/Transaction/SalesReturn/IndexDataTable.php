@@ -25,7 +25,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return ReturnHdr::with('ReturnDtl', 'Partner', 'ExchangeOrder')
             ->where('return_hdrs.tr_type', 'SR')
-            ->where('return_hdrs.status_code', Status::OPEN);
+            ->where('return_hdrs.status_code', Status::OPEN)
+            ->orderBy('tr_date', 'desc')
+            ->orderBy('tr_id', 'desc');
     }
 
     public function columns(): array
@@ -59,7 +61,18 @@ class IndexDataTable extends BaseDataTableComponent
              Column::make($this->trans('matl_code'), 'id')
                 ->label(function ($row) {
                     return $row->matl_codes;
-                }),
+                })
+                ->format(function ($value, $row) {
+                    if (!empty($row->matl_codes)) {
+                        $items = explode(', ', $row->matl_codes);
+                        $formatted = array_map(function($item) {
+                            return '<span class="badge bg-primary text-white me-1">' . $item . '</span>';
+                        }, $items);
+                        return implode('', $formatted);
+                    }
+                    return '-';
+                })
+                ->html(),
             Column::make($this->trans("return_qty"), "total_qty")
                 ->label(function ($row) {
                     return $row->total_qty;
@@ -78,6 +91,21 @@ class IndexDataTable extends BaseDataTableComponent
                 ->label(function ($row) {
                     return rupiah($row->exchange_amt);
                 }),
+            Column::make($this->trans("exchange_items"), "id")
+                ->label(function ($row) {
+                    return $row->exchange_matl_codes;
+                })
+                ->format(function ($value, $row) {
+                    if (!empty($row->exchange_matl_codes)) {
+                        $items = explode(', ', $row->exchange_matl_codes);
+                        $formatted = array_map(function($item) {
+                            return '<span class="badge bg-info text-dark me-1">' . $item . '</span>';
+                        }, $items);
+                        return implode('', $formatted);
+                    }
+                    return '-';
+                })
+                ->html(),
             Column::make($this->trans('status'), "status_code")
                 ->sortable()
                 ->format(function ($value, $row, Column $column) {

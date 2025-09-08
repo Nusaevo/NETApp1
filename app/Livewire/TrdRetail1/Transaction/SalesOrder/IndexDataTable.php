@@ -17,15 +17,17 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
+        // Hapus duplicate sorting - hanya gunakan satu
         $this->setDefaultSort('tr_date', 'desc');
-        $this->setDefaultSort('tr_id', 'desc');
     }
 
     public function builder(): Builder
     {
         return OrderHdr::with('OrderDtl', 'Partner')
             ->where('order_hdrs.tr_type', 'SO')
-            ->where('order_hdrs.status_code', Status::OPEN);
+            ->where('order_hdrs.status_code', Status::OPEN)
+            ->orderBy('tr_date', 'desc')
+            ->orderBy('tr_id', 'desc');
     }
 
     public function columns(): array
@@ -56,20 +58,24 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-             Column::make($this->trans('matl_code'), 'id')
+           Column::make($this->trans("matl_code"), 'id')
                 ->format(function ($value, $row) {
-                    // Ambil orderDtl
                     $orderDtl = OrderDtl::where('tr_id', $row->tr_id)
                         ->where('tr_type', $row->tr_type)
                         ->orderBy('id')
                         ->get();
 
-                    // Ambil cuma matl_code
-                    $matlCodes = $orderDtl->pluck('matl_code');
+                    $matlCodes = $orderDtl->pluck('matl_code', 'matl_id');
+                    $links = $matlCodes->map(function ($code, $id) {
+                        return '<a href="' . route($this->appCode.'.Master.Material.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($id)
+                        ]) . '">' . $code . '</a>';
+                    });
 
-                    // Gabungkan pakai koma
-                    return $matlCodes->implode(', ');
-                }),
+                    return $links->implode(', ');
+                })
+                ->html(),
             Column::make($this->trans("qty"), "total_qty")
                 ->label(function ($row) {
                     return $row->total_qty;
@@ -90,14 +96,14 @@ class IndexDataTable extends BaseDataTableComponent
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
                         'custom_actions' => [
-                            // [
-                            //     'label' => 'Print',
-                            //     'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
-                            //         'action' => encryptWithSessionKey('Edit'),
-                            //         'objectId' => encryptWithSessionKey($row->id)
-                            //     ]),
-                            //     'icon' => 'bi bi-printer'
-                            // ],
+                            [
+                                'label' => 'Print',
+                                'route' => route($this->appCode.'.Transaction.SalesOrder.PrintPdf', [
+                                    'action' => encryptWithSessionKey('Edit'),
+                                    'objectId' => encryptWithSessionKey($row->id)
+                                ]),
+                                'icon' => 'bi bi-printer'
+                            ],
                         ],
                         'enable_this_row' => true,
                         'allow_details' => false,

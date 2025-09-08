@@ -948,6 +948,7 @@ class Detail extends BaseComponent
 
     public function onBankCodeChanged($key, $bankCode)
     {
+
         $this->input_payments[$key]['bank_id'] =
             $this->partnerOptions[array_search($bankCode, array_column($this->partnerOptions, 'label'))]['id'] ?? null;
 
@@ -962,6 +963,7 @@ class Detail extends BaseComponent
         $this->input_payments[$key]['pay_type_code'] = $payTypeCode;
         $this->input_payments[$key]['pay_type_id'] =
             $this->paytypeOptions[array_search($payTypeCode, array_column($this->paytypeOptions, 'value'))]['id'] ?? 0;
+
     }
 
     public function render()

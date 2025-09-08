@@ -20,18 +20,18 @@
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('Tipe transaksi') }}"
                                         model="inputs.tr_type" :options="$warehousesType" required="true" :action="$actionValue"
-                                        onChanged="onTypeChanged($event.target.value)" />
+                                        onChanged="onTypeChanged($event.target.value)" :enabled="$isPanelEnabled === 'true'" />
                                     <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}"
                                         model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue"
                                         onChanged="onWarehouseChanged($event.target.value)" enabled="false" />
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
-                                        :action="$actionValue" required="true" />
+                                        :action="$actionValue" required="true" :enabled="$isPanelEnabled === 'true'" />
                                 </div>
                                 <div class="row">
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_id" :action="$actionValue"
                                         required="false" enabled="false" />
                                     <x-ui-text-field label="{{ $this->trans('note') }}" model="inputs.remark"
-                                        type="textarea" :action="$actionValue" required="false" />
+                                        type="textarea" :action="$actionValue" required="false" :enabled="$isPanelEnabled === 'true'" />
                                 </div>
                             </x-ui-padding>
                         </x-ui-card>
@@ -42,15 +42,18 @@
                                 <x-slot name="headers">
                                     <th style="width: 50px; text-align: center;">No</th>
                                     <th style="width: 200px; text-align: center;">Material</th>
+                                    <th style="width: 80px; text-align: center;">UOM</th>
                                     <th style="width: 100px; text-align: center;">Stock Saat Ini</th>
-                                    <th style="width: 100px; text-align: center;">Penyesuaian (+ tambah / - kurangi)</th>
+                                    <th style="width: 100px; text-align: center;">Penambahan (+)</th>
+                                    <th style="width: 100px; text-align: center;">Pengurangan (-)</th>
                                     <th style="width: 100px; text-align: center;">Stock Akhir</th>
-                                    <th style="width: 70px; text-align: center;">Actions</th>
+                                    <th style="width: 70px; text-align: center;">Delete</th>
                                 </x-slot>
                                 <!-- Define table rows -->
                                 <x-slot name="rows">
                                     @foreach ($input_details as $key => $input_detail)
-                                        <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
+                                        <tr wire:key="list{{ $input_detail['id'] ?? $key }}"
+                                            @if(!empty($input_detail['_delete'])) class="table-danger text-decoration-line-through" @endif>
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
                                                <x-ui-dropdown-search
@@ -63,9 +66,16 @@
                                                     :selectedValue="$input_details[$key]['matl_id'] ?? ''"
                                                     required="true"
                                                     :action="$actionValue"
-                                                    enabled="true"
+                                                    enabled="{{ empty($input_details[$key]['id']) ? 'true' : 'false' }}"
                                                     onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                                     type="int" />
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <x-ui-dropdown-select
+                                                    model="input_details.{{ $key }}.matl_uom"
+                                                    :options="$uomOptions"
+                                                    onChanged="onUomChanged({{ $key }}, $event.target.value)"
+                                                />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.current_stock"
@@ -73,10 +83,18 @@
                                                     type="text" required="false" enabled="false" />
                                             </td>
                                             <td style="text-align: center;">
-                                                <x-ui-text-field model="input_details.{{ $key }}.qty_adjustment"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue"
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_add"
+                                                    label=""
+                                                    enabled="{{ empty($input_details[$key]['id']) ? 'true' : 'false' }}" :action="$actionValue"
                                                     onChanged="updateItemAmount({{ $key }})" type="number"
-                                                    required="true" />
+                                                    placeHolder="0" min="0" />
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_subtract"
+                                                    label=""
+                                                    enabled="{{ empty($input_details[$key]['id']) ? 'true' : 'false' }}" :action="$actionValue"
+                                                    onChanged="updateItemAmount({{ $key }})" type="number"
+                                                    placeHolder="0" min="0" />
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.final_stock"
@@ -84,31 +102,38 @@
                                                     type="text" required="false" enabled="false" />
                                             </td>
                                             <td style="text-align: center;">
-                                                @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
-                                                    <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
-                                                        :action="$actionValue" cssClass="btn-danger text-danger"
-                                                        iconPath="delete.svg" :enabled="true" />
-                                                @else
-                                                    <!-- Misal, jika tidak editable, tombol delete bisa disembunyikan atau non-aktif -->
-                                                    <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
-                                                        :action="$actionValue" cssClass="btn-danger text-danger"
-                                                        iconPath="delete.svg" :enabled="$isEdit" />
-                                                @endif
+                                                <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
+                                                    :action="$actionValue" cssClass="btn-danger text-danger"
+                                                    iconPath="delete.svg" :enabled="$isPanelEnabled === 'true'" />
                                             </td>
                                         </tr>
                                     @endforeach
                                 </x-slot>
-                                <x-slot name="button">
+                                                                <x-slot name="button">
                                     <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                        button-name="Add"  :action="$actionValue"/>
+                                        button-name="Add" :action="$actionValue" :enabled="$isPanelEnabled === 'true'"/>
+                                    <x-ui-button clickEvent="openItemDialogBox" cssClass="btn btn-primary" iconPath="add.svg"
+                                        button-name="Add Multiple Items" :action="$actionValue" :enabled="$isPanelEnabled === 'true'"/>
                                 </x-slot>
                             </x-ui-table>
+
+                            <!-- Add Multiple Items Dialog -->
+                              @livewire('trd-retail1.component.material-selection', [
+                                        'dialogId' => 'ItemDialogBox',
+                                        'title' => 'Search Materials',
+                                        'width' => '900px',
+                                        'height' => '650px',
+                                        'enableFilters' => true,
+                                        'multiSelect' => true,
+                                        'eventName' => 'materialsSelected',
+                                        'additionalParams' => []
+                                    ])
                         </x-ui-card>
                     </div>
-                    <x-ui-footer>
+                   <x-ui-footer>
+                        @include('layout.customs.transaction-form-footer')
                         <div>
                             @include('layout.customs.buttons.save')
-
                         </div>
                     </x-ui-footer>
                 </div>

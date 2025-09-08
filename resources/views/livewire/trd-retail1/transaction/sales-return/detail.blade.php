@@ -124,96 +124,20 @@
                             </x-slot>
                         </x-ui-table>
 
-                        <!-- Dialog untuk memilih return item -->
-                            <x-ui-dialog-box id="itemDialogBox" title="Search Return Item" width="600px" height="1000px"
-                                onOpened="openItemDialogBox" onClosed="closeItemDialogBox">
-                                <x-slot name="body">
-                                    <div class="row">
-                                        <x-ui-text-field type="text" label="Search Code/Nama" model="searchTerm"
-                                            required="true" :action="$actionValue" enabled="true" clickEvent=""
-                                            buttonName="" />
-                                        <x-ui-dropdown-search
-                                            label="Category"
-                                            model="filterCategory"
-                                            query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_CATEGL1' AND deleted_at IS NULL"
-                                            connection="Default"
-                                            optionValue="str1"
-                                            optionLabel="{str2}"
-                                            placeHolder="Select category..."
-                                            type="string" />
-                                    </div>
-                                    <div class="row">
-                                        <x-ui-dropdown-search
-                                            label="Brand"
-                                            model="filterBrand"
-                                            query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_BRAND' AND deleted_at IS NULL"
-                                            connection="Default"
-                                            optionValue="str1"
-                                            optionLabel="{str2}"
-                                            placeHolder="Select brand..."
-                                            type="string" />
-                                        <x-ui-dropdown-search
-                                            label="Type"
-                                            model="filterType"
-                                            query="SELECT str1, str2 FROM config_consts WHERE const_group='MMATL_TYPE' AND deleted_at IS NULL"
-                                            connection="Default"
-                                            optionValue="str1"
-                                            optionLabel="{str2}"
-                                            placeHolder="Select type..."
-                                            type="string" />
-                                    </div>
-
-                                    <x-ui-button clickEvent="searchMaterials" cssClass="btn btn-primary"
-                                        button-name="Search" />
-                                    <x-ui-table id="materialsTable" padding="0px" margin="0px" height="400px">
-                                        <x-slot name="headers">
-                                            <th class="min-w-100px">Code</th>
-                                            <th class="min-w-100px">Image</th>
-                                            <th class="min-w-100px">Name</th>
-                                            <th class="min-w-100px">Buying Price</th>
-                                            <th class="min-w-100px">Selling Price</th>
-                                        </x-slot>
-
-                                        <x-slot name="rows">
-                                            @if (empty($materialList))
-                                                <tr>
-                                                    <td colspan="5" class="text-center text-muted">No Data Found</td>
-                                                </tr>
-                                            @else
-                                                @foreach ($materialList as $index => $material)
-                                                    <tr wire:key="row-{{ $index }}-return-material">
-                                                        <td style="text-align: center;">
-                                                            <x-ui-option label="" required="false"
-                                                                layout="horizontal" enabled="true" type="checkbox"
-                                                                visible="true" :options="[$material['id'] => $material['code']]"
-                                                                onChanged="selectMaterial({{ $material['id'] }})" />
-                                                        </td>
-                                                        <td style="text-align: center;">
-                                                            @if (isset($material->Attachment) && $material->Attachment->first())
-                                                                <img src="{{ $material->Attachment->first()->getUrl() }}"
-                                                                    alt="Image" style="width: 50px; height: 50px;">
-                                                            @else
-                                                                <span>No Image</span>
-                                                            @endif
-                                                        </td>
-                                                        <td>{{ $material->name }}</td>
-                                                        <td style="text-align: right;">{{ rupiah($material->buying_price ?? 0) }}</td>
-                                                        <td style="text-align: right;">{{ rupiah($material->selling_price ?? 0) }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            @endif
-                                        </x-slot>
-
-                                        <x-slot name="footer">
-                                            <x-ui-button clickEvent="confirmSelection" button-name="Confirm Selection"
-                                                loading="true" :action="$actionValue" cssClass="btn-primary" />
-                                        </x-slot>
-                                    </x-ui-table>
-                        </x-slot>
-                    </x-ui-dialog-box>
-                </div>
-            </x-ui-card>
-        </div>
+                        {{-- Material Selection Component for Return Items --}}
+                        @livewire('trd-retail1.component.material-selection', [
+                            'dialogId' => 'ItemDialogBox',
+                            'title' => 'Search Return Items',
+                            'width' => '900px',
+                            'height' => '650px',
+                            'enableFilters' => true,
+                            'multiSelect' => true,
+                            'eventName' => 'materialsSelected',
+                            'additionalParams' => []
+                        ])
+                    </div>
+                </x-ui-card>
+            </div>
 
         <div class="col-md-12">
             <x-ui-card title="Barang Pengganti"
@@ -304,69 +228,21 @@
                     <x-slot name="button">
                         <x-ui-button clickEvent="addExchangeItem" cssClass="btn btn-primary" iconPath="add.svg"
                             button-name="Add Exchange Item" />
-                        <x-ui-button clickEvent="openExchangeItemDialogBox" cssClass="btn btn-primary"
+                        <x-ui-button clickEvent="openExchangeMaterialDialogBox" cssClass="btn btn-primary"
                             iconPath="add.svg" button-name="Add Multiple Exchange Items" />
                     </x-slot>
                 </x-ui-table>
-
-                <!-- Dialog untuk memilih exchange item -->
-                <x-ui-dialog-box id="exchangeItemDialogBox" title="Search Exchange Item" width="600px" height="1000px"
-                    onOpened="openExchangeItemDialogBox" onClosed="closeExchangeItemDialogBox">
-                    <x-slot name="body">
-                        <div class="row">
-                            <x-ui-text-field type="text" label="Search Code/Nama" model="exchangeSearchTerm"
-                                required="true" :action="$actionValue" enabled="true" clickEvent=""
-                                buttonName="" />
-                        </div>
-
-                        <x-ui-button clickEvent="searchExchangeMaterials" cssClass="btn btn-primary"
-                            button-name="Search" />
-                        <x-ui-table id="exchangeMaterialsTable" padding="0px" margin="0px" height="400px">
-                            <x-slot name="headers">
-                                <th class="min-w-100px">Code</th>
-                                <th class="min-w-100px">Image</th>
-                                <th class="min-w-100px">Name</th>
-                                <th class="min-w-100px">Buying Price</th>
-                                <th class="min-w-100px">Selling Price</th>
-                            </x-slot>
-
-                            <x-slot name="rows">
-                                @if (empty($exchangeMaterialList))
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">No Data Found</td>
-                                    </tr>
-                                @else
-                                    @foreach ($exchangeMaterialList as $index => $material)
-                                        <tr wire:key="exchange-row-{{ $index }}-material">
-                                            <td style="text-align: center;">
-                                                <x-ui-option label="" required="false"
-                                                    layout="horizontal" enabled="true" type="checkbox"
-                                                    visible="true" :options="[$material['id'] => $material['code']]"
-                                                    onChanged="selectExchangeMaterial({{ $material['id'] }})" />
-                                            </td>
-                                            <td style="text-align: center;">
-                                                @if (isset($material->Attachment) && $material->Attachment->first())
-                                                    <img src="{{ $material->Attachment->first()->getUrl() }}"
-                                                        alt="Image" style="width: 50px; height: 50px;">
-                                                @else
-                                                    <span>No Image</span>
-                                                @endif
-                                            </td>
-                                            <td>{{ $material->name }}</td>
-                                            <td style="text-align: right;">{{ rupiah($material->buying_price ?? 0) }}</td>
-                                            <td style="text-align: right;">{{ rupiah($material->selling_price ?? 0) }}</td>
-                                        </tr>
-                                    @endforeach
-                                @endif
-                            </x-slot>
-
-                            <x-slot name="footer">
-                                <x-ui-button clickEvent="confirmExchangeSelection" button-name="Confirm Exchange Selection"
-                                    loading="true" :action="$actionValue" cssClass="btn-primary" />
-                            </x-slot>
-                        </x-ui-table>
-                    </x-slot>
-                </x-ui-dialog-box>
+                {{-- Material Selection Component for Exchange Items --}}
+                @livewire('trd-retail1.component.material-selection', [
+                    'dialogId' => 'ExchangeMaterialDialogBox',
+                    'title' => 'Search Exchange Items',
+                    'width' => '900px',
+                    'height' => '650px',
+                    'enableFilters' => true,
+                    'multiSelect' => true,
+                    'eventName' => 'exchangeMaterialsSelected',
+                            'additionalParams' => []
+                ])
             </x-ui-card>
         </div>
 

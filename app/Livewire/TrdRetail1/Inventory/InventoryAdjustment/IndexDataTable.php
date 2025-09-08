@@ -22,8 +22,12 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return IvttrHdr::query()
-            ->where('status_code', Status::OPEN)
-            ->orWhere('status_code', Status::ACTIVE); // Include non-active records
+            ->where(function ($query) {
+                $query->where('status_code', Status::OPEN)
+                      ->orWhere('status_code', Status::ACTIVE);
+            })
+            ->where('remark', '!=', 'Initial stock adjustment from Excel upload')
+            ->whereNull('deleted_at');
     }
 
     public function columns(): array

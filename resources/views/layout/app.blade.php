@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="facebook-domain-verification" content="nrk61mmi9umrp43dddp99yron03921" />
     <title>{{ config('app.name', 'Laravel') }}</title>
 
     <!-- Dynamic Favicon from SysConfig1 Application Logo -->
@@ -132,6 +133,14 @@
             50% { opacity: 0.7; }
             100% { opacity: 1; }
         }
+
+        /* Hide loading spinner when printing */
+        @media print {
+            .nextjs-loading-spinner {
+                display: none !important;
+                visibility: hidden !important;
+            }
+        }
     </style>
 
     @livewireStyles
@@ -174,7 +183,7 @@
         </div>
 
         <!-- Offcanvas Sidebar for mobile (left) -->
-        <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+        <div class="offcanvas offcanvas-start d-lg-none"  id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
             <div class="offcanvas-header border-bottom p-3">
                 <div class="w-100 me-3">
                     <!-- Mobile Application Component -->
@@ -212,7 +221,7 @@
         </div>
 
         <!-- Offcanvas Profile for mobile (right) -->
-        <div class="offcanvas offcanvas-end d-lg-none" tabindex="-1" id="mobileProfile" aria-labelledby="mobileProfileLabel">
+        <div class="offcanvas offcanvas-end d-lg-none"  id="mobileProfile" aria-labelledby="mobileProfileLabel">
             <div class="offcanvas-header border-bottom bg-light">
                 <h5 class="offcanvas-title fw-bold text-primary" id="mobileProfileLabel">
                     <i class="bi bi-person-circle me-2"></i>Account
@@ -318,7 +327,7 @@
     </div>
 
     <!-- Image Preview Modal -->
-    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="imagePreviewModal"  aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
