@@ -18,18 +18,12 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    {{-- <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
-                                        searchModel="App\Models\TrdTire1\Master\Partner"
-                                        searchWhereCondition="deleted_at=null&grp=C" optionValue="id"
-                                         optionLabel="{code},{name}" placeHolder="Type to search custommer..."
-                                        :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
-                                        type="int" onChanged="onPartnerChange" /> --}}
-                                    <x-ui-dropdown-search label="Custommer" model="inputs.partner_id"
+                                    <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
                                         query="SELECT id, code, name, address, city FROM partners WHERE deleted_at IS NULL AND grp = 'C'"
-                                        optionValue="id" optionLabel="code,name,address,city"
-                                        placeHolder="Type to search custommer..." :selectedValue="$inputs['partner_id']" required="true"
+                                        optionValue="id" optionLabel="{code};{name};{address};{city}"
+                                        placeHolder="Type to search customer..." :selectedValue="$inputs['partner_id']" required="true"
                                         :action="$actionValue" :enabled="$isPanelEnabled" type="int"
-                                        onChanged="onPartnerChange" />
+                                        onChanged="onPartnerChanged" />
                                     <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
@@ -55,21 +49,24 @@
                         <x-slot name="rows">
                             @foreach ($input_advance as $key => $advance)
                                 <tr wire:key="advance-{{ $key }}">
-                                    <td style="text-align: center;">{{ $loop->iteration }}</td>
-                                    <td>
+                                    <td style="text-align: center;">{{ $loop->iteration }}</td>                                    
+                                    {{-- <td>
                                         <x-ui-dropdown-select :options="$advanceOptions"
                                             model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue"
-                                            enabled="true"
+                                            enabled="false"
                                             onChanged="onAdvanceChanged({{ $key }}, $event.target.value)" />
-                                            {{-- @dump($advance) --}}
+                                    </td> --}}
+                                    <td style="text-align: center;">
+                                        <x-ui-text-field model="input_advance.{{ $key }}.descr"
+                                            label="" :action="$actionValue" enabled="false" type="text" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_advance.{{ $key }}.amtAdvBal"
                                             label="" :action="$actionValue" enabled="false" type="number" />
+                                    </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_advance.{{ $key }}.amt" label=""
                                             :action="$actionValue" enabled="false" type="number" />
-                                    </td>
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-button :clickEvent="'deleteAdvanceItem(' . $key . ')'" button-name="" loading="true" :action="$actionValue"
@@ -78,10 +75,10 @@
                                 </tr>
                             @endforeach
                         </x-slot>
-                        <x-slot name="button">
+                        {{-- <x-slot name="button">
                             <x-ui-button clickEvent="addAdvanceItem" cssClass="btn btn-primary" iconPath="add.svg"
                                 button-name="Add" />
-                        </x-slot>
+                        </x-slot> --}}
                     </x-ui-table>
                 </x-ui-card>
             </div>
@@ -110,15 +107,15 @@
                                             onChanged="onBankCodeChanged({{ $key }}, $event.target.value)" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_payments.{{ $key }}.amt"
-                                            label="" :action="$actionValue" enabled="true" type="number" />
+                                        <x-ui-text-field model="input_payments.{{ $key }}.amt" label=""
+                                            :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_payments.{{ $key }}.bank_reff"
                                             label="" :action="$actionValue" enabled="true" type="text" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_payments.{{ $key }}.bank_date"
+                                        <x-ui-text-field model="input_payments.{{ $key }}.bank_duedt"
                                             label="" :action="$actionValue" enabled="true" type="date" />
                                     </td>
                                     <td style="text-align: center;">
@@ -149,7 +146,7 @@
                             <th style="width: 50px; text-align: center;">Total Piutang</th>
                             <th style="width: 30px; text-align: center;">Adjustment</th>
                             <th style="width: 90px; text-align: center;">Total Bayar</th>
-                            <th style="width: 40px; text-align: center;">Lunas</th>
+                            <th style="width: 40px; text-align: center;">Dilunaskan</th>
                         </x-slot>
 
                         <!-- Define table rows -->
@@ -158,10 +155,10 @@
                                 <tr wire:key="detail-{{ $input_detail['billhdr_id'] ?? $key }}">
                                     <td style="text-align: center;">
                                         <input type="checkbox"
-                                               wire:model="input_details.{{ $key }}.is_selected"
-                                               wire:change="onNotaSelectionChanged"
-                                               {{ $actionValue === 'Edit' ? 'disabled' : '' }}
-                                               style="width: 18px; height: 18px; cursor: {{ $actionValue === 'Edit' ? 'not-allowed' : 'pointer' }};">
+                                            wire:model="input_details.{{ $key }}.is_selected"
+                                            wire:change="onNotaSelectionChanged"
+                                            {{ $actionValue === 'Edit' ? 'disabled' : '' }}
+                                            style="width: 18px; height: 18px; cursor: {{ $actionValue === 'Edit' ? 'not-allowed' : 'pointer' }};">
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.billhdrtr_code"
@@ -173,25 +170,20 @@
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.outstanding_amt"
-                                            label="" :action="$actionValue" enabled="false" type="number"/>
+                                            label="" :action="$actionValue" enabled="false" type="number" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-text-field model="input_details.{{ $key }}.amt_adjustment" label=""
-                                            :action="$actionValue" enabled="false" type="number" />
+                                        <x-ui-text-field model="input_details.{{ $key }}.amt_adjustment"
+                                            label="" :action="$actionValue" enabled="false" type="number" />
                                     </td>
                                     <td style="text-align: center;">
                                         <x-ui-text-field model="input_details.{{ $key }}.amt" label=""
                                             :action="$actionValue" enabled="true" type="number" />
                                     </td>
                                     <td style="text-align: center;">
-                                        <x-ui-toggle-switch
-                                            model="input_details.{{ $key }}.is_lunas"
-                                            onChanged="toggleLunas({{ $key }})"
-                                            :action="$actionValue"
-                                            enabled="true"
-                                            :showLabel="false"
-                                            :label="$input_detail['is_lunas'] ? 'Lunas' : 'Belum Lunas'"
-                                        />
+                                        <x-ui-toggle-switch model="input_details.{{ $key }}.is_lunas"
+                                            onChanged="toggleLunas({{ $key }})" :action="$actionValue"
+                                            enabled="true" :showLabel="false" :label="$input_detail['is_lunas'] ? 'Lunas' : 'Belum Lunas'" />
                                     </td>
                                 </tr>
                             @endforeach
@@ -211,12 +203,14 @@
             <x-ui-card title="">
                 <x-ui-padding>
                     <div class="row">
-                        <x-ui-text-field model="totalPaymentAmount" label="Total Pembayaran" :action="$actionValue"
+                        <x-ui-text-field model="totalAmtAdvance" label="Total Saldo Dipakai" :action="$actionValue"
                             enabled="false" type="number" />
-                        <x-ui-text-field model="totalNotaAmount" label="Total Amt Nota" :action="$actionValue"
+                        <x-ui-text-field model="totalAmtSource" label="Total Pembayaran" :action="$actionValue"
                             enabled="false" type="number" />
-                        <x-ui-text-field model="advanceBalance" label="Lebih Bayar" :action="$actionValue"
+                        <x-ui-text-field model="totalAmtBilling" label="Total Amt Nota" :action="$actionValue"
                             enabled="false" type="number" />
+                        <x-ui-text-field model="overPayment" label="Lebih Bayar" :action="$actionValue" enabled="false"
+                            type="number" />
                     </div>
                 </x-ui-padding>
             </x-ui-card>

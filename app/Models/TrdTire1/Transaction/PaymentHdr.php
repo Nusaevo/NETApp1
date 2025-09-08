@@ -19,7 +19,9 @@ class PaymentHdr extends BaseModel
     protected static function boot()
     {
         parent::boot();
-    }    protected $fillable = [
+    }
+
+    protected $fillable = [
         'tr_type',
         'tr_code',
         'tr_date',
@@ -33,6 +35,17 @@ class PaymentHdr extends BaseModel
         'amt_advs',
         'amt_dtls',
     ];
+
+    protected $casts = [
+        'amt_scrs' => 'float',
+        'amt_advs' => 'float',
+        'amt_dtls' => 'float',
+        'curr_id' => 'integer',
+        'curr_rate' => 'float',
+        'partner_id' => 'integer',
+    ];
+
+
 
     #region Relations
     public function Partner()
@@ -124,8 +137,9 @@ class PaymentHdr extends BaseModel
 
         // Verifikasi bahwa sequence baru belum digunakan
         while (self::where('tr_type', $tr_type)
-               ->where('tr_code', $formattedSequence)
-               ->exists()) {
+            ->where('tr_code', $formattedSequence)
+            ->exists()
+        ) {
             $newSequence++;
             $formattedSequence = str_pad($newSequence, 4, '0', STR_PAD_LEFT);
         }

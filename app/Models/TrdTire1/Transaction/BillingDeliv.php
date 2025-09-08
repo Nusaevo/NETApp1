@@ -27,6 +27,8 @@ class BillingDeliv extends BaseModel
 
     protected $casts = [
         'amt_shipcost' => 'float',
+        'trhdr_id' => 'integer',
+        'deliv_id' => 'integer',
     ];
 
     #region Relations

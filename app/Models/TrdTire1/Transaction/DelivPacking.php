@@ -32,6 +32,10 @@ class DelivPacking extends BaseModel
     ];
     protected $casts = [
         'qty' => 'float',
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'reffdtl_id' => 'integer',
+        'reffhdr_id' => 'integer',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];

@@ -48,6 +48,11 @@ class Material extends BaseModel
         'specs',
         'uom',
     ];
+
+    protected $casts = [
+        'wgt' => 'float',
+    ];
+
     public function MatlUom()
     {
         return $this->hasOne(MatlUom::class, 'matl_id');

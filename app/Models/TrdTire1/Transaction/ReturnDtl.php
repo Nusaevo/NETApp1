@@ -108,6 +108,24 @@ class ReturnDtl extends BaseModel
         'qty_reff',
     ];
 
+    protected $casts = [
+        'trhdr_id' => 'integer',
+        'tr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'dlvdtl_id' => 'integer',
+        'dlvhdrtr_id' => 'integer',
+        'dlvdtltr_seq' => 'integer',
+        'matl_id' => 'integer',
+        'qty' => 'float',
+        'qty_uom' => 'float',
+        'qty_base' => 'float',
+        'price' => 'float',
+        'price_uom' => 'float',
+        'price_base' => 'float',
+        'amt' => 'float',
+        'qty_reff' => 'float',
+    ];
+    
     #region Relations
     public function ReturnHdr()
     {

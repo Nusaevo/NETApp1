@@ -22,6 +22,15 @@ class PartnertrDtl extends BaseModel
         'tr_descr',
     ];
 
+    protected $casts = [
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'partnerbal_id' => 'integer',
+        'partner_id' => 'integer',
+        'reff_id' => 'integer',
+        'amt' => 'float',
+    ];
+
     #region Relations
     public function PaymentSrc()
     {

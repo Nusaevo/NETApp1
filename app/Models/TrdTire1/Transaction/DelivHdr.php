@@ -35,6 +35,8 @@ class DelivHdr extends BaseModel
     protected $casts = [
         'tr_code' => 'string',
         'amt_shipcost' => 'float',
+        'partner_id' => 'integer',
+        'billhdr_id' => 'integer',
     ];
 
     protected $appends = ['total_qty'];

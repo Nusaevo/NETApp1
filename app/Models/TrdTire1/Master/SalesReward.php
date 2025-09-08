@@ -27,4 +27,12 @@ class SalesReward extends BaseModel
         'brand',
     ];
 
+    protected $casts = [
+        'matl_id' => 'integer',
+        'qty' => 'float',
+        'reward' => 'float',
+        'beg_date' => 'datetime',
+        'end_date' => 'datetime',
+    ];
+
 }

@@ -36,7 +36,7 @@ class PartnerLog extends BaseModel
         'curr_id',
         'curr_code',
         'curr_rate',
-        'tr_desc',
+        'tr_descr',
     ];
 
     public function scopeGetActiveData()

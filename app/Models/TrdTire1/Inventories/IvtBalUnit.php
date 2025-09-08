@@ -32,6 +32,13 @@ class IvtBalUnit extends BaseModel
         'status_code',
     ];
 
+    protected $casts = [
+        'ivt_id' => 'integer',
+        'matl_id' => 'integer',
+        'wh_id' => 'integer',
+        'qty_oh' => 'float',
+    ];
+    
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();

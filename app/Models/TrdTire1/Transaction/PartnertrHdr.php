@@ -22,6 +22,13 @@ class PartnertrHdr extends BaseModel
         'amt_base',
     ];
 
+    protected $casts = [
+        'curr_id' => 'integer',
+        'curr_rate' => 'float',
+        'amt' => 'float',
+        'amt_base' => 'float',
+    ];
+
     #region Relations
     public function PartnertrDtl()
     {

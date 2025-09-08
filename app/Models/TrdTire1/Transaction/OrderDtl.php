@@ -60,6 +60,10 @@ class OrderDtl extends BaseModel
         'amt_adjustdtl' => 'float',
         'amt_tax' => 'float',
         'qty_reff' => 'float',
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'matl_id' => 'integer',
+        'gt_partner_id' => 'integer',
     ];
 
     protected $appends = ['has_delivery', 'is_editable'];

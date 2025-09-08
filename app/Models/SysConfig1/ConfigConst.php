@@ -5,6 +5,7 @@ use App\Models\Base\BaseModel;
 use App\Models\SysConfig1\ConfigSnum;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Session;
+use PhpParser\Node\Expr\Cast\String_;
 
 class ConfigConst extends BaseModel
 {
@@ -140,6 +141,19 @@ class ConfigConst extends BaseModel
     public function scopeGetActiveData()
     {
         return $this->orderBy('str1', 'asc')->get();
+    }
+
+    public static function getAppEnv(string $envName)
+    {
+        $result = ConfigConst::where('const_group', 'APP_ENV')
+            ->where('str1', $envName)
+            ->first();
+        if ($result) {
+            return $result->str2;
+        } else {
+            throw new \Exception("Environment variable $envName belum ada di ConfigConst.");
+            return null;
+        }
     }
 
 }

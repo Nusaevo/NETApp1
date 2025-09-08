@@ -19,13 +19,24 @@ class PaymentDtl extends BaseModel
         'tr_type',
         'tr_code',
         'tr_seq',
+        'partnerbal_id',
         'billhdrtr_type',
         'billhdrtr_code',
         'billhdr_id',
         'amt',
         'amt_base',
-        'status_code',
-        'partnerbal_id'
+        'partnertr_id',
+        'status_code'
+    ];
+
+    protected $casts = [
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'partnerbal_id' => 'integer',
+        'billhdr_id' => 'integer',
+        'partnertr_id' => 'integer',
+        'amt' => 'float',
+        'amt_base' => 'float',
     ];
 
     #region Relations
