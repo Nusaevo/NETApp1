@@ -24,11 +24,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return DelivHdr::with(['DelivPacking.DelivPickings', 'Partner'])
-            ->where('deliv_hdrs.tr_type', 'PD')
-            ->where(function ($query) {
-                $query->where('deliv_hdrs.status_code', Status::OPEN)
-                      ->orWhere('deliv_hdrs.status_code', Status::ACTIVE);
-            });
+            ->where('deliv_hdrs.tr_type', 'PD');
     }
     public function columns(): array
     {

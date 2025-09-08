@@ -36,7 +36,18 @@ class PaymentSrc extends BaseModel
         'amt_base'
     ];
 
-    #region Relations
+    protected $casts = [
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'pay_type_id' => 'integer',
+        'bank_id' => 'integer',
+        'partnerbal_id' => 'integer',
+        'reff_id' => 'integer',
+        'amt' => 'float',
+        'amt_base' => 'float',
+    ];
+
+     #region Relations
     public function Partner()
     {
         return $this->belongsTo(Partner::class, 'partner_id', 'id');

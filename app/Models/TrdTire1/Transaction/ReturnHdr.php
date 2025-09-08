@@ -37,6 +37,14 @@ class ReturnHdr extends BaseModel
         'status_code'
     ];
 
+    protected $casts = [
+        'partner_id' => 'integer',
+        'payment_term_id' => 'integer',
+        'curr_id' => 'integer',
+        'curr_rate' => 'float',
+        'tr_date' => 'datetime',
+    ];
+    
     #region Relations
 
     public function Partner()

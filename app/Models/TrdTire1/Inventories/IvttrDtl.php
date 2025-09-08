@@ -29,6 +29,16 @@ class IvttrDtl extends BaseModel
         'tr_descr',
         'ivt_id'
     ];
+
+    protected $casts = [
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'matl_id' => 'integer',
+        'wh_id' => 'integer',
+        'qty' => 'float',
+        'ivt_id' => 'integer',
+    ];
+    
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();

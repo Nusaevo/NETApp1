@@ -16,12 +16,13 @@ class IvtLog extends BaseModel
     }
 
     protected $fillable = [
+        'tr_date',
+        'trdtl_id',
         'trhdr_id',
         'tr_type',
         'tr_code',
         'tr_seq',
         'tr_seq2',
-        'trdtl_id',
         'ivt_id',
         'matl_id',
         'matl_code',
@@ -29,15 +30,14 @@ class IvtLog extends BaseModel
         'wh_id',
         'wh_code',
         'batch_code',
-        'reff_id',
-        'tr_date',
+        'tr_qty',
         'qty',
         'price_beforetax',
-        'tr_desc',
         'price_cogs',
         'qty_running',
-        'process_flag',
-        'tr_qty'
+        'tr_desc',
+        'reff_id',
+        'process_flag'
     ];
 
     public function scopeGetActiveData()

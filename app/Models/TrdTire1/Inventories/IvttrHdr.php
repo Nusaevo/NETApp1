@@ -27,6 +27,11 @@ class IvttrHdr extends BaseModel
         'tr_code',
         'remark',
     ];
+
+    protected $casts = [
+        'tr_date' => 'datetime',
+    ];
+    
     public function scopeGetActiveData()
     {
         return $this->orderBy('code', 'asc')->get();

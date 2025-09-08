@@ -24,6 +24,7 @@ class PartnerDetail extends BaseModel
         'wp_details' => 'array',
         'contacts' => 'array',
         'banks' => 'array',
+        'partner_id' => 'integer',
     ];
 
     public function Partner()

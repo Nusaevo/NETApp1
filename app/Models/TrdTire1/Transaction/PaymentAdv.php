@@ -29,6 +29,16 @@ class PaymentAdv extends BaseModel
         'amt_base',
     ];
 
+    protected $casts = [
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'adv_type_id' => 'integer',
+        'partnerbal_id' => 'integer',
+        'reff_id' => 'integer',
+        'amt' => 'float',
+        'amt_base' => 'float',
+    ];
+
     #region Relations
     public function Partner()
     {
