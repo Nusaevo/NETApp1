@@ -51,7 +51,11 @@ class Partner extends BaseModel
         'amt_limit',
         'partner_chars',
         'status_code',
-        'amt_limit',
+    ];
+
+    protected $casts = [
+        'curr_id' => 'integer',
+        'amt_limit' => 'float',
     ];
 
     #region Relations

@@ -36,6 +36,14 @@ class BillingOrder extends BaseModel
     protected $casts = [
         'qty' => 'float',
         'qty_base' => 'float',
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'reffdtl_id' => 'integer',
+        'reffhdr_id' => 'integer',
+        'amt' => 'float',
+        'amt_beforetax' => 'float',
+        'amt_tax' => 'float',
+        'amt_adjustdtl' => 'float',
     ];
 
     #region Relations

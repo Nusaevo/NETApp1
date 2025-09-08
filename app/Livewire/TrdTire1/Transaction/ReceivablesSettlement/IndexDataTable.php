@@ -22,13 +22,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return PaymentHdr::with(['PaymentDtl', 'Partner']) // Update builder
-            ->whereIn('payment_hdrs.tr_type', ['APP', 'ARP'])
-            ->whereIn('payment_hdrs.status_code', [Status::OPEN, Status::ACTIVE]);
+            ->whereIn('payment_hdrs.tr_type', ['APP', 'ARP']);
     }
+    
     public function columns(): array
     {
         return [
-            Column::make('Transaction', 'tr_code')
+            Column::make('Nomor Pelunasan', 'tr_code')
                 ->searchable()
                 ->sortable()
                 ->format(function ($value, $row) {
@@ -42,10 +42,10 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans("date"), "tr_date")
+            Column::make($this->trans("Tanggal Pelunasan"), "tr_date")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("supplier"), "partner_id")
+            Column::make($this->trans("customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
                         return $row->Partner->name;
@@ -54,7 +54,19 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            // Column::make($this->trans("tr_type"), "tr_type")
+            Column::make($this->trans("Nomor Nota"), "tr_code")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("Total Pelunasan"), "tr_code")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("Lebih Bayar"), "tr_code")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("Adjustment"), "tr_code")
+                ->searchable()
+                ->sortable(),
+             // Column::make($this->trans("tr_type"), "tr_type")
             //     ->hideIf(true)
             //     ->sortable(),
             // Column::make('currency', "curr_rate")

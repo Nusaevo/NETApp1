@@ -2,18 +2,19 @@
 
 namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
 
-use App\Livewire\Component\BaseComponent;
-use App\Models\SysConfig1\ConfigConst;
-use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr};
-use App\Models\TrdTire1\Inventories\IvtBal;
-use App\Services\TrdTire1\BillingService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
-use App\Services\TrdTire1\Master\MasterService;
-use App\Services\TrdTire1\DeliveryService;
-use Livewire\Attributes\On;
 use Exception;
+use Livewire\Attributes\On;
+use App\Enums\TrdTire1\Status;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\SysConfig1\ConfigConst;
+use App\Livewire\Component\BaseComponent;
+use App\Services\TrdTire1\BillingService;
+use App\Services\TrdTire1\DeliveryService;
+use App\Models\TrdTire1\Inventories\IvtBal;
+use App\Services\TrdTire1\Master\MasterService;
+use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr};
 
 class Index extends BaseComponent
 {
@@ -83,6 +84,7 @@ class Index extends BaseComponent
                     'note' => '',
                     'reff_date' => null,
                     'amt_shipcost' => $this->inputs['amt_shipcost'] ?? 0,
+                    'status_code' => Status::OPEN,
                 ];
 
                 // Persiapan array input_details

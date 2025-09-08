@@ -51,6 +51,10 @@ class BillingHdr extends BaseModel
         'amt_adjusthdr' => 'float',
         'amt_shipcost' => 'float',
         'amt_reff' => 'float',
+        'curr_id' => 'integer',
+        'payment_term_id' => 'integer',
+        'partner_id' => 'integer',
+        'partnerbal_id' => 'integer',
     ];
 
     #region Relations

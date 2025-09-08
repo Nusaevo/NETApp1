@@ -72,6 +72,11 @@ class OrderHdr extends BaseModel
         'amt_shipcost' => 'float',
         'tax_pct' => 'float',
         'curr_rate' => 'float',
+        'partner_id' => 'integer',
+        'payment_term_id' => 'integer',
+        'tax_id' => 'integer',
+        'sales_id' => 'integer',
+        'curr_id' => 'integer',
     ];
 
     protected static function boot()

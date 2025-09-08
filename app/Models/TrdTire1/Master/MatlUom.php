@@ -31,6 +31,18 @@ class MatlUom extends BaseModel
         // 'initial_qty_fgr' // Pastikan field ini ada jika diperlukan
     ];
 
+    protected $casts = [
+        'matl_id' => 'integer',
+        'reff_factor' => 'float',
+        'base_factor' => 'float',
+        'qty_oh' => 'float',
+        'qty_fgr' => 'float',
+        'qty_fgi' => 'float',
+        'selling_price' => 'float',
+        'last_buying_price' => 'float',
+        'last_buying_date' => 'datetime',
+    ];
+    
     protected static function boot()
     {
         parent::boot();

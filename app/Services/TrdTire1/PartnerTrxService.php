@@ -3,8 +3,9 @@
 namespace App\Services\TrdTire1;
 
 use Exception;
-use App\Models\TrdTire1\Transaction\{PartnertrDtl, PartnertrHdr, PaymentSrc};
 use Illuminate\Support\Facades\Log;
+use App\Models\TrdTire1\Transaction\BillingHdr;
+use App\Models\TrdTire1\Transaction\{PartnertrDtl, PartnertrHdr, PaymentSrc};
 
 
 class PartnerTrxService
@@ -15,7 +16,6 @@ class PartnerTrxService
     {
         $this->partnerBalanceService = $partnerBalanceService;
     }
-
 
     public function savePartnerTrx(array $headerData, array $detailData)
     {
@@ -33,6 +33,12 @@ class PartnerTrxService
 
     private function saveHeaderTrx(array $headerData)
     {
+        if (empty($headerData)) {
+            PartnertrHdr::where('tr_type', '=', $headerData['tr_type'])
+                ->where('tr_code', '=', $headerData['tr_code'])
+                ->get();
+        }
+
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             $partnertrHdr = PartnertrHdr::create($headerData);
         } else {
@@ -55,7 +61,7 @@ class PartnerTrxService
         $dbPartnertrDtl = PartnertrDtl::where('trhdr_id', $headerData['id'])->get();
 
         $savedIds = [];
-        foreach ($detailData as &$detail){
+        foreach ($detailData as &$detail) {
             $detail['trhdr_id'] = $headerData['id'];
             $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
@@ -70,8 +76,8 @@ class PartnerTrxService
                     $detail['tr_seq'] = PartnertrDtl::getNextTrSeq($headerData['id']);
 
                     $detail1 = $detail;
-                    $detail1['tr_seq'] = - $detail['tr_seq'];
-                    $detail1['amt'] = - $detail['amt'];
+                    $detail1['tr_seq'] = -$detail['tr_seq'];
+                    $detail1['amt'] = -$detail['amt'];
                     $partnertrDtl = new PartnertrDtl();
                     $partnertrDtl->fill($detail1);
                     $partnertrDtl->save();
@@ -104,7 +110,6 @@ class PartnerTrxService
                     }
 
                     $savedIds[] = $partnertrDtl->id;
-
                 } else if ($detail['tr_type'] == 'ARA' || $detail['tr_type'] == 'APA') {
                     $detail['tr_seq'] = PartnertrDtl::getNextTrSeq($headerData['id']);
 
@@ -118,7 +123,7 @@ class PartnerTrxService
 
                     $savedIds[] = $partnertrDtl->id;
                 }
-            // Buat Update
+                // Buat Update
             } else {
                 if ($detail['tr_type'] == 'CQDEP' || $detail['tr_type'] == 'CQREJ') {
                     $partnertrDtl = $dbPartnertrDtl->where('trhdr_id', -$detail['tr_seq'])->first();
@@ -198,5 +203,84 @@ class PartnerTrxService
         }
 
         return true;
+    }
+
+    public function saveAutoAraFromPayment(array $headerData, array $detailData)
+    {
+        // dd($headerData, $detailData);
+        $dbPartnertrHdr = PartnertrHdr::where('tr_type', 'ARA')
+            ->where('tr_code', $headerData['tr_code'])
+            ->first();
+        if ($dbPartnertrHdr) {
+            $headerData['id'] = $dbPartnertrHdr->id;
+            if ($headerData['amt'] == 0) {
+                $dbPartnertrHdr->delete();
+            } else {
+                $dbPartnertrHdr->fill($headerData);
+                // dd($dbPartnertrHdr->isDirty(),$dbPartnertrHdr);
+                if ($dbPartnertrHdr->isDirty()) {
+                    $dbPartnertrHdr->save();
+                }
+            }
+        } else {
+            $dbPartnertrHdr = PartnertrHdr::create($headerData);
+            $headerData['id'] = $dbPartnertrHdr->id;
+        }
+
+        $dbPartnertrDtl = PartnertrDtl::where('tr_type', 'ARA')
+            ->where('tr_code', $headerData['tr_code'])
+            ->get();
+
+        $saveIds = [];
+        foreach ($detailData as &$detail) {
+            $partnertrDtl = $dbPartnertrDtl->firstWhere('partnerbal_id', $detail['partnerbal_id']);
+            if ($partnertrDtl) {
+                $detail['id'] = $partnertrDtl->id;
+                $detail['trhdr_id'] = $partnertrDtl->trhdr_id;
+
+                if ($detail['amt'] == 0) {
+                    $this->partnerBalanceService->delPartnerLog(0, $partnertrDtl->id);
+                    $partnertrDtl->delete();
+                } else {
+                    $partnertrDtl->fill($detail);
+                    if ($partnertrDtl->isDirty()) {
+                        BillingHdr::updAmtReff($detail['reff_id'], $partnertrDtl->getOriginal('amt'));
+                        $this->partnerBalanceService->delPartnerLog(0, $partnertrDtl->id);
+                        $partnertrDtl->save();
+                        BillingHdr::updAmtReff($detail['reff_id'], -$detail['amt']);
+                        $partnerBalId = $this->partnerBalanceService->updFromPartnerTrx($headerData, $detail);
+                    }
+                    $saveIds[] = $partnertrDtl->id;
+                }
+            } else {
+                if ($detail['amt'] != 0) {
+                    $detail['trhdr_id'] = $headerData['id'];
+                    $detail['tr_seq'] = PartnertrDtl::getNextTrSeq(($headerData['id']));
+                    $partnertrDtl = new PartnertrDtl();
+                    $partnertrDtl->fill($detail);
+                    $partnertrDtl->save();
+                    $detail['id'] = $partnertrDtl->id;
+                    BillingHdr::updAmtReff($detail['reff_id'], -$detail['amt']);
+                    $partnerBalId = $this->partnerBalanceService->updFromPartnerTrx($headerData, $detail);
+                    $partnertrDtl->partnerbal_id = $partnerBalId;
+                    $partnertrDtl->save();
+                    $detail['partnerbal_id'] = $partnerBalId;
+                    $saveIds[] = $partnertrDtl->id;
+                }
+            }
+        }
+        unset($detail);
+
+        foreach ($dbPartnertrDtl as $detail) {
+            if (!in_array($detail->id, $saveIds)) {
+                $this->partnerBalanceService->delPartnerLog(0, $partnertrDtl->id);
+                $partnertrDtl->delete();
+            }
+        }
+
+        return [
+            'header' => $dbPartnertrHdr,
+            'detail' => $dbPartnertrDtl,
+        ];
     }
 }

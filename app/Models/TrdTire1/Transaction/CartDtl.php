@@ -31,6 +31,16 @@ class CartDtl extends BaseModel
         'amt'
     ];
 
+    protected $casts = [
+        'trhdr_id' => 'integer',
+        'tr_seq' => 'integer',
+        'matl_id' => 'integer',
+        'qty' => 'float',
+        'qty_reff' => 'float',
+        'price' => 'float',
+        'amt' => 'float',
+    ];
+    
     #region Relations
     public function Material()
     {

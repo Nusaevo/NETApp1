@@ -30,7 +30,13 @@ class IvtBal extends BaseModel
         'qty_fgi'
     ];
 
-
+    protected $casts = [
+        'matl_id' => 'integer',
+        'wh_id' => 'integer',
+        'qty_oh' => 'float',
+        'qty_fgr' => 'float',
+        'qty_fgi' => 'float',
+    ];
 
     public function scopeGetActiveData()
     {

@@ -429,18 +429,14 @@ class BillingService
     public function getOutstandingBillsByPartner($partnerId = null)
     {
         $bills = BillingHdr::select([
-                'id as billhdr_id',
-                'tr_code as billhdrtr_code',
-                DB::raw('tr_date + make_interval(days => payment_due_days) AS due_date'),
-                DB::raw('(amt - amt_reff) as outstanding_amt')
-            ])
+            'id as billhdr_id',
+            'tr_type as billhdrtr_type',
+            'tr_code as billhdrtr_code',
+            DB::raw('tr_date + make_interval(days => payment_due_days) AS due_date'),
+            DB::raw('(amt - amt_reff)::int as outstanding_amt')])
             ->where('partner_id', $partnerId)
+            ->whereRaw('(amt - amt_reff) > 0')
             ->get();
-
-        // Pastikan outstanding_amt integer (tanpa ribuan/desimal)
-        foreach ($bills as $bill) {
-            $bill->outstanding_amt = (int) $bill->outstanding_amt;
-        }
 
         return $bills;
     }

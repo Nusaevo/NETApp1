@@ -16,7 +16,6 @@ class Status
     const CANCEL = 'X';
     const PRINT = 'P';
 
-
     /**
      * Get the full status string from the abbreviation.
      *

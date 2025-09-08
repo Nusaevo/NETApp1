@@ -25,6 +25,12 @@ class CartHdr extends BaseModel
         'status_code',
     ];
 
+    protected $casts = [
+        'curr_id' => 'integer',
+        'curr_rate' => 'float',
+        'tr_date' => 'datetime',
+    ];
+
     #region Relations
 
     public function CartDtl()
