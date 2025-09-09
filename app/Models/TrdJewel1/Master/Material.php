@@ -164,7 +164,7 @@ class Material extends BaseModel
     public static function getAvailableMaterials()
     {
         return self::whereHas('ivtBal', function ($query) {
-                    $query->where('qty_oh', '>=', 0);
+                    $query->where('qty_oh', '>', 0);
                 })
                 ->whereNull('materials.deleted_at')
                 ->distinct();
