@@ -79,8 +79,11 @@
                                                     </td>
                                                     <td style="text-align: center;">
                                                         <x-ui-dropdown-select
+                                                            wire:key="uom-{{ $key }}-{{ $input_details[$key]['matl_id'] ?? 'no-material' }}"
                                                             model="input_details.{{ $key }}.matl_uom"
-                                                            :options="$uomOptions"
+                                                            :options="$materialUomOptions[$key] ?? []"
+                                                            :selectedValue="$input_details[$key]['matl_uom'] ?? ''"
+                                                             :action="$actionValue"
                                                             onChanged="onUomChanged({{ $key }}, $event.target.value)"
                                                         />
                                                     </td>
