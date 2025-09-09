@@ -28,13 +28,14 @@
                 @if (isset($required) && $required === 'true') required @endif wire:loading.attr="disabled">
 
                 <!-- Blank option with dynamic value -->
-                <option value="{{ $blankValue }}"></option>
+                <option value="{{ $blankValue }}"
+                    @if (empty($selectedValue) || $selectedValue === $blankValue) selected @endif>
+                </option>
 
                 @if (!is_null($options))
                     @foreach ($options as $option)
                         <option value="{{ $option['value'] }}"
-                            @if (isset($model) && $model === $option['value']) selected
-                            @elseif($selectedValue === $option['value']) selected @endif>
+                            @if($selectedValue === $option['value'] && !empty($selectedValue)) selected @endif>
                             {{ $option['label'] }}
                         </option>
                     @endforeach

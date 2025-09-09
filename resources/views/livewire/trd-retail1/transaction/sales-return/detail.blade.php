@@ -73,8 +73,14 @@
                                                 type="int" />
                                         </td>
                                         <td style="text-align: center;">
-                                            <x-ui-dropdown-select model="input_details.{{ $key }}.matl_uom"
-                                                :options="$uomOptions" />
+                                            <x-ui-dropdown-select
+                                                wire:key="uom-{{ $key }}-{{ $input_details[$key]['matl_id'] ?? 'no-material' }}"
+                                                model="input_details.{{ $key }}.matl_uom"
+                                                :options="$materialUomOptions[$key] ?? []"
+                                                :selectedValue="$input_details[$key]['matl_uom'] ?? ''"
+                                                             :action="$actionValue"
+                                                onChanged="onUomChanged({{ $key }}, $event.target.value)"
+                                            />
                                         </td>
                                         <td style="text-align: center;">
                                             @if (!empty($input_details[$key]['image_url']))
@@ -182,8 +188,14 @@
                                         type="int" />
                                 </td>
                                 <td style="text-align: center;">
-                                    <x-ui-dropdown-select model="exchange_details.{{ $key }}.matl_uom"
-                                        :options="$uomOptions" />
+                                    <x-ui-dropdown-select
+                                        wire:key="exchange-uom-{{ $key }}-{{ $exchange_details[$key]['matl_id'] ?? 'no-material' }}"
+                                        model="exchange_details.{{ $key }}.matl_uom"
+                                        :options="$exchangeMaterialUomOptions[$key] ?? []"
+                                        :selectedValue="$exchange_details[$key]['matl_uom'] ?? ''"
+                                                             :action="$actionValue"
+                                        onChanged="onExchangeUomChanged({{ $key }}, $event.target.value)"
+                                    />
                                 </td>
                                 <td style="text-align: center;">
                                     @if (!empty($exchange_details[$key]['image_url']))

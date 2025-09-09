@@ -42,6 +42,7 @@ class Detail extends BaseComponent
 
     public $warehouseOptions = [];
     public $uomOptions = [];
+    public $materialUomOptions = []; // Add this to store UOM options for each material
     public $payments;
 
     public $materials;
@@ -338,6 +339,7 @@ class Detail extends BaseComponent
     // }
     public function addItem()
     {
+        $key = count($this->input_details);
         $this->input_details[] = [
             'matl_id' => null,
             'matl_uom' => 'PCS',
@@ -345,6 +347,9 @@ class Detail extends BaseComponent
             'price' => 0.0,
             'amt' => 0.0
         ];
+
+        // Initialize empty UOM options for the new item
+        $this->materialUomOptions[$key] = [];
     }
     public function onMaterialChanged($key, $matl_id)
     {
@@ -363,8 +368,42 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['matl_id'] = $material->id;
                 $this->input_details[$key]['matl_code'] = $material->code;
                 $this->input_details[$key]['matl_descr'] = $material->name;
-                $this->input_details[$key]['matl_uom'] = 'PCS'; // default UOM
+
+                // Load UOMs for this specific material (ordered by matl_uom)
+                $materialUoms = MatlUom::where('matl_id', $matl_id)
+                    ->orderBy('matl_uom', 'asc')
+                    ->get();
+
+                $uomOptions = [];
+                $firstUom = null;
+                foreach ($materialUoms as $matlUom) {
+                    $uomOptions[] = [
+                        'value' => $matlUom->matl_uom,
+                        'label' => $matlUom->matl_uom
+                    ];
+
+                    // Set first UOM found
+                    if ($firstUom === null) {
+                        $firstUom = $matlUom->matl_uom;
+                    }
+                }
+
+                // Store UOM options for this material
+                $this->materialUomOptions[$key] = $uomOptions;
+
+                // Set default UOM to first found UOM from material's UOM list
+                if ($firstUom !== null) {
+                    $this->input_details[$key]['matl_uom'] = $firstUom;
+                } else {
+                    // Only fallback to PCS if absolutely no UOMs exist for this material
+                    $this->input_details[$key]['matl_uom'] = 'PCS';
+                    // Create default UOM entry if none exists
+                    $this->materialUomOptions[$key] = [['value' => 'PCS', 'label' => 'PCS']];
+                }
+
                 $attachment = optional($material->Attachment)->first();
+                $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
+                $this->updateMaterialUomData($key);                $attachment = optional($material->Attachment)->first();
                 $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
                 $this->updateMaterialUomData($key);
             } else {
@@ -447,6 +486,20 @@ class Detail extends BaseComponent
             foreach ($this->object_detail as $key => $detail) {
                 $this->input_details[$key] = populateArrayFromModel($detail);
                 $this->input_details[$key]['wh_code'] = $this->warehouseOptions[0]['value'] ?? null;
+
+                // Load UOMs for this material (ordered by matl_uom)
+                $materialUoms = MatlUom::where('matl_id', $detail->matl_id)
+                    ->orderBy('matl_uom', 'asc')
+                    ->get();
+                $uomOptions = [];
+                foreach ($materialUoms as $matlUom) {
+                    $uomOptions[] = [
+                        'value' => $matlUom->matl_uom,
+                        'label' => $matlUom->matl_uom
+                    ];
+                }
+                $this->materialUomOptions[$key] = $uomOptions;
+
                 $material = Material::withTrashed()->find($detail->matl_id);
                 if ($material) {
                     $attachment = optional($material->Attachment)->first();

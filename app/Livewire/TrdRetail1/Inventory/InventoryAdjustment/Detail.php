@@ -45,6 +45,7 @@ class Detail extends BaseComponent
     // Options
     public $warehouseOptions = [];
     public $uomOptions = [];
+    public $materialUomOptions = []; // Add this to store UOM options for each material
     public $adjustmentTypes = [];
     public $categoryOptions = [];
     public $brandOptions = [];
@@ -177,6 +178,8 @@ class Detail extends BaseComponent
         }
 
         try {
+            $newIndex = count($this->input_details);
+
             $this->input_details[] = [
                 'matl_id'        => null,
                 'matl_code'      => '',
@@ -189,6 +192,9 @@ class Detail extends BaseComponent
                 'wh_code'        => $this->inputs['wh_code'],
                 'is_editable'    => true,
             ];
+
+            // Initialize empty UOM options for the new item
+            $this->materialUomOptions[$newIndex] = [['value' => 'PCS', 'label' => 'PCS']];
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.add_item', ['message' => $e->getMessage()]));
         }
@@ -207,11 +213,43 @@ class Detail extends BaseComponent
                 return;
             }
 
+            // Load UOMs for this specific material (ordered by matl_uom)
+            $materialUoms = MatlUom::where('matl_id', $materialId)
+                ->orderBy('matl_uom', 'asc')
+                ->get();
+
+            $uomOptions = [];
+            $firstUom = null;
+            foreach ($materialUoms as $matlUom) {
+                $uomOptions[] = [
+                    'value' => $matlUom->matl_uom,
+                    'label' => $matlUom->matl_uom
+                ];
+
+                // Set first UOM found
+                if ($firstUom === null) {
+                    $firstUom = $matlUom->matl_uom;
+                }
+            }
+
+            // Store UOM options for this material
+            $this->materialUomOptions[$index] = $uomOptions;
+
             // Update the material details
             $this->input_details[$index]['matl_id'] = $materialId;
             $this->input_details[$index]['matl_code'] = $material->code;
             $this->input_details[$index]['matl_name'] = $material->name;
-            $this->input_details[$index]['matl_uom'] = 'PCS'; // default UOM
+
+            // Set default UOM to first found UOM from material's UOM list
+            if ($firstUom !== null) {
+                $this->input_details[$index]['matl_uom'] = $firstUom;
+            } else {
+                // Only fallback to PCS if absolutely no UOMs exist for this material
+                $this->input_details[$index]['matl_uom'] = 'PCS';
+                // Create default UOM entry if none exists
+                $this->materialUomOptions[$index] = [['value' => 'PCS', 'label' => 'PCS']];
+            }
+
             $this->input_details[$index]['qty_add'] = 0;
             $this->input_details[$index]['qty_subtract'] = 0;
 
@@ -317,9 +355,22 @@ class Detail extends BaseComponent
                 ->get();
 
             $this->input_details = [];
-            foreach ($inventoryDetails as $detail) {
+            foreach ($inventoryDetails as $key => $detail) {
                 // Ambil data material
                 $material = Material::find($detail->matl_id);
+
+                // Load UOMs for this material (ordered by matl_uom)
+                $materialUoms = MatlUom::where('matl_id', $detail->matl_id)
+                    ->orderBy('matl_uom', 'asc')
+                    ->get();
+                $uomOptions = [];
+                foreach ($materialUoms as $matlUom) {
+                    $uomOptions[] = [
+                        'value' => $matlUom->matl_uom,
+                        'label' => $matlUom->matl_uom
+                    ];
+                }
+                $this->materialUomOptions[$key] = $uomOptions;
 
                 // Get current stock from inventory balance based on material and UOM
                 $currentStock = IvtBal::where('matl_id', $detail->matl_id)
