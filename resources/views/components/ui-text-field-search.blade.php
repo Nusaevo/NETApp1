@@ -4,65 +4,105 @@
     $containerClass = !empty($label) ? 'form-floating flex-grow-1' : 'flex-grow-1';
     // Determine enabled state externally.
     $isEnabled = isset($enabled) && ($enabled === 'always' || $enabled === 'true');
+
+    // Generate ID if not provided - this is the key fix!
+    $componentId = $id ?? str_replace(['.', '[', ']'], '_', $model ?? 'textfield_' . uniqid());
+
+    // Debug the ID
+    if (empty($componentId)) {
+        $componentId = 'textfield_' . uniqid();
+    }
 @endphp
 
-<div wire:key="{{ $id }}-select2"   class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
+<div wire:key="{{ $componentId }}-textfield-search" class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
     <!-- Make the container position relative so the overlay positions correctly -->
     <div class="input-group">
         <!-- This container is ignored by Livewire for select2 handling -->
         <div wire:ignore class="{{ $containerClass }}" x-data x-init="() => {
                 const initSelect2 = () => {
-                    const selectElement = document.getElementById('{{ $id }}');
+                    const selectElement = document.getElementById('{{ $componentId }}');
                     if (!selectElement) {
-                        console.warn(`Element #{{ $id }} not found.`);
                         return;
                     }
-                    // If instance already exists, destroy it first
-                    if ($(selectElement).hasClass('select2-hidden-accessible')) {
-                        $(selectElement).select2('destroy');
+
+                    // Check if jQuery and Select2 are available
+                    if (typeof $ === 'undefined' || typeof $.fn.select2 === 'undefined') {
+                        return;
                     }
-                    // Initialize Select2
-                    $(selectElement).select2();
-                    // Remove duplicate event bindings
-                    $(selectElement).off('change');
-                    // Bind change event
-                    $(selectElement).on('change', function () {
-                        const value = $(this).val();
-                        @this.set('{{ $model }}', value);
 
-                        @if (isset($onChanged) && $onChanged)
-                            let onChanged = '{{ $onChanged }}';
-                            if (onChanged.includes('$event.target.value')) {
-                                onChanged = onChanged.replace('$event.target.value', value);
-                            }
-                            if (onChanged.includes('(')) {
-                                const matches = onChanged.match(/^([\w.]+)\((.*)\)$/);
-                                if (matches) {
-                                    const methodName = matches[1];
-                                    const params = matches[2]
-                                        .split(',')
-                                        .map(param => param.trim())
-                                        .filter(param => param !== '');
-                                    $wire.call(methodName, ...params);
-                                } else {
-                                    console.error(`Invalid onChanged format: ${onChanged}`);
-                                }
-                            } else {
-                                $wire.call(onChanged, value);
-                            }
-                        @endif
+                    try {
+                        // If instance already exists, destroy it first
+                        if ($(selectElement).hasClass('select2-hidden-accessible')) {
+                            $(selectElement).select2('destroy');
+                        }
 
-                        // Reinitialize Select2 for this element after change
-                        initSelect2();
-                    });
-                    console.log(`Select2 initialized for #{{ $id }}`);
+                        // Initialize Select2 with proper configuration
+                        $(selectElement).select2({
+                            placeholder: '{{ $placeHolder ?? "Select an option" }}',
+                            allowClear: true,
+                            width: '100%',
+                            minimumResultsForSearch: {{ count($options ?? []) > 10 ? '0' : 'Infinity' }},
+                            // Ensure search functionality remains active
+                            escapeMarkup: function(markup) {
+                                return markup;
+                            }
+                        });
+
+                        // Remove any existing event handlers
+                        $(selectElement).off('change.textfieldSearch');
+
+                        // Bind change event WITHOUT re-initialization
+                        $(selectElement).on('change.textfieldSearch', function (e) {
+                            const value = $(this).val();
+
+                            try {
+                                // Update Livewire model
+                                @this.set('{{ $model }}', value);
+
+                                // Handle onChanged callback if provided
+                                @if (isset($onChanged) && $onChanged)
+                                    let onChanged = '{{ $onChanged }}';
+                                    if (onChanged.includes('$event.target.value')) {
+                                        onChanged = onChanged.replace('$event.target.value', value);
+                                    }
+                                    if (onChanged.includes('(')) {
+                                        const matches = onChanged.match(/^([\w.]+)\((.*)\)$/);
+                                        if (matches) {
+                                            const methodName = matches[1];
+                                            const params = matches[2]
+                                                .split(',')
+                                                .map(param => param.trim())
+                                                .filter(param => param !== '');
+                                            $wire.call(methodName, ...params);
+                                        }
+                                    } else {
+                                        $wire.call(onChanged, value);
+                                    }
+                                @endif
+                            } catch (error) {
+                                // Silent error handling
+                            }
+                        });
+
+                        // Set initial value if available
+                        const currentValue = '{{ $selectedValue ?? "" }}';
+                        if (currentValue && currentValue !== '{{ $blankValue }}') {
+                            $(selectElement).val(currentValue).trigger('change.select2');
+                        }
+
+                    } catch (error) {
+                        // Silent error handling
+                    }
                 };
-                // Initialize Select2 when component is created
-                initSelect2();
+
+                // Initialize once with delay to ensure DOM is ready
+                setTimeout(() => {
+                    initSelect2();
+                }, 50);
             }">
 
-            <select id="{{ $id }}"
+            <select id="{{ $componentId }}"
                 class="form-select  @error($model) is-invalid @enderror
                     @if ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false')) disabled-gray @endif"
                 wire:model="{{ $model }}"
@@ -79,7 +119,7 @@
             </select>
 
             @if (!empty($label))
-                <label for="{{ $id }}" class="@if (isset($required) && $required === 'true') required @endif">
+                <label for="{{ $componentId }}" class="@if (isset($required) && $required === 'true') required @endif">
                     {{ $label }}
                 </label>
             @endif
