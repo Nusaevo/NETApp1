@@ -158,7 +158,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
             parse_str($this->initialQueryString, $allParams);
 
             // 3) create a *new* filtered array without 'table-filter'
-            $filtered = Arr::except($allParams, ['table-filters']);
+            $filtered = Arr::except($allParams, ['table-filters','table-sorts','page']);
 
             // 4) if there are any left, re‑append them
             if (!empty($filtered)) {
