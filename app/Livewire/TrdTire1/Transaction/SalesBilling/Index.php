@@ -6,7 +6,9 @@ use App\Livewire\Component\BaseComponent;
 use App\Models\SysConfig1\ConfigConst;
 use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr, BillingHdr};
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\TrdTire1\Master\MasterService;
+use App\Services\TrdTire1\AuditLogService;
 use Livewire\Attributes\On;
 use App\Enums\TrdTire1\Status;
 
@@ -39,24 +41,48 @@ class Index extends BaseComponent
 
         DB::beginTransaction();
 
-        $selectedOrders = BillingHdr::whereIn('id', $this->selectedOrderIds)->get();
+        try {
+            $selectedOrders = BillingHdr::whereIn('id', $this->selectedOrderIds)->get();
 
-        foreach ($selectedOrders as $order) {
-            $order->update([
-                'print_date' => $this->tr_date,
-                'status_code' => Status::PAID, // gunakan constant status
+            // Get old print dates before update
+            $oldPrintDates = $selectedOrders->pluck('print_date', 'id')->toArray();
+
+            foreach ($selectedOrders as $order) {
+                $order->update([
+                    'print_date' => $this->tr_date,
+                    'status_code' => Status::PAID, // gunakan constant status
+                ]);
+            }
+
+            // Create audit logs for each billing
+            try {
+                AuditLogService::createPrintDateAuditLogs(
+                    $this->selectedOrderIds,
+                    $this->tr_date,
+                    $oldPrintDates[$this->selectedOrderIds[0]] ?? null
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to create audit logs: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            $this->dispatch('close-modal-delivery-date');
+            $this->dispatch('showAlert', [
+                'type' => 'success',
+                'message' => 'Tanggal penagihan berhasil disimpan'
+            ]);
+
+            $this->dispatch('refreshDatatable');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to update delivery date: ' . $e->getMessage());
+            $this->dispatch('showAlert', [
+                'type' => 'error',
+                'message' => 'Gagal menyimpan tanggal penagihan: ' . $e->getMessage()
             ]);
         }
-
-        DB::commit();
-
-        $this->dispatch('close-modal-delivery-date');
-        $this->dispatch('showAlert', [
-            'type' => 'success',
-            'message' => 'Tanggal penagihan berhasil disimpan'
-        ]);
-
-        $this->dispatch('refreshDatatable');
     }
 
     public function onPrerender()
