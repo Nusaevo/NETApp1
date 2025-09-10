@@ -28,6 +28,9 @@
     <!-- Card hanya tampil di layar, tidak saat print -->
     <div class="card d-print-none" style="width: 100%; margin: 20px 0; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 20px;">
         <div class="report-box" style="width: 100%; margin: auto;">
+            <h3 style="text-decoration:underline; text-align:left;">
+                {!! $menuName !!}
+            </h3>
             <div style="text-align:left; margin-bottom:10px; font-size: 16px;">
                 <strong>Kode Program : {{ $selectedRewardCode }}</strong>
             </div>

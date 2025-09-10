@@ -8,6 +8,8 @@ use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr, Bil
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Services\TrdTire1\AuditLogService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -202,7 +204,23 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $selectedOrderIds = $this->getSelected();
         if (count($selectedOrderIds) > 0) {
+            // Get old print dates before update
+            $billings = BillingHdr::whereIn('id', $selectedOrderIds)->get();
+            $oldPrintDates = $billings->pluck('print_date', 'id')->toArray();
+
+            // Update print dates
             BillingHdr::whereIn('id', $selectedOrderIds)->update(['print_date' => $this->tr_date]);
+
+            // Create audit logs for each billing
+            try {
+                AuditLogService::createPrintDateAuditLogs(
+                    $selectedOrderIds,
+                    $this->tr_date,
+                    $oldPrintDates[$selectedOrderIds[0]] ?? null
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to create audit logs: ' . $e->getMessage());
+            }
 
             $this->clearSelected();
             $this->dispatch('showAlert', [
@@ -220,6 +238,13 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Update status to PRINT
             BillingHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => \App\Enums\TrdTire1\Status::PRINT]);
+
+            // Create audit logs for print action
+            try {
+                AuditLogService::createPrintAuditLogs($selectedOrderIds);
+            } catch (\Exception $e) {
+                Log::error('Failed to create print audit logs: ' . $e->getMessage());
+            }
 
             // Clear selected items
             $this->clearSelected();
