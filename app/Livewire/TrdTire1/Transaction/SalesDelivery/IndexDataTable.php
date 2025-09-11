@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\SalesDelivery;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, OrderDtl, OrderHdr};
+use App\Models\TrdTire1\Transaction\{BillingHdr, DelivHdr, DelivPacking, DelivPicking, OrderDtl, OrderHdr};
 use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
@@ -34,7 +34,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
-            ->where('order_hdrs.tr_type', 'SO');
+            ->where('order_hdrs.tr_type', 'SO')
+            ->select('order_hdrs.*'); // Pastikan semua field dari order_hdrs di-select
     }
     public function columns(): array
     {
@@ -82,12 +83,9 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->total_amt);
                 })
                 ->sortable(),
-            Column::make('Ongkos Kirim', 'amt_shipcost')
+            Column::make($this->trans('Ongkos Kirim'), 'amt_shipcost')
                 ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery && $delivery->amt_shipcost ? rupiah($delivery->amt_shipcost) : '-';
+                    return rupiah($row->amt_shipcost);
                 })
                 ->sortable(),
             Column::make($this->trans("Tanggal Kirim"), "tr_date")
@@ -238,6 +236,17 @@ class IndexDataTable extends BaseDataTableComponent
 
                 if ($delivHdrs->isEmpty()) {
                     $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
+                    return;
+                }
+
+                // Validasi billing: jika amt_reff > 0 maka tidak bisa dibatalkan
+                $billingHdrs = BillingHdr::whereIn('tr_code', $selectedTrCodes)
+                    ->where('amt_reff', '>', 0)
+                    ->get();
+
+                if ($billingHdrs->isNotEmpty()) {
+                    $blockedTrCodes = $billingHdrs->pluck('tr_code')->toArray();
+                    $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ada pembayaran');
                     return;
                 }
 

@@ -50,44 +50,6 @@
                                             :options="$npwpOptions" required="false" :action="$actionValue"
                                             clickEvent="openNpwpDialogBox" buttonName="+"
                                             onChanged="onTaxPayerChanged" />
-
-                                        <!-- Debug: tampilkan jumlah options -->
-                                        {{-- @if (config('app.debug'))
-                                            <div style="font-size: 10px; color: #666;">
-                                                Debug: NPWP Options count: {{ count($npwpOptions ?? []) }}
-                                                @if (!empty($npwpOptions))
-                                                    <br>Options: {{ json_encode($npwpOptions) }}
-                                                @endif
-                                                <br>Selected NPWP: {{ $inputs['npwp_code'] ?? 'none' }}
-                                                <br>Partner ID: {{ $inputs['partner_id'] ?? 'none' }}
-                                            </div>
-                                        @endif
-                                        <script>
-                                            document.addEventListener('livewire:init', () => {
-                                                Livewire.on('refreshSelect2', (event) => {
-                                                    const elementId = event[0];
-                                                    const selectElement = document.getElementById(elementId);
-                                                    if (selectElement) {
-                                                        // Destroy existing Select2 instance
-                                                        if ($(selectElement).hasClass('select2-hidden-accessible')) {
-                                                            $(selectElement).select2('destroy');
-                                                        }
-                                                        // Reinitialize Select2
-                                                        $(selectElement).select2();
-                                                        console.log('Select2 refreshed for:', elementId);
-                                                    }
-                                                });
-
-                                                // Listen for Livewire updates
-                                                Livewire.hook('morph.updated', () => {
-                                                    const selectElement = document.getElementById('inputs_npwp_code');
-                                                    if (selectElement && !$(selectElement).hasClass('select2-hidden-accessible')) {
-                                                        $(selectElement).select2();
-                                                        console.log('Select2 reinitialized after morph update');
-                                                    }
-                                                });
-                                            });
-                                        </script> --}}
                                         <x-ui-dialog-box id="NpwpDialogBox" title="Form Jenis" width="600px"
                                             height="400px" onOpened="openNpwpDialogBox" onClosed="closeNpwpDialogBox">
                                             <x-slot name="body">
