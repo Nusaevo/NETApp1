@@ -23,7 +23,6 @@ class Index extends BaseComponent
     public $inputs = [
         'tr_date' => '',
         'wh_code' => '',
-        'amt_shipcost' => null,
     ];
     protected $masterService;
     public $warehouses;
@@ -52,7 +51,6 @@ class Index extends BaseComponent
         $this->validate([
             'inputs.tr_date' => 'required|date',
             'inputs.wh_code' => 'required',
-            'inputs.amt_shipcost' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -75,7 +73,7 @@ class Index extends BaseComponent
                     'tr_date' => $this->inputs['tr_date'],
                     'partner_id' => $order->partner_id,
                     'partner_code' => $order->partner_code,
-                    'status_code' => $order->status_code,
+                    // 'status_code' => $order->status_code,
                     'wh_code' => $warehouse->str1,
                     'wh_id' => $warehouse->id,
                     'payment_term_id' => $order->payment_term_id,
@@ -83,7 +81,7 @@ class Index extends BaseComponent
                     'payment_due_days' => $order->payment_due_days,
                     'note' => '',
                     'reff_date' => null,
-                    'amt_shipcost' => $this->inputs['amt_shipcost'] ?? 0,
+                    'amt_shipcost' => $order->amt_shipcost ?? 0,
                     'status_code' => Status::OPEN,
                 ];
 
@@ -99,7 +97,7 @@ class Index extends BaseComponent
                         ->sum('qty_oh');
 
                     if ($totalStock < $detail->qty) {
-                        $errorMessages[] = __('Stok tidak mencukupi untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code . ' (Tersedia: ' . $totalStock . ', Dibutuhkan: ' . $detail->qty . ')');
+                        $errorMessages[] = __('Stok tidak mencukupi untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code . ' (Tersedia: ' . (int)$totalStock . ', Dibutuhkan: ' . $detail->qty . ')');
                         continue 2; // skip ke order berikutnya
                     }
 
@@ -169,7 +167,7 @@ class Index extends BaseComponent
 
             $this->dispatch('close-modal-delivery-date');
             $this->dispatch('refreshDatatable');
-            $this->dispatch('refresh-page');
+            // $this->dispatch('refresh-page');
 
         } catch (Exception $e) {
             Log::error('Error creating Sales Delivery: ' . $e->getMessage());

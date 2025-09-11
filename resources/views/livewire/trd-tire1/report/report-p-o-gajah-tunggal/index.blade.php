@@ -90,6 +90,9 @@
     <div id="print" class="d-none d-print-block p-20">
         <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
             <div class="report-box" style="max-width: 1200px; margin: auto; padding: 20px;">
+                <h3 style="text-decoration:underline; text-align:left;">
+                    {!! $menuName !!}
+                </h3>
                 <div style="text-align:left; margin-bottom:0;">
                     <strong>Kode Program : {{ $selectedRewardCode }}</strong>
                 </div>

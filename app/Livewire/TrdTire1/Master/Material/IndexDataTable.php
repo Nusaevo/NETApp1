@@ -34,7 +34,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return Material::with('MatlUom')
+        return Material::with(['MatlUom', 'IvtBal'])
             ->select('materials.*');
     }
 
@@ -67,9 +67,9 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make('Stock', 'MatlUom.qty_oh')
+            Column::make('Stock', 'IvtBal.qty_oh')
                 ->format(function ($value, $row, Column $column) {
-                    return $row->MatlUom?->qty_oh ?? 0;
+                    return $row->IvtBal?->qty_oh ?? 0;
                 })
                 ->searchable()
                 ->sortable(),
