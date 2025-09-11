@@ -139,7 +139,7 @@ class DropdownSearchController extends Controller
             try {
                 $db = DB::connection($connection);
             } catch (\Exception $e) {
-                \Log::error('Invalid database connection:', ['connection' => $connection, 'error' => $e->getMessage()]);
+                // \Log::error('Invalid database connection:', ['connection' => $connection, 'error' => $e->getMessage()]);
                 return response()->json([
                     'results' => [],
                     'error' => 'Invalid database connection: ' . $connection
@@ -149,11 +149,11 @@ class DropdownSearchController extends Controller
             // Validate SQL query
             if (!$sqlQuery) {
                 $errorMessage = 'SQL query is required';
-                \Log::error($errorMessage, [
-                    'request_all' => $request->all(),
-                    'request_headers' => $request->header(),
-                    'search_term' => $searchTerm
-                ]);
+                // \Log::error($errorMessage, [
+                //     'request_all' => $request->all(),
+                //     'request_headers' => $request->header(),
+                //     'search_term' => $searchTerm
+                // ]);
 
                 return response()->json([
                     'results' => [],
@@ -167,20 +167,28 @@ class DropdownSearchController extends Controller
 
                 if ($preserveExisting && $specificId && $bypassFilters) {
                     // This is for fetching existing/selected value - bypass ALL filters
-                    \Log::info('Using bypass filters for selected value lookup:', [
-                        'specific_id' => $specificId,
-                        'option_value' => $optionValue,
-                        'preserve_existing' => $preserveExisting,
-                        'bypass_filters' => $bypassFilters
-                    ]);
-
                     $modifiedQuery = $this->bypassAllFilters($sqlQuery, $optionValue, $specificId);
-                    $results = $db->select($modifiedQuery);
+
+                    // \Log::info('SELECTED VALUE QUERY: ' . $modifiedQuery);
+
+                    try {
+                        $results = $db->select($modifiedQuery);
+                    } catch (\Exception $e) {
+                        // \Log::error('Selected value query error: ' . $e->getMessage());
+                        throw $e;
+                    }
 
                 } else if ($specificId) {
                     // Regular specific ID lookup with normal filters
                     $modifiedQuery = $this->modifyQueryForId($sqlQuery, $optionValue, $specificId);
                     $results = $db->select($modifiedQuery);
+
+                    // If no results found with normal filters, try bypass mode automatically
+                    if (empty($results)) {
+                        $bypassQuery = $this->bypassAllFilters($sqlQuery, $optionValue, $specificId);
+                        // \Log::info('FALLBACK SELECTED VALUE QUERY: ' . $bypassQuery);
+                        $results = $db->select($bypassQuery);
+                    }
 
                 } else {
                     // Normal search with filters applied
@@ -190,20 +198,20 @@ class DropdownSearchController extends Controller
                         $modifiedQuery = $sqlQuery;
                     }
 
+                    // \Log::info('OPTIONS QUERY: ' . $modifiedQuery . ' LIMIT 50');
+
                     // Execute query for regular search
                     $results = $db->select($modifiedQuery . ' LIMIT 50');
-                }
-
-                // Handle specific ID lookup (both bypass and normal)
+                }                // Handle specific ID lookup (both bypass and normal)
                 if ($specificId && !empty($results)) {
                     $item = $results[0];
 
                     // Check if the required property exists
                     if (!property_exists($item, $optionValue)) {
-                        \Log::error('Column not found in results:', [
-                            'optionValue' => $optionValue,
-                            'available' => array_keys(get_object_vars($item))
-                        ]);
+                        // \Log::error('Column not found in results:', [
+                        //     'optionValue' => $optionValue,
+                        //     'available' => array_keys(get_object_vars($item))
+                        // ]);
 
                         return response()->json([
                             'results' => [],
@@ -213,25 +221,17 @@ class DropdownSearchController extends Controller
 
                     $displayText = $this->formatDisplayText($item, $optionLabel);
 
-                    // Detect status indicators for existing values
-                    $statusInfo = $this->detectStatusIndicators($item);
-
                     return response()->json([
                         'results' => [[
                             'id' => $item->{$optionValue},
-                            'text' => $displayText,
-                            'is_deleted' => $statusInfo['is_deleted'],
-                            'is_out_of_stock' => $statusInfo['is_out_of_stock'],
-                            'is_inactive' => $statusInfo['is_inactive'],
-                            'is_expired' => $statusInfo['is_expired'],
-                            'custom_status' => $statusInfo['custom_status']
+                            'text' => $displayText
                         ]]
                     ]);
                 } else if ($specificId) {
-                    \Log::info('No results found for specific ID lookup:', [
-                        'id' => $specificId,
-                        'query' => $modifiedQuery
-                    ]);
+                    // \Log::info('No results found for specific ID lookup:', [
+                    //     'id' => $specificId,
+                    //     'query' => $modifiedQuery
+                    // ]);
                     return response()->json(['results' => []]);
                 }
 
@@ -243,10 +243,10 @@ class DropdownSearchController extends Controller
                     $id = property_exists($item, $optionValue) ? $item->{$optionValue} : null;
 
                     if ($id === null) {
-                        \Log::warning('Dropdown item missing ID field:', [
-                            'optionValue' => $optionValue,
-                            'item' => json_encode($item)
-                        ]);
+                        // \Log::warning('Dropdown item missing ID field:', [
+                        //     'optionValue' => $optionValue,
+                        //     'item' => json_encode($item)
+                        // ]);
                     }
 
                     return [
@@ -257,20 +257,20 @@ class DropdownSearchController extends Controller
                     return $item['id'] !== null; // Filter out items with null IDs
                 });
 
-                \Log::info('Dropdown search results count:', ['count' => count($formattedResults)]);
+                //\Log::info('Dropdown search results count:', ['count' => count($formattedResults)]);
 
                 return response()->json([
                     'results' => $formattedResults
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Error in dropdown search: ' . $e->getMessage());
+                //\Log::error('Error in dropdown search: ' . $e->getMessage());
                 return response()->json(['error' => $e->getMessage()], 500);
             }
         } catch (\Exception $e) {
-            \Log::error('Dropdown search error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            // \Log::error('Dropdown search error:', [
+            //     'message' => $e->getMessage(),
+            //     'trace' => $e->getTraceAsString()
+            // ]);
 
             return response()->json([
                 'results' => [],
@@ -417,89 +417,68 @@ class DropdownSearchController extends Controller
     }
 
     /**
-     * Bypass all filters for selected value lookup
-     * Removes ALL WHERE conditions and only searches by the specific ID
+     * Create a simplified query for selected value lookup
+     * Uses basic SELECT with simple WHERE condition: WHERE {optionValue} = xxxx
+     * This bypasses all complex filters and joins to ensure selected values can always be found
+     * Supports both aliased fields (m.id) and simple fields (id)
      */
     private function bypassAllFilters($sqlQuery, $optionValue, $specificId)
     {
-        // Remove the entire WHERE clause and everything after it (GROUP BY, ORDER BY, etc.)
-        // Keep only the SELECT ... FROM ... part
-        $baseQuery = preg_replace('/\s+WHERE\s+.*$/i', '', $sqlQuery);
+        // For selected value lookup, we want ONLY the ID condition
+        // Remove all existing WHERE clauses and add only WHERE id = specificId
 
-        // Also remove any trailing ORDER BY, GROUP BY, HAVING clauses that might be standalone
-        $baseQuery = preg_replace('/\s+(ORDER\s+BY|GROUP\s+BY|HAVING)\s+.*$/i', '', $baseQuery);
+        // Handle flexible optionValue - support both "id" and "m.id" format
+        $whereField = $optionValue;
 
-        // Add only the ID condition
-        $idCondition = " WHERE {$optionValue} = " . (is_numeric($specificId) ? $specificId : "'{$specificId}'");
+        // If optionValue contains a dot (table alias), check if it exists in the query
+        if (strpos($optionValue, '.') !== false) {
+            // Extract table alias and field name
+            $parts = explode('.', $optionValue);
+            $tableAlias = $parts[0];
+            $fieldName = $parts[1];
 
-        $finalQuery = $baseQuery . $idCondition;
-
-        \Log::info('Bypass filters query transformation:', [
-            'original' => $sqlQuery,
-            'base_cleaned' => $baseQuery,
-            'final' => $finalQuery,
-            'specific_id' => $specificId,
-            'option_value' => $optionValue
-        ]);
-
-        return $finalQuery;
-    }    /**
-     * Detect status indicators for dropdown items
-     */
-    private function detectStatusIndicators($item)
-    {
-        $statusInfo = [
-            'is_deleted' => false,
-            'is_out_of_stock' => false,
-            'is_inactive' => false,
-            'is_expired' => false,
-            'custom_status' => null
-        ];
-
-        // Check for deleted status
-        if (property_exists($item, 'deleted_at') && !empty($item->deleted_at)) {
-            $statusInfo['is_deleted'] = true;
-            $statusInfo['custom_status'] = 'Deleted';
-        }
-
-        // Check for stock status
-        if (property_exists($item, 'stock') && $item->stock <= 0) {
-            $statusInfo['is_out_of_stock'] = true;
-            if (!$statusInfo['custom_status']) {
-                $statusInfo['custom_status'] = 'Out of Stock';
+            // Check if the table alias exists in the query
+            if (stripos($sqlQuery, $tableAlias . ' ') !== false || stripos($sqlQuery, ' ' . $tableAlias) !== false) {
+                // Alias exists in query, use full format (e.g., "m.id")
+                $whereField = $optionValue;
+            } else {
+                // Alias doesn't exist, fall back to simple field name (e.g., "id")
+                $whereField = $fieldName;
             }
-        }
+        } else {
+            // Simple field name without alias, try to detect if we need to add an alias
+            // Look for common table aliases in the query that might need the field
+            if (preg_match('/\bFROM\s+\w+\s+([a-zA-Z]+)\b/i', $sqlQuery, $matches)) {
+                $potentialAlias = $matches[1];
 
-        // Check for active status
-        if (property_exists($item, 'status') && $item->status !== 'active') {
-            $statusInfo['is_inactive'] = true;
-            if (!$statusInfo['custom_status']) {
-                $statusInfo['custom_status'] = 'Inactive';
-            }
-        }
-
-        if (property_exists($item, 'is_active') && !$item->is_active) {
-            $statusInfo['is_inactive'] = true;
-            if (!$statusInfo['custom_status']) {
-                $statusInfo['custom_status'] = 'Inactive';
-            }
-        }
-
-        // Check for expiration
-        if (property_exists($item, 'expired_date') && !empty($item->expired_date)) {
-            $expiredDate = \Carbon\Carbon::parse($item->expired_date);
-            if ($expiredDate->isPast()) {
-                $statusInfo['is_expired'] = true;
-                if (!$statusInfo['custom_status']) {
-                    $statusInfo['custom_status'] = 'Expired';
+                // Check if this alias is used elsewhere in the query
+                if (stripos($sqlQuery, $potentialAlias . '.') !== false) {
+                    // Alias is used, so we should probably use it too
+                    $whereField = $potentialAlias . '.' . $optionValue;
                 }
             }
         }
 
-        return $statusInfo;
-    }
+        // Remove existing WHERE clause completely for selected value lookup
+        $upperQuery = strtoupper($sqlQuery);
+        $wherePos = strpos($upperQuery, ' WHERE ');
 
-    /**
+        if ($wherePos !== false) {
+            // Remove everything from WHERE onwards
+            $queryWithoutWhere = substr($sqlQuery, 0, $wherePos);
+        } else {
+            // No WHERE clause to remove
+            $queryWithoutWhere = $sqlQuery;
+        }
+
+        // Add ONLY the ID condition
+        $escapedId = is_numeric($specificId) ? $specificId : "'" . addslashes($specificId) . "'";
+
+        // Create new WHERE clause with ONLY the ID condition
+        $finalQuery = $queryWithoutWhere . " WHERE {$whereField} = {$escapedId}";
+
+        return $finalQuery;
+    }    /**
      * Modify SQL query to search by term
      *
      * @param string $sqlQuery
@@ -595,12 +574,12 @@ class DropdownSearchController extends Controller
 
         $searchClause = '(' . implode(' OR ', $searchConditions) . ')';
 
-        \Log::info('Generated search clause with table aliases and text casting', [
-            'searchFields' => $searchableFields,
-            'clause' => $searchClause,
-            'uppercased_term' => $upperSearchTerm,
-            'original_option_label' => $optionLabel
-        ]);
+        // \Log::info('Generated search clause with table aliases and text casting', [
+        //     'searchFields' => $searchableFields,
+        //     'clause' => $searchClause,
+        //     'uppercased_term' => $upperSearchTerm,
+        //     'original_option_label' => $optionLabel
+        // ]);
 
         // No search placeholders, we need to add the search condition
         if ($hasWhere) {

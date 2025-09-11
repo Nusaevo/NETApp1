@@ -334,27 +334,9 @@
                                     if (data && data.results && data.results.length > 0) {
                                         const item = data.results[0];
 
-                                        // Build display text with status indicators
-                                        let displayText = item.text;
-                                        const indicators = [];
-
-                                        if (item.is_deleted) indicators.push('Deleted');
-                                        if (item.is_out_of_stock) indicators.push('Out of Stock');
-                                        if (item.is_inactive) indicators.push('Inactive');
-                                        if (item.is_expired) indicators.push('Expired');
-                                        if (item.custom_status) indicators.push(item.custom_status);
-
-                                        if (indicators.length > 0) {
-                                            displayText += ` (${indicators.join(', ')})`;
-                                        }
-
+                                        // Use display text directly from the response
+                                        const displayText = item.text;
                                         const option = new Option(displayText, item.id, true, true);
-
-                                        // Add appropriate CSS classes for styling
-                                        if (item.is_deleted) $(option).addClass('deleted-option');
-                                        if (item.is_out_of_stock) $(option).addClass('out-of-stock-option');
-                                        if (item.is_inactive) $(option).addClass('inactive-option');
-                                        if (item.is_expired) $(option).addClass('expired-option');
 
                                         $(selectElement).append(option).trigger('change');
                                     } else {
