@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PartnertrDtl};
+use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PartnertrDtl, PaymentAdv};
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +72,21 @@ class IndexDataTable extends BaseDataTableComponent
                 ->sortable(),
             Column::make($this->trans("Lebih Bayar"), "amt_advs")
                 ->format(function ($value, $row) {
-                    return rupiah($row->amt_advs ?? 0);
+                    // Jika menggunakan saldo advance, maka lebih bayar = 0
+                    // amt_advs berisi total advance yang digunakan, bukan lebih bayar
+                    // Lebih bayar hanya muncul jika ada overpayment setelah semua advance digunakan
+                    $overPayment = 0;
+
+                    // Cari overpayment dari PaymentAdv dengan reff_id = id (menandakan overpayment)
+                    $overPaymentRecord = PaymentAdv::where('trhdr_id', $row->id)
+                        ->whereColumn('reff_id', '=', 'id')
+                        ->first();
+
+                    if ($overPaymentRecord) {
+                        $overPayment = $overPaymentRecord->amt ?? 0;
+                    }
+
+                    return rupiah($overPayment);
                 })
                 ->sortable(),
             Column::make($this->trans("Adjustment"), "tr_code")
@@ -91,7 +105,8 @@ class IndexDataTable extends BaseDataTableComponent
                                 ->first();
 
                             if ($cnData) {
-                                $adjustmentTotal += $cnData->amt;
+                                // Pastikan nilai selalu positif (+)
+                                $adjustmentTotal += abs($cnData->amt);
                             }
                         }
                     }

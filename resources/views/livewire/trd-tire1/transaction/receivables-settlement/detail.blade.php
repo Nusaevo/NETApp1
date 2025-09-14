@@ -49,7 +49,7 @@
                         <x-slot name="rows">
                             @foreach ($input_advance as $key => $advance)
                                 <tr wire:key="advance-{{ $key }}">
-                                    <td style="text-align: center;">{{ $loop->iteration }}</td>                                    
+                                    <td style="text-align: center;">{{ $loop->iteration }}</td>
                                     {{-- <td>
                                         <x-ui-dropdown-select :options="$advanceOptions"
                                             model="input_advance.{{ $key }}.partnerbal_id" :action="$actionValue"
