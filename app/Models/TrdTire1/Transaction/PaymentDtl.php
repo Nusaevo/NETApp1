@@ -25,7 +25,6 @@ class PaymentDtl extends BaseModel
         'billhdr_id',
         'amt',
         'amt_base',
-        'partnertr_id',
         'status_code'
     ];
 
@@ -34,7 +33,6 @@ class PaymentDtl extends BaseModel
         'tr_seq' => 'integer',
         'partnerbal_id' => 'integer',
         'billhdr_id' => 'integer',
-        'partnertr_id' => 'integer',
         'amt' => 'float',
         'amt_base' => 'float',
     ];
