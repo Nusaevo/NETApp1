@@ -70,11 +70,11 @@
                             Code
                         @endif
                     </th>
-                    <th class="min-w-100px">Image</th>
-                    <th class="min-w-150px">Name</th>
-                    <th class="min-w-80px">UOM</th>
-                    <th class="min-w-100px">Buying Price</th>
-                    <th class="min-w-100px">Selling Price</th>
+                    <th class="min-w-100px" style="max-width: 100px;">Image</th>
+                    <th class="min-w-100px" style="max-width: 100px;">Name</th>
+                    <th class="min-w-80px" style="max-width: 50px;">UOM</th>
+                    <th class="min-w-100px" style="max-width: 100px;">Buying Price</th>
+                    <th class="min-w-100px" style="max-width: 100px;">Selling Price</th>
                 </x-slot>
 
                 <x-slot name="rows">
