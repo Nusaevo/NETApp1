@@ -29,26 +29,54 @@
     @endif
 
     <div class="main-content gallery-main-content {{ $isComponent ? 'dialog-box-body' : '' }}">
-        @foreach ($attachments as $key => $attachment)
-            <div class="list-gallery-item gallery-list-item">
-                <div class="image-container gallery-image-container">
-                    <input type="checkbox" class="gallery-checkbox" data-image-id="{{ $attachment->id }}"
-                        data-image-url="{{ $attachment->getUrl() }}" onchange="toggleDeleteButton()">
-                    <x-ui-image src="{{ $attachment->getUrl() }}" alt="Captured Image" width="250px" height="200px" />
-                    <!-- Photo File Name Below Image -->
-                    <div class="gallery-file-name">
-                        <small>{{ $attachment->name }}</small>
+        @if ($isComponent && !$loadImages)
+            <!-- Bootstrap loading state -->
+            <div class="d-flex justify-content-center align-items-center" style="min-height: 300px;">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-
-                    @if (!$isComponent)
-                        @if (isset($permissions['delete']) && $permissions['delete'])
-                            <button class="gallery-btn-delete-image" onclick="deleteImage('{{ $attachment->id }}')"
-                                data-image-id="{{ $attachment->id }}">X</button>
-                        @endif
-                    @endif
+                    <h6 class="text-muted">Loading images...</h6>
+                    <p class="text-muted small mb-0">Please wait</p>
                 </div>
             </div>
-        @endforeach
+        @else
+            @forelse ($attachments as $key => $attachment)
+                <div class="list-gallery-item gallery-list-item">
+                    <div class="image-container gallery-image-container card">
+                        <input type="checkbox" class="gallery-checkbox form-check-input" data-image-id="{{ $attachment->id }}"
+                            data-image-url="{{ $attachment->getUrl() }}" onchange="toggleDeleteButton()">
+                        <x-ui-image src="{{ $attachment->getUrl() }}" alt="Captured Image" width="300px" height="300px" />
+
+                        <!-- Photo File Name Below Image -->
+                        <div class="gallery-file-name">
+                            <small class="fw-medium">{{ $attachment->name }}</small>
+                        </div>
+
+                        @if (!$isComponent)
+                            @if (isset($permissions['delete']) && $permissions['delete'])
+                                <button class="gallery-btn-delete-image btn btn-danger btn-sm" onclick="deleteImage('{{ $attachment->id }}')"
+                                    data-image-id="{{ $attachment->id }}" title="Delete Image">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+            @empty
+                @if ($loadImages)
+                    <div class="col-12">
+                        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+                            <div class="text-center">
+                                <i class="bi bi-images text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-2">No images found</h5>
+                                <p class="text-muted small mb-0">Your storage gallery is empty</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endforelse
+        @endif
     </div>
 
     @if (!$isComponent)
@@ -65,6 +93,40 @@
     @endif
 
     <script>
+        // Simple lazy loading when dialog is opened
+        document.addEventListener('DOMContentLoaded', function() {
+            // Listen for Bootstrap modal events
+            const storageModal = document.getElementById('storageDialogBox');
+            if (storageModal) {
+                storageModal.addEventListener('shown.bs.modal', function () {
+                    if (@js($isComponent) && !@js($loadImages)) {
+                        @this.loadImagesLazy();
+                    }
+                });
+
+                storageModal.addEventListener('hidden.bs.modal', function () {
+                    if (@js($isComponent)) {
+                        @this.resetImagesLoad();
+                    }
+                });
+            }
+
+            // Listen for Livewire custom events (fallback)
+            window.addEventListener('openStorageDialog', function() {
+                if (@js($isComponent) && !@js($loadImages)) {
+                    setTimeout(() => {
+                        @this.loadImagesLazy();
+                    }, 200);
+                }
+            });
+
+            window.addEventListener('closeStorageDialog', function() {
+                if (@js($isComponent)) {
+                    @this.resetImagesLoad();
+                }
+            });
+        });
+
         async function readImageAsByteArray(url) {
             const response = await fetch(url);
             const blob = await response.blob();

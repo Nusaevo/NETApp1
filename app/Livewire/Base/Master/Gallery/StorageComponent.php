@@ -18,19 +18,26 @@ class StorageComponent extends BaseComponent
 
     public $images = [];
     public $isComponent;
+    public $loadImages = false;
 
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null, $isComponent = true)
     {
         $this->isComponent = $isComponent;
+        $this->loadImages = !$isComponent; // Load images immediately if not a component
         parent::mount($action, $objectId, $actionValue, $objectIdValue);
     }
 
     public function render()
     {
-        $query = Attachment::where('attached_objecttype', 'NetStorage')
-            ->orderBy('created_at', 'desc');
+        $attachments = collect();
 
-        $attachments = $this->isComponent ? $query->get() : $query->paginate(15);
+        if ($this->loadImages) {
+            $query = Attachment::where('attached_objecttype', 'NetStorage')
+                ->orderBy('created_at', 'desc');
+
+            $attachments = $this->isComponent ? $query->get() : $query->paginate(15);
+        }
+
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
         return view($renderRoute, ['attachments' => $attachments]);
     }
@@ -43,7 +50,9 @@ class StorageComponent extends BaseComponent
         'captureImages' => 'captureImages',
         'deleteImage' => 'deleteImage',
         'deleteSelectedImages' => 'deleteSelectedImages',
-        'submitImages' => 'submitImages'
+        'submitImages' => 'submitImages',
+        'loadImagesLazy' => 'loadImagesLazy',
+        'resetImagesLoad' => 'resetImagesLoad'
     ];
 
     public function submitImages($imageByteArrays)
@@ -54,6 +63,20 @@ class StorageComponent extends BaseComponent
 
         $this->dispatch('saveImages', $imageByteArrays);
         $this->dispatch('success', 'Images submitted successfully.');
+    }
+
+    public function loadImagesLazy()
+    {
+        $this->loadImages = true;
+        // Force re-render after loading
+        $this->dispatch('$refresh');
+    }
+
+    public function resetImagesLoad()
+    {
+        if ($this->isComponent) {
+            $this->loadImages = false;
+        }
     }
 
     public function captureImages($imageData, $originalFilename = null)

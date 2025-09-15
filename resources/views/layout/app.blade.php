@@ -327,12 +327,12 @@
     </div>
 
     <!-- Image Preview Modal -->
-    <div class="modal fade" id="imagePreviewModal"  aria-hidden="true">
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true" data-bs-keyboard="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Image Preview</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="imagePreviewModalLabel">Image Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center">
                     <img id="previewImage" src="" alt="Image Preview" class="img-fluid rounded">
@@ -492,12 +492,28 @@
         // Image preview function
         function showImagePreview(imageUrl) {
             const previewImage = document.getElementById('previewImage');
-            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+            const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'), {
+                keyboard: true, // Enable ESC key
+                backdrop: true  // Enable click outside to close
+            });
             if (previewImage) {
                 previewImage.src = imageUrl;
                 modal.show();
             }
         }
+
+        // Additional ESC key handler for image preview modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                const imageModal = document.getElementById('imagePreviewModal');
+                if (imageModal && imageModal.classList.contains('show')) {
+                    const modalInstance = bootstrap.Modal.getInstance(imageModal);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                }
+            }
+        });
 
         // Print function
         function printReport() {
