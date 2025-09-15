@@ -1,3 +1,4 @@
+<div>
 <div id="tab-container-{{ $id }}" class="modern-tab-container">
     <ul class="nav nav-tabs modern-tabs" id="{{ $id }}" role="tablist">
         @php
@@ -254,3 +255,4 @@
     })();
 </script>
 @endpush
+</div>
