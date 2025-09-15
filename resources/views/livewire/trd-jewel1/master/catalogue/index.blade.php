@@ -6,14 +6,31 @@
                 <div class="row g-3 mb-2">
                     <x-ui-text-field label="Code Barang" model="inputs.code" type="text" action="Edit" />
                     <x-ui-text-field label="Cari Nama Barang" model="inputs.name" type="text" action="Edit" />
-                    <x-ui-text-field label="Cari Nama Bahan" model="inputs.description" type="text" action="Edit" />
+                    <x-ui-text-field label="Cari Deskripsi Barang" model="inputs.description" type="text" action="Edit" />
                 </div>
                 <div class="row g-3 mb-2">
-                    <x-ui-text-field label="Harga Jual (From)" model="inputs.selling_price1" type="number" action="Edit" />
-                    <x-ui-text-field label="Harga Jual (To)" model="inputs.selling_price2" type="number" action="Edit" />
+                    <x-ui-dropdown-select label="Kategori 1" model="inputs.category1" :options="$categories1" :action="'Edit'" placeholder="Pilih Kategori 1"/>
+                    <x-ui-dropdown-select label="Kategori 2" model="inputs.category2" :options="$categories2" :action="'Edit'" placeholder="Pilih Kategori 2"/>
+                </div>
+                <div class="row g-3 mb-2">
+                    <x-ui-text-field label="Harga Jual USD (From)" model="inputs.selling_price1" type="number" action="Edit" currency="USD"/>
+                    <x-ui-text-field label="Harga Jual USD (To)" model="inputs.selling_price2" type="number" action="Edit" currency="USD" />
+                </div>
+                <div class="row g-3 mb-2">
+                    <x-ui-text-field label="Harga Jual IDR (From)" model="inputs.selling_price1_idr" type="number" action="Edit" currency="IDR"/>
+                    <x-ui-text-field label="Harga Jual IDR (To)" model="inputs.selling_price2_idr" type="number" action="Edit" currency="IDR" />
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Gunakan filter harga USD atau IDR, tidak keduanya bersamaan. Rate: {{ number_format($currencyRate, 0) }} IDR/USD
+                        </small>
+                    </div>
                 </div>
             </div>
             <div class="card-footer d-flex justify-content-end">
+               <x-ui-button clickEvent="resetFilters" button-name="Reset" action="Edit" cssClass="btn-outline-secondary" />
                 <x-ui-button clickEvent="search" button-name="Search" loading="true" action="Edit" cssClass="btn-primary" />
             </div>
         </x-ui-expandable-card>
@@ -34,11 +51,23 @@
                                 @endif
                             </div>
                             <div class="card-body d-flex flex-column p-4">
-                                <div class="d-flex justify-content-between align-items-start ">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title text-dark mb-0 flex-grow-1 me-3">{{ $material->name ?? "Test" }}</h5>
                                     <span class="badge bg-secondary text-nowrap fs-6">{{ $material->code }}</span>
                                 </div>
-                                <p  style="font-size: 0.9rem; line-height: 1.4;">{{ $material->descr }}</p>
+
+                                @if($material->category || $material->category2)
+                                    <div class="mb-2">
+                                        @if($material->category)
+                                            <span class="badge bg-primary me-1 small">{{ $material->category }}</span>
+                                        @endif
+                                        @if($material->category2)
+                                            <span class="badge bg-info small">{{ $material->category2 }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                <p style="font-size: 0.9rem; line-height: 1.4;">{{ $material->descr }}</p>
                                 <div class="price-section">
                                     @if($material->isOrderedMaterial())
                                         <span class="badge bg-success fs-5 px-3 py-2">{{ rupiah($material->jwl_selling_price_idr) }}</span>

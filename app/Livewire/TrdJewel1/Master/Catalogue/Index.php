@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\{Crypt, Auth, DB};
 use App\Models\TrdJewel1\Master\{Material, GoldPriceLog};
 use App\Models\TrdJewel1\Transaction\{CartHdr, CartDtl};
+use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Support\Carbon;
 use Exception;
 
@@ -15,16 +16,91 @@ class Index extends BaseComponent
     use WithPagination;
     #region Constant Variables
     public $currencyRate;
+    public $categories1 = [];
+    public $categories2 = [];
 
     public $inputs = [
         'name' => '',
         'description' => '',
         'selling_price1' => '',
         'selling_price2' => '',
-        'code' => ''
+        'selling_price1_idr' => '',
+        'selling_price2_idr' => '',
+        'code' => '',
+        'category1' => '',
+        'category2' => ''
     ];
 
     #endregion
+
+    public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
+    {
+        parent::mount($action, $objectId, $actionValue, $objectIdValue);
+
+        // Load categories for dropdowns
+        $this->loadCategories();
+    }
+
+    public function loadCategories()
+    {
+        // Get categories from ConfigConst for category1
+        $categories1 = ConfigConst::where('const_group', 'MMATL_CATEGL1')
+            ->whereNull('deleted_at')
+            ->orderBy('str2')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+            })
+            ->toArray();
+
+        // If no data found, try without deleted_at filter for category1
+        if (empty($categories1)) {
+            $categories1 = ConfigConst::where('const_group', 'MMATL_CATEGL1')
+                ->orderBy('str2')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+                })
+                ->toArray();
+        }
+
+        // Convert to format expected by dropdown
+        $this->categories1 = collect($categories1)->map(function($text, $value) {
+            return [
+                'value' => $value,
+                'label' => $text
+            ];
+        })->values()->toArray();
+
+        // Get categories from ConfigConst for category2
+        $categories2 = ConfigConst::where('const_group', 'MMATL_CATEGL2')
+            ->whereNull('deleted_at')
+            ->orderBy('str2')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+            })
+            ->toArray();
+
+        // If no data found, try without deleted_at filter for category2
+        if (empty($categories2)) {
+            $categories2 = ConfigConst::where('const_group', 'MMATL_CATEGL2')
+                ->orderBy('str2')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    return [$item->str1 => $item->str1 . ' - ' . $item->str2];
+                })
+                ->toArray();
+        }
+
+        // Convert to format expected by dropdown
+        $this->categories2 = collect($categories2)->map(function($text, $value) {
+            return [
+                'value' => $value,
+                'label' => $text
+            ];
+        })->values()->toArray();
+    }
 
     #region Populate Data methods
     public function render()
@@ -44,10 +120,22 @@ class Index extends BaseComponent
             $query->whereRaw('UPPER(descr) LIKE ?', ['%' . strtoupper($this->inputs['description']) . '%']);
         }
         if (!empty($this->inputs['selling_price1']) && !empty($this->inputs['selling_price2'])) {
-            $query->whereBetween('jwl_selling_price', [$this->inputs['selling_price1'], $this->inputs['selling_price2']]);
+            $query->whereBetween('jwl_selling_price_usd', [$this->inputs['selling_price1'], $this->inputs['selling_price2']]);
+        }
+        if (!empty($this->inputs['selling_price1_idr']) && !empty($this->inputs['selling_price2_idr'])) {
+            // Filter by IDR price range - convert USD to IDR for comparison
+            $minUsd = floatval($this->inputs['selling_price1_idr']) / $this->currencyRate;
+            $maxUsd = floatval($this->inputs['selling_price2_idr']) / $this->currencyRate;
+            $query->whereBetween('jwl_selling_price_usd', [$minUsd, $maxUsd]);
         }
         if (!empty($this->inputs['code'])) {
             $query->whereRaw('UPPER(code) = ?', [strtoupper($this->inputs['code'])]);
+        }
+        if (!empty($this->inputs['category1'])) {
+            $query->where('jwl_category1', $this->inputs['category1']);
+        }
+        if (!empty($this->inputs['category2'])) {
+            $query->where('jwl_category2', $this->inputs['category2']);
         }
 
         $materials = $query->orderBy('created_at', 'desc')->paginate(12);
@@ -80,6 +168,46 @@ class Index extends BaseComponent
 
     public function search()
     {
+        // Validate that both USD and IDR price filters are not used at the same time
+        if ((!empty($this->inputs['selling_price1']) || !empty($this->inputs['selling_price2'])) &&
+            (!empty($this->inputs['selling_price1_idr']) || !empty($this->inputs['selling_price2_idr']))) {
+            $this->dispatch('warning', 'Gunakan filter harga USD atau IDR, tidak keduanya bersamaan.');
+            return;
+        }
+
+        // Validate USD price range
+        if (!empty($this->inputs['selling_price1']) && !empty($this->inputs['selling_price2'])) {
+            if ($this->inputs['selling_price1'] > $this->inputs['selling_price2']) {
+                $this->dispatch('warning', 'Harga USD minimum harus lebih kecil dari harga maksimum.');
+                return;
+            }
+        }
+
+        // Validate IDR price range
+        if (!empty($this->inputs['selling_price1_idr']) && !empty($this->inputs['selling_price2_idr'])) {
+            if ($this->inputs['selling_price1_idr'] > $this->inputs['selling_price2_idr']) {
+                $this->dispatch('warning', 'Harga IDR minimum harus lebih kecil dari harga maksimum.');
+                return;
+            }
+        }
+
+        $this->resetPage();
+    }
+
+    public function resetFilters()
+    {
+        $this->inputs = [
+            'name' => '',
+            'description' => '',
+            'selling_price1' => '',
+            'selling_price2' => '',
+            'selling_price1_idr' => '',
+            'selling_price2_idr' => '',
+            'code' => '',
+            'category1' => '',
+            'category2' => ''
+        ];
+        $this->dispatch('resetSelect2Dropdowns');
         $this->resetPage();
     }
 
