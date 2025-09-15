@@ -38,59 +38,7 @@
     $uniqueId = uniqid('select2_');
 @endphp
 
-<!-- Custom styles moved to pagebase.css -->
-<style>
-    /* Multi-line support for dropdown results */
-    .select2-container .select2-results__option {
-        white-space: pre-line; /* Preserve line breaks */
-        line-height: 1.4;
-    }
-
-    /* Selected value styling - more compact */
-    .select2-container .select2-selection__rendered {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    /* Modal support - ensure Select2 dropdown appears above modal */
-    .modal .select2-container--default .select2-dropdown {
-        z-index: 1060 !important; /* Bootstrap modal z-index is 1050 */
-    }
-
-    /* Ensure dropdown can overflow modal boundaries */
-    .modal-body {
-        overflow: visible !important;
-    }
-
-    .modal-content {
-        overflow: visible !important;
-    }
-
-    .select2-dropdown {
-        z-index: 1060 !important;
-    }
-
-    .modal .select2-container--default .select2-selection--single {
-        border: 1px solid #ced4da;
-        border-radius: 0.375rem;
-        min-height: calc(1.5em + 0.75rem + 2px);
-    }
-
-    .modal .select2-container--default .select2-selection--single .select2-selection__rendered {
-        padding-left: 0.75rem;
-        padding-right: 2.25rem;
-        color: #495057;
-        line-height: calc(1.5em + 0.75rem);
-    }
-
-    .modal .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: calc(1.5em + 0.75rem);
-        right: 0.75rem;
-    }
-</style>
-
-<div wire:key="{{ $id }}-dropdown-search" class="{{ $colClass }}"
+<div wire:key="{{ $id }}-dropdown-search" class="{{ $colClass }} ui-dropdown-search"
     @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
 
