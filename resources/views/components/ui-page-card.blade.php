@@ -1,3 +1,4 @@
+<div>
 <div class="page-card-wrapper">
     <div id="page-card" class="container-xXxl mb-5">
         <!-- Header Section -->
@@ -292,3 +293,4 @@
         });
     </script>
 @endif
+</div>

@@ -1,3 +1,4 @@
+<div>
 <div class="expandable-card-wrapper mb-4">
     @isset($id)
     <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
@@ -218,3 +219,4 @@
 }
 </style>
 
+</div>
