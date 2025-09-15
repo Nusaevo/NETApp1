@@ -103,22 +103,10 @@
 
 .page-header-card {
     border: none;
-    transition: all 0.3s ease;
-}
-
-.page-header-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
 }
 
 .page-content-card {
     border: none;
-    transition: all 0.3s ease;
-}
-
-.page-content-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
 }
 
 .title-icon {
@@ -127,12 +115,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
-}
-
-.page-header-card:hover .title-icon {
-    transform: scale(1.1);
-    background-color: rgba(255, 255, 255, 0.3) !important;
 }
 
 .page-title {
@@ -148,17 +130,9 @@
 .status-badge .badge {
     font-size: 0.875rem;
     font-weight: 500;
-    transition: all 0.3s ease;
     backdrop-filter: blur(10px);
     background-color: rgba(255, 255, 255, 0.95) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
-}
-
-.status-badge .badge:hover {
-    transform: scale(1.05);
-    background-color: rgba(255, 255, 255, 1) !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 .bg-gradient-secondary {
@@ -166,19 +140,13 @@
 }
 
 .metadata-card {
-    transition: all 0.3s ease;
-}
-
-.metadata-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08) !important;
+    /* No transitions that might interfere with modals */
 }
 
 .info-simple {
     padding: 0.75rem;
     border-radius: 0.5rem;
     background-color: #f8f9fa;
-    transition: all 0.3s ease;
     height: 100%;
     min-height: 80px;
     display: flex;
@@ -186,32 +154,12 @@
     justify-content: space-between;
 }
 
-.info-simple:hover {
-    background-color: #e9ecef;
-    transform: translateY(-1px);
-}
-
-.badge {
-    transition: all 0.3s ease;
-}
-
-.badge:hover {
-    transform: scale(1.05);
-}
-
 .info-item {
     padding: 1rem;
     border-radius: 0.75rem;
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
     height: 100%;
-}
-
-.info-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    border-color: rgba(102, 126, 234, 0.2);
 }
 
 .info-item i {
@@ -222,20 +170,9 @@
     min-height: 200px;
 }
 
-/* Animation for content load */
+/* Disable animations that might conflict with modals */
 .page-card-wrapper {
-    animation: slideInUp 0.6s ease-out;
-}
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    /* Animation removed to prevent modal conflicts */
 }
 
 /* Responsive Design */
