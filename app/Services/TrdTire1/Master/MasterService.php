@@ -435,19 +435,19 @@ class MasterService extends BaseService
 
         if ($taxDocFlag) {
             switch ($salesType) {
-                case 'O':
-                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
-                case 'I':
+                case 'O': // MOTOR dengan faktur pajak: Format: [A-Z]{2}[yy][5-digit]
                     return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
+                case 'I': // MOBIL dengan faktur pajak: Format: [A-Z][yy][5-digit]
+                    return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
         } else {
             switch ($salesType) {
-                case 'O': // MOTOR tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
-                    return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
-                case 'I': // MOBIL tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
+                case 'O': // MOTOR tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
                     return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
+                case 'I': // MOBIL tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
+                    return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
@@ -473,21 +473,22 @@ class MasterService extends BaseService
             ->first();
 
         if ($sales_type == 'O') {
-            if ($tax_doc_flag) {
-                $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
-                $expectedPrefix = $currentMonthLetter;
-            } else {
-                $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
-                $expectedPrefix = $currentMonthLetter;
-            }
-        } elseif ($sales_type == 'I') {
-            // MOBIL
+            // MOTOR - sekarang menggunakan format [A-Z]{2}
             if ($tax_doc_flag) {
                 $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
             } else {
                 $pattern = '/^([A-Z]{2})(\d{2})8(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
+            }
+        } elseif ($sales_type == 'I') {
+            // MOBIL - sekarang menggunakan format [A-Z]
+            if ($tax_doc_flag) {
+                $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter;
+            } else {
+                $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
+                $expectedPrefix = $currentMonthLetter;
             }
         } else {
             throw new \InvalidArgumentException('Invalid sales type');

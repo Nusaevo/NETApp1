@@ -481,7 +481,11 @@ class Detail extends BaseComponent
     public function onTaxDocFlagChanged()
     {
         $this->payer = !empty($this->inputs['tax_doc_flag']) ? "true" : "false";
-        $this->inputs['tr_code'] = '';
+
+        // Hanya kosongkan tr_code jika dalam mode create, bukan edit
+        if ($this->actionValue === 'Create') {
+            $this->inputs['tr_code'] = '';
+        }
 
         // Jika tax_doc_flag aktif dan ada partner_id, muat data NPWP
         if (!empty($this->inputs['tax_doc_flag']) && !empty($this->inputs['partner_id'])) {
@@ -536,7 +540,11 @@ class Detail extends BaseComponent
     {
         $salesType = $this->inputs['sales_type'] ?? null;
         $this->input_details = [];
-        $this->inputs['tr_code'] = '';
+
+        // Hanya kosongkan tr_code jika dalam mode create, bukan edit
+        if ($this->actionValue === 'Create') {
+            $this->inputs['tr_code'] = '';
+        }
 
         if (!$salesType) {
             $this->materials = [];
@@ -553,19 +561,6 @@ class Detail extends BaseComponent
             })->toArray();
 
         $categoryList = implode(',', $categories); // 'BAN DALAM MOBIL','BAN DALAM MOTOR'
-
-        // $this->materialQuery = "SELECT id, code, name
-        // FROM materials
-        // WHERE status_code = 'A' AND deleted_at IS NULL AND category IN ($categoryList)";
-
-        // $this->materialQuery = "SELECT id, code, name, qty_oh, qty_fgi FROM (
-        //     SELECT m.id, m.code, m.name, coalesce(sum(b.qty_oh),0) qty_oh, coalesce(sum(b.qty_fgi),0) qty_fgi
-        //     FROM materials m
-        //     LEFT OUTER JOIN ivt_bals b on b.matl_id = m.id
-        //     WHERE m.status_code = 'A'
-        //     AND m.deleted_at IS NULL
-        //     AND m.category IN ($categoryList)
-        //     GROUP BY m.id, m.code, m.name) as t";
 
         $this->materialQuery = "
             SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
@@ -949,6 +944,11 @@ class Detail extends BaseComponent
                 $this->inputs['npwp_code'] = '';
                 $this->inputs['npwp_name'] = '';
                 $this->inputs['npwp_addr'] = '';
+
+                // Validasi: jika tax_doc_flag aktif tapi partner tidak memiliki NPWP
+                if (!empty($this->inputs['tax_doc_flag'])) {
+                    $this->dispatch('error', 'Partner ' . $partner->name . ' tidak memiliki NPWP. Silahkan tambahkan NPWP terlebih dahulu.');
+                }
 
                 // Debug: partner tidak memiliki wp_details
                 Log::info('Partner has no wp_details:', [

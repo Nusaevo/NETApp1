@@ -18,7 +18,7 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('tr_type') }}" model="inputs.tr_type"
+                                    <x-ui-dropdown-select label="{{ $this->trans('Tipe') }}" model="inputs.tr_type"
                                         :options="$chequeType" required="true" :action="$actionValue" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" type="text"
                                         :action="$actionValue" required="true" :enabled="$isPanelEnabled" />

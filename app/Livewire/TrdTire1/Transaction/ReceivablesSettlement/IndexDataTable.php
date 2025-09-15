@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\ReceivablesSettlement;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl};
+use App\Models\TrdTire1\Transaction\{PaymentHdr, OrderDtl, PartnertrDtl, PaymentAdv};
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -15,16 +15,16 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_date', 'desc');
-        // $this->setDefaultSort('tr_code', 'desc');
+        // $this->setDefaultSort('tr_date', 'desc');
+        $this->setDefaultSort('tr_code', 'desc');
     }
 
     public function builder(): Builder
     {
-        return PaymentHdr::with(['PaymentDtl', 'Partner']) // Update builder
+        return PaymentHdr::with(['PaymentDtl', 'Partner', 'paymentSrc']) // Update builder
             ->whereIn('payment_hdrs.tr_type', ['APP', 'ARP']);
     }
-    
+
     public function columns(): array
     {
         return [
@@ -55,17 +55,65 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
             Column::make($this->trans("Nomor Nota"), "tr_code")
-                ->searchable()
+                ->format(function ($value, $row) {
+                    // Ambil nomor nota dari detail pembayaran
+                    $paymentDetails = $row->PaymentDtl;
+                    if ($paymentDetails && $paymentDetails->count() > 0) {
+                        $notaNumbers = $paymentDetails->pluck('billhdrtr_code')->filter()->unique()->values();
+                        return $notaNumbers->implode(', ');
+                    }
+                    return '-';
+                })
+                ->html(),
+            Column::make($this->trans("Total Pelunasan"), "amt_dtls")
+                ->format(function ($value, $row) {
+                    return rupiah($row->amt_dtls ?? 0);
+                })
                 ->sortable(),
-            Column::make($this->trans("Total Pelunasan"), "tr_code")
-                ->searchable()
-                ->sortable(),
-            Column::make($this->trans("Lebih Bayar"), "tr_code")
-                ->searchable()
+            Column::make($this->trans("Lebih Bayar"), "amt_advs")
+                ->format(function ($value, $row) {
+                    // Jika menggunakan saldo advance, maka lebih bayar = 0
+                    // amt_advs berisi total advance yang digunakan, bukan lebih bayar
+                    // Lebih bayar hanya muncul jika ada overpayment setelah semua advance digunakan
+                    $overPayment = 0;
+
+                    // Cari overpayment dari PaymentAdv dengan reff_id = id (menandakan overpayment)
+                    $overPaymentRecord = PaymentAdv::where('trhdr_id', $row->id)
+                        ->whereColumn('reff_id', '=', 'id')
+                        ->first();
+
+                    if ($overPaymentRecord) {
+                        $overPayment = $overPaymentRecord->amt ?? 0;
+                    }
+
+                    return rupiah($overPayment);
+                })
                 ->sortable(),
             Column::make($this->trans("Adjustment"), "tr_code")
-                ->searchable()
-                ->sortable(),
+                ->format(function ($value, $row) {
+                    // Hitung total adjustment dari PartnertrDtl dengan tr_type 'ARA' (credit note)
+                    $adjustmentTotal = 0;
+
+                    // Ambil semua PaymentDtl untuk payment ini
+                    $paymentDetails = $row->PaymentDtl;
+                    if ($paymentDetails && $paymentDetails->count() > 0) {
+                        foreach ($paymentDetails as $detail) {
+                            // Cari PartnertrDtl dengan tr_type 'ARA' yang terkait dengan detail ini
+                            $cnData = PartnertrDtl::where('tr_type', '=', 'ARA')
+                                ->where('tr_code', '=', $detail->tr_code)
+                                ->where('partnerbal_id', '=', $detail->partnerbal_id)
+                                ->first();
+
+                            if ($cnData) {
+                                // Pastikan nilai selalu positif (+)
+                                $adjustmentTotal += abs($cnData->amt);
+                            }
+                        }
+                    }
+
+                    return rupiah($adjustmentTotal);
+                })
+                ->html(),
              // Column::make($this->trans("tr_type"), "tr_type")
             //     ->hideIf(true)
             //     ->sortable(),

@@ -14,10 +14,10 @@
     }
 @endphp
 
-<div wire:key="{{ $componentId }}-textfield-search" class="{{ $colClass }}" @if (isset($span)) span="{{ $span }}" @endif
+<div wire:key="{{ $componentId }}-textfield-search" class="{{ $colClass }} ui-text-field-search" @if (isset($span)) span="{{ $span }}" @endif
     @if (isset($visible) && $visible === 'false') style="display: none;" @endif>
-    <!-- Make the container position relative so the overlay positions correctly -->
-    <div class="input-group">
+    <!-- Input-group dengan position relative untuk overlay -->
+    <div class="input-group position-relative">
         <!-- This container is ignored by Livewire for select2 handling -->
         <div wire:ignore class="{{ $containerClass }}" x-data x-init="() => {
                 const initSelect2 = () => {
@@ -133,21 +133,12 @@
             @enderror
         </div>
 
-        <!-- Overlay for disabled state (outside of wire:ignore) -->
+        <!-- Overlay untuk disabled state - full height -->
         @if (!$isEnabled)
-            <div class="disabled-overlay" style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: gray;
-                    opacity: 0.1;
-                    cursor: not-allowed;
-                    z-index: 10;">
-            </div>
+            <div class="disabled-overlay"></div>
         @endif
-    <!-- Button for Click Event -->
+
+        <!-- Button for Click Event -->
         @if (isset($clickEvent) && $clickEvent !== '')
             <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary"
                 :buttonName="$buttonName" :action="$action" :enabled="$buttonEnabled" loading="true" />

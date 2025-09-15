@@ -264,13 +264,15 @@ class MaterialComponent extends BaseComponent
 
         // 2. Normalisasi color_code
         $this->materials['color_code'] = strtoupper(str_replace(' ', '', $this->materials['color_code']));
-
-        // 3. Siapkan data specs
         $this->materials['specs'] = [
             'color_code' => $this->materials['color_code'] ?? '',
             'color_name' => $this->materials['color_name'] ?? '',
             'size'       => $this->materials['size'] ?? '',
         ];
+        // 3. Siapkan data specs
+         $this->materials['specs'] = json_encode($this->materials['specs']);
+
+
 
         // 4. Generate tag & name
         $this->materials['tag'] = Material::generateTag(

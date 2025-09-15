@@ -33,9 +33,9 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("date"), "tr_date")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("tr_type"), "tr_type")
+            Column::make($this->trans("Tipe"), "tr_type")
                 ->sortable(),
-            Column::make($this->trans("tr_code"), "tr_code")
+            Column::make($this->trans("nomor Transaksi"), "tr_code")
                 ->format(function ($value, $row) {
                     return '<a href="' . route($this->appCode . '.Transaction.ChequeTransaction.Detail', [
                         'action' => encryptWithSessionKey('Edit'),

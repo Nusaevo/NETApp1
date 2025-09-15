@@ -429,11 +429,11 @@ class Detail extends BaseComponent
             $this->getTransactionCode();
         }
 
-        // Prepare header data    
+        // Prepare header data
         $this->inputs['amt_srcs'] = array_sum(array_column($this->input_payments, 'amt')) ?? 0;
         $this->inputs['amt_dtls'] = array_sum(array_column($this->input_details, 'amt')) ?? 0;
         $this->inputs['amt_advs'] = array_sum(array_column($this->input_advance, 'amt')) ?? 0;
-        $this->inputs['amt_advs'] += $this->overPayment; // Tambahkan overpayment jika ada   
+        $this->inputs['amt_advs'] += $this->overPayment; // Tambahkan overpayment jika ada
         $headerData = $this->inputs;
         // Set status_code untuk mode Create
         if ($this->actionValue === 'Create') {
@@ -496,9 +496,9 @@ class Detail extends BaseComponent
         }
         unset($advance);
 
-        // dd($this->inputs, $headerData, 
-        //     $this->input_payments,$paymentData, 
-        //     $this->input_details, $detailData, 
+        // dd($this->inputs, $headerData,
+        //     $this->input_payments,$paymentData,
+        //     $this->input_details, $detailData,
         //     $this->input_advance, $advanceData);
 
         // Process save dengan error handling
@@ -563,7 +563,7 @@ class Detail extends BaseComponent
         $partnerDtlData = [];
         foreach ($detailData as $detail) {
             $partnerDtlData[] = [
-                'trhdr_id' => $detail['partnertr_id'],
+                // 'trhdr_id' => $detail['partnertr_id'],
                 'tr_type' => $partnerHdrData['tr_type'],
                 'tr_code' => $partnerHdrData['tr_code'],
                 'partnerbal_id' => $detail['partnerbal_id'],
@@ -574,7 +574,7 @@ class Detail extends BaseComponent
                 'reff_code' => $detail['billhdrtr_code'],
                 'amt' => $detail['amt_adjustment'],
                 'tr_descr' => 'Adjustment dari pelunasan ' . $headerData['tr_code'] . ' - invoice ' . $detail['billhdrtr_code'],
-                'partnertr_id' => $detail['id'],
+                // 'partnertr_id' => $detail['id'],
             ];
         }
 

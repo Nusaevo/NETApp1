@@ -124,7 +124,7 @@
                                         </div>
 
                                         <div class="button-container">
-                                            <x-ui-image-button :action="$actionValue"
+                                            {{-- <x-ui-image-button :action="$actionValue"
                                                 hideStorageButton="false"></x-ui-image-button>
 
                                             <x-ui-dialog-box id="storageDialogBox" :width="'2000px'"
@@ -133,7 +133,7 @@
                                                 <x-slot name="body">
                                                     @livewire('base.master.gallery.storage-component', ['isComponent' => true])
                                                 </x-slot>
-                                            </x-ui-dialog-box>
+                                            </x-ui-dialog-box> --}}
                                         </div>
                                     </div>
                                 </div>

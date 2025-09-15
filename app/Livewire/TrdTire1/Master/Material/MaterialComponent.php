@@ -260,8 +260,7 @@ class MaterialComponent extends BaseComponent
         $dataToSave['size'] = $this->materials['size'] ?? null;
         $dataToSave['pattern'] = $this->materials['pattern'] ?? null;
 
-        $this->materials['specs'] = $dataToSave;
-
+        $this->materials['specs'] = json_encode($dataToSave);
         $this->object->fill($this->materials);
         $this->object->save();
         $this->saveUOMs();
@@ -332,7 +331,7 @@ class MaterialComponent extends BaseComponent
             ->where('str2', $this->materials['brand'])
             ->first();
 
-        $brandCode = $brandConfig->str1;
+        $brandCode = $brandConfig->str1 ?? '';
 
         $this->materials['name'] = Material::generateName(
             $brandCode, // Gunakan kode brand (str1)
