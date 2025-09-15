@@ -1,5 +1,5 @@
 <div>
-    <div class="tab-content" {{ $attributes }}>
+    <div class="tab-content modern-tab-content" {{ $attributes }}>
         {{ $slot }}
     </div>
 </div>
