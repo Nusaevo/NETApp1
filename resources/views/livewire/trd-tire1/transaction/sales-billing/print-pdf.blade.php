@@ -16,7 +16,7 @@
 
     <!-- Card hanya tampil di layar, tidak saat print -->
     <div class="card d-print-none" style="max-width: 700px; margin: 30px auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 32px 32px 40px 32px;">
-        <div style="font-family: 'Courier New', Courier, monospace; font-size: 16px;">
+        <div style="font-family: 'Calibri'; font-size: 14px;">
             <div style="display: flex; justify-content: flex-end;">
                 <div style="text-align: right;">
                     <span>Tgl.: {{ now()->format('d-M-Y') }}</span>
@@ -60,7 +60,7 @@
 
     <!-- Area print tetap tampil saat print -->
     <div id="print" class="d-none d-print-block p-20">
-        <div style="max-width: 700px; margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 16px;">
+        <div style="max-width: 700px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
             <div style="display: flex; justify-content: flex-end;">
                 <div style="text-align: right;">
                     <span>Tgl.: {{ now()->format('d-M-Y') }}</span>

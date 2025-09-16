@@ -393,7 +393,6 @@ class Detail extends BaseComponent
         try {
             if (!isset($this->object->id) || empty($this->object->id)) {
                 throw new Exception('Nomor Pelunasan tidak ada');
-                return;
             }
 
             $this->paymentService->delPayment($this->object->id);
@@ -698,6 +697,25 @@ class Detail extends BaseComponent
             }
         }
 
+        // Pengecekan: jika total piutang = total bayar, set toggle adjustment menjadi false
+        $totalPiutang = 0;
+        $totalBayar = 0;
+
+        foreach ($selectedDetails as $item) {
+            $key = $item['key'];
+            $totalPiutang += $item['outstanding_amt'];
+            $totalBayar += $this->input_details[$key]['amt'];
+        }
+
+        // Jika total piutang sama dengan total bayar, set toggle adjustment menjadi false
+        if (abs($totalPiutang - $totalBayar) < 0.01) { // Gunakan toleransi kecil untuk perbandingan float
+            foreach ($selectedDetails as $item) {
+                $key = $item['key'];
+                $this->input_details[$key]['is_lunas'] = false;
+                $this->input_details[$key]['amt_adjustment'] = 0;
+            }
+        }
+
         $this->updateTotalAmt();
         // $this->dispatch('success', 'Pembayaran berhasil dibagi ke nota yang dipilih menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
     }
@@ -778,6 +796,25 @@ class Detail extends BaseComponent
                 $useFromThisAdvance = min($amtAdvBal, $remainingAdvanceUsed);
                 $this->input_advance[$key]['amt'] = $useFromThisAdvance;
                 $remainingAdvanceUsed -= $useFromThisAdvance;
+            }
+        }
+
+        // Pengecekan: jika total piutang = total bayar, set toggle adjustment menjadi false
+        $totalPiutang = 0;
+        $totalBayar = 0;
+
+        foreach ($details as $item) {
+            $key = $item['key'];
+            $totalPiutang += $item['outstanding_amt'];
+            $totalBayar += $this->input_details[$key]['amt'];
+        }
+
+        // Jika total piutang sama dengan total bayar, set toggle adjustment menjadi false
+        if (abs($totalPiutang - $totalBayar) < 0.01) { // Gunakan toleransi kecil untuk perbandingan float
+            foreach ($details as $item) {
+                $key = $item['key'];
+                $this->input_details[$key]['is_lunas'] = false;
+                $this->input_details[$key]['amt_adjustment'] = 0;
             }
         }
 

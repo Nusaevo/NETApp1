@@ -15,13 +15,16 @@
                         <div class="col-md-2">
                             <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <x-ui-dropdown-select label="Customer" model="filterPartner" :options="$this->getPartnerOptions()" action="Edit" />
+                        </div>
+                        <div class="col-md-2">
+                            <x-ui-dropdown-select label="Kode Barang" model="filterMaterialCode" :options="$this->getMaterialCodeOptions()" action="Edit" />
                         </div>
                         <div class="col-md-2">
                             <x-ui-dropdown-select label="Status" model="filterStatus" :options="$this->getStatusOptions()" action="Edit" />
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
                                 cssClass="btn-primary w-100 mb-2" />
                             <button type="button" class="btn btn-light text-capitalize border-0 w-100"
@@ -113,15 +116,21 @@
                                     Periode: {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
                                     s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
                                 </p>
-                                @if($filterPartner || $filterStatus)
+                                @if($filterPartner || $filterStatus || $filterMaterialCode)
                                     <p style="text-align:left; margin-bottom:20px; font-size: 12px;">
-                                        @if($filterPartner && $filterStatus)
-                                            {{ \App\Models\TrdTire1\Master\Partner::find($filterPartner)->name ?? 'Customer Tidak Ditemukan' }} | {{ ucfirst(str_replace('_', ' ', $filterStatus)) }}
-                                        @elseif($filterPartner)
-                                            {{ \App\Models\TrdTire1\Master\Partner::find($filterPartner)->name ?? 'Customer Tidak Ditemukan' }}
-                                        @elseif($filterStatus)
-                                            {{ ucfirst(str_replace('_', ' ', $filterStatus)) }}
-                                        @endif
+                                        @php
+                                            $filters = [];
+                                            if($filterPartner) {
+                                                $filters[] = \App\Models\TrdTire1\Master\Partner::find($filterPartner)->name ?? 'Customer Tidak Ditemukan';
+                                            }
+                                            if($filterMaterialCode) {
+                                                $filters[] = 'Kode: ' . $filterMaterialCode;
+                                            }
+                                            if($filterStatus) {
+                                                $filters[] = ucfirst(str_replace('_', ' ', $filterStatus));
+                                            }
+                                        @endphp
+                                        {{ implode(' | ', $filters) }}
                                     </p>
                                 @endif
 

@@ -12,6 +12,7 @@ class Index extends BaseComponent
     public $endCode;
     public $filterStatus = '';
     public $filterPartner = '';
+    public $filterMaterialCode = '';
     public $results = [];
 
     protected function onPreRender()
@@ -21,16 +22,26 @@ class Index extends BaseComponent
 
     public function search()
     {
-        if (isNullOrEmptyNumber($this->startCode)) {
-            $this->dispatch('warning', __('generic.error.field_required', ['field' => "Tanggal Awal"]));
-            $this->addError('startCode',  "Mohon lengkapi");
+        // Validasi: minimal harus ada salah satu filter (tanggal, partner, atau kode barang)
+        if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterMaterialCode)) {
+            $this->dispatch('notify-swal', [
+                'type' => 'warning',
+                'message' => 'Mohon lengkapi tanggal awal, pilih customer, atau masukkan kode barang untuk melakukan pencarian'
+            ]);
+            // $this->addError('startCode',  "Mohon lengkapi tanggal awal atau pilih customer");
             return;
         }
 
         $this->resetErrorBag();
 
-        $startDate = addslashes($this->startCode);
-        $endDate = addslashes($this->endCode ?: $this->startCode);
+        // Jika tanggal kosong, gunakan range yang sangat luas
+        if (isNullOrEmptyNumber($this->startCode)) {
+            $startDate = '1900-01-01';
+            $endDate = '2099-12-31';
+        } else {
+            $startDate = addslashes($this->startCode);
+            $endDate = addslashes($this->endCode ?: $this->startCode);
+        }
 
         // Build filter conditions
         $statusFilter = "";
@@ -47,6 +58,7 @@ class Index extends BaseComponent
         }
 
         $partnerFilter = $this->filterPartner ? "AND p.id = {$this->filterPartner}" : "";
+        $materialCodeFilter = $this->filterMaterialCode ? "AND od.matl_code LIKE '%" . addslashes($this->filterMaterialCode) . "%'" : "";
 
         // Query untuk mendapatkan data sales order
         $query = "
@@ -69,6 +81,7 @@ class Index extends BaseComponent
                 AND oh.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
                 {$statusFilter}
                 {$partnerFilter}
+                {$materialCodeFilter}
                 AND oh.deleted_at IS NULL
                 AND od.deleted_at IS NULL
             ORDER BY oh.tr_code, od.tr_seq
@@ -130,6 +143,7 @@ class Index extends BaseComponent
         $this->endCode = '';
         $this->filterStatus = '';
         $this->filterPartner = '';
+        $this->filterMaterialCode = '';
         $this->results = [];
     }
 
@@ -161,6 +175,27 @@ class Index extends BaseComponent
             $options[] = [
                 'value' => $partner->id,
                 'label' => $label
+            ];
+        }
+
+        return $options;
+    }
+
+    public function getMaterialCodeOptions()
+    {
+        $materials = DB::connection(Session::get('app_code'))
+            ->table('materials')
+            ->select('code', 'name')
+            ->whereNull('deleted_at')
+            ->orderBy('code')
+            ->get();
+
+        $options = [['value' => '', 'label' => 'Semua Kode Barang']];
+
+        foreach ($materials as $material) {
+            $options[] = [
+                'value' => $material->code,
+                'label' => $material->code . ' - ' . $material->name
             ];
         }
 
