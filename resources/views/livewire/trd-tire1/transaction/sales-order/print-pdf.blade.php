@@ -40,6 +40,7 @@
                             <strong>{{ $this->object->Partner->name }}</strong>
                         </p>
                         <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
                     </td>
                 </tr>
             </table>
@@ -64,13 +65,10 @@
                     @endphp
                     @foreach ($this->object->OrderDtl as $key => $OrderDtl)
                         @php
-                            $subTotal = $OrderDtl->qty * $OrderDtl->price;
-                            if($this->object->sales_type == 'O') {
-                                $grand_total += $subTotal;
-                            } else {
-                                $subTotalAfterDisc = $OrderDtl->amt;
-                                $grand_total += $subTotalAfterDisc;
-                            }
+                            $discount = $OrderDtl->disc_pct / 100;
+                            $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
+                            $subTotalAfterDisc = $priceAfterDisc * $OrderDtl->qty;
+                            $grand_total += $subTotalAfterDisc;
                         @endphp
                         <tr style="line-height: 1.2;">
                             <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px;">
@@ -83,7 +81,28 @@
                                 {{ ceil($OrderDtl->qty) }}
                             </td>
                             <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
+                                @php
+                                    $discount = $OrderDtl->disc_pct / 100;
+                                    $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
+                                @endphp
+                                {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}
+                                @if ($loop->last)
+                                    <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                        <!-- Biaya kirim -->
+                                        Total
+                                    </div>
+                                @endif
+                                @if ($loop->last && $this->object->amt_shipcost > 0)
+                                    <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                        <!-- Biaya kirim -->
+                                        Biaya EX
+                                    </div>
+                                @endif
+                                @if ($loop->last && $this->object->amt_shipcost > 0)
+                                    <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                        Grand Total
+                                    </div>
+                                @endif
                             </td>
                             @if($this->object->sales_type != 'O')
                                 <td style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
@@ -91,15 +110,23 @@
                                 </td>
                             @endif
                             <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                @if($this->object->sales_type == 'O')
-                                    {{ number_format($subTotal, 0, ',', '.') }}
-                                @else
-                                    {{ number_format($OrderDtl->amt, 0, ',', '.') }}
-                                @endif
+                                {{ number_format($subTotalAfterDisc, 0, ',', '.') }}
                                 @if ($loop->last)
                                     <div style="border-top: 1px solid #000; text-align: right; font-weight: bold; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px;">
                                         {{ number_format($grand_total, 0, ',', '.') }}
                                     </div>
+                                    @if($this->object->amt_shipcost > 0)
+                                        <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                            <!-- Isian biaya plus -->
+                                            {{ number_format($this->object->amt_shipcost, 0, ',', '.') }}
+                                        </div>
+                                    @endif
+                                    @if($this->object->amt_shipcost > 0)
+                                        <div style="border-top: 1px solid #000; text-align: right; font-weight: bold; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                            <!-- Total akhir -->
+                                            {{ number_format($grand_total + $this->object->amt_shipcost, 0, ',', '.') }}
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                         </tr>
@@ -108,7 +135,7 @@
             </table>
             <table style="margin-top: -18px; width: 100%;">
                 <tr>
-                    <td style="text-align: start; border: 1px solid #000; padding: 10px;">
+                    <td style="border: 1px solid #000; padding: 10px;">
                         <p style="margin: 0; display: inline;">Penerima: ________________</p>
                         <p style="margin: 0; text-align: end; display: inline; float: right;">
                             Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
@@ -147,6 +174,7 @@
                                 <strong>{{ $this->object->Partner->name }}</strong>
                             </p>
                             <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
                         </td>
                     </tr>
                 </table>
@@ -171,13 +199,10 @@
                         @endphp
                         @foreach ($this->object->OrderDtl as $key => $OrderDtl)
                             @php
-                                $subTotal = $OrderDtl->qty * $OrderDtl->price;
-                                if($this->object->sales_type == 'O') {
-                                    $grand_total += $subTotal;
-                                } else {
-                                    $subTotalAfterDisc = $OrderDtl->amt;
-                                    $grand_total += $subTotalAfterDisc;
-                                }
+                                $discount = $OrderDtl->disc_pct / 100;
+                                $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
+                                $subTotalAfterDisc = $priceAfterDisc * $OrderDtl->qty;
+                                $grand_total += $subTotalAfterDisc;
                             @endphp
                             <tr style="line-height: 1.2;">
                                 <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px;">
@@ -190,7 +215,23 @@
                                     {{ ceil($OrderDtl->qty) }}
                                 </td>
                                 <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                    {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
+                                    @php
+                                        $discount = $OrderDtl->disc_pct / 100;
+                                        $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
+                                    @endphp
+                                    {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}
+                                    @if ($loop->last)
+                                        <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                            <!-- Biaya kirim -->
+                                            Total
+                                        </div>
+                                        @if($this->object->amt_shipcost > 0)
+                                            <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                                <!-- Biaya kirim -->
+                                                Biaya EX
+                                            </div>
+                                        @endif
+                                    @endif
                                 </td>
                                 @if($this->object->sales_type != 'O')
                                     <td style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
@@ -198,15 +239,23 @@
                                     </td>
                                 @endif
                                 <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                    @if($this->object->sales_type == 'O')
-                                        {{ number_format($subTotal, 0, ',', '.') }}
-                                    @else
-                                        {{ number_format($OrderDtl->amt, 0, ',', '.') }}
-                                    @endif
+                                    {{ number_format($subTotalAfterDisc, 0, ',', '.') }}
                                     @if ($loop->last)
                                     <div style="border-top: 1px solid #000; text-align: right; font-weight: bold; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px;">
                                         {{ number_format($grand_total, 0, ',', '.') }}
                                         </div>
+                                    @if($this->object->amt_shipcost > 0)
+                                        <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                            <!-- Isian biaya plus -->
+                                            {{ number_format($this->object->amt_shipcost, 0, ',', '.') }}
+                                        </div>
+                                    @endif
+                                    @if($this->object->amt_shipcost > 0)
+                                        <div style="border-top: 1px solid #000; text-align: right; font-weight: bold; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
+                                            <!-- Total akhir -->
+                                            {{ number_format($grand_total + $this->object->amt_shipcost, 0, ',', '.') }}
+                                        </div>
+                                    @endif
                                     @endif
                                 </td>
                             </tr>
@@ -215,7 +264,7 @@
                 </table>
                 <table style="margin-top: -18px; width: 100%;">
                     <tr>
-                        <td style="text-align: start; border: 1px solid #000; padding: 10px;">
+                        <td style="border: 1px solid #000; padding: 10px;">
                             <p style="margin: 0; display: inline;">Penerima: ________________</p>
                             <p style="margin: 0; text-align: end; display: inline; float: right;">
                                 Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
