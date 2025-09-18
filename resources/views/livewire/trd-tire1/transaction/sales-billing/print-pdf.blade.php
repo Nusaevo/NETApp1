@@ -15,7 +15,8 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
     <!-- Card hanya tampil di layar, tidak saat print -->
-    <div class="card d-print-none" style="max-width: 700px; margin: 30px auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 32px 32px 40px 32px;">
+    <div class="card d-print-none"
+        style="max-width: 700px; margin: 30px auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 32px 32px 40px 32px;">
         <div style="font-family: 'Calibri'; font-size: 14px;">
             <div style="display: flex; justify-content: flex-end;">
                 <div style="text-align: right;">
@@ -27,7 +28,8 @@
                 <div>KERTAJAYA 16, SURABAYA</div>
             </div>
             <div style="margin-bottom: 10px;">
-                <span style="text-decoration: underline; font-weight: bold;">Mohon Periksa Nota-nota tersebut di bawah ini</span>
+                <span style="text-decoration: underline; font-weight: bold;">Mohon Periksa Nota-nota tersebut di bawah
+                    ini</span>
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
                 @php $grandTotal = 0; @endphp
@@ -35,10 +37,12 @@
                     @php $grandTotal += $order->amt; @endphp
                     <tr style="height: 25px;">
                         <td style="padding: 2px 0 2px 5px;">{{ $i + 1 }}.</td>
-                        <td style="padding: 2px 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}</td>
+                        <td style="padding: 2px 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
+                        </td>
                         <td style="padding: 2px 5px;">No. {{ $order->tr_code }}</td>
                         <td style="padding: 2px 5px; text-align: right;">Rp.</td>
-                        <td style="padding: 2px 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}</td>
+                        <td style="padding: 2px 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}
+                        </td>
                     </tr>
                 @endforeach
             </table>
@@ -46,7 +50,8 @@
                 <table style="border-collapse: collapse;">
                     <tr>
                         <td style="padding: 0 5px 0 0; text-align: right;">Jumlah:</td>
-                        <td style="padding: 0 5px; text-align: right; border-bottom: 2px solid #000; font-weight: bold;">
+                        <td
+                            style="padding: 0 5px; text-align: right; border-bottom: 2px solid #000; font-weight: bold;">
                             Rp. {{ number_format($grandTotal, 2, ',', '.') }}
                         </td>
                     </tr>
@@ -71,7 +76,8 @@
                 <div>KERTAJAYA 16, SURABAYA</div>
             </div>
             <div style="margin-bottom: 10px;">
-                <span style="text-decoration: underline; font-weight: bold;">Mohon Periksa Nota-nota tersebut di bawah ini</span>
+                <span style="text-decoration: underline; font-weight: bold;">Mohon Periksa Nota-nota tersebut di bawah
+                    ini</span>
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
                 @php $grandTotal = 0; @endphp
@@ -79,10 +85,12 @@
                     @php $grandTotal += $order->amt; @endphp
                     <tr style="height: 25px;">
                         <td style="padding: 2px 0 2px 5px;">{{ $i + 1 }}.</td>
-                        <td style="padding: 2px 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}</td>
+                        <td style="padding: 2px 5px;">Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
+                        </td>
                         <td style="padding: 2px 5px;">No. {{ $order->tr_code }}</td>
                         <td style="padding: 2px 5px; text-align: right;">Rp.</td>
-                        <td style="padding: 2px 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}</td>
+                        <td style="padding: 2px 5px; text-align: right;">{{ number_format($order->amt, 2, ',', '.') }}
+                        </td>
                     </tr>
                 @endforeach
             </table>
@@ -90,7 +98,8 @@
                 <table style="border-collapse: collapse;">
                     <tr>
                         <td style="padding: 0 5px 0 0; text-align: right;">Jumlah:</td>
-                        <td style="padding: 0 5px; text-align: right; border-bottom: 2px solid #000; font-weight: bold;">
+                        <td
+                            style="padding: 0 5px; text-align: right; border-bottom: 2px solid #000; font-weight: bold;">
                             Rp. {{ number_format($grandTotal, 2, ',', '.') }}
                         </td>
                     </tr>
@@ -102,10 +111,32 @@
         </div>
     </div>
 
+    <style>
+        @media print {
+            @page {
+                size: 105mm 148mm;
+                /* setengah dari A5 */
+                margin: 5mm;
+                /* atur margin sesuai kebutuhan */
+            }
+
+            body {
+                zoom: 0.9;
+                /* bisa diatur untuk menyesuaikan konten */
+            }
+
+            /* Supaya area print terpusat */
+            #print {
+                width: 100%;
+                max-width: 105mm;
+                margin: 0 auto;
+            }
+        }
+    </style>
+
     <script>
         function printInvoice() {
             window.print();
         }
     </script>
 </div>
-
