@@ -10,7 +10,7 @@ use App\Enums\Status;
 use App\Services\SysConfig1\ConfigService;
 use App\Services\TrdTire1\OrderService;
 use App\Services\TrdTire1\Master\MasterService;
-use Illuminate\Support\Facades\{DB, Log};
+use Illuminate\Support\Facades\{DB, Log, Auth};
 use Exception;
 
 class Detail extends BaseComponent
@@ -48,6 +48,11 @@ class Detail extends BaseComponent
     public $isDeliv = false; // True jika ada delivery pada salah satu detail
     public $object;
     public $object_detail;
+    public $canUpdateAfterPrint = true; // izin untuk save/print/delete setelah pernah dicetak
+    public $hasBeenPrinted = false; // apakah pernah dicetak (revision > 0)
+    public $canPrintNotaButton = true; // enable/disable tombol Cetak Nota Jual
+    public $canPrintSuratJalanButton = true; // enable/disable tombol Cetak Surat Jalan
+    public $canSaveButtonEnabled = true; // enable/disable tombol Simpan
 
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari customer ...",
@@ -287,6 +292,8 @@ class Detail extends BaseComponent
                 // dd($this->materialQuery);
                 $this->salesTypeOnChanged();
                 $this->loadDetails();
+                $this->updateAfterPrintPermission();
+                $this->updateButtonStatesByCounter();
             } else {
                 // Jika object tidak ditemukan, buat instance baru dan tampilkan error
                 $this->object = new OrderHdr();
@@ -303,6 +310,107 @@ class Detail extends BaseComponent
             $this->onSOTaxChange();
         }
         $this->dispatch('updateTaxPayerEnabled', !empty($this->inputs['tax_doc_flag']));
+    }
+
+    private function getRevisionCount(): int
+    {
+        $rev = 0;
+        if (isset($this->inputs['print_remarks'])) {
+            if (is_array($this->inputs['print_remarks'])) {
+                $rev = (int)($this->inputs['print_remarks']['nota'] ?? 0);
+            } else {
+                $rev = (int)$this->inputs['print_remarks'];
+            }
+        }
+        return $rev;
+    }
+
+    private function updateAfterPrintPermission(): void
+    {
+        \Log::info('updateAfterPrintPermission called');
+
+        // Cek apakah ada cetakan (nota atau surat jalan)
+        $notaCount = 0;
+        $suratCount = 0;
+        if ($this->object && method_exists($this->object, 'getPrintCounterArray')) {
+            $c = $this->object->getPrintCounterArray();
+            $notaCount = (int)($c['nota'] ?? 0);
+            $suratCount = (int)($c['surat_jalan'] ?? 0);
+        }
+        $this->hasBeenPrinted = ($notaCount > 0 || $suratCount > 0);
+
+        if (!$this->hasBeenPrinted) {
+            $this->canUpdateAfterPrint = true;
+            return;
+        }
+
+        $userId = Auth::id();
+        $num1 = ConfigConst::where('const_group', 'SEC_LEVEL')
+            ->where('str2', 'UPDATE_AFTER_PRINT')
+            ->where('user_id', $userId)
+            ->value('num1');
+        $this->canUpdateAfterPrint = ((int)($num1 ?? 0)) === 1;
+
+        // Debug log untuk cek izin
+        \Log::info('Permission Debug:', [
+            'userId' => $userId,
+            'num1' => $num1,
+            'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
+        ]);
+    }
+
+    private function updateButtonStatesByCounter(): void
+    {
+        // Ambil counter terbaru dari object jika tersedia
+        $notaCount = 0;
+        $suratCount = 0;
+        if ($this->object) {
+            if (method_exists($this->object, 'getPrintCounterArray')) {
+                $c = $this->object->getPrintCounterArray();
+                $notaCount = (int)($c['nota'] ?? 0);
+                $suratCount = (int)($c['surat_jalan'] ?? 0);
+            } else {
+                // fallback dari inputs.print_remarks string "x.y"
+                $display = $this->object->getDisplayFormat();
+                if (is_string($display) && strpos($display, '.') !== false) {
+                    [$n, $s] = explode('.', $display);
+                    $notaCount = (int)$n;
+                    $suratCount = (int)$s;
+                }
+            }
+        } else if (!empty($this->inputs['print_remarks']) && is_string($this->inputs['print_remarks'])) {
+            $display = $this->inputs['print_remarks'];
+            if (strpos($display, '.') !== false) {
+                [$n, $s] = explode('.', $display);
+                $notaCount = (int)$n;
+                $suratCount = (int)$s;
+            }
+        }
+
+        // Aturan baru:
+        // - Jika nota jual 1.0 maka tombol Nota Jual nonaktif, Surat Jalan aktif
+        // - Jika surat jalan 0.1 maka tombol Surat Jalan nonaktif
+        // - Jika salah satu counter sudah 1 maka tombol Simpan nonaktif
+        $this->canPrintNotaButton = ($notaCount === 0);
+        $this->canPrintSuratJalanButton = ($suratCount === 0);
+        $this->canSaveButtonEnabled = ($notaCount === 0 && $suratCount === 0);
+
+        // Debug log
+        \Log::info('Button States Debug:', [
+            'notaCount' => $notaCount,
+            'suratCount' => $suratCount,
+            'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
+            'canPrintNotaButton' => $this->canPrintNotaButton,
+            'canPrintSuratJalanButton' => $this->canPrintSuratJalanButton,
+            'canSaveButtonEnabled' => $this->canSaveButtonEnabled,
+        ]);
+
+        // Jika SEC_LEVEL mengizinkan update setelah print, semua tombol diaktifkan
+        if ($this->canUpdateAfterPrint) {
+            $this->canPrintNotaButton = true;
+            $this->canPrintSuratJalanButton = true;
+            $this->canSaveButtonEnabled = true;
+        }
     }
 
     public function onReset()
@@ -335,6 +443,13 @@ class Detail extends BaseComponent
         }
 
         $this->validate();
+
+        // Guard: batasi update jika sudah pernah dicetak dan user tidak berizin
+        $this->updateAfterPrintPermission();
+        if ($this->actionValue !== 'Create' && $this->hasBeenPrinted && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Anda tidak memiliki izin untuk mengubah data setelah dicetak.');
+            return;
+        }
 
         if ($this->actionValue === 'Create') {
             $this->inputs['status_code'] = Status::OPEN;
@@ -679,21 +794,17 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
                 // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
                 $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue);
-                // Total Nota dihiitung dari harga setelah disc * qty
-                // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
-                // priceAdjustment
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             } else if ($this->inputs['tax_code'] === 'E') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue,0);
-                $this->input_details[$key]['amt'] = $this->input_details[$key]['amt_beforetax'] + $this->input_details[$key]['amt_tax'];
             } else if ($this->inputs['tax_code'] === 'N') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             }
+            // amt selalu tanpa pengaruh tax_code
+            $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
             $this->input_details[$key]['amt_adjustdtl'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'];
 
@@ -707,7 +818,11 @@ class Detail extends BaseComponent
             $this->inputs['amt_adjustdtl'] = 0;
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
-                $this->total_amount += $detail['amt'] ?? 0;
+                if ($this->inputs['tax_code'] === 'E') {
+                    $this->total_amount += (($detail['amt_beforetax'] ?? 0) + ($detail['amt_tax'] ?? 0));
+                } else {
+                    $this->total_amount += $detail['amt'] ?? 0;
+                }
                 $this->total_discount += $detail['disc_amt'] ?? 0;
                 $this->total_dpp += $detail['amt_beforetax'] ?? 0;
                 $this->total_tax += $detail['amt_tax'] ?? 0;
@@ -788,6 +903,12 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
+            // Guard: batasi delete jika sudah pernah dicetak dan user tidak berizin
+            $this->updateAfterPrintPermission();
+            if ($this->hasBeenPrinted && !$this->canUpdateAfterPrint) {
+                $this->dispatch('error', 'Anda tidak memiliki izin untuk menghapus data setelah dicetak.');
+                return;
+            }
             // Jika mode Create, object belum disimpan ke database
             if ($this->actionValue === 'Create') {
                 $this->dispatch('warning', 'Tidak ada data untuk dihapus pada mode Create');
@@ -815,6 +936,12 @@ class Detail extends BaseComponent
     public function deleteTransaction()
     {
         try {
+            // Guard: batasi delete jika sudah pernah dicetak dan user tidak berizin
+            $this->updateAfterPrintPermission();
+            if ($this->hasBeenPrinted && !$this->canUpdateAfterPrint) {
+                $this->dispatch('error', 'Anda tidak memiliki izin untuk menghapus data setelah dicetak.');
+                return;
+            }
             if (!$this->object || is_null($this->object->id) || !OrderHdr::where('id', $this->object->id)->exists()) {
                 throw new Exception(__('Data header tidak ditemukan'));
             }
@@ -1057,6 +1184,67 @@ class Detail extends BaseComponent
             $this->object->refresh();
             $this->inputs['print_remarks'] = $this->object->getDisplayFormat();
             $this->dispatch('printCounterUpdated', $this->inputs['print_remarks']);
+            // Update izin setelah nilai revision berubah
+            $this->updateAfterPrintPermission();
+            $this->updateButtonStatesByCounter();
+        }
+    }
+
+    public function goToPrintNota()
+    {
+        $this->updateAfterPrintPermission();
+        $this->updateButtonStatesByCounter();
+        if (!$this->canPrintNotaButton && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Cetak Nota Jual dinonaktifkan sesuai aturan counter.');
+            return;
+        }
+        // Cek counter khusus Nota: cetak ulang membutuhkan izin
+        $notaCount = 0;
+        if ($this->object && method_exists($this->object, 'getPrintCounterArray')) {
+            $c = $this->object->getPrintCounterArray();
+            $notaCount = (int)($c['nota'] ?? 0);
+        }
+        if ($notaCount > 0 && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Anda tidak memiliki izin untuk mencetak ulang.');
+            return;
+        }
+        if ($this->object && $this->object->id) {
+            return redirect()->route(
+                'TrdTire1.Transaction.SalesOrder.PrintPdf',
+                [
+                    'action'   => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id),
+                ]
+            );
+        }
+    }
+
+    public function goToPrintSuratJalan()
+    {
+        $this->updateAfterPrintPermission();
+        $this->updateButtonStatesByCounter();
+        if (!$this->canPrintSuratJalanButton && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Cetak Surat Jalan dinonaktifkan sesuai aturan counter.');
+            return;
+        }
+        // Cek counter khusus Surat Jalan: cetak ulang membutuhkan izin
+        $suratCount = 0;
+        if ($this->object && method_exists($this->object, 'getPrintCounterArray')) {
+            $c = $this->object->getPrintCounterArray();
+            $suratCount = (int)($c['surat_jalan'] ?? 0);
+        }
+        if ($suratCount > 0 && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Anda tidak memiliki izin untuk mencetak ulang surat jalan.');
+            return;
+        }
+        if ($this->object && $this->object->id) {
+            return redirect()->route(
+                'TrdTire1.Transaction.SalesDelivery.PrintPdf',
+                [
+                    'action'   => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id),
+                ]
+            );
         }
     }
 

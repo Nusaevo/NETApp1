@@ -93,7 +93,7 @@ class PartnerBalanceService
                     $bankDuedt = Carbon::parse($detailData['bank_duedt'])->format('d M Y');
                     $partnerbalDescr = ($detailData['bank_reff'] ?? '') . ' - ' . $bankDuedt;
                 }
-  
+
                 $amtBal = $detailData['amt'];
                 $trAmt = $detailData['amt'];
                 $trDesc =  'Penerimaan ' . ($detailData['bank_code']) . ' dari pelunasan ' . $headerData['tr_code'];
@@ -182,11 +182,11 @@ class PartnerBalanceService
                 'reff_type' => $detailData['reff_type'],
                 'reff_code' => $detailData['reff_code'],
                 'descr' => $trDesc,
-                'amt_adv' => $detailData['amt'],
             ]
         );
 
-        $partnerBal->amt_adv += $detailData['amt'];
+        // Hindari dobel: selalu jumlahkan dari nilai yang ada (default 0 bila null)
+        $partnerBal->amt_adv = ($partnerBal->amt_adv ?? 0) + $detailData['amt'];
         $partnerBal->save();
 
         $logData = [
@@ -198,7 +198,6 @@ class PartnerBalanceService
             'trdtl_id' => $detailData['id'],
             'partner_id' => $headerData['partner_id'],
             'partner_code' => $headerData['partner_code'],
-            'partnerbal_id' => $partnerBal->id,
             'reff_id' => $detailData['reff_id'],
             'reff_type' => $detailData['reff_type'],
             'reff_code' => $detailData['reff_code'],
@@ -244,7 +243,7 @@ class PartnerBalanceService
                 $trDesc = 'Terima Tolakan Giro ' . $detailData['tr_descr'];
             }
         } else if ($detailData['tr_type'] === 'ARA') {
-            $trDesc = 'Transaksi penyesuaian Piutang ' . $detailData['tr_type'] . ' ' . $detailData['tr_code']; 
+            $trDesc = 'Transaksi penyesuaian Piutang ' . $detailData['tr_type'] . ' ' . $detailData['tr_code'];
         } else {
             $trDesc = 'Transaksi ' . $detailData['tr_type'] . ' ' . $detailData['tr_code'];
         }

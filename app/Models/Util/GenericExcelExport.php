@@ -88,14 +88,38 @@ class GenericExcelExport
 
             $sheet->setTitle($sheetData['name'] ?? 'Sheet' . ($index + 1));
 
+            $currentRow = 1;
+
+            // Add title if provided
+            if (!empty($sheetData['title'])) {
+                $sheet->setCellValue('A' . $currentRow, $sheetData['title']);
+                $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(16);
+                $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $currentRow++;
+            }
+
+            // Add subtitle if provided
+            if (!empty($sheetData['subtitle'])) {
+                $sheet->setCellValue('A' . $currentRow, $sheetData['subtitle']);
+                $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(12);
+                $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $currentRow++;
+            }
+
+            // Add empty row after title/subtitle
+            if (!empty($sheetData['title']) || !empty($sheetData['subtitle'])) {
+                $currentRow++;
+            }
+
             // Add headers
-            $this->addHeaders($sheet, $sheetData['headers'], $sheetData['protectedColumns'] ?? []);
+            $this->addHeaders($sheet, $sheetData['headers'], $sheetData['protectedColumns'] ?? [], $currentRow);
 
             // Add data
+            $dataStartRow = $currentRow + 1;
             if (!empty($sheetData['data'])) {
-                $sheet->fromArray($sheetData['data'], null, 'A2');
+                $sheet->fromArray($sheetData['data'], null, 'A' . $dataStartRow);
             } else {
-                $sheet->fromArray([array_fill(0, count($sheetData['headers']), '')], null, 'A2');
+                $sheet->fromArray([array_fill(0, count($sheetData['headers']), '')], null, 'A' . $dataStartRow);
             }
 
             // Adjust column widths dynamically
@@ -117,12 +141,13 @@ class GenericExcelExport
      * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet The worksheet object.
      * @param array $headers Array of header names.
      * @param array $protectedColumns Array of protected columns (e.g., ['A', 'B']).
+     * @param int $startRow The row number to start adding headers.
      */
-    private function addHeaders($sheet, array $headers, array $protectedColumns)
+    private function addHeaders($sheet, array $headers, array $protectedColumns, int $startRow = 1)
     {
         foreach ($headers as $index => $header) {
             $column = chr(65 + $index);
-            $cell = "{$column}1";
+            $cell = "{$column}{$startRow}";
 
             $sheet->setCellValue($cell, $header);
             $sheet

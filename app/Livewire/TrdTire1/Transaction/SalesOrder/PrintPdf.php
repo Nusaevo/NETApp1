@@ -5,6 +5,8 @@ namespace App\Livewire\TrdTire1\Transaction\SalesOrder;
 use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Livewire\Component\BaseComponent;
+use App\Models\SysConfig1\ConfigConst;
+use Illuminate\Support\Facades\Auth;
 
 class PrintPdf extends BaseComponent
 {
@@ -19,6 +21,28 @@ class PrintPdf extends BaseComponent
                 return;
             }
             $this->object = OrderHdr::findOrFail($this->objectIdValue);
+
+            // Guard izin cetak ulang untuk Nota Jual saja (cetakan pertama diizinkan untuk semua)
+            $revData = $this->object->getPrintCounterArray();
+            $hasPrinted = (($revData['nota'] ?? 0) > 0);
+            if ($hasPrinted) {
+                $userId = Auth::id();
+                $allowed = (int) (ConfigConst::where('const_group', 'SEC_LEVEL')
+                    ->where('str2', 'UPDATE_AFTER_PRINT')
+                    ->where('user_id', $userId)
+                    ->value('num1') ?? 0) === 1;
+                if (!$allowed) {
+                    $this->dispatch('error', 'Anda tidak memiliki izin untuk mencetak ulang.');
+                    // Redirect balik ke detail
+                    return redirect()->route(
+                        'TrdTire1.Transaction.SalesOrder.Detail',
+                        [
+                            'action'   => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($this->object->id),
+                        ]
+                    );
+                }
+            }
             // Update status_code to PRINT
             $this->object->status_code = Status::PRINT;
             $this->object->save();
