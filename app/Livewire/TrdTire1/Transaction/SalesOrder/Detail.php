@@ -157,30 +157,10 @@ class Detail extends BaseComponent
                 'wp_name' => $this->npwpDetails['wp_name'],
                 'wp_location' => $this->npwpDetails['wp_location'],
             ];
-
-            // Debug: cek data yang akan disimpan
-            Log::info('NPWP Data to be saved:', [
-                'new_npwp' => $this->npwpDetails,
-                'all_wp_details' => $wpDetails
-            ]);
-
             // Simpan ke database
             $partnerDetail->wp_details = $wpDetails;
             $result = $partnerDetail->save();
 
-            // Debug: cek hasil penyimpanan
-            Log::info('NPWP Save result:', [
-                'save_result' => $result,
-                'partner_detail_id' => $partnerDetail->id,
-                'wp_details_after_save' => $partnerDetail->wp_details
-            ]);
-
-            // Debug: cek data yang tersimpan ke database
-            Log::info('NPWP Data saved to database:', [
-                'partner_id' => $partner->id,
-                'wp_details_before_save' => $wpDetails,
-                'partner_detail_id' => $partnerDetail->id
-            ]);
 
             // Refresh data dari database untuk memastikan data ter-update
             $partnerDetail->refresh();
@@ -387,10 +367,6 @@ class Detail extends BaseComponent
             }
         }
 
-        // Aturan baru:
-        // - Jika nota jual 1.0 maka tombol Nota Jual nonaktif, Surat Jalan aktif
-        // - Jika surat jalan 0.1 maka tombol Surat Jalan nonaktif
-        // - Jika salah satu counter sudah 1 maka tombol Simpan nonaktif
         $this->canPrintNotaButton = ($notaCount === 0);
         $this->canPrintSuratJalanButton = ($suratCount === 0);
         $this->canSaveButtonEnabled = ($notaCount === 0 && $suratCount === 0);
@@ -488,6 +464,11 @@ class Detail extends BaseComponent
         // Prepare data
         $headerData = $this->prepareHeaderData();
         $detailData = $this->prepareDetailData();
+        $totals = $this->calcTotalFromDetails($detailData);
+        $headerData['amt'] = $totals['amt'];
+        $headerData['amt_beforetax'] = $totals['amt_beforetax'];
+        $headerData['amt_tax'] = $totals['amt_tax'];
+        $headerData['amt_adjustdtl'] = $totals['amt_adjustdtl'];
          // dd($headerData, $detailData);
         if ($this->actionValue === 'Create') {
             $result = $this->orderService->saveOrder($headerData, $detailData);
@@ -779,10 +760,10 @@ class Detail extends BaseComponent
             $price = $this->input_details[$key]['price'];
             $discount = $this->input_details[$key]['disc_pct'] / 100;
             $taxValue = $this->inputs['tax_pct'] / 100;
-            $priceAfterDisc = round($price * (1 - $discount));
-            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue));
+            $priceAfterDisc = $price * (1 - $discount);
+            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue),0);
             // dd($this->inputs['tax_code'], $price, $priceAfterDisc, $priceBeforeTax, $taxValue);
-            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount);
+            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount,0);
 
             $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
@@ -793,7 +774,7 @@ class Detail extends BaseComponent
                 // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
                 $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
                 // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
-                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue);
+                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue,0);
             } else if ($this->inputs['tax_code'] === 'E') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
@@ -803,7 +784,7 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
             }
-            // amt selalu tanpa pengaruh tax_code
+            // amt selalu dihitung tanpa dipengaruhi tax_code: (price after discount) * qty
             $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
             $this->input_details[$key]['amt_adjustdtl'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'];
@@ -812,24 +793,19 @@ class Detail extends BaseComponent
             $this->total_discount = 0;
             $this->total_dpp = 0;
             $this->total_tax = 0;
-            $this->inputs['amt'] = 0;
-            $this->inputs['amt_beforetax'] = 0;
-            $this->inputs['amt_tax'] = 0;
-            $this->inputs['amt_adjustdtl'] = 0;
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
+                // Total header dipengaruhi tax_code
                 if ($this->inputs['tax_code'] === 'E') {
-                    $this->total_amount += (($detail['amt_beforetax'] ?? 0) + ($detail['amt_tax'] ?? 0));
+                    // Exclude PPN pada harga item; total = DPP + PPN
+                    $this->total_amount += ($detail['amt_beforetax'] + $detail['amt_tax']);
                 } else {
-                    $this->total_amount += $detail['amt'] ?? 0;
+                    // Include atau Non PPN: total = amt (sudah termasuk/ tanpa PPN sesuai kebijakan)
+                    $this->total_amount += $detail['amt'];
                 }
                 $this->total_discount += $detail['disc_amt'] ?? 0;
-                $this->total_dpp += $detail['amt_beforetax'] ?? 0;
-                $this->total_tax += $detail['amt_tax'] ?? 0;
-                $this->inputs['amt'] += $detail['amt'] ?? 0;
-                $this->inputs['amt_beforetax'] += $detail['disc_amt'] ?? 0;
-                $this->inputs['amt_tax'] += $detail['amt_tax'] ?? 0;
-                $this->inputs['amt_adjustdtl'] += $detail['amt_adjustdtl'] ?? 0;
+                $this->total_dpp += $detail['amt_beforetax'];
+                $this->total_tax += $detail['amt_tax'];
             }
             // Format as Rupiah
             $this->total_amount = rupiah($this->total_amount);
@@ -871,6 +847,28 @@ class Detail extends BaseComponent
             }
             $this->checkDeliveryStatus();
         }
+    }
+
+    private function calcTotalFromDetails($detailData)
+    {
+        $amt = 0;
+        $amtBeforeTax = 0;
+        $amtTax = 0;
+        $amtAdjustDtl = 0;
+
+        foreach ($detailData as $detail) {
+            $amt += $detail['amt'] ?? 0;
+            $amtBeforeTax += $detail['amt_beforetax'] ?? 0;
+            $amtTax += $detail['amt_tax'] ?? 0;
+            $amtAdjustDtl += $detail['amt_adjustdtl'] ?? 0;
+        }
+
+        return [
+            'amt' => $amt,
+            'amt_beforetax' => $amtBeforeTax,
+            'amt_tax' => $amtTax,
+            'amt_adjustdtl' => $amtAdjustDtl
+        ];
     }
 
     private function redirectToEdit()
