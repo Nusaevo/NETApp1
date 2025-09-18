@@ -179,27 +179,21 @@
                     <x-ui-footer>
                         @if ($actionValue !== 'Create' && isset($object->id))
                             <x-ui-button :action="$actionValue"
-                                clickEvent="{{ route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($object->id),
-                                ]) }}"
-                                cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Nota Jual"
-                                iconPath="print.svg" />
+                                clickEvent="goToPrintNota"
+                                cssClass="btn-primary" loading="true" button-name="Cetak Nota Jual"
+                                iconPath="print.svg" :enabled="($canUpdateAfterPrint || $canPrintNotaButton) ? 'true' : 'false'" />
 
                             <x-ui-button :action="$actionValue"
-                                clickEvent="{{ route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
-                                    'action' => encryptWithSessionKey('Edit'),
-                                    'objectId' => encryptWithSessionKey($object->id),
-                                ]) }}"
-                                cssClass="btn-primary" type="Route" loading="true" button-name="Cetak Surat Jalan"
-                                iconPath="print.svg" />
+                                clickEvent="goToPrintSuratJalan"
+                                cssClass="btn-primary" loading="true" button-name="Cetak Surat Jalan"
+                                iconPath="print.svg" :enabled="($canUpdateAfterPrint || $canPrintSuratJalanButton) ? 'true' : 'false'" />
                         @endif
 
                         <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
-                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : 'true'" />
+                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')" />
 
                         <x-ui-button clickEvent="Save" button-name="Simpan" loading="true" :action="$actionValue"
-                            cssClass="btn-primary" iconPath="save.svg" :enabled="true" />
+                            cssClass="btn-primary" iconPath="save.svg" :enabled="($canUpdateAfterPrint || $canSaveButtonEnabled) ? 'true' : 'false'" />
                     </x-ui-footer>
                 </div>
 

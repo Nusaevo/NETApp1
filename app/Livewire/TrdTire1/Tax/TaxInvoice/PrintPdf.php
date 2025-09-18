@@ -4,6 +4,7 @@ namespace App\Livewire\TrdTire1\Tax\TaxInvoice;
 
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\OrderHdr;
+use App\Models\Util\GenericExcelExport;
 use App\Enums\TrdTire1\Status;
 use Livewire\WithPagination;
 
@@ -90,6 +91,86 @@ class PrintPdf extends BaseComponent
             }
         }
         $this->getOrdersProperty();
+    }
+
+    public function downloadExcel()
+    {
+        if ($this->orders->isEmpty()) {
+            $this->dispatch('error', 'Tidak ada data untuk didownload.');
+            return;
+        }
+
+        // Prepare data for Excel
+        $excelData = [];
+        foreach ($this->orders as $order) {
+            $taxPct = (float)($order->tax_pct ?? 0);
+            $taxFlag = $order->tax_code ?? 'I';
+
+            foreach ($order->OrderDtl as $detail) {
+                // Calculate line amount
+                $discPct = (float)($detail->disc_pct ?? 0);
+                $lineAmt = isset($detail->amt) && $detail->amt > 0
+                    ? (float)$detail->amt
+                    : ((float)$detail->qty * (float)$detail->price * (1 - $discPct / 100));
+
+                // Calculate DPP/PPN
+                if ($taxFlag === 'I') {
+                    $dpp = $taxPct > 0 ? ($lineAmt / (1 + $taxPct / 100)) : $lineAmt;
+                    $ppn = $lineAmt - $dpp;
+                } elseif ($taxFlag === 'E') {
+                    $dpp = $lineAmt;
+                    $ppn = $lineAmt * ($taxPct / 100);
+                } else {
+                    $dpp = $lineAmt;
+                    $ppn = 0;
+                }
+
+                $excelData[] = [
+                    $order->tr_code,
+                    $order->tax_doc_num ?? '',
+                    \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y'),
+                    $order->Partner?->name ?? 'N/A',
+                    $detail->matl_descr,
+                    $detail->qty,
+                    number_format($detail->price, 0, ',', '.'),
+                    number_format($dpp, 0, ',', '.'),
+                    number_format($ppn, 0, ',', '.'),
+                    number_format($dpp + $ppn, 0, ',', '.'),
+                    number_format($lineAmt, 0, ',', '.'),
+                    number_format($ppn, 0, ',', '.'),
+                ];
+            }
+        }
+
+        // Create Excel configuration with title and header info
+        $title = 'FAKTUR PAJAK REPORT';
+        $subtitle = '';
+
+        if ($this->type === 'cetakProsesDate' && $this->printDate) {
+            $subtitle = 'Tanggal Proses: ' . \Carbon\Carbon::parse($this->printDate)->format('d-M-Y');
+        } elseif ($this->type === 'single' && $this->objectIdValue) {
+            $subtitle = 'Single Order Print - ' . now()->format('d-M-Y H:i:s');
+        } else {
+            $subtitle = 'Report - ' . now()->format('d-M-Y H:i:s');
+        }
+
+        $sheets = [[
+            'name' => 'Faktur_Pajak_Report',
+            'headers' => [
+                'No. Nota', 'No. Faktur', 'Tanggal', 'Nama Pelanggan',
+                'Nama Barang', 'Qty', 'Harga Pcs', 'DPP', 'PPN',
+                'DPP + PPN', 'Amt Nota', 'Hitung PPN'
+            ],
+            'data' => $excelData,
+            'protectedColumns' => [],
+            'allowInsert' => false,
+            'title' => $title,
+            'subtitle' => $subtitle,
+        ]];
+
+        $filename = 'Faktur_Pajak_Report_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+        return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
 
     public function render()

@@ -363,21 +363,17 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
                 // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
                 $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue,0);
-                // Total Nota dihiitung dari harga setelah disc * qty
-                // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
-                // priceAdjustment
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             } else if ($this->inputs['tax_code'] === 'E') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue,0);
-                $this->input_details[$key]['amt'] = $this->input_details[$key]['amt_beforetax'] + $this->input_details[$key]['amt_tax'];
             } else if ($this->inputs['tax_code'] === 'N') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             }
+            // amt selalu dihitung tanpa dipengaruhi tax_code: (price after discount) * qty
+            $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
             $this->input_details[$key]['amt_adjustdtl'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'];
 
@@ -387,7 +383,14 @@ class Detail extends BaseComponent
             $this->total_tax = 0;
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
-                $this->total_amount += $detail['amt'];
+                // Total header dipengaruhi tax_code
+                if ($this->inputs['tax_code'] === 'E') {
+                    // Exclude PPN pada harga item; total = DPP + PPN
+                    $this->total_amount += ($detail['amt_beforetax'] + $detail['amt_tax']);
+                } else {
+                    // Include atau Non PPN: total = amt (sudah termasuk/ tanpa PPN sesuai kebijakan)
+                    $this->total_amount += $detail['amt'];
+                }
                 $this->total_discount += $detail['disc_amt'] ?? 0;
                 $this->total_dpp += $detail['amt_beforetax'];
                 $this->total_tax += $detail['amt_tax'];
