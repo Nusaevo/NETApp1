@@ -15,7 +15,7 @@
 
     <!-- Card hanya tampil di layar, tidak saat print -->
     <div class="card d-print-none" style="max-width: 800px; margin: 30px auto; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 32px 32px 40px 32px;">
-        <div class="invoice-box" style="max-width: 800px; margin: auto; padding: 20px;">
+        <div class="invoice-box" style="margin: auto; padding: 20px;">
             <!-- Header -->
             <table width="100%" style="margin-bottom: 10px;">
                 <tr>
@@ -93,7 +93,7 @@
             </table>
 
             <!-- Recipient Info -->
-            <div style="margin-top: 70px;">
+            <div style="margin-top: 30px;">
                 <p style="margin: 0 0 10px 0;">
                     {{ $this->object->Partner->name }} -
                     {{ $this->object->Partner->address }} -
@@ -103,19 +103,19 @@
                 <div width="100%" style="margin-top: -10px;">
                     <div class="row justify-content-between" style="text-align: center;">
                         <div style="width: 25%;">
-                            <p>Administrasi:</p><br><br>
+                            <p>Administrasi:</p><br>
                             <p>(________________)</p>
                         </div>
                         <div style="width: 25%;">
-                            <p>Gudang:</p><br><br>
+                            <p>Gudang:</p><br>
                             <p>(________________)</p>
                         </div>
                         <div style="width: 25%;">
-                            <p>Driver:</p><br><br>
+                            <p>Driver:</p><br>
                             <p>(________________)</p>
                         </div>
                         <div style="width: 25%;">
-                            <p>Penerima:</p><br><br>
+                            <p>Penerima:</p><br>
                             <p>(________________)</p>
                         </div>
                     </div>
@@ -126,8 +126,8 @@
 
     <!-- Area print tetap tampil saat print -->
     <div id="print" class="d-none d-print-block p-20">
-        <div style="max-width: 800px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
-            <div class="invoice-box" style="max-width: 800px; margin: auto; padding: 20px;">
+        <div style="margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
+            <div class="invoice-box" style="margin: auto; padding: 20px;">
                 <!-- Header -->
                 <table width="100%" style="margin-bottom: 10px;">
                     <tr>
@@ -206,8 +206,7 @@
                     </tr>
                 </table>
 
-                <!-- Recipient Info -->
-                <div style="margin-top: 70px;">
+                <div style="margin-top: 30px;">
                     <p style="margin: 0 0 10px 0;">
                         {{ $this->object->Partner->name }} -
                         {{ $this->object->Partner->address }} -
@@ -217,19 +216,19 @@
                     <div width="100%" style="margin-top: -10px;">
                         <div class="row justify-content-between" style="text-align: center;">
                             <div style="width: 25%;">
-                                <p>Administrasi:</p><br><br>
+                                <p>Administrasi:</p><br>
                                 <p>(________________)</p>
                             </div>
                             <div style="width: 25%;">
-                                <p>Gudang:</p><br><br>
+                                <p>Gudang:</p><br>
                                 <p>(________________)</p>
                             </div>
                             <div style="width: 25%;">
-                                <p>Driver:</p><br><br>
+                                <p>Driver:</p><br>
                                 <p>(________________)</p>
                             </div>
                             <div style="width: 25%;">
-                                <p>Penerima:</p><br><br>
+                                <p>Penerima:</p><br>
                                 <p>(________________)</p>
                             </div>
                         </div>
