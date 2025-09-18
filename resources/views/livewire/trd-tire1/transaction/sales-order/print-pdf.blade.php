@@ -11,7 +11,7 @@
         <hr>
     </div>
 
-        <style>
+        {{-- <style>
             @page {
                 size: A5 portrait;
                 margin: 10mm;
@@ -67,7 +67,7 @@
                     font-size: 10px;
                 }
             }
-        </style>
+        </style> --}}
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
     <!-- Card hanya tampil di layar, tidak saat print -->
@@ -207,128 +207,127 @@
     <div id="print" class="d-none d-print-block p-20">
         <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
             <div class="invoice-box" style="max-width: 1200px; margin: auto; padding: 20px;">
-                <!-- Header -->
-                <table width="100%" style="margin-bottom: 10px; border: none;">
-                    <tr style="border: none;">
-                        <td style="width: 25%; border: none;">
-                            <div style="text-align: center;">
-                                <h2 style="margin: 0; text-decoration: underline; font-weight: bold; white-space: nowrap;">
-                                    CAHAYA TERANG</h2>
-                                <p style="margin-top: -5px; white-space: nowrap;">SURABAYA</p>
-                            </div>
-                        </td>
-                        <td style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 45%; border: none;">
-                            <h3 style="margin-bottom: -5px; text-decoration: underline;">
-                                NOTA PENJUALAN</h3>
-                            <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
-                        </td>
-                        <td style="text-align: left; vertical-align: bottom; width: 30%; border: none;">
-                            <p style="margin-bottom: -8px;">
-                                Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
-                            </p>
-                            <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                            <p style="margin-bottom: -8px;">
-                                <strong>{{ $this->object->Partner->name }}</strong>
-                            </p>
-                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
-                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
-                        </td>
-                    </tr>
-                </table>
-
-                <!-- Items Table -->
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%;">KODE BARANG</th>
-                            <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%;">NAMA BARANG</th>
-                            <th style="border: 1px solid #000; text-align: center; width: 5%;">QTY</th>
-                            <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 13%;">HARGA SATUAN</th>
-                            @if($this->object->sales_type != 'O')
-                                <th style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%;">DISC</th>
-                            @endif
-                            <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%;">JUMLAH HARGA</th>
+                @php
+                    $chunks = $this->object->OrderDtl->chunk(15);
+                    $grand_total_all = $this->object->OrderDtl->reduce(function($carry, $d){
+                        $disc = $d->disc_pct / 100;
+                        $price = round($d->price * (1 - $disc));
+                        return $carry + ($price * $d->qty);
+                    }, 0);
+                @endphp
+                @foreach ($chunks as $chunkIndex => $chunk)
+                    <!-- Header per page -->
+                    <table width="100%" style="margin-bottom: 10px; border: none;">
+                        <tr style="border: none;">
+                            <td style="width: 25%; border: none;">
+                                <div style="text-align: center;">
+                                    <h2 style="margin: 0; text-decoration: underline; font-weight: bold; white-space: nowrap;">CAHAYA TERANG</h2>
+                                    <p style="margin-top: -2px; white-space: nowrap;">SURABAYA</p>
+                                </div>
+                            </td>
+                            <td style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 45%; border: none;">
+                                <h3 style="margin-bottom: 1px; text-decoration: underline;">NOTA PENJUALAN</h3>
+                                <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
+                            </td>
+                        <td style="text-align: left; width: 30%; border: none; padding: 0 2px;">
+                            <p style="margin: -5px 0;">Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
+                            <p style="margin: -5px 0;">Kepada Yth :</p>
+                            <p style="margin: -5px 0;"><strong>{{ $this->object->Partner->name }}</strong></p>
+                            <p style="margin: -5px 0;">{{ $this->object->Partner->address }}</p>
+                            <p style="margin: -5px 0;">{{ $this->object->Partner->city }}</p>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @php
-                            $grand_total = 0;
-                        @endphp
-                        @foreach ($this->object->OrderDtl as $key => $OrderDtl)
-                            @php
-                                $discount = $OrderDtl->disc_pct / 100;
-                                $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
-                                $subTotalAfterDisc = $priceAfterDisc * $OrderDtl->qty;
-                                $grand_total += $subTotalAfterDisc;
-                            @endphp
-                            <tr style="line-height: 1.2;">
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px;">
-                                    {{ $OrderDtl->matl_code }}
-                                </td>
-                                <td style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                    {{ $OrderDtl->matl_descr }}
-                                </td>
-                                <td style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                    {{ ceil($OrderDtl->qty) }}
-                                </td>
-                                <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                    @php
-                                        $discount = $OrderDtl->disc_pct / 100;
-                                        $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
-                                    @endphp
-                                    {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}
-                                    @if ($loop->last)
-                                        <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
-                                            <!-- Biaya kirim -->
-                                            Total
-                                        </div>
-                                        @if($this->object->amt_shipcost > 0)
-                                            <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
-                                                <!-- Biaya kirim -->
-                                                Biaya EX
-                                            </div>
-                                        @endif
-                                    @endif
-                                </td>
+                    </table>
+
+                    <!-- Items Table (10 per page) -->
+                    @php $page_subtotal = 0; $has_disc = $this->object->sales_type != 'O'; @endphp
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%;">KODE BARANG</th>
+                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%;">NAMA BARANG</th>
+                                <th style="border: 1px solid #000; text-align: center; width: 5%;">QTY</th>
+                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 13%;">HARGA SATUAN</th>
                                 @if($this->object->sales_type != 'O')
-                                    <td style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                        {{ number_format($OrderDtl->disc_pct, 0, ',', '.') }}%
-                                    </td>
+                                    <th style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%;">DISC</th>
                                 @endif
-                                <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">
-                                    {{ number_format($subTotalAfterDisc, 0, ',', '.') }}
-                                    @if ($loop->last)
-                                    <div style="border-top: 1px solid #000; text-align: right; font-weight: bold; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px;">
-                                        {{ number_format($grand_total, 0, ',', '.') }}
-                                        </div>
-                                    @if($this->object->amt_shipcost > 0)
-                                        <div style="border-top: 1px solid #000; text-align: right; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
-                                            <!-- Isian biaya plus -->
-                                            {{ number_format($this->object->amt_shipcost, 0, ',', '.') }}
-                                        </div>
-                                    @endif
-                                    @if($this->object->amt_shipcost > 0)
-                                        <div style="border-top: 1px solid #000; text-align: right; font-weight: bold; padding-top: 5px; margin-top: 6px; margin-left: -5px; margin-right: -5px; padding-right: 5px; min-height: 20px;">
-                                            <!-- Total akhir -->
-                                            {{ number_format($grand_total + $this->object->amt_shipcost, 0, ',', '.') }}
-                                        </div>
-                                    @endif
-                                    @endif
-                                </td>
+                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%;">JUMLAH HARGA</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                <table style="margin-top: -18px; width: 100%;">
-                    <tr>
-                        <td style="border: 1px solid #000; padding: 10px;">
-                            <p style="margin: 0; display: inline;">Penerima: ________________</p>
-                            <p style="margin: 0; text-align: end; display: inline; float: right;">
-                                Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach ($chunk as $key => $OrderDtl)
+                                @php
+                                    $discount = $OrderDtl->disc_pct / 100;
+                                    $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
+                                    $subTotalAfterDisc = $priceAfterDisc * $OrderDtl->qty;
+                                    $page_subtotal += $subTotalAfterDisc;
+                                @endphp
+                                <tr style="line-height: 1.2;">
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px;">{{ $OrderDtl->matl_code }}</td>
+                                    <td style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">{{ $OrderDtl->matl_descr }}</td>
+                                    <td style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">{{ ceil($OrderDtl->qty) }}</td>
+                                    <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">{{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}</td>
+                                    @if($this->object->sales_type != 'O')
+                                        <td style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">{{ number_format($OrderDtl->disc_pct, 0, ',', '.') }}%</td>
+                                    @endif
+                                    <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">{{ number_format($subTotalAfterDisc, 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                            <!-- Summary row per page with blank first columns -->
+                            @php $isLastChunk = ($chunkIndex === $chunks->count() - 1); @endphp
+                            <tr>
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;"></td>
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000;">Total</td>
+                                @if($has_disc)
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                @endif
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; font-weight: bold; border-top: 1px solid #000;">{{ number_format($page_subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                            @if($isLastChunk && $this->object->amt_shipcost > 0)
+                                <tr>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;"></td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000;">Biaya EX</td>
+                                    @if($has_disc)
+                                        <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                    @endif
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000;">{{ number_format($this->object->amt_shipcost, 0, ',', '.') }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;"></td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold;">Grand Total</td>
+                                    @if($has_disc)
+                                        <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                                    @endif
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold;">{{ number_format($grand_total_all + $this->object->amt_shipcost, 0, ',', '.') }}</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+
+                    <!-- Footer per page -->
+                    <table style="margin-top: -18px; width: 100%;">
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 10px;">
+                                <p style="margin: 0; display: inline;">Penerima: ________________</p>
+                                <p style="margin: 0; text-align: end; display: inline; float: right;">Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong></p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div style="width: 100%; text-align: right; font-size: 10px; margin-top: 5px;">
+                        Page {{ $chunkIndex + 1 }} of {{ $chunks->count() }}
+                    </div>
+
+                    @if ($chunkIndex < $chunks->count() - 1)
+                        <div style="page-break-after: always;"></div>
+                    @endif
+                @endforeach
             </div>
         </div>
     </div>
