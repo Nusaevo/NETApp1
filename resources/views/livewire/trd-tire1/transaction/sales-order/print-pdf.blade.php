@@ -208,7 +208,7 @@
         <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
             <div class="invoice-box" style="max-width: 1200px; margin: auto; padding: 20px;">
                 @php
-                    $chunks = $this->object->OrderDtl->chunk(15);
+                    $chunks = $this->object->OrderDtl->chunk(13);
                     $grand_total_all = $this->object->OrderDtl->reduce(function($carry, $d){
                         $disc = $d->disc_pct / 100;
                         $price = round($d->price * (1 - $disc));
