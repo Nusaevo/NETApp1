@@ -691,12 +691,44 @@ class Detail extends BaseComponent
         return true;
     }
 
+    /**
+     * Get maximum SO item limit from ConfigConst
+     */
+    private function getMaxSoItemLimit()
+    {
+        try {
+            $configConst = ConfigConst::where('const_group', 'APP_ENV')
+                ->where('str1', 'MAX_SO_ITEM')
+                ->first();
+
+            if ($configConst && $configConst->num1) {
+                return (int) $configConst->num1;
+            }
+
+            // Default limit jika tidak ada konfigurasi
+            return 10;
+        } catch (Exception $e) {
+            Log::error('Error getting MAX_SO_ITEM from ConfigConst: ' . $e->getMessage());
+            return 10; // Default limit
+        }
+    }
+
     public function addItem()
     {
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih nota MOTOR atau MOBIL terlebih dahulu.');
             return;
         }
+
+        // Cek batasan jumlah item
+        $maxItems = $this->getMaxSoItemLimit();
+        $currentItemCount = count($this->input_details);
+
+        if ($currentItemCount >= $maxItems) {
+            $this->dispatch('error', "Maksimal item yang dapat ditambahkan adalah {$maxItems} item. Saat ini sudah ada {$currentItemCount} item.");
+            return;
+        }
+
         try {
             $this->input_details[] = populateArrayFromModel(new OrderDtl());
             $key = count($this->input_details) - 1;

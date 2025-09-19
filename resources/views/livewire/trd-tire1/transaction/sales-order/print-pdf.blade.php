@@ -208,14 +208,13 @@
         <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
             <div class="invoice-box" style="max-width: 1200px; margin: auto; padding: 20px;">
                 @php
-                    $chunks = $this->object->OrderDtl->chunk(13);
                     $grand_total_all = $this->object->OrderDtl->reduce(function($carry, $d){
                         $disc = $d->disc_pct / 100;
                         $price = round($d->price * (1 - $disc));
                         return $carry + ($price * $d->qty);
                     }, 0);
                 @endphp
-                @foreach ($chunks as $chunkIndex => $chunk)
+                @foreach ([$this->object->OrderDtl] as $chunkIndex => $chunk)
                     <!-- Header per page -->
                     <table width="100%" style="margin-bottom: 10px; border: none;">
                         <tr style="border: none;">
@@ -239,8 +238,8 @@
                         </tr>
                     </table>
 
-                    <!-- Items Table (10 per page) -->
-                    @php $page_subtotal = 0; $has_disc = $this->object->sales_type != 'O'; @endphp
+                    <!-- Items Table -->
+                    @php $has_disc = $this->object->sales_type != 'O'; @endphp
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
                         <thead>
                             <tr>
@@ -260,7 +259,6 @@
                                     $discount = $OrderDtl->disc_pct / 100;
                                     $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
                                     $subTotalAfterDisc = $priceAfterDisc * $OrderDtl->qty;
-                                    $page_subtotal += $subTotalAfterDisc;
                                 @endphp
                                 <tr style="line-height: 1.2;">
                                     <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px;">{{ $OrderDtl->matl_code }}</td>
@@ -273,8 +271,7 @@
                                     <td style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px;">{{ number_format($subTotalAfterDisc, 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
-                            <!-- Summary row per page with blank first columns -->
-                            @php $isLastChunk = ($chunkIndex === $chunks->count() - 1); @endphp
+                            <!-- Summary row with blank first columns -->
                             <tr>
                                 <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;"></td>
                                 <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
@@ -283,9 +280,9 @@
                                 @if($has_disc)
                                     <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
                                 @endif
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; font-weight: bold; border-top: 1px solid #000;">{{ number_format($page_subtotal, 0, ',', '.') }}</td>
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; font-weight: bold; border-top: 1px solid #000;">{{ number_format($grand_total_all, 0, ',', '.') }}</td>
                             </tr>
-                            @if($isLastChunk && $this->object->amt_shipcost > 0)
+                            @if($this->object->amt_shipcost > 0)
                                 <tr>
                                     <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;"></td>
                                     <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
@@ -310,7 +307,7 @@
                         </tbody>
                     </table>
 
-                    <!-- Footer per page -->
+                    <!-- Footer -->
                     <table style="margin-top: -18px; width: 100%;">
                         <tr>
                             <td style="border: 1px solid #000; padding: 10px;">
@@ -319,14 +316,6 @@
                             </td>
                         </tr>
                     </table>
-
-                    <div style="width: 100%; text-align: right; font-size: 10px; margin-top: 5px;">
-                        Page {{ $chunkIndex + 1 }} of {{ $chunks->count() }}
-                    </div>
-
-                    @if ($chunkIndex < $chunks->count() - 1)
-                        <div style="page-break-after: always;"></div>
-                    @endif
                 @endforeach
             </div>
         </div>
