@@ -924,7 +924,7 @@ class Detail extends BaseComponent
             $this->object->status_code = Status::NONACTIVE;
             $this->object->save();
             $this->object->delete();
-            $this->dispatch('success', __('generic.string.disable'));
+            $this->dispatch('success', __('generic.string.delete'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }

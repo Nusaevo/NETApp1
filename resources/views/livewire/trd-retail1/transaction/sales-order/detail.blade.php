@@ -185,7 +185,10 @@
                             cssClass="btn-primary" loading="true" button-name="Print"
                             iconPath="print.svg" />
                         @endif
-                        @include('layout.customs.buttons.save')
+                         <x-ui-button clickEvent="Save"
+                                :action="$actionValue"
+                                type="save"
+                                :enabled="true" />
                     </div>
                 </x-ui-footer>
             </div>

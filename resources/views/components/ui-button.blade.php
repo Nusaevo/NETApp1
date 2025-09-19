@@ -83,6 +83,145 @@
         }, 80);
     }
 </script>
+@elseif(isset($type) && $type == 'delete')
+@php
+    // Check if user has delete permission
+    $hasDeletePermission = empty($permissions) || (isset($permissions['delete']) && $permissions['delete']);
+
+    // Check if object can be deleted (status and not deleted)
+    $canDelete = empty($object) || ($status === 'OPEN' || !$object->deleted_at);
+@endphp
+
+@if($hasDeletePermission && $canDelete)
+<span style="padding: 2px;">
+    @if(isset($enableConfirmationDialog) && $enableConfirmationDialog === 'true')
+        {{-- Delete button WITH confirmation dialog --}}
+        <button type="button"
+                @if (isset($id)) id="{{ $id }}" @endif
+                class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action btn-delete-dialog"
+                @if (!(isset($enabled) && $enabled === 'always') && (isset($enabled) && $enabled === 'false' || (isset($action) && $action === 'View'))) disabled @endif
+                @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
+                data-click-event="{{ isset($clickEvent) ? $clickEvent : '' }}"
+                @if (isset($dataBsTarget) && $dataBsTarget !=='' ) data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal" @endif
+                @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif>
+            @if (isset($iconPath) && $iconPath)
+            <img src="{{ imagePath($iconPath) }}" alt="Icon" style="width: 20px; height: 20px;">
+            @endif
+            <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
+        </button>
+    @else
+        {{-- Delete button WITHOUT confirmation dialog --}}
+        <button type="button"
+                @if (isset($id)) id="{{ $id }}" @endif
+                class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action"
+                @if (!(isset($enabled) && $enabled === 'always') && (isset($enabled) && $enabled === 'false' || (isset($action) && $action === 'View'))) disabled @endif
+                @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
+                @if (isset($clickEvent) && $clickEvent) wire:click="{{ $clickEvent }}" @endif
+                @if (isset($loading) && $loading === 'true') wire:loading.attr="disabled" wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}" @endif
+                @if (isset($dataBsTarget) && $dataBsTarget !=='' ) data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal" @endif
+                @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif>
+
+            @if (isset($loading) && $loading === 'true')
+            <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+                @if (isset($iconPath) && $iconPath)
+                <img src="{{ imagePath($iconPath) }}" alt="Icon" style="width: 20px; height: 20px;">
+                @endif
+                <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
+            </span>
+            <span wire:loading wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+                <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+            </span>
+            @else
+            @if (isset($iconPath) && $iconPath)
+            <img src="{{ imagePath($iconPath) }}" alt="Icon" style="width: 20px; height: 20px;">
+            @endif
+            <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
+            @endif
+        </button>
+    @endif
+</span>
+
+@if(isset($enableConfirmationDialog) && $enableConfirmationDialog === 'true')
+<script>
+    $(document).on('click', '.btn-delete-dialog', function(e) {
+        e.preventDefault();
+
+        const clickEvent = $(this).data('click-event');
+
+        Swal.fire({
+            title: "Konfirmasi Penghapusan",
+            text: "Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.",
+            icon: "warning",
+            iconColor: "#f27474",
+            background: "#fff",
+            backdrop: "rgba(0,0,0,0.4)",
+            buttonsStyling: false,
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: "<i class='fas fa-trash me-1'></i>Ya, Hapus",
+            cancelButtonText: "<i class='fas fa-times me-1'></i>Batal",
+            closeOnConfirm: false,
+            allowOutsideClick: false,
+            allowEscapeKey: true,
+            customClass: {
+                popup: "rounded-3 shadow-lg",
+                title: "fw-bold text-dark fs-4 mb-3",
+                htmlContainer: "text-muted fs-6 mb-4",
+                confirmButton: "btn btn-danger me-3 px-4 py-2 rounded-pill",
+                cancelButton: "btn btn-outline-secondary px-4 py-2 rounded-pill",
+                actions: "gap-2 mt-4"
+            }
+        }).then(result => {
+            if (result.isConfirmed && clickEvent) {
+                Livewire.dispatch(clickEvent);
+            }
+        });
+    });
+</script>
+@endif
+@endif
+@elseif(isset($type) && $type == 'save')
+<span style="padding: 2px;">
+    @if (isset($loading) && $loading === 'true')
+    <button type="button"
+            @if (isset($id)) id="{{ $id }}" @endif
+            class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action"
+            @if (!(isset($enabled) && $enabled === 'always') && (isset($enabled) && $enabled === 'false' || (isset($action) && $action === 'View'))) disabled @endif
+            @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
+            @if (isset($clickEvent) && $clickEvent) wire:click="{{ $clickEvent }}" @endif
+            wire:loading.attr="disabled"
+            @if (isset($dataBsTarget) && $dataBsTarget !=='' ) data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal" @endif
+            @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif
+            wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+
+        <span wire:loading.remove wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+            @if (isset($iconPath) && $iconPath)
+            <img src="{{ imagePath($iconPath) }}" alt="Icon" style="width: 20px; height: 20px;">
+            @endif
+            <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
+        </span>
+
+        <span wire:loading wire:target="{{ isset($clickEvent) ? $clickEvent : '' }}">
+            <span class="spinner-border spinner-border-sm align-middle" role="status" aria-hidden="true"></span>
+        </span>
+    </button>
+
+    @else
+    <button type="button"
+            @if (isset($id)) id="{{ $id }}" @endif
+            class="btn {{ isset($cssClass) ? $cssClass : '' }} btn-action"
+            @if (!(isset($enabled) && $enabled === 'always') && (isset($enabled) && $enabled === 'false' || (isset($action) && $action === 'View'))) disabled @endif
+            @if (isset($visible) && $visible==='false' ) style="display: none;" @endif
+            @if (isset($clickEvent) && $clickEvent) wire:click="{{ $clickEvent }}" @endif
+            @if (isset($dataBsTarget) && $dataBsTarget !=='' ) data-bs-target="{{ $dataBsTarget }}" data-bs-toggle="modal" @endif
+            @if (isset($jsClick) && $jsClick) onclick="{{ $jsClick }}" @endif>
+        @if (isset($iconPath) && $iconPath)
+        <img src="{{ imagePath($iconPath) }}" alt="Icon" style="width: 20px; height: 20px;">
+        @endif
+        <span style="font-size: 16px;">{{ isset($buttonName) ? $buttonName : '' }}</span>
+    </button>
+    @endif
+</span>
 @elseif(isset($type) && $type == 'InputButton')
     @if (isset($loading) && $loading === 'true')
     <button type="button"

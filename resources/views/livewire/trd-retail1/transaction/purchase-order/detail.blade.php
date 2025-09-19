@@ -150,7 +150,10 @@
                     <x-ui-footer>
                         @include('layout.customs.transaction-form-footer')
                         <div>
-                            @include('layout.customs.buttons.save')
+                         <x-ui-button clickEvent="Save"
+                                :action="$actionValue"
+                                type="save"
+                                :enabled="true" />
                         </div>
                     </x-ui-footer>
                 </div>

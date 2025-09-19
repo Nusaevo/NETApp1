@@ -618,7 +618,7 @@ class Detail extends BaseComponent
             }
             $this->object->save();
             $this->object->delete();
-            $messageKey = 'generic.string.disable';
+            $messageKey = 'generic.string.delete';
             $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
@@ -662,7 +662,7 @@ class Detail extends BaseComponent
     {
         try {
             app(InventoryService::class)->delInventory($this->object->id);
-            $this->dispatch('success', __('generic.string.disable'));
+            $this->dispatch('success', __('generic.string.delete'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.disable', ['message' => $e->getMessage()]));
         }

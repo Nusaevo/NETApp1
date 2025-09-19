@@ -189,11 +189,15 @@
                                 iconPath="print.svg" :enabled="($canUpdateAfterPrint || $canPrintSuratJalanButton) ? 'true' : 'false'" />
                         @endif
 
-                        <x-ui-button clickEvent="deleteTransaction" button-name="Hapus" loading="true"
-                            :action="$actionValue" cssClass="btn-danger" iconPath="delete.svg" :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')" />
+                        <x-ui-button clickEvent="deleteTransaction"
+                            :action="$actionValue"
+                            :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')"
+                            type="delete" enableConfirmationDialog="true" :permissions="$permissions"/>
 
-                        <x-ui-button clickEvent="Save" button-name="Simpan" loading="true" :action="$actionValue"
-                            cssClass="btn-primary" iconPath="save.svg" :enabled="($canUpdateAfterPrint || $canSaveButtonEnabled) ? 'true' : 'false'" />
+                        <x-ui-button clickEvent="Save"
+                            :action="$actionValue"
+                            type="save"
+                            :enabled="($canUpdateAfterPrint || $canSaveButtonEnabled) ? 'true' : 'false'" />
                     </x-ui-footer>
                 </div>
 
