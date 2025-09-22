@@ -41,62 +41,62 @@
 
     <!-- Print Content - Selalu visible -->
     <div id="print">
-                    <div class="invoice-box">
-                        <div style="margin: 0 auto; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4;">
-                            <!-- Header dengan tanggal di kanan -->
-                            <div style="margin-bottom: 15px;">
-                                <div style="text-align: right; font-size: 14px; margin-bottom: 10px;">
-                                    <span>Tgl.: {{ now()->format('d-M-Y') }}</span>
-                                </div>
-                                <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
-                                    <div style="font-weight: bold; font-size: 16px;">PLATINA</div>
-                                    <div style="font-size: 14px;">KERTAJAYA 16, SURABAYA</div>
-                                </div>
-                            </div>
-
-                            <!-- Garis pemisah -->
-                            <div style="border-top: 1px solid #000; margin-bottom: 15px;"></div>
-
-                            <!-- Instruksi -->
-                            <div style="margin-bottom: 15px;">
-                                <span style="text-decoration: underline; font-weight: bold; font-size: 14px;">
-                                    Mohon Periksa Nota-nota tersebut di bawah ini
-                                </span>
-                            </div>
-
-                            <!-- Tabel data nota -->
-                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-                                @php $grandTotal = 0; @endphp
-                                @foreach ($orders as $i => $order)
-                                    @php $grandTotal += $order->amt; @endphp
-                                    <tr style="height: 25px;">
-                                        <td style="padding: 2px 0; width: 30px;">{{ $i + 1 }}.</td>
-                                        <td style="padding: 2px 5px; width: 120px;">
-                                            Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
-                                        </td>
-                                        <td style="padding: 2px 5px; width: 150px;">No. {{ $order->tr_code }}</td>
-                                        <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
-                                        <td style="padding: 2px 5px; text-align: right; width: 120px;">
-                                            {{ number_format($order->amt, 2, ',', '.') }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </table>
-
-                            <!-- Total -->
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-                                <span style="font-weight: bold;">Jumlah:</span>
-                                <span style="font-weight: bold; text-decoration: underline;">
-                                    Rp. {{ number_format($grandTotal, 2, ',', '.') }}
-                                </span>
-                            </div>
-
-                            <!-- Tanda tangan -->
-                            <div style="margin-top: 30px;">
-                                <span>Ttd:</span>
-                            </div>
-                        </div>
+        <div class="invoice-box">
+            <div style="margin: 0 auto; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.4;">
+                <!-- Header dengan tanggal di kanan -->
+                <div style="margin-bottom: 15px;">
+                    <div style="text-align: right; font-size: 16px; margin-bottom: 10px;">
+                        <span>Tgl.: {{ now()->format('d-M-Y') }}</span>
                     </div>
+                    <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
+                        <div style="font-weight: bold; font-size: 16px;">PLATINA</div>
+                        <div style="font-size: 16px;">KERTAJAYA 16, SURABAYA</div>
+                    </div>
+                </div>
+
+                <!-- Garis pemisah -->
+                <div style="border-top: 1px solid #000; margin-bottom: 15px;"></div>
+
+                <!-- Instruksi -->
+                <div style="margin-bottom: 15px;">
+                    <span style="text-decoration: underline; font-weight: bold; font-size: 16px;">
+                        Mohon Periksa Nota-nota tersebut di bawah ini
+                    </span>
+                </div>
+
+                <!-- Tabel data nota -->
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                    @php $grandTotal = 0; @endphp
+                    @foreach ($orders as $i => $order)
+                        @php $grandTotal += $order->amt; @endphp
+                        <tr style="height: 25px;">
+                            <td style="padding: 2px 0; width: 30px;">{{ $i + 1 }}.</td>
+                            <td style="padding: 2px 5px; width: auto; white-space: nowrap;">
+                                Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
+                            </td>
+                            <td style="padding: 2px 5px; width: 150px;">No. {{ $order->tr_code }}</td>
+                            <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
+                            <td style="padding: 2px 5px; text-align: right; width: 120px;">
+                                {{ number_format($order->amt, 2, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </table>
+
+                <!-- Total -->
+                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                    <span style="font-weight: bold;">Jumlah:</span>
+                    <span style="font-weight: bold; text-decoration: underline;">
+                        Rp. {{ number_format($grandTotal, 2, ',', '.') }}
+                    </span>
+                </div>
+
+                <!-- Tanda tangan -->
+                <div style="margin-top: 30px;">
+                    <span>Ttd:</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="text/javascript">
@@ -129,7 +129,7 @@
             width: 100%;
             box-sizing: border-box;
             padding: 0;
-            font-size: 14px;
+            font-size: 16px;
             line-height: 1.4;
         }
 
@@ -174,11 +174,11 @@
                 width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                font-size: 14px !important;
+                font-size: 16px !important;
                 background: white !important;
             }
 
-            .invoice-box > div {
+            .invoice-box>div {
                 width: 100% !important;
                 max-width: none !important;
                 margin: 0 !important;
