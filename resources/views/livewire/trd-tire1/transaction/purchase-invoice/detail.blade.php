@@ -171,11 +171,15 @@
                             {{-- </x-ui-padding> --}}
                         </x-ui-card>
 
-                        <!-- Footer with Save button -->
                         <x-ui-footer>
-                            @include('layout.customs.buttons.delete')
-                            @include('layout.customs.buttons.save')
-
+                            <x-ui-button clickEvent="deleteTransaction"
+                                :action="$actionValue"
+                                :enabled="$isDeliv ? 'false' : 'true'"
+                                type="delete" enableConfirmationDialog="true" :permissions="$permissions"/>
+                            <x-ui-button clickEvent="Save"
+                                :action="$actionValue"
+                                type="save"
+                                :enabled="true" />
                         </x-ui-footer>
                     </div>
                 </div>

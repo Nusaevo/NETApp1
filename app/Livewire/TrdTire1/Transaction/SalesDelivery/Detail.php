@@ -353,7 +353,7 @@ class Detail extends BaseComponent
 
             $this->deliveryService->delDelivery($this->object->id);
 
-            $this->dispatch('success', __('generic.string.disable'));
+            $this->dispatch('success', __('generic.string.delete'));
             return redirect()->route(str_replace('.Detail', '', $this->baseRoute));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));

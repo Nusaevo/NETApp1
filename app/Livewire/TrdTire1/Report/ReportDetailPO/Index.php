@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Report\ReportDetailSO;
+namespace App\Livewire\TrdTire1\Report\ReportDetailPO;
 
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session};
@@ -10,9 +10,8 @@ class Index extends BaseComponent
 {
     public $startCode;
     public $endCode;
-    public $filterStatus = '';
     public $filterPartner = '';
-    public $filterMaterialCode = '';
+    public $filterBrand = '';
     public $results = [];
 
     protected function onPreRender()
@@ -22,11 +21,11 @@ class Index extends BaseComponent
 
     public function search()
     {
-        // Validasi: minimal harus ada salah satu filter (tanggal, partner, atau kode barang)
-        if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterMaterialCode)) {
+        // Validasi: minimal harus ada salah satu filter (tanggal, partner, atau brand)
+        if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterBrand)) {
             $this->dispatch('notify-swal', [
                 'type' => 'warning',
-                'message' => 'Mohon lengkapi tanggal awal, pilih customer, atau masukkan kode barang untuk melakukan pencarian'
+                'message' => 'Mohon lengkapi tanggal awal, pilih supplier, atau pilih brand untuk melakukan pencarian'
             ]);
             // $this->addError('startCode',  "Mohon lengkapi tanggal awal atau pilih customer");
             return;
@@ -44,44 +43,36 @@ class Index extends BaseComponent
         }
 
         // Build filter conditions
-        $statusFilter = "";
-        switch ($this->filterStatus) {
-            case 'batal':
-                $statusFilter = "AND oh.status_code = 'X'";
-                break;
-            case 'belum_terkirim':
-                $statusFilter = "AND dh.tr_date IS NULL";
-                break;
-            case 'belum_lunas':
-                $statusFilter = "AND ph.tr_date IS NULL";
-                break;
-        }
-
         $partnerFilter = $this->filterPartner ? "AND p.id = {$this->filterPartner}" : "";
-        $materialCodeFilter = $this->filterMaterialCode ? "AND od.matl_code LIKE '%" . addslashes($this->filterMaterialCode) . "%'" : "";
+        $brandFilter = $this->filterBrand ? "AND m.brand = '" . addslashes($this->filterBrand) . "'" : "";
 
-        // Query untuk mendapatkan data sales order
+        // Query untuk mendapatkan data Purchase Order
+        // Catatan: kolom Kirim/Sisa berasal dari ivt_bals (qty_oh dan qty_fgr) yang dicari berdasarkan matl_code
+
         $query = "
-            SELECT oh.tr_code, oh.tr_date, p.name, p.city,
-            od.matl_code, od.matl_descr, od.qty, od.price, od.disc_pct, od.amt, oh.status_code, oh.npwp_name,
-            dh.tr_date as ship_date,
-            bh.tr_date as billing_date,
-            bh.print_date as collect_date,
-            ph.tr_date as paid_date
+            SELECT
+                oh.tr_code,
+                oh.tr_date,
+                p.name,
+                p.city,
+                od.tr_seq,
+                od.matl_code,
+                od.matl_descr,
+                od.qty,
+                od.price,
+                od.disc_pct,
+                od.amt,
+                COALESCE(ib.qty_oh, 0)  AS kirim,
+                COALESCE(ib.qty_fgr, 0) AS sisa
             FROM order_hdrs oh
-            JOIN order_dtls od on od.trhdr_id=oh.id
-            JOIN partners p ON p.id=oh.partner_id
-            LEFT OUTER JOIN deliv_packings dp on dp.reffdtl_id=od.id
-            LEFT OUTER JOIN deliv_hdrs dh on dh.id=dp.trhdr_id
-            LEFT OUTER JOIN billing_orders bo on bo.reffdtl_id=od.id
-            LEFT OUTER JOIN billing_hdrs bh on bh.id=bo.trhdr_id
-            LEFT OUTER JOIN payment_dtls pd on pd.billhdr_id=bh.id
-            LEFT OUTER JOIN payment_hdrs ph on ph.id=pd.trhdr_id
-            WHERE oh.tr_type='SO'
+            JOIN order_dtls od ON od.trhdr_id = oh.id
+            JOIN partners p ON p.id = oh.partner_id
+            LEFT JOIN materials m ON m.code = od.matl_code AND m.deleted_at IS NULL
+            LEFT JOIN ivt_bals ib ON ib.matl_code = od.matl_code
+            WHERE oh.tr_type = 'PO'
                 AND oh.tr_date BETWEEN '{$startDate}' AND '{$endDate}'
-                {$statusFilter}
                 {$partnerFilter}
-                {$materialCodeFilter}
+                {$brandFilter}
                 AND oh.deleted_at IS NULL
                 AND od.deleted_at IS NULL
             ORDER BY oh.tr_code, od.tr_seq
@@ -112,7 +103,7 @@ class Index extends BaseComponent
                 ];
             }
 
-            // Add item to current nota
+            // Tambahkan item ke nota saat ini
             $notaData['items'][] = [
                 'kode' => $row->matl_code,
                 'nama_barang' => $row->matl_descr,
@@ -120,11 +111,8 @@ class Index extends BaseComponent
                 'harga' => $row->price,
                 'disc' => $row->disc_pct,
                 'total' => $row->amt,
-                't_kirim' => $row->ship_date,
-                'tgl_tagih' => $row->collect_date,
-                's' => $row->status_code,
-                'wajib_pajak' => $row->npwp_name,
-                'tgl_lunas' => $row->paid_date
+                'kirim' => $row->kirim,
+                'sisa' => $row->sisa,
             ];
         }
 
@@ -141,21 +129,11 @@ class Index extends BaseComponent
     {
         $this->startCode = '';
         $this->endCode = '';
-        $this->filterStatus = '';
         $this->filterPartner = '';
-        $this->filterMaterialCode = '';
+        $this->filterBrand = '';
         $this->results = [];
     }
 
-    public function getStatusOptions()
-    {
-        return [
-            ['value' => '', 'label' => 'Semua Status'],
-            ['value' => 'batal', 'label' => 'Batal'],
-            ['value' => 'belum_terkirim', 'label' => 'Belum Terkirim'],
-            ['value' => 'belum_lunas', 'label' => 'Belum Lunas'],
-        ];
-    }
 
     public function getPartnerOptions()
     {
@@ -181,21 +159,24 @@ class Index extends BaseComponent
         return $options;
     }
 
-    public function getMaterialCodeOptions()
+    public function getBrandOptions()
     {
-        $materials = DB::connection(Session::get('app_code'))
+        $brands = DB::connection(Session::get('app_code'))
             ->table('materials')
-            ->select('code', 'name')
+            ->select('brand')
+            ->whereNotNull('brand')
+            ->where('brand', '!=', '')
             ->whereNull('deleted_at')
-            ->orderBy('code')
+            ->distinct()
+            ->orderBy('brand')
             ->get();
 
-        $options = [['value' => '', 'label' => 'Semua Kode Barang']];
+        $options = [['value' => '', 'label' => 'Semua Brand']];
 
-        foreach ($materials as $material) {
+        foreach ($brands as $b) {
             $options[] = [
-                'value' => $material->code,
-                'label' => $material->code . ' - ' . $material->name
+                'value' => $b->brand,
+                'label' => $b->brand
             ];
         }
 

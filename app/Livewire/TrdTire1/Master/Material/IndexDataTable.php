@@ -98,41 +98,24 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            SelectFilter::make('Tipe Penjualan', 'sales_type_filter')
-                ->options([
-                    '' => 'Semua',
-                    'O' => 'Mobil',
-                    'I' => 'Motor',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value !== '') {
-                        // Ambil semua category yang str1-nya sama dengan $value
-                        $categories = \App\Models\SysConfig1\ConfigConst::where('const_group', 'MMATL_CATEGORY')
-                            ->where('str1', $value)
-                            ->pluck('str2')
-                            ->toArray();
-                        if (!empty($categories)) {
-                            $builder->whereIn('category', $categories);
-                        } else {
-                            // Jika tidak ada category yang cocok, hasilkan kosong
-                            $builder->whereRaw('1=0');
-                        }
-                    }
-                }),
+            // Filter pencarian berdasarkan kode produk
             SelectFilter::make('Kategori', 'kategori_filter')
-                ->options($this->materialCategory)
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value !== '') {
-                        $builder->where('category', '=', $value);
-                    }
-                }),
+            ->options($this->materialCategory)
+            ->filter(function (Builder $builder, string $value) {
+                if ($value !== '') {
+                    $builder->where('category', '=', $value);
+                }
+            }),
             SelectFilter::make('Merk', 'brand_filter')
-                ->options($this->materialBrand)
-                ->filter(function (Builder $builder, string $value) {
-                    if ($value !== '') {
-                        $builder->where('brand', '=', $value);
-                    }
-                }),
+            ->options($this->materialBrand)
+            ->filter(function (Builder $builder, string $value) {
+                if ($value !== '') {
+                    $builder->where('brand', '=', $value);
+                }
+            }),
+            $this->createTextFilter('Kode Produk', 'code', 'Kode Produk', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
             // Filter pencarian berdasarkan field tag dengan LIKE
             $this->createTextFilter('Nama Barang', 'tag', 'Nama Barang', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tag)'), 'like', '%' . strtoupper($value) . '%');

@@ -148,7 +148,6 @@ class IndexDataTable extends BaseDataTableComponent
                 ->format(function ($value, $row, Column $column) {
                     return view('layout.customs.data-table-action', [
                         'row' => $row,
-                        'row' => $row,
                         'custom_actions' => [
                             [
                                 'label' => 'Print',
@@ -210,6 +209,28 @@ class IndexDataTable extends BaseDataTableComponent
                         $builder->whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$value]); // Filter using YYYY-MM
                     }
                 }),
+            SelectFilter::make('Nomor Faktur')
+                ->options([
+                    '' => 'Semua',
+                    'with' => 'Ada Nomor Faktur',
+                    'without' => 'Tanpa Nomor Faktur',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === 'with') {
+                        // Ada nomor faktur: tax_doc_num tidak null, tidak kosong, dan tidak 0
+                        $builder->whereNotNull('order_hdrs.tax_doc_num')
+                            ->where('order_hdrs.tax_doc_num', '!=', '')
+                            ->where('order_hdrs.tax_doc_num', '!=', 0);
+                    } elseif ($value === 'without') {
+                        // Tanpa nomor faktur: tax_doc_num null, kosong, atau 0
+                        $builder->where(function ($q) {
+                            $q->whereNull('order_hdrs.tax_doc_num')
+                                ->orWhere('order_hdrs.tax_doc_num', '=', '')
+                                ->orWhere('order_hdrs.tax_doc_num', '=', 0);
+                        });
+                    }
+                }),
+
             DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where('order_hdrs.tr_date', '=', $value);
             }),

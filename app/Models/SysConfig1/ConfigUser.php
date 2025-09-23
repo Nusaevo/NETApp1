@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
 use App\Traits\BaseTrait;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Constant;
 
 class ConfigUser extends Authenticatable implements MustVerifyEmail
 {
@@ -15,7 +16,15 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
     // use SpatieLogsActivity;
     // use HasRoles;
     use SoftDeletes;
-    use BaseTrait;    protected static function boot()
+    use BaseTrait;
+
+     public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->connection = Constant::configConn();
+    }
+
+    protected static function boot()
     {
         parent::boot();
         self::bootBaseTrait();

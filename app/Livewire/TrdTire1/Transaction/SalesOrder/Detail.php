@@ -10,7 +10,7 @@ use App\Enums\Status;
 use App\Services\SysConfig1\ConfigService;
 use App\Services\TrdTire1\OrderService;
 use App\Services\TrdTire1\Master\MasterService;
-use Illuminate\Support\Facades\{DB, Log};
+use Illuminate\Support\Facades\{DB, Log, Auth};
 use Exception;
 
 class Detail extends BaseComponent
@@ -48,6 +48,11 @@ class Detail extends BaseComponent
     public $isDeliv = false; // True jika ada delivery pada salah satu detail
     public $object;
     public $object_detail;
+    public $canUpdateAfterPrint = true; // izin untuk save/print/delete setelah pernah dicetak
+    public $hasBeenPrinted = false; // apakah pernah dicetak (revision > 0)
+    public $canPrintNotaButton = true; // enable/disable tombol Cetak Nota Jual
+    public $canPrintSuratJalanButton = true; // enable/disable tombol Cetak Surat Jalan
+    public $canSaveButtonEnabled = true; // enable/disable tombol Simpan
 
     public $ddPartner = [
         'placeHolder' => "Ketik untuk cari customer ...",
@@ -152,30 +157,10 @@ class Detail extends BaseComponent
                 'wp_name' => $this->npwpDetails['wp_name'],
                 'wp_location' => $this->npwpDetails['wp_location'],
             ];
-
-            // Debug: cek data yang akan disimpan
-            Log::info('NPWP Data to be saved:', [
-                'new_npwp' => $this->npwpDetails,
-                'all_wp_details' => $wpDetails
-            ]);
-
             // Simpan ke database
             $partnerDetail->wp_details = $wpDetails;
             $result = $partnerDetail->save();
 
-            // Debug: cek hasil penyimpanan
-            Log::info('NPWP Save result:', [
-                'save_result' => $result,
-                'partner_detail_id' => $partnerDetail->id,
-                'wp_details_after_save' => $partnerDetail->wp_details
-            ]);
-
-            // Debug: cek data yang tersimpan ke database
-            Log::info('NPWP Data saved to database:', [
-                'partner_id' => $partner->id,
-                'wp_details_before_save' => $wpDetails,
-                'partner_detail_id' => $partnerDetail->id
-            ]);
 
             // Refresh data dari database untuk memastikan data ter-update
             $partnerDetail->refresh();
@@ -287,6 +272,8 @@ class Detail extends BaseComponent
                 // dd($this->materialQuery);
                 $this->salesTypeOnChanged();
                 $this->loadDetails();
+                $this->updateAfterPrintPermission();
+                $this->updateButtonStatesByCounter();
             } else {
                 // Jika object tidak ditemukan, buat instance baru dan tampilkan error
                 $this->object = new OrderHdr();
@@ -303,6 +290,103 @@ class Detail extends BaseComponent
             $this->onSOTaxChange();
         }
         $this->dispatch('updateTaxPayerEnabled', !empty($this->inputs['tax_doc_flag']));
+    }
+
+    private function getRevisionCount(): int
+    {
+        $rev = 0;
+        if (isset($this->inputs['print_remarks'])) {
+            if (is_array($this->inputs['print_remarks'])) {
+                $rev = (int)($this->inputs['print_remarks']['nota'] ?? 0);
+            } else {
+                $rev = (int)$this->inputs['print_remarks'];
+            }
+        }
+        return $rev;
+    }
+
+    private function updateAfterPrintPermission(): void
+    {
+        \Log::info('updateAfterPrintPermission called');
+
+        // Cek apakah ada cetakan (nota atau surat jalan)
+        $notaCount = 0;
+        $suratCount = 0;
+        if ($this->object && method_exists($this->object, 'getPrintCounterArray')) {
+            $c = $this->object->getPrintCounterArray();
+            $notaCount = (int)($c['nota'] ?? 0);
+            $suratCount = (int)($c['surat_jalan'] ?? 0);
+        }
+        $this->hasBeenPrinted = ($notaCount > 0 || $suratCount > 0);
+
+        if (!$this->hasBeenPrinted) {
+            $this->canUpdateAfterPrint = true;
+            return;
+        }
+
+        $userId = Auth::id();
+        $num1 = ConfigConst::where('const_group', 'SEC_LEVEL')
+            ->where('str2', 'UPDATE_AFTER_PRINT')
+            ->where('user_id', $userId)
+            ->value('num1');
+        $this->canUpdateAfterPrint = ((int)($num1 ?? 0)) === 1;
+
+        // Debug log untuk cek izin
+        \Log::info('Permission Debug:', [
+            'userId' => $userId,
+            'num1' => $num1,
+            'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
+        ]);
+    }
+
+    private function updateButtonStatesByCounter(): void
+    {
+        // Ambil counter terbaru dari object jika tersedia
+        $notaCount = 0;
+        $suratCount = 0;
+        if ($this->object) {
+            if (method_exists($this->object, 'getPrintCounterArray')) {
+                $c = $this->object->getPrintCounterArray();
+                $notaCount = (int)($c['nota'] ?? 0);
+                $suratCount = (int)($c['surat_jalan'] ?? 0);
+            } else {
+                // fallback dari inputs.print_remarks string "x.y"
+                $display = $this->object->getDisplayFormat();
+                if (is_string($display) && strpos($display, '.') !== false) {
+                    [$n, $s] = explode('.', $display);
+                    $notaCount = (int)$n;
+                    $suratCount = (int)$s;
+                }
+            }
+        } else if (!empty($this->inputs['print_remarks']) && is_string($this->inputs['print_remarks'])) {
+            $display = $this->inputs['print_remarks'];
+            if (strpos($display, '.') !== false) {
+                [$n, $s] = explode('.', $display);
+                $notaCount = (int)$n;
+                $suratCount = (int)$s;
+            }
+        }
+
+        $this->canPrintNotaButton = ($notaCount === 0);
+        $this->canPrintSuratJalanButton = ($suratCount === 0);
+        $this->canSaveButtonEnabled = ($notaCount === 0 && $suratCount === 0);
+
+        // Debug log
+        \Log::info('Button States Debug:', [
+            'notaCount' => $notaCount,
+            'suratCount' => $suratCount,
+            'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
+            'canPrintNotaButton' => $this->canPrintNotaButton,
+            'canPrintSuratJalanButton' => $this->canPrintSuratJalanButton,
+            'canSaveButtonEnabled' => $this->canSaveButtonEnabled,
+        ]);
+
+        // Jika SEC_LEVEL mengizinkan update setelah print, semua tombol diaktifkan
+        if ($this->canUpdateAfterPrint) {
+            $this->canPrintNotaButton = true;
+            $this->canPrintSuratJalanButton = true;
+            $this->canSaveButtonEnabled = true;
+        }
     }
 
     public function onReset()
@@ -335,6 +419,13 @@ class Detail extends BaseComponent
         }
 
         $this->validate();
+
+        // Guard: batasi update jika sudah pernah dicetak dan user tidak berizin
+        $this->updateAfterPrintPermission();
+        if ($this->actionValue !== 'Create' && $this->hasBeenPrinted && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Anda tidak memiliki izin untuk mengubah data setelah dicetak.');
+            return;
+        }
 
         if ($this->actionValue === 'Create') {
             $this->inputs['status_code'] = Status::OPEN;
@@ -373,6 +464,11 @@ class Detail extends BaseComponent
         // Prepare data
         $headerData = $this->prepareHeaderData();
         $detailData = $this->prepareDetailData();
+        $totals = $this->calcTotalFromDetails($detailData);
+        $headerData['amt'] = $totals['amt'];
+        $headerData['amt_beforetax'] = $totals['amt_beforetax'];
+        $headerData['amt_tax'] = $totals['amt_tax'];
+        $headerData['amt_adjustdtl'] = $totals['amt_adjustdtl'];
          // dd($headerData, $detailData);
         if ($this->actionValue === 'Create') {
             $result = $this->orderService->saveOrder($headerData, $detailData);
@@ -595,12 +691,44 @@ class Detail extends BaseComponent
         return true;
     }
 
+    /**
+     * Get maximum SO item limit from ConfigConst
+     */
+    private function getMaxSoItemLimit()
+    {
+        try {
+            $configConst = ConfigConst::where('const_group', 'APP_ENV')
+                ->where('str1', 'MAX_SO_ITEM')
+                ->first();
+
+            if ($configConst && $configConst->num1) {
+                return (int) $configConst->num1;
+            }
+
+            // Default limit jika tidak ada konfigurasi
+            return 10;
+        } catch (Exception $e) {
+            Log::error('Error getting MAX_SO_ITEM from ConfigConst: ' . $e->getMessage());
+            return 10; // Default limit
+        }
+    }
+
     public function addItem()
     {
         if (empty($this->inputs['sales_type'])) {
             $this->dispatch('error', 'Silakan pilih nota MOTOR atau MOBIL terlebih dahulu.');
             return;
         }
+
+        // Cek batasan jumlah item
+        $maxItems = $this->getMaxSoItemLimit();
+        $currentItemCount = count($this->input_details);
+
+        if ($currentItemCount >= $maxItems) {
+            $this->dispatch('error', "Maksimal item yang dapat ditambahkan adalah {$maxItems} item. Saat ini sudah ada {$currentItemCount} item.");
+            return;
+        }
+
         try {
             $this->input_details[] = populateArrayFromModel(new OrderDtl());
             $key = count($this->input_details) - 1;
@@ -664,10 +792,10 @@ class Detail extends BaseComponent
             $price = $this->input_details[$key]['price'];
             $discount = $this->input_details[$key]['disc_pct'] / 100;
             $taxValue = $this->inputs['tax_pct'] / 100;
-            $priceAfterDisc = round($price * (1 - $discount));
-            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue));
+            $priceAfterDisc = $price * (1 - $discount);
+            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue),0);
             // dd($this->inputs['tax_code'], $price, $priceAfterDisc, $priceBeforeTax, $taxValue);
-            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount);
+            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount,0);
 
             $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
@@ -678,22 +806,18 @@ class Detail extends BaseComponent
                 // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
                 $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
                 // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
-                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue);
-                // Total Nota dihiitung dari harga setelah disc * qty
-                // selisih yang timbul antara Total Nota dan DPP + PPN diabaikan
-                // priceAdjustment
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
+                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue,0);
             } else if ($this->inputs['tax_code'] === 'E') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue,0);
-                $this->input_details[$key]['amt'] = $this->input_details[$key]['amt_beforetax'] + $this->input_details[$key]['amt_tax'];
             } else if ($this->inputs['tax_code'] === 'N') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
                 $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
                 $this->input_details[$key]['amt_tax'] = 0;
-                $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             }
+            // amt selalu dihitung tanpa dipengaruhi tax_code: (price after discount) * qty
+            $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
             $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
             $this->input_details[$key]['amt_adjustdtl'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'];
 
@@ -701,20 +825,19 @@ class Detail extends BaseComponent
             $this->total_discount = 0;
             $this->total_dpp = 0;
             $this->total_tax = 0;
-            $this->inputs['amt'] = 0;
-            $this->inputs['amt_beforetax'] = 0;
-            $this->inputs['amt_tax'] = 0;
-            $this->inputs['amt_adjustdtl'] = 0;
             // dd($this->input_details, $this->input_details[$key]['disc_amt']);
             foreach ($this->input_details as $detail) {
-                $this->total_amount += $detail['amt'] ?? 0;
+                // Total header dipengaruhi tax_code
+                if ($this->inputs['tax_code'] === 'E') {
+                    // Exclude PPN pada harga item; total = DPP + PPN
+                    $this->total_amount += ($detail['amt_beforetax'] + $detail['amt_tax']);
+                } else {
+                    // Include atau Non PPN: total = amt (sudah termasuk/ tanpa PPN sesuai kebijakan)
+                    $this->total_amount += $detail['amt'];
+                }
                 $this->total_discount += $detail['disc_amt'] ?? 0;
-                $this->total_dpp += $detail['amt_beforetax'] ?? 0;
-                $this->total_tax += $detail['amt_tax'] ?? 0;
-                $this->inputs['amt'] += $detail['amt'] ?? 0;
-                $this->inputs['amt_beforetax'] += $detail['disc_amt'] ?? 0;
-                $this->inputs['amt_tax'] += $detail['amt_tax'] ?? 0;
-                $this->inputs['amt_adjustdtl'] += $detail['amt_adjustdtl'] ?? 0;
+                $this->total_dpp += $detail['amt_beforetax'];
+                $this->total_tax += $detail['amt_tax'];
             }
             // Format as Rupiah
             $this->total_amount = rupiah($this->total_amount);
@@ -758,6 +881,28 @@ class Detail extends BaseComponent
         }
     }
 
+    private function calcTotalFromDetails($detailData)
+    {
+        $amt = 0;
+        $amtBeforeTax = 0;
+        $amtTax = 0;
+        $amtAdjustDtl = 0;
+
+        foreach ($detailData as $detail) {
+            $amt += $detail['amt'] ?? 0;
+            $amtBeforeTax += $detail['amt_beforetax'] ?? 0;
+            $amtTax += $detail['amt_tax'] ?? 0;
+            $amtAdjustDtl += $detail['amt_adjustdtl'] ?? 0;
+        }
+
+        return [
+            'amt' => $amt,
+            'amt_beforetax' => $amtBeforeTax,
+            'amt_tax' => $amtTax,
+            'amt_adjustdtl' => $amtAdjustDtl
+        ];
+    }
+
     private function redirectToEdit()
     {
         $objectId = $this->actionValue === 'Create' ? $this->object->id : $this->object->id;
@@ -788,6 +933,12 @@ class Detail extends BaseComponent
     public function delete()
     {
         try {
+            // Guard: batasi delete jika sudah pernah dicetak dan user tidak berizin
+            $this->updateAfterPrintPermission();
+            if ($this->hasBeenPrinted && !$this->canUpdateAfterPrint) {
+                $this->dispatch('error', 'Anda tidak memiliki izin untuk menghapus data setelah dicetak.');
+                return;
+            }
             // Jika mode Create, object belum disimpan ke database
             if ($this->actionValue === 'Create') {
                 $this->dispatch('warning', 'Tidak ada data untuk dihapus pada mode Create');
@@ -805,7 +956,7 @@ class Detail extends BaseComponent
             $this->object->status_code = Status::NONACTIVE;
             $this->object->save();
             $this->object->delete();
-            $this->dispatch('success', __('generic.string.disable'));
+            $this->dispatch('success', __('generic.string.delete'));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
         }
@@ -815,6 +966,12 @@ class Detail extends BaseComponent
     public function deleteTransaction()
     {
         try {
+            // Guard: batasi delete jika sudah pernah dicetak dan user tidak berizin
+            $this->updateAfterPrintPermission();
+            if ($this->hasBeenPrinted && !$this->canUpdateAfterPrint) {
+                $this->dispatch('error', 'Anda tidak memiliki izin untuk menghapus data setelah dicetak.');
+                return;
+            }
             if (!$this->object || is_null($this->object->id) || !OrderHdr::where('id', $this->object->id)->exists()) {
                 throw new Exception(__('Data header tidak ditemukan'));
             }
@@ -1057,6 +1214,67 @@ class Detail extends BaseComponent
             $this->object->refresh();
             $this->inputs['print_remarks'] = $this->object->getDisplayFormat();
             $this->dispatch('printCounterUpdated', $this->inputs['print_remarks']);
+            // Update izin setelah nilai revision berubah
+            $this->updateAfterPrintPermission();
+            $this->updateButtonStatesByCounter();
+        }
+    }
+
+    public function goToPrintNota()
+    {
+        $this->updateAfterPrintPermission();
+        $this->updateButtonStatesByCounter();
+        if (!$this->canPrintNotaButton && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Cetak Nota Jual dinonaktifkan sesuai aturan counter.');
+            return;
+        }
+        // Cek counter khusus Nota: cetak ulang membutuhkan izin
+        $notaCount = 0;
+        if ($this->object && method_exists($this->object, 'getPrintCounterArray')) {
+            $c = $this->object->getPrintCounterArray();
+            $notaCount = (int)($c['nota'] ?? 0);
+        }
+        if ($notaCount > 0 && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Anda tidak memiliki izin untuk mencetak ulang.');
+            return;
+        }
+        if ($this->object && $this->object->id) {
+            return redirect()->route(
+                'TrdTire1.Transaction.SalesOrder.PrintPdf',
+                [
+                    'action'   => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id),
+                ]
+            );
+        }
+    }
+
+    public function goToPrintSuratJalan()
+    {
+        $this->updateAfterPrintPermission();
+        $this->updateButtonStatesByCounter();
+        if (!$this->canPrintSuratJalanButton && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Cetak Surat Jalan dinonaktifkan sesuai aturan counter.');
+            return;
+        }
+        // Cek counter khusus Surat Jalan: cetak ulang membutuhkan izin
+        $suratCount = 0;
+        if ($this->object && method_exists($this->object, 'getPrintCounterArray')) {
+            $c = $this->object->getPrintCounterArray();
+            $suratCount = (int)($c['surat_jalan'] ?? 0);
+        }
+        if ($suratCount > 0 && !$this->canUpdateAfterPrint) {
+            $this->dispatch('error', 'Anda tidak memiliki izin untuk mencetak ulang surat jalan.');
+            return;
+        }
+        if ($this->object && $this->object->id) {
+            return redirect()->route(
+                'TrdTire1.Transaction.SalesDelivery.PrintPdf',
+                [
+                    'action'   => encryptWithSessionKey('Edit'),
+                    'objectId' => encryptWithSessionKey($this->object->id),
+                ]
+            );
         }
     }
 

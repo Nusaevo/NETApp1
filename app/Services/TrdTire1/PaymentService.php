@@ -47,10 +47,10 @@ class PaymentService
 
             $this->saveOverPayment($headerData, $overAmt);
             // dd($headerData, $overAmt);
-   
+
             return $paymentHdr;
         } catch (Exception $e) {
-    
+
             throw new Exception('Error adding payment: ' . $e->getMessage());
         }
     }
@@ -289,7 +289,8 @@ class PaymentService
             ];
         }
         // dd($overPaymentData);
-        if (!isset($overPaymentData['id]']) || empty($overPaymentData['id]'])) {
+        // Perbaiki pengecekan kunci 'id' (sebelumnya 'id]' menyebabkan selalu dianggap kosong)
+        if (!isset($overPaymentData['id']) || empty($overPaymentData['id'])) {
             $overPaymentData['tr_seq'] = PaymentAdv::getNextTrSeq($headerData['id']);
             $paymentAdv = new PaymentAdv();
             $paymentAdv->fill($overPaymentData);

@@ -267,7 +267,7 @@ class Detail extends BaseComponent
             }
             $this->object->save();
             $this->object->delete();
-            $messageKey = 'generic.string.disable';
+            $messageKey = 'generic.string.delete';
             $this->dispatch('success', __($messageKey));
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
