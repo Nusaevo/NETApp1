@@ -1,4 +1,4 @@
-<style>
+﻿<style>
     @media print {
         thead {
             display: table-header-group !important;
@@ -46,21 +46,21 @@
 </style>
 
 <div>
-                <div class="row d-flex align-items-baseline">
-                    <div class="col-xl-9">
+    <div class="row d-flex align-items-baseline">
+        <div class="col-xl-9">
             <x-ui-button clickEvent="back" type="Back" button-name="Back" />
-                    </div>
-                    <div class="col-xl-3 float-end">
-            <a class="btn btn-light text-capitalize border-0 me-2" data-mdb-ripple-color="dark" onclick="printInvoice()">
-                            <i class="fas fa-print text-primary"></i> Print
-                        </a>
-                        <button wire:click="downloadExcel" class="btn btn-success text-capitalize border-0"
-                            data-mdb-ripple-color="dark">
-                            <i class="fas fa-file-excel text-white"></i> Download Excel
-                        </button>
-                    </div>
-                    <hr>
-                </div>
+        </div>
+        <div class="col-xl-3 float-end d-flex gap-2">
+            <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark" onclick="printInvoice()">
+                <i class="fas fa-print text-primary"></i> Print
+            </a>
+            <button type="button" wire:click="downloadExcel" class="btn btn-success text-capitalize border-0"
+                data-mdb-ripple-color="dark" style="display: inline-block !important;">
+                <i class="fas fa-file-excel text-white"></i> Download Excel
+            </button>
+        </div>
+        <hr>
+    </div>
 
     <!-- Card hanya tampil di layar, tidak saat print -->
     <div class="card d-print-none"
@@ -74,144 +74,143 @@
                 Tanggal Proses: {{ \Carbon\Carbon::parse($printDate)->format('d-M-Y') }}
             </p>
 
-                        @if ($orders->isEmpty())
+            @if ($orders->isEmpty())
                 <p style="text-align: center; color: #dc3545; font-size: 16px;">Tidak ada data untuk ditampilkan.</p>
-                        @else
+            @else
                 <!-- Items Table -->
-                <table
-                    style="width: 100%; margin-bottom: 20px; line-height: 1.2;">
-                                <thead>
+                <table style="width: 100%; margin-bottom: 20px; line-height: 1.2;">
+                    <thead>
                         <tr style="background-color: #f8f9fa;">
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                No. Nota</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                No. Faktur</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Tanggal</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Nama Pelanggan</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Nama Barang</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Qty</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Harga Pcs</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Amt</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                PPN</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Amt + PPN</th>
-                            <th
-                                style=" center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
-                                Amt Nota</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($orders as $order)
-                                        @php
-                                            // subtotal per order
-                                            $sumAmt = 0;
-                                            $sumPpn = 0;
-                                        @endphp
-                                        @foreach ($order->OrderDtl as $index => $detail)
-                                            @php
-                                                // Hitung amount baris (fallback ke qty*price*(1-disc)) bila amt null
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                No. Nota
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                No. Faktur
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Tanggal
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Nama Pelanggan
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Nama Barang
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Qty
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Harga Pcs
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Amt
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                PPN
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Amt + PPN
+                            </th>
+                            <th style="text-align: center; padding: 8px 5px; font-weight: bold; background-color: #e9ecef;">
+                                Amt Nota
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($orders as $order)
+                            @php
+                                // subtotal per order
+                                $sumAmt = 0;
+                                $sumPpn = 0;
+                            @endphp
+                            @foreach ($order->OrderDtl as $index => $detail)
+                                @php
+                                    // Hitung amount baris (fallback ke qty*price*(1-disc)) bila amt null
                                     $discPct = (float) ($detail->disc_pct ?? 0);
-                                    $lineAmt =
-                                        isset($detail->amt) && $detail->amt > 0
-                                            ? (float) $detail->amt
-                                            : (float) $detail->qty * (float) $detail->price * (1 - $discPct / 100);
+                                    $lineAmt = isset($detail->amt) && $detail->amt > 0
+                                        ? (float) $detail->amt
+                                        : (float) $detail->qty * (float) $detail->price * (1 - $discPct / 100);
 
-                                                // Ambil DPP dan PPN langsung dari OrderDtl
-                                                $dpp = (float) ($detail->amt_beforetax ?? 0);
-                                                $ppn = (float) ($detail->amt_tax ?? 0);
+                                    // Ambil DPP dan PPN langsung dari OrderDtl
+                                    $dpp = (float) ($detail->amt_beforetax ?? 0);
+                                    $ppn = (float) ($detail->amt_tax ?? 0);
 
-                                                $sumAmt += $lineAmt;
-                                                $sumPpn += $ppn;
-                                            @endphp
+                                    $sumAmt += $lineAmt;
+                                    $sumPpn += $ppn;
+                                @endphp
                                 <tr style="line-height: 1.2;">
-                                                @if ($index === 0)
-                                                    <!-- Hanya tampilkan pada seq 1 -->
-                                        <td style=" left; padding: 5px; vertical-align: top;"
+                                    @if ($index === 0)
+                                        <!-- Hanya tampilkan pada seq 1 -->
+                                        <td style="text-align: left; padding: 5px; vertical-align: top;"
                                             rowspan="{{ count($order->OrderDtl) }}">
                                             {{ $order->tr_code }}
                                         </td>
-                                        <td style=" left; padding: 5px; vertical-align: top;"
+                                        <td style="text-align: left; padding: 5px; vertical-align: top;"
                                             rowspan="{{ count($order->OrderDtl) }}">
                                             {{ $order->tax_doc_num }}
-                                                    </td>
-                                        <td style=" left; padding: 5px; vertical-align: top;"
+                                        </td>
+                                        <td style="text-align: left; padding: 5px; vertical-align: top;"
                                             rowspan="{{ count($order->OrderDtl) }}">
-                                                        {{ \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y') }}
-                                                    </td>
-                                        <td style=" left; padding: 5px; vertical-align: top;"
+                                            {{ \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y') }}
+                                        </td>
+                                        <td style="text-align: left; padding: 5px; vertical-align: top;"
                                             rowspan="{{ count($order->OrderDtl) }}">
                                             {{ $order->Partner?->name ?? 'N/A' }}
                                         </td>
-                                                @endif
-                                    <td style=" left; padding: 5px;">
-                                        {{ $detail->matl_descr }}</td>
-                                    <td style=" right; padding: 5px;">
-                                        {{ $detail->qty }}</td>
-                                    <td style=" right; padding: 5px;">
-                                        {{ number_format($detail->price_beforetax, 0, ',', '.') }}</td>
-                                    <td style=" right; padding: 5px;">
-                                        {{ number_format($detail->amt, 0, ',', '.') }}</td>
-                                    <td style=" right; padding: 5px;">
-                                        {{ number_format($ppn, 0, ',', '.') }}</td>
-                                    <td style=" right; padding: 5px;">
-                                        {{ number_format($dpp + $ppn, 0, ',', '.') }}</td>
-                                    <td style=" right; padding: 5px;">
-                                        {{ number_format($lineAmt, 0, ',', '.') }}</td>
-                                    {{-- <td style=" right; padding: 5px;">
-                                        {{ number_format($ppn, 0, ',', '.') }}</td> --}}
-                                            </tr>
-                                        @endforeach
-                                        @if (count($order->OrderDtl) > 1)
-                                            <!-- Tampilkan subtotal jika lebih dari satu item -->
-                                <tr>
-                                    <td colspan="7"
-                                        style=" right; padding: 5px; font-weight: bold;">
+                                    @endif
+                                    <td style="text-align: left; padding: 5px;">
+                                        {{ $detail->matl_descr }}
                                     </td>
-                                    <td
-                                        style=" right; padding: 5px; font-weight: bold; border-bottom: 1px solid #000;">
+                                    <td style="text-align: right; padding: 5px;">
+                                        {{ $detail->qty }}
+                                    </td>
+                                    <td style="text-align: right; padding: 5px;">
+                                        {{ number_format($detail->price_beforetax, 0, ',', '.') }}
+                                    </td>
+                                    <td style="text-align: right; padding: 5px;">
+                                        {{ number_format($detail->amt, 0, ',', '.') }}
+                                    </td>
+                                    <td style="text-align: right; padding: 5px;">
+                                        {{ number_format($ppn, 0, ',', '.') }}
+                                    </td>
+                                    <td style="text-align: right; padding: 5px;">
+                                        {{ number_format($dpp + $ppn, 0, ',', '.') }}
+                                    </td>
+                                    <td style="text-align: right; padding: 5px;">
+                                        {{ number_format($lineAmt, 0, ',', '.') }}
+                                    </td>
+                                    {{-- <td style="text-align: right; padding: 5px;">
+                                        {{ number_format($ppn, 0, ',', '.') }}</td> --}}
+                                </tr>
+                            @endforeach
+                            @if (count($order->OrderDtl) > 1)
+                                <!-- Tampilkan subtotal jika lebih dari satu item -->
+                                <tr>
+                                    <td colspan="7" style="text-align: right; padding: 5px; font-weight: bold;">
+                                    </td>
+                                    <td style="text-align: right; padding: 5px; font-weight: bold; border-bottom: 1px solid #000;">
                                         {{ number_format($sumAmt, 0, ',', '.') }}
                                     </td>
-                                    <td
-                                        style=" right; padding: 5px; font-weight: bold; border-bottom: 1px solid #000;">
+                                    <td style="text-align: right; padding: 5px; font-weight: bold; border-bottom: 1px solid #000;">
                                         {{ number_format($sumPpn, 0, ',', '.') }}
                                     </td>
-                                    <td
-                                        style=" right; padding: 5px; font-weight: bold; border-bottom: 3px solid #000;">
+                                    <td style="text-align: right; padding: 5px; font-weight: bold; border-bottom: 3px solid #000;">
                                         {{ number_format($sumAmt + $sumPpn, 0, ',', '.') }}
                                     </td>
-                                    <td
-                                        style=" right; padding: 5px; font-weight: bold;">
+                                    <td style="text-align: right; padding: 5px; font-weight: bold;">
                                         {{ number_format($sumAmt, 0, ',', '.') }}
                                     </td>
-                                    {{-- <td
-                                        style=" right; padding: 5px; font-weight: bold;">
+                                    {{-- <td style="text-align: right; padding: 5px; font-weight: bold;">
                                         {{ number_format($sumPpn, 0, ',', '.') }}
                                     </td> --}}
-                                            </tr>
-                                        @endif
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @endif
-                    </div>
-                </div>
+                                </tr>
+                            @endif
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
 
     <!-- Area print tetap tampil saat print -->
     <div id="print" class="d-none d-print-block p-20">
