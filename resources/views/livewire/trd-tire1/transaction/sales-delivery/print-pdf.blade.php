@@ -48,11 +48,11 @@
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #000; line-height: 1.1;">
                     <thead>
                         <tr>
-                            <th style="border: 1px solid #000; text-align: center; width: 5%;">NO</th>
-                            <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 15%;">KODE BARANG</th>
-                            <th style="border: 1px solid #000; text-align: center; width: 25%;">KETERANGAN</th>
-                            <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 5%;">QTY</th>
-                            <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: auto;">NAMA BARANG</th>
+                            <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 12px;">NO</th>
+                            <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 15%; font-size: 12px;">KODE BARANG</th>
+                            <th style="border: 1px solid #000; text-align: center; width: 25%; font-size: 12px;">KETERANGAN</th>
+                            <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 5%; font-size: 12px;">QTY</th>
+                            <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: auto; font-size: 12px;">NAMA BARANG</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,18 +65,18 @@
                                 $total_qty += $OrderDtl->qty;
                             @endphp
                             <tr style="line-height: 1.1;">
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px;">
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px; font-size: 12px;">
                                     {{ $counter++ }}
                                 </td>
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 5px;">
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 5px; font-size: 12px;">
                                     {{ $OrderDtl->matl_code }}
                                 </td>
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px;">
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px; font-size: 12px;">
                                 </td>
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding: 2px 5px;">
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding: 2px 5px; font-size: 12px;">
                                     {{ ceil($OrderDtl->qty) }}
                                 </td>
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 3px;">
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 3px; font-size: 12px;">
                                     {{ $OrderDtl->matl_descr }}
                                 </td>
                             </tr>
@@ -85,11 +85,11 @@
                 </table>
             <table style="width: 100%; margin-top: -11px;">
                 <tr style="line-height: 1.1;">
-                    <td style="text-align: right; padding: 2px 3px; width: 5%;"></td>
-                    <td style="text-align: right; padding: 2px 3px; width: 15%;">TOTAL :</td>
-                    <td style="border-top: 1px solid #000; border-left: 1px solid #000; border-bottom: 1px solid #000; text-align: right; padding: 2px 3px; width: 25%;"></td>
-                    <td style="border: 1px solid #000; text-align: right; padding: 2px 5px; width: 5%;">{{ $total_qty }}</td>
-                    <td style="text-align: left; padding: 2px 3px; width: auto;"></td>
+                    <td style="text-align: right; padding: 2px 3px; width: 5%; font-size: 12px;"></td>
+                    <td style="text-align: right; padding: 2px 3px; width: 15%; font-size: 12px;">TOTAL :</td>
+                    <td style="border-top: 1px solid #000; border-left: 1px solid #000; border-bottom: 1px solid #000; text-align: right; padding: 2px 3px; width: 25%; font-size: 12px;"></td>
+                    <td style="border: 1px solid #000; text-align: right; padding: 2px 5px; width: 5%; font-size: 12px;">{{ $total_qty }}</td>
+                    <td style="text-align: left; padding: 2px 3px; width: auto; font-size: 12px;"></td>
                 </tr>
             </table>
 
@@ -161,22 +161,22 @@
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #000; line-height: 1.1;">
                         <thead>
                             <tr>
-                                <th style="border: 1px solid #000; text-align: center; width: 5%;">NO</th>
-                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 15%;">KODE BARANG</th>
-                                <th style="border: 1px solid #000; text-align: center; width: 25%;">KETERANGAN</th>
-                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 5%;">QTY</th>
-                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: auto;">NAMA BARANG</th>
+                                <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 12px;">NO</th>
+                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 15%; font-size: 12px;">KODE BARANG</th>
+                                <th style="border: 1px solid #000; text-align: center; width: 25%; font-size: 12px;">KETERANGAN</th>
+                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 5%; font-size: 12px;">QTY</th>
+                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: auto; font-size: 12px;">NAMA BARANG</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($chunk as $OrderDtl)
                                 @php $page_total_qty += $OrderDtl->qty; @endphp
                                 <tr style="line-height: 1.1;">
-                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px;">{{ $counter++ }}</td>
-                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 5px;">{{ $OrderDtl->matl_code }}</td>
-                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px;"></td>
-                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding: 2px 5px;">{{ ceil($OrderDtl->qty) }}</td>
-                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 3px;">{{ $OrderDtl->matl_descr }}</td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px; font-size: 12px;">{{ $counter++ }}</td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 5px; font-size: 12px;">{{ $OrderDtl->matl_code }}</td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: center; padding: 2px 3px; font-size: 12px;"></td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding: 2px 5px; font-size: 12px;">{{ ceil($OrderDtl->qty) }}</td>
+                                    <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 2px 3px; font-size: 12px;">{{ $OrderDtl->matl_descr }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -185,11 +185,11 @@
                     <!-- Total -->
                     <table style="width: 100%; margin-top: -11px;">
                         <tr style="line-height: 1.1;">
-                            <td style="text-align: right; padding: 2px 3px; width: 5%;"></td>
-                            <td style="text-align: right; padding: 2px 3px; width: 15%;">TOTAL :</td>
-                            <td style="border-top: 1px solid #000; border-left: 1px solid #000; border-bottom: 1px solid #000; text-align: right; padding: 2px 3px; width: 25%;"></td>
-                            <td style="border: 1px solid #000; text-align: right; padding: 2px 5px; width: 5%;">{{ $total_qty }}</td>
-                            <td style="text-align: left; padding: 2px 3px; width: auto;"></td>
+                            <td style="text-align: right; padding: 2px 3px; width: 5%; font-size: 12px;"></td>
+                            <td style="text-align: right; padding: 2px 3px; width: 15%; font-size: 12px;">TOTAL :</td>
+                            <td style="border-top: 1px solid #000; border-left: 1px solid #000; border-bottom: 1px solid #000; text-align: right; padding: 2px 3px; width: 25%; font-size: 12px;"></td>
+                            <td style="border: 1px solid #000; text-align: right; padding: 2px 5px; width: 5%; font-size: 12px;">{{ $total_qty }}</td>
+                            <td style="text-align: left; padding: 2px 3px; width: auto; font-size: 12px;"></td>
                         </tr>
                     </table>
 
