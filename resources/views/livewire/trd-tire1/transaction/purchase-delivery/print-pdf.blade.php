@@ -382,5 +382,15 @@
         function printInvoice() {
             window.print();
         }
+
+        // Handle refresh page setelah download Excel
+        document.addEventListener('livewire:initialized', function() {
+            Livewire.on('refresh-page', function() {
+                // Refresh halaman setelah download Excel selesai
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            });
+        });
     </script>
 </div>

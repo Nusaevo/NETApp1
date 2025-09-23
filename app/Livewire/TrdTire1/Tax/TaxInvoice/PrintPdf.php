@@ -160,6 +160,8 @@ class PrintPdf extends BaseComponent
 
             $filename = 'Faktur_Pajak_Report_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
 
+            $this->dispatch('refresh-page');
+
             return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
         } catch (\Exception $e) {
             $this->dispatch('error', 'Error generating Excel: ' . $e->getMessage());
