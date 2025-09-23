@@ -59,7 +59,7 @@
 
                 <!-- Instruksi -->
                 <div style="margin-bottom: 15px;">
-                    <span style="text-decoration: underline; font-weight: bold; font-size: 16px;">
+                    <span style="text-decoration: underline; font-size: 16px;">
                         Mohon Periksa Nota-nota tersebut di bawah ini
                     </span>
                 </div>
@@ -84,12 +84,17 @@
                 </table>
 
                 <!-- Total -->
-                <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-                    <span style="font-weight: bold;">Jumlah:</span>
-                    <span style="font-weight: bold; text-decoration: underline;">
-                        Rp. {{ number_format($grandTotal, 2, ',', '.') }}
-                    </span>
-                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                    <tr>
+                        <td style="padding: 2px 0; width: 30px;"></td>
+                        <td style="padding: 2px 5px; width: auto;"></td>
+                        <td style="padding: 2px 35px; width: 150px;">Jumlah:</td>
+                        <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
+                        <td style="padding: 2px 5px; text-align: right; width: 120px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                            {{ number_format($grandTotal, 2, ',', '.') }}
+                        </td>
+                    </tr>
+                </table>
 
                 <!-- Tanda tangan -->
                 <div style="margin-top: 30px;">
@@ -107,8 +112,8 @@
 
     <style>
         @page {
-            size: A6 portrait;
-            margin: 10mm;
+            size: 105mm auto;
+            margin: 2mm;
         }
 
         body {
