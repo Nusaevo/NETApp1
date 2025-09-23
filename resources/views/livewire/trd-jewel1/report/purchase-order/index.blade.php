@@ -58,13 +58,15 @@
                 vertical-align: middle !important;
                 word-wrap: break-word !important;
                 height: auto !important;
-                min-height: 130px !important;
+                min-height: 80px !important;
             }
 
             .print-table th {
                 background-color: #f8f9fa !important;
                 font-weight: bold !important;
                 font-size: 11px !important;
+                height: 30px !important;
+                min-height: unset !important;
             }
 
             .print-table td {
@@ -73,14 +75,14 @@
 
             .print-table .col-no { width: 4% !important; }
             .print-table .col-code { width: 10% !important; }
-            .print-table .col-foto { width: 12% !important; }
-            .print-table .col-descr { width: 30% !important; }
+            .print-table .col-foto { width: 15% !important; }
+            .print-table .col-descr { width: 28% !important; }
             .print-table .col-modal { width: 14% !important; }
-            .print-table .col-jual { width: 30% !important; }
+            .print-table .col-jual { width: 29% !important; }
 
             .print-table img {
-                max-width: 120px !important;
-                max-height: 120px !important;
+                width: 110px !important;
+                height: 110px !important;
                 object-fit: contain !important;
                 display: block !important;
                 margin: 0 auto !important;
@@ -88,7 +90,7 @@
 
             .print-table .col-foto {
                 padding: 2px !important;
-                height: 135px !important;
+                height: 110px !important;
             }
 
             .print-header {
@@ -105,8 +107,18 @@
             }
 
             .print-table tr {
-                height: 140px !important;
+                height: 110px !important;
                 page-break-inside: avoid !important;
+            }
+
+            .print-table tr.header-row {
+                height: 25px !important;
+            }
+
+            .print-table tr.header-row td {
+                min-height: 25px !important;
+                height: 25px !important;
+                font-size: 11px !important;
             }
         }
 
@@ -131,14 +143,15 @@
                 vertical-align: middle;
                 word-wrap: break-word;
                 height: auto;
-                min-height: 130px;
+                min-height: 80px;
             }
 
             .print-table th {
                 background-color: #f8f9fa;
                 font-weight: bold;
                 font-size: 14px;
-                height: auto;
+                height: 35px;
+                min-height: unset;
             }
 
             .print-table td {
@@ -147,21 +160,31 @@
 
             .print-table .col-no { width: 4%; }
             .print-table .col-code { width: 10%; }
-            .print-table .col-foto { width: 12%; }
-            .print-table .col-descr { width: 30%; }
+            .print-table .col-foto { width: 15%; }
+            .print-table .col-descr { width: 28%; }
             .print-table .col-modal { width: 14%; }
-            .print-table .col-jual { width: 30%; }
+            .print-table .col-jual { width: 29%; }
 
             .print-table img {
-                max-width: 120px;
-                max-height: 120px;
+                width: 110px;
+                height: 110px;
                 object-fit: contain;
                 display: block;
                 margin: 0 auto;
             }
 
             .print-table tr {
-                height: 140px;
+                height: 110px;
+            }
+
+            .print-table tr.header-row {
+                height: 25px;
+            }
+
+            .print-table tr.header-row td {
+                min-height: 25px;
+                height: 25px;
+                font-size: 12px;
             }
         }
     </style>
@@ -190,13 +213,13 @@
 
             <table class="print-table">
                 <thead>
-                    <tr>
-                        <th class="col-no">No</th>
-                        <th class="col-code">Code</th>
-                        <th class="col-foto">Foto</th>
-                        <th class="col-descr">Descr</th>
-                        <th class="col-modal">Modal</th>
-                        <th class="col-jual">Jual</th>
+                    <tr class="header-row">
+                        <td class="col-no" style="font-weight: bold; height: 25px;">No</td>
+                        <td class="col-code" style="font-weight: bold; height: 25px;">Code</td>
+                        <td class="col-foto" style="font-weight: bold; height: 25px;">Foto</td>
+                        <td class="col-descr" style="font-weight: bold; height: 25px;">Descr</td>
+                        <td class="col-modal" style="font-weight: bold; height: 25px;">Modal</td>
+                        <td class="col-jual" style="font-weight: bold; height: 25px;">Jual</td>
                     </tr>
                 </thead>
                 <tbody>
@@ -213,7 +236,7 @@
                                     @php
                                         $imageUrl = config('app.storage_url') . "/TrdJewel1" . '/' . ltrim($item->file_url, '/');
                                     @endphp
-                                    <img src="{{ $imageUrl }}" alt="Material" style="width: 120px; height: 120px; object-fit: contain;">
+                                    <img src="{{ $imageUrl }}" alt="Material" style="width: 110px; height: 110px; object-fit: contain;">
                                 @endif
                             </td>
                             <td class="col-descr" style="text-align: left;">
