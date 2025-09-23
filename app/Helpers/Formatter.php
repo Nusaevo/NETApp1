@@ -246,6 +246,7 @@ if (!function_exists('sanitizeModelAttributes')) {
      * Sanitize model attributes before saving to DB.
      *
      * - Trim strings
+     * - Handle null values for numeric columns as 0
      * - If value is an array:
      *   - Use '' if column type is string
      *   - Use 0 if column type is numeric (int, decimal, float)
@@ -258,6 +259,24 @@ if (!function_exists('sanitizeModelAttributes')) {
     function sanitizeModelAttributes(&$attributes, $columnTypes = [], $nullableColumns = [])
     {
         foreach ($attributes as $key => $value) {
+            // Check if column is numeric type
+            $isNumericColumn = false;
+            if (isset($columnTypes[$key])) {
+                $columnType = strtolower($columnTypes[$key]);
+                $isNumericColumn = in_array($columnType, ['int', 'integer', 'bigint', 'smallint', 'tinyint', 'decimal', 'float', 'double', 'numeric']);
+            }
+
+            // Handle null values
+            if ($value === null) {
+                if ($isNumericColumn && !in_array($key, $nullableColumns)) {
+                    $attributes[$key] = 0; // Convert null to 0 for numeric columns
+                } else if (!in_array($key, $nullableColumns)) {
+                    $attributes[$key] = ''; // Convert null to empty string for non-nullable columns
+                }
+                // If column is nullable, keep it as null
+                continue;
+            }
+
             if (is_array($value)) {
                 // Handle arrays based on column type
                 if (in_array($key, $nullableColumns)) {
@@ -276,11 +295,14 @@ if (!function_exists('sanitizeModelAttributes')) {
                     $attributes[$key] = '';
                 }
             } elseif (is_string($value)) {
+                // Handle empty strings for numeric columns
+                if ($isNumericColumn && trim($value) === '') {
+                    $attributes[$key] = 0; // Convert empty string to 0 for numeric columns
+                }
                 // Handle JSON/JSONB fields with empty strings
-                if (isset($columnTypes[$key])) {
+                elseif (isset($columnTypes[$key])) {
                     $columnType = strtolower($columnTypes[$key]);
                     if (in_array($columnType, ['json', 'jsonb']) && trim($value) === '') {
-
                         $attributes[$key] = '{}'; // Convert empty string to empty JSON object for JSON fields
                     } else {
                         // Trim string values for non-JSON fields
