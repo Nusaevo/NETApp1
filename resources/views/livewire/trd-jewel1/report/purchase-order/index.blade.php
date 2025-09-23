@@ -93,25 +93,20 @@
 
             .print-header {
                 text-align: center;
-                margin-bottom: 10px;
+                margin-bottom: 15px;
                 font-weight: bold;
                 font-size: 16px;
             }
 
-            .items-per-page {
-                height: auto !important;
-                margin-bottom: 0 !important;
+            .print-header small {
+                font-size: 11px !important;
+                font-weight: normal !important;
+                color: #666 !important;
             }
 
             .print-table tr {
                 height: 95px !important;
                 page-break-inside: avoid !important;
-            }
-
-            .page-break {
-                page-break-before: always !important;
-                margin: 0 !important;
-                padding: 0 !important;
             }
         }
 
@@ -192,134 +187,67 @@
 
         <!-- Print Area -->
         <div id="print">
-            @php
-                // Handle different types of $results (Collection, array, etc.)
-                $resultsArray = is_array($results) ? $results : (method_exists($results, 'toArray') ? $results->toArray() : $results->all());
-                $chunks = array_chunk($resultsArray, 10); // 10 items per page
-            @endphp
+            <div class="print-header">
+                Laporan Penerimaan Baarang
+                <br>
+                <small style="font-size: 12px; font-weight: normal;">
+                    Tanggal Cetak: {{ date('d/m/Y H:i:s') }}
+                </small>
+            </div>
 
-            @foreach($chunks as $chunkIndex => $chunk)
-                @if($chunkIndex > 0)
-                    <div class="page-break"></div>
-                @endif
-
-                <div class="items-per-page">
-
-                    <table class="print-table">
-                        <thead>
-                            <tr>
-                                <th class="col-no">No</th>
-                                <th class="col-code">Code</th>
-                                <th class="col-foto">Foto</th>
-                                <th class="col-descr">Descr</th>
-                                <th class="col-modal">Modal</th>
-                                <th class="col-jual">Jual</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($chunk as $index => $res)
-                                @php
-                                    // Handle both object and array data types
-                                    $item = is_object($res) ? $res : (object) $res;
-                                    $globalIndex = ($chunkIndex * 10) + $index + 1;
-                                @endphp
-                                <tr>
-                                    <td class="col-no">{{ $globalIndex }}</td>
-                                    <td class="col-code">{{ $item->material_code }}</td>
-                                    <td class="col-foto">
-                                        @php
-                                            $imageUrl = $item->file_url
-                                                ? config('app.storage_url') . "/TrdJewel1" . '/' . ltrim($item->file_url, '/')
-                                                : 'https://via.placeholder.com/70';
-                                        @endphp
-                                        <img src="{{ $imageUrl }}" alt="Material" style="width: 70px; height: 70px; object-fit: contain;">
-                                    </td>
-                                    <td class="col-descr" style="text-align: left;">
-                                        @if(!empty($item->category2))
-                                            <strong>{{ $masterService->GetMatlCategory1String($item->category) }}
-                                            {{ $masterService->GetMatlCategory2String($item->category2) }}</strong>
-                                        @endif
-
-                                        @if(!empty($item->material_gold))
-                                            <br>{{ numberFormat($item->material_gold, 2) }} Gram
-                                        @endif
-
-                                        @if(!empty($item->material_carat))
-                                            <br>{{ $masterService->GetMatlJewelPurityString($item->material_carat) }}
-                                        @endif
-
-                                        @if(!empty($item->material_descr))
-                                            <br>{{ $item->material_descr }}
-                                        @endif
-                                    </td>
-                                    <td class="col-modal">{{ dollar($item->price) }}</td>
-                                    <td class="col-jual" style="text-align: left;">
-                                        @if(!empty($item->no_nota))
-                                            <strong>No Nota:</strong> {{ $item->no_nota }}<br>
-                                            <strong>Customer:</strong> {{ $item->partner_name }}<br>
-                                            <strong>Harga Jual:</strong> {{ rupiah($item->selling_price) }}<br>
-                                            <strong>Tanggal:</strong> {{ $item->tr_date }}
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endforeach
-        </div>
-
-        <!-- Screen View Table (Hidden when printing) -->
-        <div class="d-print-none">
-            <table class="print-table" style="margin-top: 20px;">
+            <table class="print-table">
                 <thead>
                     <tr>
-                        <th class="col-no" style="text-align: center;">No</th>
-                        <th class="col-code" style="text-align: center;">Code</th>
-                        <th class="col-foto" style="text-align: center;">Foto</th>
-                        <th class="col-descr" style="text-align: center;">Descr</th>
-                        <th class="col-modal" style="text-align: center;">Modal</th>
-                        <th class="col-jual" style="text-align: center;">Jual</th>
+                        <th class="col-no">No</th>
+                        <th class="col-code">Code</th>
+                        <th class="col-foto">Foto</th>
+                        <th class="col-descr">Descr</th>
+                        <th class="col-modal">Modal</th>
+                        <th class="col-jual">Jual</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($results as $res)
+                    @foreach($results as $index => $res)
+                        @php
+                            // Handle both object and array data types
+                            $item = is_object($res) ? $res : (object) $res;
+                        @endphp
                         <tr>
-                            <td class="col-no">{{ $loop->iteration }}</td>
-                            <td class="col-code">{{ $res->material_code }}</td>
+                            <td class="col-no">{{ $index + 1 }}</td>
+                            <td class="col-code">{{ $item->material_code }}</td>
                             <td class="col-foto">
-                                @php
-                                    $imageUrl = $res->file_url
-                                        ? config('app.storage_url') . "/TrdJewel1" . '/' . ltrim($res->file_url, '/')
-                                        : 'https://via.placeholder.com/60';
-                                @endphp
-                                <img src="{{ $imageUrl }}" alt="Material" style="width: 60px; height: 60px; object-fit: contain;">
+                                @if(!empty($item->file_url))
+                                    @php
+                                        $imageUrl = config('app.storage_url') . "/TrdJewel1" . '/' . ltrim($item->file_url, '/');
+                                    @endphp
+                                    <img src="{{ $imageUrl }}" alt="Material" style="width: 70px; height: 70px; object-fit: contain;">
+                                @endif
                             </td>
                             <td class="col-descr" style="text-align: left;">
-                                @if(!empty($res->category2))
-                                    <strong>{{ $masterService->GetMatlCategory1String($res->category) }}
-                                    {{ $masterService->GetMatlCategory2String($res->category2) }}</strong>
+                                @if(!empty($item->category2))
+                                    <strong>{{ $masterService->GetMatlCategory1String($item->category) }}
+                                    {{ $masterService->GetMatlCategory2String($item->category2) }}</strong>
                                 @endif
 
-                                @if(!empty($res->material_gold))
-                                    <br>{{ numberFormat($res->material_gold, 2) }} Gram
+                                @if(!empty($item->material_gold))
+                                    <br>{{ numberFormat($item->material_gold, 2) }} Gram
                                 @endif
 
-                                @if(!empty($res->material_carat))
-                                    <br>{{ $masterService->GetMatlJewelPurityString($res->material_carat) }}
+                                @if(!empty($item->material_carat))
+                                    <br>{{ $masterService->GetMatlJewelPurityString($item->material_carat) }}
                                 @endif
 
-                                @if(!empty($res->material_descr))
-                                    <br>{{ $res->material_descr }}
+                                @if(!empty($item->material_descr))
+                                    <br>{{ $item->material_descr }}
                                 @endif
                             </td>
-                            <td class="col-modal">{{ dollar($res->price) }}</td>
+                            <td class="col-modal">{{ dollar($item->price) }}</td>
                             <td class="col-jual" style="text-align: left;">
-                                @if(!empty($res->no_nota))
-                                    <strong>No Nota:</strong> {{ $res->no_nota }}<br>
-                                    <strong>Customer:</strong> {{ $res->partner_name }}<br>
-                                    <strong>Harga Jual:</strong> {{ rupiah($res->selling_price) }}<br>
-                                    <strong>Tanggal:</strong> {{ $res->tr_date }}
+                                @if(!empty($item->no_nota))
+                                    <strong>No Nota:</strong> {{ $item->no_nota }}<br>
+                                    <strong>Customer:</strong> {{ $item->partner_name }}<br>
+                                    <strong>Harga Jual:</strong> {{ rupiah($item->selling_price) }}<br>
+                                    <strong>Tanggal:</strong> {{ $item->tr_date }}
                                 @endif
                             </td>
                         </tr>
@@ -327,6 +255,9 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Screen View Table (Hidden when printing) -->
+
 
     </x-ui-page-card>
 </div>
