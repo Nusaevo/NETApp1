@@ -39,6 +39,7 @@
                             <strong>{{ $this->object->Partner->name }}</strong>
                         </p>
                         <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
                     </td>
                 </tr>
             </table>
@@ -150,6 +151,7 @@
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
                                 <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong></p>
                                 <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                                <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
                             </td>
                         </tr>
                     </table>
