@@ -53,12 +53,12 @@
             .print-table th,
             .print-table td {
                 border: 1px solid #000 !important;
-                padding: 6px 8px !important;
+                padding: 4px 6px !important;
                 text-align: center !important;
                 vertical-align: middle !important;
                 word-wrap: break-word !important;
                 height: auto !important;
-                min-height: 90px !important;
+                min-height: 130px !important;
             }
 
             .print-table th {
@@ -79,16 +79,16 @@
             .print-table .col-jual { width: 30% !important; }
 
             .print-table img {
-                max-width: 70px !important;
-                max-height: 70px !important;
+                max-width: 120px !important;
+                max-height: 120px !important;
                 object-fit: contain !important;
                 display: block !important;
                 margin: 0 auto !important;
             }
 
             .print-table .col-foto {
-                padding: 3px !important;
-                height: 90px !important;
+                padding: 2px !important;
+                height: 135px !important;
             }
 
             .print-header {
@@ -105,7 +105,7 @@
             }
 
             .print-table tr {
-                height: 95px !important;
+                height: 140px !important;
                 page-break-inside: avoid !important;
             }
         }
@@ -126,12 +126,12 @@
             .print-table th,
             .print-table td {
                 border: 1px solid #dee2e6;
-                padding: 8px 12px;
+                padding: 6px 10px;
                 text-align: center;
                 vertical-align: middle;
                 word-wrap: break-word;
                 height: auto;
-                min-height: 90px;
+                min-height: 130px;
             }
 
             .print-table th {
@@ -153,15 +153,15 @@
             .print-table .col-jual { width: 30%; }
 
             .print-table img {
-                max-width: 70px;
-                max-height: 70px;
+                max-width: 120px;
+                max-height: 120px;
                 object-fit: contain;
                 display: block;
                 margin: 0 auto;
             }
 
             .print-table tr {
-                height: 95px;
+                height: 140px;
             }
         }
     </style>
@@ -187,13 +187,6 @@
 
         <!-- Print Area -->
         <div id="print">
-            <div class="print-header">
-                Laporan Penerimaan Baarang
-                <br>
-                <small style="font-size: 12px; font-weight: normal;">
-                    Tanggal Cetak: {{ date('d/m/Y H:i:s') }}
-                </small>
-            </div>
 
             <table class="print-table">
                 <thead>
@@ -220,7 +213,7 @@
                                     @php
                                         $imageUrl = config('app.storage_url') . "/TrdJewel1" . '/' . ltrim($item->file_url, '/');
                                     @endphp
-                                    <img src="{{ $imageUrl }}" alt="Material" style="width: 70px; height: 70px; object-fit: contain;">
+                                    <img src="{{ $imageUrl }}" alt="Material" style="width: 120px; height: 120px; object-fit: contain;">
                                 @endif
                             </td>
                             <td class="col-descr" style="text-align: left;">
