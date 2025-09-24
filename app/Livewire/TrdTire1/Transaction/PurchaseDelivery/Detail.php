@@ -52,6 +52,8 @@ class Detail extends BaseComponent
     public $isPanelEnabled = true;
     public $purchaseOrders = [];
 
+    public $isDeliv;
+
     protected $rules = [
         'inputs.tr_code' => 'required',
         'inputs.wh_code' => 'required',

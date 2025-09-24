@@ -223,6 +223,8 @@ class PrintPdf extends BaseComponent
 
         $filename = 'Laporan_Penjualan_' . \Carbon\Carbon::parse($this->masa)->format('Y-m') . '.xlsx';
 
+        $this->dispatch('refresh-page');
+
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
 }
