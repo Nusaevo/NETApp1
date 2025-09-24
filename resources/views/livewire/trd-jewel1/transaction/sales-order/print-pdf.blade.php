@@ -105,18 +105,22 @@
                                                 </p>
                                                 <p style="margin: 2mm 0; font-size: 11px;">Berat : {{ $OrderDtl->Material->jwl_wgt_gold }} Gram</p>
                                                 <p style="margin: 2mm 0; font-size: 11px;">Kemurnian : {{ $masterService->GetMatlJewelPurityString($OrderDtl->Material->jwl_carat) }}</p>
+
                                                 <p style="margin: 2mm 0; font-size: 11px;">Bahan : {{ $OrderDtl->Material->descr }}</p>
+                                                @if ($isShowDescr)
+                                                <p style="margin: 2mm 0; font-size: 11px;">Keterangan : {{ $OrderDtl->Material->remark }}</p>
+                                                @endif
                                             </td>
                                         </tr>
                                     </table>
 
                                     <!-- Remarks Section -->
-                                    <table style="width: 100%; border-collapse: collapse; max-height: 15mm;">
+                                    <table style="width: 100%; border-collapse: collapse; max-height: 15mm; ">
                                         <tr>
-                                            <td style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #ddd; padding: 1mm 0;" colspan="2">KETERANGAN:</td>
+                                            <td style="font-size: 13px; font-weight: bold; border-bottom: 1px solid #ddd; padding-left: 20mm;" colspan="2">KETERANGAN:</td>
                                         </tr>
                                         <tr>
-                                            <td style="width: 60%; font-size: 10px; vertical-align: top; padding: 1mm 0;">
+                                            <td style="width: 60%; font-size: 10px; vertical-align: top; padding-left: 20mm;">
                                                 <ul style="margin: 0; padding-left: 6mm; line-height: 1.2;">
                                                     @foreach ($printRemarks as $remark)
                                                         @if ($remark['checked'])
