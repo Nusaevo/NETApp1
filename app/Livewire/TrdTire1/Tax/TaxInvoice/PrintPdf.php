@@ -105,7 +105,11 @@ class PrintPdf extends BaseComponent
             // Prepare data for Excel
             $excelData = [];
             foreach ($this->orders as $order) {
-                foreach ($order->OrderDtl as $detail) {
+                $sumAmt = 0;
+                $sumPpn = 0;
+                $totalQty = 0;
+
+                foreach ($order->OrderDtl as $index => $detail) {
                     // Hitung amount baris (fallback ke qty*price*(1-disc)) bila amt null
                     $discPct = (float)($detail->disc_pct ?? 0);
                     $lineAmt = isset($detail->amt) && $detail->amt > 0
@@ -116,20 +120,38 @@ class PrintPdf extends BaseComponent
                     $dpp = (float)($detail->amt_beforetax ?? 0);
                     $ppn = (float)($detail->amt_tax ?? 0);
 
+                    $sumAmt += $dpp;
+                    $sumPpn += $ppn;
+                    $totalQty += $detail->qty;
+
                     $excelData[] = [
-                        $order->tr_code,
-                        $order->tax_doc_num ?? '',
-                        \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y'),
-                        $order->Partner?->name ?? 'N/A',
+                        $index === 0 ? $order->tr_code : '', // Only show invoice number on first detail
+                        $index === 0 ? ($order->tax_doc_num ?? '') : '', // Only show tax doc number on first detail
+                        $index === 0 ? \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y') : '', // Only show date on first detail
+                        $index === 0 ? ($order->Partner?->name ?? 'N/A') : '', // Only show customer name on first detail
                         $detail->matl_descr,
                         $detail->qty,
-                        number_format($detail->price_beforetax, 0, ',', '.'),
-                        number_format($dpp, 0, ',', '.'),
-                        number_format($ppn, 0, ',', '.'),
-                        number_format($dpp + $ppn, 0, ',', '.'),
-                        number_format($lineAmt, 0, ',', '.'),
+                        $detail->price_beforetax,
+                        $dpp,
+                        $ppn,
+                        $dpp + $ppn,
+                        $detail->amt, // Show detail amount on every detail row like in display
                     ];
                 }
+
+                $excelData[] = [
+                    '',
+                    '',
+                    '',
+                    '',
+                    '',
+                    $totalQty, // Total Qty
+                    '',
+                    $sumAmt, // Total DPP
+                    $sumPpn, // Total PPN
+                    $sumAmt + $sumPpn, // Total DPP + PPN
+                    $order->amt, // Total Order Amount
+                ];
             }
 
             // Create Excel configuration with title and header info
