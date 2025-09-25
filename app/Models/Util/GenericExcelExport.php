@@ -226,9 +226,9 @@ class GenericExcelExport
         // }
 
         // Enable sheet protection with password
-        $protection = $sheet->getProtection();
-        $protection->setSheet(true);
-        $protection->setPassword('NusaevoTeknologi');
+        // $protection = $sheet->getProtection();
+        // $protection->setSheet(true);
+        // $protection->setPassword('NusaevoTeknologi');
     }
 
     /**
