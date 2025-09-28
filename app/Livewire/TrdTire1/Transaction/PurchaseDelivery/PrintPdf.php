@@ -132,7 +132,7 @@ class PrintPdf extends BaseComponent
             $taxPct = (float)($order->tax_pct ?? 0);
             $taxFlag = $order->tax_code ?? 'I';
 
-            foreach ($order->OrderDtl as $detail) {
+            foreach ($order->OrderDtl as $index => $detail) {
                 // Calculate line amount
                 $discPct = (float)($detail->disc_pct ?? 0);
                 $lineAmt = isset($detail->amt) && $detail->amt > 0
@@ -158,9 +158,9 @@ class PrintPdf extends BaseComponent
                 $totalJumlah += $jumlah;
 
                 $excelData[] = [
-                    $order->tax_doc_num ?? '',
-                    \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y'),
-                    $order->Partner?->name ?? 'N/A',
+                    $index === 0 ? ($order->tax_doc_num ?? '') : '', // Only show tax doc number on first detail
+                    $index === 0 ? \Carbon\Carbon::parse($order->tr_date)->format('d-M-Y') : '', // Only show date on first detail
+                    $index === 0 ? ($order->Partner?->name ?? 'N/A') : '', // Only show customer name on first detail
                     $detail->matl_descr,
                     $detail->qty,
                     number_format($detail->price, 0, ',', '.'),
@@ -222,6 +222,8 @@ class PrintPdf extends BaseComponent
         ]];
 
         $filename = 'Laporan_Penjualan_' . \Carbon\Carbon::parse($this->masa)->format('Y-m') . '.xlsx';
+
+        $this->dispatch('refresh-page');
 
         return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
     }
