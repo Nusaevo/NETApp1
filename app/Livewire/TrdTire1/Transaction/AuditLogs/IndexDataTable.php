@@ -35,7 +35,18 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Event Code"), "event_code"),
             Column::make($this->trans("Event Time"), "event_time"),
             Column::make($this->trans("Key Value"), "key_value"),
-            // Column::make($this->trans("Audit Trail"), "audit_trail"),
+            Column::make($this->trans("Audit Trail"), "audit_trail")
+                ->format(function ($value, $row) {
+                    if (is_array($value)) {
+                        $formatted = [];
+                        foreach ($value as $key => $val) {
+                            $formatted[] = "<strong>{$key}:</strong> {$val}";
+                        }
+                        return implode('<br>', $formatted);
+                    }
+                    return $value;
+                })
+                ->html(),
             // Column::make($this->trans("Created At"), "created_at"),
         ];
     }

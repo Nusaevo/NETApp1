@@ -1,0 +1,587 @@
+<?php
+
+namespace App\Livewire\TrdTire1\Migration\Migration;
+
+use App\Livewire\Component\BaseComponent;
+use Illuminate\Support\Facades\{DB, Session, Log};
+use App\Services\TrdTire1\Master\MasterService;
+use App\Services\TrdTire1\InventoryService;
+use App\Services\TrdTire1\BillingService;
+use App\Services\TrdTire1\PartnerTrxService;
+use App\Services\TrdTire1\PartnerBalanceService;
+use App\Services\TrdTire1\PaymentService;
+use App\Enums\Constant;
+use App\Models\TrdTire1\Master\SalesReward;
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, BillingHdr, PaymentHdr, PaymentDtl, PaymentSrc, PaymentAdv, OrderHdr, OrderDtl};
+use App\Models\TrdTire1\Inventories\{IvttrHdr, IvttrDtl};
+
+class Index extends BaseComponent
+{
+    protected $masterService;
+    protected $inventoryService;
+    protected $billingService;
+    protected $partnerTrxService;
+    protected $paymentService;
+    protected $partnerBalanceService;
+    protected $listeners = [];
+
+    protected function onPreRender()
+    {
+        $this->masterService = new MasterService();
+        $this->inventoryService = new InventoryService();
+    }
+
+
+    public function render()
+    {
+        $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
+        return view($renderRoute);
+    }
+
+    public function migrateAll()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(7200);
+        ini_set('max_execution_time', 7200);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 7200000'); // 7200 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 7200000'); // 7200 seconds in milliseconds
+
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        $this->migrateToInventory();
+        $this->migrateToBilling();
+        $this->migratePaymentToPartner();
+        $this->migrateOrderToInventory();
+        $this->migrateIvttrToInventory();
+    }
+
+    public function migrateToInventory()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000'); // 3600 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000'); // 3600 seconds in milliseconds
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        $prepare = DelivPicking::join('deliv_packings as a', function($join) {
+            $join->on('a.id', '=', 'deliv_pickings.trpacking_id')
+                 ->whereIn('a.tr_type', ['PD', 'SD']);
+        })
+        ->select('deliv_pickings.*', 'a.tr_type', 'a.trhdr_id', 'a.tr_code', 'a.tr_seq', 'a.reffdtl_id')
+        ->get();
+
+        foreach ($prepare as $picking) {
+            // Ambil data header delivery
+            $delivHdr = DelivHdr::find($picking->trhdr_id);
+            if (!$delivHdr) {
+                continue;
+            }
+
+            $headerData = [
+                'id' => $delivHdr->id,
+                'tr_date' => $delivHdr->tr_date,
+                'tr_type' => $delivHdr->tr_type,
+                'tr_code' => $delivHdr->tr_code,
+                // 'reff_id' => $delivHdr->id,
+            ];
+
+            $packingData = [
+                'id' => $picking->trpacking_id,
+                'trhdr_id' => $picking->trhdr_id,
+                'tr_code' => $picking->tr_code,
+                'tr_seq' => $picking->tr_seq,
+                'matl_id' => $picking->matl_id,
+                'matl_code' => $picking->matl_code,
+                'matl_uom' => $picking->matl_uom,
+                'wh_id' => 0,
+                'wh_code' => '',
+                'batch_code' => '',
+                'qty' => $picking->qty,
+                'reffdtl_id' => $picking->reffdtl_id
+            ];
+            $this->inventoryService->addReservation($headerData, $packingData);
+
+            $pickingData = [
+                'id' => $picking->id,
+                'trhdr_id' => $picking->trhdr_id,
+                'tr_code' => $picking->tr_code,
+                'tr_seq' => $picking->tr_seq,
+                'tr_seq2' => $picking->tr_seq2 ?? 0,
+                'matl_id' => $picking->matl_id,
+                'matl_code' => $picking->matl_code,
+                'matl_uom' => $picking->matl_uom,
+                'wh_id' => $picking->wh_id,
+                'wh_code' => $picking->wh_code,
+                'batch_code' => $picking->batch_code,
+                'qty' => $picking->qty,
+                'reffdtl_id' => $picking->reffdtl_id
+            ];
+            $this->inventoryService->addOnhand($headerData, $pickingData);
+        }
+
+        // $this->dispatch('show-message', [
+        //     'type' => 'success',
+        //     'message' => 'Migrasi data delivery ke inventory berhasil dilakukan!'
+        // ]);
+    }
+
+    public function migrateToBilling()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000'); // 3600 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000'); // 3600 seconds in milliseconds
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->billingService) {
+            $deliveryService = new \App\Services\TrdTire1\DeliveryService(new InventoryService());
+            $partnerBalanceService = new PartnerBalanceService();
+            $this->billingService = new BillingService($deliveryService, $partnerBalanceService);
+        }
+
+        // Ambil data delivery PD dan SD
+        $deliveries = DelivHdr::whereIn('tr_type', ['PD', 'SD'])
+            ->with(['DelivPacking.OrderDtl'])
+            ->get();
+
+        $processedCount = 0;
+        foreach ($deliveries as $delivery) {
+            try {
+                // Tentukan tr_type billing berdasarkan delivery type
+                $billingType = $delivery->tr_type === 'PD' ? 'APB' : 'ARB';
+
+                // Siapkan data header billing
+                $headerData = [
+                    'id' => 0, // New billing
+                    'tr_type' => $billingType,
+                    'tr_code' => $delivery->tr_code,
+                    'tr_date' => $delivery->tr_date,
+                ];
+
+                // Siapkan data detail billing - BillingService mengharapkan deliv_id
+                $detailData = [
+                    [
+                        'deliv_id' => $delivery->id
+                    ]
+                ];
+
+                // Simpan billing
+                $this->billingService->saveBilling($headerData, $detailData);
+
+                // Update amt_reff setelah partner balance berhasil dibuat (seperti di PaymentService)
+                // if (isset($billingResult['billing_hdr']) && $billingResult['billing_hdr']) {
+                //     $billingHdr = $billingResult['billing_hdr'];
+                //     $this->billingService->updAmtReff('+', $billingHdr->amt, $billingHdr->id);
+                // }
+
+                $processedCount++;
+
+            } catch (\Exception $e) {
+                Log::error("Error creating billing for delivery {$delivery->tr_code}: " . $e->getMessage());
+                continue;
+            }
+        }
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi data delivery ke billing berhasil dilakukan! Total: {$processedCount} records"
+        ]);
+    }
+
+    public function migratePaymentToPartner()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000'); // 3600 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000'); // 3600 seconds in milliseconds
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->partnerBalanceService) {
+            $this->partnerBalanceService = new PartnerBalanceService();
+        }
+
+        // Ambil data payment yang belum di-migrate ke partner balance
+        $payments = PaymentHdr::with(['PaymentDtl', 'paymentSrc', 'PaymentAdv'])
+            ->whereIn('tr_type', ['ARP']) // ARP = Accounts Receivable Payment (APP belum didukung)
+            ->get();
+
+        $processedCount = 0;
+        $errorCount = 0;
+
+        foreach ($payments as $payment) {
+            try {
+                // Siapkan data header payment
+                $headerData = [
+                    'id' => $payment->id,
+                    'tr_date' => $payment->tr_date,
+                    'tr_type' => $payment->tr_type,
+                    'tr_code' => $payment->tr_code,
+                    'curr_id' => $payment->curr_id,
+                    'curr_code' => $payment->curr_code,
+                    'curr_rate' => $payment->curr_rate,
+                    'partner_id' => $payment->partner_id,
+                    'partner_code' => $payment->partner_code,
+                ];
+
+                // Proses PaymentDtl (detail pembayaran ke billing)
+                foreach ($payment->PaymentDtl as $paymentDtl) {
+                    // Skip jika tipe tidak dikenali oleh updFromPayment
+                    if (!in_array($paymentDtl->tr_type, ['ARP', 'ARPS', 'ARPA'])) {
+                        continue;
+                    }
+
+                    $detailData = [
+                        'id' => $paymentDtl->id,
+                        'trhdr_id' => $paymentDtl->trhdr_id,
+                        'tr_type' => $paymentDtl->tr_type,
+                        'tr_code' => $paymentDtl->tr_code,
+                        'tr_seq' => $paymentDtl->tr_seq,
+                        'partner_id' => $payment->partner_id,
+                        'partner_code' => $payment->partner_code,
+                        'billhdr_id' => $paymentDtl->billhdr_id,
+                        'billhdrtr_type' => $paymentDtl->billhdrtr_type,
+                        'billhdrtr_code' => $paymentDtl->billhdrtr_code,
+                        'amt' => $paymentDtl->amt,
+                    ];
+
+                    $this->partnerBalanceService->updFromPayment($headerData, $detailData);
+
+                    // Update amt_reff di BillingHdr setelah partner balance dibuat
+                    BillingHdr::updAmtReff($detailData['billhdr_id'], $detailData['amt']);
+                }
+
+                // Proses PaymentSrc (sumber pembayaran)
+                foreach ($payment->paymentSrc as $paymentSrc) {
+                    // Skip jika tipe tidak dikenali oleh updFromPayment
+                    if (!in_array($paymentSrc->tr_type, ['ARP', 'ARPS', 'ARPA'])) {
+                        continue;
+                    }
+
+                    $sourceData = [
+                        'id' => $paymentSrc->id,
+                        'trhdr_id' => $paymentSrc->trhdr_id,
+                        'tr_type' => $paymentSrc->tr_type,
+                        'tr_code' => $paymentSrc->tr_code,
+                        'tr_seq' => $paymentSrc->tr_seq,
+                        'partner_id' => $payment->partner_id,
+                        'partner_code' => $payment->partner_code,
+                        'reff_id' => $paymentSrc->reff_id,
+                        'reff_type' => $paymentSrc->reff_type,
+                        'reff_code' => $paymentSrc->reff_code,
+                        'bank_id' => $paymentSrc->bank_id,
+                        'bank_code' => $paymentSrc->bank_code,
+                        'bank_reff' => $paymentSrc->bank_reff,
+                        'bank_duedt' => $paymentSrc->bank_duedt,
+                        'bank_note' => $paymentSrc->bank_note,
+                        'amt' => $paymentSrc->amt,
+                    ];
+
+                    $this->partnerBalanceService->updFromPayment($headerData, $sourceData);
+                }
+
+                // Proses PaymentAdv (pembayaran advance)
+                foreach ($payment->PaymentAdv as $paymentAdv) {
+                    // Skip jika tipe tidak dikenali oleh updFromPayment
+                    if (!in_array($paymentAdv->tr_type, ['ARP', 'ARPS', 'ARPA'])) {
+                        continue;
+                    }
+
+                    $advanceData = [
+                        'id' => $paymentAdv->id,
+                        'trhdr_id' => $paymentAdv->trhdr_id,
+                        'tr_type' => $paymentAdv->tr_type,
+                        'tr_code' => $paymentAdv->tr_code,
+                        'tr_seq' => $paymentAdv->tr_seq,
+                        'partner_id' => $payment->partner_id,
+                        'partner_code' => $payment->partner_code,
+                        'reff_id' => $paymentAdv->reff_id,
+                        'reff_type' => $paymentAdv->reff_type,
+                        'reff_code' => $paymentAdv->reff_code,
+                        'amt' => $paymentAdv->amt,
+                    ];
+
+                    $this->partnerBalanceService->updFromPayment($headerData, $advanceData);
+                }
+
+                $processedCount++;
+
+            } catch (\Exception $e) {
+                Log::error("Error migrating payment {$payment->tr_code} to partner balance: " . $e->getMessage());
+                $errorCount++;
+                continue;
+            }
+        }
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi data payment ke partner balance berhasil dilakukan! Total: {$processedCount} records, Error: {$errorCount} records"
+        ]);
+    }
+
+    public function migrateOrderToInventory()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000'); // 3600 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000'); // 3600 seconds in milliseconds
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        // Debug: Cek semua tipe order yang ada
+        $allOrderTypes = OrderHdr::select('tr_type')->distinct()->pluck('tr_type');
+        Log::info("Available order types: " . $allOrderTypes->implode(', '));
+
+        // Ambil data order yang belum di-migrate ke inventory dengan batch processing
+        $totalOrders = OrderHdr::whereIn('tr_type', ['PO', 'SO'])->count();
+        Log::info("Total orders found with PO/SO: " . $totalOrders);
+
+        $batchSize = 100; // Process 100 orders at a time
+        $offset = 0;
+
+        $processedCount = 0;
+        $errorCount = 0;
+
+        // Process orders in batches to avoid memory issues
+        while ($offset < $totalOrders) {
+            Log::info("Processing batch: offset {$offset}, limit {$batchSize}");
+
+            $orders = OrderHdr::with(['OrderDtl'])
+                ->whereIn('tr_type', ['PO', 'SO'])
+                ->offset($offset)
+                ->limit($batchSize)
+                ->get();
+
+            foreach ($orders as $order) {
+                try {
+                    Log::info("Processing order: " . $order->tr_code . " - Type: " . $order->tr_type);
+
+                    // Siapkan data header order
+                    $headerData = [
+                        'id' => $order->id,
+                        'tr_date' => $order->tr_date,
+                        'tr_type' => $order->tr_type,
+                        'tr_code' => $order->tr_code,
+                        // 'reff_id' => $order->reff_code ?? 0
+                    ];
+
+                    // Proses OrderDtl (detail order)
+                    Log::info("OrderDtl count: " . $order->OrderDtl->count());
+                    foreach ($order->OrderDtl as $orderDtl) {
+                        $detailData = [
+                            'id' => $orderDtl->id,
+                            'trhdr_id' => $orderDtl->trhdr_id,
+                            'tr_type' => $orderDtl->tr_type,
+                            'tr_code' => $orderDtl->tr_code,
+                            'tr_seq' => $orderDtl->tr_seq,
+                            'matl_id' => $orderDtl->matl_id,
+                            'matl_code' => $orderDtl->matl_code,
+                            'matl_uom' => $orderDtl->matl_uom,
+                            'wh_id' => 0,
+                            'wh_code' => '',
+                            'batch_code' => '',
+                            'qty' => $orderDtl->qty,
+                            'price_beforetax' => $orderDtl->price_beforetax,
+                            'reffdtl_id' => $orderDtl->id
+                        ];
+
+                        Log::info("Processing OrderDtl: " . json_encode($detailData));
+                        // Tambahkan reservation untuk order
+                        $this->inventoryService->addReservation($headerData, $detailData);
+                    }
+
+                    $processedCount++;
+
+                } catch (\Exception $e) {
+                    Log::error("Error migrating order {$order->tr_code} to inventory: " . $e->getMessage());
+                    $errorCount++;
+                    continue;
+                }
+            }
+
+            $offset += $batchSize;
+
+            // Clear memory
+            unset($orders);
+            gc_collect_cycles();
+
+            Log::info("Batch completed. Processed: {$processedCount}, Errors: {$errorCount}");
+        }
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi data order ke inventory berhasil dilakukan! Total: {$processedCount} records, Error: {$errorCount} records"
+        ]);
+    }
+
+    public function migrateIvttrToInventory()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '1024M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000');
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000');
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        // Ambil data IvttrHdr yang belum di-migrate
+        $totalHeaders = IvttrHdr::count();
+        Log::info("Found {$totalHeaders} IvttrHdr to migrate");
+
+        $processedCount = 0;
+        $chunkSize = 20; // Process 20 headers at a time
+
+        IvttrHdr::with(['IvttrDtl'])
+            ->chunk($chunkSize, function ($headers) use (&$processedCount) {
+                foreach ($headers as $header) {
+                    try {
+                        Log::info("Processing IvttrHdr: {$header->tr_code} (ID: {$header->id})");
+                        Log::info("Header has " . $header->IvttrDtl->count() . " details");
+
+                        // Siapkan data header
+                        $headerData = [
+                            'id' => $header->id,
+                            'tr_type' => $header->tr_type,
+                            'tr_code' => $header->tr_code,
+                            'tr_date' => $header->tr_date,
+                            'reff_id' => $header->reff_id ?? 0,
+                            'descr' => $header->descr ?? '',
+                        ];
+
+                        // Proses setiap detail
+                        foreach ($header->IvttrDtl as $detail) {
+                            $detailData = [
+                                'id' => $detail->id,
+                                'trhdr_id' => $detail->trhdr_id,
+                                'tr_seq' => $detail->tr_seq,
+                                'tr_seq2' => $detail->tr_seq2 ?? 0,
+                                'matl_id' => $detail->matl_id,
+                                'matl_code' => $detail->matl_code ?? '',
+                                'matl_uom' => $detail->matl_uom ?? '',
+                                'wh_id' => $detail->wh_id ?? 0,
+                                'wh_code' => $detail->wh_code ?? '',
+                                'batch_code' => $detail->batch_code ?? '',
+                                'qty' => $detail->qty,
+                                'price_beforetax' => $detail->price_beforetax ?? 0,
+                                'reffdtl_id' => $detail->reffdtl_id ?? 0,
+                            ];
+
+                            // Panggil method yang sesuai berdasarkan tr_type
+                            if ($header->tr_type === 'IA') {
+                                // Inventory Adjustment - gunakan addOnhand
+                                $this->inventoryService->addOnhand($headerData, $detailData);
+                            } else if ($header->tr_type === 'TW') {
+                                // Transfer Warehouse - gunakan addOnhand untuk kedua warehouse
+                                $this->inventoryService->addOnhand($headerData, $detailData);
+                            } else if (in_array($header->tr_type, ['PO', 'SO', 'PD', 'SD'])) {
+                                // Purchase/Sales Order/Delivery - gunakan addReservation
+                                $this->inventoryService->addReservation($headerData, $detailData);
+                            }
+                        }
+
+                        $processedCount++;
+                        Log::info("Successfully migrated IvttrHdr: {$header->tr_code}");
+
+                    } catch (\Exception $e) {
+                        Log::error("Error migrating IvttrHdr {$header->tr_code}: " . $e->getMessage());
+                        Log::error("Stack trace: " . $e->getTraceAsString());
+                        continue;
+                    }
+                }
+
+                // Force garbage collection after each chunk
+                gc_collect_cycles();
+            });
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi data IvttrHdr ke inventory berhasil dilakukan! Total: {$processedCount} records dari {$totalHeaders} header"
+        ]);
+    }
+
+}

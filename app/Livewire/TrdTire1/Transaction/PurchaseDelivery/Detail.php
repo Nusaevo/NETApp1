@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\TrdTire1\DeliveryService;
 use App\Services\TrdTire1\BillingService;
+use Illuminate\Support\Carbon;
 
 class Detail extends BaseComponent
 {
@@ -235,26 +236,27 @@ class Detail extends BaseComponent
 
             // dd($orderDetail);
             $delivPacking = new DelivPacking();
-            foreach ($orderDetail as $key => $detail) {
-                $this->input_details[] = populateArrayFromModel($delivPacking);
+            $index = 0;
+            foreach ($orderDetail as $detail) {
                 $qty_remaining = $detail->qty - $detail->qty_reff;
                 if ($qty_remaining > 0) {
-                    $this->input_details[$key]['reffdtl_id'] = $detail->reffdtl_id;
-                    $this->input_details[$key]['reffhdr_id'] = $detail->reffhdr_id;
-                    $this->input_details[$key]['reffhdrtr_type'] = $detail->reffhdrtr_type;
-                    $this->input_details[$key]['reffhdrtr_code'] = $detail->reffhdrtr_code;
-                    $this->input_details[$key]['reffdtltr_seq'] = $detail->reffdtltr_seq;
-                    $this->input_details[$key]['matl_descr'] = $detail->matl_descr;
-                    $this->input_details[$key]['qty'] = 0;
+                    $this->input_details[] = populateArrayFromModel($delivPacking);
+                    $this->input_details[$index]['reffdtl_id'] = $detail->reffdtl_id;
+                    $this->input_details[$index]['reffhdr_id'] = $detail->reffhdr_id;
+                    $this->input_details[$index]['reffhdrtr_type'] = $detail->reffhdrtr_type;
+                    $this->input_details[$index]['reffhdrtr_code'] = $detail->reffhdrtr_code;
+                    $this->input_details[$index]['reffdtltr_seq'] = $detail->reffdtltr_seq;
+                    $this->input_details[$index]['matl_descr'] = $detail->matl_descr;
+                    $this->input_details[$index]['qty'] = 0;
                     // // Tambahan Order Detail
-                    $this->input_details[$key]['qty_order'] = $qty_remaining;
-                    $this->input_details[$key]['matl_id'] = $detail->matl_id;
-                    $this->input_details[$key]['matl_code'] = $detail->matl_code;
-                    $this->input_details[$key]['matl_uom'] = $detail->matl_uom;
-                    $this->input_details[$key]['wh_id'] = $this->inputs['wh_id'];
-                    $this->input_details[$key]['wh_code'] = $this->inputs['wh_code'];
-                    $this->input_details[$key]['order_date'] = $detail->order_date;
-                    // ];
+                    $this->input_details[$index]['qty_order'] = $qty_remaining;
+                    $this->input_details[$index]['matl_id'] = $detail->matl_id;
+                    $this->input_details[$index]['matl_code'] = $detail->matl_code;
+                    $this->input_details[$index]['matl_uom'] = $detail->matl_uom;
+                    $this->input_details[$index]['wh_id'] = $this->inputs['wh_id'];
+                    $this->input_details[$index]['wh_code'] = $this->inputs['wh_code'];
+                    $this->input_details[$index]['order_date'] = $detail->order_date;
+                    $index++;
                 }
             }
         }
@@ -292,6 +294,16 @@ class Detail extends BaseComponent
         // dd($this->inputs, $this->input_details);
         try {
             $this->validate();
+
+            // Validasi tanggal terima barang tidak boleh lebih besar dari tanggal sekarang
+            if (!empty($this->inputs['tr_date'])) {
+                $deliveryDate = Carbon::parse($this->inputs['tr_date']);
+                $today = Carbon::now()->startOfDay();
+
+                if ($deliveryDate->gt($today)) {
+                    throw new Exception('Tanggal terima barang tidak boleh lebih besar dari tanggal sekarang.');
+                }
+            }
 
             // Cek duplikasi tr_code
             $existingDelivery = DelivHdr::where([

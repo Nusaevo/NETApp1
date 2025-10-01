@@ -28,7 +28,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->setSearchDisabled();
         $this->setDefaultSort('tr_date', 'desc');
-        $this->setDefaultSort('tr_code', 'desc');
+        // $this->setDefaultSort('tr_code', 'desc');
     }
 
     public function builder(): Builder

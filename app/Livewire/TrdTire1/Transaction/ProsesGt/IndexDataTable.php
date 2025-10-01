@@ -12,6 +12,7 @@ use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
+use App\Services\TrdTire1\Master\MasterService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -19,6 +20,8 @@ class IndexDataTable extends BaseDataTableComponent
     public $selectedItems = [];
     public $deletedRemarks = [];
     public $filters = [];
+    public $materialBrand = [];
+    protected $masterService;
     protected $listeners = [
         'refreshTable' => 'render',
         'onSrCodeChanged',
@@ -27,7 +30,11 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('orderHdr.tr_date', 'desc');
+        $this->setDefaultSort('orderHdr.tr_code', 'desc');
+
+        // Inisialisasi MasterService dan ambil data brand
+        $this->masterService = new MasterService();
+        $this->materialBrand = $this->masterService->getMatlBrandOptionsForSelectFilter();
         // dd(request()->query('table-filters'));
 
     }
@@ -35,11 +42,11 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         $query = OrderDtl::query()
-            ->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward'])
+            ->with(['OrderHdr', 'OrderHdr.Partner', 'SalesReward', 'Material'])
             ->where('order_dtls.tr_type', 'SO')
             ->select('order_dtls.*')
-            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id');
-            // ->whereRaw('1=0'); // Default: Tidak menampilkan data
+            ->join('order_hdrs', 'order_dtls.trhdr_id', '=', 'order_hdrs.id')
+            ->whereRaw('1=0'); // Default: Tidak menampilkan data
 
         return $query;
     }
@@ -115,19 +122,15 @@ class IndexDataTable extends BaseDataTableComponent
         $processDates = OrderDtl::select(DB::raw('DATE(gt_process_date) as gt_process_date')) // Format hanya tanggal
             ->distinct()
             ->whereNotNull('gt_process_date')
+            ->orderBy('gt_process_date', 'desc')
             ->pluck('gt_process_date', 'gt_process_date')
             ->toArray();
 
         // Add "Not Selected" option for print_date
         $processDates = ['' => 'Not Selected'] + $processDates;
 
-        // Ambil data SalesReward untuk filter
-        $salesRewards = SalesReward::select('code', 'descrs')
-            ->orderBy('code', 'asc')
-            ->pluck('descrs', 'code')
-            ->toArray();
-
-        $salesRewards = ['' => 'Not Selected'] + $salesRewards;
+        // Data brand sudah diambil dari MasterService di mount()
+        $brandOptions = $this->materialBrand;
 
         return [
             SelectFilter::make('Tanggal Proses', 'gt_process_date')
@@ -136,15 +139,19 @@ class IndexDataTable extends BaseDataTableComponent
                     if ($value) {
                         // simpan ke state persis seperti TaxInvoice
                         $this->filters['gt_process_date'] = $value;
+                        // Override kondisi whereRaw('1=0') dengan kondisi yang benar
+                        $this->removeDefaultNoDataCondition($builder);
                         $builder->whereDate('order_dtls.gt_process_date', $value); // Gunakan whereDate untuk mencocokkan hanya tanggal
                     }
                 }),
-            SelectFilter::make('Sales Reward')
-                ->options($salesRewards)
+            SelectFilter::make('Merk')
+                ->options($brandOptions)
                 ->filter(function (Builder $builder, $value) {
                     if (!empty($value)) {
-                        $builder->whereHas('SalesReward', function ($query) use ($value) {
-                            $query->where('code', $value);
+                        // Override kondisi whereRaw('1=0') dengan kondisi yang benar
+                        $this->removeDefaultNoDataCondition($builder);
+                        $builder->whereHas('Material', function ($query) use ($value) {
+                            $query->where('brand', $value);
                         });
                     }
                 }),
@@ -172,6 +179,16 @@ class IndexDataTable extends BaseDataTableComponent
             'last_cnt' => 'N/A',
             'wrap_high' => 'N/A',
         ];
+    }
+
+    /**
+     * Remove the default whereRaw('1=0') condition to allow data to be displayed
+     */
+    private function removeDefaultNoDataCondition(Builder $builder): void
+    {
+        $builder->getQuery()->wheres = array_filter($builder->getQuery()->wheres, function($where) {
+            return $where['type'] !== 'raw' || $where['sql'] !== '1=0';
+        });
     }
 
     public function setNotaGT()
@@ -216,6 +233,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->toArray();
 
             $this->dispatch('openProsesDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
+
+            // Refresh page setelah membuka modal
+            $this->dispatch('refreshTable');
         }
     }
 

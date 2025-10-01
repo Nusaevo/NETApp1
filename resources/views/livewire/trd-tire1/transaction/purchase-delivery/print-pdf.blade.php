@@ -65,7 +65,7 @@
             <a class="btn btn-light text-capitalize border-0 me-2" data-mdb-ripple-color="dark" onclick="printInvoice()">
                 <i class="fas fa-print text-primary"></i> Print
             </a>
-            <button wire:click="downloadExcel" class="btn btn-success text-capitalize border-0"
+            <button onclick="downloadTableAsExcel()" class="btn btn-success text-capitalize border-0"
                 data-mdb-ripple-color="dark">
                 <i class="fas fa-file-excel text-white"></i> Download Excel
             </button>
@@ -203,7 +203,7 @@
                                     <td style="text-align: right; padding: 5px;">
                                         {{ number_format($detail->amt_tax, 0, ',', '.') }}</td>
                                     <td style="text-align: right; padding: 5px;">
-                                        {{ number_format($jumlah, 0, ',', '.') }}</td>
+                                        {{ number_format($detail->amt, 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
                             <!-- Tampilkan subtotal untuk setiap order (meskipun hanya 1 item) -->
@@ -403,7 +403,7 @@
                                             {{ number_format($ppn, 0, ',', '.') }}
                                         </td>
                                         <td style="text-align: right; padding: 5px;">
-                                            {{ number_format($jumlah, 0, ',', '.') }}
+                                            {{ number_format($detail->amt, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -481,6 +481,111 @@
             window.print();
         }
 
+        // JavaScript function to download table as Excel
+        function downloadTableAsExcel() {
+            try {
+                // Get the table data
+                const table = document.querySelector('table');
+                if (!table) {
+                    alert('Tidak ada data tabel untuk didownload.');
+                    return;
+                }
+
+                // Create a new workbook
+                const wb = XLSX.utils.book_new();
+
+                // Add custom header and title
+                const masa = '{{ $this->masa }}';
+                const masaFormatted = new Date(masa + '-01').toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'long'
+                }).toUpperCase();
+
+                // Create new worksheet with custom layout
+                const newWs = XLSX.utils.aoa_to_sheet([
+                    ['LAPORAN PENJUALAN MASA ' + masaFormatted],
+                    ['Periode: ' + masaFormatted],
+                    ['Tanggal Proses: ' + new Date().toLocaleDateString('id-ID')],
+                    [''], // Empty row
+                    // Table headers
+                    ['No. Faktur', 'Tgl. Nota', 'Nama Customer', 'Nama Barang', 'Qty', 'Harga', 'DPP', 'DPP Lain2', 'PPN', 'JUMLAH']
+                ]);
+
+                // Get table data and process it properly
+                const tableRows = Array.from(table.querySelectorAll('tbody tr'));
+                let processedData = [];
+                let currentOrderData = [];
+                let currentOrderTotals = {
+                    qty: 0,
+                    dpp: 0,
+                    dpp2: 0,
+                    ppn: 0,
+                    jumlah: 0
+                };
+
+                tableRows.forEach((row, index) => {
+                    const cells = Array.from(row.querySelectorAll('td'));
+                    const rowData = cells.map(cell => cell.textContent.trim());
+
+                    // Check if this is a subtotal row (has colspan="4" in first cell)
+                    const isSubtotalRow = cells.length === 7 && cells[0].getAttribute('colspan') === '4';
+
+                    if (isSubtotalRow) {
+                        // This is a subtotal row, format it properly
+                        // Structure: [colspan4, qty, harga, dpp, dpp2, ppn, jumlah]
+                        const subtotalRow = [
+                            '', // No. Faktur
+                            '', // Tgl. Nota
+                            '', // Nama Customer
+                            '', // Nama Barang
+                            rowData[1] || '', // Qty (from 2nd cell)
+                            '', // Harga (empty for subtotal)
+                            rowData[3] || '', // DPP (from 4th cell)
+                            rowData[4] || '', // DPP Lain2 (from 5th cell)
+                            rowData[5] || '', // PPN (from 6th cell)
+                            rowData[6] || ''  // JUMLAH (from 7th cell)
+                        ];
+                        processedData.push(subtotalRow);
+                    } else {
+                        // This is a regular data row
+                        processedData.push(rowData);
+                    }
+                });
+
+                // Add processed table data to worksheet
+                processedData.forEach(row => {
+                    XLSX.utils.sheet_add_aoa(newWs, [row], { origin: -1 });
+                });
+
+                // Set column widths
+                newWs['!cols'] = [
+                    { wch: 15 }, // No. Faktur
+                    { wch: 12 }, // Tgl. Nota
+                    { wch: 25 }, // Nama Customer
+                    { wch: 30 }, // Nama Barang
+                    { wch: 8 },  // Qty
+                    { wch: 15 }, // Harga
+                    { wch: 15 }, // DPP
+                    { wch: 15 }, // DPP Lain2
+                    { wch: 15 }, // PPN
+                    { wch: 15 }  // JUMLAH
+                ];
+
+                // Add worksheet to workbook
+                XLSX.utils.book_append_sheet(wb, newWs, 'Laporan_Penjualan');
+
+                // Generate filename
+                const filename = 'Laporan_Penjualan_' + masa + '.xlsx';
+
+                // Download the file
+                XLSX.writeFile(wb, filename);
+
+            } catch (error) {
+                console.error('Error downloading Excel:', error);
+                alert('Error downloading Excel: ' + error.message);
+            }
+        }
+
         // Handle refresh page setelah download Excel
         document.addEventListener('livewire:initialized', function() {
             Livewire.on('refresh-page', function() {
@@ -491,4 +596,7 @@
             });
         });
     </script>
+
+    <!-- Include SheetJS library for Excel download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </div>
