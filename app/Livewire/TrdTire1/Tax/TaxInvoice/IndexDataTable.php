@@ -46,7 +46,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('currency', "curr_rate")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("tr_code"), "tr_code")
+            Column::make($this->trans("Nomor Nota"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
                         return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
@@ -75,14 +75,14 @@ class IndexDataTable extends BaseDataTableComponent
                     return rupiah($row->amt);
                 })
                 ->sortable(),
-            Column::make($this->trans('dpp'), 'dpp')
+            Column::make($this->trans('dpp'), 'amt_beforetax')
                 ->label(function ($row) {
                     $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
-                    $dpp = $orderDetails->sum('dpp');
+                    $dpp = $orderDetails->sum('amt_beforetax');
                     return rupiah($dpp);
                 })
                 ->sortable(),
-            Column::make($this->trans('amt_tax'), 'amt_tax')
+            Column::make($this->trans('ppn'), 'amt_tax')
                 ->label(function ($row) {
                     $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
                     $amtTax = $orderDetails->sum('amt_tax');
@@ -99,17 +99,17 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Tgl Proses"), "print_date")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans('npwp_code'), 'npwp_code')
+            Column::make($this->trans('NPWP CODE'), 'npwp_code')
                 ->label(function ($row) {
                     return $row->npwp_code;
                 })
                 ->sortable(),
-            Column::make($this->trans('npwp_name'), 'npwp_name')
+            Column::make($this->trans('NAMA WP'), 'npwp_name')
                 ->label(function ($row) {
                     return $row->npwp_name;
                 })
                 ->sortable(),
-            Column::make($this->trans('npwp_address'), 'npwp_addr')
+            Column::make($this->trans('ALAMAT WP'), 'npwp_addr')
                 ->label(function ($row) {
                     return $row->npwp_addr;
                 })
@@ -174,6 +174,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $configDetails = $this->getConfigDetails();
         $printDates = OrderHdr::select('print_date')
+            ->where('order_hdrs.tr_type', 'SO')
+            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
+            ->where('order_hdrs.tax_doc_flag', 1)
             ->distinct()
             ->whereNotNull('print_date')
             ->pluck('print_date', 'print_date')
@@ -183,6 +186,9 @@ class IndexDataTable extends BaseDataTableComponent
         $printDates = ['' => 'Not Selected'] + $printDates;
 
         $masaOptions = OrderHdr::selectRaw("TO_CHAR(tr_date, 'YYYY-MM') as filter_value, TO_CHAR(tr_date, 'FMMonth-YYYY') as display_value") // Updated for PostgreSQL
+            ->where('order_hdrs.tr_type', 'SO')
+            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
+            ->where('order_hdrs.tax_doc_flag', 1)
             ->distinct()
             ->orderByRaw("TO_CHAR(tr_date, 'YYYY-MM') DESC") // Sort by year-month descending (latest first)
             ->get()

@@ -62,6 +62,11 @@ class PaymentHdr extends BaseModel
         return $this->hasMany(PaymentSrc::class, 'trhdr_id', 'id');
     }
 
+    public function PaymentAdv()
+    {
+        return $this->hasMany(PaymentAdv::class, 'trhdr_id', 'id');
+    }
+
     // Define the details relationship
     // public function details()
     // {
