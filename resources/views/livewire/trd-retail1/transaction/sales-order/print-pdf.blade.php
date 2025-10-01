@@ -67,7 +67,6 @@
                                 <td>
                                     <p
                                         style="    text-align: center;
-                                    padding-bottom: 4px;
                                     font-size: 16px !important;
                                     line-height: 1.2;
                                     font-weight: bold;">
@@ -212,10 +211,8 @@ body {
     width: 80mm !important;
     margin: 0;
     padding: 0;
-    left: -10mm !important;
-  }
-  .invoice-box {
-    padding: 1mm 2mm 0 1mm !important;
+    top: -50mm !important;
+    left: -70mm !important;
   }
 }
 /* store header below the logo */
