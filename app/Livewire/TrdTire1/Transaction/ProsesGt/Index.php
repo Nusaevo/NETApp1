@@ -46,8 +46,10 @@ class Index extends BaseComponent
             })
             ->toArray();
 
-        // Fetch SR Codes
-        $this->sr_codes = SalesReward::select('code', 'descrs') // Ambil code dan descrs
+        // Fetch SR Codes - gunakan DISTINCT untuk menghilangkan duplikasi
+        $this->sr_codes = SalesReward::selectRaw('DISTINCT code, descrs')
+            ->whereNull('deleted_at')
+            ->orderBy('code')
             ->get()
             ->map(function ($sr) {
                 return [

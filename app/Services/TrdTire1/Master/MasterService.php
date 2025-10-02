@@ -390,11 +390,11 @@ class MasterService extends BaseService
         })->toArray();
     }
 
-    public function getNewTrCode($trType, $salesType, $taxDocFlag): string
+    public function getNewTrCode($trType, $salesType, $taxDocFlag, $trDate = null): string
     {
         if ($trType == 'SO'){
             // Generate SO code based on sales type and tax document flag
-            return self::getNewTrCodeSo($salesType, $taxDocFlag);
+            return self::getNewTrCodeSo($salesType, $taxDocFlag, $trDate);
         } else {
             switch ($trType) {
                 case 'PO':
@@ -425,13 +425,15 @@ class MasterService extends BaseService
         }
     }
 
-    private static function getNewTrCodeSo($salesType, $taxDocFlag = true)
+    private static function getNewTrCodeSo($salesType, $taxDocFlag = true, $trDate = null)
     {
+        // Gunakan tanggal yang dipilih atau tanggal saat ini
+        $date = $trDate ? \Carbon\Carbon::parse($trDate) : \Carbon\Carbon::now();
 
-        $year = date('y');
-        $monthNumber = date('n');
+        $year = $date->format('y');
+        $monthNumber = $date->month;
         $monthLetter = chr(64 + $monthNumber);
-        $sequenceNumber = self::getNewSeqNumSo($salesType, $taxDocFlag);
+        $sequenceNumber = self::getNewSeqNumSo($salesType, $taxDocFlag, $trDate);
 
         if ($taxDocFlag) {
             switch ($salesType) {
@@ -458,10 +460,13 @@ class MasterService extends BaseService
      * Fungsi ini mengambil nomor urut berdasarkan entri terakhir.
      * Regex disesuaikan berdasarkan jenis kendaraan (MOTOR/MOBIL) dan flag tax invoice.
      */
-    private static function getNewSeqNumSo($sales_type, $tax_doc_flag)
+    private static function getNewSeqNumSo($sales_type, $tax_doc_flag, $trDate = null)
     {
-        $currentYear = date('y');
-        $currentMonth = date('n');
+        // Gunakan tanggal yang dipilih atau tanggal saat ini
+        $date = $trDate ? \Carbon\Carbon::parse($trDate) : \Carbon\Carbon::now();
+
+        $currentYear = $date->format('y');
+        $currentMonth = $date->month;
         $currentMonthLetter = chr(64 + $currentMonth);
 
         $taxInvoiceFlag = $tax_doc_flag ? 1 : 0;

@@ -51,6 +51,7 @@
 
                         // Remove any existing event handlers
                         $(selectElement).off('change.textfieldSearch');
+                        $(selectElement).off('select2:clear.textfieldSearch');
 
                         // Bind change event WITHOUT re-initialization
                         $(selectElement).on('change.textfieldSearch', function (e) {
@@ -78,6 +79,48 @@
                                         }
                                     } else {
                                         $wire.call(onChanged, value);
+                                    }
+                                @endif
+                            } catch (error) {
+                                // Silent error handling
+                            }
+                        });
+
+                        // Bind clear event to trigger onChanged when X button is clicked
+                        $(selectElement).on('select2:clear.textfieldSearch', function () {
+                            const blankValue = '{{ $blankValue }}';
+
+                            try {
+                                // Update Livewire model
+                                @this.set('{{ $model }}', blankValue);
+
+                                // Handle onChanged callback if provided
+                                @if (isset($onChanged) && $onChanged)
+                                    let onChanged = '{{ $onChanged }}';
+                                    if (onChanged.includes('$event.target.value')) {
+                                        onChanged = onChanged.replace('$event.target.value', blankValue);
+                                    }
+                                    if (onChanged.includes('(')) {
+                                        const matches = onChanged.match(/^([\w.]+)\((.*)\)$/);
+                                        if (matches) {
+                                            const methodName = matches[1];
+                                            const params = matches[2]
+                                                .split(',')
+                                                .map(param => param.trim())
+                                                .filter(param => param !== '');
+
+                                            // Replace parameter values with blank value
+                                            const processedParams = params.map(param => {
+                                                if (param === '$event.target.value') {
+                                                    return blankValue;
+                                                }
+                                                return param;
+                                            });
+
+                                            $wire.call(methodName, ...processedParams);
+                                        }
+                                    } else {
+                                        $wire.call(onChanged, blankValue);
                                     }
                                 @endif
                             } catch (error) {

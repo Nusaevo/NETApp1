@@ -16,6 +16,7 @@
         "psr/simple-cache": "^3.0",
         "rappasoft/laravel-livewire-tables": "^3.3.2",
         "ratchet/pawl": "^0.4.1",
+        "resend/resend-laravel": "^0.22.0",
         "spatie/laravel-activitylog": "^4.8",
         "spatie/laravel-permission": "^6.9"
     },

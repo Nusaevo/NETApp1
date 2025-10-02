@@ -15,7 +15,20 @@
                     <x-ui-padding>
                         <div class="row">
                             <x-ui-text-field label="{{ $this->trans('date') }}" model="inputs.tr_date" type="date" :action="$actionValue" required="true" onChanged="saveCheck" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field-search type="int" label="{{ $this->trans('partner') }}" clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$suppliers" required="true" :action="$actionValue" onChanged="saveCheck" :enabled="$isPanelEnabled" />
+                            <x-ui-dropdown-search
+                                label="{{ $this->trans('supplier') }}"
+                                model="inputs.partner_id"
+                                query="SELECT id, code, name FROM partners WHERE deleted_at IS NULL AND grp='V'"
+                                connection="TrdJewel1"
+                                optionValue="id"
+                                optionLabel="{code},{name}"
+                                placeHolder="Type to search suppliers..."
+                                :selectedValue="$inputs['partner_id']"
+                                required="true"
+                                :action="$actionValue"
+                                :enabled="$isPanelEnabled"
+                                type="int"
+                                onChanged="saveCheck" />
                         </div>
                         {{-- <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" clickEvent="" model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue" />
                         <x-ui-text-field label="Deliv by" model="inputs.deliv_by" type="text" :action="$actionValue" /> --}}

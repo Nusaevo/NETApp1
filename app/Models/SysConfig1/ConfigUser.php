@@ -34,7 +34,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
      *
      * @var array
      */
-    protected $fillable = ['code', 'password', 'name', 'dept', 'phone', 'email', 'status_code'];    /**
+    protected $fillable = ['code', 'password', 'name', 'dept', 'phone', 'email', 'status_code', 'otp_code', 'otp_expiry'];    /**
      * The attributes that should be hidden for arrays.
      *
      * @var array
@@ -110,9 +110,9 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
      *
      * @var array
      */
-    // protected $casts = [
-    //     'email_verified_at' => 'datetime',
-    // ];
+    protected $casts = [
+        'otp_expiry' => 'datetime',
+    ];
 
     public function getRememberToken()
     {
@@ -164,5 +164,107 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
             ->toArray();
 
         return $groupCodes;
+    }
+
+    /**
+     * Generate OTP for this user
+     */
+    public function generateOtp()
+    {
+        $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        $this->update([
+            'otp_code' => $otp,
+            'otp_expiry' => now()->addMinutes(5) // OTP expires in 5 minutes
+        ]);
+
+        return $otp;
+    }
+
+    /**
+     * Verify OTP
+     */
+    public function verifyOtp($inputOtp)
+    {
+        if (!$this->otp_code || !$this->otp_expiry) {
+            return false;
+        }
+
+        if ($this->otp_expiry < now()) {
+            // Clear expired OTP
+            $this->update([
+                'otp_code' => null,
+                'otp_expiry' => null
+            ]);
+            return false;
+        }
+
+        // Try different comparison approaches
+        $storedOtp = trim((string)$this->otp_code);
+        $inputOtpTrimmed = trim((string)$inputOtp);
+
+        if ($storedOtp === $inputOtpTrimmed) {
+            // Clear used OTP
+            $this->update([
+                'otp_code' => null,
+                'otp_expiry' => null
+            ]);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user has OTP access to app
+     */
+    public function hasOtpAccessToApp($appCode)
+    {
+        // Get user's groups for the app
+        $groups = $this->ConfigGroup()
+            ->where('app_code', $appCode)
+            ->get();
+
+        // Get excluded OTP groups from TrdTire1 ConfigConst
+        $excludedGroups = $this->getExcludedOtpGroups();
+
+        foreach ($groups as $group) {
+            // Check if group is in excluded list (bypass OTP)
+            if (in_array($group->code, $excludedGroups)) {
+                return 'bypass'; // Special return value for excluded groups
+            }
+        }
+
+        $hasAccess = $groups->isNotEmpty();
+
+        return $hasAccess; // Return true if user has any group access
+    }
+
+    /**
+     * Get excluded OTP groups from TrdTire1 ConfigConst
+     */
+    private function getExcludedOtpGroups()
+    {
+        // Look for excluded groups configuration in ConfigConst using TrdTire1 connection
+        $excludedConfig = \DB::connection('TrdTire1')
+            ->table('config_consts')
+            ->select('note1')
+            ->where('const_group', 'EXCLUDED_OTP_GROUPS')
+            ->first();
+
+        $excludedGroups = [];
+        if ($excludedConfig && $excludedConfig->note1) {
+            // Assume group codes are comma-separated in note1
+            $groupCodes = explode(',', $excludedConfig->note1);
+            $excludedGroups = array_map('trim', $groupCodes);
+        } else {
+            // Fallback groups if no configuration found
+            $excludedGroups = ['netDevelopers'];
+        }
+
+        // Remove duplicates and filter non-empty values
+        $excludedGroups = array_unique(array_filter($excludedGroups));
+
+        return $excludedGroups;
     }
 }

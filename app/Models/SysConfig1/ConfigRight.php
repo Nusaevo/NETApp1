@@ -150,4 +150,40 @@ class ConfigRight extends SysConfig1BaseModel
         $trustee .= $permissions['delete'] ? 'D' : '';
         return $trustee;
     }
+
+    /**
+     * Check if user has access to specific app based on their groups
+     *
+     * @param int $userId
+     * @param string|array $appCode
+     * @return bool
+     */
+    public static function userHasAppAccess($userId, $appCode)
+    {
+        $query = self::join('config_grpusers', 'config_rights.group_id', '=', 'config_grpusers.group_id')
+            ->where('config_grpusers.user_id', $userId);
+
+        if (is_array($appCode)) {
+            $query->whereIn('config_rights.app_code', $appCode);
+            \Log::info('Checking user ' . $userId . ' access to apps: ' . implode(', ', $appCode));
+        } else {
+            $query->where('config_rights.app_code', $appCode);
+            \Log::info('Checking user ' . $userId . ' access to app: ' . $appCode);
+        }
+
+        $hasAccess = $query->exists();
+        \Log::info('User ' . $userId . ' app access result: ' . ($hasAccess ? 'TRUE' : 'FALSE'));
+
+        return $hasAccess;
+    }    /**
+     * Check if user has access to specific app using ConfigUser instance
+     *
+     * @param \App\Models\SysConfig1\ConfigUser $user
+     * @param string|array $appCode
+     * @return bool
+     */
+    public static function checkUserAppAccess($user, $appCode)
+    {
+        return self::userHasAppAccess($user->id, $appCode);
+    }
 }

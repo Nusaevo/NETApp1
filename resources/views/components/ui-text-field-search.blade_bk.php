@@ -90,7 +90,7 @@
             @error($model)
                 <div class="error-message">{{ $message }}</div>
             @enderror
-        </div> <!-- Penutup div containerClass -->
+        </div>
 
         @if (isset($clickEvent) && $clickEvent !== '')
             <x-ui-button type="InputButton" :clickEvent="$clickEvent" cssClass="btn btn-secondary"

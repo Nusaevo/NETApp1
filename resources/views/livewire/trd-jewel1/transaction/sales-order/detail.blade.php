@@ -1,5 +1,5 @@
 <div>
-    <div>
+    <div >
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card  title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (Nota #' . $this->object->tr_id . ')' : '' }}" status="{{ $this->trans($status) }}">
@@ -14,9 +14,21 @@
                 <x-ui-card>
                     <x-ui-padding>
                         <div class="row">
-                            <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled"/>
-                            <x-ui-text-field-search type="int" label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']" :options="$partners" required="true" :action="$actionValue" onChanged="onPartnerChanged"
-                                :enabled="$isPanelEnabled"/>
+                            <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
+                            <x-ui-dropdown-search
+                                label="{{ $this->trans('customer') }}"
+                                model="inputs.partner_id"
+                                query="SELECT id, code, name FROM partners WHERE deleted_at IS NULL AND grp='C'"
+                                connection="TrdJewel1"
+                                optionValue="id"
+                                optionLabel="{code},{name}"
+                                placeHolder="Type to search customers..."
+                                :selectedValue="$inputs['partner_id']"
+                                required="true"
+                                :action="$actionValue"
+                                :enabled="$isPanelEnabled"
+                                type="int"
+                                onChanged="onPartnerChanged" />
                         </div>
                     </x-ui-padding>
 

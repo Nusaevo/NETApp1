@@ -32,6 +32,16 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
                 ->name('password.update');
+
+    // OTP Routes - moved from auth middleware to guest middleware
+    Route::get('otp', [AuthenticatedSessionController::class, 'showOtpForm'])
+                ->name('auth.otp.show');
+
+    Route::post('otp/verify', [AuthenticatedSessionController::class, 'verifyOtp'])
+                ->name('auth.otp.verify');
+
+    Route::get('otp/resend', [AuthenticatedSessionController::class, 'resendOtp'])
+                ->name('auth.otp.resend');
 });
 
 Route::middleware('auth')->group(function () {
@@ -53,4 +63,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->name('logout');
+
+    // Device trust management route
+    Route::post('device-trust/clear', [AuthenticatedSessionController::class, 'clearDeviceTrust'])
+                ->name('device.trust.clear');
 });

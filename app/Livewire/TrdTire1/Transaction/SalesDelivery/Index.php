@@ -53,6 +53,14 @@ class Index extends BaseComponent
             'inputs.wh_code' => 'required',
         ]);
 
+        // Validasi tanggal kirim tidak boleh lebih besar dari tanggal sekarang
+        $deliveryDate = Carbon::parse($this->inputs['tr_date']);
+        $today = Carbon::now()->startOfDay();
+
+        if ($deliveryDate->gt($today)) {
+            throw new Exception('Tanggal kirim tidak boleh lebih besar dari tanggal sekarang.');
+        }
+
         try {
             $selectedOrders = OrderHdr::whereIn('id', $this->selectedOrderIds)->get();
             $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();

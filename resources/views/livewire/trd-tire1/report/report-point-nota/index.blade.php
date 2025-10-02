@@ -123,7 +123,7 @@
                                     <thead>
                                         {{-- baris grup header --}}
                                         <tr>
-                                            <th colspan="3"
+                                            <th colspan="4"
                                                 style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-right:1px dashed #000; border-left:1px solid #000; border-top: 1px solid #000;">
                                                 Nama / Alamat Pelanggan
                                             </th>
@@ -140,7 +140,11 @@
                                         {{-- baris sub-header --}}
                                         <tr>
                                             <th
-                                                style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-left:1px solid #000; width: 15%;">
+                                                style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; border-left:1px solid #000; width: 100px; min-width: 100px; max-width: 100px;">
+                                                Tgl. Nota
+                                            </th>
+                                            <th
+                                                style="text-align:left; padding:4px 8px; border-bottom:1px solid #000; width: 12%;">
                                                 No. Nota
                                             </th>
                                             <th
@@ -172,7 +176,9 @@
                                             {{-- Detail per nota --}}
                                             @foreach ($group['details'] as $row)
                                                 <tr>
-                                                    <td style="padding:4px 8px; border-left:1px solid #000;">
+                                                    <td style="padding:4px 8px; border-left:1px solid #000; width: 100px; min-width: 100px; max-width: 100px; white-space: nowrap;">
+                                                        {{ $row->tgl_nota ? \Carbon\Carbon::parse($row->tgl_nota)->format('d-M-Y') : '-' }}</td>
+                                                    <td style="padding:4px 8px;">
                                                         {{ $row->no_nota }}</td>
                                                     <td style="padding:4px 8px; text-align:left;">
                                                         {{ $row->kode_brg }}</td>
@@ -194,7 +200,7 @@
                                             @endforeach
                                             {{-- Summary per customer --}}
                                             <tr>
-                                                <td colspan="3"
+                                                <td colspan="4"
                                                     style="padding:6px 8px;  font-weight:bold; border-left:1px solid #000; text-align:center;{{ $loop->last ? ' border-bottom:1px solid #000;' : '' }}">
                                                     {{ $group['customer'] }}
                                                 </td>

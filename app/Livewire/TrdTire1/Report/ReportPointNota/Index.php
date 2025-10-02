@@ -107,6 +107,7 @@ class Index extends BaseComponent
 
         $query = "
             SELECT
+                oh.tr_date AS tgl_nota,
                 oh.tr_code AS no_nota,
                 od.matl_code AS kode_brg,
                 od.matl_descr AS nama_barang,
