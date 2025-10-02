@@ -35,8 +35,9 @@
 
                     {{-- Cookie Management Section for TrdTire1 OTP Groups --}}
                     @if($showCookieManagement)
+                    <div class="row">
                           <x-ui-card title="🍪 Device Trust Cookie Management" class="mt-4 border border-info">
-
+                            <div>
                                 <div class="alert alert-info">
                                     <h6><i class="fas fa-info-circle"></i> Informasi Cookie</h6>
                                     <p class="mb-2">Konfigurasi ini terkait dengan sistem OTP. Anda dapat mengelola device trust cookie untuk testing dan debugging.</p>
@@ -115,7 +116,9 @@
                                     </ul>
                                 </small>
                             </div>
+                        </div>
                         </x-ui-card>
+                    </div>
                     @endif
                 </x-ui-card>
             </div>
@@ -123,7 +126,6 @@
 
         @include('layout.customs.form-footer')
     </x-ui-page-card>
-</div>
 
 <script>
     document.addEventListener('livewire:initialized', () => {
@@ -237,3 +239,5 @@
         background-color: #f8f9fa;
     }
 </style>
+
+</div>
