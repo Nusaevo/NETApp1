@@ -54,7 +54,20 @@
                         @endif
                         <div class="row">
                             <div class="col-sm-6">
-                            <x-ui-text-field-search type="int" label='{{ $this->trans("partner") }}' clickEvent="" model="materials.partner_id" :selectedValue="$materials['partner_id']" :enabled="$panelEnabled" :options="$partners" required="true" :action="$actionValue" onChanged="onPartnerChanged" />
+                            <x-ui-dropdown-search
+                                label="{{ $this->trans('partner') }}"
+                                model="materials.partner_id"
+                                query="SELECT id, code, name FROM partners WHERE deleted_at IS NULL AND grp='C' "
+                                connection="TrdJewel1"
+                                optionValue="id"
+                                optionLabel="{code},{name}"
+                                placeHolder="Type to search partners..."
+                                :selectedValue="$materials['partner_id']"
+                                required="true"
+                                :action="$actionValue"
+                                :enabled="$panelEnabled"
+                                type="int"
+                                onChanged="onPartnerChanged" />
                             </div>
                         </div>
 

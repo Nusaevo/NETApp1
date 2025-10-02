@@ -15,8 +15,19 @@
                     <x-ui-padding>
                         <div class="row">
                             <x-ui-text-field label="Tgl Transaksi" model="inputs.tr_date" type="date" :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
-                            <x-ui-text-field-search type="int" label='{{ $this->trans("partner") }}' clickEvent="" model="inputs.partner_id" :selectedValue="$inputs['partner_id']"
-                                :options="$partners" required="true" :action="$actionValue" :enabled="$isPanelEnabled" />
+                            <x-ui-dropdown-search
+                                label="{{ $this->trans('customer') }}"
+                                model="inputs.partner_id"
+                                query="SELECT id, code, name FROM partners WHERE deleted_at IS NULL AND grp='C'"
+                                connection="TrdJewel1"
+                                optionValue="id"
+                                optionLabel="{code},{name}"
+                                placeHolder="Type to search customers..."
+                                :selectedValue="$inputs['partner_id']"
+                                required="true"
+                                :action="$actionValue"
+                                :enabled="$isPanelEnabled"
+                                type="int" />
                         </div>
 
                     </x-ui-padding>

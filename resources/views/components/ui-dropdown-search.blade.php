@@ -247,6 +247,38 @@
                         $(selectElement).on('select2:clear', function () {
                             const blankValue = '{{ $blankValue }}';
                             @this.set('{{ $model }}', blankValue);
+
+                            // Trigger onChanged event when clearing
+                            @if (isset($onChanged) && $onChanged)
+                                let onChanged = '{{ $onChanged }}';
+                                if (onChanged.includes('$event.target.value')) {
+                                    onChanged = onChanged.replace('$event.target.value', blankValue);
+                                }
+                                if (onChanged.includes('(')) {
+                                    const matches = onChanged.match(/^([\w.]+)\((.*)\)$/);
+                                    if (matches) {
+                                        const methodName = matches[1];
+                                        const params = matches[2]
+                                            .split(',')
+                                            .map(param => param.trim())
+                                            .filter(param => param !== '');
+
+                                        // Replace parameter values
+                                        const processedParams = params.map(param => {
+                                            if (param === '$event.target.value') {
+                                                return blankValue;
+                                            }
+                                            return param;
+                                        });
+
+                                        $wire.call(methodName, ...processedParams);
+                                    } else {
+                                        // console.error(`Invalid onChanged format: ${onChanged}`);
+                                    }
+                                } else {
+                                    $wire.call(onChanged, blankValue);
+                                }
+                            @endif
                         });
 
                     // console.log(`Select2 initialized for #{{ $id }}`, {

@@ -110,6 +110,50 @@ class Detail extends BaseComponent
         }
     }
 
+    /**
+     * Refresh only newly saved items instead of full retrieveMaterials for better performance
+     */
+    protected function refreshNewlySavedItems()
+    {
+        if ($this->object && !empty($this->newItems)) {
+            // Get only the newly added items from database
+            $newItemIds = array_column($this->newItems, 'matl_id');
+            $newDetails = ReturnDtl::GetByOrderHdr($this->object->id, $this->trType)
+                ->whereIn('matl_id', $newItemIds)
+                ->orderBy('tr_seq')
+                ->get();
+
+            // Update the input_details with fresh data for new items only
+            foreach ($newDetails as $detail) {
+                $existingIndex = array_search($detail->matl_id, array_column($this->input_details, 'matl_id'));
+                if ($existingIndex !== false) {
+                    $this->input_details[$existingIndex] = populateArrayFromModel($detail);
+                    $this->input_details[$existingIndex]['name'] = $detail->Material->name;
+                    $this->input_details[$existingIndex]['id'] = $detail->id;
+                    $this->input_details[$existingIndex]['selling_price'] = ($detail->OrderDtl->price);
+                    $this->input_details[$existingIndex]['sub_total'] = $detail->amt;
+                    $this->input_details[$existingIndex]['barcode'] = $detail->Material->MatlUom[0]->barcode;
+                    $this->input_details[$existingIndex]['image_path'] = $detail->Material->Attachment->first() ? $detail->Material->Attachment->first()->getUrl() : null;
+                }
+            }
+
+            // Clear the new items array after refresh
+            $this->newItems = [];
+            $this->countTotalAmount();
+        }
+    }
+
+    /**
+     * Refresh after deleting specific item
+     */
+    protected function refreshAfterDelete($deletedIndex)
+    {
+        // Simply remove from array and reindex - no need to query database
+        unset($this->input_details[$deletedIndex]);
+        $this->input_details = array_values($this->input_details);
+        $this->countTotalAmount();
+    }
+
     public function onReset()
     {
         $this->reset('inputs');
@@ -154,8 +198,7 @@ class Detail extends BaseComponent
         }
         $this->object->fill($this->inputs);
         if ($this->object->tr_id === null || $this->object->tr_id == 0) {
-            $configSnum = ConfigSnum::where('app_code', '=', $this->appCode)
-                ->where('code', '=',  "BUYBACK_LASTID")
+            $configSnum = ConfigSnum::where('code', '=',  "BUYBACK_LASTID")
                 ->first();
             if ($configSnum != null) {
                 $stepCnt = $configSnum->step_cnt;
@@ -192,7 +235,9 @@ class Detail extends BaseComponent
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
         }
-        $this->retrieveMaterials();
+
+        // Only refresh newly saved items instead of full retrieveMaterials
+        $this->refreshNewlySavedItems();
         $this->searchMaterials();
     }
 
@@ -300,9 +345,9 @@ class Detail extends BaseComponent
                 $returnDtl->forceDelete();
             }
         }
-        unset($this->input_details[$index]);
-        $this->input_details = array_values($this->input_details);
-        $this->countTotalAmount();
+
+        // Use optimized refresh method for deletion
+        $this->refreshAfterDelete($index);
     }
     public function saveCheck()
     {

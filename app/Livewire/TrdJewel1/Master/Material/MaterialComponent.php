@@ -160,7 +160,6 @@ class MaterialComponent extends BaseComponent
         $this->sideMaterialGemStone = $this->masterService->getMatlSideMaterialGemstoneData();
         $this->sideMaterialJewelPurity = $this->masterService->getMatlSideMaterialPurityData();
         $this->sideMaterialJewelOrigins = $this->masterService->getMatlSideMaterialOriginData();
-        $this->partners = $this->masterService->getCustomers();
 
 
         if ($this->isEditOrView()) {

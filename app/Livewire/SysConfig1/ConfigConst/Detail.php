@@ -188,7 +188,7 @@ class Detail extends BaseComponent
 
         // Force re-read from current request
         $this->deviceTrustStatus = $this->otpService->isDeviceTrusted();
-        
+
         // Get fresh cookie value from request
         $cookieValue = request()->cookie(OtpService::DEVICE_TRUST_COOKIE);
 
@@ -196,10 +196,9 @@ class Detail extends BaseComponent
             'device_trust_cookie' => OtpService::DEVICE_TRUST_COOKIE,
             'is_trusted' => $this->deviceTrustStatus,
             'cookie_lifetime' => OtpService::COOKIE_LIFETIME_DAYS . ' hari',
-            'cookie_lifetime_days' => OtpService::COOKIE_LIFETIME_DAYS,
             'cookie_value' => $cookieValue ?? 'Tidak ada',
         ];
-        
+
         // Force Livewire to re-render the component
         $this->dispatch('$refresh');
     }
@@ -215,13 +214,13 @@ class Detail extends BaseComponent
         }
 
         $this->otpService->clearDeviceTrust();
-        
+
         // Force immediate refresh with delay to allow cookie to be cleared
         $this->dispatch('cookie-updated', ['action' => 'cleared']);
-        
+
         // Refresh cookie info after a small delay
         $this->loadCookieInfo();
-        
+
         $this->dispatch('show-alert', [
             'type' => 'success',
             'message' => '✅ Device trust berhasil dihapus! Device akan memerlukan OTP pada login berikutnya.'
@@ -239,13 +238,13 @@ class Detail extends BaseComponent
         }
 
         $this->otpService->setDeviceAsTrusted();
-        
+
         // Force immediate refresh with delay to allow cookie to be set
         $this->dispatch('cookie-updated', ['action' => 'set']);
-        
+
         // Refresh cookie info after a small delay
         $this->loadCookieInfo();
-        
+
         $this->dispatch('show-alert', [
             'type' => 'success',
             'message' => '🛡️ Device berhasil ditandai sebagai trusted! OTP akan di-skip pada login berikutnya.'
@@ -267,7 +266,7 @@ class Detail extends BaseComponent
             'message' => "🔄 Informasi cookie diperbarui. Status: {$statusText}"
         ]);
     }
-    
+
     /**
      * Force refresh component to get latest cookie state
      */
