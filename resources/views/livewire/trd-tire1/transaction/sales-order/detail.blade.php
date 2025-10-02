@@ -15,6 +15,7 @@
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
                 <div class="row mt-4">
                     <div class="col-md-12">
+
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
@@ -27,11 +28,12 @@
                                             :checked="$inputs['tax_doc_flag']" onChanged="onTaxDocFlagChanged" />
                                     </div>
                                     <div class="row">
+                                        <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
+                                            :action="$actionValue" required="true" :enabled="$isPanelEnabled"
+                                            onChanged="onTrDateChanged" />
                                         <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                             type="code" :action="$actionValue" required="true" clickEvent="trCodeOnClick"
                                             buttonName="Nomor Baru" enabled="false" :buttonEnabled="$isPanelEnabled" />
-                                        <x-ui-text-field label="Tanggal Transaksi" model="inputs.tr_date" type="date"
-                                            :action="$actionValue" required="true" :enabled="$isPanelEnabled" />
                                     </div>
                                     <div class="row">
                                         <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
@@ -117,7 +119,8 @@
                                         <td>
                                             <x-ui-dropdown-search label=""
                                                 model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
-                                                optionValue="id" optionLabel="{code};{name};Stok: {qty_oh};Rsv: {qty_fgi}"
+                                                optionValue="id"
+                                                optionLabel="{code};{name};Stok: {qty_oh};Rsv: {qty_fgi}"
                                                 placeHolder="Select material..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                 :action="$actionValue" enabled="true"
                                                 onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
@@ -178,26 +181,19 @@
                     <br>
                     <x-ui-footer>
                         @if ($actionValue !== 'Create' && isset($object->id))
-                            <x-ui-button :action="$actionValue"
-                                clickEvent="goToPrintNota"
-                                cssClass="btn-primary" loading="true" button-name="Cetak Nota Jual"
-                                iconPath="print.svg" :enabled="($canUpdateAfterPrint || $canPrintNotaButton) ? 'true' : 'false'" />
+                            <x-ui-button :action="$actionValue" clickEvent="goToPrintNota" cssClass="btn-primary"
+                                loading="true" button-name="Cetak Nota Jual" iconPath="print.svg"
+                                :enabled="$canUpdateAfterPrint || $canPrintNotaButton ? 'true' : 'false'" />
 
-                            <x-ui-button :action="$actionValue"
-                                clickEvent="goToPrintSuratJalan"
-                                cssClass="btn-primary" loading="true" button-name="Cetak Surat Jalan"
-                                iconPath="print.svg" :enabled="($canUpdateAfterPrint || $canPrintSuratJalanButton) ? 'true' : 'false'" />
+                            <x-ui-button :action="$actionValue" clickEvent="goToPrintSuratJalan" cssClass="btn-primary"
+                                loading="true" button-name="Cetak Surat Jalan" iconPath="print.svg"
+                                :enabled="$canUpdateAfterPrint || $canPrintSuratJalanButton ? 'true' : 'false'" />
                         @endif
 
-                        <x-ui-button clickEvent="deleteTransaction"
-                            :action="$actionValue"
-                            :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')"
-                            type="delete" enableConfirmationDialog="true" :permissions="$permissions"/>
+                        <x-ui-button clickEvent="deleteTransaction" :action="$actionValue" :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')"
+                            type="delete" enableConfirmationDialog="true" :permissions="$permissions" />
 
-                        <x-ui-button clickEvent="Save"
-                            :action="$actionValue"
-                            type="save"
-                            :enabled="($canUpdateAfterPrint || $canSaveButtonEnabled) ? 'true' : 'false'" />
+                        <x-ui-button clickEvent="Save" :action="$actionValue" type="save" :enabled="$canUpdateAfterPrint || $canSaveButtonEnabled ? 'true' : 'false'" />
                     </x-ui-footer>
                 </div>
 
@@ -212,6 +208,24 @@
             if (revisionField) {
                 revisionField.value = newValue;
             }
+        });
+    });
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputs = document.querySelectorAll("input");
+
+        inputs.forEach((input, index) => {
+            input.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    e.preventDefault(); // cegah submit
+                    let next = inputs[index + 1];
+                    if (next) {
+                        next.focus(); // pindah ke field berikutnya
+                    } else {
+                        // kalau sudah di input terakhir, submit form
+                        this.form.submit();
+                    }
+                }
+            });
         });
     });
 </script>

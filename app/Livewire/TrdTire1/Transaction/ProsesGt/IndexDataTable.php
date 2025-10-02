@@ -12,7 +12,6 @@ use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
-use App\Services\TrdTire1\Master\MasterService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -21,7 +20,6 @@ class IndexDataTable extends BaseDataTableComponent
     public $deletedRemarks = [];
     public $filters = [];
     public $materialBrand = [];
-    protected $masterService;
     protected $listeners = [
         'refreshTable' => 'render',
         'onSrCodeChanged',
@@ -32,9 +30,14 @@ class IndexDataTable extends BaseDataTableComponent
         $this->setSearchDisabled();
         $this->setDefaultSort('orderHdr.tr_code', 'desc');
 
-        // Inisialisasi MasterService dan ambil data brand
-        $this->masterService = new MasterService();
-        $this->materialBrand = $this->masterService->getMatlBrandOptionsForSelectFilter();
+        // Set specific brands from sales_rewards table
+        $this->materialBrand = [
+            '' => 'All',
+            'GT RADIAL' => 'GTR - GT RADIAL',
+            'GAJAH TUNGGAL' => 'GTL - GAJAH TUNGGAL',
+            'IRC' => 'IRC - IRC',
+            'ZENEOS' => 'ZN - ZENEOS'
+        ];
         // dd(request()->query('table-filters'));
 
     }

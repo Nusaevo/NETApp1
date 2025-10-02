@@ -99,6 +99,7 @@ class Detail extends BaseComponent
         'refreshData'   => 'refreshData',
         'onTaxPayerChanged' => 'onTaxPayerChanged',
         'salesTypeOnChanged' => 'salesTypeOnChanged', // tambahkan listener baru
+        'onTrDateChanged' => 'onTrDateChanged', // listener untuk perubahan tr_date
     ];
     public function openNpwpDialogBox()
     {
@@ -285,6 +286,9 @@ class Detail extends BaseComponent
             $this->inputs['tax_doc_flag'] = true;
             $this->inputs['tax_code'] = 'I';
             $this->inputs['print_remarks'] = '0.0';
+
+            // Set default payment term to COD
+            $this->setDefaultPaymentTerm();
         }
         if (!empty($this->inputs['tax_code'])) {
             $this->onSOTaxChange();
@@ -307,7 +311,7 @@ class Detail extends BaseComponent
 
     private function updateAfterPrintPermission(): void
     {
-        \Log::info('updateAfterPrintPermission called');
+        Log::info('updateAfterPrintPermission called');
 
         // Cek apakah ada cetakan (nota atau surat jalan)
         $notaCount = 0;
@@ -332,7 +336,7 @@ class Detail extends BaseComponent
         $this->canUpdateAfterPrint = ((int)($num1 ?? 0)) === 1;
 
         // Debug log untuk cek izin
-        \Log::info('Permission Debug:', [
+        Log::info('Permission Debug:', [
             'userId' => $userId,
             'num1' => $num1,
             'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
@@ -372,7 +376,7 @@ class Detail extends BaseComponent
         $this->canSaveButtonEnabled = ($notaCount === 0 && $suratCount === 0);
 
         // Debug log
-        \Log::info('Button States Debug:', [
+        Log::info('Button States Debug:', [
             'notaCount' => $notaCount,
             'suratCount' => $suratCount,
             'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
@@ -403,6 +407,9 @@ class Detail extends BaseComponent
         $this->inputs['curr_id'] = app(ConfigService::class)->getConstIdByStr1('BASE_CURRENCY', $this->inputs['curr_code']);
         $this->inputs['curr_rate'] = 1.00;
         $this->inputs['print_remarks'] = ['nota' => 0, 'surat_jalan' => 0];
+
+        // Set default payment term to COD
+        $this->setDefaultPaymentTerm();
 
         // Reset npwpDetails
         $this->npwpDetails = [
@@ -549,9 +556,17 @@ class Detail extends BaseComponent
             $this->dispatch('error', 'Silakan pilih Tipe Kendaraan terlebih dahulu sebelum generate Nomor.');
             return;
         }
+
+        // Tambahkan pengecekan tr_date
+        if (empty($this->inputs['tr_date'])) {
+            $this->dispatch('error', 'Silakan pilih Tanggal Transaksi terlebih dahulu sebelum generate Nomor.');
+            return;
+        }
+
         $salesType = $this->inputs['sales_type'];
         $taxDocFlag = !empty($this->inputs['tax_doc_flag']);
-        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag);
+        $trDate = $this->inputs['tr_date'];
+        $this->inputs['tr_code'] = app(MasterService::class)->getNewTrCode($this->trType,$salesType,$taxDocFlag,$trDate);
     }
 
     public function onSOTaxChange()
@@ -1141,6 +1156,44 @@ class Detail extends BaseComponent
         }
     }
 
+    public function onTrDateChanged()
+    {
+        // Reset tr_code jika tr_date diubah, karena tr_code bergantung pada bulan
+        if ($this->actionValue === 'Create' && !empty($this->inputs['tr_code'])) {
+            // Cek apakah bulan dari tr_date berbeda dengan bulan saat ini
+            $currentMonth = date('n');
+            $trDateMonth = null;
+
+            if (!empty($this->inputs['tr_date'])) {
+                $trDateMonth = \Carbon\Carbon::parse($this->inputs['tr_date'])->month;
+            }
+
+            // Reset tr_code jika bulan berbeda atau jika belum ada tr_date
+            if ($trDateMonth !== $currentMonth) {
+                $this->inputs['tr_code'] = '';
+                $this->dispatch('info', 'Nomor transaksi di-reset karena tanggal berubah ke bulan yang berbeda.');
+            }
+        }
+
+        // Update due_date berdasarkan payment_term yang dipilih
+        if (!empty($this->inputs['payment_term_id'])) {
+            $this->onPaymentTermChanged();
+        }
+    }
+
+    private function setDefaultPaymentTerm()
+    {
+        $cod = ConfigConst::where('const_group', 'MPAYMENT_TERMS')->where('str1', 'COD')->first();
+        if ($cod) {
+            $this->inputs['payment_term_id'] = $cod->id;
+            $this->inputs['payment_term'] = $cod->str1;
+            $this->inputs['payment_due_days'] = $cod->num1;
+            if (!empty($this->inputs['tr_date'])) {
+                $this->inputs['due_date'] = \Carbon\Carbon::parse($this->inputs['tr_date'])->addDays($cod->num1)->format('Y-m-d');
+            }
+        }
+    }
+
     public function onNpwpSelectionChanged($npwpCode)
     {
         $partner = Partner::find($this->inputs['partner_id']);
@@ -1284,6 +1337,11 @@ class Detail extends BaseComponent
         // $this->validateOnly($propertyName);
         if ($propertyName === 'input_details') {
             $this->checkDeliveryStatus();
+        }
+
+        // Deteksi perubahan tr_date dan reset tr_code jika bulan berubah
+        if ($propertyName === 'inputs.tr_date') {
+            $this->onTrDateChanged();
         }
     }
 
