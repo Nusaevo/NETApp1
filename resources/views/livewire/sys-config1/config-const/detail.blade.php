@@ -34,7 +34,7 @@
                         required="false" visible="true" />
 
                     {{-- Cookie Management Section for TrdTire1 OTP Groups --}}
-                    @if($showCookieManagement)
+                    @if($showCookieManagement && $actionValue == 'Edit')
                     <div class="row">
                           <x-ui-card title="🍪 Device Trust Cookie Management" class="mt-4 border border-info">
                             <div>
