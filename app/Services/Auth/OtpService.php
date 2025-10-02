@@ -22,7 +22,13 @@ class OtpService extends BaseService
         // Use SysConfig1 connection for user operations
         $this->setConfigConnection(Constant::configConn()); // SysConfig1 for users
         // Use TrdTire1 connection only for getting email configuration
-        $this->setMainConnection('TrdTire1'); // TrdTire1 for email config lookup only
+       try {
+            $this->setMainConnection('TrdTire1'); // TrdTire1 for email config lookup only
+        } catch (\Exception $e) {
+            // If TrdTire1 connection is not available, fall back to SysConfig1
+            // This prevents errors when users don't have access to TrdTire1
+            $this->setMainConnection(Constant::configConn());
+        }
     }
     /**
      * Generate and send OTP to authorized emails
