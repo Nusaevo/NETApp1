@@ -8,6 +8,7 @@ use PhpOffice\PhpSpreadsheet\Style\Protection as StyleProtection;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 
@@ -94,7 +95,10 @@ class GenericExcelExport
             if (!empty($sheetData['title'])) {
                 $sheet->setCellValue('A' . $currentRow, $sheetData['title']);
                 $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(16);
-                $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Use custom title alignment if provided, otherwise default to center
+                $titleAlignment = $sheetData['titleAlignment'] ?? Alignment::HORIZONTAL_CENTER;
+                $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal($titleAlignment);
                 $currentRow++;
             }
 
@@ -102,7 +106,10 @@ class GenericExcelExport
             if (!empty($sheetData['subtitle'])) {
                 $sheet->setCellValue('A' . $currentRow, $sheetData['subtitle']);
                 $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(12);
-                $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Use custom subtitle alignment if provided, otherwise default to center
+                $subtitleAlignment = $sheetData['subtitleAlignment'] ?? Alignment::HORIZONTAL_CENTER;
+                $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal($subtitleAlignment);
                 $currentRow++;
             }
 
@@ -111,19 +118,32 @@ class GenericExcelExport
                 $currentRow++;
             }
 
-            // Add headers
-            $this->addHeaders($sheet, $sheetData['headers'], $sheetData['protectedColumns'] ?? [], $currentRow);
+            // Add headers (only if headers are provided)
+            if (!empty($sheetData['headers'])) {
+                $this->addHeaders($sheet, $sheetData['headers'], $sheetData['protectedColumns'] ?? [], $currentRow);
+                $dataStartRow = $currentRow + 1;
+            } else {
+                $dataStartRow = $currentRow;
+            }
 
             // Add data
-            $dataStartRow = $currentRow + 1;
             if (!empty($sheetData['data'])) {
                 $sheet->fromArray($sheetData['data'], null, 'A' . $dataStartRow);
-            } else {
+            } else if (!empty($sheetData['headers'])) {
                 $sheet->fromArray([array_fill(0, count($sheetData['headers']), '')], null, 'A' . $dataStartRow);
             }
 
             // Adjust column widths dynamically
-            $this->adjustColumnWidths($sheet, $sheetData['headers']);
+            if (!empty($sheetData['columnWidths'])) {
+                $this->setCustomColumnWidths($sheet, $sheetData['columnWidths']);
+            } else {
+                $this->adjustColumnWidths($sheet, $sheetData['headers']);
+            }
+
+            // Apply custom row styling if provided
+            if (!empty($sheetData['rowStyles'])) {
+                $this->applyRowStyles($sheet, $sheetData['rowStyles'], $dataStartRow);
+            }
 
             // Protect specific columns
             if($sheetData['allowInsert'] == false)
@@ -247,6 +267,110 @@ class GenericExcelExport
             $adjustedWidth = max($minWidth, $calculatedWidth);
 
             $sheet->getColumnDimension($column)->setWidth($adjustedWidth);
+        }
+    }
+
+    /**
+     * Set custom column widths.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet The worksheet object.
+     * @param array $columnWidths Array of column widths where key is column letter and value is width.
+     */
+    private function setCustomColumnWidths($sheet, array $columnWidths)
+    {
+        foreach ($columnWidths as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
+        }
+    }
+
+    /**
+     * Apply custom styling to specific rows.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet The worksheet object.
+     * @param array $rowStyles Array of row styling configurations.
+     * @param int $dataStartRow The starting row number for data.
+     */
+    private function applyRowStyles($sheet, array $rowStyles, int $dataStartRow)
+    {
+        foreach ($rowStyles as $rowStyle) {
+            $rowNumber = $dataStartRow + $rowStyle['rowIndex'];
+
+            $style = [];
+
+            // Apply border styling
+            if (!empty($rowStyle['borderTop'])) {
+                $style['borders']['top'] = [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ];
+            }
+
+            if (!empty($rowStyle['borderBottom'])) {
+                $style['borders']['bottom'] = [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ];
+            }
+
+            if (!empty($rowStyle['borderLeft'])) {
+                $style['borders']['left'] = [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ];
+            }
+
+            if (!empty($rowStyle['borderRight'])) {
+                $style['borders']['right'] = [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ];
+            }
+
+            if (!empty($rowStyle['borderAll'])) {
+                $style['borders']['allBorders'] = [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ];
+            }
+
+            // Apply font styling
+            if (!empty($rowStyle['bold'])) {
+                $style['font']['bold'] = true;
+            }
+
+            // Apply background color
+            if (!empty($rowStyle['backgroundColor'])) {
+                $style['fill'] = [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => $rowStyle['backgroundColor']]
+                ];
+            }
+
+            // Apply number format
+            if (!empty($rowStyle['numberFormat'])) {
+                $style['numberFormat']['formatCode'] = $rowStyle['numberFormat'];
+            }
+
+            if (!empty($style)) {
+                // Check if specific cells are defined
+                if (!empty($rowStyle['specificCells'])) {
+                    // Apply styling to specific cells only
+                    foreach ($rowStyle['specificCells'] as $column) {
+                        $cellRange = $column . $rowNumber;
+                        $sheet->getStyle($cellRange)->applyFromArray($style);
+                    }
+                } elseif (!empty($rowStyle['rangeColumns'])) {
+                    // Apply styling to a range of columns
+                    $startColumn = $rowStyle['rangeColumns'][0];
+                    $endColumn = $rowStyle['rangeColumns'][1];
+                    $range = $startColumn . $rowNumber . ':' . $endColumn . $rowNumber;
+                    $sheet->getStyle($range)->applyFromArray($style);
+                } else {
+                    // Apply to entire row or custom range
+                    $range = $rowStyle['range'] ?? 'A' . $rowNumber . ':' . $sheet->getHighestColumn() . $rowNumber;
+                    $sheet->getStyle($range)->applyFromArray($style);
+                }
+            }
         }
     }
 }

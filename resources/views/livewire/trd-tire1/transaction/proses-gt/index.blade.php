@@ -82,6 +82,13 @@
             Livewire.on('close-modal-proses-nota', event => {
                 $('#modalProsesNota').modal('hide');
             });
+
+            // Listener untuk refresh page setelah transfer berhasil
+            Livewire.on('refreshPage', event => {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500); // Delay 1.5 detik untuk menampilkan notifikasi sukses
+            });
         });
     </script>
 @endpush

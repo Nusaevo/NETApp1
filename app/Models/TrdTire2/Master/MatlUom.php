@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Models\TrdTire2\Master;
+
+use App\Models\Base\BaseModel;
+use Illuminate\Support\Carbon;
+use App\Models\TrdTire2\Inventories\IvtBal;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\TrdTire2\Inventories\IvtBalUnit;
+
+class MatlUom extends BaseModel
+{
+    protected $table = 'matl_uoms';
+    use SoftDeletes;
+
+    protected $fillable = [
+        'matl_uom',
+        'matl_id',
+        'matl_code',
+        'reff_uom',
+        'reff_factor',
+        'base_factor',
+        'price_grp',
+        'barcode',
+        'qty_oh',
+        'qty_fgr',
+        'qty_fgi',
+        'selling_price',
+        'last_buying_price',
+        'last_buying_date'
+        // 'initial_qty_fgr' // Pastikan field ini ada jika diperlukan
+    ];
+
+    protected $casts = [
+        'matl_id' => 'integer',
+        'reff_factor' => 'float',
+        'base_factor' => 'float',
+        'qty_oh' => 'float',
+        'qty_fgr' => 'float',
+        'qty_fgi' => 'float',
+        'selling_price' => 'float',
+        'last_buying_price' => 'float',
+        'last_buying_date' => 'datetime',
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+    }
+
+    public function Material()
+    {
+        return $this->belongsTo(Material::class, 'matl_id');
+    }
+
+    public function ivtBal()
+    {
+        return $this->hasMany(IvtBal::class, 'matl_id');
+    }
+
+    public function ivtBalUnit()
+    {
+        return $this->hasMany(IvtBalUnit::class, 'matl_id');
+    }
+
+    public function scopeFindMaterialId($query, $matl_id)
+    {
+        return $query->where('matl_id', $matl_id);
+    }
+
+    public static function updLastBuyingPrice(
+        int $matlId,
+        string $matlUom,
+        float $lastBuyingPrice,
+        string|Carbon $lastBuyingDate
+    ): void {
+        $matlUomRec = self::where([
+            'matl_id'  => $matlId,
+            'matl_uom' => $matlUom,
+        ])->first();
+        if ($matlUomRec) {
+            if (is_null($matlUomRec->last_buying_date) || $lastBuyingDate >= $matlUomRec->last_buying_date) {
+                $matlUomRec->update([
+                    'last_buying_price' => $lastBuyingPrice,
+                    'last_buying_date' => $lastBuyingDate,
+                ]);
+            }
+        }
+    }
+}
