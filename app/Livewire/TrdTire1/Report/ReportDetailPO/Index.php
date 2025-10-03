@@ -5,6 +5,9 @@ namespace App\Livewire\TrdTire1\Report\ReportDetailPO;
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session};
 use App\Models\TrdTire1\Master\Partner;
+use App\Models\Util\GenericExcelExport;
+use Illuminate\Support\Carbon;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class Index extends BaseComponent
 {
@@ -192,5 +195,169 @@ class Index extends BaseComponent
     public function resetResult()
     {
         $this->results = [];
+    }
+
+    public function downloadExcel()
+    {
+        // Validasi: pastikan ada data untuk di-export
+        if (empty($this->results)) {
+            $this->dispatch('notify-swal', [
+                'type' => 'warning',
+                'message' => 'Tidak ada data untuk di-export. Mohon lakukan pencarian terlebih dahulu.'
+            ]);
+            return;
+        }
+
+        try {
+            // Siapkan data untuk Excel
+            $excelData = [];
+            $rowStyles = [];
+            $currentRowIndex = 0;
+
+            foreach ($this->results as $nota) {
+                // Hitung subtotal untuk nota ini
+                $subTotalAmount = 0;
+                foreach ($nota['items'] as $item) {
+                    $subTotalAmount += $item['total'];
+                }
+                $ppn = round($subTotalAmount * 0.11, 0);
+                $grandTotal = $subTotalAmount + $ppn;
+
+                // Tambahkan header nota (baris kuning) - baris pertama dengan label
+                $excelData[] = [
+                    'No. Nota',
+                    'T. Order',
+                    'Nama Supplier',
+                    '',
+                    '',
+                    'Total',
+                    'PPN',
+                    'Total Nota'
+                ];
+
+                // Styling untuk header labels (background kuning)
+                $rowStyles[] = [
+                    'rowIndex' => $currentRowIndex,
+                    'backgroundColor' => 'FFF6B1', // Kuning muda
+                    'bold' => true,
+                    'borderTop' => true,
+                    'borderBottom' => false
+                ];
+                $currentRowIndex++;
+
+                // Tambahkan nilai header nota - baris kedua dengan nilai
+                $excelData[] = [
+                    $nota['no_nota'],
+                    $nota['tgl_nota'] ? Carbon::parse($nota['tgl_nota'])->format('d-M-y') : '',
+                    $nota['nama_customer'],
+                    '',
+                    '',
+                   $subTotalAmount,
+                   $ppn,
+                   $grandTotal,
+                ];
+
+                // Styling untuk header values (background kuning)
+                $rowStyles[] = [
+                    'rowIndex' => $currentRowIndex,
+                    'backgroundColor' => 'FFF6B1', // Kuning muda
+                    'bold' => true,
+                    'borderTop' => false,
+                    'borderBottom' => true
+                ];
+                $currentRowIndex++;
+
+                // Tambahkan header kolom detail
+                $excelData[] = [
+                    'Kode Brg.',
+                    'Nama Barang',
+                    'Order',
+                    'Harga',
+                    'Disc.',
+                    'Total',
+                    'Kirim',
+                    'Sisa'
+                ];
+
+                // Styling untuk header kolom detail
+                $rowStyles[] = [
+                    'rowIndex' => $currentRowIndex,
+                    'bold' => true,
+                    'borderTop' => true
+                ];
+                $currentRowIndex++;
+
+                // Tambahkan data items
+                foreach ($nota['items'] as $item) {
+                    $excelData[] = [
+                        $item['kode'],
+                        $item['nama_barang'],
+                       $item['qty'],
+                       $item['harga'],
+                       $item['disc'],
+                       $item['total'],
+                       $item['kirim'],
+                        $item['sisa'],
+                    ];
+                    $currentRowIndex++;
+                }
+
+                // Tambahkan baris kosong sebagai pemisah antar nota
+                $excelData[] = ['', '', '', '', '', '', '', ''];
+                $currentRowIndex++;
+            }
+
+            // Buat title dan subtitle
+            $title = 'LAPORAN ORDER BARANG';
+            $subtitle = 'Periode: ' .
+                ($this->startCode ? Carbon::parse($this->startCode)->format('d-M-Y') : '-') .
+                ' s/d ' .
+                ($this->endCode ? Carbon::parse($this->endCode)->format('d-M-Y') : '-');
+
+            // Tambahkan filter info jika ada
+            if ($this->filterPartner || $this->filterBrand) {
+                $filters = [];
+                if ($this->filterPartner) {
+                    $partner = Partner::find($this->filterPartner);
+                    $filters[] = $partner ? $partner->name : 'Supplier Tidak Ditemukan';
+                }
+                if ($this->filterBrand) {
+                    $filters[] = 'Brand: ' . $this->filterBrand;
+                }
+                $subtitle .= ' | ' . implode(' | ', $filters);
+            }
+
+            // Konfigurasi sheet Excel
+            $sheets = [[
+                'name' => 'Laporan_Order_Barang',
+                'headers' => [], // Kosongkan headers karena kita buat custom header sendiri
+                'data' => $excelData,
+                'protectedColumns' => [],
+                'allowInsert' => false,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'titleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'subtitleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'rowStyles' => $rowStyles,
+                'columnWidths' => [
+                    'A' => 15,  // Kode Brg.
+                    'B' => 35,  // Nama Barang
+                    'C' => 12,  // Order
+                    'D' => 15,  // Harga
+                    'E' => 10,  // Disc.
+                    'F' => 15,  // Total
+                    'G' => 12,  // Kirim
+                    'H' => 12   // Sisa
+                ],
+            ]];
+
+            $filename = 'Laporan_Order_Barang_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+            return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
+
+        } catch (\Exception $e) {
+            $this->dispatch('error', 'Error generating Excel: ' . $e->getMessage());
+            return;
+        }
     }
 }

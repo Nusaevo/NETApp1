@@ -12,6 +12,8 @@ use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
+use App\Services\TrdTire1\TransferService;
+use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -32,11 +34,11 @@ class IndexDataTable extends BaseDataTableComponent
 
         // Set specific brands from sales_rewards table
         $this->materialBrand = [
-            '' => 'All',
-            'GT RADIAL' => 'GTR - GT RADIAL',
-            'GAJAH TUNGGAL' => 'GTL - GAJAH TUNGGAL',
-            'IRC' => 'IRC - IRC',
-            'ZENEOS' => 'ZN - ZENEOS'
+            '' => 'Pilih Merk ...',
+            'GT RADIAL' => 'GT RADIAL',
+            'GAJAH TUNGGAL' => ' GAJAH TUNGGAL',
+            'IRC' => 'IRC',
+            'ZENEOS' => 'ZENEOS'
         ];
         // dd(request()->query('table-filters'));
 
@@ -93,14 +95,14 @@ class IndexDataTable extends BaseDataTableComponent
                 ->label(fn($row) => ($row->gt_tr_code))
                 ->sortable(),
             Column::make('Custommer Point', 'gt_partner_code')
-                ->label(fn($row) => $row->gt_partner_code ? $row->gt_partner_code . ' - ' . ($row->orderHdr->Partner->city ?? '') : '')
+                ->label(fn($row) => $row->gt_partner_code ? $row->gt_partner_code : '')
                 ->sortable(),
             Column::make('Tgl Proses GT', 'gt_process_date')
                 ->sortable(),
             Column::make('CID Point', 'gt_partner_code')
                 ->label(fn($row) => $row->gt_partner_code ? ($row->orderHdr->Partner->code ?? '') : '') // Show code only if gt_partner_code is filled
                 ->sortable(),
-            Column::make('CID Note', 'orderHdr.partner_code')
+            Column::make('CID Nota', 'orderHdr.partner_code')
                 ->label(fn($row) => $row->orderHdr->partner_code ?? '')
                 ->sortable(),
             Column::make($this->trans('action'), 'id')
@@ -167,6 +169,7 @@ class IndexDataTable extends BaseDataTableComponent
             'prosesNotadanPoint' => 'No Nota dan Point',
             'prosesNota' => 'Proses Nota',
             'cetakNota' => 'Cetak Nota',
+            'transferKeCTMS' => 'Transfer ke CTMS',
         ];
     }
     public function getConfigDetails()
@@ -239,6 +242,8 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Refresh page setelah membuka modal
             $this->dispatch('refreshTable');
+        } else {
+            $this->dispatch('error', 'Pilih minimal satu data untuk proses nota dan point.');
         }
     }
 
@@ -271,6 +276,50 @@ class IndexDataTable extends BaseDataTableComponent
         }
 
         $this->dispatch('error', 'Tanggal proses belum dipilih.');
+    }
+
+    public function transferKeCTMS()
+    {
+        if (count($this->getSelected()) == 0) {
+            $this->dispatch('error', 'Pilih minimal satu data untuk ditransfer.');
+            return;
+        }
+
+        try {
+            $transferService = new TransferService();
+
+            // Validasi apakah TrdTire2 tersedia
+            if (!$transferService->isTrdTire2Available()) {
+                $this->dispatch('error', 'Aplikasi TrdTire2 tidak tersedia atau tidak aktif.');
+                return;
+            }
+
+            // Lakukan transfer
+            $results = $transferService->transferOrderToTrdTire2($this->getSelected());
+
+            // Tampilkan hasil
+            if (count($results['success']) > 0) {
+                $successMessage = "Berhasil transfer " . count($results['success']) . " order ke CTMS (TrdTire2).";
+                if (count($results['errors']) > 0) {
+                    $successMessage .= " Terdapat " . count($results['errors']) . " error.";
+                }
+                $this->dispatch('success', $successMessage);
+
+                // Refresh page setelah transfer berhasil
+                $this->dispatch('refreshPage');
+            }
+
+            if (count($results['errors']) > 0) {
+                $errorMessage = "Terjadi error pada transfer:\n" . implode("\n", $results['errors']);
+                $this->dispatch('error', $errorMessage);
+            }
+
+            // Refresh table
+            $this->dispatch('refreshTable');
+
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Terjadi kesalahan saat transfer: ' . $e->getMessage());
+        }
     }
 
     // protected function isFirstFilterApplied(Builder $query): bool

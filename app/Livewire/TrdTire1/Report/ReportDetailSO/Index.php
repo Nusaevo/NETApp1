@@ -5,6 +5,9 @@ namespace App\Livewire\TrdTire1\Report\ReportDetailSO;
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session};
 use App\Models\TrdTire1\Master\Partner;
+use App\Models\Util\GenericExcelExport;
+use Illuminate\Support\Carbon;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class Index extends BaseComponent
 {
@@ -211,5 +214,141 @@ class Index extends BaseComponent
     public function resetResult()
     {
         $this->results = [];
+    }
+
+    public function downloadExcel()
+    {
+        // Validasi: pastikan ada data untuk di-export
+        if (empty($this->results)) {
+            $this->dispatch('notify-swal', [
+                'type' => 'warning',
+                'message' => 'Tidak ada data untuk di-export. Mohon lakukan pencarian terlebih dahulu.'
+            ]);
+            return;
+        }
+
+        try {
+            // Siapkan data untuk Excel
+            $excelData = [];
+            $rowStyles = [];
+            $currentRowIndex = 0;
+
+            foreach ($this->results as $nota) {
+                $isFirstItem = true;
+                $subTotalQty = 0;
+                $subTotalAmount = 0;
+
+                foreach ($nota['items'] as $item) {
+                    $subTotalQty += $item['qty'];
+                    $subTotalAmount += $item['total'];
+
+                    $excelData[] = [
+                        $isFirstItem ? $nota['no_nota'] : '',
+                        $isFirstItem ? ($nota['tgl_nota'] ? \Carbon\Carbon::parse($nota['tgl_nota'])->format('d-M-Y') : '') : '',
+                        $isFirstItem ? $item['wajib_pajak'] : '',
+                        $item['kode'],
+                        $item['nama_barang'],
+                        $item['qty'],
+                        $item['harga'],
+                        $item['disc'],
+                        $item['total'],
+                        $isFirstItem ? $item['s'] : '',
+                        $isFirstItem ? ($item['t_kirim'] ? \Carbon\Carbon::parse($item['t_kirim'])->format('d-M-Y') : '') : '',
+                        $isFirstItem ? ($item['tgl_tagih'] ? \Carbon\Carbon::parse($item['tgl_tagih'])->format('d-M-Y') : '') : '',
+                        $isFirstItem ? ($item['tgl_lunas'] ? \Carbon\Carbon::parse($item['tgl_lunas'])->format('d-M-Y') : '') : '',
+                    ];
+
+                    $currentRowIndex++;
+                    $isFirstItem = false;
+                }
+
+                // Tambahkan baris sub total
+                $excelData[] = [
+                    '',
+                    '',
+                    '',
+                    '',
+                    'Sub Total (' . $nota['no_nota'] . '):',
+                    $subTotalQty,
+                    '',
+                    '',
+                    $subTotalAmount,
+                    '',
+                    '',
+                    '',
+                    '',
+                ];
+
+                // Tambahkan styling untuk baris subtotal (border top dan bold)
+                // Border top dari kolom Qty sampai Total (F sampai I)
+                $rowStyles[] = [
+                    'rowIndex' => $currentRowIndex,
+                    'rangeColumns' => ['F', 'I'], // Dari kolom F sampai I
+                    'borderTop' => true,
+                    'bold' => true
+                ];
+
+                $currentRowIndex++;
+            }
+
+            // Buat title dan subtitle
+            $title = 'DAFTAR NOTA JUAL';
+            $subtitle = 'Periode: ' .
+                ($this->startCode ? \Carbon\Carbon::parse($this->startCode)->format('d-M-Y') : '-') .
+                ' s/d ' .
+                ($this->endCode ? \Carbon\Carbon::parse($this->endCode)->format('d-M-Y') : '-');
+
+            // Tambahkan filter info jika ada
+            if ($this->filterPartner || $this->filterStatus || $this->filterMaterialCode) {
+                $filters = [];
+                if ($this->filterPartner) {
+                    $partner = Partner::find($this->filterPartner);
+                    $filters[] = $partner ? $partner->name : 'Customer Tidak Ditemukan';
+                }
+                if ($this->filterMaterialCode) {
+                    $filters[] = 'Kode: ' . $this->filterMaterialCode;
+                }
+                if ($this->filterStatus) {
+                    $filters[] = ucfirst(str_replace('_', ' ', $this->filterStatus));
+                }
+                $subtitle .= ' | ' . implode(' | ', $filters);
+            }
+
+            // Konfigurasi sheet Excel
+            $sheets = [[
+                'name' => 'Daftar_Nota_Jual',
+                'headers' => [
+                    'No. Nota',
+                    'Tgl Nota',
+                    'Wajib Pajak',
+                    'Kode',
+                    'Nama Barang',
+                    'Qty',
+                    'Harga',
+                    '% Disc',
+                    'Total',
+                    'S',
+                    'Tgl Kirim',
+                    'Tgl Tagih',
+                    'Tgl Lunas'
+                ],
+                'data' => $excelData,
+                'protectedColumns' => [],
+                'allowInsert' => false,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'titleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'subtitleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'rowStyles' => $rowStyles,
+            ]];
+
+            $filename = 'Daftar_Nota_Jual_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+            return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
+
+        } catch (\Exception $e) {
+            $this->dispatch('error', 'Error generating Excel: ' . $e->getMessage());
+            return;
+        }
     }
 }
