@@ -90,7 +90,7 @@ class OtpService extends BaseService
     private function sendOtpEmail($email, $otp, $userName)
     {
         try {
-            $fromEmail = 'onboarding@resend.dev';
+            $fromEmail = 'noreply@nusaevo.com'; // Ganti ke domain yang sudah diverifikasi
             $fromName = 'Nusaevo System';
             $fromField = $fromName . ' <' . $fromEmail . '>';
 
@@ -101,7 +101,7 @@ class OtpService extends BaseService
             Resend::emails()->send([
                 'from' => $fromField,
                 'to' => [$email],
-                'subject' => 'OTP untuk Akses Cahaya Terang',
+                'subject' => 'OTP untuk Akses Nusaevo',
                 'html' => $this->getOtpEmailTemplate($otp, $userName, $deviceInfo, $userInfo)
             ]);
 

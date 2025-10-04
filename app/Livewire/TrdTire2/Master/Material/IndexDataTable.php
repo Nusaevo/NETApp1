@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Livewire\TrdTire2\Master\Material;
+
+use App\Livewire\Component\BaseDataTableComponent;
+use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
+use App\Models\TrdTire2\Master\Material;
+use App\Models\SysConfig1\ConfigRight;
+use App\Enums\Status;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+use App\Services\TrdTire2\Master\MasterService;
+
+class IndexDataTable extends BaseDataTableComponent
+{
+    protected $model = Material::class;
+
+    protected $masterService;
+    public $materialCategory;
+    public $materialBrand;
+
+    public function mount(): void
+    {
+        $this->setSearchDisabled();
+        $this->setFilter('Status', 0);
+        $this->setFilter('stock_filter', 'above_0');
+        $this->setDefaultSort('created_at', 'desc');
+
+        // Inisialisasi masterService dan ambil data kategori material
+        $this->masterService = new MasterService();
+        $this->materialCategory = $this->masterService->getMatlCategoryOptionsForSelectFilter();
+        $this->materialBrand = $this->masterService->getMatlBrandOptionsForSelectFilter();
+    }
+
+    public function builder(): Builder
+    {
+        return Material::with(['MatlUom', 'IvtBal'])
+            ->select('materials.*');
+    }
+
+    public function columns(): array
+    {
+        return [
+            Column::make($this->trans("category"), "category")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("code"), "code")
+                ->format(function ($value, $row) {
+                    return '<a href="' . route($this->appCode . '.Master.Material.Detail', [
+                        'action'   => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->id)
+                    ]) . '">' . $row->code . '</a>';
+                })
+                ->html(),
+            Column::make($this->trans("description_material"), "name")
+                ->searchable()
+                ->sortable(),
+            Column::make($this->trans("selling_price"), "MatlUom.selling_price")
+                ->format(function ($value, $row) {
+                    return rupiah($row->MatlUom?->selling_price ?? 0);
+                })
+                ->sortable(),
+            // kolom uom di tabel material
+            Column::make($this->trans("uom"), "MatlUom.matl_uom")
+                ->format(function ($value, $row) {
+                    return $row->MatlUom?->matl_uom ?? '';
+                })
+                ->searchable()
+                ->sortable(),
+            Column::make('Stock', 'IvtBal.qty_oh')
+                ->format(function ($value, $row, Column $column) {
+                    return $row->IvtBal?->qty_oh ?? 0;
+                })
+                ->searchable()
+                ->sortable(),
+            BooleanColumn::make($this->trans("Status"), "deleted_at")
+                ->setCallback(function ($value) {
+                    return $value === null;
+                }),
+            // Column::make($this->trans('created_date'), 'created_at')
+            //     ->sortable(),
+            Column::make($this->trans('action'), 'id')
+                ->format(function ($value, $row, Column $column) {
+                    return view('layout.customs.data-table-action', [
+                        'row'              => $row,
+                        'custom_actions'   => [],
+                        'enable_this_row'  => true,
+                        'allow_details'    => false,
+                        'allow_edit'       => true,
+                        'allow_disable'    => false,
+                        'allow_delete'     => false,
+                        'permissions'      => $this->permissions
+                    ]);
+                }),
+        ];
+    }
+
+    public function filters(): array
+    {
+        return [
+            // Filter pencarian berdasarkan kode produk
+            SelectFilter::make('Kategori', 'kategori_filter')
+            ->options($this->materialCategory)
+            ->filter(function (Builder $builder, string $value) {
+                if ($value !== '') {
+                    $builder->where('category', '=', $value);
+                }
+            }),
+            SelectFilter::make('Merk', 'brand_filter')
+            ->options($this->materialBrand)
+            ->filter(function (Builder $builder, string $value) {
+                if ($value !== '') {
+                    $builder->where('brand', '=', $value);
+                }
+            }),
+            $this->createTextFilter('Kode Produk', 'code', 'Kode Produk', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            // Filter pencarian berdasarkan field tag dengan LIKE
+            $this->createTextFilter('Nama Barang', 'tag', 'Nama Barang', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(tag)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+            // Filter status
+            SelectFilter::make('Status', 'status_filter')
+                ->options([
+                    'active'  => 'Active',
+                    'deleted' => 'Non Active',
+                ])->filter(function (Builder $builder, string $value) {
+                    if ($value === 'active') {
+                        $builder->whereNull('materials.deleted_at');
+                    } elseif ($value === 'deleted') {
+                        $builder->withTrashed()->whereNotNull('materials.deleted_at');
+                    }
+                }),
+        ];
+    }
+}
