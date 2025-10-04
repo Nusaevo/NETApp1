@@ -18,15 +18,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
+        // Set default sort berdasarkan tr_date descending (terbaru di atas)
+        // Jika tr_date sama, maka sort berdasarkan tr_id descending
         $this->setDefaultSort('tr_date', 'desc');
-        $this->setDefaultSort('tr_id', 'desc');
     }
 
     public function builder(): Builder
     {
         return OrderHdr::with('OrderDtl', 'Partner')
             ->where('order_hdrs.tr_type', 'SO')
-            ->where('order_hdrs.status_code', Status::OPEN);
+            ->where('order_hdrs.status_code', Status::OPEN)
+            ->orderBy('order_hdrs.tr_date', 'desc') // Urutkan berdasarkan tanggal terbaru
+            ->orderBy('order_hdrs.tr_id', 'desc');   // Jika tanggal sama, urutkan berdasarkan nomor terbesar
     }
 
     public function columns(): array
