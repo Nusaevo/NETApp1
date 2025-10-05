@@ -12,8 +12,6 @@ use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Models\SysConfig1\ConfigSnum;
-use App\Services\TrdTire1\TransferService;
-use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -22,6 +20,11 @@ class IndexDataTable extends BaseDataTableComponent
     public $deletedRemarks = [];
     public $filters = [];
     public $materialBrand = [];
+    public array $appliedFilters = [
+        'gt_process_date' => null,
+        'merk' => null,
+        'sr_code' => null,
+    ];
     protected $listeners = [
         'refreshTable' => 'render',
         'onSrCodeChanged',
@@ -137,6 +140,18 @@ class IndexDataTable extends BaseDataTableComponent
         // Data brand sudah diambil dari MasterService di mount()
         $brandOptions = $this->materialBrand;
 
+        // Get SR code options from sales_rewards table
+        $srCodeOptions = SalesReward::select('code', 'descrs')
+            ->whereNotNull('code')
+            ->where('code', '!=', '')
+            ->orderBy('code')
+            ->get()
+            ->pluck('descrs', 'code')
+            ->toArray();
+
+        // Add "Pilih SR Code..." option
+        $srCodeOptions = ['' => 'Pilih SR Code...'] + $srCodeOptions;
+
         return [
             SelectFilter::make('Tanggal Proses', 'gt_process_date')
                 ->options($processDates)
@@ -144,20 +159,40 @@ class IndexDataTable extends BaseDataTableComponent
                     if ($value) {
                         // simpan ke state persis seperti TaxInvoice
                         $this->filters['gt_process_date'] = $value;
-                        // Override kondisi whereRaw('1=0') dengan kondisi yang benar
-                        $this->removeDefaultNoDataCondition($builder);
+                        $this->appliedFilters['gt_process_date'] = $value;
+                        // Cek apakah semua filter sudah dipilih sebelum menampilkan data
+                        $this->checkAllFiltersApplied($builder);
                         $builder->whereDate('order_dtls.gt_process_date', $value); // Gunakan whereDate untuk mencocokkan hanya tanggal
+                    } else {
+                        $this->appliedFilters['gt_process_date'] = null;
                     }
                 }),
             SelectFilter::make('Merk')
                 ->options($brandOptions)
                 ->filter(function (Builder $builder, $value) {
                     if (!empty($value)) {
-                        // Override kondisi whereRaw('1=0') dengan kondisi yang benar
-                        $this->removeDefaultNoDataCondition($builder);
+                        $this->appliedFilters['merk'] = $value;
+                        // Cek apakah semua filter sudah dipilih sebelum menampilkan data
+                        $this->checkAllFiltersApplied($builder);
                         $builder->whereHas('Material', function ($query) use ($value) {
                             $query->where('brand', $value);
                         });
+                    } else {
+                        $this->appliedFilters['merk'] = null;
+                    }
+                }),
+            SelectFilter::make('SR Code')
+                ->options($srCodeOptions)
+                ->filter(function (Builder $builder, $value) {
+                    if (!empty($value)) {
+                        $this->appliedFilters['sr_code'] = $value;
+                        // Cek apakah semua filter sudah dipilih sebelum menampilkan data
+                        $this->checkAllFiltersApplied($builder);
+                        $builder->whereHas('SalesReward', function ($query) use ($value) {
+                            $query->where('code', $value);
+                        });
+                    } else {
+                        $this->appliedFilters['sr_code'] = null;
                     }
                 }),
         ];
@@ -169,7 +204,6 @@ class IndexDataTable extends BaseDataTableComponent
             'prosesNotadanPoint' => 'No Nota dan Point',
             'prosesNota' => 'Proses Nota',
             'cetakNota' => 'Cetak Nota',
-            'transferKeCTMS' => 'Transfer ke CTMS',
         ];
     }
     public function getConfigDetails()
@@ -195,6 +229,22 @@ class IndexDataTable extends BaseDataTableComponent
         $builder->getQuery()->wheres = array_filter($builder->getQuery()->wheres, function($where) {
             return $where['type'] !== 'raw' || $where['sql'] !== '1=0';
         });
+    }
+
+    /**
+     * Check if all required filters are applied before showing data
+     */
+    private function checkAllFiltersApplied(Builder $builder): void
+    {
+        // Check if all three filters are applied (Tanggal Proses, Merk, SR Code)
+        $hasProcessDate = !empty($this->appliedFilters['gt_process_date']);
+        $hasBrand = !empty($this->appliedFilters['merk']);
+        $hasSrCode = !empty($this->appliedFilters['sr_code']);
+
+        // Only remove the default no-data condition if all filters are applied
+        if ($hasProcessDate && $hasBrand && $hasSrCode) {
+            $this->removeDefaultNoDataCondition($builder);
+        }
     }
 
     public function setNotaGT()
@@ -278,49 +328,6 @@ class IndexDataTable extends BaseDataTableComponent
         $this->dispatch('error', 'Tanggal proses belum dipilih.');
     }
 
-    public function transferKeCTMS()
-    {
-        if (count($this->getSelected()) == 0) {
-            $this->dispatch('error', 'Pilih minimal satu data untuk ditransfer.');
-            return;
-        }
-
-        try {
-            $transferService = new TransferService();
-
-            // Validasi apakah TrdTire2 tersedia
-            if (!$transferService->isTrdTire2Available()) {
-                $this->dispatch('error', 'Aplikasi TrdTire2 tidak tersedia atau tidak aktif.');
-                return;
-            }
-
-            // Lakukan transfer
-            $results = $transferService->transferOrderToTrdTire2($this->getSelected());
-
-            // Tampilkan hasil
-            if (count($results['success']) > 0) {
-                $successMessage = "Berhasil transfer " . count($results['success']) . " order ke CTMS (TrdTire2).";
-                if (count($results['errors']) > 0) {
-                    $successMessage .= " Terdapat " . count($results['errors']) . " error.";
-                }
-                $this->dispatch('success', $successMessage);
-
-                // Refresh page setelah transfer berhasil
-                $this->dispatch('refreshPage');
-            }
-
-            if (count($results['errors']) > 0) {
-                $errorMessage = "Terjadi error pada transfer:\n" . implode("\n", $results['errors']);
-                $this->dispatch('error', $errorMessage);
-            }
-
-            // Refresh table
-            $this->dispatch('refreshTable');
-
-        } catch (Exception $e) {
-            $this->dispatch('error', 'Terjadi kesalahan saat transfer: ' . $e->getMessage());
-        }
-    }
 
     // protected function isFirstFilterApplied(Builder $query): bool
     // {

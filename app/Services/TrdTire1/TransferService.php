@@ -16,7 +16,7 @@ class TransferService
     /**
      * Transfer order data dari TrdTire1 ke TrdTire2
      */
-    public function transferOrderToTrdTire2(array $orderDtlIds): array
+    public function transferOrderToTrdTire2(array $orderHdrIds): array
     {
         $results = [
             'success' => [],
@@ -25,38 +25,39 @@ class TransferService
         ];
 
         try {
+            // Pastikan koneksi TrdTire2 terdaftar
+            $this->ensureTrdTire2Connection();
+
             DB::beginTransaction();
 
-            // Ambil data order details dengan relasi
-            $orderDetails = OrderDtl::whereIn('id', $orderDtlIds)
-                ->with(['Material', 'Material.MatlUom'])
+
+            // Ambil data order headers dengan relasi
+            $orderHeaders = OrderHdr::whereIn('id', $orderHdrIds)
+                ->with(['Partner', 'Partner.PartnerDetail', 'OrderDtl', 'OrderDtl.Material', 'OrderDtl.Material.MatlUom'])
                 ->get();
 
-            // Group by order header untuk menghindari duplikasi
-            $orderHeaders = $orderDetails->groupBy('trhdr_id');
 
-            foreach ($orderHeaders as $orderHdrId => $details) {
-                // Ambil OrderHdr secara terpisah untuk menghindari masalah relasi
-                $orderHdr = OrderHdr::with(['Partner', 'Partner.PartnerDetail'])->find($orderHdrId);
+            // Validasi data yang ditemukan
+            if ($orderHeaders->isEmpty()) {
+                $errorMsg = "Tidak ada data order header yang ditemukan untuk ID: " . implode(', ', $orderHdrIds);
+                Log::error($errorMsg);
+                $results['errors'][] = $errorMsg;
+                return $results;
+            }
 
-                // Validasi OrderHdr tidak null
-                if (!$orderHdr) {
-                    $results['errors'][] = "Order Header tidak ditemukan untuk ID: {$orderHdrId}";
-                    continue;
-                }
-
+            foreach ($orderHeaders as $orderHdr) {
                 try {
                     // 1. Transfer/Copy Partner jika belum ada
                     $partner2Id = $this->transferPartner($orderHdr->Partner);
 
                     // 2. Transfer/Copy Material jika belum ada
-                    $materials2Ids = $this->transferMaterials($details);
+                    $materials2Ids = $this->transferMaterials($orderHdr->OrderDtl);
 
                     // 3. Transfer Order Header
                     $orderHdr2Id = $this->transferOrderHeader($orderHdr, $partner2Id);
 
                     // 4. Transfer Order Details
-                    $this->transferOrderDetails($details, $orderHdr2Id, $materials2Ids);
+                    $this->transferOrderDetails($orderHdr->OrderDtl, $orderHdr2Id, $materials2Ids);
 
                     $results['transferred_orders'][] = [
                         'original_tr_code' => $orderHdr->tr_code ?? 'N/A',
@@ -67,12 +68,13 @@ class TransferService
                     $results['success'][] = "Order " . ($orderHdr->tr_code ?? 'Unknown') . " berhasil ditransfer ke TrdTire2";
 
                 } catch (Exception $e) {
-                    $results['errors'][] = "Gagal transfer order " . ($orderHdr->tr_code ?? 'Unknown') . ": " . $e->getMessage();
+                    $errorMsg = "Gagal transfer order " . ($orderHdr->tr_code ?? 'Unknown') . ": " . $e->getMessage();
                     Log::error("Transfer Order Error", [
                         'order_code' => $orderHdr->tr_code ?? 'Unknown',
                         'error' => $e->getMessage(),
                         'trace' => $e->getTraceAsString()
                     ]);
+                    $results['errors'][] = $errorMsg;
                 }
             }
 
@@ -221,11 +223,25 @@ class TransferService
      */
     public function isTrdTire2Available(): bool
     {
-        $config = ConfigAppl::where('code', 'TrdTire2')
-            ->where('status_code', 'A')
-            ->first();
+        try {
+            $config = ConfigAppl::where('code', 'TrdTire2')
+                ->where('status_code', 'A')
+                ->first();
 
-        return $config !== null;
+            if (!$config) {
+                Log::warning('TrdTire2 not found in config_appls table');
+                return false;
+            }
+
+            // Test koneksi ke database TrdTire2
+            $testConnection = DB::connection('TrdTire2')->getPdo();
+            Log::info('TrdTire2 connection test successful');
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('TrdTire2 connection test failed: ' . $e->getMessage());
+            return false;
+        }
     }
 
     /**
@@ -236,5 +252,23 @@ class TransferService
         return ConfigAppl::where('code', 'TrdTire2')
             ->where('status_code', 'A')
             ->first();
+    }
+
+    /**
+     * Pastikan koneksi TrdTire2 terdaftar
+     */
+    private function ensureTrdTire2Connection(): void
+    {
+        // Cek apakah koneksi TrdTire2 sudah terdaftar
+        if (!config("database.connections.TrdTire2")) {
+            Log::info('TrdTire2 connection not found, registering dynamic connections...');
+
+            // Panggil fungsi untuk mendaftarkan koneksi dinamis
+            if (function_exists('registerDynamicConnections')) {
+                registerDynamicConnections();
+            } else {
+                throw new Exception('Function registerDynamicConnections not found');
+            }
+        }
     }
 }
