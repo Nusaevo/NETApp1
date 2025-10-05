@@ -492,7 +492,7 @@ class MaterialComponent extends BaseComponent
     private function prepareBOMData($bomData, $index)
     {
         $bomData['matl_id'] = $this->object->id;
-        $bomData['matl_code'] = $this->object->id;
+        $bomData['matl_code'] = $this->object->code;
         $bomData['jwl_sides_price'] = $bomData['jwl_sides_price'] === null || $bomData['jwl_sides_price'] === "" ? 0 : $bomData['jwl_sides_price'];
         $bomData['seq'] = $index + 1;
         $bomData['base_matl_id'] = $bomData['base_matl_id_value'];
