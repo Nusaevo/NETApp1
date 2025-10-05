@@ -208,30 +208,37 @@ class MaterialComponent extends BaseComponent
                 $this->matl_boms[$key]['id'] = $detail->id;
 
                 $baseMaterial = ConfigConst::where('id', $detail->base_matl_id)->first();
-                $this->matl_boms[$key]['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
-
-                $this->matl_boms[$key]['base_matl_id_value'] =  $baseMaterial->id;
-                $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
+                if ($baseMaterial) {
+                    $this->matl_boms[$key]['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
+                    $this->matl_boms[$key]['base_matl_id_value'] =  $baseMaterial->id;
+                    $this->matl_boms[$key]['base_matl_id_note'] =  $baseMaterial->note1;
+                } else {
+                    $this->matl_boms[$key]['base_matl_id'] = "";
+                    $this->matl_boms[$key]['base_matl_id_value'] = null;
+                    $this->matl_boms[$key]['base_matl_id_note'] = null;
+                }
                 $decodedData = $detail->jwl_sides_spec;
-                switch ($this->matl_boms[$key]['base_matl_id_note']) {
-                    case Material::JEWELRY:
-                        $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
-                        break;
-                    case Material::DIAMOND:
-                        $this->matl_boms[$key]['shapes'] = $decodedData['shapes'] ?? null;
-                        $this->matl_boms[$key]['clarity'] = $decodedData['clarity'] ?? null;
-                        $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
-                        $this->matl_boms[$key]['cut'] = $decodedData['cut'] ?? null;
-                        $this->matl_boms[$key]['gia_number'] = $decodedData['gia_number'] ?? 0;
-                        break;
-                    case Material::GEMSTONE:
-                        $this->matl_boms[$key]['gemstone'] = $decodedData['gemstone'] ?? null;
-                        $this->matl_boms[$key]['gemcolor'] = $decodedData['gemcolor'] ?? null;
-                        break;
-                    case Material::GOLD:
-                        $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? 0;
-                        $this->matl_boms[$key]['ref_mark'] = $decodedData['ref_mark'] ?? null;
-                        break;
+                if ($this->matl_boms[$key]['base_matl_id_note']) {
+                    switch ($this->matl_boms[$key]['base_matl_id_note']) {
+                        case Material::JEWELRY:
+                            $this->matl_boms[$key]['purity'] = $decodedData['purity'] ?? null;
+                            break;
+                        case Material::DIAMOND:
+                            $this->matl_boms[$key]['shapes'] = $decodedData['shapes'] ?? null;
+                            $this->matl_boms[$key]['clarity'] = $decodedData['clarity'] ?? null;
+                            $this->matl_boms[$key]['color'] = $decodedData['color'] ?? null;
+                            $this->matl_boms[$key]['cut'] = $decodedData['cut'] ?? null;
+                            $this->matl_boms[$key]['gia_number'] = $decodedData['gia_number'] ?? 0;
+                            break;
+                        case Material::GEMSTONE:
+                            $this->matl_boms[$key]['gemstone'] = $decodedData['gemstone'] ?? null;
+                            $this->matl_boms[$key]['gemcolor'] = $decodedData['gemcolor'] ?? null;
+                            break;
+                        case Material::GOLD:
+                            $this->matl_boms[$key]['production_year'] = $decodedData['production_year'] ?? 0;
+                            $this->matl_boms[$key]['ref_mark'] = $decodedData['ref_mark'] ?? null;
+                            break;
+                    }
                 }
                 $this->bom_row++;
             }
@@ -485,7 +492,7 @@ class MaterialComponent extends BaseComponent
     private function prepareBOMData($bomData, $index)
     {
         $bomData['matl_id'] = $this->object->id;
-        $bomData['matl_code'] = $this->object->id;
+        $bomData['matl_code'] = $this->object->code;
         $bomData['jwl_sides_price'] = $bomData['jwl_sides_price'] === null || $bomData['jwl_sides_price'] === "" ? 0 : $bomData['jwl_sides_price'];
         $bomData['seq'] = $index + 1;
         $bomData['base_matl_id'] = $bomData['base_matl_id_value'];

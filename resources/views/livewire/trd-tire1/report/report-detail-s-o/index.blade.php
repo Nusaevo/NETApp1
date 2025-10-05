@@ -1,8 +1,4 @@
 <div>
-    @php
-        use App\Services\TrdJewel1\Master\MasterService;
-        $masterService = new MasterService();
-    @endphp
     <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
         {{-- Filter Frame --}}
         <div class="card mb-4">
@@ -42,12 +38,15 @@
 
         <div id="print">
             <div>
-                <br>
                 <style>
                     @media print {
                         body {
                             background: #fff !important;
                             font-family: 'Calibri', Arial, sans-serif !important;
+                            transform: rotate(0deg);
+                        }
+                        html {
+                            transform: rotate(0deg);
                         }
                         #print .card {
                             box-shadow: none !important;
@@ -56,6 +55,7 @@
                         }
                         #print .card-body {
                             padding: 0 !important;
+                            margin: 0 !important;
                         }
                         #print .container {
                             margin: 0 auto !important;
@@ -73,6 +73,7 @@
                             font-size: 11px !important;
                             border: none !important;
                             vertical-align: middle !important;
+                            color: #000 !important;
                         }
                         #print td[style*="border-top"] {
                             border-top: 1px solid #000 !important;
@@ -83,15 +84,24 @@
                             text-align: left !important;
                         }
                         #print h3, #print h4 {
-                            margin: 10px 0 !important;
+                            margin: 0 !important;
                             font-weight: bold !important;
+                            color: #000 !important;
                         }
                         #print p {
                             margin: 5px 0 !important;
                         }
                         @page {
-                            margin: 1cm 1cm 2cm 1cm;
-                            size: F4 landscape;
+                            margin: 0.5cm 1cm 1cm 1cm;
+                            size: A4 landscape;
+                            width: 330mm;
+                            height: 210mm;
+                        }
+                        @media print and (orientation: landscape) {
+                            @page {
+                                margin: 0.5cm 1cm 1cm 1cm;
+                                size: A4 landscape;
+                            }
                         }
                         .btn, .card-header, .card-footer, .page-info {
                             display: none !important;
@@ -99,13 +109,38 @@
                         #print {
                             font-family: 'Calibri', Arial, sans-serif !important;
                             font-size: 14px !important;
+                            color: #000 !important;
+                        }
+                        #print * {
+                            color: #000 !important;
+                        }
+                        #print .container {
+                            margin-top: 0 !important;
+                            padding-top: 0 !important;
+                        }
+                        #print div[style*="max-width:2480px"] {
+                            padding-top: 0px !important;
+                            padding: 0px 20px 20px 20px !important;
+                            max-width: 100% !important;
+                        }
+                        #print table {
+                            width: 100% !important;
+                            max-width: 100% !important;
+                        }
+                        #print {
+                            width: 100% !important;
+                            max-width: 100% !important;
+                        }
+                        #print .container {
+                            width: 100% !important;
+                            max-width: 100% !important;
                         }
                     }
                 </style>
                 <div class="card print-page">
                     <div class="card-body">
-                        <div class="container mb-5 mt-3">
-                            <div style="max-width:2480px; margin:auto; padding:20px;">
+                        <div class="container mb-3">
+                            <div style="max-width:2480px; margin:auto; padding:5px 20px 20px 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                     <h3 style="font-weight:bold; margin:0;">
                                         DAFTAR NOTA JUAL
