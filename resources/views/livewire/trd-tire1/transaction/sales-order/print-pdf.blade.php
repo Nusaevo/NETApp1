@@ -94,11 +94,18 @@
                             Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                         </p>
                         <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                        <p style="margin-bottom: -8px;">
-                            <strong>{{ $this->object->Partner->name }}</strong>
-                        </p>
-                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
-                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                        @if($this->object->tax_doc_flag == 1)
+                            <p style="margin-bottom: -8px;">
+                                <strong>{{ $this->object->npwp_name }}</strong>
+                            </p>
+                            <p style="margin-bottom: -8px;">{{ $this->object->npwp_addr }}</p>
+                        @else
+                            <p style="margin-bottom: -8px;">
+                                <strong>{{ $this->object->Partner->name }}</strong>
+                            </p>
+                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                        @endif
                     </td>
                 </tr>
             </table>
@@ -275,9 +282,14 @@
                                 <p style="margin-bottom: -8px;">Surabaya,
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                                <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong></p>
-                                <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
-                                <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                                @if($this->object->tax_doc_flag == 1)
+                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->npwp_name }}</strong></p>
+                                    <p style="margin-bottom: -8px;">{{ $this->object->npwp_addr }}</p>
+                                @else
+                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong></p>
+                                    <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                                    <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                                @endif
                             </td>
                         </tr>
                     </table>
