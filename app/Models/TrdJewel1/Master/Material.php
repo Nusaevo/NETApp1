@@ -241,34 +241,42 @@ class Material extends BaseModel
 
     public static function retrieveBomDetail($detail)
     {
-        $baseMaterial = ConfigConst::where('id', $detail->base_matl_id)->first();
+        $baseMaterial = ConfigConst::withTrashed()->where('id', $detail->base_matl_id)->first();
         $formattedDetail = populateArrayFromModel($detail);
 
-        $formattedDetail['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
-        $formattedDetail['base_matl_id_value'] = $baseMaterial->id;
-        $formattedDetail['base_matl_id_note'] = $baseMaterial->note1;
+        if ($baseMaterial) {
+            $formattedDetail['base_matl_id'] = strval($baseMaterial->id) . "-" . strval($baseMaterial->note1);
+            $formattedDetail['base_matl_id_value'] = $baseMaterial->id;
+            $formattedDetail['base_matl_id_note'] = $baseMaterial->note1;
+        } else {
+            $formattedDetail['base_matl_id'] = "";
+            $formattedDetail['base_matl_id_value'] = null;
+            $formattedDetail['base_matl_id_note'] = null;
+        }
 
         $decodedData = $detail->jwl_sides_spec;
 
-        switch ($formattedDetail['base_matl_id_note']) {
-            case self::JEWELRY:
-                $formattedDetail['purity'] = $decodedData['purity'] ?? null;
-                break;
-            case self::DIAMOND:
-                $formattedDetail['shapes'] = $decodedData['shapes'] ?? null;
-                $formattedDetail['clarity'] = $decodedData['clarity'] ?? null;
-                $formattedDetail['color'] = $decodedData['color'] ?? null;
-                $formattedDetail['cut'] = $decodedData['cut'] ?? null;
-                $formattedDetail['gia_number'] = $decodedData['gia_number'] ?? 0;
-                break;
-            case self::GEMSTONE:
-                $formattedDetail['gemstone'] = $decodedData['gemstone'] ?? null;
-                $formattedDetail['gemcolor'] = $decodedData['gemcolor'] ?? null;
-                break;
-            case self::GOLD:
-                $formattedDetail['production_year'] = $decodedData['production_year'] ?? 0;
-                $formattedDetail['ref_mark'] = $decodedData['ref_mark'] ?? null;
-                break;
+        if ($formattedDetail['base_matl_id_note']) {
+            switch ($formattedDetail['base_matl_id_note']) {
+                case self::JEWELRY:
+                    $formattedDetail['purity'] = $decodedData['purity'] ?? null;
+                    break;
+                case self::DIAMOND:
+                    $formattedDetail['shapes'] = $decodedData['shapes'] ?? null;
+                    $formattedDetail['clarity'] = $decodedData['clarity'] ?? null;
+                    $formattedDetail['color'] = $decodedData['color'] ?? null;
+                    $formattedDetail['cut'] = $decodedData['cut'] ?? null;
+                    $formattedDetail['gia_number'] = $decodedData['gia_number'] ?? 0;
+                    break;
+                case self::GEMSTONE:
+                    $formattedDetail['gemstone'] = $decodedData['gemstone'] ?? null;
+                    $formattedDetail['gemcolor'] = $decodedData['gemcolor'] ?? null;
+                    break;
+                case self::GOLD:
+                    $formattedDetail['production_year'] = $decodedData['production_year'] ?? 0;
+                    $formattedDetail['ref_mark'] = $decodedData['ref_mark'] ?? null;
+                    break;
+            }
         }
 
         return $formattedDetail;
@@ -284,7 +292,7 @@ class Material extends BaseModel
             });
 
             if (!empty($bomIds)) {
-                $bomData = ConfigConst::whereIn('id', $bomIds)->get()->keyBy('id');
+                $bomData = ConfigConst::withTrashed()->whereIn('id', $bomIds)->get()->keyBy('id');
             }
 
             foreach ($matl_boms as $bom) {
