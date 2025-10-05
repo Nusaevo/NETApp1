@@ -37,11 +37,18 @@
                             Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                         </p>
                         <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                        <p style="margin-bottom: -8px;">
-                            <strong>{{ $this->object->Partner->name }}</strong>
-                        </p>
-                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
-                        <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                        @if($this->object->tax_doc_flag == 1)
+                            <p style="margin-bottom: -8px;">
+                                <strong>{{ $this->object->npwp_name }}</strong>
+                            </p>
+                            <p style="margin-bottom: -8px;">{{ $this->object->npwp_addr }}</p>
+                        @else
+                            <p style="margin-bottom: -8px;">
+                                <strong>{{ $this->object->Partner->name }}</strong>
+                            </p>
+                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                        @endif
                     </td>
                 </tr>
             </table>
@@ -115,9 +122,14 @@
             <!-- Recipient Info -->
             <div style="margin-top: 15px;">
                 <p style="margin: 0 0 10px 0;">
-                    {{ $this->object->Partner->name }} -
-                    {{ $this->object->Partner->address }} -
-                    {{ $this->object->Partner->city }}
+                    @if($this->object->tax_doc_flag == 1)
+                        {{ $this->object->npwp_name }} -
+                        {{ $this->object->npwp_addr }}
+                    @else
+                        {{ $this->object->Partner->name }} -
+                        {{ $this->object->Partner->address }} -
+                        {{ $this->object->Partner->city }}
+                    @endif
                 </p>
 
                 <div width="100%" style="margin-top: 5px;">
@@ -171,9 +183,14 @@
                                 <p style="margin-bottom: -8px;">Surabaya,
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                                <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong></p>
-                                <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
-                                <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                                @if($this->object->tax_doc_flag == 1)
+                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->npwp_name }}</strong></p>
+                                    <p style="margin-bottom: -8px;">{{ $this->object->npwp_address }}</p>
+                                @else
+                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong></p>
+                                    <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
+                                    <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
+                                @endif
                             </td>
                         </tr>
                     </table>
@@ -240,8 +257,15 @@
 
                     <!-- Footer -->
                     <div style="margin-top: 15px;">
-                        <p style="margin: 0 0 5px 0;">{{ $this->object->Partner->name }} -
-                            {{ $this->object->Partner->address }} - {{ $this->object->Partner->city }}</p>
+                        <p style="margin: 0 0 5px 0;">
+                            @if($this->object->tax_doc_flag == 1)
+                                {{ $this->object->npwp_name }} -
+                                {{ $this->object->npwp_addr }}
+                            @else
+                                {{ $this->object->Partner->name }} -
+                                {{ $this->object->Partner->address }} - {{ $this->object->Partner->city }}
+                            @endif
+                        </p>
                         <div width="100%" style="margin-top: 5px;">
                             <div class="row justify-content-between" style="text-align: center;">
                                 <div style="width: 25%;">
