@@ -26,7 +26,7 @@
                     margin: 0;
                     padding: 0;
                     font-family: 'Calibri', Arial, sans-serif;
-                    font-size: 14px;
+                    font-size: 16px;
                     line-height: 1.2;
                 }
 
@@ -59,7 +59,7 @@
 
                 h2, h3 {
                     margin: 2px 0;
-                    font-size: 14px;
+                    font-size: 16px;
                 }
 
                 p {
@@ -72,7 +72,7 @@
 
     <!-- Card hanya tampil di layar, tidak saat print -->
     <div class="card d-print-none"
-        style="max-width: 1200px; margin: 30px auto; background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 32px 32px 40px 32px;">
+        style="max-width: 1200px; margin: 30px auto; background: #fff; box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 0px 1.5px rgba(0,0,0,0.03); border-radius: 10px; padding: 32px 32px 40px 32px;">
         <div class="invoice-box" style="max-width: 1200px; margin: auto; padding: 20px;">
             <!-- Header -->
             <table width="100%" style="margin-bottom: 10px; border: none;">
@@ -108,18 +108,18 @@
                 style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
                 <thead>
                     <tr>
-                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 14px;">KODE BARANG
+                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 16px;">KODE BARANG
                         </th>
-                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 14px;">NAMA BARANG
+                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 16px;">NAMA BARANG
                         </th>
-                        <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 14px;">QTY</th>
-                        <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 12%; font-size: 14px;">HARGA
+                        <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 16px;">QTY</th>
+                        <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 12%; font-size: 16px;">HARGA
                             SATUAN</th>
                         @if ($this->object->sales_type != 'O')
-                            <th style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%; font-size: 14px;">DISC
+                            <th style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%; font-size: 16px;">DISC
                             </th>
                         @endif
-                        <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 14px;">JUMLAH
+                        <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 16px;">JUMLAH
                             HARGA</th>
                     </tr>
                 </thead>
@@ -136,19 +136,19 @@
                         @endphp
                         <tr style="line-height: 1.2;">
                             <td
-                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px; font-size: 16px;">
                                 {{ $OrderDtl->matl_code }}
                             </td>
                             <td
-                                style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                 {{ $OrderDtl->matl_descr }}
                             </td>
                             <td
-                                style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                 {{ ceil($OrderDtl->qty) }}
                             </td>
                             <td
-                                style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                 @php
                                     $discount = $OrderDtl->disc_pct / 100;
                                     $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
@@ -157,12 +157,12 @@
                             </td>
                             @if ($this->object->sales_type != 'O')
                                 <td
-                                    style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                    style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                     {{ number_format($OrderDtl->disc_pct, 0, ',', '.') }}%
                                 </td>
                             @endif
                             <td
-                                style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                 {{ number_format($subTotalAfterDisc, 0, ',', '.') }}
                             </td>
                         </tr>
@@ -177,15 +177,15 @@
                         <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
                         @if ($this->object->sales_type != 'O')
                             <td colspan="2"
-                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                 Total</td>
                         @else
                             <td
-                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                 Total</td>
                         @endif
                         <td
-                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; font-weight: bold; border-top: 1px solid #000; font-size: 14px;">
+                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; font-weight: bold; border-top: 1px solid #000; font-size: 16px;">
                             {{ number_format($grand_total, 0, ',', '.') }}</td>
                     </tr>
                     @if ($this->object->amt_shipcost > 0)
@@ -197,15 +197,15 @@
                             <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
                             @if ($this->object->sales_type != 'O')
                                 <td colspan="2"
-                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                     Biaya EX</td>
                             @else
                                 <td
-                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                     Biaya EX</td>
                             @endif
                             <td
-                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                 {{ number_format($this->object->amt_shipcost, 0, ',', '.') }}</td>
                         </tr>
                         <tr>
@@ -216,15 +216,15 @@
                             <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
                             @if ($this->object->sales_type != 'O')
                                 <td colspan="2"
-                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 16px;">
                                     Grand Total</td>
                             @else
                                 <td
-                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 16px;">
                                     Grand Total</td>
                             @endif
                             <td
-                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 16px;">
                                 {{ number_format($grand_total + $this->object->amt_shipcost, 0, ',', '.') }}</td>
                         </tr>
                     @endif
@@ -232,9 +232,9 @@
             </table>
             <table style="margin-top: -18px; width: 100%;">
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px;">
-                        <p style="margin: 0; display: inline;">Penerima: ________________</p>
-                        <p style="margin: 0; text-align: end; display: inline; float: right;">
+                    <td style="border: 1px solid #000; padding: 5px;">
+                        <p style="margin: 0; display: inline; font-size: 16px;">Penerima: ________________</p>
+                        <p style="margin: 0; text-align: end; display: inline; float: right; font-size: 16px;">
                             Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
                         </p>
                     </td>
@@ -245,7 +245,7 @@
 
     <!-- Area print tetap tampil saat print -->
     <div id="print" class="d-none d-print-block p-20">
-        <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
+        <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 16px;">
             <div class="invoice-box" style="max-width: 1200px; margin: auto; padding: 20px;">
                 @php
                     $grand_total_all = $this->object->OrderDtl->reduce(function ($carry, $d) {
@@ -287,19 +287,19 @@
                         style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
                         <thead>
                             <tr>
-                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 14px;">
+                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 16px;">
                                     KODE BARANG</th>
-                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 14px;">
+                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 16px;">
                                     NAMA BARANG</th>
-                                <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 14px;">QTY</th>
-                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 13%; font-size: 14px;">
+                                <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 16px;">QTY</th>
+                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 13%; font-size: 16px;">
                                     HARGA SATUAN</th>
                                 @if ($this->object->sales_type != 'O')
                                     <th
-                                        style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%; font-size: 14px;">
+                                        style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%; font-size: 16px;">
                                         DISC</th>
                                 @endif
-                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 14px;">
+                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 16px;">
                                     JUMLAH HARGA</th>
                             </tr>
                         </thead>
@@ -312,24 +312,24 @@
                                 @endphp
                                 <tr style="line-height: 1.2;">
                                     <td
-                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: left; padding: 3px 5px 3px 5px; font-size: 16px;">
                                         {{ $OrderDtl->matl_code }}</td>
                                     <td
-                                        style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                        style="text-align: left; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                         {{ $OrderDtl->matl_descr }}</td>
                                     <td
-                                        style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                        style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                         {{ ceil($OrderDtl->qty) }}</td>
                                     <td
-                                        style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                        style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                         {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}</td>
                                     @if ($this->object->sales_type != 'O')
                                         <td
-                                            style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                            style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                             {{ number_format($OrderDtl->disc_pct, 0, ',', '.') }}%</td>
                                     @endif
                                     <td
-                                        style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 14px;">
+                                        style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                         {{ number_format($subTotalAfterDisc, 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
@@ -344,15 +344,15 @@
                                 </td>
                                 @if ($has_disc)
                                     <td colspan="2"
-                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                         Total</td>
                                 @else
                                     <td
-                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                         Total</td>
                                 @endif
                                 <td
-                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; font-weight: bold; border-top: 1px solid #000; font-size: 14px;">
+                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; font-weight: bold; border-top: 1px solid #000; font-size: 16px;">
                                     {{ number_format($grand_total_all, 0, ',', '.') }}</td>
                             </tr>
                             @if ($this->object->amt_shipcost > 0)
@@ -368,15 +368,15 @@
                                     </td>
                                     @if ($has_disc)
                                         <td colspan="2"
-                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                             Biaya EX</td>
                                     @else
                                         <td
-                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                             Biaya EX</td>
                                     @endif
                                     <td
-                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 14px;">
+                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-size: 16px;">
                                         {{ number_format($this->object->amt_shipcost, 0, ',', '.') }}</td>
                                 </tr>
                                 <tr>
@@ -391,15 +391,15 @@
                                     </td>
                                     @if ($has_disc)
                                         <td colspan="2"
-                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 16px;">
                                             Grand Total</td>
                                     @else
                                         <td
-                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 16px;">
                                             Grand Total</td>
                                     @endif
                                     <td
-                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 14px;">
+                                        style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; text-align: right; padding-right: 5px; border-top: 1px solid #000; font-weight: bold; font-size: 16px;">
                                         {{ number_format($grand_total_all + $this->object->amt_shipcost, 0, ',', '.') }}
                                     </td>
                                 </tr>
@@ -410,10 +410,10 @@
                     <!-- Footer -->
                     <table style="margin-top: -18px; width: 100%;">
                         <tr>
-                            <td style="border: 1px solid #000; padding: 10px;">
-                                <p style="margin: 0; display: inline;">Penerima: ________________</p>
-                                <p style="margin: 0; text-align: end; display: inline; float: right;">Pembayaran:
-                                    <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
+                            <td style="border: 1px solid #000; padding: 5px;">
+                                <p style="margin: 0; display: inline; font-size: 16px;">Penerima: ________________</p>
+                                <p style="margin: 0; text-align: end; display: inline; float: right; font-size: 16px;">
+                                    Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
                                 </p>
                             </td>
                         </tr>
