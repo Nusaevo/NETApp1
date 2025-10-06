@@ -455,18 +455,22 @@ class BaseComponent extends Component
 
         // Priority-ordered URL sources for immediate checking
         $urlSources = [
-            // 1. Navigation history (most reliable)
+            // 1. Navigation history - simple chronological approach but smart
             function() use ($currentUrl, $currentFullUrl, $actualCurrentUrl) {
                 $navHistory = session('navigation_history', []);
                 if (empty($navHistory)) return [];
 
-                // Clean and update session in one operation
+                // Clean and get all previous URLs from history
                 $cleanHistory = array_values(array_filter($navHistory, function($url) use ($currentUrl, $currentFullUrl, $actualCurrentUrl) {
                     return $url && $url !== $currentUrl && $url !== $currentFullUrl && $url !== $actualCurrentUrl;
                 }));
                 session(['navigation_history' => $cleanHistory]);
 
-                return array_reverse($cleanHistory); // Most recent first
+                Log::info("Available URLs in navigation history: " . json_encode($cleanHistory));
+
+                // Simple approach: return URLs in reverse chronological order (most recent first)
+                // Let the isValidUrl function handle the filtering
+                return array_reverse($cleanHistory);
             },
 
             // 2. Laravel previous
@@ -477,9 +481,7 @@ class BaseComponent extends Component
 
             // 4. HTTP referrer
             function() { return [request()->header('referer')]; }
-        ];
-
-        // Check each source until valid URL found
+        ];        // Check each source until valid URL found
         foreach ($urlSources as $sourceFunc) {
             $urls = $sourceFunc();
             foreach ($urls as $url) {
@@ -501,33 +503,83 @@ class BaseComponent extends Component
             return false;
         }
 
-        // Allow PrintPdf <-> Detail navigation (different page types)
-        $urlHasPrintPdf = str_contains($url, '/PrintPdf/');
-        $currentHasPrintPdf = str_contains($currentUrl, '/PrintPdf/');
-        $urlHasDetail = str_contains($url, '/Detail/');
-        $currentHasDetail = str_contains($currentUrl, '/Detail/');
-
-        if (($urlHasPrintPdf && $currentHasDetail) || ($urlHasDetail && $currentHasPrintPdf)) {
-            return false; // Different page types, allow navigation
-        }
-
-        // Fast path comparison using string operations
+        // Allow navigation between different page types in same module
         $urlPath = parse_url($url, PHP_URL_PATH) ?: '';
         $currentPath = parse_url($currentUrl, PHP_URL_PATH) ?: '';
 
-        // Extract first 3 segments quickly
-        $urlParts = explode('/', $urlPath, 5); // Limit to 5 for performance
-        $currentParts = explode('/', $currentPath, 5);
+        // Check if this is Detail -> Index navigation (should be allowed)
+        $currentHasDetail = str_contains($currentPath, '/Detail/');
+        $urlHasDetail = str_contains($urlPath, '/Detail/');
 
-        // Compare first 3 non-empty segments
-        $urlCore = array_values(array_filter(array_slice($urlParts, 0, 4), 'strlen'));
-        $currentCore = array_values(array_filter(array_slice($currentParts, 0, 4), 'strlen'));
-
-        if (count($urlCore) >= 3 && count($currentCore) >= 3) {
-            return array_slice($urlCore, 0, 3) === array_slice($currentCore, 0, 3);
+        // If current is Detail and target doesn't have Detail, allow (Detail -> Index)
+        if ($currentHasDetail && !$urlHasDetail) {
+            Log::info("Allowing Detail -> Index navigation: $url");
+            return false; // Allow navigation
         }
 
-        return false;
+        // If both are Detail pages with different IDs, consider them different
+        if ($currentHasDetail && $urlHasDetail && $currentPath !== $urlPath) {
+            Log::info("Different Detail pages, allowing navigation: $url");
+            return false; // Allow navigation to different Detail pages
+        }
+
+        // Only consider similar if exact same path (to prevent infinite loops)
+        return $urlPath === $currentPath;
+    }
+
+    private function extractContextSegments($pathSegments)
+    {
+        // Extract meaningful context segments (stop at actions/IDs)
+        $contextSegments = [];
+        foreach ($pathSegments as $segment) {
+            if (in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf']) ||
+                is_numeric($segment) ||
+                preg_match('/^[A-Z0-9]{8,}$/', $segment)) {
+                break;
+            }
+            if (!empty($segment)) {
+                $contextSegments[] = strtolower($segment);
+            }
+        }
+        return $contextSegments;
+    }
+
+    private function calculateContextScore($currentContext, $urlContext, $currentSegments, $urlSegments)
+    {
+        $score = 0;
+
+        // Exact context match gets highest score
+        if ($currentContext === $urlContext) {
+            $score += 100;
+        }
+
+        // Partial context match
+        $matchingSegments = 0;
+        $maxSegments = max(count($currentContext), count($urlContext));
+        for ($i = 0; $i < min(count($currentContext), count($urlContext)); $i++) {
+            if ($currentContext[$i] === $urlContext[$i]) {
+                $matchingSegments++;
+            } else {
+                break; // Stop at first non-match
+            }
+        }
+
+        if ($maxSegments > 0) {
+            $score += ($matchingSegments / $maxSegments) * 50;
+        }
+
+        // Prefer parent/index pages over deep detail pages
+        if (count($urlSegments) < count($currentSegments)) {
+            $score += 30; // Parent page bonus
+        }
+
+        // Penalize generic home pages when we're in specific contexts
+        if (count($currentContext) >= 3 && count($urlContext) <= 2 &&
+            in_array('home', $urlContext)) {
+            $score -= 40; // Penalty for generic home when in specific context
+        }
+
+        return $score;
     }    private function constructValidUrlFromHistory($historyUrl, $skipPatterns)
     {
         // Check if history URL should be skipped
@@ -556,45 +608,25 @@ class BaseComponent extends Component
 
         Log::info("Current path segments: " . json_encode($pathSegments));
 
-        // For print URLs, try to construct the detail URL first
-        if (in_array('PrintPdf', $pathSegments) || str_contains($currentPath, 'print')) {
-            Log::info("Detected print URL, trying to construct detail URL");
-
-            // Remove PrintPdf and replace with Detail
-            $detailSegments = [];
-            $skipNext = false;
-
-            foreach ($pathSegments as $i => $segment) {
-                if ($segment === 'PrintPdf') {
-                    $detailSegments[] = 'Detail';
-                    $skipNext = false; // Keep the IDs after PrintPdf
-                } elseif (!in_array(strtolower($segment), ['print', 'pdf'])) {
-                    $detailSegments[] = $segment;
-                }
-            }
-
-            if (!empty($detailSegments)) {
-                $detailPath = '/' . implode('/', $detailSegments);
-                $detailUrl = url($detailPath);
-                Log::info("Constructed detail URL from print: " . $detailUrl);
-                return $detailUrl;
-            }
-        }
-
-        // Remove segments until we get to a reasonable index page
-        // Usually remove 'detail', objectId, action etc.
+        // Simple approach: remove action segments and IDs to get back to index
         $indexSegments = [];
 
         foreach ($pathSegments as $segment) {
-            // Skip detail, action parameters, IDs, and print-related segments
-            if (!in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf']) &&
-                !is_numeric($segment) &&
-                !preg_match('/^[A-Z0-9]{8,}$/', $segment) && // Skip encrypted IDs
-                !empty($segment)) {
+            // Stop at action segments or IDs
+            if (in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf'])) {
+                break; // Stop here, don't include action segments
+            }
+
+            if (is_numeric($segment) || preg_match('/^[A-Z0-9]{8,}$/', $segment)) {
+                break; // Stop at IDs (numeric or encrypted)
+            }
+
+            if (!empty($segment)) {
                 $indexSegments[] = $segment;
             }
         }
 
+        // Construct index URL from remaining segments
         if (!empty($indexSegments)) {
             $indexPath = '/' . implode('/', $indexSegments);
             $indexUrl = url($indexPath);
@@ -602,12 +634,10 @@ class BaseComponent extends Component
             return $indexUrl;
         }
 
-        // Final fallback
+        // Final fallback - try dashboard or home
         Log::info("Using dashboard as final fallback");
-        return url('/');
-    }
-
-    protected function onReset()
+        return url('/dashboard') ?: url('/');
+    }    protected function onReset()
     {
         // This method is intentionally left empty.
         // Override this method in child classes to implement specific reset logic.
