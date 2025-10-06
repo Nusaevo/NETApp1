@@ -691,17 +691,17 @@ class DropdownSearchController extends Controller
 
         // Basic validation: must start with SELECT
         if (!preg_match('/^\s*SELECT\s+/i', $query)) {
-            \Log::warning('Invalid SQL query detected (must start with SELECT)', [
-                'query' => $query
-            ]);
+            // \Log::warning('Invalid SQL query detected (must start with SELECT)', [
+            //     'query' => $query
+            // ]);
             return null;
         }
 
         // Log the sanitized query
-        \Log::debug('Sanitized SQL query', [
-            'sanitized_query' => $query,
-            'length' => strlen($query)
-        ]);
+        // \Log::debug('Sanitized SQL query', [
+        //     'sanitized_query' => $query,
+        //     'length' => strlen($query)
+        // ]);
 
         return $query;
     }
