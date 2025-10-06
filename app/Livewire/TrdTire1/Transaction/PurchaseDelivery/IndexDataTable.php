@@ -38,7 +38,7 @@ class IndexDataTable extends BaseDataTableComponent
             // Column::make('currency', "curr_rate")
             //     ->hideIf(true)
             //     ->sortable(),
-            Column::make($this->trans("tr_code"), "tr_code")
+            Column::make($this->trans("Nomor Surat Jalan"), "tr_code")
                 ->format(function ($value, $row) {
                     return '<a href="' . route($this->appCode . '.Transaction.PurchaseDelivery.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
@@ -107,7 +107,7 @@ class IndexDataTable extends BaseDataTableComponent
             DateFilter::make('Tanggal Terima Barang')->filter(function (Builder $builder, string $value) {
                 $builder->where('deliv_hdrs.tr_date', '=', $value);
             }),
-            $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
+            $this->createTextFilter('Nomor Surat Jalan', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {

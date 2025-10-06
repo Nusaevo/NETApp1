@@ -50,8 +50,21 @@ class Detail extends BaseComponent
     public $currencyRate = 0;
     public $npwpOptions = [];
     protected $masterService;
-    public $isPanelEnabled = true;
+    public $isPanelEnabled = "true";
     public $purchaseOrders = [];
+    public $ddPurchaseOrder = [
+        'placeHolder' => "Ketik untuk cari purchase order ...",
+        'optionLabel' => "tr_code",
+        'query' => "SELECT DISTINCT h.tr_code FROM order_hdrs h LEFT JOIN order_dtls d ON h.id = d.trhdr_id WHERE h.tr_type = 'PO' AND d.qty > d.qty_reff ORDER BY h.tr_code",
+    ];
+
+    public $ddPartner = [
+        'placeHolder' => "Ketik untuk cari customer ...",
+        'optionLabel' => "code,name,address,city",
+        'query' => "SELECT id,code,name,address,city
+                    FROM partners
+                    WHERE deleted_at IS NULL AND grp = 'C'",
+    ];
 
     public $isDeliv;
 
@@ -96,7 +109,7 @@ class Detail extends BaseComponent
             $this->inputs['tax_invoice'] = $this->object->tax_invoice;
             $this->inputs['tr_code'] = $this->object->tr_code;
 
-            // Load reffhdrtr_code from DelivDtl if not set in DelivHdr
+            // Load reffhdrtr_code from DelivPacking if not set in DelivHdr
             if (empty($this->inputs['reffhdrtr_code'])) {
                 $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
                 if ($delivDtl) {
@@ -105,7 +118,20 @@ class Detail extends BaseComponent
                     // $this->inputs['qty'] = $delivDtl->qty;
                     // $this->inputs['wh_code'] = $delivDtl->wh_code;
                 }
+            } else {
+                // Force load from DelivPacking even if already set
+                $delivDtl = DelivPacking::where('trhdr_id', $this->object->id)->first();
+                if ($delivDtl && !empty($delivDtl->reffhdrtr_code)) {
+                    $this->inputs['reffhdrtr_code'] = $delivDtl->reffhdrtr_code;
+                    $this->inputs['reffhdr_id'] = $delivDtl->reffhdr_id;
+                }
             }
+
+            // Debug logging for reffhdrtr_code
+            Log::info('Purchase Delivery Edit - reffhdrtr_code loaded', [
+                'reffhdrtr_code' => $this->inputs['reffhdrtr_code'] ?? 'empty',
+                'object_id' => $this->object->id ?? 'no_object'
+            ]);
             // Load partner data
             $partner = Partner::find($this->object->partner_id);
             if ($partner) {
@@ -113,13 +139,14 @@ class Detail extends BaseComponent
                 $this->inputs['partner_name'] = $partner->name;
             }
 
-            if (
-                !empty($this->inputs['reffhdrtr_code']) &&
-                !collect($this->purchaseOrders)->pluck('value')->contains($this->inputs['reffhdrtr_code'])
-            ) {
+            // Add existing reffhdrtr_code to purchaseOrders array for edit mode
+            if (!empty($this->inputs['reffhdrtr_code'])) {
+                $existingCode = $this->inputs['reffhdrtr_code'];
+
+                // Add to purchaseOrders array
                 $this->purchaseOrders[] = [
-                    'label' => $this->inputs['reffhdrtr_code'],
-                    'value' => $this->inputs['reffhdrtr_code'],
+                    'label' => $existingCode,
+                    'value' => $existingCode,
                 ];
             }
 

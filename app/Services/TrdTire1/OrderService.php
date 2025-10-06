@@ -73,7 +73,7 @@ class OrderService
                 $newDetail = OrderDtl::create($detail);
                 if (str_starts_with($headerData['tr_code'], 'PO')) {
                     MatlUom::updLastBuyingPrice(
-                        $newDetail->matl_id, 
+                        $newDetail->matl_id,
                         $newDetail->matl_uom,
                         $newDetail->price,
                         $headerData['tr_date'],

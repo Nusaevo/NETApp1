@@ -296,5 +296,17 @@
                 window.print();
             }, 1000);
         }
+
+        // Listen for successful print counter update
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('success', (message) => {
+                if (message.includes('Print counter surat jalan berhasil diupdate')) {
+                    // Refresh halaman setelah berhasil update counter
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000); // Delay 2 detik untuk memastikan print dialog selesai
+                }
+            });
+        });
     </script>
 </div>

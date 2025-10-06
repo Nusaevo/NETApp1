@@ -807,10 +807,10 @@ class Detail extends BaseComponent
             $price = $this->input_details[$key]['price'];
             $discount = $this->input_details[$key]['disc_pct'] / 100;
             $taxValue = $this->inputs['tax_pct'] / 100;
-            $priceAfterDisc = $price * (1 - $discount);
-            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue),0);
+            $priceAfterDisc = round($price * (1 - $discount), 0);
+            $priceBeforeTax = round($priceAfterDisc / (1 + $taxValue), 0);
             // dd($this->inputs['tax_code'], $price, $priceAfterDisc, $priceBeforeTax, $taxValue);
-            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount,0);
+            $this->input_details[$key]['disc_amt'] = round($qty * $price * $discount, 0);
 
             $this->input_details[$key]['amt'] = 0;
             $this->input_details[$key]['amt_beforetax'] = 0;
@@ -819,22 +819,22 @@ class Detail extends BaseComponent
                 $this->input_details[$key]['price_beforetax'] = $priceBeforeTax;
                 // Catatan: khusus untuk yang include PPN
                 // DPP dihitung dari harga setelah disc dikurangi PPN dibulatkan ke rupiah * qty
-                $this->input_details[$key]['amt_beforetax'] = $priceBeforeTax * $qty ;
+                $this->input_details[$key]['amt_beforetax'] = round($priceBeforeTax * $qty, 0);
                 // PPN dihitung dari DPP * PPN dibulatkan ke rupiah
-                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue,0);
+                $this->input_details[$key]['amt_tax'] = round($this->input_details[$key]['amt_beforetax'] * $taxValue, 0);
             } else if ($this->inputs['tax_code'] === 'E') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
-                $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
-                $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue,0);
+                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
+                $this->input_details[$key]['amt_tax'] = round($priceAfterDisc * $qty * $taxValue, 0);
             } else if ($this->inputs['tax_code'] === 'N') {
                 $this->input_details[$key]['price_beforetax'] = $priceAfterDisc;
-                $this->input_details[$key]['amt_beforetax'] = $priceAfterDisc * $qty;
+                $this->input_details[$key]['amt_beforetax'] = round($priceAfterDisc * $qty, 0);
                 $this->input_details[$key]['amt_tax'] = 0;
             }
             // amt selalu dihitung tanpa dipengaruhi tax_code: (price after discount) * qty
-            $this->input_details[$key]['amt'] = $priceAfterDisc * $qty;
+            $this->input_details[$key]['amt'] = round($priceAfterDisc * $qty, 0);
             $this->input_details[$key]['price_afterdisc'] = $priceAfterDisc;
-            $this->input_details[$key]['amt_adjustdtl'] = $this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'];
+            $this->input_details[$key]['amt_adjustdtl'] = round($this->input_details[$key]['amt'] - $this->input_details[$key]['amt_beforetax'] - $this->input_details[$key]['amt_tax'], 0);
 
             $this->total_amount = 0;
             $this->total_discount = 0;
@@ -911,10 +911,10 @@ class Detail extends BaseComponent
         }
 
         return [
-            'amt' => $amt,
-            'amt_beforetax' => $amtBeforeTax,
-            'amt_tax' => $amtTax,
-            'amt_adjustdtl' => $amtAdjustDtl
+            'amt' => round($amt, 0),
+            'amt_beforetax' => round($amtBeforeTax, 0),
+            'amt_tax' => round($amtTax, 0),
+            'amt_adjustdtl' => round($amtAdjustDtl, 0)
         ];
     }
 

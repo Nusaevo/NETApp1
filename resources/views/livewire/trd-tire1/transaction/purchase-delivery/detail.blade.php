@@ -18,12 +18,12 @@
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
-                                        :action="$actionValue" required="true" enabled="true" />
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
                                         type="text" :action="$actionValue" required="true" :enabled="$isPanelEnabled"
                                         capslockMode="true" />
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.reff_date" type="date"
+                                        :action="$actionValue" required="true" enabled="true" />
+                                    <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" enabled="true" />
                                 </div>
                                 <div class="row">
@@ -34,9 +34,19 @@
                                     <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" model="inputs.wh_code"
                                         :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         onChanged="whCodeOnChanged($event.target.value)" />
-                                    <x-ui-dropdown-select label="{{ $this->trans('reffhdrtr_code') }}"
-                                        model="inputs.reffhdrtr_code" :options="$purchaseOrders" required="true"
-                                        :action="$actionValue" onChanged="onPurchaseOrderChanged($event.target.value)" :enabled="$isPanelEnabled"/>
+
+                                    {{-- @if ($actionValue === 'Edit')
+                                        <x-ui-dropdown-select label="Nota Pembelian" model="inputs.reffhdrtr_code"
+                                            :options="$purchaseOrders" required="true" :action="$actionValue"
+                                            onChanged="onPurchaseOrderChanged($event.target.value)" :enabled="$isPanelEnabled" />
+                                    @else --}}
+                                    <x-ui-dropdown-search label="Nota Pembelian" model="inputs.reffhdrtr_code"
+                                        optionValue="tr_code" :query="$ddPurchaseOrder['query']" :optionLabel="$ddPurchaseOrder['optionLabel']" :placeHolder="$ddPurchaseOrder['placeHolder']"
+                                        :selectedValue="$inputs['reffhdrtr_code'] ?? ''" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        type="int" onChanged="onPurchaseOrderChanged($event.target.value)" />
+                                        
+                                    {{-- @endif --}}
+                                    {{-- Debug: @dump($inputs['reffhdrtr_code']) --}}
                                     {{-- @dump($inputs['reffhdrtr_code']) --}}
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
@@ -62,12 +72,13 @@
                                 <!-- Define table rows -->
                                 <x-slot name="rows">
                                     @foreach ($input_details as $key => $input_detail)
-                                    <tr wire:key="list{{ $input_detail['id'] ?? $key }}-{{ $inputs['reffhdrtr_code']}}">
-                                        <td style="text-align: center;">{{ $loop->iteration }}</td>
+                                        <tr
+                                            wire:key="list{{ $input_detail['id'] ?? $key }}-{{ $inputs['reffhdrtr_code'] }}">
+                                            <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
                                                 <x-ui-dropdown-search model="input_details.{{ $key }}.matl_id"
                                                     query="SELECT id, code, name FROM materials WHERE status_code='A' AND deleted_at IS NULL"
-                                                    optionValue="id"  optionLabel="{code},{name}"
+                                                    optionValue="id" optionLabel="{code},{name}"
                                                     placeHolder="Search materials..." :selectedValue="$input_details[$key]['matl_id'] ?? ''" required="true"
                                                     :action="$actionValue" enabled="true"
                                                     onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
@@ -103,14 +114,9 @@
 
                         <!-- Footer with Save button -->
                         <x-ui-footer>
-                             <x-ui-button clickEvent="deleteTransaction"
-                                :action="$actionValue"
-                                :enabled="$isDeliv ? 'false' : 'true'"
-                                type="delete" enableConfirmationDialog="true" :permissions="$permissions"/>
-                            <x-ui-button clickEvent="Save"
-                                :action="$actionValue"
-                                type="save"
-                                :enabled="true" />
+                            <x-ui-button clickEvent="deleteTransaction" :action="$actionValue" :enabled="$isDeliv ? 'false' : 'true'"
+                                type="delete" enableConfirmationDialog="true" :permissions="$permissions" />
+                            <x-ui-button clickEvent="Save" :action="$actionValue" type="save" :enabled="true" />
 
                         </x-ui-footer>
                     </div>
