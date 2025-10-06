@@ -399,24 +399,15 @@ class BaseComponent extends Component
         $currentUrl = request()->url();
         $currentFullUrl = request()->fullUrl();
 
-        // Log for debugging
-        Log::info("=== GO BACK DEBUG START ===");
-        Log::info("Current URL: " . $currentUrl);
-        Log::info("Current Full URL: " . $currentFullUrl);
-
         // Find the first valid URL by going through browser history
         $validUrl = $this->findValidBackUrl();
 
         if ($validUrl) {
-            // Always redirect if we found a valid URL, regardless of current URL
-            Log::info("Found valid back URL: " . $validUrl);
-            Log::info("Redirecting to: " . $validUrl);
             return redirect()->to($validUrl);
         }
 
         // Fallback to index/list page if no valid URL found
         $fallbackUrl = $this->constructIndexUrl();
-        Log::info("Using fallback URL: " . $fallbackUrl);
         return redirect()->to($fallbackUrl);
     }
 
@@ -431,7 +422,6 @@ class BaseComponent extends Component
             $referrer = request()->header('referer');
             if ($referrer) {
                 $actualCurrentUrl = $referrer;
-                Log::info("Using referrer as actual current URL: " . $actualCurrentUrl);
             }
         }
 
@@ -455,18 +445,18 @@ class BaseComponent extends Component
 
         // Priority-ordered URL sources for immediate checking
         $urlSources = [
-            // 1. Navigation history (most reliable)
+            // 1. Navigation history - simple chronological approach but smart
             function() use ($currentUrl, $currentFullUrl, $actualCurrentUrl) {
                 $navHistory = session('navigation_history', []);
                 if (empty($navHistory)) return [];
 
-                // Clean and update session in one operation
+                // Clean and get all previous URLs from history
                 $cleanHistory = array_values(array_filter($navHistory, function($url) use ($currentUrl, $currentFullUrl, $actualCurrentUrl) {
                     return $url && $url !== $currentUrl && $url !== $currentFullUrl && $url !== $actualCurrentUrl;
                 }));
                 session(['navigation_history' => $cleanHistory]);
 
-                return array_reverse($cleanHistory); // Most recent first
+                return array_reverse($cleanHistory);
             },
 
             // 2. Laravel previous
@@ -477,20 +467,16 @@ class BaseComponent extends Component
 
             // 4. HTTP referrer
             function() { return [request()->header('referer')]; }
-        ];
-
-        // Check each source until valid URL found
+        ];        // Check each source until valid URL found
         foreach ($urlSources as $sourceFunc) {
             $urls = $sourceFunc();
             foreach ($urls as $url) {
                 if ($isValidUrl($url)) {
-                    Log::info("Valid URL found: " . $url);
                     return $url;
                 }
             }
         }
 
-        Log::info("No valid URL found");
         return null;
     }
 
@@ -501,113 +487,55 @@ class BaseComponent extends Component
             return false;
         }
 
-        // Allow PrintPdf <-> Detail navigation (different page types)
-        $urlHasPrintPdf = str_contains($url, '/PrintPdf/');
-        $currentHasPrintPdf = str_contains($currentUrl, '/PrintPdf/');
-        $urlHasDetail = str_contains($url, '/Detail/');
-        $currentHasDetail = str_contains($currentUrl, '/Detail/');
-
-        if (($urlHasPrintPdf && $currentHasDetail) || ($urlHasDetail && $currentHasPrintPdf)) {
-            return false; // Different page types, allow navigation
-        }
-
-        // Fast path comparison using string operations
+        // Allow navigation between different page types in same module
         $urlPath = parse_url($url, PHP_URL_PATH) ?: '';
         $currentPath = parse_url($currentUrl, PHP_URL_PATH) ?: '';
 
-        // Extract first 3 segments quickly
-        $urlParts = explode('/', $urlPath, 5); // Limit to 5 for performance
-        $currentParts = explode('/', $currentPath, 5);
+        // Check if this is Detail -> Index navigation (should be allowed)
+        $currentHasDetail = str_contains($currentPath, '/Detail/');
+        $urlHasDetail = str_contains($urlPath, '/Detail/');
 
-        // Compare first 3 non-empty segments
-        $urlCore = array_values(array_filter(array_slice($urlParts, 0, 4), 'strlen'));
-        $currentCore = array_values(array_filter(array_slice($currentParts, 0, 4), 'strlen'));
-
-        if (count($urlCore) >= 3 && count($currentCore) >= 3) {
-            return array_slice($urlCore, 0, 3) === array_slice($currentCore, 0, 3);
+        // If current is Detail and target doesn't have Detail, allow (Detail -> Index)
+        if ($currentHasDetail && !$urlHasDetail) {
+            return false; // Allow navigation
         }
 
-        return false;
-    }    private function constructValidUrlFromHistory($historyUrl, $skipPatterns)
-    {
-        // Check if history URL should be skipped
-        foreach ($skipPatterns as $pattern) {
-            if (str_contains($historyUrl, $pattern)) {
-                // Try to construct a valid URL from this invalid one
-                if (str_contains($historyUrl, 'PrintPdf')) {
-                    // Convert PrintPdf URL to Detail URL
-                    $detailUrl = str_replace('/PrintPdf/', '/Detail/', $historyUrl);
-                    Log::info("Constructed Detail URL from PrintPdf history: " . $detailUrl);
-                    return $detailUrl;
-                }
-                return null;
-            }
+        // If both are Detail pages with different IDs, consider them different
+        if ($currentHasDetail && $urlHasDetail && $currentPath !== $urlPath) {
+            return false; // Allow navigation to different Detail pages
         }
 
-        // If URL doesn't contain skip patterns, it's potentially valid
-        return $historyUrl;
+        // Only consider similar if exact same path (to prevent infinite loops)
+        return $urlPath === $currentPath;
     }
 
     private function constructIndexUrl()
     {
-        // Try to construct index/list URL from current path
         $currentPath = request()->getPathInfo();
         $pathSegments = explode('/', trim($currentPath, '/'));
-
-        Log::info("Current path segments: " . json_encode($pathSegments));
-
-        // For print URLs, try to construct the detail URL first
-        if (in_array('PrintPdf', $pathSegments) || str_contains($currentPath, 'print')) {
-            Log::info("Detected print URL, trying to construct detail URL");
-
-            // Remove PrintPdf and replace with Detail
-            $detailSegments = [];
-            $skipNext = false;
-
-            foreach ($pathSegments as $i => $segment) {
-                if ($segment === 'PrintPdf') {
-                    $detailSegments[] = 'Detail';
-                    $skipNext = false; // Keep the IDs after PrintPdf
-                } elseif (!in_array(strtolower($segment), ['print', 'pdf'])) {
-                    $detailSegments[] = $segment;
-                }
-            }
-
-            if (!empty($detailSegments)) {
-                $detailPath = '/' . implode('/', $detailSegments);
-                $detailUrl = url($detailPath);
-                Log::info("Constructed detail URL from print: " . $detailUrl);
-                return $detailUrl;
-            }
-        }
-
-        // Remove segments until we get to a reasonable index page
-        // Usually remove 'detail', objectId, action etc.
         $indexSegments = [];
 
         foreach ($pathSegments as $segment) {
-            // Skip detail, action parameters, IDs, and print-related segments
-            if (!in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf']) &&
-                !is_numeric($segment) &&
-                !preg_match('/^[A-Z0-9]{8,}$/', $segment) && // Skip encrypted IDs
-                !empty($segment)) {
+            if (in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf'])) {
+                break;
+            }
+
+            if (is_numeric($segment) || preg_match('/^[A-Z0-9]{8,}$/', $segment)) {
+                break;
+            }
+
+            if (!empty($segment)) {
                 $indexSegments[] = $segment;
             }
         }
 
         if (!empty($indexSegments)) {
             $indexPath = '/' . implode('/', $indexSegments);
-            $indexUrl = url($indexPath);
-            Log::info("Constructed index URL: " . $indexUrl);
-            return $indexUrl;
+            return url($indexPath);
         }
 
-        // Final fallback
-        Log::info("Using dashboard as final fallback");
-        return url('/');
-    }
-
-    protected function onReset()
+        return url('/dashboard') ?: url('/');
+    }    protected function onReset()
     {
         // This method is intentionally left empty.
         // Override this method in child classes to implement specific reset logic.
