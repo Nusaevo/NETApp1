@@ -64,9 +64,10 @@ class Index extends BaseComponent
                 FROM ivt_bals b
                 join materials m on m.id = b.matl_id
                 " . ($brand ? "and m.brand = '{$brand}'" : "") . "
-                where b.qty_oh > 0 or b.qty_fgi > 0
+                where b.qty_oh != 0 or b.qty_fgi != 0
             ) a
             group by code, name
+            order by code
         ";
 
         $this->results = DB::connection(Session::get('app_code'))->select($query);
