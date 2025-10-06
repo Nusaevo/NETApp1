@@ -399,24 +399,15 @@ class BaseComponent extends Component
         $currentUrl = request()->url();
         $currentFullUrl = request()->fullUrl();
 
-        // Log for debugging
-        Log::info("=== GO BACK DEBUG START ===");
-        Log::info("Current URL: " . $currentUrl);
-        Log::info("Current Full URL: " . $currentFullUrl);
-
         // Find the first valid URL by going through browser history
         $validUrl = $this->findValidBackUrl();
 
         if ($validUrl) {
-            // Always redirect if we found a valid URL, regardless of current URL
-            Log::info("Found valid back URL: " . $validUrl);
-            Log::info("Redirecting to: " . $validUrl);
             return redirect()->to($validUrl);
         }
 
         // Fallback to index/list page if no valid URL found
         $fallbackUrl = $this->constructIndexUrl();
-        Log::info("Using fallback URL: " . $fallbackUrl);
         return redirect()->to($fallbackUrl);
     }
 
@@ -431,7 +422,6 @@ class BaseComponent extends Component
             $referrer = request()->header('referer');
             if ($referrer) {
                 $actualCurrentUrl = $referrer;
-                Log::info("Using referrer as actual current URL: " . $actualCurrentUrl);
             }
         }
 
@@ -466,10 +456,6 @@ class BaseComponent extends Component
                 }));
                 session(['navigation_history' => $cleanHistory]);
 
-                Log::info("Available URLs in navigation history: " . json_encode($cleanHistory));
-
-                // Simple approach: return URLs in reverse chronological order (most recent first)
-                // Let the isValidUrl function handle the filtering
                 return array_reverse($cleanHistory);
             },
 
@@ -486,13 +472,11 @@ class BaseComponent extends Component
             $urls = $sourceFunc();
             foreach ($urls as $url) {
                 if ($isValidUrl($url)) {
-                    Log::info("Valid URL found: " . $url);
                     return $url;
                 }
             }
         }
 
-        Log::info("No valid URL found");
         return null;
     }
 
@@ -513,13 +497,11 @@ class BaseComponent extends Component
 
         // If current is Detail and target doesn't have Detail, allow (Detail -> Index)
         if ($currentHasDetail && !$urlHasDetail) {
-            Log::info("Allowing Detail -> Index navigation: $url");
             return false; // Allow navigation
         }
 
         // If both are Detail pages with different IDs, consider them different
         if ($currentHasDetail && $urlHasDetail && $currentPath !== $urlPath) {
-            Log::info("Different Detail pages, allowing navigation: $url");
             return false; // Allow navigation to different Detail pages
         }
 
@@ -527,98 +509,19 @@ class BaseComponent extends Component
         return $urlPath === $currentPath;
     }
 
-    private function extractContextSegments($pathSegments)
-    {
-        // Extract meaningful context segments (stop at actions/IDs)
-        $contextSegments = [];
-        foreach ($pathSegments as $segment) {
-            if (in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf']) ||
-                is_numeric($segment) ||
-                preg_match('/^[A-Z0-9]{8,}$/', $segment)) {
-                break;
-            }
-            if (!empty($segment)) {
-                $contextSegments[] = strtolower($segment);
-            }
-        }
-        return $contextSegments;
-    }
-
-    private function calculateContextScore($currentContext, $urlContext, $currentSegments, $urlSegments)
-    {
-        $score = 0;
-
-        // Exact context match gets highest score
-        if ($currentContext === $urlContext) {
-            $score += 100;
-        }
-
-        // Partial context match
-        $matchingSegments = 0;
-        $maxSegments = max(count($currentContext), count($urlContext));
-        for ($i = 0; $i < min(count($currentContext), count($urlContext)); $i++) {
-            if ($currentContext[$i] === $urlContext[$i]) {
-                $matchingSegments++;
-            } else {
-                break; // Stop at first non-match
-            }
-        }
-
-        if ($maxSegments > 0) {
-            $score += ($matchingSegments / $maxSegments) * 50;
-        }
-
-        // Prefer parent/index pages over deep detail pages
-        if (count($urlSegments) < count($currentSegments)) {
-            $score += 30; // Parent page bonus
-        }
-
-        // Penalize generic home pages when we're in specific contexts
-        if (count($currentContext) >= 3 && count($urlContext) <= 2 &&
-            in_array('home', $urlContext)) {
-            $score -= 40; // Penalty for generic home when in specific context
-        }
-
-        return $score;
-    }    private function constructValidUrlFromHistory($historyUrl, $skipPatterns)
-    {
-        // Check if history URL should be skipped
-        foreach ($skipPatterns as $pattern) {
-            if (str_contains($historyUrl, $pattern)) {
-                // Try to construct a valid URL from this invalid one
-                if (str_contains($historyUrl, 'PrintPdf')) {
-                    // Convert PrintPdf URL to Detail URL
-                    $detailUrl = str_replace('/PrintPdf/', '/Detail/', $historyUrl);
-                    Log::info("Constructed Detail URL from PrintPdf history: " . $detailUrl);
-                    return $detailUrl;
-                }
-                return null;
-            }
-        }
-
-        // If URL doesn't contain skip patterns, it's potentially valid
-        return $historyUrl;
-    }
-
     private function constructIndexUrl()
     {
-        // Try to construct index/list URL from current path
         $currentPath = request()->getPathInfo();
         $pathSegments = explode('/', trim($currentPath, '/'));
-
-        Log::info("Current path segments: " . json_encode($pathSegments));
-
-        // Simple approach: remove action segments and IDs to get back to index
         $indexSegments = [];
 
         foreach ($pathSegments as $segment) {
-            // Stop at action segments or IDs
             if (in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf'])) {
-                break; // Stop here, don't include action segments
+                break;
             }
 
             if (is_numeric($segment) || preg_match('/^[A-Z0-9]{8,}$/', $segment)) {
-                break; // Stop at IDs (numeric or encrypted)
+                break;
             }
 
             if (!empty($segment)) {
@@ -626,16 +529,11 @@ class BaseComponent extends Component
             }
         }
 
-        // Construct index URL from remaining segments
         if (!empty($indexSegments)) {
             $indexPath = '/' . implode('/', $indexSegments);
-            $indexUrl = url($indexPath);
-            Log::info("Constructed index URL: " . $indexUrl);
-            return $indexUrl;
+            return url($indexPath);
         }
 
-        // Final fallback - try dashboard or home
-        Log::info("Using dashboard as final fallback");
         return url('/dashboard') ?: url('/');
     }    protected function onReset()
     {
