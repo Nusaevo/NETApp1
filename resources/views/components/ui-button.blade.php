@@ -42,16 +42,8 @@
                     // Check if current URL is a dropdown endpoint
                     const currentUrl = window.location.href;
 
-                    // List of endpoints to skip in history
-                    const skipEndpoints = [
-                        '/search-dropdown',
-                        'search-dropdown'
-                    ];
-
-                    // Check if current URL should be skipped
-                    const shouldSkipCurrent = skipEndpoints.some(endpoint =>
-                        currentUrl.includes(endpoint)
-                    );
+                    // Check if current URL contains search-dropdown
+                    const shouldSkipCurrent = currentUrl.includes('search-dropdown');
 
                     if (shouldSkipCurrent) {
                         // If we're currently on a dropdown endpoint, go back twice
@@ -62,9 +54,7 @@
                         // Add a small delay to allow history to update, then check again
                         setTimeout(() => {
                             const newUrl = window.location.href;
-                            const stillOnDropdown = skipEndpoints.some(endpoint =>
-                                newUrl.includes(endpoint)
-                            );
+                            const stillOnDropdown = newUrl.includes('search-dropdown');
 
                             if (stillOnDropdown && history.length > 1) {
                                 history.back(); // Go back one more time
