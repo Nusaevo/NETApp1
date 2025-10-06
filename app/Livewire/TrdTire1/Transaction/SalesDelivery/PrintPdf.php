@@ -15,6 +15,7 @@ class PrintPdf extends BaseComponent
 
     protected function onPreRender()
     {
+        $this->bypassPermissions = true;
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {
                 $this->dispatch('error', 'Invalid object ID');
