@@ -37,18 +37,10 @@
                             Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                         </p>
                         <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                        @if($this->object->tax_doc_flag == 1)
-                            <p style="margin-bottom: -8px;">
-                                <strong>{{ $this->object->npwp_name }}</strong>
-                            </p>
-                            <p style="margin-bottom: -8px;">{{ $this->object->npwp_addr }}</p>
-                        @else
-                            <p style="margin-bottom: -8px;">
-                                <strong>{{ $this->object->Partner->name }}</strong>
-                            </p>
-                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
-                            <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
-                        @endif
+                        <p style="margin-bottom: -8px;">
+                            <strong>{{ $this->object->ship_to_name }}</strong>
+                        </p>
+                        <p style="margin-bottom: -8px;">{{ $this->object->ship_to_addr }}</p>
                     </td>
                 </tr>
             </table>
@@ -119,20 +111,25 @@
                 </tr>
             </table>
 
+            <!-- Empty rows untuk memposisikan tanda tangan di bawah -->
+            @php
+                $itemCount = $this->object->OrderDtl->count();
+                $minRows = 8; // Minimum 8 baris untuk memastikan tanda tangan di bawah
+                $emptyRows = max(0, $minRows - $itemCount);
+            @endphp
+
+            @for ($i = 0; $i < $emptyRows; $i++)
+                <div style="height: 20px; line-height: 20px;">&nbsp;</div>
+            @endfor
+
             <!-- Recipient Info -->
-            <div style="margin-top: 15px;">
-                <p style="margin: 0 0 10px 0;">
-                    @if($this->object->tax_doc_flag == 1)
-                        {{ $this->object->npwp_name }} -
-                        {{ $this->object->npwp_addr }}
-                    @else
-                        {{ $this->object->Partner->name }} -
-                        {{ $this->object->Partner->address }} -
-                        {{ $this->object->Partner->city }}
-                    @endif
+            <div style="margin-top: 20px;">
+                <p style="margin: 0 0 0px 0;">
+                    {{ $this->object->npwp_name }} -
+                    {{ $this->object->npwp_addr }}
                 </p>
 
-                <div width="100%" style="margin-top: 5px;">
+                <div width="100%" style="margin-top: 0px;">
                     <div class="row justify-content-between" style="text-align: center;">
                         <div style="width: 25%;">
                             <p style="margin: 5px 0;">Administrasi:</p><br>
@@ -183,18 +180,12 @@
                                 <p style="margin-bottom: -8px;">Surabaya,
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                                @if($this->object->tax_doc_flag == 1)
-                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->npwp_name }}</strong></p>
-                                    <p style="margin-bottom: -8px;">{{ $this->object->npwp_address }}</p>
-                                @else
-                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong></p>
-                                    <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
-                                    <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
-                                @endif
+                                <p style="margin-bottom: -8px;"><strong>{{ $this->object->ship_to_name }}</strong></p>
+                                <p style="margin-bottom: -8px;">{{ $this->object->ship_to_addr }}</p>
+
                             </td>
                         </tr>
                     </table>
-
                     <!-- Items -->
                     @php $page_total_qty = 0; @endphp
                     <table
@@ -255,18 +246,24 @@
                         </tr>
                     </table>
 
+                    <!-- Empty rows untuk memposisikan tanda tangan di bawah -->
+                    @php
+                        $itemCount = is_array($chunk) ? count($chunk) : $chunk->count();
+                        $minRows = 8; // Minimum 8 baris untuk memastikan tanda tangan di bawah
+                        $emptyRows = max(0, $minRows - $itemCount);
+                    @endphp
+
+                    @for ($i = 0; $i < $emptyRows; $i++)
+                        <div style="height: 20px; line-height: 20px;">&nbsp;</div>
+                    @endfor
+
                     <!-- Footer -->
-                    <div style="margin-top: 15px;">
-                        <p style="margin: 0 0 5px 0;">
-                            @if($this->object->tax_doc_flag == 1)
-                                {{ $this->object->npwp_name }} -
-                                {{ $this->object->npwp_addr }}
-                            @else
-                                {{ $this->object->Partner->name }} -
-                                {{ $this->object->Partner->address }} - {{ $this->object->Partner->city }}
-                            @endif
+                    <div style="margin-top: 20px;">
+                        <p style="margin: 0 0 0px 0;">
+                            {{ $this->object->npwp_name }} -
+                            {{ $this->object->npwp_addr }}
                         </p>
-                        <div width="100%" style="margin-top: 5px;">
+                        <div width="100%" style="margin-top: 0px;">
                             <div class="row justify-content-between" style="text-align: center;">
                                 <div style="width: 25%;">
                                     <p style="margin: 5px 0;">Administrasi:</p><br>
