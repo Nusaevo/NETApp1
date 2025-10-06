@@ -37,41 +37,62 @@
         const href = el.getAttribute('href');
         setTimeout(() => {
             if (!href || href === '#') {
+                console.log('=== BACK BUTTON DEBUG START ===');
+                console.log('History length:', history.length);
+
                 // Smart back navigation that skips dropdown endpoints
                 if (history.length > 1) {
                     // Check if current URL is a dropdown endpoint
                     const currentUrl = window.location.href;
+                    console.log('Current URL:', currentUrl);
 
                     // Check if current URL contains search-dropdown
                     const shouldSkipCurrent = currentUrl.includes('search-dropdown');
+                    console.log('Should skip current (contains search-dropdown):', shouldSkipCurrent);
 
                     if (shouldSkipCurrent) {
                         // Optimized: Keep going back until we find a non-dropdown URL
+                        let navigationCount = 0;
                         const navigateToValidPage = () => {
+                            navigationCount++;
+                            console.log(`Navigation attempt #${navigationCount}`);
+                            console.log('Going back from:', window.location.href);
+
                             // Go back immediately
                             history.back();
 
                             // Quick check after minimal delay
                             setTimeout(() => {
                                 const currentPageUrl = window.location.href;
+                                console.log('After back(), new URL:', currentPageUrl);
+                                console.log('Still contains search-dropdown:', currentPageUrl.includes('search-dropdown'));
+                                console.log('History length now:', history.length);
 
                                 // If still on search-dropdown, continue going back
-                                if (currentPageUrl.includes('search-dropdown') && history.length > 1) {
+                                if (currentPageUrl.includes('search-dropdown') && history.length > 1 && navigationCount < 10) {
+                                    console.log('Still on dropdown, continuing navigation...');
                                     navigateToValidPage(); // Continue until valid page
+                                } else {
+                                    console.log('=== NAVIGATION COMPLETE ===');
+                                    console.log('Final URL:', currentPageUrl);
+                                    console.log('Total navigation attempts:', navigationCount);
+                                    console.log('=== BACK BUTTON DEBUG END ===');
                                 }
-                                // If not search-dropdown, we're done - stay on this page
                             }, 50); // Reduced delay for faster navigation
                         };
 
                         navigateToValidPage();
                     } else {
+                        console.log('Current URL is not search-dropdown, doing normal back navigation');
                         // Normal back navigation
                         history.back();
                     }
                 } else {
+                    console.log('History length <= 1, redirecting to home');
                     window.location.href = '/';
                 }
             } else {
+                console.log('Href provided, redirecting to:', href);
                 window.location.href = href;
             }
         }, 80);
