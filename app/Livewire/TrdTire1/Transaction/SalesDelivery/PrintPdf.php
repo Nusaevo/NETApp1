@@ -58,6 +58,12 @@ class PrintPdf extends BaseComponent
             $newVersion = OrderHdr::updateDeliveryPrintCounterStatic($this->object->id);
             $this->dispatch('success', 'Print counter surat jalan berhasil diupdate: ' . $newVersion);
             $this->dispatch('refreshData');
+
+            // Refresh halaman setelah berhasil update counter
+            $this->redirect(route('TrdTire1.Transaction.SalesOrder.Detail', [
+                'action'   => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id),
+            ]), navigate: true);
         }
     }
 
