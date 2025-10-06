@@ -446,8 +446,8 @@ class MasterService extends BaseService
             }
         } else {
             switch ($salesType) {
-                case 'O': // MOTOR tanpa tax invoice: Format: [A-Z]{2}[yy]8[5-digit]
-                    return sprintf('%s%s%s8%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
+                case 'O': // MOTOR tanpa tax invoice: Format: [A-Z]{2}[yy]8[3-digit]
+                    return sprintf('%s%s%s8%03d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 case 'I': // MOBIL tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
                     return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
                 default:
@@ -483,7 +483,7 @@ class MasterService extends BaseService
                 $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
             } else {
-                $pattern = '/^([A-Z]{2})(\d{2})8(\d{5})$/';
+                $pattern = '/^([A-Z]{2})(\d{2})8(\d{3})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
             }
         } elseif ($sales_type == 'I') {
