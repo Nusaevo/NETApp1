@@ -46,20 +46,24 @@
                     const shouldSkipCurrent = currentUrl.includes('search-dropdown');
 
                     if (shouldSkipCurrent) {
-                        // If we're currently on a dropdown endpoint, go back twice
-                        // First back() will go to the page that made the dropdown request
-                        // But we might still be on dropdown URL, so we need to check and go back again if needed
-                        history.back();
+                        // Optimized: Keep going back until we find a non-dropdown URL
+                        const navigateToValidPage = () => {
+                            // Go back immediately
+                            history.back();
 
-                        // Add a small delay to allow history to update, then check again
-                        setTimeout(() => {
-                            const newUrl = window.location.href;
-                            const stillOnDropdown = newUrl.includes('search-dropdown');
+                            // Quick check after minimal delay
+                            setTimeout(() => {
+                                const currentPageUrl = window.location.href;
 
-                            if (stillOnDropdown && history.length > 1) {
-                                history.back(); // Go back one more time
-                            }
-                        }, 100);
+                                // If still on search-dropdown, continue going back
+                                if (currentPageUrl.includes('search-dropdown') && history.length > 1) {
+                                    navigateToValidPage(); // Continue until valid page
+                                }
+                                // If not search-dropdown, we're done - stay on this page
+                            }, 50); // Reduced delay for faster navigation
+                        };
+
+                        navigateToValidPage();
                     } else {
                         // Normal back navigation
                         history.back();
