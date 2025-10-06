@@ -478,21 +478,37 @@ class MasterService extends BaseService
             ->first();
 
         if ($sales_type == 'O') {
-            // MOTOR - sekarang menggunakan format [A-Z]{2}
+            // MOBIL - menggunakan format [A-Z]{2}
             if ($tax_doc_flag) {
                 $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
             } else {
-                $pattern = '/^([A-Z]{2})(\d{2})8(\d{3})$/';
+                $pattern = '/^([A-Z]{2})(\d{2})8(\d{4})$/';
                 $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
             }
         } elseif ($sales_type == 'I') {
-            // MOBIL - sekarang menggunakan format [A-Z]
+            // MOTOR - menggunakan format [A-Z] atau [A-Z]{2} (untuk backward compatibility)
             if ($tax_doc_flag) {
+                // Coba pattern MOTOR dulu, jika tidak match coba pattern MOBIL
                 $pattern = '/^([A-Z])(\d{2})(\d{5})$/';
                 $expectedPrefix = $currentMonthLetter;
+
+                // Jika tidak ada data dengan pattern MOTOR, coba pattern MOBIL
+                $lastOrderMotor = OrderHdr::where('tr_type', 'SO')
+                    ->where('sales_type', $sales_type)
+                    ->where('tax_doc_flag', $taxInvoiceFlag)
+                    ->where('tr_code', 'like', $currentMonthLetter . '%')
+                    ->orderBy('tr_code', 'desc')
+                    ->first();
+
+                if ($lastOrderMotor && !preg_match($pattern, $lastOrderMotor->tr_code)) {
+                    // Gunakan pattern MOBIL jika data menggunakan format MOBIL
+                    $pattern = '/^([A-Z]{2})(\d{2})(\d{5})$/';
+                    $expectedPrefix = $currentMonthLetter . $currentMonthLetter;
+                    $lastOrder = $lastOrderMotor;
+                }
             } else {
-                $pattern = '/^([A-Z])(\d{2})8(\d{5})$/';
+                $pattern = '/^([A-Z])(\d{2})8(\d{3})$/';
                 $expectedPrefix = $currentMonthLetter;
             }
         } else {
