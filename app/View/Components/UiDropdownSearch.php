@@ -102,22 +102,22 @@ class UIDropdownSearch extends UiBaseComponent
     {
         // Check if query is empty
         if (empty($this->query)) {
-            \Log::warning('UiDropdownSearch has empty query', [
-                'component' => $this->model,
-                'connection' => $this->connection,
-                'selectedValue' => $this->selectedValue
-            ]);
+            // \Log::warning('UiDropdownSearch has empty query', [
+            //     'component' => $this->model,
+            //     'connection' => $this->connection,
+            //     'selectedValue' => $this->selectedValue
+            // ]);
         }
 
         // Log query data with more detail for debugging
-        \Log::debug('UiDropdownSearch component render', [
-            'component' => $this->model,
-            'query' => $this->query,
-            'query_length' => strlen($this->query ?? ''),
-            'query_type' => gettype($this->query),
-            'hasQuery' => !empty($this->query),
-            'connection' => $this->connection
-        ]);
+        // \Log::debug('UiDropdownSearch component render', [
+        //     'component' => $this->model,
+        //     'query' => $this->query,
+        //     'query_length' => strlen($this->query ?? ''),
+        //     'query_type' => gettype($this->query),
+        //     'hasQuery' => !empty($this->query),
+        //     'connection' => $this->connection
+        // ]);
 
         // Untuk backward compatibility:
         // Jika menggunakan format lama (model-based) tapi juga menyediakan query,
@@ -126,10 +126,10 @@ class UIDropdownSearch extends UiBaseComponent
         // Untuk kasus konversi otomatis model ke query jika keduanya diberikan
         if (!empty($this->searchModel) && empty($this->query)) {
             // Tampilkan peringatan jika masih menggunakan format lama tanpa query
-            \Log::warning('UiDropdownSearch using deprecated model-based format', [
-                'model' => $this->searchModel,
-                'component' => $this->model
-            ]);
+            // \Log::warning('UiDropdownSearch using deprecated model-based format', [
+            //     'model' => $this->searchModel,
+            //     'component' => $this->model
+            // ]);
         }
 
         return view('components.ui-dropdown-search');
