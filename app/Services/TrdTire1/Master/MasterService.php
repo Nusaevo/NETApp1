@@ -437,19 +437,19 @@ class MasterService extends BaseService
 
         if ($taxDocFlag) {
             switch ($salesType) {
-                case 'O': // MOTOR dengan faktur pajak: Format: [A-Z]{2}[yy][5-digit]
-                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
-                case 'I': // MOBIL dengan faktur pajak: Format: [A-Z][yy][5-digit]
+                case 'I': // MOTOR dengan faktur pajak: Format: [A-Z][yy][5-digit]
                     return sprintf('%s%s%05d', $monthLetter, $year, $sequenceNumber);
+                case 'O': // MOBIL dengan faktur pajak: Format: [A-Z]{2}[yy][5-digit]
+                    return sprintf('%s%s%s%05d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
         } else {
             switch ($salesType) {
-                case 'O': // MOTOR tanpa tax invoice: Format: [A-Z]{2}[yy]8[3-digit]
-                    return sprintf('%s%s%s8%03d', $monthLetter, $monthLetter, $year, $sequenceNumber);
-                case 'I': // MOBIL tanpa tax invoice: Format: [A-Z][yy]8[5-digit]
-                    return sprintf('%s%s8%05d', $monthLetter, $year, $sequenceNumber);
+                case 'I': // MOTOR tanpa tax invoice: Format: [A-Z][yy]8[3-digit]
+                    return sprintf('%s%s8%03d', $monthLetter, $year, $sequenceNumber);
+                case 'O': // MOBIL tanpa tax invoice: Format: [A-Z]{2}[yy]8[4-digit]
+                    return sprintf('%s%s%s8%04d', $monthLetter, $monthLetter, $year, $sequenceNumber);
                 default:
                     throw new \InvalidArgumentException('Invalid vehicle type');
             }
