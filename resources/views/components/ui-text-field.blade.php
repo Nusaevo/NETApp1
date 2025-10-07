@@ -93,50 +93,54 @@
                                     });
                                 },
 
-                                formatNumber(num, showDecimals = false) {
-                                    if (!num || num === '' || num === null || num === undefined) {
-                                        return '';
-                                    }
-                                    let number = parseFloat(num);
-                                    if (isNaN(number)) return '';
+                            formatNumber(num, showDecimals = false) {
+                                if (!num || num === '' || num === null || num === undefined) {
+                                    return '';
+                                }
+                                let number = parseFloat(num);
+                                if (isNaN(number)) return '';
 
-                                    // Jika decimalPlaces diset, bulatkan ke jumlah decimal tersebut
+                                // Fix floating point precision issues by rounding to 10 decimal places first
+                                number = Math.round(number * 10000000000) / 10000000000;
+
+                                // Jika decimalPlaces diset, bulatkan ke jumlah decimal tersebut
+                                @if(isset($decimalPlaces))
+                                // Bulatkan ke jumlah decimal yang ditentukan dengan Math.round untuk precision
+                                number = Math.round(number * Math.pow(10, {{ $decimalPlaces }})) / Math.pow(10, {{ $decimalPlaces }});
+                                @endif
+
+                                let parts = number.toString().split('.');
+                                let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
+                                let decimalPart = parts[1] || '';
+
+                                if (decimalPart) {
                                     @if(isset($decimalPlaces))
-                                    // Bulatkan ke jumlah decimal yang ditentukan
-                                    number = parseFloat(number.toFixed({{ $decimalPlaces }}));
+                                    // Pad dengan 0 jika perlu untuk mencapai jumlah decimal yang diinginkan
+                                    while (decimalPart.length < {{ $decimalPlaces }}) {
+                                        decimalPart += '0';
+                                    }
+                                    // Potong jika terlalu panjang
+                                    decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
+                                    @else
+                                    // Jika tidak ada decimalPlaces, tampilkan maksimal 2 decimal untuk mencegah precision error
+                                    if (decimalPart.length > 2) {
+                                        decimalPart = decimalPart.substring(0, 2);
+                                    }
                                     @endif
+                                    return integerPart + ',' + decimalPart;
+                                }
 
-                                    let parts = number.toString().split('.');
-                                    let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
-                                    let decimalPart = parts[1] || '';
+                                if (showDecimals) {
+                                    @if(isset($decimalPlaces))
+                                    return integerPart + ',' + '0'.repeat({{ $decimalPlaces }});
+                                    @else
+                                    return integerPart + ',00';
+                                    @endif
+                                }
 
-                                    if (decimalPart) {
-                                        @if(isset($decimalPlaces))
-                                        // Pad dengan 0 jika perlu untuk mencapai jumlah decimal yang diinginkan
-                                        while (decimalPart.length < {{ $decimalPlaces }}) {
-                                            decimalPart += '0';
-                                        }
-                                        // Potong jika terlalu panjang
-                                        decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
-                                        @else
-                                        // Jika tidak ada decimalPlaces, tampilkan semua decimal yang ada
-                                        // Tidak ada batasan atau padding
-                                        @endif
-                                        return integerPart + ',' + decimalPart;
-                                    }
-
-                                    if (showDecimals) {
-                                        @if(isset($decimalPlaces))
-                                        return integerPart + ',' + '0'.repeat({{ $decimalPlaces }});
-                                        @else
-                                        return integerPart + ',00';
-                                        @endif
-                                    }
-
-                                    return integerPart;
-                                },
-
-                                parseNumber(str) {
+                                // Jika tidak ada decimal dan tidak diminta showDecimals, tampilkan integer saja
+                                return integerPart;
+                            },                                parseNumber(str) {
                                     if (!str || str === '') return null;
 
                                     // Indonesian format: 1.234.567,89 → 1234567.89
@@ -193,22 +197,47 @@
                                         return;
                                     }
 
-                                    let numberValue;
-                                    if (typeof this.rawValue === 'string') {
-                                        numberValue = this.parseNumber(this.rawValue);
-                                        this.rawValue = numberValue;
-                                    } else {
-                                        numberValue = this.rawValue;
+                                let numberValue;
+                                if (typeof this.rawValue === 'string') {
+                                    numberValue = this.parseNumber(this.rawValue);
+                                } else {
+                                    numberValue = this.rawValue;
+                                }
+
+                                // Apply precision fix EARLY to prevent floating point errors
+                                if (numberValue !== null && numberValue !== undefined) {
+                                    let originalValue = numberValue;
+                                    numberValue = Math.round(numberValue * 10000000000) / 10000000000;
+                                    console.log('🔧 PRECISION FIX:', originalValue, '→', numberValue);
+                                    this.rawValue = numberValue; // Update rawValue with precision-fixed number
+                                }
+
+                                if (numberValue !== null && numberValue !== undefined) {
+                                    @if(isset($decimalPlaces))
+                                    // Jika decimalPlaces di-set, selalu tampilkan dengan decimal
+                                    console.log('📊 DECIMAL PLACES SET - forcing decimals for:', numberValue);
+                                    this.displayValue = this.formatNumber(numberValue, true);
+                                    @else
+                                    // Check if number has meaningful decimal places
+                                    let remainder = Math.abs(numberValue % 1);
+                                    let hasRealDecimals = false;
+
+                                    // If remainder is very close to 1.0, round to next integer
+                                    if (remainder > 0.9999) {
+                                        numberValue = Math.round(numberValue);
+                                        this.rawValue = numberValue; // Update rawValue with rounded number
+                                        remainder = 0;
+                                        console.log('🔄 ROUNDED TO INTEGER:', numberValue);
+                                    } else if (remainder > 0.0001) {
+                                        hasRealDecimals = true;
                                     }
 
-                                    if (numberValue !== null && numberValue !== undefined) {
-                                        let isDecimal = numberValue % 1 !== 0;
-                                        this.displayValue = this.formatNumber(numberValue, isDecimal);
-                                    } else {
-                                        this.displayValue = '';
-                                    }
-
-                                    if (this.$el) {
+                                    console.log('📊 NO DECIMAL PLACES - numberValue:', numberValue, 'hasRealDecimals:', hasRealDecimals, 'remainder:', remainder);
+                                    this.displayValue = this.formatNumber(numberValue, hasRealDecimals);
+                                    @endif
+                                } else {
+                                    this.displayValue = '';
+                                }                                    if (this.$el) {
                                         this.$el.value = this.displayValue;
                                     }
                                 },
@@ -385,10 +414,13 @@
                                 let number = parseFloat(num);
                                 if (isNaN(number)) return '';
 
+                                // Fix floating point precision issues by rounding to 10 decimal places first
+                                number = Math.round(number * 10000000000) / 10000000000;
+
                                 // Jika decimalPlaces diset, bulatkan ke jumlah decimal tersebut
                                 @if(isset($decimalPlaces))
-                                // Bulatkan ke jumlah decimal yang ditentukan
-                                number = parseFloat(number.toFixed({{ $decimalPlaces }}));
+                                // Bulatkan ke jumlah decimal yang ditentukan dengan Math.round untuk precision
+                                number = Math.round(number * Math.pow(10, {{ $decimalPlaces }})) / Math.pow(10, {{ $decimalPlaces }});
                                 @endif
 
                                 let parts = number.toString().split('.');
@@ -404,8 +436,10 @@
                                     // Potong jika terlalu panjang
                                     decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
                                     @else
-                                    // Jika tidak ada decimalPlaces, tampilkan semua decimal yang ada
-                                    // Tidak ada batasan atau padding
+                                    // Jika tidak ada decimalPlaces, tampilkan maksimal 2 decimal untuk mencegah precision error
+                                    if (decimalPart.length > 2) {
+                                        decimalPart = decimalPart.substring(0, 2);
+                                    }
                                     @endif
                                     return integerPart + ',' + decimalPart;
                                 }
@@ -418,6 +452,7 @@
                                     @endif
                                 }
 
+                                // Jika tidak ada decimal dan tidak diminta showDecimals, tampilkan integer saja
                                 return integerPart;
                             },
 
@@ -481,14 +516,41 @@
                                 let numberValue;
                                 if (typeof this.rawValue === 'string') {
                                     numberValue = this.parseNumber(this.rawValue);
-                                    this.rawValue = numberValue;
                                 } else {
                                     numberValue = this.rawValue;
                                 }
 
+                                // Apply precision fix and update rawValue
                                 if (numberValue !== null && numberValue !== undefined) {
-                                    let isDecimal = numberValue % 1 !== 0;
-                                    this.displayValue = this.formatNumber(numberValue, isDecimal);
+                                    let originalValue = numberValue;
+                                    numberValue = Math.round(numberValue * 10000000000) / 10000000000;
+                                    console.log('🔧 PRECISION FIX (no-currency):', originalValue, '→', numberValue);
+                                    this.rawValue = numberValue; // Update rawValue with precision-fixed number
+                                }
+
+                                if (numberValue !== null && numberValue !== undefined) {
+                                    @if(isset($decimalPlaces))
+                                    // Jika decimalPlaces di-set, selalu tampilkan dengan decimal
+                                    console.log('📊 DECIMAL PLACES SET (no-currency) - forcing decimals for:', numberValue);
+                                    this.displayValue = this.formatNumber(numberValue, true);
+                                    @else
+                                    // Check if number has meaningful decimal places
+                                    let remainder = Math.abs(numberValue % 1);
+                                    let hasRealDecimals = false;
+
+                                    // If remainder is very close to 1.0, round to next integer
+                                    if (remainder > 0.9999) {
+                                        numberValue = Math.round(numberValue);
+                                        this.rawValue = numberValue; // Update rawValue with rounded number
+                                        remainder = 0;
+                                        console.log('🔄 ROUNDED TO INTEGER (no-currency):', numberValue);
+                                    } else if (remainder > 0.0001) {
+                                        hasRealDecimals = true;
+                                    }
+
+                                    console.log('📊 NO DECIMAL PLACES (no-currency) - numberValue:', numberValue, 'hasRealDecimals:', hasRealDecimals, 'remainder:', remainder);
+                                    this.displayValue = this.formatNumber(numberValue, hasRealDecimals);
+                                    @endif
                                 } else {
                                     this.displayValue = '';
                                 }

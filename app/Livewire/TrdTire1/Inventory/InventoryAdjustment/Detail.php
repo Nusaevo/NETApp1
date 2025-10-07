@@ -92,7 +92,7 @@ class Detail extends BaseComponent
             $this->object = IvttrHdr::with('IvttrDtl')->find($this->objectIdValue);
             $this->inputs = populateArrayFromModel($this->object);
             $this->inputs['tr_type'] = $this->object->tr_type;
-            $this->inputs['tr_date'] = $this->object->tr_date;
+            $this->inputs['tr_date'] = $this->object->tr_date ? $this->object->tr_date->format('Y-m-d') : null;
             $this->inputs['tr_code'] = $this->object->tr_code;
             $this->inputs['wh_code'] = $this->object->IvttrDtl->first()->wh_code ?? null;
             $this->inputs['tr_descr'] = $this->object->IvttrDtl->first()->tr_descr ?? null;
@@ -218,10 +218,30 @@ class Detail extends BaseComponent
                         ->where('matl_id', $matl_id)
                         ->get();
                     foreach ($batches as $bal) {
+                        // Untuk mode edit, hitung stock sebelum transaksi
+                        $tr_type = $this->inputs['tr_type'] ?? null;
+                        $qty_oh_before = $bal->qty_oh; // Default: stock saat ini
+
+                        // Cari detail yang sesuai dengan batch ini
+                        $detailForBatch = $destinationDetails->where('matl_id', $matl_id)
+                            ->where('batch_code', $bal->batch_code)
+                            ->first();
+
+                        if ($detailForBatch) {
+                            $qty = $detailForBatch->qty;
+                            if ($tr_type === 'IA') {
+                                // Untuk IA: qty_oh_sebelum = qty_oh_sekarang - qty_adjustment
+                                $qty_oh_before = $bal->qty_oh - $qty;
+                            } else {
+                                // Untuk TW: qty_oh_sebelum = qty_oh_sekarang + qty_transfer
+                                $qty_oh_before = $bal->qty_oh + $qty;
+                            }
+                        }
+
                         $this->batchOptions[$matl_id][] = [
                             'value' => $bal->batch_code,
                             'label' => $bal->batch_code,
-                            'qty_oh' => $bal->qty_oh,
+                            'qty_oh' => $qty_oh_before,
                         ];
                     }
                 }
@@ -229,7 +249,7 @@ class Detail extends BaseComponent
 
             $this->input_details = [];
             foreach ($destinationDetails as $key => $detail) {
-                // Ambil qty_oh dari wh_code_asal
+                // Hitung qty_oh sebelum transaksi (stock asli sebelum adjustment)
                 $qty_oh = null;
                 if ($wh_code_asal) {
                     $ivtBal = IvtBal::where('wh_code', $wh_code_asal)
@@ -237,7 +257,16 @@ class Detail extends BaseComponent
                         ->where('batch_code', $detail->batch_code)
                         ->first();
                     if ($ivtBal) {
-                        $qty_oh = $ivtBal->qty_oh;
+                        // Untuk mode edit, hitung stock sebelum transaksi
+                        $qty = $detail->qty;
+                        $tr_type = $this->inputs['tr_type'] ?? null;
+                        if ($tr_type === 'IA') {
+                            // Untuk IA: qty_oh_sebelum = qty_oh_sekarang - qty_adjustment
+                            $qty_oh = $ivtBal->qty_oh - $qty;
+                        } else {
+                            // Untuk TW: qty_oh_sebelum = qty_oh_sekarang + qty_transfer
+                            $qty_oh = $ivtBal->qty_oh + $qty;
+                        }
                     }
                 }
                 if ($qty_oh === null && isset($detail->qty_oh)) {
@@ -350,6 +379,8 @@ class Detail extends BaseComponent
         if (isset($this->batchOptions[$matl_id])) {
             foreach ($this->batchOptions[$matl_id] as $batch) {
                 if ($batch['value'] == $batch_code) {
+                    // Untuk mode edit, gunakan stock saat ini dari batchOptions
+                    // karena batchOptions sudah berisi stock terkini
                     $this->input_details[$index]['qty_oh'] = $batch['qty_oh'];
                     return;
                 }
@@ -415,13 +446,10 @@ class Detail extends BaseComponent
             // $this->inputs['id'] dan tr_code sudah di-set di atas
 
             $detailData = $this->prepareBatchCode();
-            dd($detailData);
+            // dd($detailData);
 
-            if ($this->actionValue == 'Edit') {
-                app(InventoryService::class)->updInventory($this->inputs, $detailData, $this->object->id);
-            } else {
-                app(InventoryService::class)->addInventory($this->inputs, $detailData);
-            }
+
+            app(InventoryService::class)->saveInventoryTrx($this->inputs, $detailData);
         } else {
             // Untuk IA, isi wh_id dari wh_code
             $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
@@ -429,11 +457,8 @@ class Detail extends BaseComponent
             // $this->inputs['id'] dan tr_code sudah di-set di atas
 
             $detailData = $this->prepareBatchCode();
-            if ($this->actionValue == 'Edit') {
-                app(InventoryService::class)->updInventory($this->inputs, $detailData, $this->object->id);
-            } else {
-                app(InventoryService::class)->addInventory($this->inputs, $detailData);
-            }
+            app(InventoryService::class)->saveInventoryTrx($this->inputs, $detailData);
+
         }
         if ($this->actionValue == 'Create') {
             return redirect()->route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
@@ -535,7 +560,7 @@ class Detail extends BaseComponent
 
             if ($tr_type === 'IA') {
                 $result[] = [
-                    // 'id'        => 0,
+                    'id'        => 0,
                     'tr_seq'    => $seq,
                     'matl_id'   => $matlId,
                     'matl_code' => $matlCode,
@@ -547,8 +572,8 @@ class Detail extends BaseComponent
                 ];
             } else {
                 $result[] = [
-                    // 'id'        => 0,
-                    // 'id2'       => 0,
+                    'id'        => 0,
+                    'id2'       => 0,
                     'tr_seq'    => $seq,
                     'matl_id'   => $matlId,
                     'matl_code' => $matlCode,

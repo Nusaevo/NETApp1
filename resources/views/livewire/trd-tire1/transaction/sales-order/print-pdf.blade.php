@@ -156,11 +156,8 @@
                             </td>
                             <td
                                 style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                @php
-                                    $discount = $OrderDtl->disc_pct / 100;
-                                    $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
-                                @endphp
-                                {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}
+
+                                {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
                             </td>
                             @if ($this->object->sales_type != 'O')
                                 <td
@@ -180,7 +177,9 @@
                         <td
                             style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;">
                         </td>
-                        <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
+                        <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px; font-size: 16px; text-align: start;">
+                            Penerima: ________________
+                        </td>
                         <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
                         @if ($this->object->sales_type != 'O')
                             <td colspan="2"
@@ -237,16 +236,16 @@
                     @endif
                 </tbody>
             </table>
-            <table style="margin-top: -18px; width: 100%;">
+            <table style="margin-top: -18px; width: 62%;">
                 <tr>
                     <td style="border: 1px solid #000; padding: 5px;">
-                        <p style="margin: 0; display: inline; font-size: 16px;">Penerima: ________________</p>
-                        <p style="margin: 0; text-align: end; display: inline; float: right; font-size: 16px;">
+                        <p style="margin: 0; text-align: start; font-size: 16px;">
                             Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
                         </p>
                     </td>
                 </tr>
             </table>
+            <p style="font-size: 15px; text-align: start; font-weight: lighter;">Barang yang sudah dibeli tidak bisa dikembalikan</p>
         </div>
     </div>
 
@@ -334,8 +333,8 @@
                                         {{ ceil($OrderDtl->qty) }}</td>
                                     <td
                                         style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                        {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}</td>
-                                    @if ($this->object->sales_type != 'O')
+                                        {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
+                                        @if ($this->object->sales_type != 'O')
                                         <td
                                             style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                             {{ number_format($OrderDtl->disc_pct, 0, ',', '.') }}%</td>
@@ -350,7 +349,8 @@
                                 <td
                                     style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;">
                                 </td>
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;">
+                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px; font-size: 16px; text-align: start;">
+                                    Penerima: ________________
                                 </td>
                                 <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;">
                                 </td>
@@ -420,16 +420,16 @@
                     </table>
 
                     <!-- Footer -->
-                    <table style="margin-top: -18px; width: 100%;">
+                    <table style="margin-top: -18px; width: 62%;">
                         <tr>
                             <td style="border: 1px solid #000; padding: 5px;">
-                                <p style="margin: 0; display: inline; font-size: 16px;">Penerima: ________________</p>
-                                <p style="margin: 0; text-align: end; display: inline; float: right; font-size: 16px;">
+                                <p style="margin: 0; text-align: start; font-size: 16px;">
                                     Pembayaran: <strong>{{ $this->object->payment_method ?? 'CASH' }}</strong>
                                 </p>
                             </td>
                         </tr>
                     </table>
+                    <p style="font-size: 15px; text-align: start; font-weight: lighter;">Barang yang sudah dibeli tidak bisa dikembalikan</p>
                 @endforeach
             </div>
         </div>
@@ -442,5 +442,17 @@
                 window.print();
             }, 1000);
         }
+
+        // Listen for successful print counter update
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('success', (message) => {
+                if (message.includes('Print counter berhasil diupdate')) {
+                    // Refresh halaman setelah berhasil update counter
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000); // Delay 2 detik untuk memastikan print dialog selesai
+                }
+            });
+        });
     </script>
 </div>

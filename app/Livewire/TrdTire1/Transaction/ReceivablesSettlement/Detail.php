@@ -98,8 +98,8 @@ class Detail extends BaseComponent
         ];
 
         $this->masterService = new MasterService();
-        $this->partners = $this->masterService->getCustomers();
-        $this->codeBill = $this->masterService->getBillCode();
+        // $this->partners = $this->masterService->getCustomers();
+        // $this->codeBill = $this->masterService->getBillCode();
 
         // Tidak otomatis populate advance items saat Create mode
         // Advance items akan muncul setelah partner dipilih melalui confirmSelection()
