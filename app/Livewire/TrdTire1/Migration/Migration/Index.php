@@ -845,4 +845,296 @@ class Index extends BaseComponent
         ]);
     }
 
+    /**
+     * Migrasi khusus untuk Sales Order dari OrderHdr dan OrderDtl dengan reff_code = 'baru'
+     */
+    public function migrateSalesOrder()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '1024M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000');
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000');
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        // Ambil data OrderHdr dengan tr_type = 'SO' dan reff_code = 'baru'
+        $totalHeaders = OrderHdr::where('tr_type', 'SO')
+            ->where('reff_code', 'baru')
+            ->count();
+
+        Log::info("Found {$totalHeaders} Sales Order (SO) records from OrderHdr with reff_code = 'baru' to migrate");
+
+        if ($totalHeaders == 0) {
+            $this->dispatch('show-message', [
+                'type' => 'info',
+                'message' => "Tidak ada data Sales Order (SO) dengan reff_code = 'baru' yang perlu di-migrate."
+            ]);
+            return;
+        }
+
+        $processedCount = 0;
+        $errorCount = 0;
+        $chunkSize = 30; // Process 30 SO records at a time
+
+        OrderHdr::where('tr_type', 'SO')
+            ->where('reff_code', 'baru')
+            ->with(['OrderDtl'])
+            ->chunk($chunkSize, function ($headers) use (&$processedCount, &$errorCount) {
+                foreach ($headers as $header) {
+                    try {
+                        Log::info("Processing SO Header: {$header->tr_code} (ID: {$header->id}) - Reff Code: {$header->reff_code}");
+                        Log::info("SO Header has " . $header->OrderDtl->count() . " details");
+
+                        // Validasi data header SO
+                        if (empty($header->tr_code) || empty($header->tr_date) || $header->reff_code !== 'baru') {
+                            Log::warning("Skipping SO Header {$header->id}: Missing required fields or reff_code is not 'baru'");
+                            $errorCount++;
+                            continue;
+                        }
+
+                        // Siapkan data header untuk SO
+                        $headerData = [
+                            'id' => $header->id,
+                            'tr_type' => $header->tr_type,
+                            'tr_code' => $header->tr_code,
+                            'tr_date' => $header->tr_date,
+                            'reff_id' => $header->id, // Gunakan ID order sebagai reff_id
+                            'reff_code' => $header->reff_code,
+                            'descr' => $header->note ?? 'Sales Order',
+                        ];
+
+                        // Proses setiap detail SO
+                        foreach ($header->OrderDtl as $detail) {
+                            try {
+                                // Validasi data detail SO
+                                if (empty($detail->matl_id) || $detail->qty <= 0) {
+                                    Log::warning("Skipping SO Detail {$detail->id}: Invalid material or quantity");
+                                    continue;
+                                }
+
+                                $detailData = [
+                                    'id' => $detail->id,
+                                    'trhdr_id' => $detail->trhdr_id,
+                                    'tr_code' => $header->tr_code, // Tambahkan tr_code dari header
+                                    'tr_seq' => $detail->tr_seq,
+                                    'tr_seq2' => 0, // OrderDtl tidak memiliki tr_seq2
+                                    'matl_id' => $detail->matl_id,
+                                    'matl_code' => $detail->matl_code ?? '',
+                                    'matl_uom' => $detail->matl_uom ?? 'PCS',
+                                    'wh_id' => 0, // OrderDtl tidak memiliki wh_id, default ke 0
+                                    'wh_code' => '', // OrderDtl tidak memiliki wh_code
+                                    'batch_code' => '', // OrderDtl tidak memiliki batch_code
+                                    'qty' => $detail->qty,
+                                    'price_beforetax' => $detail->price_beforetax ?? 0,
+                                    'reffdtl_id' => $detail->id, // Gunakan ID detail sebagai reffdtl_id
+                                ];
+
+                                // Untuk SO, gunakan addReservation untuk membuat reservasi stok
+                                $this->inventoryService->addReservation($headerData, $detailData);
+
+                                Log::info("Successfully processed SO Detail: Material {$detail->matl_code}, Qty: {$detail->qty}, Price: {$detail->price_beforetax}");
+
+                            } catch (\Exception $e) {
+                                Log::error("Error processing SO Detail {$detail->id}: " . $e->getMessage());
+                                Log::error("Stack trace: " . $e->getTraceAsString());
+                                $errorCount++;
+                                continue;
+                            }
+                        }
+
+                        $processedCount++;
+                        Log::info("Successfully migrated SO Header: {$header->tr_code} with reff_code: {$header->reff_code}");
+
+                    } catch (\Exception $e) {
+                        Log::error("Error migrating SO Header {$header->tr_code}: " . $e->getMessage());
+                        Log::error("Stack trace: " . $e->getTraceAsString());
+                        $errorCount++;
+                        continue;
+                    }
+                }
+
+                // Force garbage collection after each chunk
+                gc_collect_cycles();
+            });
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi Sales Order (SO) dari OrderHdr/OrderDtl dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
+        ]);
+    }
+
+    /**
+     * Migrasi khusus untuk Sales Delivery dari DelivHdr dan DelivPacking dengan reff_code = 'baru'
+     */
+    public function migrateSalesDelivery()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '1024M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000');
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000');
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        // Ambil data DelivHdr dengan tr_type = 'SD' dan reff_code = 'baru'
+        $totalHeaders = DelivHdr::where('tr_type', 'SD')
+            ->where('reff_code', 'baru')
+            ->count();
+
+        Log::info("Found {$totalHeaders} Sales Delivery (SD) records from DelivHdr with reff_code = 'baru' to migrate");
+
+        if ($totalHeaders == 0) {
+            $this->dispatch('show-message', [
+                'type' => 'info',
+                'message' => "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate."
+            ]);
+            return;
+        }
+
+        $processedCount = 0;
+        $errorCount = 0;
+        $chunkSize = 30; // Process 30 SD records at a time
+
+        DelivHdr::where('tr_type', 'SD')
+            ->where('reff_code', 'baru')
+            ->chunk($chunkSize, function ($headers) use (&$processedCount, &$errorCount) {
+                foreach ($headers as $header) {
+                    try {
+                        Log::info("Processing SD Header: {$header->tr_code} (ID: {$header->id}) - Reff Code: {$header->reff_code}");
+                        Log::info("SD Header has " . $header->DelivPacking->count() . " details");
+
+                        // Debug: Cek data DelivPacking langsung
+                        $delivPackingCount = DelivPacking::where('trhdr_id', $header->id)->count();
+                        Log::info("Direct DelivPacking count for header {$header->id}: {$delivPackingCount}");
+
+                        // Debug: Cek data DelivPacking dengan tr_type
+                        $delivPackingWithType = DelivPacking::where('trhdr_id', $header->id)
+                            ->where('tr_type', $header->tr_type)
+                            ->count();
+                        Log::info("DelivPacking with tr_type '{$header->tr_type}' count: {$delivPackingWithType}");
+
+                        // Validasi data header SD
+                        if (empty($header->tr_code) || empty($header->tr_date) || $header->reff_code !== 'baru') {
+                            Log::warning("Skipping SD Header {$header->id}: Missing required fields or reff_code is not 'baru'");
+                            $errorCount++;
+                            continue;
+                        }
+
+                        // Siapkan data header untuk SD
+                        $headerData = [
+                            'id' => $header->id,
+                            'tr_type' => $header->tr_type,
+                            'tr_code' => $header->tr_code,
+                            'tr_date' => $header->tr_date,
+                            'reff_id' => $header->id, // Gunakan ID delivery sebagai reff_id
+                            'reff_code' => $header->reff_code,
+                            'descr' => $header->note ?? 'Sales Delivery',
+                        ];
+
+                        // Ambil data DelivPacking langsung tanpa relasi
+                        $delivPackingDetails = DelivPacking::where('trhdr_id', $header->id)
+                            ->where('tr_type', $header->tr_type)
+                            ->orderBy('tr_seq')
+                            ->get();
+
+                        Log::info("Found {$delivPackingDetails->count()} DelivPacking details for processing");
+
+                        // Proses setiap detail SD
+                        foreach ($delivPackingDetails as $detail) {
+                            try {
+                                // Validasi data detail SD
+                                if (empty($detail->reffdtl_id) || $detail->qty <= 0) {
+                                    Log::warning("Skipping SD Detail {$detail->id}: Invalid reffdtl_id or quantity");
+                                    continue;
+                                }
+
+                                // Ambil data material dari OrderDtl yang direferensikan
+                                $orderDtl = OrderDtl::find($detail->reffdtl_id);
+                                if (!$orderDtl) {
+                                    Log::warning("Skipping SD Detail {$detail->id}: OrderDtl not found for reffdtl_id {$detail->reffdtl_id}");
+                                    continue;
+                                }
+
+                                $detailData = [
+                                    'id' => $detail->id,
+                                    'trhdr_id' => $detail->trhdr_id,
+                                    'tr_code' => $header->tr_code, // Tambahkan tr_code dari header
+                                    'tr_seq' => $detail->tr_seq,
+                                    'tr_seq2' => 0, // DelivPacking tidak memiliki tr_seq2
+                                    'matl_id' => $orderDtl->matl_id,
+                                    'matl_code' => $orderDtl->matl_code ?? '',
+                                    'matl_uom' => $orderDtl->matl_uom ?? 'PCS',
+                                    'wh_id' => 0, // DelivPacking tidak memiliki wh_id, default ke 0
+                                    'wh_code' => '', // DelivPacking tidak memiliki wh_code
+                                    'batch_code' => '', // DelivPacking tidak memiliki batch_code
+                                    'qty' => $detail->qty,
+                                    'price_beforetax' => $orderDtl->price_beforetax ?? 0,
+                                    'reffdtl_id' => $detail->reffdtl_id, // ID dari OrderDtl yang direferensikan
+                                ];
+
+                                // Untuk SD, gunakan addOnhand untuk mengurangi stok
+                                $this->inventoryService->addOnhand($headerData, $detailData);
+
+                                Log::info("Successfully processed SD Detail: Material {$orderDtl->matl_code}, Qty: {$detail->qty}, Price: {$orderDtl->price_beforetax}");
+
+                            } catch (\Exception $e) {
+                                Log::error("Error processing SD Detail {$detail->id}: " . $e->getMessage());
+                                Log::error("Stack trace: " . $e->getTraceAsString());
+                                $errorCount++;
+                                continue;
+                            }
+                        }
+
+                        $processedCount++;
+                        Log::info("Successfully migrated SD Header: {$header->tr_code} with reff_code: {$header->reff_code}");
+
+                    } catch (\Exception $e) {
+                        Log::error("Error migrating SD Header {$header->tr_code}: " . $e->getMessage());
+                        Log::error("Stack trace: " . $e->getTraceAsString());
+                        $errorCount++;
+                        continue;
+                    }
+                }
+
+                // Force garbage collection after each chunk
+                gc_collect_cycles();
+            });
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi Sales Delivery (SD) dari DelivHdr/DelivPacking dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
+        ]);
+    }
+
 }

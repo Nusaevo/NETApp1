@@ -22,7 +22,10 @@
             <div class="card-body">
                 <x-ui-button clickEvent="migrateInventoryAdjustment" button-name="Create Data from IA" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
-
+                <x-ui-button clickEvent="migrateSalesOrder" button-name="Create Data from SO 'baru'" loading="true"
+                    action="Edit" cssClass="btn-success btn-lg px-5" />
+                <x-ui-button clickEvent="migrateSalesDelivery" button-name="Create Data from SD 'baru'" loading="true"
+                    action="Edit" cssClass="btn-success btn-lg px-5" />
             </div>
             <div class="card-body text-center">
                 <x-ui-button clickEvent="migrateAll" button-name="Migrate All" loading="true" action="Edit"
