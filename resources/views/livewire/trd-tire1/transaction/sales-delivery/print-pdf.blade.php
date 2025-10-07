@@ -40,7 +40,7 @@
                         <p style="margin-bottom: -8px;">
                             <strong>{{ $this->object->ship_to_name }}</strong>
                         </p>
-                        <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1.2; margin-top: 0px;">{{ $this->object->ship_to_addr }}</p>
+                        <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 3px;">{{ $this->object->ship_to_addr }}</p>
                     </td>
                 </tr>
             </table>

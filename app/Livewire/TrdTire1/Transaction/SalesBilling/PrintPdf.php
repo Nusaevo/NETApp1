@@ -14,6 +14,7 @@ class PrintPdf extends BaseComponent
     }
     public $orders = [];
     public $selectedOrderIds;
+    public $groupedOrders = [];
 
     protected function onPreRender()
     {
@@ -33,10 +34,36 @@ class PrintPdf extends BaseComponent
                 ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN])
                 ->get();
 
+            // Group orders by customer (partner_id)
+            $this->groupOrdersByCustomer();
+
             // Update status to PRINT
             BillingHdr::whereIn('id', $this->selectedOrderIds)->update(['status_code' => Status::PRINT]);
         }
     }
+    private function groupOrdersByCustomer()
+    {
+        $this->groupedOrders = [];
+
+        if ($this->orders && $this->orders->count() > 0) {
+            // Group orders by partner_id
+            $grouped = $this->orders->groupBy('partner_id');
+
+            // Convert to array format for easier handling in view
+            foreach ($grouped as $partnerId => $orders) {
+                $firstOrder = $orders->first();
+                if ($firstOrder && $firstOrder->Partner) {
+                    $this->groupedOrders[] = [
+                        'partner_id' => $partnerId,
+                        'partner' => $firstOrder->Partner,
+                        'orders' => $orders,
+                        'total_amount' => $orders->sum('amt')
+                    ];
+                }
+            }
+        }
+    }
+
     public function render()
     {
         $renderRoute = getViewPath(__NAMESPACE__, class_basename($this));
