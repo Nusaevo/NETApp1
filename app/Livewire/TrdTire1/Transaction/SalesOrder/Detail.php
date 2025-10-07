@@ -616,11 +616,23 @@ class Detail extends BaseComponent
                         ];
                     }, $wpDetails);
 
-                    // Isi default NPWP dari opsi pertama
-                    $first = reset($this->npwpOptions);
-                    $this->inputs['npwp_code'] = $first['value'] ?? '';
-                    $this->inputs['npwp_name'] = $first['name'] ?? '';
-                    $this->inputs['npwp_addr'] = $first['address'] ?? '';
+                    // Simpan data NPWP yang sudah ada sebelum di-reset
+                    $existingNpwpCode = $this->inputs['npwp_code'] ?? '';
+                    $existingNpwpName = $this->inputs['npwp_name'] ?? '';
+                    $existingNpwpAddr = $this->inputs['npwp_addr'] ?? '';
+
+                    // Jika ada data NPWP yang sudah tersimpan, gunakan data tersebut
+                    if (!empty($existingNpwpCode)) {
+                        $this->inputs['npwp_code'] = $existingNpwpCode;
+                        $this->inputs['npwp_name'] = $existingNpwpName;
+                        $this->inputs['npwp_addr'] = $existingNpwpAddr;
+                    } else {
+                        // Jika tidak ada data tersimpan, gunakan data pertama
+                        $first = reset($this->npwpOptions);
+                        $this->inputs['npwp_code'] = $first['value'] ?? '';
+                        $this->inputs['npwp_name'] = $first['name'] ?? '';
+                        $this->inputs['npwp_addr'] = $first['address'] ?? '';
+                    }
                 }
             }
         } else {
@@ -1048,6 +1060,13 @@ class Detail extends BaseComponent
             $this->inputs['partner_address'] = $partner->address;
             $this->inputs['partner_city'] = $partner->city;
 
+            // Simpan data ship_to dan npwp_code yang sudah ada sebelum di-reset
+            $existingShipToName = $this->inputs['ship_to_name'] ?? '';
+            $existingShipToAddr = $this->inputs['ship_to_addr'] ?? '';
+            $existingNpwpCode = $this->inputs['npwp_code'] ?? '';
+            $existingNpwpName = $this->inputs['npwp_name'] ?? '';
+            $existingNpwpAddr = $this->inputs['npwp_addr'] ?? '';
+
             // Reset shipping info
             $this->inputs['ship_to_name'] = '';
             $this->inputs['ship_to_addr'] = '';
@@ -1067,7 +1086,13 @@ class Detail extends BaseComponent
                             'address' => $item['address'],
                         ];
                     }, $shipDetail);
-                    if (!empty($this->shipOptions)) {
+
+                    // Jika ada data ship_to yang sudah tersimpan, gunakan data tersebut
+                    if (!empty($existingShipToName)) {
+                        $this->inputs['ship_to_name'] = $existingShipToName;
+                        $this->inputs['ship_to_addr'] = $existingShipToAddr;
+                    } else if (!empty($this->shipOptions)) {
+                        // Jika tidak ada data tersimpan, gunakan data pertama
                         $first = reset($this->shipOptions);
                         $this->inputs['ship_to_name'] = $first['value'] ?? '';
                         $this->inputs['ship_to_addr'] = $first['address'] ?? '';
@@ -1104,10 +1129,18 @@ class Detail extends BaseComponent
                     ]);
 
                     if (!empty($this->inputs['tax_doc_flag'])) {
-                        $first = reset($this->npwpOptions);
-                        $this->inputs['npwp_code'] = $first['value'] ?? '';
-                        $this->inputs['npwp_name'] = $first['name'] ?? '';
-                        $this->inputs['npwp_addr'] = $first['address'] ?? '';
+                        // Jika ada data NPWP yang sudah tersimpan, gunakan data tersebut
+                        if (!empty($existingNpwpCode)) {
+                            $this->inputs['npwp_code'] = $existingNpwpCode;
+                            $this->inputs['npwp_name'] = $existingNpwpName;
+                            $this->inputs['npwp_addr'] = $existingNpwpAddr;
+                        } else {
+                            // Jika tidak ada data tersimpan, gunakan data pertama
+                            $first = reset($this->npwpOptions);
+                            $this->inputs['npwp_code'] = $first['value'] ?? '';
+                            $this->inputs['npwp_name'] = $first['name'] ?? '';
+                            $this->inputs['npwp_addr'] = $first['address'] ?? '';
+                        }
                     }
                 }
             } else {

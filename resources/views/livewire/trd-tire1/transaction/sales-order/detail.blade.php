@@ -38,7 +38,7 @@
                                     <div class="row">
                                         <x-ui-dropdown-search label="Customer" model="inputs.partner_id"
                                             optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
-                                            :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                            :selectedValue="$inputs['partner_id']" required="true" :action="$actionValue" enabled="true"
                                             type="int" onChanged="onPartnerChanged" />
                                     </div>
                                     <div class="row">
