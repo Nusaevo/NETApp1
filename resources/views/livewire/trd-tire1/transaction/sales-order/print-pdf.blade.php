@@ -239,7 +239,7 @@
                     @endif
                 </tbody>
             </table>
-            <table style="margin-top: -18px; width: 62%;">
+            <table style="margin-top: -18px; width: 65.8%;">
                 <tr>
                     <td style="border: 1px solid #000; padding: 5px;">
                         <p style="margin: 0; text-align: start; font-size: 16px;">
@@ -428,7 +428,7 @@
                     </table>
 
                     <!-- Footer -->
-                    <table style="margin-top: -18px; width: 62%;">
+                    <table style="margin-top: -18px; width: 65.8%;">
                         <tr>
                             <td style="border: 1px solid #000; padding: 5px;">
                                 <p style="margin: 0; text-align: start; font-size: 16px;">

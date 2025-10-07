@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Report\ReportDetailSO;
 
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session};
-use App\Models\TrdTire1\Master\Partner;
+use App\Models\TrdTire1\Master\{Partner, Material};
 use App\Models\Util\GenericExcelExport;
 use Illuminate\Support\Carbon;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -15,8 +15,23 @@ class Index extends BaseComponent
     public $endCode;
     public $filterStatus = '';
     public $filterPartner = '';
-    public $filterMaterialCode = '';
+    public $filterMaterialId = '';
     public $results = [];
+
+    public $ddPartner = [
+        'placeHolder' => "Ketik untuk cari customer ...",
+        'optionLabel' => "code,name,address,city",
+        'query' => "SELECT id,code,name,address,city
+                    FROM partners
+                    WHERE deleted_at IS NULL AND grp = 'C'",
+    ];
+
+    public $materialQuery = "
+        SELECT m.id, m.code, m.name
+        FROM materials m
+        WHERE m.status_code = 'A'
+        AND m.deleted_at IS NULL
+    ";
 
     protected function onPreRender()
     {
@@ -26,7 +41,7 @@ class Index extends BaseComponent
     public function search()
     {
         // Validasi: minimal harus ada salah satu filter (tanggal, partner, atau kode barang)
-        if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterMaterialCode)) {
+        if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterMaterialId)) {
             $this->dispatch('notify-swal', [
                 'type' => 'warning',
                 'message' => 'Mohon lengkapi tanggal awal, pilih customer, atau masukkan kode barang untuk melakukan pencarian'
@@ -61,7 +76,7 @@ class Index extends BaseComponent
         }
 
         $partnerFilter = $this->filterPartner ? "AND p.id = {$this->filterPartner}" : "";
-        $materialCodeFilter = $this->filterMaterialCode ? "AND od.matl_code LIKE '%" . addslashes($this->filterMaterialCode) . "%'" : "";
+        $materialCodeFilter = $this->filterMaterialId ? "AND od.matl_id = " . intval($this->filterMaterialId) : "";
 
         // Query untuk mendapatkan data sales order
         $query = "
@@ -127,7 +142,8 @@ class Index extends BaseComponent
                 'tgl_tagih' => $row->collect_date,
                 's' => $row->status_code,
                 'wajib_pajak' => $row->npwp_name,
-                'tgl_lunas' => $row->paid_date
+                'tgl_lunas' => $row->paid_date,
+                'customer_name' => $row->name . ($row->city ? ' - ' . $row->city : '')
             ];
         }
 
@@ -146,7 +162,7 @@ class Index extends BaseComponent
         $this->endCode = '';
         $this->filterStatus = '';
         $this->filterPartner = '';
-        $this->filterMaterialCode = '';
+        $this->filterMaterialId = '';
         $this->results = [];
     }
 
@@ -216,6 +232,18 @@ class Index extends BaseComponent
         $this->results = [];
     }
 
+    public function onPartnerChanged()
+    {
+        // Method ini akan dipanggil ketika partner dipilih dari dropdown search
+        // Tidak perlu melakukan apa-apa khusus karena filterPartner sudah ter-update otomatis
+    }
+
+    public function onMaterialChanged()
+    {
+        // Method ini akan dipanggil ketika material dipilih dari dropdown search
+        // Tidak perlu melakukan apa-apa khusus karena filterMaterialId sudah ter-update otomatis
+    }
+
     public function downloadExcel()
     {
         // Validasi: pastikan ada data untuk di-export
@@ -245,7 +273,7 @@ class Index extends BaseComponent
                     $excelData[] = [
                         $isFirstItem ? $nota['no_nota'] : '',
                         $isFirstItem ? ($nota['tgl_nota'] ? \Carbon\Carbon::parse($nota['tgl_nota'])->format('d-M-Y') : '') : '',
-                        $isFirstItem ? $item['wajib_pajak'] : '',
+                        $isFirstItem ? $item['customer_name'] : '',
                         $item['kode'],
                         $item['nama_barang'],
                         $item['qty'],
@@ -253,6 +281,7 @@ class Index extends BaseComponent
                         $item['disc'],
                         $item['total'],
                         $isFirstItem ? $item['s'] : '',
+                        $isFirstItem ? $item['wajib_pajak'] : '',
                         $isFirstItem ? ($item['t_kirim'] ? \Carbon\Carbon::parse($item['t_kirim'])->format('d-M-Y') : '') : '',
                         $isFirstItem ? ($item['tgl_tagih'] ? \Carbon\Carbon::parse($item['tgl_tagih'])->format('d-M-Y') : '') : '',
                         $isFirstItem ? ($item['tgl_lunas'] ? \Carbon\Carbon::parse($item['tgl_lunas'])->format('d-M-Y') : '') : '',
@@ -273,6 +302,7 @@ class Index extends BaseComponent
                     '',
                     '',
                     $subTotalAmount,
+                    '',
                     '',
                     '',
                     '',
@@ -299,14 +329,15 @@ class Index extends BaseComponent
                 ($this->endCode ? \Carbon\Carbon::parse($this->endCode)->format('d-M-Y') : '-');
 
             // Tambahkan filter info jika ada
-            if ($this->filterPartner || $this->filterStatus || $this->filterMaterialCode) {
+            if ($this->filterPartner || $this->filterStatus || $this->filterMaterialId) {
                 $filters = [];
                 if ($this->filterPartner) {
                     $partner = Partner::find($this->filterPartner);
                     $filters[] = $partner ? $partner->name : 'Customer Tidak Ditemukan';
                 }
-                if ($this->filterMaterialCode) {
-                    $filters[] = 'Kode: ' . $this->filterMaterialCode;
+                if ($this->filterMaterialId) {
+                    $material = Material::find($this->filterMaterialId);
+                    $filters[] = 'Kode: ' . ($material ? $material->code : 'Material Tidak Ditemukan');
                 }
                 if ($this->filterStatus) {
                     $filters[] = ucfirst(str_replace('_', ' ', $this->filterStatus));
@@ -320,7 +351,7 @@ class Index extends BaseComponent
                 'headers' => [
                     'No. Nota',
                     'Tgl Nota',
-                    'Wajib Pajak',
+                    'Nama Customer',
                     'Kode',
                     'Nama Barang',
                     'Qty',
@@ -328,6 +359,7 @@ class Index extends BaseComponent
                     '% Disc',
                     'Total',
                     'S',
+                    'Wajib Pajak',
                     'Tgl Kirim',
                     'Tgl Tagih',
                     'Tgl Lunas'

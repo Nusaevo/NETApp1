@@ -28,13 +28,28 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return BillingHdr::with(['Partner', 'OrderHdr']) // tambahkan eager load OrderHdr
             ->where('billing_hdrs.tr_type', 'ARB')
-            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP]);
+            ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP])
+            ->orderBy('billing_hdrs.tr_date', 'desc')
+            // ->orderBy('billing_hdrs.tr_code', 'desc')
+            ->orderBy('billing_hdrs.partner_code', 'asc');
 
     }
 
     public function columns(): array
     {
         return [
+            Column::make($this->trans("Customer"), "partner_id")
+                ->format(function ($value, $row) {
+                    if ($row->Partner && $row->Partner->name) {
+                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                            'action' => encryptWithSessionKey('Edit'),
+                            'objectId' => encryptWithSessionKey($row->partner_id)
+                        ]) . '">' . $row->Partner->name . '</a>';
+                    } else {
+                        return '';
+                    }
+                })
+                ->html(),
             Column::make($this->trans("Nomor Nota"), "tr_code")
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
@@ -73,18 +88,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Customer"), "partner_id")
-                ->format(function ($value, $row) {
-                    if ($row->Partner && $row->Partner->name) {
-                        return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
-                            'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->partner_id)
-                        ]) . '">' . $row->Partner->name . '</a>';
-                    } else {
-                        return '';
-                    }
-                })
-                ->html(),
+
             Column::make($this->trans('Total Uang'), 'total_amt')
                 ->label(function ($row) {
                     // Ambil total_amt dari relasi OrderHdr

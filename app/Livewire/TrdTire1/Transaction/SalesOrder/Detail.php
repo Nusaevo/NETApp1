@@ -1091,6 +1091,13 @@ class Detail extends BaseComponent
                     if (!empty($existingShipToName)) {
                         $this->inputs['ship_to_name'] = $existingShipToName;
                         $this->inputs['ship_to_addr'] = $existingShipToAddr;
+                    } else {
+                        // Jika tidak ada data tersimpan, gunakan data pertama
+                        $first = reset($this->shipOptions);
+                        if ($first) {
+                            $this->inputs['ship_to_name'] = $first['value'] ?? '';
+                            $this->inputs['ship_to_addr'] = $first['address'] ?? '';
+                        }
                     }
                 }
             }

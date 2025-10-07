@@ -41,70 +41,72 @@
 
     <!-- Print Content - Selalu visible -->
     <div id="print">
-        <div class="card shadow-sm" style="max-width: 800px; margin: 0 auto;">
-            <div class="card-body p-4">
-                <div class="invoice-box">
-                    <div style="margin: 0 auto; font-family: Arial, sans-serif; font-size: 17px; line-height: 1.4;">
-                        <!-- Header dengan tanggal di kanan -->
-                        <div style="margin-bottom: 15px;">
-                            <div style="text-align: right; font-size: 17px; margin-bottom: 10px;">
-                                <span>Tgl.: {{ now()->format('d-M-Y') }}</span>
+        @foreach($groupedOrders as $index => $customerGroup)
+            <div class="card shadow-sm customer-billing" style="max-width: 800px; margin: 0 auto; @if($index > 0) margin-top: 50px; @endif">
+                <div class="card-body p-4">
+                    <div class="invoice-box">
+                        <div style="margin: 0 auto; font-family: Arial, sans-serif; font-size: 17px; line-height: 1.4;">
+                            <!-- Header dengan tanggal di kanan -->
+                            <div style="margin-bottom: 15px;">
+                                <div style="text-align: right; font-size: 15px; margin-bottom: 10px; padding-top: 30px;">
+                                    <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
+                                </div>
+                                <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
+                                    <div style="font-weight: bold; font-size: 17px;">{{ $customerGroup['partner']->name }}</div>
+                                    <div style="font-size: 17px;">{{ $customerGroup['partner']->address }}</div>
+                                </div>
                             </div>
-                            <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
-                                <div style="font-weight: bold; font-size: 17px;">PLATINA</div>
-                                <div style="font-size: 17px;">KERTAJAYA 16, SURABAYA</div>
+
+                            <!-- Garis pemisah -->
+                            <div style="border-top: 1px solid #000; margin-bottom: 15px;"></div>
+
+                            <!-- Instruksi -->
+                            <div style="margin-bottom: 15px; text-align: center;">
+                                <span style="text-decoration: underline; font-size: 17px;">
+                                    Mohon Periksa Nota-nota tersebut di bawah ini
+                                </span>
                             </div>
-                        </div>
 
-                        <!-- Garis pemisah -->
-                        <div style="border-top: 1px solid #000; margin-bottom: 15px;"></div>
+                            <!-- Tabel data nota -->
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                                @php $customerTotal = 0; @endphp
+                                @foreach ($customerGroup['orders'] as $i => $order)
+                                    @php $customerTotal += $order->amt; @endphp
+                                    <tr style="height: 25px;">
+                                        <td style="padding: 2px 5px; width: auto; white-space: nowrap;">
+                                            Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
+                                        </td>
+                                        <td style="padding: 2px 5px; width: 150px;">No. {{ $order->tr_code }}</td>
+                                        <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
+                                        <td style="padding: 2px 5px; text-align: right; width: 120px;">
+                                            {{ number_format($order->amt, 2, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </table>
 
-                        <!-- Instruksi -->
-                        <div style="margin-bottom: 15px;">
-                            <span style="text-decoration: underline; font-size: 17px;">
-                                Mohon Periksa Nota-nota tersebut di bawah ini
-                            </span>
-                        </div>
-
-                        <!-- Tabel data nota -->
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-                            @php $grandTotal = 0; @endphp
-                            @foreach ($orders as $i => $order)
-                                @php $grandTotal += $order->amt; @endphp
-                                <tr style="height: 25px;">
-                                    <td style="padding: 2px 5px; width: auto; white-space: nowrap;">
-                                        Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
-                                    </td>
-                                    <td style="padding: 2px 5px; width: 150px;">No. {{ $order->tr_code }}</td>
+                            <!-- Total -->
+                            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 2px 0; width: 30px;"></td>
+                                    <td style="padding: 2px 5px; width: auto;"></td>
+                                    <td style="padding: 2px 35px; width: 150px;">Jumlah:</td>
                                     <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
-                                    <td style="padding: 2px 5px; text-align: right; width: 120px;">
-                                        {{ number_format($order->amt, 2, ',', '.') }}
+                                    <td style="padding: 2px 5px; text-align: right; width: 120px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                                        {{ number_format($customerTotal, 2, ',', '.') }}
                                     </td>
                                 </tr>
-                            @endforeach
-                        </table>
+                            </table>
 
-                        <!-- Total -->
-                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-                            <tr>
-                                <td style="padding: 2px 0; width: 30px;"></td>
-                                <td style="padding: 2px 5px; width: auto;"></td>
-                                <td style="padding: 2px 35px; width: 150px;">Jumlah:</td>
-                                <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
-                                <td style="padding: 2px 5px; text-align: right; width: 120px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000;">
-                                    {{ number_format($grandTotal, 2, ',', '.') }}
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Tanda tangan -->
-                        <div style="margin-top: 30px;">
-                            <span>Ttd:</span>
+                            <!-- Tanda tangan -->
+                            <div style="margin-top: 30px;">
+                                <span>Ttd:</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        @endforeach
     </div>
 
     <script type="text/javascript">
@@ -215,6 +217,20 @@
             .invoice-box * {
                 color: black !important;
                 background: transparent !important;
+            }
+
+            /* Page break untuk multiple customers */
+            .page-break {
+                page-break-before: always !important;
+            }
+
+            /* Pastikan setiap customer billing dimulai di halaman baru */
+            .customer-billing {
+                page-break-before: always !important;
+            }
+
+            .customer-billing:first-child {
+                page-break-before: auto !important;
             }
         }
     </style>
