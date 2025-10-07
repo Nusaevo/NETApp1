@@ -156,11 +156,8 @@
                             </td>
                             <td
                                 style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                @php
-                                    $discount = $OrderDtl->disc_pct / 100;
-                                    $priceAfterDisc = round($OrderDtl->price * (1 - $discount));
-                                @endphp
-                                {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}
+
+                                {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
                             </td>
                             @if ($this->object->sales_type != 'O')
                                 <td
@@ -336,8 +333,8 @@
                                         {{ ceil($OrderDtl->qty) }}</td>
                                     <td
                                         style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                        {{ number_format(ceil($priceAfterDisc), 0, ',', '.') }}</td>
-                                    @if ($this->object->sales_type != 'O')
+                                        {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
+                                        @if ($this->object->sales_type != 'O')
                                         <td
                                             style="text-align: center; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
                                             {{ number_format($OrderDtl->disc_pct, 0, ',', '.') }}%</td>
