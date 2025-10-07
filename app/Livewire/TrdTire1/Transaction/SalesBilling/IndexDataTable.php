@@ -238,6 +238,24 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $selectedOrderIds = $this->getSelected();
         if (count($selectedOrderIds) > 0) {
+            // Validasi tanggal proses sebelum cetak
+            $billingOrders = BillingHdr::with('OrderHdr')
+                ->whereIn('id', $selectedOrderIds)
+                ->get();
+
+            $ordersWithoutProcessDate = [];
+            foreach ($billingOrders as $billing) {
+                if ($billing->OrderHdr && empty($billing->OrderHdr->tax_process_date)) {
+                    $ordersWithoutProcessDate[] = $billing->tr_code;
+                }
+            }
+
+            // Jika ada nota dengan tanggal proses kosong, tampilkan error
+            if (!empty($ordersWithoutProcessDate)) {
+                $this->dispatch('error', 'Tidak dapat mencetak nota. Beberapa nota belum memiliki tanggal proses: ' . implode(', ', $ordersWithoutProcessDate));
+                return;
+            }
+
             $selectedOrders = BillingHdr::whereIn('id', $selectedOrderIds)->get();
 
             // Update status to PRINT
