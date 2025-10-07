@@ -39,14 +39,11 @@ class DropdownSearchController extends Controller
             $rawSearchTerm = $request->get('q', '');
             $searchTerm = trim($rawSearchTerm);
 
-            // Log search term processing for debugging
-            // if ($rawSearchTerm !== $searchTerm) {
-            //     \Log::debug('Search term trimmed:', [
-            //         'original' => $rawSearchTerm,
-            //         'trimmed' => $searchTerm,
-            //         'had_spaces' => $rawSearchTerm !== $searchTerm
-            //     ]);
-            // }
+            // Prevent search if user only typed spaces or empty string
+            if (empty($searchTerm)) {
+                // Return early without search - will return base query results
+                $searchTerm = '';
+            }
 
             $optionValue = $request->get('option_value', 'id');
             $optionLabel = $request->get('option_label', 'name');
@@ -486,15 +483,9 @@ class DropdownSearchController extends Controller
      * @return string
      */    private function modifyQueryForSearch($sqlQuery, $searchTerm, $optionLabel = null)
     {
-        // Log the raw query for debugging
-        // \Log::debug('modifyQueryForSearch raw inputs', [
-        //     'sqlQuery' => $sqlQuery,
-        //     'searchTerm' => $searchTerm,
-        //     'optionLabel' => $optionLabel
-        // ]);
-
-        if (empty($searchTerm)) {
-            // No search term provided, return original query
+        // Check if search term is empty or only whitespace
+        if (empty($searchTerm) || trim($searchTerm) === '') {
+            // No search term provided or only spaces, return original query without search filters
             return $sqlQuery;
         }
 
