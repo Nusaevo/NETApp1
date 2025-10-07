@@ -27,7 +27,8 @@
 
     // Ensure we never have empty query in the output
     if (empty($sqlQuery)) {
-        // \Log::warning('Empty SQL query in dropdown', ['component_id' => $id]);
+        \Log::warning('Empty SQL query in dropdown', ['component_id' => $id, 'rawQuery' => $rawQuery]);
+        // console.error akan muncul di browser juga
     }
 
     // Handle model-based params (backward compatibility)
@@ -46,12 +47,27 @@
     <div class="input-group position-relative">
         <!-- This container is ignored by Livewire for select2 handling -->
         <div wire:ignore class="{{ $containerClass }} position-relative" x-data x-init="() => {
+                console.log('🔄 Initializing dropdown component {{ $id }}', {
+                    query: '{{ $escapedQuery }}',
+                    connection: '{{ $dbConnection }}',
+                    hasQueryParam: {{ $hasQueryParam ? 'true' : 'false' }},
+                    hasModelParams: {{ $hasModelParams ? 'true' : 'false' }}
+                });
+
                 const initSelect2 = () => {
                     const selectElement = document.getElementById('{{ $id }}');
                     if (!selectElement) {
-                        // console.warn(`Element #{{ $id }} not found.`);
+                        console.warn(`Element #{{ $id }} not found.`);
                         return;
                     }
+
+                    // Debug data attributes
+                    console.log('🔍 Data attributes for {{ $id }}:', {
+                        'data-query': selectElement.getAttribute('data-query'),
+                        'data-connection': selectElement.getAttribute('data-connection'),
+                        'data-option-value': selectElement.getAttribute('data-option-value'),
+                        'data-option-label': selectElement.getAttribute('data-option-label')
+                    });
 
                     // If instance already exists, destroy it first
                     if ($(selectElement).hasClass('select2-hidden-accessible')) {
@@ -109,17 +125,17 @@
                                     textarea.innerHTML = queryValue;
                                     queryValue = textarea.value;
 
-                                    // console.log('Decoded query value:', queryValue);
+                                    console.log('Decoded query value:', queryValue);
                                 } catch (e) {
-                                    // console.error('Error decoding query:', e);
+                                    console.error('Error decoding query:', e);
                                 }
 
                                 // Log raw value for debugging
-                                // console.log('Raw query value from data attribute:', queryValue);
+                                console.log('Raw query value from data attribute:', queryValue);
 
                                 // Check if query is empty
                                 if (!queryValue || queryValue.trim() === '') {
-                                    // console.error('QUERY IS EMPTY! Component:', selectElement.id);
+                                    console.error('QUERY IS EMPTY! Component:', selectElement.id);
                                 }
 
                                 // Only include the query parameter, not both query and sqlQuery
@@ -134,30 +150,40 @@
                                 // ENHANCED DEBUGGING - check if query is properly set
                                 const hasQuery = queryValue && queryValue.trim().length > 0;
                                 if (!hasQuery) {
-                                    // console.error(`ERROR: Empty query for dropdown ${selectElement.id}!`, {
-                                    //     'data-query': $(selectElement).attr('data-query'),
-                                    //     'data-connection': $(selectElement).attr('data-connection')
-                                    // });
+                                    console.error(`ERROR: Empty query for dropdown ${selectElement.id}!`, {
+                                        'data-query': $(selectElement).attr('data-query'),
+                                        'data-connection': $(selectElement).attr('data-connection')
+                                    });
                                 }
 
-                                // console.debug(`Sending dropdown params for ${selectElement.id}:`, {
-                                //     queryValue: queryValue,
-                                //     queryValueLength: queryValue ? queryValue.length : 0,
-                                //     connection: $(selectElement).data('connection')
-                                // });
+                                console.debug(`Sending dropdown params for ${selectElement.id}:`, {
+                                    queryValue: queryValue,
+                                    queryValueLength: queryValue ? queryValue.length : 0,
+                                    connection: $(selectElement).data('connection')
+                                });
 
-                                // console.log('Dropdown search params:', data);
+                                console.log('Dropdown search params:', data);
                                 return data;
                             },
                             processResults: function (data) {
+                                console.log('📥 AJAX Response for {{ $id }}:', data);
                                 if (data && data.results) {
+                                    console.log(`✅ Found ${data.results.length} results for {{ $id }}`);
                                     return { results: data.results };
                                 } else {
-                                    // console.error('Invalid response format for {{ $id }}:', data);
+                                    console.error('Invalid response format for {{ $id }}:', data);
                                     return { results: [] };
                                 }
                             },
-                            cache: false
+                            cache: false,
+                            error: function(xhr, status, error) {
+                                console.error('🚨 AJAX Error in {{ $id }}:', {
+                                    status: status,
+                                    error: error,
+                                    responseText: xhr.responseText,
+                                    xhr: xhr
+                                });
+                            }
                         },
                         language: {
                             errorLoading: function () {
@@ -209,6 +235,7 @@
                         // Bind select event
                         $(selectElement).on('select2:select', function () {
                             const value = $(this).val();
+                            console.log('🎯 Item selected in {{ $id }}:', value);
                             @this.set('{{ $model }}', value);
 
                             @if (isset($onChanged) && $onChanged)
@@ -235,7 +262,7 @@
 
                                         $wire.call(methodName, ...processedParams);
                                     } else {
-                                        // console.error(`Invalid onChanged format: ${onChanged}`);
+                                        console.error(`Invalid onChanged format: ${onChanged}`);
                                     }
                                 } else {
                                     $wire.call(onChanged, value);
@@ -246,6 +273,7 @@
                         // Bind clear event
                         $(selectElement).on('select2:clear', function () {
                             const blankValue = '{{ $blankValue }}';
+                            console.log('🗑️ Dropdown cleared in {{ $id }}, setting to:', blankValue);
                             @this.set('{{ $model }}', blankValue);
 
                             // Trigger onChanged event when clearing
@@ -273,7 +301,7 @@
 
                                         $wire.call(methodName, ...processedParams);
                                     } else {
-                                        // console.error(`Invalid onChanged format: ${onChanged}`);
+                                        console.error(`Invalid onChanged format: ${onChanged}`);
                                     }
                                 } else {
                                     $wire.call(onChanged, blankValue);
@@ -281,11 +309,11 @@
                             @endif
                         });
 
-                    // console.log(`Select2 initialized for #{{ $id }}`, {
-                    //     connection: '{{ $dbConnection }}',
-                    //     query: document.getElementById('{{ $id }}').getAttribute('data-query'),
-                    //     hasQueryParam: {{ $hasQueryParam ? 'true' : 'false' }},
-                    // });
+                    console.log(`Select2 initialized for #{{ $id }}`, {
+                        connection: '{{ $dbConnection }}',
+                        query: document.getElementById('{{ $id }}').getAttribute('data-query'),
+                        hasQueryParam: {{ $hasQueryParam ? 'true' : 'false' }},
+                    });
 
                     // Restore existing value if present
                     const existingValue = '{{ $selectedValue ?? '' }}' || '{{ $this->$model ?? '' }}';
@@ -306,7 +334,7 @@
                             params.append('preserve_existing', 'true');  // Flag for existing value lookup
                             params.append('bypass_filters', 'true');    // Bypass business logic filters
 
-                            // console.log('Fetching existing value with params:', params.toString());
+                            console.log('Fetching existing value with params:', params.toString());
 
                             fetch(`${endpoint}?${params.toString()}`)
                                 .then(response => response.json())
@@ -321,14 +349,14 @@
                                         $(selectElement).append(option).trigger('change');
                                     } else {
                                         // If no result found, create a placeholder option
-                                        // console.warn('No display text found for existing value, creating placeholder');
+                                        console.warn('No display text found for existing value, creating placeholder');
                                         const option = new Option(`ID: ${existingValue} (Not Found)`, existingValue, true, true);
                                         $(option).addClass('missing-option');
                                         $(selectElement).append(option).trigger('change');
                                     }
                                 })
                                 .catch(error => {
-                                    // console.warn('Failed to restore selected value:', error);
+                                    console.warn('Failed to restore selected value:', error);
                                     // Create a fallback option
                                     const option = new Option(`ID: ${existingValue} (Error Loading)`, existingValue, true, true);
                                     $(option).addClass('error-option');
