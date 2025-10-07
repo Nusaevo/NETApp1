@@ -83,34 +83,92 @@ class BaseComponent extends Component
     private function storeNavigationHistory()
     {
         $currentUrl = request()->fullUrl();
-        $previousUrl = url()->previous();
+        $currentPath = request()->getPathInfo();
 
-        // Skip storing certain URLs in navigation history
-        $skipPatterns = ['livewire/update', 'search-dropdown', 'PrintPdf'];
-        $shouldSkip = false;
+        // Early skip check for performance - check patterns first
+        if ($this->shouldSkipNavigation($currentUrl, $currentPath)) {
+            return;
+        }
+
+        // Check if current page is home/index page
+        if ($this->isHomeOrIndexPage($currentPath)) {
+            $this->clearNavigationHistory();
+            return;
+        }
+
+        $this->addToNavigationHistory($currentUrl);
+    }
+
+    private function shouldSkipNavigation($currentUrl, $currentPath)
+    {
+        // Performance: Use static array and early return
+        static $skipPatterns = ['livewire/update', 'search-dropdown', 'PrintPdf', '/print', '/pdf'];
 
         foreach ($skipPatterns as $pattern) {
-            if (str_contains($currentUrl, $pattern)) {
-                $shouldSkip = true;
-                break;
+            if (str_contains($currentUrl, $pattern) || str_contains($currentPath, $pattern)) {
+                return true;
             }
         }
 
-        if (!$shouldSkip) {
-            // Get existing navigation history
-            $navHistory = session('navigation_history', []);
+        return false;
+    }
 
-            // Add current URL to history (keep last 10 URLs)
-            $navHistory[] = $currentUrl;
-            $navHistory = array_slice(array_unique($navHistory), -10);
+    private function clearNavigationHistory()
+    {
+        session()->forget(['navigation_history', 'navigation_sequence']);
+        session(['previous_url' => url()->previous()]);
+    }
 
-            session(['navigation_history' => $navHistory]);
-            session(['previous_url' => $previousUrl]);
+    private function addToNavigationHistory($currentUrl)
+    {
+        // Get current state efficiently
+        $navHistory = session('navigation_history', []);
+        $currentSequence = session('navigation_sequence', 0);
 
-            Log::info("Navigation history updated: " . json_encode($navHistory));
+        // Performance: Check last entry without end() which resets array pointer
+        $lastEntry = $navHistory ? $navHistory[count($navHistory) - 1] : null;
+        $lastUrl = $lastEntry ? ($lastEntry['url'] ?? $lastEntry) : null;
+
+        // Only add if different from last URL
+        if ($lastUrl !== $currentUrl) {
+            $currentSequence++;
+            $navHistory[] = [
+                'url' => $currentUrl,
+                'sequence' => $currentSequence,
+                'timestamp' => time()
+            ];
+
+            // Keep last 15 URLs - array_slice is more efficient than manual loop
+            if (count($navHistory) > 15) {
+                $navHistory = array_slice($navHistory, -15);
+            }
+
+            // Batch session updates
+            session([
+                'navigation_history' => $navHistory,
+                'navigation_sequence' => $currentSequence,
+                'previous_url' => url()->previous()
+            ]);
         }
     }
 
+
+    private function isHomeOrIndexPage($currentPath)
+    {
+        // Performance: Use static patterns and normalize once
+        static $homePatterns = ['', 'dashboard', 'home'];
+        static $indexRegex = '/\/(Home|Index|home|index)$/';
+
+        $path = trim(strtolower($currentPath), '/');
+
+        // Quick check for exact home patterns
+        if (in_array($path, $homePatterns)) {
+            return true;
+        }
+
+        // Regex check for index patterns - single regex is faster
+        return preg_match($indexRegex, $currentPath);
+    }
 
     private function setActionAndObject($action, $objectId)
     {
@@ -395,13 +453,8 @@ class BaseComponent extends Component
 
     public function goBack()
     {
-        // Get current URL to avoid infinite loops
-        $currentUrl = request()->url();
-        $currentFullUrl = request()->fullUrl();
-
         // Find the first valid URL by going through browser history
         $validUrl = $this->findValidBackUrl();
-
         if ($validUrl) {
             return redirect()->to($validUrl);
         }
@@ -417,124 +470,91 @@ class BaseComponent extends Component
         $currentFullUrl = request()->fullUrl();
 
         // Get actual current page from referrer if current URL is livewire/update
-        $actualCurrentUrl = $currentUrl;
-        if (str_contains($currentUrl, 'livewire/update')) {
-            $referrer = request()->header('referer');
-            if ($referrer) {
-                $actualCurrentUrl = $referrer;
-            }
-        }
+        $actualCurrentUrl = str_contains($currentUrl, 'livewire/update')
+            ? (request()->header('referer') ?: $currentUrl)
+            : $currentUrl;
 
-        // Skip patterns for fast rejection
-        $skipPatterns = ['search-dropdown', 'PrintPdf', 'livewire/update', '/print', '/pdf'];
+        // Performance: Static skip patterns
+        static $skipPatterns = ['search-dropdown', 'PrintPdf', 'livewire/update'];
 
-        // Fast URL validation function
+        // Optimized URL validation
         $isValidUrl = function($url) use ($currentUrl, $currentFullUrl, $actualCurrentUrl, $skipPatterns) {
             if (!$url || $url === $currentUrl || $url === $currentFullUrl || $url === $actualCurrentUrl) {
                 return false;
             }
 
+            // Performance: Early return on skip patterns
             foreach ($skipPatterns as $pattern) {
                 if (str_contains($url, $pattern)) {
                     return false;
                 }
             }
 
-            return !$this->isSimilarPageFast($url, $actualCurrentUrl);
+            return true;
         };
 
-        // Priority-ordered URL sources for immediate checking
-        $urlSources = [
-            // 1. Navigation history - simple chronological approach but smart
-            function() use ($currentUrl, $currentFullUrl, $actualCurrentUrl) {
-                $navHistory = session('navigation_history', []);
-                if (empty($navHistory)) return [];
+        // Check navigation history first (most efficient source)
+        $navHistory = session('navigation_history', []);
+        if ($navHistory) {
+            // Performance: Direct reverse iteration without array_reverse
+            for ($i = count($navHistory) - 1; $i >= 0; $i--) {
+                $entry = $navHistory[$i];
+                $url = is_array($entry) ? $entry['url'] : $entry;
+                $sequence = is_array($entry) ? ($entry['sequence'] ?? 'unknown') : 'unknown';
 
-                // Clean and get all previous URLs from history
-                $cleanHistory = array_values(array_filter($navHistory, function($url) use ($currentUrl, $currentFullUrl, $actualCurrentUrl) {
-                    return $url && $url !== $currentUrl && $url !== $currentFullUrl && $url !== $actualCurrentUrl;
-                }));
-                session(['navigation_history' => $cleanHistory]);
-
-                return array_reverse($cleanHistory);
-            },
-
-            // 2. Laravel previous
-            function() { return [url()->previous()]; },
-
-            // 3. Session previous
-            function() { return [session('previous_url')]; },
-
-            // 4. HTTP referrer
-            function() { return [request()->header('referer')]; }
-        ];        // Check each source until valid URL found
-        foreach ($urlSources as $sourceFunc) {
-            $urls = $sourceFunc();
-            foreach ($urls as $url) {
                 if ($isValidUrl($url)) {
                     return $url;
                 }
             }
         }
 
+        // Check other sources only if history fails
+        $otherSources = [
+            url()->previous(),
+            session('previous_url'),
+            request()->header('referer')
+        ];
+
+        foreach ($otherSources as $url) {
+            if ($url && $isValidUrl($url)) {
+                return $url;
+            }
+        }
+
         return null;
-    }
-
-    private function isSimilarPageFast($url, $currentUrl)
-    {
-        // Quick string operations for performance
-        if (str_contains($url, 'livewire') || str_contains($currentUrl, 'livewire')) {
-            return false;
-        }
-
-        // Allow navigation between different page types in same module
-        $urlPath = parse_url($url, PHP_URL_PATH) ?: '';
-        $currentPath = parse_url($currentUrl, PHP_URL_PATH) ?: '';
-
-        // Check if this is Detail -> Index navigation (should be allowed)
-        $currentHasDetail = str_contains($currentPath, '/Detail/');
-        $urlHasDetail = str_contains($urlPath, '/Detail/');
-
-        // If current is Detail and target doesn't have Detail, allow (Detail -> Index)
-        if ($currentHasDetail && !$urlHasDetail) {
-            return false; // Allow navigation
-        }
-
-        // If both are Detail pages with different IDs, consider them different
-        if ($currentHasDetail && $urlHasDetail && $currentPath !== $urlPath) {
-            return false; // Allow navigation to different Detail pages
-        }
-
-        // Only consider similar if exact same path (to prevent infinite loops)
-        return $urlPath === $currentPath;
     }
 
     private function constructIndexUrl()
     {
         $currentPath = request()->getPathInfo();
         $pathSegments = explode('/', trim($currentPath, '/'));
+
+        // Performance: Static action patterns - hanya yang jelas action/detail
+        static $actionSegments = ['detail', 'printpdf'];
+        static $idPattern = '/^[A-Z0-9]{8,}$/';
+
         $indexSegments = [];
 
         foreach ($pathSegments as $segment) {
-            if (in_array(strtolower($segment), ['detail', 'create', 'edit', 'view', 'printpdf', 'print', 'pdf'])) {
+            if (!$segment) continue;
+
+            // Early break hanya pada action segments yang jelas atau IDs
+            if (in_array(strtolower($segment), $actionSegments) ||
+                is_numeric($segment) ||
+                preg_match($idPattern, $segment)) {
                 break;
             }
 
-            if (is_numeric($segment) || preg_match('/^[A-Z0-9]{8,}$/', $segment)) {
-                break;
-            }
-
-            if (!empty($segment)) {
-                $indexSegments[] = $segment;
-            }
+            $indexSegments[] = $segment;
         }
 
-        if (!empty($indexSegments)) {
-            $indexPath = '/' . implode('/', $indexSegments);
-            return url($indexPath);
+        if ($indexSegments) {
+            $indexUrl = url('/' . implode('/', $indexSegments));
+            return $indexUrl;
         }
 
-        return url('/dashboard') ?: url('/');
+        // Fallback to root
+        return url('/');
     }    protected function onReset()
     {
         // This method is intentionally left empty.
