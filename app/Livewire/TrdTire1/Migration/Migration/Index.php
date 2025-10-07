@@ -1086,6 +1086,14 @@ class Index extends BaseComponent
                                     continue;
                                 }
 
+                                // Ambil data warehouse dan batch dari DelivPicking
+                                $delivPicking = DelivPicking::where('trpacking_id', $detail->id)->first();
+                                $whId = $delivPicking ? $delivPicking->wh_id : 0;
+                                $whCode = $delivPicking ? $delivPicking->wh_code : '';
+                                $batchCode = $delivPicking ? $delivPicking->batch_code : '';
+
+                                Log::info("DelivPacking {$detail->id} -> DelivPicking: wh_id={$whId}, wh_code={$whCode}, batch_code={$batchCode}");
+
                                 $detailData = [
                                     'id' => $detail->id,
                                     'trhdr_id' => $detail->trhdr_id,
@@ -1095,9 +1103,9 @@ class Index extends BaseComponent
                                     'matl_id' => $orderDtl->matl_id,
                                     'matl_code' => $orderDtl->matl_code ?? '',
                                     'matl_uom' => $orderDtl->matl_uom ?? 'PCS',
-                                    'wh_id' => 0, // DelivPacking tidak memiliki wh_id, default ke 0
-                                    'wh_code' => '', // DelivPacking tidak memiliki wh_code
-                                    'batch_code' => '', // DelivPacking tidak memiliki batch_code
+                                    'wh_id' => $whId, // Dari DelivPicking
+                                    'wh_code' => $whCode, // Dari DelivPicking
+                                    'batch_code' => $batchCode, // Dari DelivPicking
                                     'qty' => $detail->qty,
                                     'price_beforetax' => $orderDtl->price_beforetax ?? 0,
                                     'reffdtl_id' => $detail->reffdtl_id, // ID dari OrderDtl yang direferensikan
