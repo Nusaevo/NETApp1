@@ -191,14 +191,12 @@ class DropdownSearchController extends Controller
                     // Normal search with filters applied
                     if (!empty($searchTerm)) {
                         $modifiedQuery = $this->modifyQueryForSearch($sqlQuery, $searchTerm, $optionLabel);
+                        // Execute query for regular search
+                        $results = $db->select($modifiedQuery . ' LIMIT 50');
                     } else {
-                        $modifiedQuery = $sqlQuery;
+                        // Empty search term - return empty results to prevent showing all data
+                        $results = [];
                     }
-
-                    // \Log::info('OPTIONS QUERY: ' . $modifiedQuery . ' LIMIT 50');
-
-                    // Execute query for regular search
-                    $results = $db->select($modifiedQuery . ' LIMIT 50');
                 }                // Handle specific ID lookup (both bypass and normal)
                 if ($specificId && !empty($results)) {
                     $item = $results[0];
