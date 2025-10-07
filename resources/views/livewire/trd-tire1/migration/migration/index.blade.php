@@ -19,12 +19,15 @@
                         (ivtLogs & ivtBal)
                     </p> --}}
             </div>
+            <br>
             <div class="card-body">
                 <x-ui-button clickEvent="migrateInventoryAdjustment" button-name="Create Data from IA" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
-                <x-ui-button clickEvent="migrateSalesOrder" button-name="Create Data from SO 'baru'" loading="true"
+                <x-ui-button clickEvent="migrateSalesOrder" button-name="SO 'baru' to inventory" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
-                <x-ui-button clickEvent="migrateToInventoryDelivSdBaru" button-name="Create Data from SD 'baru'" loading="true"
+                <x-ui-button clickEvent="migrateToInventoryDelivSdBaru" button-name="SD 'baru' to inventory" loading="true"
+                    action="Edit" cssClass="btn-success btn-lg px-5" />
+                <x-ui-button clickEvent="migrateToBillingSdBaru" button-name="SD 'baru' to billing" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
             </div>
             <div class="card-body text-center">

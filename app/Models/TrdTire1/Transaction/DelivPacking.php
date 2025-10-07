@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class DelivPacking extends BaseModel
 {
- 
+
 
     protected $table = 'deliv_packings';
     protected $fillable = [
