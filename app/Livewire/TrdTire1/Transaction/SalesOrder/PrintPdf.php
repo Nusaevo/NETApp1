@@ -60,10 +60,10 @@ class PrintPdf extends BaseComponent
             $this->dispatch('refreshData');
 
             // Refresh halaman setelah berhasil update counter
-            $this->redirect(route('TrdTire1.Transaction.SalesOrder.Detail', [
-                'action'   => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey($this->object->id),
-            ]), navigate: true);
+            // $this->redirect(route('TrdTire1.Transaction.SalesOrder.Detail', [
+            //     'action'   => encryptWithSessionKey('Edit'),
+            //     'objectId' => encryptWithSessionKey($this->object->id),
+            // ]), navigate: true);
         }
     }
 
