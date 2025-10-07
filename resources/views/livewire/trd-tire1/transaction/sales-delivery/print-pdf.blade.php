@@ -32,7 +32,7 @@
                             SURAT JALAN</h3>
                         <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
                     </td>
-                    <td style="text-align: left; vertical-align: bottom; width: 30%;">
+                    <td style="text-align: left; vertical-align: bottom; width: 30%; padding-bottom: 5px;">
                         <p style="margin-bottom: -8px;">
                             Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                         </p>
@@ -123,7 +123,7 @@
             @endfor
 
             <!-- Recipient Info -->
-            <div style="margin-top: 0px;">
+            <div style="margin-top: 10px;">
                 <p style="margin: 0 0 0px 0;">
                     {{ $this->object->npwp_name }} -
                     {{ $this->object->npwp_addr }}
@@ -176,7 +176,7 @@
                                 <h3 style="margin-bottom: -5px; text-decoration: underline;">SURAT JALAN</h3>
                                 <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
                             </td>
-                            <td style="text-align: left; vertical-align: bottom; width: 30%;">
+                            <td style="text-align: left; vertical-align: bottom; width: 30%; padding-bottom: 5px;">
                                 <p style="margin-bottom: -8px;">Surabaya,
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
@@ -257,7 +257,7 @@
                     @endfor
 
                     <!-- Footer -->
-                    <div style="margin-top: 0px;">
+                    <div style="margin-top: 10px;">
                         <p style="margin: 0 0 0px 0;">
                             {{ $this->object->npwp_name }} -
                             {{ $this->object->npwp_addr }}

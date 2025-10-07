@@ -33,7 +33,8 @@ class Index extends BaseComponent
             SELECT DISTINCT m.brand
             FROM ivt_bals b
             JOIN materials m ON m.id = b.matl_id
-            WHERE b.qty_oh > 0 OR b.qty_fgi > 0 OR b.qty_fgr > 0
+            WHERE (b.qty_oh > 0 OR b.qty_fgi > 0 OR b.qty_fgr > 0)
+            AND m.deleted_at IS NULL
         ";
         $this->brandOptions = collect(DB::connection(Session::get('app_code'))->select($query))
             ->map(function ($item) {
@@ -64,7 +65,8 @@ class Index extends BaseComponent
                 FROM ivt_bals b
                 join materials m on m.id = b.matl_id
                 " . ($brand ? "and m.brand = '{$brand}'" : "") . "
-                where b.qty_oh != 0 or b.qty_fgi != 0
+                where (b.qty_oh != 0 or b.qty_fgi != 0)
+                and m.deleted_at IS NULL
             ) a
             group by code, name
             order by code

@@ -1,8 +1,4 @@
 <div>
-    @php
-        use App\Services\TrdJewel1\Master\MasterService;
-        $masterService = new MasterService();
-    @endphp
     <x-ui-page-card title="{!! $menuName !!}" status="{{ $status }}">
         {{-- Filter Frame --}}
         <div class="card mb-4">
@@ -56,6 +52,16 @@
 
                     /* CSS untuk print */
                     @media print {
+                        @page:first {
+                            size: A4 landscape;
+                            margin: 0 0 0 0;
+                        }
+
+                        @page {
+                            size: A4 landscape;
+                            margin: 10mm 0 0 0;
+                        }
+
                         .card.mb-4,
                         x-ui-page-card {
                             display: none !important;
@@ -63,24 +69,50 @@
 
                         #print {
                             display: block !important;
+                            width: 100vw;
+                            height: 100vh;
+                            margin: 0;
+                            padding: 0;
                         }
 
                         body {
                             margin: 0;
                             padding: 0;
+                            width: 100vw;
+                            height: 100vh;
                         }
 
                         .print-page {
                             box-shadow: none !important;
                             border: none !important;
+                            width: 100%;
+                            height: 100%;
+                            margin: 0;
+                            padding: 0;
+                        }
+
+                        .container {
+                            width: 100% !important;
+                            max-width: none !important;
+                            margin: 0 !important;
+                        }
+
+                        .laporan-stok {
+                            width: 100% !important;
+                            font-size: 12px !important;
+                        }
+
+                        .laporan-stok th,
+                        .laporan-stok td {
+                            padding: 2px 4px !important;
                         }
                     }
                 </style>
                 <div class="card print-page laporan-stok">
                     <div class="card-body">
-                        <div class="container mb-5 mt-3">
-                            <div style="max-width:2480px; margin:auto; padding:20px;">
-                                <div style="width:100%; margin-bottom:10px;">
+                        <div class="container">
+                            <div style="max-width:2480px;">
+                                <div style="width:100%;">
                                     <div style="font-weight:bold; font-size:24px; text-decoration:underline; color:#142850; font-family:'Times New Roman',serif; margin-bottom: 8px;">
                                         GAJAH TUNGGAL
                                     </div>

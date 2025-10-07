@@ -5,8 +5,8 @@
             <div class="card-body text-center">
                 <x-ui-button clickEvent="migrateOrderToInventory" button-name="Create Data from Order" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
-                <x-ui-button clickEvent="migrateToInventory" button-name="Create Data From Deliv" loading="true" action="Edit"
-                    cssClass="btn-success btn-lg px-5" />
+                <x-ui-button clickEvent="migrateToInventory" button-name="Create Data From Deliv" loading="true"
+                    action="Edit" cssClass="btn-success btn-lg px-5" />
                 <x-ui-button clickEvent="migrateToBilling" button-name="Create Billing" loading="true" action="Edit"
                     cssClass="btn-success btn-lg px-5" />
                 <x-ui-button clickEvent="migratePaymentToPartner" button-name="Create Data from Payment" loading="true"
@@ -14,14 +14,19 @@
                 <x-ui-button clickEvent="migrateIvttrToInventory" button-name="Create Data from Ivttr" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
                 {{-- <p class="mt-3 text-muted">
-                    <i class="fas fa-info-circle"></i>
-                    Klik tombol di atas untuk memproses data <strong>Purchase Delivery (PD)</strong> ke inventory
-                    (ivtLogs & ivtBal)
-                </p> --}}
+                        <i class="fas fa-info-circle"></i>
+                        Klik tombol di atas untuk memproses data <strong>Purchase Delivery (PD)</strong> ke inventory
+                        (ivtLogs & ivtBal)
+                    </p> --}}
+            </div>
+            <div class="card-body">
+                <x-ui-button clickEvent="migrateInventoryAdjustment" button-name="Create Data from IA" loading="true"
+                    action="Edit" cssClass="btn-success btn-lg px-5" />
+
             </div>
             <div class="card-body text-center">
-                <x-ui-button clickEvent="migrateAll" button-name="Migrate All" loading="true"
-                    action="Edit" cssClass="btn-primary btn-lg px-5" />
+                <x-ui-button clickEvent="migrateAll" button-name="Migrate All" loading="true" action="Edit"
+                    cssClass="btn-primary btn-lg px-5" />
 
             </div>
         </div>

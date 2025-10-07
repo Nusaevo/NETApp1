@@ -12,10 +12,16 @@
                             <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
                         </div>
                         <div class="col-md-2">
-                            <x-ui-dropdown-select label="Customer" model="filterPartner" :options="$this->getPartnerOptions()" action="Edit" />
+                            <x-ui-dropdown-search label="Customer" model="filterPartner"
+                                optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
+                                :selectedValue="$filterPartner" required="false" action="Edit" enabled="true"
+                                type="int" onChanged="onPartnerChanged" />
                         </div>
                         <div class="col-md-2">
-                            <x-ui-dropdown-select label="Kode Barang" model="filterMaterialCode" :options="$this->getMaterialCodeOptions()" action="Edit" />
+                            <x-ui-dropdown-search label="Kode Barang" model="filterMaterialId"
+                                optionValue="id" :query="$materialQuery" optionLabel="code,name" placeHolder="Ketik untuk cari barang..."
+                                :selectedValue="$filterMaterialId" required="false" action="Edit" enabled="true"
+                                type="int" onChanged="onMaterialChanged" />
                         </div>
                         <div class="col-md-2">
                             <x-ui-dropdown-select label="Status" model="filterStatus" :options="$this->getStatusOptions()" action="Edit" />
@@ -153,15 +159,16 @@
                                     Periode: {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
                                     s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
                                 </p>
-                                @if($filterPartner || $filterStatus || $filterMaterialCode)
+                                @if($filterPartner || $filterStatus || $filterMaterialId)
                                     <p style="text-align:left; margin-bottom:20px; font-size: 12px;">
                                         @php
                                             $filters = [];
                                             if($filterPartner) {
                                                 $filters[] = \App\Models\TrdTire1\Master\Partner::find($filterPartner)->name ?? 'Customer Tidak Ditemukan';
                                             }
-                                            if($filterMaterialCode) {
-                                                $filters[] = 'Kode: ' . $filterMaterialCode;
+                                            if($filterMaterialId) {
+                                                $material = \App\Models\TrdTire1\Master\Material::find($filterMaterialId);
+                                                $filters[] = 'Kode: ' . ($material ? $material->code : 'Material Tidak Ditemukan');
                                             }
                                             if($filterStatus) {
                                                 $filters[] = ucfirst(str_replace('_', ' ', $filterStatus));
@@ -184,14 +191,14 @@
                                         <tr style="border-bottom: 1px solid #000;">
                                             <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">No. Nota</th>
                                             <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">Tgl Nota</th>
-                                            <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">Wajib Pajak</th>
+                                            <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">Nama Customer</th>
                                             <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">Kode</th>
                                             <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">Nama Barang</th>
                                             <th style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">Qty</th>
                                             <th style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">Harga</th>
                                             <th style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">% Disc</th>
                                             <th style="text-align:right; padding:4px 6px; font-weight:bold; font-size:11px;">Total</th>
-                                            <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">S</th>
+                                            <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">S</th>                                            <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px;">Wajib Pajak</th>
                                             <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px; width: 60px;">Tgl Kirim</th>
                                             <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px; width: 60px;">Tgl Tagih</th>
                                             <th style="text-align:left; padding:4px 6px; font-weight:bold; font-size:11px; width: 60px;">Tgl Lunas</th>
@@ -214,7 +221,7 @@
                                                     @if ($isFirstItem)
                                                         <td style="text-align:left; padding:4px 6px; font-size:11px;">{{ $nota['no_nota'] }}</td>
                                                         <td style="text-align:left; padding:4px 6px; font-size:11px;">{{ formatDate($nota['tgl_nota']) }}</td>
-                                                        <td style="text-align:left; padding:4px 6px; font-size:11px;">{{ $item['wajib_pajak'] }}</td>
+                                                        <td style="text-align:left; padding:4px 6px; font-size:11px;">{{ $item['customer_name'] }}</td>
                                                     @else
                                                         <td style="padding:4px 6px;"></td>
                                                         <td style="padding:4px 6px;"></td>
@@ -228,6 +235,7 @@
                                                     <td style="text-align:right; padding:4px 6px; font-size:11px;">{{ number_format($item['total'], 0, ',', '.') }}</td>
                                                     @if ($isFirstItem)
                                                     <td style="text-align:left; padding:4px 6px; font-size:11px;">{{ $item['s'] }}</td>
+                                                    <td style="text-align:left; padding:4px 6px; font-size:11px;">{{ $item['wajib_pajak'] }}</td>
                                                         <td style="text-align:left; padding:4px 6px; font-size:11px; width: 60px;">{{ formatDate($item['t_kirim']) }}</td>
                                                         <td style="text-align:left; padding:4px 6px; font-size:11px; width: 60px;">{{ formatDate($item['tgl_tagih']) }}</td>
                                                         <td style="text-align:left; padding:4px 6px; font-size:11px; width: 60px;">{{ formatDate($item['tgl_lunas']) }}</td>

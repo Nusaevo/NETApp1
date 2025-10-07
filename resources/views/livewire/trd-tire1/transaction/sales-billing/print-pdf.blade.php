@@ -48,8 +48,8 @@
                         <div style="margin: 0 auto; font-family: Arial, sans-serif; font-size: 17px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
-                                <div style="text-align: right; font-size: 17px; margin-bottom: 10px;">
-                                    <span>Tgl.: {{ now()->format('d-M-Y') }}</span>
+                                <div style="text-align: right; font-size: 15px; margin-bottom: 10px; padding-top: 30px;">
+                                    <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
                                 </div>
                                 <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
                                     <div style="font-weight: bold; font-size: 17px;">{{ $customerGroup['partner']->name }}</div>
@@ -61,7 +61,7 @@
                             <div style="border-top: 1px solid #000; margin-bottom: 15px;"></div>
 
                             <!-- Instruksi -->
-                            <div style="margin-bottom: 15px;">
+                            <div style="margin-bottom: 15px; text-align: center;">
                                 <span style="text-decoration: underline; font-size: 17px;">
                                     Mohon Periksa Nota-nota tersebut di bawah ini
                                 </span>

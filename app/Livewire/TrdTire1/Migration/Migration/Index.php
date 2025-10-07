@@ -714,4 +714,135 @@ class Index extends BaseComponent
         ]);
     }
 
+    /**
+     * Migrasi khusus untuk Inventory Adjustment (tr_type = 'IA')
+     */
+    public function migrateInventoryAdjustment()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '1024M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000');
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000');
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        // Ambil data IvttrHdr dengan tr_type = 'IA' saja
+        $totalHeaders = IvttrHdr::where('tr_type', 'IA')->count();
+        Log::info("Found {$totalHeaders} Inventory Adjustment (IA) records to migrate");
+
+        if ($totalHeaders == 0) {
+            $this->dispatch('show-message', [
+                'type' => 'info',
+                'message' => "Tidak ada data Inventory Adjustment (IA) yang perlu di-migrate."
+            ]);
+            return;
+        }
+
+        $processedCount = 0;
+        $errorCount = 0;
+        $chunkSize = 50; // Process 50 IA records at a time (IA biasanya lebih sederhana)
+
+        IvttrHdr::where('tr_type', 'IW')
+            ->with(['IvttrDtl'])
+            ->chunk($chunkSize, function ($headers) use (&$processedCount, &$errorCount) {
+                foreach ($headers as $header) {
+                    try {
+                        Log::info("Processing IA Header: {$header->tr_code} (ID: {$header->id})");
+                        Log::info("IA Header has " . $header->IvttrDtl->count() . " details");
+
+                        // Validasi data header IA
+                        if (empty($header->tr_code) || empty($header->tr_date)) {
+                            Log::warning("Skipping IA Header {$header->id}: Missing required fields");
+                            $errorCount++;
+                            continue;
+                        }
+
+                        // Siapkan data header untuk IA
+                        $headerData = [
+                            'id' => $header->id,
+                            'tr_type' => $header->tr_type,
+                            'tr_code' => $header->tr_code,
+                            'tr_date' => $header->tr_date,
+                            'reff_id' => $header->reff_id ?? 0,
+                            'descr' => $header->descr ?? 'Inventory Adjustment',
+                        ];
+
+                        // Proses setiap detail IA
+                        foreach ($header->IvttrDtl as $detail) {
+                            try {
+                                // Validasi data detail IA
+                                if (empty($detail->matl_id) || $detail->qty == 0) {
+                                    Log::warning("Skipping IA Detail {$detail->id}: Invalid material or quantity");
+                                    continue;
+                                }
+
+                                $detailData = [
+                                    'id' => $detail->id,
+                                    'trhdr_id' => $detail->trhdr_id,
+                                    'tr_seq' => $detail->tr_seq,
+                                    'tr_seq2' => $detail->tr_seq2 ?? 0,
+                                    'matl_id' => $detail->matl_id,
+                                    'matl_code' => $detail->matl_code ?? '',
+                                    'matl_uom' => $detail->matl_uom ?? 'PCS',
+                                    'wh_id' => $detail->wh_id ?? 0,
+                                    'wh_code' => $detail->wh_code ?? '',
+                                    'batch_code' => $detail->batch_code ?? '',
+                                    'qty' => $detail->qty,
+                                    'price_beforetax' => $detail->price_beforetax ?? 0,
+                                    'reffdtl_id' => $detail->reffdtl_id ?? 0,
+                                ];
+
+                                // Untuk IA, gunakan addOnhand untuk menyesuaikan stok
+                                $result = $this->inventoryService->addOnhand($headerData, $detailData);
+
+                                if ($result) {
+                                    Log::info("Successfully processed IA Detail: Material {$detail->matl_code}, Qty: {$detail->qty}");
+                                } else {
+                                    Log::warning("Failed to process IA Detail: Material {$detail->matl_code}");
+                                }
+
+                            } catch (\Exception $e) {
+                                Log::error("Error processing IA Detail {$detail->id}: " . $e->getMessage());
+                                $errorCount++;
+                                continue;
+                            }
+                        }
+
+                        $processedCount++;
+                        Log::info("Successfully migrated IA Header: {$header->tr_code}");
+
+                    } catch (\Exception $e) {
+                        Log::error("Error migrating IA Header {$header->tr_code}: " . $e->getMessage());
+                        Log::error("Stack trace: " . $e->getTraceAsString());
+                        $errorCount++;
+                        continue;
+                    }
+                }
+
+                // Force garbage collection after each chunk
+                gc_collect_cycles();
+            });
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi Inventory Adjustment (IA) berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
+        ]);
+    }
+
 }

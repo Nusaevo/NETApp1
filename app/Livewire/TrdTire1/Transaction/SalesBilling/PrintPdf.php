@@ -57,10 +57,18 @@ class PrintPdf extends BaseComponent
                         'partner_id' => $partnerId,
                         'partner' => $firstOrder->Partner,
                         'orders' => $orders,
-                        'total_amount' => $orders->sum('amt')
+                        'total_amount' => $orders->sum('amt'),
+                        'print_date' => $firstOrder->print_date
                     ];
                 }
             }
+
+            // Sort grouped orders by print_date descending (terbaru ke terlama)
+            usort($this->groupedOrders, function($a, $b) {
+                $dateA = $a['print_date'] ? \Carbon\Carbon::parse($a['print_date']) : \Carbon\Carbon::minValue();
+                $dateB = $b['print_date'] ? \Carbon\Carbon::parse($b['print_date']) : \Carbon\Carbon::minValue();
+                return $dateB->timestamp - $dateA->timestamp; // Descending order
+            });
         }
     }
 
