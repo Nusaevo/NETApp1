@@ -19,12 +19,15 @@
                         (ivtLogs & ivtBal)
                     </p> --}}
             </div>
+            <br>
             <div class="card-body">
                 <x-ui-button clickEvent="migrateInventoryAdjustment" button-name="Create Data from IA" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
-                <x-ui-button clickEvent="migrateSalesOrder" button-name="Create Data from SO 'baru'" loading="true"
+                <x-ui-button clickEvent="migrateSalesOrder" button-name="SO 'baru' to inventory" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
-                <x-ui-button clickEvent="migrateSalesDelivery" button-name="Create Data from SD 'baru'" loading="true"
+                <x-ui-button clickEvent="migrateToInventoryDelivSdBaru" button-name="SD 'baru' to inventory" loading="true"
+                    action="Edit" cssClass="btn-success btn-lg px-5" />
+                <x-ui-button clickEvent="migrateToBillingSdBaru" button-name="SD 'baru' to billing" loading="true"
                     action="Edit" cssClass="btn-success btn-lg px-5" />
             </div>
             <div class="card-body text-center">
@@ -93,6 +96,55 @@
                                 </div>
                             </div>
                         @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Hasil Migration Umum --}}
+        @if (session('migration_success'))
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-check-circle"></i> {{ session('migration_success') }}
+                        </h5>
+                        <p class="mb-0">
+                            <i class="fas fa-clock"></i>
+                            Waktu: {{ now()->format('d-m-Y H:i:s') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if (session('migration_error'))
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle"></i> {{ session('migration_error') }}
+                        </h5>
+                        <p class="mb-0">
+                            <i class="fas fa-clock"></i>
+                            Waktu: {{ now()->format('d-m-Y H:i:s') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if (session('migration_info'))
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-info-circle"></i> {{ session('migration_info') }}
+                        </h5>
+                        <p class="mb-0">
+                            <i class="fas fa-clock"></i>
+                            Waktu: {{ now()->format('d-m-Y H:i:s') }}
+                        </p>
                     </div>
                 </div>
             </div>

@@ -13,7 +13,7 @@ use App\Services\TrdTire1\PaymentService;
 use App\Enums\Constant;
 use App\Models\TrdTire1\Master\SalesReward;
 use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, BillingHdr, PaymentHdr, PaymentDtl, PaymentSrc, PaymentAdv, OrderHdr, OrderDtl};
-use App\Models\TrdTire1\Inventories\{IvttrHdr, IvttrDtl};
+use App\Models\TrdTire1\Inventories\{IvttrHdr, IvttrDtl, IvtLog};
 
 class Index extends BaseComponent
 {
@@ -283,6 +283,227 @@ class Index extends BaseComponent
             throw $e; // Re-throw untuk debugging jika diperlukan
         }
     }
+    public function migrateToInventoryDelivSdBaru()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000'); // 3600 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000'); // 3600 seconds in milliseconds
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        // Log mulai proses migrasi
+        Log::info('=== MULAI MIGRASI INVENTORY ===', [
+            'timestamp' => now(),
+            'memory_usage' => memory_get_usage(true),
+            'memory_limit' => ini_get('memory_limit')
+        ]);
+
+        try {
+
+            $prepare = DelivHdr::join('deliv_packings as a', function($join) {
+                $join->on('a.trhdr_id', '=', 'deliv_hdrs.id');
+            })
+            ->join('deliv_pickings as i', function($join) {
+                $join->on('i.trpacking_id', '=', 'a.id');
+            })
+            ->where('deliv_hdrs.tr_type', 'SD')
+            ->where('deliv_hdrs.reff_code', 'baru')
+            ->select('i.*', 'a.tr_type', 'a.trhdr_id', 'a.tr_code', 'a.tr_seq', 'a.reffdtl_id', 'deliv_hdrs.reff_code')
+            ->get();
+
+            $totalRecords = $prepare->count();
+            $processedCount = 0;
+            $errorCount = 0;
+            $successCount = 0;
+
+            Log::info('Data yang akan diproses', [
+                'total_records' => $totalRecords,
+                'query_execution_time' => microtime(true)
+            ]);
+
+            foreach ($prepare as $index => $picking) {
+                $processedCount++;
+
+                try {
+                    // Log progress setiap 100 record
+                    if ($processedCount % 100 == 0) {
+                        Log::info("Progress migrasi: {$processedCount}/{$totalRecords}", [
+                            'percentage' => round(($processedCount / $totalRecords) * 100, 2),
+                            'memory_usage' => memory_get_usage(true),
+                            'success_count' => $successCount,
+                            'error_count' => $errorCount
+                        ]);
+                    }
+
+                    // Ambil data header delivery
+                    $delivHdr = DelivHdr::find($picking->trhdr_id);
+                    if (!$delivHdr) {
+                        Log::warning('DelivHdr tidak ditemukan', [
+                            'picking_id' => $picking->id,
+                            'trhdr_id' => $picking->trhdr_id,
+                            'tr_code' => $picking->tr_code
+                        ]);
+                        $errorCount++;
+                        continue;
+                    }
+
+                    $headerData = [
+                        'id' => $delivHdr->id,
+                        'tr_date' => $delivHdr->tr_date,
+                        'tr_type' => $delivHdr->tr_type,
+                        'tr_code' => $delivHdr->tr_code,
+                        // 'reff_id' => $delivHdr->id,
+                    ];
+
+                    // Log detail data yang akan diproses
+                    Log::debug('Memproses picking', [
+                        'picking_id' => $picking->id,
+                        'tr_code' => $picking->tr_code,
+                        'matl_code' => $picking->matl_code,
+                        'qty' => $picking->qty,
+                        'wh_code' => $picking->wh_code,
+                        'batch_code' => $picking->batch_code
+                    ]);
+
+                    // Proses addReservation
+                    try {
+                        $packingData = [
+                            'id' => $picking->trpacking_id,
+                            'trhdr_id' => $picking->trhdr_id,
+                            'tr_code' => $picking->tr_code,
+                            'tr_seq' => $picking->tr_seq,
+                            'matl_id' => $picking->matl_id,
+                            'matl_code' => $picking->matl_code,
+                            'matl_uom' => $picking->matl_uom,
+                            'wh_id' => 0,
+                            'wh_code' => '',
+                            'batch_code' => '',
+                            'qty' => $picking->qty,
+                            'reffdtl_id' => $picking->reffdtl_id
+                        ];
+
+                        $this->inventoryService->addReservation($headerData, $packingData);
+
+                        Log::debug('addReservation berhasil', [
+                            'picking_id' => $picking->id,
+                            'tr_code' => $picking->tr_code,
+                            'matl_code' => $picking->matl_code
+                        ]);
+
+                    } catch (\Exception $e) {
+                        Log::error('Error pada addReservation', [
+                            'picking_id' => $picking->id,
+                            'tr_code' => $picking->tr_code,
+                            'matl_code' => $picking->matl_code,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        $errorCount++;
+                        continue; // Skip ke record berikutnya jika addReservation gagal
+                    }
+
+                    // Proses addOnhand
+                    try {
+                        $pickingData = [
+                            'id' => $picking->id,
+                            'trhdr_id' => $picking->trhdr_id,
+                            'tr_code' => $picking->tr_code,
+                            'tr_seq' => $picking->tr_seq,
+                            'tr_seq2' => $picking->tr_seq2 ?? 0,
+                            'matl_id' => $picking->matl_id,
+                            'matl_code' => $picking->matl_code,
+                            'matl_uom' => $picking->matl_uom,
+                            'wh_id' => $picking->wh_id,
+                            'wh_code' => $picking->wh_code,
+                            'batch_code' => $picking->batch_code,
+                            'qty' => $picking->qty,
+                            'reffdtl_id' => $picking->reffdtl_id
+                        ];
+
+                        $this->inventoryService->addOnhand($headerData, $pickingData);
+
+                        Log::debug('addOnhand berhasil', [
+                            'picking_id' => $picking->id,
+                            'tr_code' => $picking->tr_code,
+                            'matl_code' => $picking->matl_code
+                        ]);
+
+                        $successCount++;
+
+                    } catch (\Exception $e) {
+                        Log::error('Error pada addOnhand', [
+                            'picking_id' => $picking->id,
+                            'tr_code' => $picking->tr_code,
+                            'matl_code' => $picking->matl_code,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        $errorCount++;
+                    }
+
+                } catch (\Exception $e) {
+                    Log::error('Error umum pada record', [
+                        'picking_id' => $picking->id ?? 'unknown',
+                        'index' => $index,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    $errorCount++;
+                }
+            }
+
+            // Log hasil akhir
+            Log::info('=== MIGRASI INVENTORY SELESAI ===', [
+                'total_records' => $totalRecords,
+                'processed_count' => $processedCount,
+                'success_count' => $successCount,
+                'error_count' => $errorCount,
+                'success_rate' => $totalRecords > 0 ? round(($successCount / $totalRecords) * 100, 2) : 0,
+                'final_memory_usage' => memory_get_usage(true),
+                'peak_memory_usage' => memory_get_peak_usage(true),
+                'execution_time' => microtime(true),
+                'timestamp' => now()
+            ]);
+
+            // Tampilkan notifikasi ke user
+            $this->dispatch('showAlert', [
+                'type' => $errorCount > 0 ? 'warning' : 'success',
+                'message' => "Migrasi selesai! Berhasil: {$successCount}, Error: {$errorCount} dari {$totalRecords} record"
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('FATAL ERROR pada migrasi inventory', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'memory_usage' => memory_get_usage(true),
+                'timestamp' => now()
+            ]);
+
+            $this->dispatch('showAlert', [
+                'type' => 'error',
+                'message' => 'Terjadi error fatal pada migrasi: ' . $e->getMessage()
+            ]);
+
+            throw $e; // Re-throw untuk debugging jika diperlukan
+        }
+    }
 
     public function migrateToBilling()
     {
@@ -321,6 +542,83 @@ class Index extends BaseComponent
             try {
                 // Tentukan tr_type billing berdasarkan delivery type
                 $billingType = $delivery->tr_type === 'PD' ? 'APB' : 'ARB';
+
+                // Siapkan data header billing
+                $headerData = [
+                    'id' => 0, // New billing
+                    'tr_type' => $billingType,
+                    'tr_code' => $delivery->tr_code,
+                    'tr_date' => $delivery->tr_date,
+                ];
+
+                // Siapkan data detail billing - BillingService mengharapkan deliv_id
+                $detailData = [
+                    [
+                        'deliv_id' => $delivery->id
+                    ]
+                ];
+
+                // Simpan billing
+                $this->billingService->saveBilling($headerData, $detailData);
+
+                // Update amt_reff setelah partner balance berhasil dibuat (seperti di PaymentService)
+                // if (isset($billingResult['billing_hdr']) && $billingResult['billing_hdr']) {
+                //     $billingHdr = $billingResult['billing_hdr'];
+                //     $this->billingService->updAmtReff('+', $billingHdr->amt, $billingHdr->id);
+                // }
+
+                $processedCount++;
+
+            } catch (\Exception $e) {
+                Log::error("Error creating billing for delivery {$delivery->tr_code}: " . $e->getMessage());
+                continue;
+            }
+        }
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => "Migrasi data delivery ke billing berhasil dilakukan! Total: {$processedCount} records"
+        ]);
+    }
+
+    public function migrateToBillingSdBaru()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000'); // 3600 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000'); // 3600 seconds in milliseconds
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->billingService) {
+            $deliveryService = new \App\Services\TrdTire1\DeliveryService(new InventoryService());
+            $partnerBalanceService = new PartnerBalanceService();
+            $this->billingService = new BillingService($deliveryService, $partnerBalanceService);
+        }
+
+        // Ambil data delivery PD dan SD
+        $deliveries = DelivHdr::where('tr_type', 'SD')
+            ->where('reff_code', 'baru')
+            ->with(['DelivPacking.OrderDtl'])
+            ->get();
+
+        $processedCount = 0;
+        foreach ($deliveries as $delivery) {
+            try {
+                // Tentukan tr_type billing berdasarkan delivery type
+                $billingType = 'ARB';
 
                 // Siapkan data header billing
                 $headerData = [
@@ -839,10 +1137,14 @@ class Index extends BaseComponent
                 gc_collect_cycles();
             });
 
+        $message = "Migrasi Inventory Adjustment (IA) berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header";
+
         $this->dispatch('show-message', [
             'type' => 'success',
-            'message' => "Migrasi Inventory Adjustment (IA) berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
+            'message' => $message
         ]);
+
+        session()->flash('migration_success', $message);
     }
 
     /**
@@ -973,168 +1275,18 @@ class Index extends BaseComponent
                 gc_collect_cycles();
             });
 
+        $message = "Migrasi Sales Order (SO) dari OrderHdr/OrderDtl dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header";
+
         $this->dispatch('show-message', [
             'type' => 'success',
-            'message' => "Migrasi Sales Order (SO) dari OrderHdr/OrderDtl dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
+            'message' => $message
         ]);
+
+        session()->flash('migration_success', $message);
     }
 
     /**
      * Migrasi khusus untuk Sales Delivery dari DelivHdr dan DelivPacking dengan reff_code = 'baru'
      */
-    public function migrateSalesDelivery()
-    {
-        // Set execution time limit to 1 hour
-        set_time_limit(3600);
-        ini_set('max_execution_time', 3600);
-        ini_set('memory_limit', '1024M');
-
-        // Disable time limit for this specific operation
-        ignore_user_abort(true);
-
-        // Set database timeout for PostgreSQL
-        DB::statement('SET statement_timeout = 3600000');
-        DB::statement('SET idle_in_transaction_session_timeout = 3600000');
-
-        // Send headers to prevent web server timeout
-        if (!headers_sent()) {
-            header('Content-Type: text/html; charset=utf-8');
-            header('Cache-Control: no-cache, must-revalidate');
-            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-        }
-
-        if (!$this->inventoryService) {
-            $this->inventoryService = new InventoryService();
-        }
-
-        // Ambil data DelivHdr dengan tr_type = 'SD' dan reff_code = 'baru'
-        $totalHeaders = DelivHdr::where('tr_type', 'SD')
-            ->where('reff_code', 'baru')
-            ->count();
-
-        Log::info("Found {$totalHeaders} Sales Delivery (SD) records from DelivHdr with reff_code = 'baru' to migrate");
-
-        if ($totalHeaders == 0) {
-            $this->dispatch('show-message', [
-                'type' => 'info',
-                'message' => "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate."
-            ]);
-            return;
-        }
-
-        $processedCount = 0;
-        $errorCount = 0;
-        $chunkSize = 30; // Process 30 SD records at a time
-
-        DelivHdr::where('tr_type', 'SD')
-            ->where('reff_code', 'baru')
-            ->chunk($chunkSize, function ($headers) use (&$processedCount, &$errorCount) {
-                foreach ($headers as $header) {
-                    try {
-                        Log::info("Processing SD Header: {$header->tr_code} (ID: {$header->id}) - Reff Code: {$header->reff_code}");
-                        Log::info("SD Header has " . $header->DelivPacking->count() . " details");
-
-                        // Debug: Cek data DelivPacking langsung
-                        $delivPackingCount = DelivPacking::where('trhdr_id', $header->id)->count();
-                        Log::info("Direct DelivPacking count for header {$header->id}: {$delivPackingCount}");
-
-                        // Debug: Cek data DelivPacking dengan tr_type
-                        $delivPackingWithType = DelivPacking::where('trhdr_id', $header->id)
-                            ->where('tr_type', $header->tr_type)
-                            ->count();
-                        Log::info("DelivPacking with tr_type '{$header->tr_type}' count: {$delivPackingWithType}");
-
-                        // Validasi data header SD
-                        if (empty($header->tr_code) || empty($header->tr_date) || $header->reff_code !== 'baru') {
-                            Log::warning("Skipping SD Header {$header->id}: Missing required fields or reff_code is not 'baru'");
-                            $errorCount++;
-                            continue;
-                        }
-
-                        // Siapkan data header untuk SD
-                        $headerData = [
-                            'id' => $header->id,
-                            'tr_type' => $header->tr_type,
-                            'tr_code' => $header->tr_code,
-                            'tr_date' => $header->tr_date,
-                            'reff_id' => $header->id, // Gunakan ID delivery sebagai reff_id
-                            'reff_code' => $header->reff_code,
-                            'descr' => $header->note ?? 'Sales Delivery',
-                        ];
-
-                        // Ambil data DelivPacking langsung tanpa relasi
-                        $delivPackingDetails = DelivPacking::where('trhdr_id', $header->id)
-                            ->where('tr_type', $header->tr_type)
-                            ->orderBy('tr_seq')
-                            ->get();
-
-                        Log::info("Found {$delivPackingDetails->count()} DelivPacking details for processing");
-
-                        // Proses setiap detail SD
-                        foreach ($delivPackingDetails as $detail) {
-                            try {
-                                // Validasi data detail SD
-                                if (empty($detail->reffdtl_id) || $detail->qty <= 0) {
-                                    Log::warning("Skipping SD Detail {$detail->id}: Invalid reffdtl_id or quantity");
-                                    continue;
-                                }
-
-                                // Ambil data material dari OrderDtl yang direferensikan
-                                $orderDtl = OrderDtl::find($detail->reffdtl_id);
-                                if (!$orderDtl) {
-                                    Log::warning("Skipping SD Detail {$detail->id}: OrderDtl not found for reffdtl_id {$detail->reffdtl_id}");
-                                    continue;
-                                }
-
-                                $detailData = [
-                                    'id' => $detail->id,
-                                    'trhdr_id' => $detail->trhdr_id,
-                                    'tr_code' => $header->tr_code, // Tambahkan tr_code dari header
-                                    'tr_seq' => $detail->tr_seq,
-                                    'tr_seq2' => 0, // DelivPacking tidak memiliki tr_seq2
-                                    'matl_id' => $orderDtl->matl_id,
-                                    'matl_code' => $orderDtl->matl_code ?? '',
-                                    'matl_uom' => $orderDtl->matl_uom ?? 'PCS',
-                                    'wh_id' => 0, // DelivPacking tidak memiliki wh_id, default ke 0
-                                    'wh_code' => '', // DelivPacking tidak memiliki wh_code
-                                    'batch_code' => '', // DelivPacking tidak memiliki batch_code
-                                    'qty' => $detail->qty,
-                                    'price_beforetax' => $orderDtl->price_beforetax ?? 0,
-                                    'reffdtl_id' => $detail->reffdtl_id, // ID dari OrderDtl yang direferensikan
-                                ];
-
-                                // Untuk SD, gunakan addOnhand untuk mengurangi stok
-                                $this->inventoryService->addOnhand($headerData, $detailData);
-
-                                Log::info("Successfully processed SD Detail: Material {$orderDtl->matl_code}, Qty: {$detail->qty}, Price: {$orderDtl->price_beforetax}");
-
-                            } catch (\Exception $e) {
-                                Log::error("Error processing SD Detail {$detail->id}: " . $e->getMessage());
-                                Log::error("Stack trace: " . $e->getTraceAsString());
-                                $errorCount++;
-                                continue;
-                            }
-                        }
-
-                        $processedCount++;
-                        Log::info("Successfully migrated SD Header: {$header->tr_code} with reff_code: {$header->reff_code}");
-
-                    } catch (\Exception $e) {
-                        Log::error("Error migrating SD Header {$header->tr_code}: " . $e->getMessage());
-                        Log::error("Stack trace: " . $e->getTraceAsString());
-                        $errorCount++;
-                        continue;
-                    }
-                }
-
-                // Force garbage collection after each chunk
-                gc_collect_cycles();
-            });
-
-        $this->dispatch('show-message', [
-            'type' => 'success',
-            'message' => "Migrasi Sales Delivery (SD) dari DelivHdr/DelivPacking dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
-        ]);
-    }
 
 }
