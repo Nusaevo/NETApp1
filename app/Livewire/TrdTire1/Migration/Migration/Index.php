@@ -839,10 +839,14 @@ class Index extends BaseComponent
                 gc_collect_cycles();
             });
 
+        $message = "Migrasi Inventory Adjustment (IA) berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header";
+
         $this->dispatch('show-message', [
             'type' => 'success',
-            'message' => "Migrasi Inventory Adjustment (IA) berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
+            'message' => $message
         ]);
+
+        session()->flash('migration_success', $message);
     }
 
     /**
@@ -973,10 +977,14 @@ class Index extends BaseComponent
                 gc_collect_cycles();
             });
 
+        $message = "Migrasi Sales Order (SO) dari OrderHdr/OrderDtl dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header";
+
         $this->dispatch('show-message', [
             'type' => 'success',
-            'message' => "Migrasi Sales Order (SO) dari OrderHdr/OrderDtl dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records dari total {$totalHeaders} header"
+            'message' => $message
         ]);
+
+        session()->flash('migration_success', $message);
     }
 
     /**
@@ -1181,10 +1189,12 @@ class Index extends BaseComponent
         Log::info("Found {$deliveries->count()} Sales Delivery (SD) records with reff_code = 'baru' to migrate to billing");
 
         if ($deliveries->count() == 0) {
+            $message = "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate ke billing.";
             $this->dispatch('show-message', [
                 'type' => 'info',
-                'message' => "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate ke billing."
+                'message' => $message
             ]);
+            session()->flash('migration_info', $message);
             return;
         }
 
@@ -1196,8 +1206,7 @@ class Index extends BaseComponent
                 Log::info("SD Delivery has " . $delivery->DelivPacking->count() . " packing details");
 
                 // Untuk SD, billing type adalah ARB
-                $billingType = 'ARB';
-
+                $billingType = $delivery->tr_type === 'PD' ? 'APB' : 'ARB';
                 // Siapkan data header billing
                 $headerData = [
                     'id' => 0, // New billing
@@ -1237,9 +1246,13 @@ class Index extends BaseComponent
             }
         }
 
+        $message = "Migrasi data Sales Delivery (SD) ke billing dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records";
+
         $this->dispatch('show-message', [
             'type' => 'success',
-            'message' => "Migrasi data Sales Delivery (SD) ke billing dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records"
+            'message' => $message
         ]);
+
+        session()->flash('migration_success', $message);
     }
 }

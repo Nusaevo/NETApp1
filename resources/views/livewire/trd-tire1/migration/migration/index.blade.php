@@ -97,5 +97,54 @@
                 </div>
             </div>
         @endif
+
+        {{-- Hasil Migration Umum --}}
+        @if (session('migration_success'))
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-check-circle"></i> {{ session('migration_success') }}
+                        </h5>
+                        <p class="mb-0">
+                            <i class="fas fa-clock"></i>
+                            Waktu: {{ now()->format('d-m-Y H:i:s') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if (session('migration_error'))
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle"></i> {{ session('migration_error') }}
+                        </h5>
+                        <p class="mb-0">
+                            <i class="fas fa-clock"></i>
+                            Waktu: {{ now()->format('d-m-Y H:i:s') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if (session('migration_info'))
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-info-circle"></i> {{ session('migration_info') }}
+                        </h5>
+                        <p class="mb-0">
+                            <i class="fas fa-clock"></i>
+                            Waktu: {{ now()->format('d-m-Y H:i:s') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
     </x-ui-page-card>
 </div>
