@@ -24,7 +24,10 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return DelivHdr::with(['DelivPacking.DelivPickings', 'Partner'])
-            ->where('deliv_hdrs.tr_type', 'PD');
+            ->where('deliv_hdrs.tr_type', 'PD')
+            ->orderBy('deliv_hdrs.updated_at', 'desc')
+            ->orderBy('deliv_hdrs.tr_date', 'desc')
+            ->orderBy('deliv_hdrs.tr_code', 'desc');
     }
     public function columns(): array
     {

@@ -387,7 +387,7 @@ class Detail extends BaseComponent
             return redirect()->route(
                 $this->appCode . '.Transaction.PurchaseDelivery.Detail',
                 [
-                    'action'   => encryptWithSessionKey('Edit'),
+                    'action'   => encryptWithSessionKey('Create'),
                     'objectId' => encryptWithSessionKey($this->object->id),
                 ]
             );
