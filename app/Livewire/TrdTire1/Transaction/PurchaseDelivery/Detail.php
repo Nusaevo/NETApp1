@@ -54,8 +54,8 @@ class Detail extends BaseComponent
     public $purchaseOrders = [];
     public $ddPurchaseOrder = [
         'placeHolder' => "Ketik untuk cari purchase order ...",
-        'optionLabel' => "tr_code",
-        'query' => "SELECT DISTINCT h.tr_code FROM order_hdrs h LEFT JOIN order_dtls d ON h.id = d.trhdr_id WHERE h.tr_type = 'PO' AND d.qty > d.qty_reff ORDER BY h.tr_code",
+        'optionLabel' => "h.tr_code",
+        'query' => "SELECT DISTINCT h.tr_code FROM order_hdrs h LEFT JOIN order_dtls d ON h.id = d.trhdr_id WHERE h.tr_type = 'PO' AND d.qty > d.qty_reff",
     ];
 
     public $ddPartner = [
