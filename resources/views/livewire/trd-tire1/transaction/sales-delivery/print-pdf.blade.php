@@ -40,7 +40,7 @@
                         <p style="margin-bottom: -8px;">
                             <strong>{{ $this->object->ship_to_name }}</strong>
                         </p>
-                        <p style="margin-bottom: -8px;">{{ $this->object->ship_to_addr }}</p>
+                        <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1.2; margin-top: 0px;">{{ $this->object->ship_to_addr }}</p>
                     </td>
                 </tr>
             </table>
@@ -123,13 +123,13 @@
             @endfor
 
             <!-- Recipient Info -->
-            <div style="margin-top: 20px;">
+            <div style="margin-top: 0px;">
                 <p style="margin: 0 0 0px 0;">
                     {{ $this->object->npwp_name }} -
                     {{ $this->object->npwp_addr }}
                 </p>
 
-                <div width="100%" style="margin-top: 0px;">
+                <div width="100%" style="margin-top: -10px;">
                     <div class="row justify-content-between" style="text-align: center;">
                         <div style="width: 25%;">
                             <p style="margin: 5px 0;">Administrasi:</p><br>
@@ -181,8 +181,7 @@
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
                                 <p style="margin-bottom: -8px;"><strong>{{ $this->object->ship_to_name }}</strong></p>
-                                <p style="margin-bottom: -8px;">{{ $this->object->ship_to_addr }}</p>
-
+                                <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1.2; margin-top: 0px;">{{ $this->object->ship_to_addr }}</p>
                             </td>
                         </tr>
                     </table>
@@ -258,12 +257,12 @@
                     @endfor
 
                     <!-- Footer -->
-                    <div style="margin-top: 20px;">
+                    <div style="margin-top: 0px;">
                         <p style="margin: 0 0 0px 0;">
                             {{ $this->object->npwp_name }} -
                             {{ $this->object->npwp_addr }}
                         </p>
-                        <div width="100%" style="margin-top: 0px;">
+                        <div width="100%" style="margin-top: -10px;">
                             <div class="row justify-content-between" style="text-align: center;">
                                 <div style="width: 25%;">
                                     <p style="margin: 5px 0;">Administrasi:</p><br>
