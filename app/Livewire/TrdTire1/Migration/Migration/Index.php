@@ -758,7 +758,7 @@ class Index extends BaseComponent
         $errorCount = 0;
         $chunkSize = 50; // Process 50 IA records at a time (IA biasanya lebih sederhana)
 
-        IvttrHdr::where('tr_type', 'IW')
+        IvttrHdr::where('tr_type', 'IA')
             ->with(['IvttrDtl'])
             ->chunk($chunkSize, function ($headers) use (&$processedCount, &$errorCount) {
                 foreach ($headers as $header) {
