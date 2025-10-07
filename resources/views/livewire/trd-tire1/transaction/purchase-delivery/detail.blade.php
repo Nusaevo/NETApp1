@@ -35,17 +35,17 @@
                                         :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         onChanged="whCodeOnChanged($event.target.value)" />
 
-                                    {{-- @if ($actionValue === 'Edit')
+                                    @if ($actionValue === 'Edit')
                                         <x-ui-dropdown-select label="Nota Pembelian" model="inputs.reffhdrtr_code"
                                             :options="$purchaseOrders" required="true" :action="$actionValue"
                                             onChanged="onPurchaseOrderChanged($event.target.value)" :enabled="$isPanelEnabled" />
-                                    @else --}}
+                                    @else
                                     <x-ui-dropdown-search label="Nota Pembelian" model="inputs.reffhdrtr_code"
                                         optionValue="tr_code" :query="$ddPurchaseOrder['query']" :optionLabel="$ddPurchaseOrder['optionLabel']" :placeHolder="$ddPurchaseOrder['placeHolder']"
                                         :selectedValue="$inputs['reffhdrtr_code'] ?? ''" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         type="int" onChanged="onPurchaseOrderChanged($event.target.value)" />
-                                        
-                                    {{-- @endif --}}
+
+                                    @endif
                                     {{-- Debug: @dump($inputs['reffhdrtr_code']) --}}
                                     {{-- @dump($inputs['reffhdrtr_code']) --}}
                                     <!-- Display Partner Name -->
