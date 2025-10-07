@@ -44,7 +44,7 @@
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('ship_to') }}" clickEvent=""
                                             model="inputs.ship_to_name" :selectedValue="$inputs['ship_to_name']" :options="$shipOptions"
-                                            required="true" :action="$actionValue" />
+                                            required="true" :action="$actionValue" onChanged="onShipToChanged($event.target.value)" />
                                     </div>
                                     <div class="row">
                                         <x-ui-text-field-search label="{{ $this->trans('tax_payer') }}"

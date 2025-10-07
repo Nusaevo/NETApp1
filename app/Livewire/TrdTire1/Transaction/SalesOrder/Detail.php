@@ -516,14 +516,14 @@ class Detail extends BaseComponent
             $headerData['partner_code'] = $partner ? $partner->code : '';
         }
 
-        // // Set default values for NPWP fields to prevent null constraint violation
-        // $headerData['npwp_code'] = $headerData['npwp_code'] ?? '';
-        // $headerData['npwp_name'] = $headerData['npwp_name'] ?? '';
-        // $headerData['npwp_addr'] = $headerData['npwp_addr'] ?? '';
+        // Set default values for NPWP fields to prevent null constraint violation
+        $headerData['npwp_code'] = $headerData['npwp_code'] ?? '';
+        $headerData['npwp_name'] = $headerData['npwp_name'] ?? '';
+        $headerData['npwp_addr'] = $headerData['npwp_addr'] ?? '';
 
-        // // Set default values for shipping fields to prevent null constraint violation
-        // $headerData['ship_to_name'] = $headerData['ship_to_name'] ?? '';
-        // $headerData['ship_to_addr'] = $headerData['ship_to_addr'] ?? '';
+        // Set default values for shipping fields to prevent null constraint violation
+        $headerData['ship_to_name'] = $headerData['ship_to_name'] ?? '';
+        $headerData['ship_to_addr'] = $headerData['ship_to_addr'] ?? '';
 
 
         return $headerData;
@@ -1091,11 +1091,6 @@ class Detail extends BaseComponent
                     if (!empty($existingShipToName)) {
                         $this->inputs['ship_to_name'] = $existingShipToName;
                         $this->inputs['ship_to_addr'] = $existingShipToAddr;
-                    } else if (!empty($this->shipOptions)) {
-                        // Jika tidak ada data tersimpan, gunakan data pertama
-                        $first = reset($this->shipOptions);
-                        $this->inputs['ship_to_name'] = $first['value'] ?? '';
-                        $this->inputs['ship_to_addr'] = $first['address'] ?? '';
                     }
                 }
             }
@@ -1244,6 +1239,18 @@ class Detail extends BaseComponent
                         break;
                     }
                 }
+            }
+        }
+    }
+
+    public function onShipToChanged($shipToName)
+    {
+        // Cari alamat yang sesuai dengan nama yang dipilih
+        foreach ($this->shipOptions as $option) {
+            if ($option['value'] === $shipToName) {
+                $this->inputs['ship_to_name'] = $option['value'];
+                $this->inputs['ship_to_addr'] = $option['address'];
+                break;
             }
         }
     }
