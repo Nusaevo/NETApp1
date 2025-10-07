@@ -183,11 +183,11 @@
                         @if ($actionValue !== 'Create' && isset($object->id))
                             <x-ui-button :action="$actionValue" clickEvent="goToPrintNota" cssClass="btn-primary"
                                 loading="true" button-name="Cetak Nota Jual" iconPath="print.svg"
-                                :enabled="$canUpdateAfterPrint || $canPrintNotaButton ? 'true' : 'false'" />
+                                enabled="true || $canPrintNotaButton ? 'true' : 'false'" />
 
                             <x-ui-button :action="$actionValue" clickEvent="goToPrintSuratJalan" cssClass="btn-primary"
                                 loading="true" button-name="Cetak Surat Jalan" iconPath="print.svg"
-                                :enabled="$canUpdateAfterPrint || $canPrintSuratJalanButton ? 'true' : 'false'" />
+                                enabled="true" />
                         @endif
 
                         <x-ui-button clickEvent="deleteTransaction" :action="$actionValue" :enabled="$isDeliv ? 'false' : ($canUpdateAfterPrint ? 'true' : 'false')"

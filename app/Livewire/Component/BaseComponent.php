@@ -157,7 +157,6 @@ class BaseComponent extends Component
     {
         // Performance: Use static patterns and normalize once
         static $homePatterns = ['', 'dashboard', 'home'];
-        static $indexRegex = '/\/(Home|Index|home|index)$/';
 
         $path = trim(strtolower($currentPath), '/');
 
@@ -166,8 +165,31 @@ class BaseComponent extends Component
             return true;
         }
 
-        // Regex check for index patterns - single regex is faster
-        return preg_match($indexRegex, $currentPath);
+        // Split path into segments
+        $pathSegments = explode('/', $path);
+        $pathSegments = array_filter($pathSegments); // Remove empty segments
+
+        // If path has no segments or only root, it's home
+        if (count($pathSegments) <= 1) {
+            return true;
+        }
+
+        $lastSegment = end($pathSegments);
+
+        // Check if last segment indicates it's NOT a detail/action page
+        static $detailIndicators = ['detail', 'edit', 'create', 'view', 'delete', 'print', 'pdf'];
+
+        // If last segment is a detail indicator, it's NOT an index page
+        if (in_array($lastSegment, $detailIndicators)) {
+            return false;
+        }
+
+        // If last segment looks like an ID (alphanumeric, 8+ chars), it's likely a detail page
+        if (preg_match('/^[A-Z0-9]{8,}$/i', $lastSegment) || is_numeric($lastSegment)) {
+            return false;
+        }
+
+        return false;
     }
 
     private function setActionAndObject($action, $objectId)

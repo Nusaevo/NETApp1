@@ -17,8 +17,8 @@ if (!function_exists('encryptWithSessionKey')) {
 
         $sessionSalt = Session::get('session_salt', 'default_salt');
 
-        // Create a combined string with salt and value
-        $combined = $sessionSalt . '|' . $value . '|' . time();
+        // Create a combined string with salt and value (without time for consistency)
+        $combined = $sessionSalt . '|' . $value;
 
         // Generate hash and take first 16 characters (will be reduced to 12)
         $hash = hash('sha256', $combined);
@@ -62,37 +62,31 @@ if (!function_exists('decryptWithSessionKey')) {
                 return $encryptionMap[$encrypted];
             }
 
-            // If not found in current session, try to reverse engineer with time window
+            // If not found in current session, try to reverse engineer
             $sessionSalt = Session::get('session_salt', 'default_salt');
-            $currentTime = time();
 
-            // Try with current time and recent timestamps (within 1 hour)
-            for ($timeOffset = 0; $timeOffset <= 3600; $timeOffset += 60) {
-                $testTime = $currentTime - $timeOffset;
+            // Try common values that might have been encrypted
+            $commonValues = [
+                'Edit', 'View', 'Delete', 'Create', '',
+                'cetakProsesDate', 'cetakLaporanPenjualan',
+                // Add more common values as needed
+            ];
 
-                // Try common values that might have been encrypted
-                $commonValues = [
-                    'Edit', 'View', 'Delete', 'Create', '',
-                    'cetakProsesDate', 'cetakLaporanPenjualan',
-                    // Add more common values as needed
-                ];
+            foreach ($commonValues as $testValue) {
+                $combined = $sessionSalt . '|' . $testValue;
+                $hash = hash('sha256', $combined);
+                $hexPart = substr($hash, 0, 16);
+                $decimal = hexdec($hexPart);
+                $base36 = base_convert($decimal, 10, 36);
+                $result = str_pad(substr($base36, 0, 12), 12, '0', STR_PAD_LEFT);
+                $safeChars = str_replace(['/', '+', '='], ['x', 'y', 'z'], $result);
+                $testEncrypted = strtoupper($safeChars);
 
-                foreach ($commonValues as $testValue) {
-                    $combined = $sessionSalt . '|' . $testValue . '|' . $testTime;
-                    $hash = hash('sha256', $combined);
-                    $hexPart = substr($hash, 0, 16);
-                    $decimal = hexdec($hexPart);
-                    $base36 = base_convert($decimal, 10, 36);
-                    $result = str_pad(substr($base36, 0, 12), 12, '0', STR_PAD_LEFT);
-                    $safeChars = str_replace(['/', '+', '='], ['x', 'y', 'z'], $result);
-                    $testEncrypted = strtoupper($safeChars);
-
-                    if ($testEncrypted === $encrypted) {
-                        // Store in session for future use
-                        $encryptionMap[$encrypted] = $testValue;
-                        Session::put('encryption_map', $encryptionMap);
-                        return $testValue;
-                    }
+                if ($testEncrypted === $encrypted) {
+                    // Store in session for future use
+                    $encryptionMap[$encrypted] = $testValue;
+                    Session::put('encryption_map', $encryptionMap);
+                    return $testValue;
                 }
             }
 
