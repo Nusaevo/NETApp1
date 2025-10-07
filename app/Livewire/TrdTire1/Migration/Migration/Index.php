@@ -13,7 +13,7 @@ use App\Services\TrdTire1\PaymentService;
 use App\Enums\Constant;
 use App\Models\TrdTire1\Master\SalesReward;
 use App\Models\TrdTire1\Transaction\{DelivHdr, DelivPacking, DelivPicking, BillingHdr, PaymentHdr, PaymentDtl, PaymentSrc, PaymentAdv, OrderHdr, OrderDtl};
-use App\Models\TrdTire1\Inventories\{IvttrHdr, IvttrDtl};
+use App\Models\TrdTire1\Inventories\{IvttrHdr, IvttrDtl, IvtLog};
 
 class Index extends BaseComponent
 {
@@ -1174,22 +1174,24 @@ class Index extends BaseComponent
             header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
         }
 
+        // Initialize services
         if (!$this->billingService) {
             $deliveryService = new \App\Services\TrdTire1\DeliveryService(new InventoryService());
             $partnerBalanceService = new PartnerBalanceService();
             $this->billingService = new BillingService($deliveryService, $partnerBalanceService);
         }
 
-        // Ambil data delivery SD dengan reff_code = 'baru'
+        // Ambil data delivery SD dengan reff_code = 'baru' yang BELUM memiliki billing
         $deliveries = DelivHdr::where('tr_type', 'SD')
             ->where('reff_code', 'baru')
+            ->where('billhdr_id', 0) // Hanya yang belum ada billing
             ->with(['DelivPacking.OrderDtl'])
             ->get();
 
-        Log::info("Found {$deliveries->count()} Sales Delivery (SD) records with reff_code = 'baru' to migrate to billing");
+        Log::info("Found {$deliveries->count()} Sales Delivery (SD) records with reff_code = 'baru' that need billing");
 
         if ($deliveries->count() == 0) {
-            $message = "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate ke billing.";
+            $message = "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate ke billing. Semua sudah memiliki billing.";
             $this->dispatch('show-message', [
                 'type' => 'info',
                 'message' => $message
@@ -1200,43 +1202,29 @@ class Index extends BaseComponent
 
         $processedCount = 0;
         $errorCount = 0;
+        $billingCount = 0;
+        $partnerLogCount = 0;
+        $partnerBalCount = 0;
+
         foreach ($deliveries as $delivery) {
             try {
                 Log::info("Processing SD Delivery for billing: {$delivery->tr_code} (ID: {$delivery->id}) - Reff Code: {$delivery->reff_code}");
                 Log::info("SD Delivery has " . $delivery->DelivPacking->count() . " packing details");
 
-                // Untuk SD, billing type adalah ARB
-                $billingType = $delivery->tr_type === 'PD' ? 'APB' : 'ARB';
-                // Siapkan data header billing
-                $headerData = [
-                    'id' => 0, // New billing
-                    'tr_type' => $billingType,
-                    'tr_code' => $delivery->tr_code,
-                    'tr_date' => $delivery->tr_date,
-                ];
+                // CATATAN: Inventory logs dan balance sudah otomatis dibuat saat delivery dibuat melalui DeliveryService
+                // Jadi kita hanya perlu membuat billing dan partner data
 
-                // Siapkan data detail billing - BillingService mengharapkan deliv_id
-                $detailData = [
-                    [
-                        'deliv_id' => $delivery->id
-                    ]
-                ];
-
-                Log::info("Creating billing for delivery {$delivery->tr_code} with type {$billingType}");
-
-                // Simpan billing
-                $this->billingService->saveBilling($headerData, $detailData);
-
-                Log::info("Successfully created billing for delivery {$delivery->tr_code}");
-
-                // Update amt_reff setelah partner balance berhasil dibuat (seperti di PaymentService)
-                // if (isset($billingResult['billing_hdr']) && $billingResult['billing_hdr']) {
-                //     $billingHdr = $billingResult['billing_hdr'];
-                //     $this->billingService->updAmtReff('+', $billingHdr->amt, $billingHdr->id);
-                // }
+                // 1. BUAT BILLING (yang otomatis akan membuat partner logs dan partner balance)
+                $billingResult = $this->createBilling($delivery);
+                if ($billingResult) {
+                    $billingCount++;
+                    $partnerLogCount++; // 1 partner log per billing
+                    $partnerBalCount++; // 1 partner balance per billing
+                    Log::info("Successfully created billing and partner data for delivery {$delivery->tr_code}");
+                }
 
                 $processedCount++;
-                Log::info("Successfully migrated delivery {$delivery->tr_code} to billing");
+                Log::info("Successfully migrated delivery {$delivery->tr_code} to billing system");
 
             } catch (\Exception $e) {
                 Log::error("Error creating billing for delivery {$delivery->tr_code}: " . $e->getMessage());
@@ -1246,7 +1234,10 @@ class Index extends BaseComponent
             }
         }
 
-        $message = "Migrasi data Sales Delivery (SD) ke billing dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records";
+        $message = "Migrasi data Sales Delivery (SD) ke billing dengan reff_code = 'baru' berhasil!
+                   Diproses: {$processedCount} records, Error: {$errorCount} records
+                   Billing: {$billingCount}, Partner Logs: {$partnerLogCount}, Partner Balance: {$partnerBalCount}
+                   (Inventory logs dan balance sudah otomatis dibuat saat delivery dibuat)";
 
         $this->dispatch('show-message', [
             'type' => 'success',
@@ -1255,6 +1246,203 @@ class Index extends BaseComponent
 
         session()->flash('migration_success', $message);
     }
+
+    /**
+     * Membuat data billing untuk delivery
+     */
+    private function createBilling($delivery)
+    {
+        try {
+            // Untuk SD, billing type adalah ARB
+            $billingType = 'ARB';
+
+            // Siapkan data header billing
+            $headerData = [
+                'id' => 0, // New billing
+                'tr_type' => $billingType,
+                'tr_code' => $delivery->tr_code,
+                'tr_date' => $delivery->tr_date,
+            ];
+
+            // Siapkan data detail billing - BillingService mengharapkan deliv_id
+            $detailData = [
+                [
+                    'deliv_id' => $delivery->id
+                ]
+            ];
+
+            Log::info("Creating billing for delivery {$delivery->tr_code} with type {$billingType}");
+
+            // Simpan billing menggunakan BillingService
+            $billingResult = $this->billingService->saveBilling($headerData, $detailData);
+
+            return $billingResult;
+
+        } catch (\Exception $e) {
+            Log::error("Error creating billing for delivery {$delivery->tr_code}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Migrasi inventory logs dan balance untuk delivery yang sudah ada
+     * Method ini untuk delivery yang sudah dibuat tapi belum memiliki inventory data
+     */
+    public function migrateInventoryForExistingDeliveries()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000');
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000');
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->inventoryService) {
+            $this->inventoryService = new InventoryService();
+        }
+
+        // Ambil data delivery SD dengan reff_code = 'baru' yang belum memiliki inventory logs
+        $deliveries = DelivHdr::where('tr_type', 'SD')
+            ->where('reff_code', 'baru')
+            ->with(['DelivPacking.OrderDtl'])
+            ->get();
+
+        Log::info("Found {$deliveries->count()} Sales Delivery (SD) records with reff_code = 'baru' to check for inventory data");
+
+        if ($deliveries->count() == 0) {
+            $message = "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate.";
+            $this->dispatch('show-message', [
+                'type' => 'info',
+                'message' => $message
+            ]);
+            session()->flash('migration_info', $message);
+            return;
+        }
+
+        $processedCount = 0;
+        $errorCount = 0;
+        $inventoryLogCount = 0;
+        $inventoryBalCount = 0;
+
+        foreach ($deliveries as $delivery) {
+            try {
+                Log::info("Processing SD Delivery for inventory: {$delivery->tr_code} (ID: {$delivery->id}) - Reff Code: {$delivery->reff_code}");
+
+                // Cek apakah sudah ada inventory logs untuk delivery ini
+                $existingLogs = \App\Models\TrdTire1\Inventories\IvtLog::where('trhdr_id', $delivery->id)->count();
+                if ($existingLogs > 0) {
+                    Log::info("Delivery {$delivery->tr_code} already has {$existingLogs} inventory logs, skipping");
+                    continue;
+                }
+
+                // Ambil data DelivPacking untuk delivery ini
+                $delivPackingDetails = DelivPacking::where('trhdr_id', $delivery->id)
+                    ->where('tr_type', $delivery->tr_type)
+                    ->orderBy('tr_seq')
+                    ->get();
+
+                Log::info("Found {$delivPackingDetails->count()} DelivPacking details for inventory processing");
+
+                // Siapkan data header untuk inventory
+                $headerData = [
+                    'id' => $delivery->id,
+                    'tr_type' => $delivery->tr_type,
+                    'tr_code' => $delivery->tr_code,
+                    'tr_date' => $delivery->tr_date,
+                    'reff_id' => $delivery->id,
+                    'reff_code' => $delivery->reff_code,
+                    'descr' => $delivery->note ?? 'Sales Delivery',
+                ];
+
+                // Proses setiap detail SD untuk inventory
+                foreach ($delivPackingDetails as $detail) {
+                    try {
+                        // Validasi data detail SD
+                        if (empty($detail->reffdtl_id) || $detail->qty <= 0) {
+                            Log::warning("Skipping SD Detail {$detail->id}: Invalid reffdtl_id or quantity");
+                            continue;
+                        }
+
+                        // Ambil data material dari OrderDtl yang direferensikan
+                        $orderDtl = OrderDtl::find($detail->reffdtl_id);
+                        if (!$orderDtl) {
+                            Log::warning("Skipping SD Detail {$detail->id}: OrderDtl not found for reffdtl_id {$detail->reffdtl_id}");
+                            continue;
+                        }
+
+                        // Ambil data warehouse dan batch dari DelivPicking
+                        $delivPicking = DelivPicking::where('trpacking_id', $detail->id)->first();
+                        $whId = $delivPicking ? $delivPicking->wh_id : 0;
+                        $whCode = $delivPicking ? $delivPicking->wh_code : '';
+                        $batchCode = $delivPicking ? $delivPicking->batch_code : '';
+
+                        $detailData = [
+                            'id' => $detail->id,
+                            'trhdr_id' => $detail->trhdr_id,
+                            'tr_code' => $delivery->tr_code,
+                            'tr_seq' => $detail->tr_seq,
+                            'tr_seq2' => 0,
+                            'matl_id' => $orderDtl->matl_id,
+                            'matl_code' => $orderDtl->matl_code ?? '',
+                            'matl_uom' => $orderDtl->matl_uom ?? 'PCS',
+                            'wh_id' => $whId,
+                            'wh_code' => $whCode,
+                            'batch_code' => $batchCode,
+                            'qty' => $detail->qty,
+                            'price_beforetax' => $orderDtl->price_beforetax ?? 0,
+                            'reffdtl_id' => $detail->reffdtl_id,
+                        ];
+
+                        // Untuk SD, gunakan addOnhand untuk mengurangi stok dan membuat inventory logs/balance
+                        $ivtBalId = $this->inventoryService->addOnhand($headerData, $detailData);
+
+                        if ($ivtBalId) {
+                            $inventoryLogCount++; // 1 inventory log per detail
+                            $inventoryBalCount++; // 1 inventory balance per detail (atau update existing)
+                            Log::info("Successfully processed inventory for SD Detail: Material {$orderDtl->matl_code}, Qty: {$detail->qty}");
+                        }
+
+                    } catch (\Exception $e) {
+                        Log::error("Error processing inventory for SD Detail {$detail->id}: " . $e->getMessage());
+                        continue;
+                    }
+                }
+
+                $processedCount++;
+                Log::info("Successfully migrated inventory data for delivery {$delivery->tr_code}");
+
+            } catch (\Exception $e) {
+                Log::error("Error creating inventory data for delivery {$delivery->tr_code}: " . $e->getMessage());
+                Log::error("Stack trace: " . $e->getTraceAsString());
+                $errorCount++;
+                continue;
+            }
+        }
+
+        $message = "Migrasi inventory data untuk Sales Delivery (SD) dengan reff_code = 'baru' berhasil!
+                   Diproses: {$processedCount} records, Error: {$errorCount} records
+                   Inventory Logs: {$inventoryLogCount}, Inventory Balance: {$inventoryBalCount}";
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => $message
+        ]);
+
+        session()->flash('migration_success', $message);
+    }
+
 
     public function migrateFromSDBaruToBilling()
     {
