@@ -1225,7 +1225,7 @@ class Index extends BaseComponent
                 Log::info("Creating billing for delivery {$delivery->tr_code} with type {$billingType}");
 
                 // Simpan billing
-                $billingResult = $this->billingService->saveBilling($headerData, $detailData);
+                $this->billingService->saveBilling($headerData, $detailData);
 
                 Log::info("Successfully created billing for delivery {$delivery->tr_code}");
 
@@ -1238,6 +1238,102 @@ class Index extends BaseComponent
                 $processedCount++;
                 Log::info("Successfully migrated delivery {$delivery->tr_code} to billing");
 
+            } catch (\Exception $e) {
+                Log::error("Error creating billing for delivery {$delivery->tr_code}: " . $e->getMessage());
+                Log::error("Stack trace: " . $e->getTraceAsString());
+                $errorCount++;
+                continue;
+            }
+        }
+
+        $message = "Migrasi data Sales Delivery (SD) ke billing dengan reff_code = 'baru' berhasil! Diproses: {$processedCount} records, Error: {$errorCount} records";
+
+        $this->dispatch('show-message', [
+            'type' => 'success',
+            'message' => $message
+        ]);
+
+        session()->flash('migration_success', $message);
+    }
+
+    public function migrateFromSDBaruToBilling()
+    {
+        // Set execution time limit to 1 hour
+        set_time_limit(3600);
+        ini_set('max_execution_time', 3600);
+        ini_set('memory_limit', '512M');
+
+        // Disable time limit for this specific operation
+        ignore_user_abort(true);
+
+        // Set database timeout for PostgreSQL
+        DB::statement('SET statement_timeout = 3600000'); // 3600 seconds in milliseconds
+        DB::statement('SET idle_in_transaction_session_timeout = 3600000'); // 3600 seconds in milliseconds
+
+        // Send headers to prevent web server timeout
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+
+        if (!$this->billingService) {
+            $deliveryService = new \App\Services\TrdTire1\DeliveryService(new InventoryService());
+            $partnerBalanceService = new PartnerBalanceService();
+            $this->billingService = new BillingService($deliveryService, $partnerBalanceService);
+        }
+
+        // Ambil data delivery PD dan SD
+        $deliveries = DelivHdr::whereIn('tr_type', ['SD'])
+            ->where('reff_code', 'baru')
+            ->with(['DelivPacking.OrderDtl'])
+            ->get();
+
+        Log::info("Found {$deliveries->count()} Sales Delivery (SD) records with reff_code = 'baru' to migrate to billing");
+
+        if ($deliveries->count() == 0) {
+            $message = "Tidak ada data Sales Delivery (SD) dengan reff_code = 'baru' yang perlu di-migrate ke billing.";
+            $this->dispatch('show-message', [
+                'type' => 'info',
+                'message' => $message
+            ]);
+            session()->flash('migration_info', $message);
+            return;
+        }
+
+        $processedCount = 0;
+        $errorCount = 0;
+        foreach ($deliveries as $delivery) {
+            try {
+                // Tentukan tr_type billing berdasarkan delivery type
+                $billingType = 'ARB';
+
+                // Siapkan data header billing
+                $headerData = [
+                    'id' => 0, // New billing
+                    'tr_type' => $billingType,
+                    'tr_code' => $delivery->tr_code,
+                    'tr_date' => $delivery->tr_date,
+                ];
+
+                // Siapkan data detail billing - BillingService mengharapkan deliv_id
+                $detailData = [
+                    [
+                        'deliv_id' => $delivery->id
+                    ]
+                ];
+
+                // Simpan billing
+                $this->billingService->saveBilling($headerData, $detailData);
+
+                // Update amt_reff setelah partner balance berhasil dibuat (seperti di PaymentService)
+                // if (isset($billingResult['billing_hdr']) && $billingResult['billing_hdr']) {
+                //     $billingHdr = $billingResult['billing_hdr'];
+                //     $this->billingService->updAmtReff('+', $billingHdr->amt, $billingHdr->id);
+                // }
+
+                $processedCount++;
+                Log::info("Successfully migrated delivery {$delivery->tr_code} to billing");
             } catch (\Exception $e) {
                 Log::error("Error creating billing for delivery {$delivery->tr_code}: " . $e->getMessage());
                 Log::error("Stack trace: " . $e->getTraceAsString());
