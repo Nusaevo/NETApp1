@@ -121,6 +121,11 @@
                                     }
                                     // Potong jika terlalu panjang
                                     decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
+
+                                    // Jika semua digit decimal adalah 0, jangan tampilkan decimal
+                                    if (decimalPart.replace(/0/g, '') === '') {
+                                        return integerPart;
+                                    }
                                     @else
                                     // Jika tidak ada decimalPlaces, tampilkan maksimal 2 decimal untuk mencegah precision error
                                     if (decimalPart.length > 2) {
@@ -132,9 +137,15 @@
 
                                 if (showDecimals) {
                                     @if(isset($decimalPlaces))
-                                    return integerPart + ',' + '0'.repeat({{ $decimalPlaces }});
+                                    // Cek apakah decimalPlaces menghasilkan semua 0 - jika ya, jangan tampilkan
+                                    let zeroDecimal = '0'.repeat({{ $decimalPlaces }});
+                                    if (zeroDecimal.replace(/0/g, '') === '') {
+                                        return integerPart; // Jangan tampilkan ,00 atau ,000 dst
+                                    }
+                                    return integerPart + ',' + zeroDecimal;
                                     @else
-                                    return integerPart + ',00';
+                                    // Jika tidak ada decimalPlaces yang di-set, jangan tampilkan ,00
+                                    return integerPart;
                                     @endif
                                 }
 
@@ -424,39 +435,50 @@
                                 @endif
 
                                 let parts = number.toString().split('.');
-                                let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
-                                let decimalPart = parts[1] || '';
+                            let integerPart = parseInt(parts[0]).toLocaleString('de-DE');
+                            let decimalPart = parts[1] || '';
 
-                                if (decimalPart) {
-                                    @if(isset($decimalPlaces))
-                                    // Pad dengan 0 jika perlu untuk mencapai jumlah decimal yang diinginkan
-                                    while (decimalPart.length < {{ $decimalPlaces }}) {
-                                        decimalPart += '0';
-                                    }
-                                    // Potong jika terlalu panjang
-                                    decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
-                                    @else
-                                    // Jika tidak ada decimalPlaces, tampilkan maksimal 2 decimal untuk mencegah precision error
-                                    if (decimalPart.length > 2) {
-                                        decimalPart = decimalPart.substring(0, 2);
-                                    }
-                                    @endif
-                                    return integerPart + ',' + decimalPart;
+                            if (decimalPart) {
+                                @if(isset($decimalPlaces))
+                                // Pad dengan 0 jika perlu untuk mencapai jumlah decimal yang diinginkan
+                                while (decimalPart.length < {{ $decimalPlaces }}) {
+                                    decimalPart += '0';
                                 }
+                                // Potong jika terlalu panjang
+                                decimalPart = decimalPart.substring(0, {{ $decimalPlaces }});
 
-                                if (showDecimals) {
-                                    @if(isset($decimalPlaces))
-                                    return integerPart + ',' + '0'.repeat({{ $decimalPlaces }});
-                                    @else
-                                    return integerPart + ',00';
-                                    @endif
+                                // Jika semua digit decimal adalah 0, jangan tampilkan decimal
+                                if (decimalPart.replace(/0/g, '') === '') {
+                                    return integerPart;
                                 }
+                                @else
+                                // Jika tidak ada decimalPlaces, tampilkan maksimal 2 decimal untuk mencegah precision error
+                                if (decimalPart.length > 2) {
+                                    decimalPart = decimalPart.substring(0, 2);
+                                }
+                                @endif
+                                return integerPart + ',' + decimalPart;
+                            }
 
-                                // Jika tidak ada decimal dan tidak diminta showDecimals, tampilkan integer saja
+                            if (showDecimals) {
+                                @if(isset($decimalPlaces))
+                                // Cek apakah decimalPlaces menghasilkan semua 0 - jika ya, jangan tampilkan
+                                let zeroDecimal = '0'.repeat({{ $decimalPlaces }});
+                                if (zeroDecimal.replace(/0/g, '') === '') {
+                                    return integerPart; // Jangan tampilkan ,00 atau ,000 dst
+                                }
+                                return integerPart + ',' + zeroDecimal;
+                                @else
+                                // Jika tidak ada decimalPlaces yang di-set, jangan tampilkan ,00
                                 return integerPart;
-                            },
+                                @endif
+                            }
 
-                            parseNumber(str) {
+                            // Jika tidak ada decimal dan tidak diminta showDecimals, tampilkan integer saja
+                            return integerPart;
+                        },
+
+                        parseNumber(str) {
                                 if (!str || str === '') return null;
 
                                 // Indonesian format: 1.234.567,89 → 1234567.89
