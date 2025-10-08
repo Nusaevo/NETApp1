@@ -62,6 +62,10 @@ class Detail extends BaseComponent
         'delete' => 'delete',
         'materialsSelected' => 'handleMaterialsSelected'
     ];
+
+    // Cache untuk material data yang sudah di-load
+    private $materialCache = [];
+    private $uomCache = [];
     #endregion
 
     #region Populate Data methods
@@ -323,67 +327,78 @@ class Detail extends BaseComponent
     }
     public function onMaterialChanged($key, $matl_id)
     {
-        if ($matl_id) {
-            $duplicate = collect($this->input_details)->contains(function ($detail, $index) use ($key, $matl_id) {
-                return $index != $key && isset($detail['matl_id']) && $detail['matl_id'] == $matl_id;
-            });
-
-            if ($duplicate) {
-                $this->dispatch('error', 'Material sudah ada dalam daftar.');
-                return;
-            }
-
-            $material = Material::find($matl_id);
-            if ($material) {
-                $this->input_details[$key]['matl_id'] = $material->id;
-                $this->input_details[$key]['matl_code'] = $material->code;
-                $this->input_details[$key]['matl_descr'] = $material->name;
-
-                // Load UOMs for this specific material (ordered by matl_uom)
-                $materialUoms = MatlUom::where('matl_id', $matl_id)
-                    ->orderBy('matl_uom', 'asc')
-                    ->get();
-                $uomOptions = [];
-                $firstUom = null;
-
-                foreach ($materialUoms as $matlUom) {
-                    $uomOptions[] = [
-                        'value' => $matlUom->matl_uom,
-                        'label' => $matlUom->matl_uom
-                    ];
-
-                    // Set first UOM found
-                    if ($firstUom === null) {
-                        $firstUom = $matlUom->matl_uom;
-                    }
-                }
-
-                // Store UOM options for this materials
-                $this->materialUomOptions[$key] = $uomOptions;
-
-                // Set default UOM to first found UOM from material's UOM list
-                if ($firstUom !== null) {
-                    $this->input_details[$key]['matl_uom'] = $firstUom;
-                } else {
-                    // Only fallback to PCS if absolutely no UOMs exist for this material
-                    $this->input_details[$key]['matl_uom'] = 'PCS';
-                    // Create default UOM entry if none exists
-                    $this->materialUomOptions[$key] = [['value' => 'PCS', 'label' => 'PCS']];
-                }
-
-                $attachment = optional($material->Attachment)->first();
-                $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
-
-                // Update price based on the selected default UOM
-                $this->updateMaterialUomData($key);
-            } else {
-                $this->dispatch('error', 'Material_not_found');
-            }
-        } else {
+        if (!$matl_id) {
             // Clear UOM options when no material is selected
             $this->materialUomOptions[$key] = [];
             $this->input_details[$key]['matl_uom'] = '';
+            return;
         }
+
+        // Check for duplicates more efficiently
+        $duplicate = false;
+        foreach ($this->input_details as $index => $detail) {
+            if ($index != $key && isset($detail['matl_id']) && $detail['matl_id'] == $matl_id) {
+                $duplicate = true;
+                break;
+            }
+        }
+
+        if ($duplicate) {
+            $this->dispatch('error', 'Material sudah ada dalam daftar.');
+            return;
+        }
+
+        // Use select to get only needed fields for better performance
+        $material = Material::select('id', 'code', 'name')->find($matl_id);
+        if (!$material) {
+            $this->dispatch('error', 'Material_not_found');
+            return;
+        }
+
+        $this->input_details[$key]['matl_id'] = $material->id;
+        $this->input_details[$key]['matl_code'] = $material->code;
+        $this->input_details[$key]['matl_descr'] = $material->name;
+
+        // Load UOMs for this specific material (ordered by matl_uom)
+        $materialUoms = MatlUom::where('matl_id', $matl_id)
+            ->select('matl_uom') // Only select needed column
+            ->orderBy('matl_uom', 'asc')
+            ->get();
+
+        $uomOptions = [];
+        $firstUom = null;
+
+        foreach ($materialUoms as $matlUom) {
+            $uomOptions[] = [
+                'value' => $matlUom->matl_uom,
+                'label' => $matlUom->matl_uom
+            ];
+
+            // Set first UOM found
+            if ($firstUom === null) {
+                $firstUom = $matlUom->matl_uom;
+            }
+        }
+
+        // Store UOM options for this materials
+        $this->materialUomOptions[$key] = $uomOptions;
+
+        // Set default UOM to first found UOM from material's UOM list
+        if ($firstUom !== null) {
+            $this->input_details[$key]['matl_uom'] = $firstUom;
+        } else {
+            // Only fallback to PCS if absolutely no UOMs exist for this material
+            $this->input_details[$key]['matl_uom'] = 'PCS';
+            // Create default UOM entry if none exists
+            $this->materialUomOptions[$key] = [['value' => 'PCS', 'label' => 'PCS']];
+        }
+
+        // Get image URL more efficiently
+            $attachment = $material->Attachment()->first();
+        $this->input_details[$key]['image_url'] = $attachment ? $attachment->getUrl() : '';
+
+        // Update price based on the selected default UOM
+        $this->updateMaterialUomData($key);
     }
 
     public function onUomChanged($key, $uomId)
@@ -397,52 +412,60 @@ class Detail extends BaseComponent
         $materialId = $this->input_details[$key]['matl_id'] ?? null;
         $uom = $this->input_details[$key]['matl_uom'] ?? '';
 
-        if ($materialId && !empty($uom)) {
-            // Try to get the specific material UOM combination
-            $matlUom = MatlUom::where('matl_id', $materialId)
-                ->where('matl_uom', $uom)
-                ->first();
-
-            if ($matlUom) {
-                // Use the buying price from the specific material-UOM combination
-                $this->input_details[$key]['price'] = $matlUom->buying_price ?? 0;
-            } else {
-                // Fallback to material default buying price
-                $material = Material::find($materialId);
-                $this->input_details[$key]['price'] = $material->buying_price ?? 0;
-            }
-
-            // Update the amount calculation
-            $this->updateItemAmount($key);
+        if (!$materialId || empty($uom)) {
+            return;
         }
+
+        // Use single query with fallback logic
+        $matlUom = MatlUom::where('matl_id', $materialId)
+            ->where('matl_uom', $uom)
+            ->select('buying_price') // Only select needed field
+            ->first();
+
+        if ($matlUom) {
+            // Use the buying price from the specific material-UOM combination
+            $this->input_details[$key]['price'] = $matlUom->buying_price ?? 0;
+        } else {
+            // Fallback to 0 if no MatlUom found since buying_price is in MatlUom table
+            $this->input_details[$key]['price'] = 0;
+        }
+
+        // Update the amount calculation
+        $this->updateItemAmount($key);
     }
 
     public function updateItemAmount($key)
     {
-        if (!empty($this->input_details[$key]['qty']) && !empty($this->input_details[$key]['price'])) {
-            $amount = $this->input_details[$key]['qty'] * $this->input_details[$key]['price'];
-            $this->input_details[$key]['amt'] = $amount;
-        } else {
-            $this->input_details[$key]['amt'] = 0;
+        // Early validation to avoid unnecessary calculations
+        if (!isset($this->input_details[$key])) {
+            return;
         }
-        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
 
-        // Update totals immediately
-        $this->recalculateTotals();
+        $detail = &$this->input_details[$key]; // Use reference for better performance
+        $qty = floatval($detail['qty'] ?? 0);
+        $price = floatval($detail['price'] ?? 0);
+
+        // Calculate amount only if both values are valid
+        if ($qty > 0 && $price >= 0) {
+            $amount = $qty * $price;
+            $detail['amt'] = round($amount, 2); // Round to prevent floating point issues
+        } else {
+            $detail['amt'] = 0;
+        }
+
+        $detail['amt_idr'] = rupiah($detail['amt']);
+
+        // Update totals with optimized calculation
+        $this->updateTotalAmount();
     }
 
-    public function recalculateTotals()
+    private function updateTotalAmount()
     {
-        $this->total_amount = array_sum(
-            array_map(function ($detail) {
-                $qty = $detail['qty'] ?? 0;
-                $price = $detail['price'] ?? 0;
-                $amount = $qty * $price;
-                return $amount;
-            }, $this->input_details),
-        );
-
-        $this->total_amount = round($this->total_amount, 2);
+        $total = 0;
+        foreach ($this->input_details as $detail) {
+            $total += floatval($detail['amt'] ?? 0);
+        }
+        $this->total_amount = round($total, 2);
     }
 
     public function deleteItem($index)
@@ -457,7 +480,7 @@ class Detail extends BaseComponent
 
             $this->dispatch('warning', 'Item telah dihapus dari daftar. Tekan Simpan untuk menyimpan perubahan.');
 
-            $this->recalculateTotals();
+            $this->updateTotalAmount(); // Use optimized method
         } catch (Exception $e) {
             $this->dispatch('error', __('generic.error.delete_item', ['message' => $e->getMessage()]));
         }
@@ -494,6 +517,9 @@ class Detail extends BaseComponent
                 $this->updateItemAmount($key);
             }
         }
+
+        // Calculate total once after loading all details
+        $this->updateTotalAmount();
     }
 
     public function openItemDialogBox()
@@ -545,6 +571,45 @@ class Detail extends BaseComponent
             $this->dispatch('warning', 'Semua material yang dipilih sudah ada dalam daftar.');
         }
     }
+
+    #region Cache and Optimization Methods
+
+    /**
+     * Get material data with caching
+     */
+    private function getCachedMaterial($materialId)
+    {
+        if (!isset($this->materialCache[$materialId])) {
+            $this->materialCache[$materialId] = Material::select('id', 'code', 'name')
+                ->find($materialId);
+        }
+        return $this->materialCache[$materialId];
+    }
+
+    /**
+     * Get UOM data for material with caching
+     */
+    private function getCachedMaterialUoms($materialId)
+    {
+        if (!isset($this->uomCache[$materialId])) {
+            $this->uomCache[$materialId] = MatlUom::where('matl_id', $materialId)
+                ->select('matl_uom', 'buying_price')
+                ->orderBy('matl_uom', 'asc')
+                ->get();
+        }
+        return $this->uomCache[$materialId];
+    }
+
+    /**
+     * Clear caches when needed
+     */
+    private function clearCaches()
+    {
+        $this->materialCache = [];
+        $this->uomCache = [];
+    }
+
+    #endregion
 
     #endregion
 }
