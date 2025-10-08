@@ -5,7 +5,7 @@ namespace App\Livewire\TrdRetail1\Transaction\SalesReturn;
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdRetail1\Transaction\{OrderHdr, OrderDtl, ReturnHdr, ReturnDtl};
 use App\Models\TrdRetail1\Master\{Partner, Material, MatlUom};
-use App\Models\SysConfig1\ConfigConst;
+use App\Models\SysConfig1\{ConfigConst,ConfigSnum};
 use App\Enums\Status;
 use App\Services\TrdRetail1\Master\MasterService;
 use Exception;
@@ -343,22 +343,22 @@ class Detail extends BaseComponent
     private function generateReturnId()
     {
         // Get next ID from RETURN_ORDER_LASTID serial
-        $configConst = ConfigConst::where('const_group', 'RETURN_ORDER_LASTID')->first();
+        $configConst = ConfigSnum::where('code', 'RETURN_ORDER_LASTID')->first();
 
         if ($configConst) {
-            $lastId = (int) $configConst->str1;
+            $lastId = (int) $configConst->last_cnt;
             $newId = $lastId + 1;
 
             // Update the serial
-            $configConst->str1 = (string) $newId;
+            $configConst->last_cnt = (string) $newId;
             $configConst->save();
             return $newId;
         }
 
         // If no config found, create a new one starting from 1
-        $newConfig = new ConfigConst();
-        $newConfig->const_group = 'RETURN_ORDER_LASTID';
-        $newConfig->str1 = '1';
+        $newConfig = new ConfigSnum();
+        $newConfig->code = 'RETURN_ORDER_LASTID';
+        $newConfig->last_cnt = '1';
         $newConfig->save();
         return 1;
     }
