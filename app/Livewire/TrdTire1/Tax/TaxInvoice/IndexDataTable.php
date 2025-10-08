@@ -17,7 +17,7 @@ use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    public $print_date;
+    public $tax_process_date;
     public $selectedItems = [];
     public $filters = [];
 
@@ -98,7 +98,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Tgl Proses"), "print_date")
+            Column::make($this->trans("Tgl Proses"), "tax_process_date")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans('NPWP CODE'), 'npwp_code')
@@ -175,16 +175,17 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         $configDetails = $this->getConfigDetails();
-        $printDates = OrderHdr::select('print_date')
+        $printDates = OrderHdr::select('tax_process_date')
             ->where('order_hdrs.tr_type', 'SO')
             ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
             ->where('order_hdrs.tax_doc_flag', 1)
             ->distinct()
-            ->whereNotNull('print_date')
-            ->pluck('print_date', 'print_date')
+            ->whereNotNull('tax_process_date')
+            ->orderBy('tax_process_date', 'desc')
+            ->pluck('tax_process_date', 'tax_process_date')
             ->toArray();
 
-        // Add "Not Selected" option for print_date
+        // Add "Not Selected" option for tax_process_date
         $printDates = ['' => 'Not Selected'] + $printDates;
 
         $masaOptions = OrderHdr::selectRaw("TO_CHAR(tr_date, 'YYYY-MM') as filter_value, TO_CHAR(tr_date, 'FMMonth-YYYY') as display_value") // Updated for PostgreSQL
@@ -205,8 +206,8 @@ class IndexDataTable extends BaseDataTableComponent
                 ->options($printDates)
                 ->filter(function (Builder $builder, string $value) {
                     if ($value) { // Only apply filter if a value is selected
-                        $this->filters['print_date'] = $value;
-                        $builder->where('print_date', $value);
+                        $this->filters['tax_process_date'] = $value;
+                        $builder->where('tax_process_date', $value);
                     }
                 }),
             SelectFilter::make('Masa')
@@ -267,16 +268,16 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function setProsesDate()
     {
-        $newDataCount = OrderHdr::whereNull('print_date')->count();
+        $newDataCount = OrderHdr::whereNull('tax_process_date')->count();
 
         if ($newDataCount === 0) {
             $this->dispatch('error', 'Tidak ada data baru yang bisa diproses.');
             return;
         }
 
-        // Update semua print_date yang null menjadi tanggal sekarang
-        OrderHdr::whereNull('print_date')
-            ->update(['print_date' => now()]);
+        // Update semua tax_process_date yang null menjadi tanggal sekarang
+        OrderHdr::whereNull('tax_process_date')
+            ->update(['tax_process_date' => now()]);
 
         $this->dispatch('success', 'Tanggal proses berhasil disimpan');
     }
@@ -360,10 +361,10 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function cetakProsesDate()
     {
-        $selectedPrintDate = $this->filters['print_date'] ?? null;
+        $selectedPrintDate = $this->filters['tax_process_date'] ?? null;
         if ($selectedPrintDate) {
             // Check if there are any orders for the selected print date
-            $orderCount = OrderHdr::where('print_date', $selectedPrintDate)
+            $orderCount = OrderHdr::where('tax_process_date', $selectedPrintDate)
                 ->where('tr_type', 'SO')
                 ->whereNull('deleted_at')
                 ->count();

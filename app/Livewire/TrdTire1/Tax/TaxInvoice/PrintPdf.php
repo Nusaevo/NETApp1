@@ -25,7 +25,7 @@ class PrintPdf extends BaseComponent
         try {
             if ($this->type === 'cetakProsesDate') {
                 return OrderHdr::with(['OrderDtl', 'Partner'])
-                    ->where('print_date', $this->printDate)
+                    ->where('tax_process_date', $this->printDate)
                     ->where('tr_type', 'SO')
                     ->whereNull('deleted_at')
                     ->paginate($this->perPage);

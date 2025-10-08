@@ -20,18 +20,18 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_date', 'desc');
-        // $this->setDefaultSort('tr_code', 'desc');
+        // $this->setDefaultSort('tr_date', 'desc');
+        $this->setDefaultSort('tr_code', 'desc');
+        $this->setDefaultSort('partner_code', 'asc');
     }
 
     public function builder(): Builder
     {
-        return BillingHdr::with(['Partner', 'OrderHdr']) // tambahkan eager load OrderHdr
+        return BillingHdr::with(['Partner', 'OrderHdr'])
             ->where('billing_hdrs.tr_type', 'ARB')
             ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP])
-            ->orderBy('billing_hdrs.tr_date', 'desc')
-            // ->orderBy('billing_hdrs.tr_code', 'desc')
-            ->orderBy('billing_hdrs.partner_code', 'asc');
+            ->orderBy('billing_hdrs.partner_code', 'asc')
+            ->orderBy('billing_hdrs.tr_code', 'asc');
 
     }
 
@@ -157,8 +157,8 @@ class IndexDataTable extends BaseDataTableComponent
                 SelectFilter::make($this->trans("Sales type"), 'sales_type')
                     ->options([
                         ''          => 'Semua',
-                        'O'    => 'Motor',
-                        'I' => 'Mobil',
+                        'I'    => 'Motor',
+                        'O' => 'Mobil',
                     ])
                     ->filter(function (Builder $builder, string $value) {
                         if ($value !== '') {

@@ -112,15 +112,9 @@ class Index extends BaseComponent
         try {
             // Siapkan data untuk Excel
             $excelData = [];
-            $totalG01 = $totalG02 = $totalG04 = $totalFGI = $totalPoint = 0;
 
             foreach ($this->results as $row) {
                 $rowTotal = ($row->g01 ?? 0) + ($row->g02 ?? 0) + ($row->g04 ?? 0);
-                $totalG01 += ($row->g01 ?? 0);
-                $totalG02 += ($row->g02 ?? 0);
-                $totalG04 += ($row->g04 ?? 0);
-                $totalFGI += ($row->fgi ?? 0);
-                $totalPoint += ($row->point ?? 0);
 
                 $excelData[] = [
                     $row->code ?? '',
@@ -129,23 +123,11 @@ class Index extends BaseComponent
                     is_numeric($row->g02 ?? null) ? rtrim(rtrim(number_format($row->g02, 3, '.', ''), '0'), '.') : '',
                     is_numeric($row->g04 ?? null) ? rtrim(rtrim(number_format($row->g04, 3, '.', ''), '0'), '.') : '',
                     is_numeric($rowTotal) ? rtrim(rtrim(number_format($rowTotal, 3, '.', ''), '0'), '.') : '',
-                    is_numeric($row->fgi ?? null) ? round($row->fgi, 0) : '',
-                    is_numeric($row->point ?? null) ? $row->point : '0',
+                    isset($row->fgi) && is_numeric($row->fgi) ? (string)round($row->fgi, 0) : '0',
+                    isset($row->point) && is_numeric($row->point) ? (string)$row->point : '0',
                 ];
             }
 
-            // Tambahkan baris total
-            $grandTotal = $totalG01 + $totalG02 + $totalG04;
-            $excelData[] = [
-                '',
-                'TOTAL',
-                is_numeric($totalG01) ? rtrim(rtrim(number_format($totalG01, 3, '.', ''), '0'), '.') : '',
-                is_numeric($totalG02) ? rtrim(rtrim(number_format($totalG02, 3, '.', ''), '0'), '.') : '',
-                is_numeric($totalG04) ? rtrim(rtrim(number_format($totalG04, 3, '.', ''), '0'), '.') : '',
-                is_numeric($grandTotal) ? rtrim(rtrim(number_format($grandTotal, 3, '.', ''), '0'), '.') : '',
-                is_numeric($totalFGI) ? round($totalFGI, 0) : '',
-                is_numeric($totalPoint) ? $totalPoint : '0',
-            ];
 
             // Buat title dan subtitle
             $title = 'LAPORAN STOK BARANG';
@@ -157,9 +139,6 @@ class Index extends BaseComponent
                 $filters[] = 'Brand: ' . $this->brand;
             }
 
-            // Tambahkan informasi jumlah barang
-            $totalItems = count($this->results);
-            $filters[] = 'Jumlah Barang: ' . $totalItems . ' item';
 
             if (!empty($filters)) {
                 $subtitle .= ' | ' . implode(' | ', $filters);
@@ -185,14 +164,7 @@ class Index extends BaseComponent
                 'subtitle' => $subtitle,
                 'titleAlignment' => Alignment::HORIZONTAL_LEFT,
                 'subtitleAlignment' => Alignment::HORIZONTAL_LEFT,
-                'rowStyles' => [
-                    [
-                        'rowIndex' => count($excelData) - 1, // Baris terakhir (total)
-                        'rangeColumns' => ['A', 'H'], // Dari kolom A sampai H
-                        'bold' => true,
-                        'backgroundColor' => '#f2f2f2'
-                    ]
-                ],
+                'rowStyles' => [],
             ]];
 
             // Buat filename yang mencerminkan filter
