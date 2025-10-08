@@ -27,7 +27,7 @@
                                             @forelse($capturedImages as $key => $image)
                                                 <div class="photo-box">
                                                     <x-ui-image src="{{ $image['url'] }}" alt="Captured Image"
-                                                        width="200px" height="200px" :lazy="true"  />
+                                                        width="200px" height="200px" />
                                                     <div class="image-close-button">
                                                         <x-ui-link-text type="close" :clickEvent="'deleteImage(' . $key . ')'"
                                                             class="btn btn-link" name="x" :action="$actionValue" />
