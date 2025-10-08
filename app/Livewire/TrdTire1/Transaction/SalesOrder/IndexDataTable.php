@@ -18,8 +18,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_date', 'desc');
-        $this->setDefaultSort('tr_code', 'desc');
+        // $this->setDefaultSort('tr_date', 'desc');
+        // $this->setDefaultSort('tr_code', 'desc');
         $this->setDefaultSort('updated_at', 'desc');
     }
 
@@ -27,9 +27,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->orderBy('order_hdrs.updated_at', 'desc')
-            ->orderBy('order_hdrs.tr_date', 'desc')
-            ->orderBy('order_hdrs.tr_code', 'desc');
+            ->orderBy('order_hdrs.updated_at', 'desc');
+            // ->orderBy('order_hdrs.tr_date', 'desc');
+            // ->orderBy('order_hdrs.tr_code', 'desc');
     }
     public function columns(): array
     {

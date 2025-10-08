@@ -5,6 +5,8 @@ namespace App\Livewire\TrdTire1\Master\Material;
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter, Filters\TextFilter};
 use App\Models\TrdTire1\Master\Material;
+use App\Models\TrdTire1\Master\MatlUom;
+use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\SysConfig1\ConfigRight;
 use App\Enums\Status;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,7 +25,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         $this->setSearchDisabled();
         $this->setFilter('Status', 0);
-        $this->setFilter('stock_filter', 'above_0');
+        // $this->setFilter('stock_filter', 'above_0');
         $this->setDefaultSort('created_at', 'desc');
 
         // Inisialisasi masterService dan ambil data kategori material
@@ -34,8 +36,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return Material::with(['MatlUom', 'IvtBal'])
-            ->select('materials.*');
+        return Material::query();
     }
 
     public function columns(): array
@@ -55,21 +56,25 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("description_material"), "name")
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("selling_price"), "MatlUom.selling_price")
+            Column::make($this->trans("selling_price"), "id")
                 ->format(function ($value, $row) {
-                    return rupiah($row->MatlUom?->selling_price ?? 0);
+                    $matlUom = MatlUom::where('matl_id', $row->id)
+                        ->where('matl_uom', $row->uom)
+                        ->first();
+                    return rupiah($matlUom?->selling_price ?? 0);
                 })
                 ->sortable(),
             // kolom uom di tabel material
-            Column::make($this->trans("uom"), "MatlUom.matl_uom")
+            Column::make($this->trans("uom"), "uom")
                 ->format(function ($value, $row) {
-                    return $row->MatlUom?->matl_uom ?? '';
+                    return $row->uom ?? '';
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make('Stock', 'IvtBal.qty_oh')
+            Column::make('Stock', 'id')
                 ->format(function ($value, $row, Column $column) {
-                    return $row->IvtBal?->qty_oh ?? 0;
+                    $ivtBal = IvtBal::where('matl_id', $row->id)->first();
+                    return $ivtBal?->qty_oh ?? 0;
                 })
                 ->searchable()
                 ->sortable(),
