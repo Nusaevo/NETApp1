@@ -32,6 +32,7 @@ class Detail extends BaseComponent
     protected $partnerTrxService;
     protected $masterService;
     public $notaCount = 0;
+    public $unpaidInvoiceCount = 0;
     public $suppliers = [];
     public $selectedPartners = [];
     public $warehouses;
@@ -863,12 +864,17 @@ class Detail extends BaseComponent
             $outstandingBills = collect($billingService->getOutstandingBillsByPartner($partner->id));
             $outstandingBills = $outstandingBills->sortBy('due_date')->values();
 
+            // Set count of unpaid invoices
+            $this->unpaidInvoiceCount = $outstandingBills->count();
+
             // Jika tidak ada nota outstanding, beri warning, tapi tetap lanjutkan proses advance
             $this->input_details = [];
             if (empty($outstandingBills)) {
                 $this->input_details[] = populateArrayFromModel(new PaymentDtl());
                 $this->dispatch('warning', "Tidak ada nota yang dilunasi untuk customer ini, namun saldo advance tetap bisa digunakan.");
             } else {
+                // Show notification about unpaid invoices count
+                $this->dispatch('info', "Customer {$partner->name} memiliki {$this->unpaidInvoiceCount} nota yang belum dilunasi.");
                 foreach ($outstandingBills as $key => $bill) {
                     $this->input_details[] = populateArrayFromModel(new PaymentDtl());
                     $this->input_details[$key]['billhdr_id'] = $bill->billhdr_id;

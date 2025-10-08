@@ -51,11 +51,22 @@
                                         <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
-                                                <x-ui-dropdown-select type="int" label=""
-                                                    model="input_details.{{ $key }}.matl_id" :selectedValue="$input_detail['matl_id']"
-                                                    :options="$filteredMaterials" required="true" :action="$actionValue"
-                                                    :enabled="$isPanelEnabled"
-                                                    onChanged="onMaterialChanged({{ $key }})" />
+                                                @if($actionValue === 'Create')
+                                                    <x-ui-dropdown-search label=""
+                                                        model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
+                                                        optionValue="id"
+                                                        optionLabel="{code};{name}"
+                                                        placeHolder="Select material..." :selectedValue="$input_detail['matl_id'] ?? ''" required="true"
+                                                        :action="$actionValue" enabled="true"
+                                                        onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
+                                                        type="int" :enabled="$isPanelEnabled" />
+                                                @else
+                                                    <x-ui-dropdown-select type="int" label=""
+                                                        model="input_details.{{ $key }}.matl_id" :selectedValue="$input_detail['matl_id']"
+                                                        :options="$filteredMaterials" required="true" :action="$actionValue"
+                                                        :enabled="$isPanelEnabled"
+                                                        onChanged="onMaterialChanged({{ $key }})" />
+                                                @endif
                                             </td>
                                             <td style="text-align: center;">
                                                 <x-ui-dropdown-select type="int" label="" :options="$filteredBatchCode[$key] ?? []"

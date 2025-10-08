@@ -4,37 +4,64 @@
         <div class="card mb-4">
             <div class="card-body">
                 <div class="container mb-2 mt-2">
-                    <div class="row align-items-end">
-                        <div class="col-md-2">
-                            <x-ui-text-field label="Tanggal Awal:" model="startCode" type="date" action="Edit" />
+                    <div class="row align-items-start">
+                        <!-- Grid Kiri: Filter Fields (Maksimal 3 dropdown) -->
+                        <div class="col-md-10">
+                            <div class="row align-items-end">
+                                <!-- Row 1: Date fields -->
+                                <div class="col-md-4">
+                                    <x-ui-text-field label="Tanggal Awal:" model="startCode" type="date" action="Edit" />
+                                </div>
+                                <div class="col-md-4">
+                                    <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
+                                </div>
+                                <div class="col-md-4">
+                                    <x-ui-text-field label="Nomor Nota:" model="filterTrCode" type="text" action="Edit" />
+                                </div>
+                            </div>
+
+                            <div class="row align-items-end mt-3">
+                                <!-- Row 2: Dropdown filters (maksimal 3) -->
+                                <div class="col-md-4">
+                                    <x-ui-dropdown-search label="Customer" model="filterPartner"
+                                        optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
+                                        :selectedValue="$filterPartner" required="false" action="Edit" enabled="true"
+                                        type="int" onChanged="onPartnerChanged"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <x-ui-dropdown-search label="Kode Barang" model="filterMaterialId"
+                                        optionValue="id" :query="$materialQuery" optionLabel="code,name" placeHolder="Ketik untuk cari barang..."
+                                        :selectedValue="$filterMaterialId" required="false" action="Edit" enabled="true"
+                                        type="int" onChanged="onMaterialChanged" />
+                                </div>
+                                <div class="col-md-4">
+                                    <x-ui-dropdown-select label="Status" model="filterStatus" :options="$this->getStatusOptions()" action="Edit" />
+                                </div>
+                            </div>
+
+                            <div class="row align-items-end mt-3">
+                                <!-- Row 3: Tipe Penjualan -->
+                                <div class="col-md-4">
+                                    <x-ui-dropdown-select label="Tipe Penjualan" model="filterSalesType" :options="$this->getSalesTypeOptions()" action="Edit" />
+                                </div>
+                                <div class="col-md-8">
+                                    <!-- Empty space for future filters if needed -->
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Grid Kanan: Tombol Action (Kecil) -->
                         <div class="col-md-2">
-                            <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
-                        </div>
-                        <div class="col-md-2">
-                            <x-ui-dropdown-search label="Customer" model="filterPartner"
-                                optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
-                                :selectedValue="$filterPartner" required="false" action="Edit" enabled="true"
-                                type="int" onChanged="onPartnerChanged"/>
-                        </div>
-                        <div class="col-md-2">
-                            <x-ui-dropdown-search label="Kode Barang" model="filterMaterialId"
-                                optionValue="id" :query="$materialQuery" optionLabel="code,name" placeHolder="Ketik untuk cari barang..."
-                                :selectedValue="$filterMaterialId" required="false" action="Edit" enabled="true"
-                                type="int" onChanged="onMaterialChanged" />
-                        </div>
-                        <div class="col-md-2">
-                            <x-ui-dropdown-select label="Status" model="filterStatus" :options="$this->getStatusOptions()" action="Edit" />
-                        </div>
-                        <div class="col-md-2">
-                            <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
-                                cssClass="btn-primary w-100 mb-2" />
-                            <button type="button" class="btn btn-light text-capitalize border-0 w-100 mb-2"
-                                onclick="printReport()">
-                                <i class="fas fa-print text-primary"></i> Print
-                            </button>
-                            <x-ui-button clickEvent="downloadExcel" button-name="Download Excel" loading="true" action="Edit"
-                                cssClass="btn-success w-100" />
+                            <div class="d-flex flex-column gap-2">
+                                <x-ui-button clickEvent="search" button-name="View" loading="true" action="Edit"
+                                    cssClass="btn-primary w-100" />
+                                <button type="button" class="btn btn-light text-capitalize border-0 w-100"
+                                    onclick="printReport()">
+                                    <i class="fas fa-print text-primary"></i> Print
+                                </button>
+                                <x-ui-button clickEvent="downloadExcel" button-name="Download Excel" loading="true" action="Edit"
+                                    cssClass="btn-success w-100" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -159,7 +186,7 @@
                                     Periode: {{ $startCode ? \Carbon\Carbon::parse($startCode)->format('d-M-Y') : '-' }}
                                     s/d {{ $endCode ? \Carbon\Carbon::parse($endCode)->format('d-M-Y') : '-' }}
                                 </p>
-                                @if($filterPartner || $filterStatus || $filterMaterialId)
+                                @if($filterPartner || $filterStatus || $filterMaterialId || $filterSalesType || $filterTrCode)
                                     <p style="text-align:left; margin-bottom:20px; font-size: 12px;">
                                         @php
                                             $filters = [];
@@ -172,6 +199,9 @@
                                             }
                                             if($filterStatus) {
                                                 $filters[] = ucfirst(str_replace('_', ' ', $filterStatus));
+                                            }
+                                            if($filterTrCode) {
+                                                $filters[] = 'Nota: ' . $filterTrCode;
                                             }
                                         @endphp
                                         {{ implode(' | ', $filters) }}

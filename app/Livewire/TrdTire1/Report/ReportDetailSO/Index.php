@@ -16,6 +16,8 @@ class Index extends BaseComponent
     public $filterStatus = '';
     public $filterPartner = '';
     public $filterMaterialId = '';
+    public $filterSalesType = '';
+    public $filterTrCode = '';
     public $results = [];
 
     public $ddPartner = [
@@ -40,11 +42,11 @@ class Index extends BaseComponent
 
     public function search()
     {
-        // Validasi: minimal harus ada salah satu filter (tanggal, partner, atau kode barang)
-        if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterMaterialId)) {
+        // Validasi: minimal harus ada salah satu filter (tanggal, partner, kode barang, tipe penjualan, atau nomor nota)
+        if (isNullOrEmptyNumber($this->startCode) && empty($this->filterPartner) && empty($this->filterMaterialId) && empty($this->filterTrCode)) {
             $this->dispatch('notify-swal', [
                 'type' => 'warning',
-                'message' => 'Mohon lengkapi tanggal awal, pilih customer, atau masukkan kode barang untuk melakukan pencarian'
+                'message' => 'Mohon memilih salah satu filter untuk melakukan pencarian'
             ]);
             // $this->addError('startCode',  "Mohon lengkapi tanggal awal atau pilih customer");
             return;
@@ -77,6 +79,8 @@ class Index extends BaseComponent
 
         $partnerFilter = $this->filterPartner ? "AND p.id = {$this->filterPartner}" : "";
         $materialCodeFilter = $this->filterMaterialId ? "AND od.matl_id = " . intval($this->filterMaterialId) : "";
+        $salesTypeFilter = $this->filterSalesType ? "AND oh.sales_type = '{$this->filterSalesType}'" : "";
+        $trCodeFilter = $this->filterTrCode ? "AND oh.tr_code LIKE '%" . addslashes($this->filterTrCode) . "%'" : "";
 
         // Query untuk mendapatkan data sales order
         $query = "
@@ -100,9 +104,11 @@ class Index extends BaseComponent
                 {$statusFilter}
                 {$partnerFilter}
                 {$materialCodeFilter}
+                {$salesTypeFilter}
+                {$trCodeFilter}
                 AND oh.deleted_at IS NULL
                 AND od.deleted_at IS NULL
-            ORDER BY oh.tr_code, od.tr_seq
+            ORDER BY oh.tr_date ASC, oh.tr_code, od.tr_seq
         ";
 
         // Execute query
@@ -163,6 +169,8 @@ class Index extends BaseComponent
         $this->filterStatus = '';
         $this->filterPartner = '';
         $this->filterMaterialId = '';
+        $this->filterSalesType = '';
+        $this->filterTrCode = '';
         $this->results = [];
     }
 
@@ -173,6 +181,15 @@ class Index extends BaseComponent
             ['value' => 'batal', 'label' => 'Batal'],
             ['value' => 'belum_terkirim', 'label' => 'Belum Terkirim'],
             ['value' => 'belum_lunas', 'label' => 'Belum Lunas'],
+        ];
+    }
+
+    public function getSalesTypeOptions()
+    {
+        return [
+            ['value' => '', 'label' => 'Semua Tipe'],
+            ['value' => 'O', 'label' => 'Mobil'],
+            ['value' => 'I', 'label' => 'Motor'],
         ];
     }
 
@@ -329,7 +346,7 @@ class Index extends BaseComponent
                 ($this->endCode ? \Carbon\Carbon::parse($this->endCode)->format('d-M-Y') : '-');
 
             // Tambahkan filter info jika ada
-            if ($this->filterPartner || $this->filterStatus || $this->filterMaterialId) {
+            if ($this->filterPartner || $this->filterStatus || $this->filterMaterialId || $this->filterSalesType || $this->filterTrCode) {
                 $filters = [];
                 if ($this->filterPartner) {
                     $partner = Partner::find($this->filterPartner);
@@ -341,6 +358,13 @@ class Index extends BaseComponent
                 }
                 if ($this->filterStatus) {
                     $filters[] = ucfirst(str_replace('_', ' ', $this->filterStatus));
+                }
+                if ($this->filterSalesType) {
+                    $salesTypeLabel = $this->filterSalesType === 'O' ? 'Mobil' : 'Motor';
+                    $filters[] = 'Tipe: ' . $salesTypeLabel;
+                }
+                if ($this->filterTrCode) {
+                    $filters[] = 'Nota: ' . $this->filterTrCode;
                 }
                 $subtitle .= ' | ' . implode(' | ', $filters);
             }

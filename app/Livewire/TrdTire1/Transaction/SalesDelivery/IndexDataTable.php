@@ -27,8 +27,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_date', 'desc');
-        // $this->setDefaultSort('tr_code', 'desc');
+        // $this->setDefaultSort('tr_date', 'asc');
+        $this->setDefaultSort('tr_code', 'asc');
     }
 
     public function builder(): Builder
@@ -36,6 +36,8 @@ class IndexDataTable extends BaseDataTableComponent
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
             ->select('order_hdrs.*'); // Pastikan semua field dari order_hdrs di-select
+            // ->orderBy('order_hdrs.tr_date', 'desc')
+            // ->orderBy('order_hdrs.tr_code', 'asc');
     }
     public function columns(): array
     {
@@ -154,8 +156,8 @@ class IndexDataTable extends BaseDataTableComponent
             SelectFilter::make($this->trans("Tipe Penjualan"), 'sales_type')
                 ->options([
                     ''          => 'Semua',
-                    'O'    => 'Motor',
-                    'I' => 'Mobil',
+                    'O'    => 'Mobil',
+                    'I' => 'Motor',
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if ($value !== '') {
