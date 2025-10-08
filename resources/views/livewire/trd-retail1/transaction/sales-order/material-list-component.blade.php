@@ -40,7 +40,7 @@
                         <td style="text-align: center;">
                             @if (!empty($input_details[$key]['image_url']))
                                 <x-ui-image src="{{ $input_details[$key]['image_url'] }}" alt="Material Image"
-                                    width="50px" height="50px" />
+                                    width="50px" height="50px" :lazy="true" />
                             @else
                                 <span>No Image</span>
                             @endif
