@@ -217,16 +217,13 @@
 
                                 // Apply precision fix EARLY to prevent floating point errors
                                 if (numberValue !== null && numberValue !== undefined) {
-                                    let originalValue = numberValue;
                                     numberValue = Math.round(numberValue * 10000000000) / 10000000000;
-                                    console.log('🔧 PRECISION FIX:', originalValue, '→', numberValue);
                                     this.rawValue = numberValue; // Update rawValue with precision-fixed number
                                 }
 
                                 if (numberValue !== null && numberValue !== undefined) {
                                     @if(isset($decimalPlaces))
                                     // Jika decimalPlaces di-set, selalu tampilkan dengan decimal
-                                    console.log('📊 DECIMAL PLACES SET - forcing decimals for:', numberValue);
                                     this.displayValue = this.formatNumber(numberValue, true);
                                     @else
                                     // Check if number has meaningful decimal places
@@ -238,12 +235,10 @@
                                         numberValue = Math.round(numberValue);
                                         this.rawValue = numberValue; // Update rawValue with rounded number
                                         remainder = 0;
-                                        console.log('🔄 ROUNDED TO INTEGER:', numberValue);
                                     } else if (remainder > 0.0001) {
                                         hasRealDecimals = true;
                                     }
 
-                                    console.log('📊 NO DECIMAL PLACES - numberValue:', numberValue, 'hasRealDecimals:', hasRealDecimals, 'remainder:', remainder);
                                     this.displayValue = this.formatNumber(numberValue, hasRealDecimals);
                                     @endif
                                 } else {
@@ -544,16 +539,13 @@
 
                                 // Apply precision fix and update rawValue
                                 if (numberValue !== null && numberValue !== undefined) {
-                                    let originalValue = numberValue;
                                     numberValue = Math.round(numberValue * 10000000000) / 10000000000;
-                                    console.log('🔧 PRECISION FIX (no-currency):', originalValue, '→', numberValue);
                                     this.rawValue = numberValue; // Update rawValue with precision-fixed number
                                 }
 
                                 if (numberValue !== null && numberValue !== undefined) {
                                     @if(isset($decimalPlaces))
                                     // Jika decimalPlaces di-set, selalu tampilkan dengan decimal
-                                    console.log('📊 DECIMAL PLACES SET (no-currency) - forcing decimals for:', numberValue);
                                     this.displayValue = this.formatNumber(numberValue, true);
                                     @else
                                     // Check if number has meaningful decimal places
@@ -565,12 +557,10 @@
                                         numberValue = Math.round(numberValue);
                                         this.rawValue = numberValue; // Update rawValue with rounded number
                                         remainder = 0;
-                                        console.log('🔄 ROUNDED TO INTEGER (no-currency):', numberValue);
                                     } else if (remainder > 0.0001) {
                                         hasRealDecimals = true;
                                     }
 
-                                    console.log('📊 NO DECIMAL PLACES (no-currency) - numberValue:', numberValue, 'hasRealDecimals:', hasRealDecimals, 'remainder:', remainder);
                                     this.displayValue = this.formatNumber(numberValue, hasRealDecimals);
                                     @endif
                                 } else {

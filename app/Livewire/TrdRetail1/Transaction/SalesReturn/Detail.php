@@ -79,6 +79,10 @@ class Detail extends BaseComponent
         'materialsSelected' => 'handleMaterialsSelected',
         'exchangeMaterialsSelected' => 'handleExchangeMaterialsSelected'
     ];
+
+    // Cache untuk material data yang sudah di-load
+    private $materialCache = [];
+    private $uomCache = [];
     #endregion
 
     #region Populate Data methods
@@ -511,7 +515,7 @@ class Detail extends BaseComponent
             $this->input_details = array_values($this->input_details);
 
             // Recalculate totals
-            $this->recalculateReturnTotals();
+            $this->updateReturnTotalAmount();
 
             $this->dispatch('warning', 'Item telah dihapus dari daftar. Tekan Simpan untuk menyimpan perubahan.');
         } catch (Exception $e) {
@@ -595,9 +599,8 @@ class Detail extends BaseComponent
             if ($matlUom) {
                 $this->input_details[$key]['price'] = $matlUom->selling_price;
             } else {
-                // fallback to material default price
-                $material = Material::find($materialId);
-                $this->input_details[$key]['price'] = $material->selling_price ?? 0;
+                // Fallback to 0 if no MatlUom found since selling_price is in MatlUom table
+                $this->input_details[$key]['price'] = 0;
             }
 
             $this->updateReturnItemAmount($key);
@@ -606,39 +609,38 @@ class Detail extends BaseComponent
 
     public function updateReturnItemAmount($key)
     {
-        // Ensure the key exists in input_details
+        // Early validation to avoid unnecessary calculations
         if (!isset($this->input_details[$key])) {
             return;
         }
 
-        $qty = floatval($this->input_details[$key]['qty'] ?? 0);
-        $price = floatval($this->input_details[$key]['price'] ?? 0);
+        $detail = &$this->input_details[$key]; // Use reference for better performance
+        $qty = floatval($detail['qty'] ?? 0);
+        $price = floatval($detail['price'] ?? 0);
 
-        if ($qty > 0 && $price > 0) {
-            $amount = round($qty * $price, 2);
-            $this->input_details[$key]['amt'] = $amount;
+        // Calculate amount only if both values are valid
+        if ($qty > 0 && $price >= 0) {
+            $amount = $qty * $price;
+            $detail['amt'] = round($amount, 2); // Round to prevent floating point issues
         } else {
-            $this->input_details[$key]['amt'] = 0.0;
+            $detail['amt'] = 0.0;
         }
-        $this->input_details[$key]['amt_idr'] = rupiah($this->input_details[$key]['amt']);
 
-        // Update return totals
-        $this->recalculateReturnTotals();
+        $detail['amt_idr'] = rupiah($detail['amt']);
+
+        // Update return totals with optimized calculation
+        $this->updateReturnTotalAmount();
     }
 
-    public function recalculateReturnTotals()
+    private function updateReturnTotalAmount()
     {
-        $this->total_return_amount = array_sum(
-            array_map(function ($detail) {
-                if (!$detail) return 0.0;
-                $qty = floatval($detail['qty'] ?? 0);
-                $price = floatval($detail['price'] ?? 0);
-                $amount = round($qty * $price, 2);
-                return $amount;
-            }, $this->input_details),
-        );
-
-        $this->total_return_amount = round($this->total_return_amount, 2);
+        $total = 0;
+        foreach ($this->input_details as $detail) {
+            if ($detail) {
+                $total += floatval($detail['amt'] ?? 0);
+            }
+        }
+        $this->total_return_amount = round($total, 2);
     }
 
     // Exchange Items Management (Tukar Barang)
@@ -755,9 +757,8 @@ class Detail extends BaseComponent
             if ($matlUom) {
                 $this->exchange_details[$key]['price'] = $matlUom->selling_price;
             } else {
-                // fallback to material default price
-                $material = Material::find($materialId);
-                $this->exchange_details[$key]['price'] = $material->selling_price ?? 0;
+                // Fallback to 0 if no MatlUom found since selling_price is in MatlUom table
+                $this->exchange_details[$key]['price'] = 0;
             }
 
             $this->updateExchangeItemAmount($key);
@@ -766,39 +767,38 @@ class Detail extends BaseComponent
 
     public function updateExchangeItemAmount($key)
     {
-        // Ensure the key exists in exchange_details
+        // Early validation to avoid unnecessary calculations
         if (!isset($this->exchange_details[$key])) {
             return;
         }
 
-        $qty = floatval($this->exchange_details[$key]['qty'] ?? 0);
-        $price = floatval($this->exchange_details[$key]['price'] ?? 0);
+        $detail = &$this->exchange_details[$key]; // Use reference for better performance
+        $qty = floatval($detail['qty'] ?? 0);
+        $price = floatval($detail['price'] ?? 0);
 
-        if ($qty > 0 && $price > 0) {
-            $amount = round($qty * $price, 2);
-            $this->exchange_details[$key]['amt'] = $amount;
+        // Calculate amount only if both values are valid
+        if ($qty > 0 && $price >= 0) {
+            $amount = $qty * $price;
+            $detail['amt'] = round($amount, 2); // Round to prevent floating point issues
         } else {
-            $this->exchange_details[$key]['amt'] = 0.0;
+            $detail['amt'] = 0.0;
         }
-        $this->exchange_details[$key]['amt_idr'] = rupiah($this->exchange_details[$key]['amt']);
 
-        // Update totals immediately
-        $this->recalculateTotals();
+        $detail['amt_idr'] = rupiah($detail['amt']);
+
+        // Update totals with optimized calculation
+        $this->updateExchangeTotalAmount();
     }
 
-    public function recalculateTotals()
+    private function updateExchangeTotalAmount()
     {
-        $this->total_amount = array_sum(
-            array_map(function ($detail) {
-                if (!$detail) return 0.0;
-                $qty = floatval($detail['qty'] ?? 0);
-                $price = floatval($detail['price'] ?? 0);
-                $amount = round($qty * $price, 2);
-                return $amount;
-            }, $this->exchange_details),
-        );
-
-        $this->total_amount = round($this->total_amount, 2);
+        $total = 0;
+        foreach ($this->exchange_details as $detail) {
+            if ($detail) {
+                $total += floatval($detail['amt'] ?? 0);
+            }
+        }
+        $this->total_amount = round($total, 2);
     }
 
     protected function loadDetails()
@@ -985,6 +985,45 @@ class Detail extends BaseComponent
             $this->dispatch('warning', 'Semua material yang dipilih sudah ada dalam daftar exchange.');
         }
     }
+
+    #region Cache and Optimization Methods
+
+    /**
+     * Get material data with caching
+     */
+    private function getCachedMaterial($materialId)
+    {
+        if (!isset($this->materialCache[$materialId])) {
+            $this->materialCache[$materialId] = Material::select('id', 'code', 'name')
+                ->find($materialId);
+        }
+        return $this->materialCache[$materialId];
+    }
+
+    /**
+     * Get UOM data for material with caching
+     */
+    private function getCachedMaterialUoms($materialId)
+    {
+        if (!isset($this->uomCache[$materialId])) {
+            $this->uomCache[$materialId] = MatlUom::where('matl_id', $materialId)
+                ->select('matl_uom', 'selling_price')
+                ->orderBy('matl_uom', 'asc')
+                ->get();
+        }
+        return $this->uomCache[$materialId];
+    }
+
+    /**
+     * Clear caches when needed
+     */
+    private function clearCaches()
+    {
+        $this->materialCache = [];
+        $this->uomCache = [];
+    }
+
+    #endregion
 
     #endregion
 }
