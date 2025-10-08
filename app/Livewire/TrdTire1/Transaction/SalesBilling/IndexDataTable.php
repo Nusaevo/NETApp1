@@ -141,6 +141,11 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Nomor Nota', 'tr_code', 'Cari Nomor Nota', function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
+            $this->createTextFilter($this->trans("Customer"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
+                $builder->whereHas('Partner', function ($query) use ($value) {
+                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
+                });
+            }),
             DateFilter::make('Tanggal Nota Awal')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '>=', $value);
@@ -148,11 +153,6 @@ class IndexDataTable extends BaseDataTableComponent
             DateFilter::make('Tanggal Nota Akhir')
                 ->filter(function (Builder $builder, string $value) {
                     $builder->whereDate('tr_date', '<=', $value);
-                }),
-                $this->createTextFilter($this->trans("Customer"), 'name', 'Cari Custommer', function (Builder $builder, string $value) {
-                    $builder->whereHas('Partner', function ($query) use ($value) {
-                        $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                    });
                 }),
                 SelectFilter::make($this->trans("Sales type"), 'sales_type')
                     ->options([
@@ -245,14 +245,14 @@ class IndexDataTable extends BaseDataTableComponent
 
             $ordersWithoutProcessDate = [];
             foreach ($billingOrders as $billing) {
-                if ($billing->OrderHdr && empty($billing->OrderHdr->tax_process_date)) {
+                if (empty($billing->print_date)) {
                     $ordersWithoutProcessDate[] = $billing->tr_code;
                 }
             }
 
             // Jika ada nota dengan tanggal proses kosong, tampilkan error
             if (!empty($ordersWithoutProcessDate)) {
-                $this->dispatch('error', 'Tidak dapat mencetak nota. Beberapa nota belum memiliki tanggal proses: ' . implode(', ', $ordersWithoutProcessDate));
+                $this->dispatch('error', 'Tidak dapat mencetak nota. Beberapa nota belum memiliki tanggal tagih: ' . implode(', ', $ordersWithoutProcessDate));
                 return;
             }
 

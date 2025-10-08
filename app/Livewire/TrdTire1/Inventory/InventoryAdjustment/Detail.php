@@ -42,6 +42,7 @@ class Detail extends BaseComponent
 
     // Material List Component Properties
     public $materials;
+    public $materialQuery = "";
     public $object_detail;
     public $trhdr_id;
     public $tr_seq;
@@ -315,12 +316,32 @@ class Detail extends BaseComponent
 
     protected function loadMaterialsByWarehouse($whCode)
     {
-        $materialIds = IvtBal::where('wh_code', $whCode)->pluck('matl_id')->toArray();
-        $this->materials = Material::whereIn('id', $materialIds)->get()
-            ->map(fn($m) => [
-                'value' => $m->id,
-                'label' => $m->code . " - " . $m->name,
-            ]);
+        $this->materialQuery = "
+            SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
+            FROM materials m
+            LEFT OUTER JOIN (
+                select matl_id, SUM(qty_oh)::int as qty_oh,SUM(qty_fgi)::int as qty_fgi
+                from ivt_bals
+                where wh_code = '$whCode'
+                group by matl_id
+                ) b on b.matl_id = m.id
+            WHERE m.status_code = 'A'
+            AND m.deleted_at IS NULL
+            AND b.matl_id IS NOT NULL
+        ";
+
+        // Untuk mode edit, juga isi $this->materials dengan data yang sudah dipilih
+        if ($this->isEditOrView() && !empty($this->input_details)) {
+            $selectedMatlIds = collect($this->input_details)->pluck('matl_id')->filter()->unique()->toArray();
+            if (!empty($selectedMatlIds)) {
+                $selectedMaterials = Material::whereIn('id', $selectedMatlIds)->get()
+                    ->map(fn($m) => [
+                        'value' => $m->id,
+                        'label' => $m->code . " - " . $m->name,
+                    ]);
+                $this->materials = $selectedMaterials;
+            }
+        }
     }
 
     public function toggleWarehouseDropdown($enabled)
@@ -353,8 +374,12 @@ class Detail extends BaseComponent
         }
     }
 
-    public function onMaterialChanged($index)
+    public function onMaterialChanged($index, $matl_id = null)
     {
+        if ($matl_id) {
+            $this->input_details[$index]['matl_id'] = $matl_id;
+        }
+
         if (!isset($this->input_details[$index]['matl_id'])) {
             $this->input_details[$index]['batch_code'] = null;
             $this->input_details[$index]['qty_oh'] = null;

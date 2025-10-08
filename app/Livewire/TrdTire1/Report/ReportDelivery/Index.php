@@ -13,6 +13,13 @@ class Index extends BaseComponent
     public $filterPartner = '';
     public $filterBrand = '';
     public $results = [];
+    public $ddPartner = [
+        'placeHolder' => "Ketik untuk cari customer ...",
+        'optionLabel' => "code,name",
+        'query' => "SELECT id,code,name,address,city
+                    FROM partners
+                    WHERE deleted_at IS NULL AND grp = 'C'",
+    ];
 
     protected function onPreRender()
     {
@@ -188,5 +195,11 @@ class Index extends BaseComponent
     public function resetResult()
     {
         $this->results = [];
+    }
+
+    public function onPartnerChanged()
+    {
+        // Method ini akan dipanggil ketika partner dipilih dari dropdown search
+        // Tidak perlu melakukan apa-apa khusus karena filterPartner sudah ter-update otomatis
     }
 }

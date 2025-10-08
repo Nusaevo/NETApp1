@@ -17,8 +17,10 @@
                             <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
                         </div>
                         <div class="col-md-2">
-                            <x-ui-dropdown-select label="Supplier" model="filterPartner" :options="$this->getPartnerOptions()"
-                                action="Edit" />
+                            <x-ui-dropdown-search label="Customer" model="filterPartner"
+                                optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
+                                :selectedValue="$filterPartner" required="false" action="Edit" enabled="true"
+                                type="int" onChanged="onPartnerChanged"/>
                         </div>
                         <div class="col-md-2">
                             <x-ui-dropdown-select label="Brand" model="filterBrand" :options="$this->getBrandOptions()" action="Edit" />
@@ -210,77 +212,74 @@
                     }
                 @endphp
 
-                {{-- ============================ LOOP NOTA ============================ --}}
-                @foreach ($results ?? [] as $nota)
-                @php
-                    $subTotalAmount = 0;
-                    $totalPpn = 0;
-                    foreach ($nota['items'] ?? [] as $it) {
-                        $subTotalAmount += $it['total'] ?? 0;
-                        $totalPpn += $it['ppn'] ?? 0;
-                    }
-                    $grand = $subTotalAmount + $totalPpn;
-                @endphp
+                {{-- ============================ TABLE REPORT ============================ --}}
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Tgl. Kirim</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">No. Nota</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Nama Supplier</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Kode Brg.</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: left;">Nama Barang</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Qty</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Harga</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Disc.</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Total</th>
+                            <th style="padding: 6px 8px; font-weight: bold; text-align: right;">Ppn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($results ?? [] as $nota)
+                        @php
+                            $subTotalAmount = 0;
+                            $totalPpn = 0;
+                            foreach ($nota['items'] ?? [] as $it) {
+                                $subTotalAmount += $it['total'] ?? 0;
+                                $totalPpn += $it['ppn'] ?? 0;
+                            }
+                            $grand = $subTotalAmount + $totalPpn;
+                        @endphp
 
-                    <div class="nota-block">
-                        <table style="width: 100%;">
-                            <thead>
-                                {{-- Header dengan informasi nota --}}
-                                <tr style="border-bottom: 1px solid #000;">
-                                    <td style="padding: 6px 8px; font-weight: bold;">Tgl. Kirim</td>
-                                    <td style="padding: 6px 8px; font-weight: bold;">No. Nota</td>
-                                    <td style="padding: 6px 8px; font-weight: bold;">Nama Supplier</td>
-                                    <td style="padding: 6px 8px; font-weight: bold;">Kode Brg.</td>
-                                    <td style="padding: 6px 8px; font-weight: bold;">Nama Barang</td>
-                                    <td style="padding: 6px 8px; font-weight: bold; text-align: right;">Qty</td>
-                                    <td style="padding: 6px 8px; font-weight: bold; text-align: right">Harga</td>
-                                    <td style="padding: 6px 8px; font-weight: bold; text-align: right">Disc.</td>
-                                    <td style="padding: 6px 8px; font-weight: bold; text-align: right">Total</td>
-                                    <td style="padding: 6px 8px; font-weight: bold; text-align: right">Ppn</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($nota['items'] ?? [] as $index => $item)
-                                    <tr>
-                                        @if($index == 0)
-                                            <td style="padding: 6px 8px; vertical-align: top !important;" rowspan="{{ count($nota['items']) }}">
-                                                {{ isset($nota['tgl_kirim']) ? formatDate($nota['tgl_kirim']) : '' }}
-                                            </td>
-                                            <td style="padding: 6px 8px; vertical-align: top !important;" rowspan="{{ count($nota['items']) }}">
-                                                {{ $nota['no_nota'] ?? '-' }}
-                                            </td>
-                                            <td style="padding: 6px 8px; vertical-align: top !important;" rowspan="{{ count($nota['items']) }}">
-                                                {{ $nota['nama_supplier'] ?? '-' }}
-                                            </td>
-                                        @endif
-                                        <td style="padding: 6px 8px;">{{ $item['kode_brg'] ?? '' }}</td>
-                                        <td style="padding: 6px 8px;">{{ $item['nama_barang'] ?? '' }}</td>
-                                        <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['qty'] ?? 0, 0, ',', '.') }}</td>
-                                        <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['harga'] ?? 0, 0, ',', '.') }}</td>
-                                        <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['disc'] ?? 0, 2, ',', '.') }}</td>
-                                        <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['total'] ?? 0, 0, ',', '.') }}</td>
+                        @foreach ($nota['items'] ?? [] as $index => $item)
+                            <tr>
+                                @if($index == 0)
+                                    <td style="padding: 6px 8px; vertical-align: top;" rowspan="{{ count($nota['items']) }}">
+                                        {{ isset($nota['tgl_kirim']) ? formatDate($nota['tgl_kirim']) : '' }}
+                                    </td>
+                                    <td style="padding: 6px 8px; vertical-align: top;" rowspan="{{ count($nota['items']) }}">
+                                        {{ $nota['no_nota'] ?? '-' }}
+                                    </td>
+                                    <td style="padding: 6px 8px; vertical-align: top;" rowspan="{{ count($nota['items']) }}">
+                                        {{ $nota['nama_supplier'] ?? '-' }}
+                                    </td>
+                                @endif
+                                <td style="padding: 6px 8px;">{{ $item['kode_brg'] ?? '' }}</td>
+                                <td style="padding: 6px 8px;">{{ $item['nama_barang'] ?? '' }}</td>
+                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['qty'] ?? 0, 0, ',', '.') }}</td>
+                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['harga'] ?? 0, 0, ',', '.') }}</td>
+                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['disc'] ?? 0, 2, ',', '.') }}</td>
+                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['total'] ?? 0, 0, ',', '.') }}</td>
+                                <td style="padding: 6px 8px; text-align: right;">{{ number_format($item['ppn'] ?? 0, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
 
-                                    </tr>
-                                @endforeach
-
-                                {{-- Baris subtotal --}}
-                                <tr style="font-weight: bold;">
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px;"></td>
-                                    <td style="padding: 6px 8px; text-align: right;">{{ number_format($subTotalAmount, 0, ',', '.') }}</td>
-                                    <td style="padding: 6px 8px; text-align: right;">{{ number_format($totalPpn, 0, ',', '.') }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                @endforeach
-                {{-- ============================ /LOOP NOTA ============================ --}}
+                        {{-- Baris subtotal untuk setiap nota --}}
+                        <tr style="font-weight: bold; background-color: #f8f9fa;">
+                            <td style="padding: 6px 8px;"></td>
+                            <td style="padding: 6px 8px;"></td>
+                            <td style="padding: 6px 8px;"></td>
+                            <td style="padding: 6px 8px;"></td>
+                            <td style="padding: 6px 8px; text-align: right;">Subtotal:</td>
+                            <td style="padding: 6px 8px;"></td>
+                            <td style="padding: 6px 8px;"></td>
+                            <td style="padding: 6px 8px;"></td>
+                            <td style="padding: 6px 8px; text-align: right;">{{ number_format($subTotalAmount, 0, ',', '.') }}</td>
+                            <td style="padding: 6px 8px; text-align: right;">{{ number_format($totalPpn, 0, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                {{-- ============================ /TABLE REPORT ============================ --}}
 
                 {{-- Footer Crystal Report style (opsional) --}}
                 {{--

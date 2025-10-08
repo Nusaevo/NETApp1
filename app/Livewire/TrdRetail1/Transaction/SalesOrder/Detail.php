@@ -78,9 +78,7 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
         $this->payments = $this->masterService->getPaymentTerm();
         $this->warehouses = $this->masterService->getWarehouse();
-        $this->partners = $this->masterService->getCustomers();
 
-        $this->materials = $this->masterService->getMaterials();
         $this->warehouseOptions = $this->masterService->getWarehouseData();
         $this->wh_code = $this->warehouseOptions[0]['value'] ?? null;
         $this->uomOptions = $this->masterService->getMatlUOMData();
