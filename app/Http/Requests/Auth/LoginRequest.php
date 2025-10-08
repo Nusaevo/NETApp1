@@ -74,7 +74,7 @@ class LoginRequest extends FormRequest
                 // Try getmac command first (Windows specific)
                 $output = [];
                 exec('getmac /v /fo csv', $output);
-                Log::info("GETMAC output: " . json_encode($output));
+               //Log::info("GETMAC output: " . json_encode($output));
 
                 // Parse the CSV output from getmac
                 foreach ($output as $i => $line) {
@@ -96,7 +96,7 @@ class LoginRequest extends FormRequest
                 // Try ARP command
                 $output = [];
                 exec('arp -a ' . $ip, $output);
-                Log::info("ARP output for IP {$ip}: " . json_encode($output));
+               //Log::info("ARP output for IP {$ip}: " . json_encode($output));
 
                 foreach ($output as $line) {
                     // Windows format: "  192.168.1.1           00-09-0f-aa-00-01     dynamic"
@@ -122,7 +122,7 @@ class LoginRequest extends FormRequest
                 }                // Try direct ipconfig command to get physical address - this is the most reliable
                 $output = [];
                 exec('ipconfig /all', $output);
-                Log::info("IPCONFIG output: " . json_encode($output));
+               //Log::info("IPCONFIG output: " . json_encode($output));
 
                 $physical_address = "";
                 $current_adapter = "";
@@ -141,7 +141,7 @@ class LoginRequest extends FormRequest
                     // Check if this adapter has our IP
                     if (strpos($line, "IPv4 Address") !== false && strpos($line, $ip) !== false) {
                         $ip_found = true;
-                        Log::info("Found matching IP adapter: " . $current_adapter);
+                       //Log::info("Found matching IP adapter: " . $current_adapter);
                     }
 
                     // If we found the right adapter, get its MAC
@@ -151,7 +151,7 @@ class LoginRequest extends FormRequest
                             $physical_address = trim($parts[1]);
                             // Remove any spaces in the MAC address
                             $physical_address = str_replace(' ', '', $physical_address);
-                            Log::info("Extracted physical address: " . $physical_address);
+                           //Log::info("Extracted physical address: " . $physical_address);
 
                             // Format correctly: DC-45-46-64-B1-35 -> dc:45:46:64:b1:35
                             return strtolower(str_replace('-', ':', $physical_address));
@@ -169,7 +169,7 @@ class LoginRequest extends FormRequest
                                 $physical_address = trim($parts[1]);
                                 // Remove any spaces in the MAC address
                                 $physical_address = str_replace(' ', '', $physical_address);
-                                Log::info("Extracted any physical address: " . $physical_address);
+                               //Log::info("Extracted any physical address: " . $physical_address);
 
                                 // Format correctly: DC-45-46-64-B1-35 -> dc:45:46:64:b1:35
                                 return strtolower(str_replace('-', ':', $physical_address));
@@ -192,7 +192,7 @@ class LoginRequest extends FormRequest
                               substr($hash, 8, 2) . ':' .
                               substr($hash, 10, 2);
 
-                Log::info("Generated device fingerprint as MAC: {$mac_format}");
+               //Log::info("Generated device fingerprint as MAC: {$mac_format}");
                 return $mac_format;
 
             } catch (\Exception $e) {
@@ -211,7 +211,7 @@ class LoginRequest extends FormRequest
                     exec('arp -a ' . $ip, $output);
                 }
 
-                Log::info("Linux ARP output: " . json_encode($output));
+               //Log::info("Linux ARP output: " . json_encode($output));
 
                 foreach ($output as $line) {
                     if (strpos($line, $ip) !== false) {
@@ -250,7 +250,7 @@ class LoginRequest extends FormRequest
                       substr($hash, 8, 2) . ':' .
                       substr($hash, 10, 2);
 
-        Log::info("Generated device fingerprint as MAC: {$mac_format}");
+       //Log::info("Generated device fingerprint as MAC: {$mac_format}");
         return $mac_format;
     }
 
@@ -298,7 +298,7 @@ class LoginRequest extends FormRequest
         }
 
         // Log the identifier we're checking
-        Log::info("Checking if device identifier is allowed: {$identifier}");
+       //Log::info("Checking if device identifier is allowed: {$identifier}");
 
         // Check if identifier is in the ALLOW_DEVICE constant group
         $allowedDevices = ConfigConst::where('const_group', 'ALLOW_DEVICE')
@@ -316,7 +316,7 @@ class LoginRequest extends FormRequest
             return false;
         }
 
-        Log::info("Device authorized successfully: {$identifier}");
+       //Log::info("Device authorized successfully: {$identifier}");
         return true;
     }
 
@@ -343,11 +343,11 @@ class LoginRequest extends FormRequest
         $clientIp = request()->ip();
         $macAddress = $this->getMacAddressFromIp($clientIp);
         // Log MAC address for debugging
-        Log::info("MAC address for client IP {$clientIp}: {$macAddress}");
+       //Log::info("MAC address for client IP {$clientIp}: {$macAddress}");
 
         // Create a browser fingerprint to supplement MAC address
         $browserFingerprint = $this->createBrowserFingerprint(request());
-        Log::info("Browser fingerprint: {$browserFingerprint}");
+       //Log::info("Browser fingerprint: {$browserFingerprint}");
 
         // if (!$this->isDeviceAllowed($macAddress) && !$this->isDeviceAllowed($browserFingerprint)) {
         //     Auth::logout();

@@ -171,11 +171,11 @@ class Detail extends BaseComponent
             }
 
             // Debug: cek data yang tersimpan
-            Log::info('NPWP Data after save:', [
-                'partner_id' => $partner->id,
-                'wp_details' => $wpDetails,
-                'npwpOptions_count' => count($this->npwpOptions ?? [])
-            ]);
+            // Log::info('NPWP Data after save:', [
+            //     'partner_id' => $partner->id,
+            //     'wp_details' => $wpDetails,
+            //     'npwpOptions_count' => count($this->npwpOptions ?? [])
+            // ]);
 
             // Update npwpOptions dengan data yang sudah di-refresh
             if (is_array($wpDetails) && !empty($wpDetails)) {
@@ -192,9 +192,9 @@ class Detail extends BaseComponent
             }
 
             // Debug: cek npwpOptions setelah update
-            Log::info('NPWP Options after update:', [
-                'npwpOptions' => $this->npwpOptions
-            ]);
+            // Log::info('NPWP Options after update:', [
+            //     'npwpOptions' => $this->npwpOptions
+            // ]);
 
             // Set NPWP yang baru ditambahkan sebagai yang aktif
             $this->inputs['npwp_code'] = $this->npwpDetails['npwp'];
@@ -213,10 +213,10 @@ class Detail extends BaseComponent
             $this->refreshNpwpOptions();
 
             // Debug: cek npwpOptions setelah refresh
-            Log::info('NPWP Options after refreshNpwpOptions:', [
-                'npwpOptions' => $this->npwpOptions,
-                'count' => count($this->npwpOptions ?? [])
-            ]);
+            // Log::info('NPWP Options after refreshNpwpOptions:', [
+            //     'npwpOptions' => $this->npwpOptions,
+            //     'count' => count($this->npwpOptions ?? [])
+            // ]);
 
             // Dispatch event untuk refresh Select2
             $this->dispatch('refreshSelect2', 'inputs_npwp_code');
@@ -311,7 +311,7 @@ class Detail extends BaseComponent
 
     private function updateAfterPrintPermission(): void
     {
-        Log::info('updateAfterPrintPermission called');
+        //Log::info('updateAfterPrintPermission called');
 
         // Cek apakah ada cetakan (nota atau surat jalan)
         $notaCount = 0;
@@ -336,11 +336,11 @@ class Detail extends BaseComponent
         $this->canUpdateAfterPrint = ((int)($num1 ?? 0)) === 1;
 
         // Debug log untuk cek izin
-        Log::info('Permission Debug:', [
-            'userId' => $userId,
-            'num1' => $num1,
-            'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
-        ]);
+        // Log::info('Permission Debug:', [
+        //     'userId' => $userId,
+        //     'num1' => $num1,
+        //     'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
+        // ]);
     }
 
     private function updateButtonStatesByCounter(): void
@@ -376,14 +376,14 @@ class Detail extends BaseComponent
         $this->canSaveButtonEnabled = ($notaCount === 0 && $suratCount === 0);
 
         // Debug log
-        Log::info('Button States Debug:', [
-            'notaCount' => $notaCount,
-            'suratCount' => $suratCount,
-            'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
-            'canPrintNotaButton' => $this->canPrintNotaButton,
-            'canPrintSuratJalanButton' => $this->canPrintSuratJalanButton,
-            'canSaveButtonEnabled' => $this->canSaveButtonEnabled,
-        ]);
+        // Log::info('Button States Debug:', [
+        //     'notaCount' => $notaCount,
+        //     'suratCount' => $suratCount,
+        //     'canUpdateAfterPrint' => $this->canUpdateAfterPrint,
+        //     'canPrintNotaButton' => $this->canPrintNotaButton,
+        //     'canPrintSuratJalanButton' => $this->canPrintSuratJalanButton,
+        //     'canSaveButtonEnabled' => $this->canSaveButtonEnabled,
+        // ]);
 
         // Jika SEC_LEVEL mengizinkan update setelah print, semua tombol diaktifkan
         if ($this->canUpdateAfterPrint) {
@@ -1110,10 +1110,10 @@ class Detail extends BaseComponent
                 }
 
                 // Debug: cek data wp_details yang di-load
-                Log::info('NPWP Data loaded from partner:', [
-                    'partner_id' => $partner->id,
-                    'wp_details' => $wpDetails
-                ]);
+                // Log::info('NPWP Data loaded from partner:', [
+                //     'partner_id' => $partner->id,
+                //     'wp_details' => $wpDetails
+                // ]);
 
                 if (is_array($wpDetails) && !empty($wpDetails)) {
                     $this->npwpOptions = array_map(function ($item) {
@@ -1126,9 +1126,9 @@ class Detail extends BaseComponent
                     }, $wpDetails);
 
                     // Debug: cek npwpOptions yang dibuat
-                    Log::info('NPWP Options created:', [
-                        'npwpOptions' => $this->npwpOptions
-                    ]);
+                    // Log::info('NPWP Options created:', [
+                    //     'npwpOptions' => $this->npwpOptions
+                    // ]);
 
                     if (!empty($this->inputs['tax_doc_flag'])) {
                         // Jika ada data NPWP yang sudah tersimpan, gunakan data tersebut
@@ -1158,11 +1158,11 @@ class Detail extends BaseComponent
                 }
 
                 // Debug: partner tidak memiliki wp_details
-                Log::info('Partner has no wp_details:', [
-                    'partner_id' => $partner->id,
-                    'has_partner_detail' => $partner->PartnerDetail ? 'yes' : 'no',
-                    'wp_details' => $partner->PartnerDetail ? $partner->PartnerDetail->wp_details : 'no partner detail'
-                ]);
+                // Log::info('Partner has no wp_details:', [
+                //     'partner_id' => $partner->id,
+                //     'has_partner_detail' => $partner->PartnerDetail ? 'yes' : 'no',
+                //     'wp_details' => $partner->PartnerDetail ? $partner->PartnerDetail->wp_details : 'no partner detail'
+                // ]);
             }
 
             // Dispatch event untuk refresh Select2
