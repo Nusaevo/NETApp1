@@ -63,6 +63,9 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
             Column::make($this->trans("Tanggal Nota"), "tr_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("Tgl. Kirim"), "tr_date")
@@ -70,7 +73,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $delivery = DelivHdr::where('tr_type', 'SD')
                         ->where('tr_code', $row->tr_code)
                         ->first();
-                    return $delivery ? $delivery->tr_date : '';
+                    return $delivery && $delivery->tr_date ? \Carbon\Carbon::parse($delivery->tr_date)->format('d-m-Y') : '';
                 })
                 ->sortable(),
             Column::make($this->trans("Due Date"), "tr_date")
@@ -82,7 +85,7 @@ class IndexDataTable extends BaseDataTableComponent
                         : 0;
                     if ($orderTrDate) {
                         $dueDate = \Carbon\Carbon::parse($orderTrDate)->addDays($paymentDueDays);
-                        return $dueDate->format('Y-m-d');
+                        return $dueDate->format('d-m-Y');
                     }
                     return '-';
                 })
@@ -103,6 +106,9 @@ class IndexDataTable extends BaseDataTableComponent
                 ->hideIf(true)
                 ->sortable(),
             Column::make($this->trans("Tanggal Tagih"), "print_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("Status"), "status_code")

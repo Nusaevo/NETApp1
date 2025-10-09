@@ -73,7 +73,7 @@
                                 <x-slot name="rows">
                                     @foreach ($input_details as $key => $input_detail)
                                         <tr
-                                            wire:key="list{{ $input_detail['id'] ?? $key }}-{{ $inputs['reffhdrtr_code'] }}">
+                                            wire:key="list{{ $input_detail['id'] ?? $key }}">
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
                                                 <x-ui-dropdown-search model="input_details.{{ $key }}.matl_id"

@@ -71,7 +71,7 @@ class Index extends BaseComponent
             }
 
             $successCount = 0;
-            $errorMessages = [];
+            $stockErrors = [];
 
             foreach ($selectedOrders as $order) {
                 // Persiapan array inputs
@@ -105,11 +105,10 @@ class Index extends BaseComponent
                         ->sum('qty_oh');
 
                     if ($totalStock < $detail->qty) {
-                        $errorMessages[] = __('Stok tidak mencukupi untuk material: ' . $detail->matl_code . ' pada order ' . $order->tr_code . ' (Tersedia: ' . (int)$totalStock . ', Dibutuhkan: ' . $detail->qty . ')');
-                        continue 2; // skip ke order berikutnya
+                        $stockErrors[] = 'Nota: ' . $order->tr_code . ' - Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . (int)$totalStock . ' - Dibutuhkan: ' . $detail->qty;
+                        continue 2;
                     }
 
-                    // Satu detail per material, batch allocation akan ditangani di savePicking
                     $input_details[] = [
                         'matl_id' => $detail->matl_id,
                         'matl_code' => $detail->matl_code,
@@ -165,12 +164,17 @@ class Index extends BaseComponent
                 }
             }
 
+            // Tampilkan error stok jika ada
+            if (!empty($stockErrors)) {
+                $this->dispatch('notify-swal', [
+                    'type' => 'error',
+                    'message' => '<strong>Stock Tidak Cukup</strong><br><br>' . implode('<br>', $stockErrors)
+                ]);
+            }
+
             // Tampilkan hasil
             if ($successCount > 0) {
                 $this->dispatch('success', $successCount . ' Sales Delivery berhasil dibuat');
-            }
-            if (!empty($errorMessages)) {
-                $this->dispatch('error', implode(', ', $errorMessages));
             }
 
             $this->dispatch('close-modal-delivery-date');

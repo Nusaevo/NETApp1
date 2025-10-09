@@ -12,6 +12,7 @@ class PrintPdf extends BaseComponent
 {
     public $object;
     public $objectIdValue;
+    public $notaCounter = [];
 
     protected function onPreRender()
     {
@@ -22,6 +23,9 @@ class PrintPdf extends BaseComponent
                 return;
             }
             $this->object = OrderHdr::findOrFail($this->objectIdValue);
+
+            // Inisialisasi counter dari array nota
+            $this->notaCounter = $this->object->getPrintCounterArray();
 
             // Guard izin cetak ulang untuk Surat Jalan saja (cetakan pertama diizinkan untuk semua)
             $revData = $this->object->getPrintCounterArray();
@@ -56,6 +60,9 @@ class PrintPdf extends BaseComponent
     {
         if ($this->object) {
             $newVersion = OrderHdr::updateDeliveryPrintCounterStatic($this->object->id);
+            // Update counter di property
+            $this->notaCounter = $this->object->fresh()->getPrintCounterArray();
+
             $this->dispatch('success', 'Print counter surat jalan berhasil diupdate: ' . $newVersion);
             $this->dispatch('refreshData');
 
