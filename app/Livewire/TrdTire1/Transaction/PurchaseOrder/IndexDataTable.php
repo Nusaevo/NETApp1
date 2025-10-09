@@ -30,6 +30,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             Column::make($this->trans("date"), "tr_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")

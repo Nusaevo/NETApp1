@@ -35,6 +35,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
+            ->whereIn('order_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP])
             ->select('order_hdrs.*') // Pastikan semua field dari order_hdrs di-select
             ->orderBy('order_hdrs.tr_code', 'asc');
             // ->orderBy('order_hdrs.tr_date', 'desc');

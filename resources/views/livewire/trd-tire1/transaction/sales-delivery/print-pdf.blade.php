@@ -21,7 +21,7 @@
             <table width="100%" style="margin-bottom: 5px;">
                 <!-- Counter untuk array nota -->
                 <div class="me-3" style="text-align: end">
-                    {{ $this->notaCounter['nota'] }}
+                    {{ $this->notaCounter['surat_jalan'] }}
                 </div>
                 <tr>
                     <td style="width: 25%;">
@@ -170,7 +170,7 @@
                     <table width="100%" style="margin-bottom: 5px;">
                         <!-- Counter untuk array nota -->
                         <div class="me-3" style="text-align: end">
-                            {{ $this->notaCounter['nota'] }}
+                            {{ $this->notaCounter['surat_jalan'] }}
                         </div>
                         <tr>
                             <td style="width: 25%;">
