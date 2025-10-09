@@ -22,9 +22,9 @@ use App\Http\Controllers\DropdownSearchController;
 */
 
 // Device Check Routes - publicly accessible
-Route::get('/checkdevice', [DeviceCheckController::class, 'index'])->name('device.check');
-Route::get('/checkdevice/status', [DeviceCheckController::class, 'checkDevice'])->name('device.check.status');
-Route::post('/checkdevice/register', [DeviceCheckController::class, 'registerDevice'])->name('device.register');
+// Route::get('/checkdevice', [DeviceCheckController::class, 'index'])->name('device.check');
+// Route::get('/checkdevice/status', [DeviceCheckController::class, 'checkDevice'])->name('device.check.status');
+// Route::post('/checkdevice/register', [DeviceCheckController::class, 'registerDevice'])->name('device.register');
 
 Route::middleware('auth')->group(function () {
     // Dropdown Search Route

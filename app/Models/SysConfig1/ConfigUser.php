@@ -217,6 +217,8 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
 
     /**
      * Check if user has OTP access to app
+     * NOTE: Device checks are ONLY performed during OTP verification,
+     * not during regular login authentication
      */
     public function hasOtpAccessToApp($appCode)
     {

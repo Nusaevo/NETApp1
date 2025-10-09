@@ -8,10 +8,24 @@ use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Device Check Middleware - DISABLED BY DEFAULT
+ *
+ * This middleware is currently disabled and not applied to any routes.
+ * Device checks are ONLY used during OTP verification process, not for general authentication.
+ *
+ * To re-enable device checks:
+ * 1. Add 'check.allowed.device' middleware to specific routes in web.php
+ * 2. Uncomment the device validation logic in the handle() method below
+ * 3. Ensure ConfigConst table has ALLOW_DEVICE entries configured
+ */
 class CheckAllowedDevice
 {
     /**
      * Handle an incoming request.
+     *
+     * DEVICE CHECKS ARE DISABLED - This middleware currently allows all devices through.
+     * Device validation is only performed during OTP verification process.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
@@ -19,25 +33,31 @@ class CheckAllowedDevice
      */
     public function handle(Request $request, Closure $next)
     {
+        // DEVICE CHECKS DISABLED - All devices are allowed
+        // Device validation only occurs during OTP verification process
+        // To re-enable, uncomment the code block below and apply middleware to routes
+
+        /*
         if (Auth::check()) {
             // Get the client's IP address
             $clientIp = $request->getClientIp();
 
-            // Get MAC address using IP (this is a simplified approach since getting the actual MAC address
-            // from a web request is technically challenging and often not reliable)
+            // Get MAC address using IP
             $macAddress = $this->getMacAddressFromIp($clientIp);
+
             // Check if the MAC address is in the allowed devices list
             $isAllowed = $this->isDeviceAllowed($macAddress);
 
-            // if (!$isAllowed) {
-            //     // MAC address not in allowed list
-            //     Auth::logout();
-            //     $request->session()->invalidate();
-            //     $request->session()->regenerateToken();
+            if (!$isAllowed) {
+                // MAC address not in allowed list
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
 
-            //     return redirect()->route('login')->with('error', 'Device not authorized. Please contact your administrator.');
-            // }
+                return redirect()->route('login')->with('error', 'Device not authorized. Please contact your administrator.');
+            }
         }
+        */
 
         return $next($request);
     }
