@@ -196,7 +196,6 @@ class Detail extends BaseComponent
 
                 // $this->input_details[$key]['ivt_id'] = $picking->ivt_id;
                 // $this->input_details[$key]['batch_code'] = $picking->batch_code;
-
             }
         }
     }
@@ -205,13 +204,13 @@ class Detail extends BaseComponent
     {
         try {
             unset($this->input_details[$index]);
-            $this->input_details = array_values($this->input_details);
 
             // Jika tidak ada item lagi di input_details, enable kolom reffhdrtr_code dan wh_code
             if (empty($this->input_details)) {
                 $this->isPanelEnabled = true; // Enable warehouse and reffhdrtr_code fields
                 $this->inputs['reffhdrtr_code'] = null; // Set reffhdrtr_code to null
             }
+            // $this->dispatch('success', 'Item berhasil dihapus.');
         } catch (Exception $e) {
             $this->dispatch('error', 'Gagal menghapus item: ' . $e->getMessage());
         }

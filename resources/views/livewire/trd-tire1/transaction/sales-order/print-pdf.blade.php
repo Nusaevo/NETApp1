@@ -3,7 +3,7 @@
         <div class="col-xl-9">
             <x-ui-button clickEvent="" type="Back" button-name="Back" />
         </div>
-        <div class="col-xl-3 float-end">
+        <div class="col-xl-3 float-end d-flex align-items-center">
             <a class="btn btn-light text-capitalize border-0" data-mdb-ripple-color="dark" onclick="printInvoice()">
                 <i class="fas fa-print text-primary"></i> Print
             </a>
@@ -76,6 +76,10 @@
         <div class="invoice-box" style="max-width: 1200px; margin: auto; padding: 20px;">
             <!-- Header -->
             <table width="100%" style="margin-bottom: 10px; border: none;">
+                <!-- Counter untuk array nota -->
+                <div class="me-3" style="text-align: end">
+                    {{ $this->notaCounter['nota'] }}
+                </div>
                 <tr style="border: none;">
                     <td style="width: 25%; border: none;">
                         <div style="text-align: center;">
@@ -94,7 +98,7 @@
                             Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                         </p>
                         <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                        @if($this->object->tax_doc_flag == 1)
+                        @if ($this->object->tax_doc_flag == 1)
                             <p style="margin-bottom: -8px;">
                                 <strong>{{ $this->object->npwp_name }}</strong>
                             </p>
@@ -115,18 +119,28 @@
                 style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
                 <thead>
                     <tr>
-                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 16px;">KODE BARANG
+                        <th
+                            style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 16px;">
+                            KODE BARANG
                         </th>
-                        <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 16px;">NAMA BARANG
+                        <th
+                            style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 16px;">
+                            NAMA BARANG
                         </th>
                         <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 16px;">QTY</th>
-                        <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 12%; font-size: 16px;">HARGA
+                        <th
+                            style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 12%; font-size: 16px;">
+                            HARGA
                             SATUAN</th>
                         @if ($this->object->sales_type != 'O')
-                            <th style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%; font-size: 16px;">DISC
+                            <th
+                                style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%; font-size: 16px;">
+                                DISC
                             </th>
                         @endif
-                        <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 16px;">JUMLAH
+                        <th
+                            style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 16px;">
+                            JUMLAH
                             HARGA</th>
                     </tr>
                 </thead>
@@ -156,7 +170,7 @@
                             </td>
                             <td
                                 style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                @if($this->object->sales_type == 'O')
+                                @if ($this->object->sales_type == 'O')
                                     {{ number_format(ceil($OrderDtl->price_afterdisc), 0, ',', '.') }}
                                 @else
                                     {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
@@ -180,7 +194,8 @@
                         <td
                             style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;">
                         </td>
-                        <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px; font-size: 16px; text-align: start;">
+                        <td
+                            style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px; font-size: 16px; text-align: start;">
                             Penerima: ________________
                         </td>
                         <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;"></td>
@@ -248,7 +263,8 @@
                     </td>
                 </tr>
             </table>
-            <p style="font-size: 15px; text-align: start; font-weight: lighter;">Barang yang sudah dibeli tidak bisa dikembalikan</p>
+            <p style="font-size: 15px; text-align: start; font-weight: lighter;">Barang yang sudah dibeli tidak bisa
+                dikembalikan</p>
         </div>
     </div>
 
@@ -266,6 +282,10 @@
                 @foreach ([$this->object->OrderDtl] as $chunkIndex => $chunk)
                     <!-- Header per page -->
                     <table width="100%" style="margin-bottom: 10px; border: none;">
+                        <!-- Counter untuk array nota -->
+                        <div class="me-3" style="text-align: end">
+                            {{ $this->notaCounter['nota'] }}
+                        </div>
                         <tr style="border: none;">
                             <td style="width: 25%; border: none;">
                                 <div style="text-align: center;">
@@ -284,11 +304,12 @@
                                 <p style="margin-bottom: -8px;">Surabaya,
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                                @if($this->object->tax_doc_flag == 1)
+                                @if ($this->object->tax_doc_flag == 1)
                                     <p style="margin-bottom: -8px;"><strong>{{ $this->object->npwp_name }}</strong></p>
                                     <p style="margin-bottom: -8px;">{{ $this->object->npwp_addr }}</p>
                                 @else
-                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong></p>
+                                    <p style="margin-bottom: -8px;"><strong>{{ $this->object->Partner->name }}</strong>
+                                    </p>
                                     <p style="margin-bottom: -8px;">{{ $this->object->Partner->address }}</p>
                                     <p style="margin-bottom: -8px;">{{ $this->object->Partner->city }}</p>
                                 @endif
@@ -301,19 +322,24 @@
                         style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; line-height: 1.2;">
                         <thead>
                             <tr>
-                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 16px;">
+                                <th
+                                    style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 12%; font-size: 16px;">
                                     KODE BARANG</th>
-                                <th style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 16px;">
+                                <th
+                                    style="border: 1px solid #000; text-align: left; padding-left: 5px; width: 35%; font-size: 16px;">
                                     NAMA BARANG</th>
-                                <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 16px;">QTY</th>
-                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 13%; font-size: 16px;">
+                                <th style="border: 1px solid #000; text-align: center; width: 5%; font-size: 16px;">QTY
+                                </th>
+                                <th
+                                    style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 13%; font-size: 16px;">
                                     HARGA SATUAN</th>
                                 @if ($this->object->sales_type != 'O')
                                     <th
                                         style="border: 1px solid #000; text-align: center; padding-right: 5px; width: 5%; font-size: 16px;">
                                         DISC</th>
                                 @endif
-                                <th style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 16px;">
+                                <th
+                                    style="border: 1px solid #000; text-align: right; padding-right: 5px; width: 15%; font-size: 16px;">
                                     JUMLAH HARGA</th>
                             </tr>
                         </thead>
@@ -336,7 +362,7 @@
                                         {{ ceil($OrderDtl->qty) }}</td>
                                     <td
                                         style="text-align: right; border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px 3px 5px; font-size: 16px;">
-                                        @if($this->object->sales_type == 'O')
+                                        @if ($this->object->sales_type == 'O')
                                             {{ number_format(ceil($OrderDtl->price_afterdisc), 0, ',', '.') }}
                                         @else
                                             {{ number_format(ceil($OrderDtl->price), 0, ',', '.') }}
@@ -357,7 +383,8 @@
                                 <td
                                     style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; height: 18px;">
                                 </td>
-                                <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px; font-size: 16px; text-align: start;">
+                                <td
+                                    style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000; padding: 3px 5px; font-size: 16px; text-align: start;">
                                     Penerima: ________________
                                 </td>
                                 <td style="border-width: 0px 1px 0px 1px; border-style: solid; border-color: #000;">
@@ -437,7 +464,8 @@
                             </td>
                         </tr>
                     </table>
-                    <p style="font-size: 15px; text-align: start; font-weight: lighter;">Barang yang sudah dibeli tidak bisa dikembalikan</p>
+                    <p style="font-size: 15px; text-align: start; font-weight: lighter;">Barang yang sudah dibeli tidak
+                        bisa dikembalikan</p>
                 @endforeach
             </div>
         </div>
@@ -446,19 +474,26 @@
     <script>
         function printInvoice() {
             @this.updatePrintCounter();
+
+            // Trigger print dialog
             setTimeout(function() {
                 window.print();
             }, 1000);
+
+            // Listen for print dialog close event
+            window.addEventListener('afterprint', function() {
+                // Refresh halaman setelah print dialog ditutup
+                setTimeout(function() {
+                    window.location.reload();
+                }, 500); // Delay singkat untuk memastikan print selesai
+            });
         }
 
         // Listen for successful print counter update
         document.addEventListener('livewire:init', () => {
             Livewire.on('success', (message) => {
                 if (message.includes('Print counter berhasil diupdate')) {
-                    // Refresh halaman setelah berhasil update counter
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 2000); // Delay 2 detik untuk memastikan print dialog selesai
+                    console.log('Print counter berhasil diupdate');
                 }
             });
         });

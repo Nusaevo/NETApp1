@@ -19,6 +19,10 @@
         <div class="invoice-box" style="margin: auto; padding: 10px;">
             <!-- Header -->
             <table width="100%" style="margin-bottom: 5px;">
+                <!-- Counter untuk array nota -->
+                <div class="me-3" style="text-align: end">
+                    {{ $this->notaCounter['nota'] }}
+                </div>
                 <tr>
                     <td style="width: 25%;">
                         <div style="text-align: center;">
@@ -37,10 +41,11 @@
                             Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                         </p>
                         <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                        <p style="margin-bottom: -8px;">
+                        <p style="margin-bottom: -20px;">
                             <strong>{{ $this->object->ship_to_name }}</strong>
                         </p>
-                        <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 3px;">{{ $this->object->ship_to_addr }}</p>
+                        <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 5px;">
+                            {{ $this->object->ship_to_addr }}</p>
                     </td>
                 </tr>
             </table>
@@ -163,6 +168,10 @@
                 @foreach ([$this->object->OrderDtl] as $chunkIndex => $chunk)
                     <!-- Header per page -->
                     <table width="100%" style="margin-bottom: 5px;">
+                        <!-- Counter untuk array nota -->
+                        <div class="me-3" style="text-align: end">
+                            {{ $this->notaCounter['nota'] }}
+                        </div>
                         <tr>
                             <td style="width: 25%;">
                                 <div style="text-align: center;">
@@ -180,8 +189,10 @@
                                 <p style="margin-bottom: -8px;">Surabaya,
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                                <p style="margin-bottom: -8px;"><strong>{{ $this->object->ship_to_name }}</strong></p>
-                                <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1.2; margin-top: 0px;">{{ $this->object->ship_to_addr }}</p>
+                                <p style="margin-bottom: -20px;"><strong>{{ $this->object->ship_to_name }}</strong></p>
+                                <p
+                                    style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 5px;">
+                                    {{ $this->object->ship_to_addr }}</p>
                             </td>
                         </tr>
                     </table>
@@ -291,19 +302,26 @@
     <script>
         function printInvoice() {
             @this.updateDeliveryPrintCounter();
+
+            // Trigger print dialog
             setTimeout(function() {
                 window.print();
             }, 1000);
+
+            // Listen for print dialog close event
+            window.addEventListener('afterprint', function() {
+                // Refresh halaman setelah print dialog ditutup
+                setTimeout(function() {
+                    window.location.reload();
+                }, 500); // Delay singkat untuk memastikan print selesai
+            });
         }
 
         // Listen for successful print counter update
         document.addEventListener('livewire:init', () => {
             Livewire.on('success', (message) => {
                 if (message.includes('Print counter surat jalan berhasil diupdate')) {
-                    // Refresh halaman setelah berhasil update counter
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 2000); // Delay 2 detik untuk memastikan print dialog selesai
+                    console.log('Print counter surat jalan berhasil diupdate');
                 }
             });
         });
