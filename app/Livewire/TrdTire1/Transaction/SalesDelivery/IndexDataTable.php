@@ -43,6 +43,9 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             Column::make($this->trans("Tanggal Nota"), "tr_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("tr_type"), "tr_type")
@@ -95,7 +98,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $delivery = DelivHdr::where('tr_type', 'SD')
                         ->where('tr_code', $row->tr_code)
                         ->first();
-                    return $delivery ? $delivery->tr_date : '';
+                    return $delivery && $delivery->tr_date ? \Carbon\Carbon::parse($delivery->tr_date)->format('d-m-Y') : '';
                 })
                 ->sortable(),
             Column::make($this->trans("warehouse"), "warehouse")
@@ -189,8 +192,8 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             'setDeliveryDate' => 'Kirim',
             'cancelDeliveryDate' => 'Batal Kirim',
-            'cancel' => 'Cancel',
-            'unCancel' => 'UnCancel',
+            'cancel' => 'Batal Nota',
+            'unCancel' => 'Pengemeblian nota Batal',
         ];
     }
 
