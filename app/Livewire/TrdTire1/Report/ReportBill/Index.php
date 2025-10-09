@@ -45,6 +45,7 @@ class Index extends BaseComponent
             SELECT
                 bh.tr_code AS no_nota,
                 bh.print_date AS tanggal_tagih,
+                bh.tr_date as tanggal_nota,
                 p.name AS nama_pelanggan,
                 p.city AS kota_pelanggan,
                 bh.amt AS total_tagihan

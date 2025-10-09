@@ -248,7 +248,7 @@
                                 @if ($i > 0)
                         <tr>
                     @endif
-                    <td style="text-align: center; font-weight: normal;">{{ $row->tanggal_tagih ? \Carbon\Carbon::parse($row->tanggal_tagih)->format('d') : '' }}</td>
+                        <td style="text-align: center; font-weight: normal;">{{ $row->tanggal_nota ? \Carbon\Carbon::parse($row->tanggal_nota)->format('d') : '' }}</td>
                     <td style="text-align: left;">{{ $row->no_nota }}</td>
                     <td style="text-align: right;">{{ number_format($row->total_tagihan, 0) }}</td>
                     <td></td>
@@ -351,7 +351,7 @@
                                     @if ($i > 0)
                             <tr>
                         @endif
-                        <td style="text-align: center; font-weight: normal;">{{ $row->tanggal_tagih ? \Carbon\Carbon::parse($row->tanggal_tagih)->format('d') : '' }}</td>
+                        <td style="text-align: center; font-weight: normal;">{{ $row->tanggal_nota ? \Carbon\Carbon::parse($row->tanggal_nota)->format('d') : '' }}</td>
                         <td style="text-align: left;">{{ $row->no_nota }}</td>
                         <td style="text-align: right;">{{ number_format($row->total_tagihan, 0) }}</td>
                         <td></td>
