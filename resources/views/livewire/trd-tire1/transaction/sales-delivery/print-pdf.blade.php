@@ -41,10 +41,10 @@
                             Surabaya, {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}
                         </p>
                         <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                        <p style="margin-bottom: -8px;">
+                        <p style="margin-bottom: -20px;">
                             <strong>{{ $this->object->ship_to_name }}</strong>
                         </p>
-                        <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 3px;">
+                        <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 5px;">
                             {{ $this->object->ship_to_addr }}</p>
                     </td>
                 </tr>
@@ -189,9 +189,9 @@
                                 <p style="margin-bottom: -8px;">Surabaya,
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
-                                <p style="margin-bottom: -8px;"><strong>{{ $this->object->ship_to_name }}</strong></p>
+                                <p style="margin-bottom: -20px;"><strong>{{ $this->object->ship_to_name }}</strong></p>
                                 <p
-                                    style="margin-bottom: -8px; white-space: pre-line; line-height: 1.2; margin-top: 0px;">
+                                    style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 5px;">
                                     {{ $this->object->ship_to_addr }}</p>
                             </td>
                         </tr>
