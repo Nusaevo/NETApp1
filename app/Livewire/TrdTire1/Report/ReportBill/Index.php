@@ -10,7 +10,6 @@ use App\Models\TrdTire1\Master\SalesReward;
 
 class Index extends BaseComponent
 {
-    public $printDateOptions; // Dropdown tanggal tagih
     public $selectedPrintDate; // Tanggal tagih yang dipilih
     protected $masterService;
 
@@ -22,23 +21,6 @@ class Index extends BaseComponent
 
     protected function onPreRender()
     {
-        // Ambil distinct print_date dari billing_hdrs untuk dropdown
-        $this->printDateOptions = DB::connection(Session::get('app_code'))
-            ->table('billing_hdrs')
-            ->selectRaw('DISTINCT print_date')
-            ->whereNull('deleted_at')
-            ->whereNotNull('print_date')
-            ->orderBy('print_date', 'desc')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'value' => $item->print_date,
-                    'label' => date('d-m-Y', strtotime($item->print_date)),
-                ];
-            })
-            ->toArray();
-
-
         $this->masterService = new MasterService();
         $this->resetFilters();
     }

@@ -10,8 +10,7 @@
                 <div class="container mb-2 mt-2">
                     <div class="row align-items-end justify-content-between">
                         <div class="col-md-4 d-flex justify-content-start">
-                            <x-ui-dropdown-select label="Tanggal Tagih" model="selectedPrintDate" :options="$printDateOptions"
-                                action="Edit" />
+                            <x-ui-text-field label="Tanggal Tagih" model="selectedPrintDate" type="date" action="Edit" />
                         </div>
                         <div class="col-md-2 d-flex justify-content-end">
                             <div class="row">
@@ -94,6 +93,18 @@
         }
 
         @media print {
+            @page {
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+                @top-right {
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-size: 10px;
+                    color: #000000;
+                }
+            }
+
             .print-table {
                 width: 100%;
                 font-size: 12px;
@@ -138,6 +149,45 @@
             .print-table .grand-total-row td:not(:empty) {
                 border-bottom: 2px solid #000 !important;
             }
+
+            /* Page counter untuk menghitung halaman */
+            body {
+                counter-reset: page;
+            }
+
+            /* Pastikan page counter berfungsi */
+            .print-table {
+                page-break-inside: auto;
+            }
+
+            /* Styling untuk page info di mode print */
+            #page-info {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 10px;
+                color: #666;
+                background: white;
+                padding: 2px 6px;
+                border: 1px solid #ddd;
+                border-radius: 3px;
+                z-index: 10;
+            }
+
+            /* Styling untuk page info yang ditampilkan di layar */
+            #page-info {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                font-size: 12px;
+                color: #666;
+                background: white;
+                padding: 4px 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                z-index: 10;
+            }
         }
     </style>
 
@@ -145,20 +195,17 @@
     <div class="portrait-container d-print-none">
         <div class="portrait-report">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="min-width:120px; text-align:left;">
+                <div style="min-width:120px; text-align:left; margin-bottom: -10px;">
                     <span>{{ \Carbon\Carbon::now()->format('d-M-Y') }}</span>
                 </div>
                 <div style="flex:1; text-align:center;">
                     <h2 style="text-decoration:underline; font-weight:bold; margin:0;">DAFTAR NOTA TAGIHAN</h2>
                 </div>
             </div>
-            <div style="margin-top:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="margin-top:1px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <span style="font-weight:bold; text-decoration:underline;">TANGGAL TAGIH</span>
+                    <span style="font-weight:bold;">TANGGAL TAGIH</span>
                     <span>: {{ $selectedPrintDate ? \Carbon\Carbon::parse($selectedPrintDate)->format('d-M-Y') : '-' }}</span>
-                </div>
-                <div id="page-info">
-                    Page <span class="pageNumber">1</span> of <span class="totalPages">1</span>
                 </div>
             </div>
             <table class="portrait-table" style="margin-top:10px;">
@@ -201,9 +248,9 @@
                                 @if ($i > 0)
                         <tr>
                     @endif
-                    <td>{{ $row->tanggal_tagih ? \Carbon\Carbon::parse($row->tanggal_tagih)->format('d') : '' }}</td>
-                    <td>{{ $row->no_nota }}</td>
-                    <td>{{ number_format($row->total_tagihan, 0) }}</td>
+                    <td style="text-align: center; font-weight: normal;">{{ $row->tanggal_tagih ? \Carbon\Carbon::parse($row->tanggal_tagih)->format('d') : '' }}</td>
+                    <td style="text-align: left;">{{ $row->no_nota }}</td>
+                    <td style="text-align: right;">{{ number_format($row->total_tagihan, 0) }}</td>
                     <td></td>
                     <td></td>
                     <td></td>
@@ -217,7 +264,7 @@
                     <tr class="subtotal-row">
                         <td></td>
                         <td style="font-weight:bold; text-align:right;" colspan="1">Total :</td>
-                        <td style="text-align:right; font-weight:bold;">
+                        <td style="text-align:right; font-weight:bold; text-decoration: underline;">
                             {{ number_format($subtotal, 0) }}</td>
                         <td></td> <!-- TGL LUNAS kosong -->
                         <td></td> <!-- BANK -->
@@ -232,7 +279,7 @@
                     <tr class="grand-total-row">
                         <td colspan="2"></td>
                         <td style="font-weight:bold; text-align:right;">Total Tagihan</td>
-                        <td style="text-align:right; font-weight:bold;">
+                        <td style="text-align:right; font-weight:bold; text-decoration: underline;">
                             {{ number_format($grandTotal, 0) }}</td>
                         <td></td>
                         <td></td>
@@ -251,20 +298,17 @@
         <div style="max-width: 1200px; margin: 0 auto; font-family: 'Calibri'; font-size: 14px;">
             <div class="report-box" style="max-width: 1200px; margin: auto; padding: 20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="min-width:120px; text-align:left;">
+                    <div style="min-width:120px; text-align:left; margin-bottom: -10px;">
                         <span>{{ \Carbon\Carbon::now()->format('d-M-Y') }}</span>
                     </div>
                     <div style="flex:1; text-align:center;">
                         <h2 style="text-decoration:underline; font-weight:bold; margin:0;">DAFTAR NOTA TAGIHAN</h2>
                     </div>
                 </div>
-                <div style="margin-top:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="margin-top:1px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <span style="font-weight:bold; text-decoration:underline;">TANGGAL TAGIH</span>
+                        <span style="font-weight:bold;">TANGGAL TAGIH</span>
                         <span>: {{ $selectedPrintDate ? \Carbon\Carbon::parse($selectedPrintDate)->format('d-M-Y') : '-' }}</span>
-                    </div>
-                    <div id="page-info">
-                        Page <span class="pageNumber">1</span> of <span class="totalPages">1</span>
                     </div>
                 </div>
                 <table class="print-table" style="margin-top:10px;">
@@ -307,9 +351,9 @@
                                     @if ($i > 0)
                             <tr>
                         @endif
-                        <td>{{ $row->tanggal_tagih ? \Carbon\Carbon::parse($row->tanggal_tagih)->format('d') : '' }}</td>
-                        <td>{{ $row->no_nota }}</td>
-                        <td>{{ number_format($row->total_tagihan, 0) }}</td>
+                        <td style="text-align: center; font-weight: normal;">{{ $row->tanggal_tagih ? \Carbon\Carbon::parse($row->tanggal_tagih)->format('d') : '' }}</td>
+                        <td style="text-align: left;">{{ $row->no_nota }}</td>
+                        <td style="text-align: right;">{{ number_format($row->total_tagihan, 0) }}</td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -356,27 +400,92 @@
 </div>
 <script>
     function printReport() {
-        // Calculate total pages
+        // Calculate total pages more accurately
         const printContent = document.getElementById('print');
-        const contentHeight = printContent.scrollHeight;
-        const pageHeight = 1122; // A4 height in pixels at 96dpi
-        const totalPages = Math.ceil(contentHeight / pageHeight);
+        const table = printContent.querySelector('.print-table');
 
-        // Update page info
-        const pageNumberElement = document.querySelector('.pageNumber');
-        const totalPagesElement = document.querySelector('.totalPages');
-        if (pageNumberElement && totalPagesElement) {
-            pageNumberElement.textContent = '1';
-            totalPagesElement.textContent = totalPages;
+        if (table) {
+            // Get table height
+            const tableHeight = table.offsetHeight;
+            // A4 height in pixels at 96dpi minus margins (10mm top + 10mm bottom = 20mm = ~76px)
+            const pageHeight = 1122 - 76; // Account for margins
+            const totalPages = Math.ceil(tableHeight / pageHeight);
+
+            // Update page info
+            const pageNumberElement = document.querySelector('.pageNumber');
+            const totalPagesElement = document.querySelector('.totalPages');
+            if (pageNumberElement && totalPagesElement) {
+                pageNumberElement.textContent = '1';
+                totalPagesElement.textContent = Math.max(1, totalPages);
+            }
+        } else {
+            // Fallback calculation
+            const contentHeight = printContent.scrollHeight;
+            const pageHeight = 1122 - 76; // Account for margins
+            const totalPages = Math.ceil(contentHeight / pageHeight);
+
+            const pageNumberElement = document.querySelector('.pageNumber');
+            const totalPagesElement = document.querySelector('.totalPages');
+            if (pageNumberElement && totalPagesElement) {
+                pageNumberElement.textContent = '1';
+                totalPagesElement.textContent = Math.max(1, totalPages);
+            }
         }
 
         // Print the document
         window.print();
     }
 
+    // Function to calculate and update page numbers
+    function updatePageNumbers() {
+        const printContent = document.getElementById('print');
+        const table = printContent.querySelector('.print-table');
+
+        if (table) {
+            // Get the actual height of the table including all rows
+            const tableHeight = table.offsetHeight;
+            const headerHeight = table.querySelector('thead') ? table.querySelector('thead').offsetHeight : 0;
+            const tbodyHeight = tableHeight - headerHeight;
+
+            // A4 height in pixels at 96dpi minus margins (10mm top + 10mm bottom = 20mm = ~76px)
+            // Account for header repetition on each page
+            const pageHeight = 1122 - 76; // Total page height minus margins
+            const contentHeightPerPage = pageHeight - headerHeight; // Available height for content per page
+
+            // Calculate total pages needed
+            const totalPages = Math.ceil(tbodyHeight / contentHeightPerPage);
+
+            const pageNumberElement = document.querySelector('.pageNumber');
+            const totalPagesElement = document.querySelector('.totalPages');
+            if (pageNumberElement && totalPagesElement) {
+                pageNumberElement.textContent = '1';
+                totalPagesElement.textContent = Math.max(1, totalPages);
+            }
+
+            console.log('Table height:', tableHeight);
+            console.log('Header height:', headerHeight);
+            console.log('Body height:', tbodyHeight);
+            console.log('Page height:', pageHeight);
+            console.log('Content height per page:', contentHeightPerPage);
+            console.log('Total pages:', Math.max(1, totalPages));
+        }
+    }
+
+    // Update page numbers when content changes
+    window.addEventListener('load', updatePageNumbers);
+    window.addEventListener('resize', updatePageNumbers);
+
+    // Update page numbers when Livewire updates the content
+    document.addEventListener('livewire:load', updatePageNumbers);
+    document.addEventListener('livewire:update', updatePageNumbers);
+
+    // Update page numbers after a short delay to ensure content is rendered
+    setTimeout(updatePageNumbers, 100);
+
     window.addEventListener('beforeprint', function() {
         // Additional setup before print if needed
         document.body.classList.add('printing');
+        updatePageNumbers();
     });
 
     window.addEventListener('afterprint', function() {
