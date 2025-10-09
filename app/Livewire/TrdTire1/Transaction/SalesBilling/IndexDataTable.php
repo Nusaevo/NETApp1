@@ -68,14 +68,14 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("Tgl. Kirim"), "tr_date")
-                ->label(function ($row) {
-                    $delivery = DelivHdr::where('tr_type', 'SD')
-                        ->where('tr_code', $row->tr_code)
-                        ->first();
-                    return $delivery && $delivery->tr_date ? \Carbon\Carbon::parse($delivery->tr_date)->format('d-m-Y') : '';
-                })
-                ->sortable(),
+            // Column::make($this->trans("Tgl. Kirim"), "tr_date")
+            //     ->label(function ($row) {
+            //         $delivery = DelivHdr::where('tr_type', 'SD')
+            //             ->where('tr_code', $row->tr_code)
+            //             ->first();
+            //         return $delivery && $delivery->tr_date ? \Carbon\Carbon::parse($delivery->tr_date)->format('d-m-Y') : '';
+            //     })
+            //     ->sortable(),
             Column::make($this->trans("Due Date"), "tr_date")
                 ->label(function ($row) {
                     // Gunakan tr_date dan payment_due_days dari relasi OrderHdr

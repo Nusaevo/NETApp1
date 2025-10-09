@@ -30,10 +30,13 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("date"), "tr_date")
+            Column::make($this->trans("Tgl. Transaksi"), "tr_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
+                })
                 ->searchable()
                 ->sortable(),
-            Column::make($this->trans("tr_code"), "tr_code")
+            Column::make($this->trans("Nomor Transaksi"), "tr_code")
                 ->format(function ($value, $row) {
                     return '<a href="' . route($this->appCode . '.Inventory.InventoryAdjustment.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
@@ -104,6 +107,9 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
+            // $this->createTextFilter('Nomor Transaksi', 'tr_code', 'Cari Nomor Transaksi', function (Builder $builder, string $value) {
+            //     $builder->where(DB::raw('UPPER(ivttr_hdrs.tr_code)'), '=', $value);
+            // }),
             // $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
             //     $builder->whereExists(function ($query) use ($value) {
             //         $query->select(DB::raw(1))
