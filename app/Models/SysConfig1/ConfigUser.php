@@ -228,9 +228,12 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
         // Get excluded OTP groups from TrdTire1 ConfigConst
         $excludedGroups = $this->getExcludedOtpGroups();
 
+        // Convert excluded groups to uppercase for comparison
+        $excludedGroupsUpper = array_map('strtoupper', $excludedGroups);
+
         foreach ($groups as $group) {
-            // Check if group is in excluded list (bypass OTP)
-            if (in_array($group->code, $excludedGroups)) {
+            // Check if group is in excluded list (bypass OTP) - case insensitive
+            if (in_array(strtoupper($group->code), $excludedGroupsUpper)) {
                 return 'bypass'; // Special return value for excluded groups
             }
         }
@@ -262,7 +265,7 @@ class ConfigUser extends Authenticatable implements MustVerifyEmail
             $excludedGroups = ['netDevelopers'];
         }
 
-        // Remove duplicates and filter non-empty values
+        // Remove duplicates and filter non-empty values, then normalize to uppercase
         $excludedGroups = array_unique(array_filter($excludedGroups));
 
         return $excludedGroups;
