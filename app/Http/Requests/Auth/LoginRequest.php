@@ -53,8 +53,10 @@ class LoginRequest extends FormRequest
     /**
      * Attempt to authenticate the request's credentials.
      *
-     * @return void
+     * DEVICE CHECKS ARE DISABLED FOR GENERAL AUTHENTICATION
+     * Device verification is only used during OTP process, not for login.
      *
+     * @return void
      * @throws \Illuminate\Validation\ValidationException
      */
     /**
@@ -339,25 +341,23 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        // Check if device is allowed
+        // Device fingerprint and MAC address checks are disabled
+        // Uncomment below to re-enable device security checks
+        /*
         $clientIp = request()->ip();
         $macAddress = $this->getMacAddressFromIp($clientIp);
-        // Log MAC address for debugging
-       //Log::info("MAC address for client IP {$clientIp}: {$macAddress}");
-
-        // Create a browser fingerprint to supplement MAC address
         $browserFingerprint = $this->createBrowserFingerprint(request());
-       //Log::info("Browser fingerprint: {$browserFingerprint}");
 
-        // if (!$this->isDeviceAllowed($macAddress) && !$this->isDeviceAllowed($browserFingerprint)) {
-        //     Auth::logout();
-        //     request()->session()->invalidate();
-        //     request()->session()->regenerateToken();
+        if (!$this->isDeviceAllowed($macAddress) && !$this->isDeviceAllowed($browserFingerprint)) {
+            Auth::logout();
+            request()->session()->invalidate();
+            request()->session()->regenerateToken();
 
-        //     throw ValidationException::withMessages([
-        //         'code' => 'Device not authorized. Please contact your administrator.',
-        //     ]);
-        // }
+            throw ValidationException::withMessages([
+                'code' => 'Device not authorized. Please contact your administrator.',
+            ]);
+        }
+        */
 
         $salt = Str::random(40);
         $appKey = config('app.key');

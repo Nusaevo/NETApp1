@@ -6,6 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\SysConfig1\ConfigConst;
 
+/**
+ * Device Check Controller
+ *
+ * This controller is used ONLY for OTP-related device verification.
+ * General authentication does NOT require device checks.
+ *
+ * Purpose:
+ * - Provides device information for OTP verification
+ * - Allows registration of trusted devices for OTP bypass
+ * - Device checks are isolated to OTP process only
+ */
 class DeviceCheckController extends Controller
 {
     /**

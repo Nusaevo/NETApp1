@@ -255,6 +255,7 @@ class OtpService extends BaseService
 
     /**
      * Check if current device is trusted (ALWAYS_ALLOW = true)
+     * Device checks are ONLY used for OTP verification, not for general authentication
      */
     public function isDeviceTrusted()
     {
