@@ -4,7 +4,7 @@ namespace App\Livewire\TrdTire1\Transaction\SalesBilling;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\LinkColumn, Filters\SelectFilter, Filters\TextFilter, Filters\DateFilter};
-use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr, BillingHdr};
+use App\Models\TrdTire1\Transaction\{DelivHdr, DelivDtl, OrderDtl, OrderHdr, BillingHdr, BillingDeliv};
 use App\Enums\TrdTire1\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +31,7 @@ class IndexDataTable extends BaseDataTableComponent
         return BillingHdr::with(['Partner', 'OrderHdr'])
             ->where('billing_hdrs.tr_type', 'ARB')
             ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP])
+            ->orderBy('billing_hdrs.partner_code', 'asc')
             ->orderBy('billing_hdrs.tr_code', 'asc');
     }
 
@@ -49,12 +50,20 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans("Tgl. Nota"), "tr_date")
-                ->format(function ($value) {
-                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
-                })
-                ->searchable(),
+            // Column::make($this->trans("Tgl. Nota"), "tr_date")
+            //     ->format(function ($value) {
+            //         return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '';
+            //     })
+            //     ->searchable(),
                 // ->sortable(),
+            Column::make($this->trans("Tgl. Nota"), "tr_date")
+                ->label(function ($row) {
+                    $delivery = OrderHdr::where('tr_type', 'SO')
+                        ->where('tr_code', $row->tr_code)
+                        ->first();
+                    return $delivery && $delivery->tr_date ? \Carbon\Carbon::parse($delivery->tr_date)->format('d-m-Y') : '';
+                })
+                ->sortable(),
             Column::make($this->trans("Tgl. Kirim"), "tr_date")
                 ->label(function ($row) {
                     $delivery = DelivHdr::where('tr_type', 'SD')

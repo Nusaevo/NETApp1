@@ -310,13 +310,12 @@ class Detail extends BaseComponent
             }
 
             // Panggil service untuk memproses sales delivery
+            $result = $this->deliveryService->saveDelivery($headerData, $detailData);
+            $this->object = $result['header'];
+
+            // Tambahkan pembuatan BillingHdr untuk create operation
             if ($this->actionValue === 'Create') {
-                $result = $this->deliveryService->addDelivery($headerData, $detailData);
-                $this->object = $result['header'];
-                // Tambahkan pembuatan BillingHdr
-                app(BillingService::class)->addBilling($headerData, $detailData);
-            } else {
-                $this->deliveryService->updDelivery($this->object->id, $headerData, $detailData);
+                app(BillingService::class)->saveBilling($headerData, $detailData);
             }
 
             DB::commit();

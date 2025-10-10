@@ -13,10 +13,8 @@ use App\Services\TrdTire1\BillingService;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
 use App\Services\TrdTire1\DeliveryService;
-use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -220,7 +218,6 @@ class IndexDataTable extends BaseDataTableComponent
 
             $this->dispatch('openDeliveryDateModal', orderIds: $this->getSelected(), selectedItems: $selectedItems);
             // $this->dispatch('submitDeliveryDate'); // Dihapus agar tidak auto-submit
-
         }
     }
 
@@ -229,63 +226,52 @@ class IndexDataTable extends BaseDataTableComponent
         $selectedOrderIds = $this->getSelected();
         if (count($selectedOrderIds) > 0) {
             DB::beginTransaction();
-            try {
-                // Ambil tr_code dari OrderHdr yang terpilih
-                $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
-                    ->pluck('tr_code')
-                    ->toArray();
 
-                // Validasi apakah ada delivery yang sudah dibuat
-                $delivHdrs = DelivHdr::where('tr_type', 'SD')
-                    ->whereIn('tr_code', $selectedTrCodes)
-                    ->get();
+            // Ambil tr_code dari OrderHdr yang terpilih
+            $selectedTrCodes = OrderHdr::whereIn('id', $selectedOrderIds)
+                ->pluck('tr_code')
+                ->toArray();
 
-                if ($delivHdrs->isEmpty()) {
-                    $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
-                    return;
-                }
+            // Validasi apakah ada delivery yang sudah dibuat
+            $delivHdrs = DelivHdr::where('tr_type', 'SD')
+                ->whereIn('tr_code', $selectedTrCodes)
+                ->get();
 
-                // Validasi billing: jika amt_reff > 0 maka tidak bisa dibatalkan
-                $billingHdrs = BillingHdr::whereIn('tr_code', $selectedTrCodes)
-                    ->where('amt_reff', '>', 0)
-                    ->get();
+            if ($delivHdrs->isEmpty()) {
+                $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
+                return;
+            }
 
-                if ($billingHdrs->isNotEmpty()) {
-                    $blockedTrCodes = $billingHdrs->pluck('tr_code')->toArray();
-                    $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ada pembayaran');
-                    return;
-                }
+            // Validasi billing: jika amt_reff > 0 maka tidak bisa dibatalkan
+            $billingHdrs = BillingHdr::whereIn('tr_code', $selectedTrCodes)
+                ->where('amt_reff', '>', 0)
+                ->get();
 
-                // Gunakan DeliveryService untuk menghapus delivery
-                $deliveryService = app(DeliveryService::class);
-                $billingService = app(BillingService::class);
-                $deletedCount = 0;
+            if ($billingHdrs->isNotEmpty()) {
+                $blockedTrCodes = $billingHdrs->pluck('tr_code')->toArray();
+                $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ada pembayaran');
+                return;
+            }
 
-                foreach ($delivHdrs as $delivHdr) {
-                    try {
-                        $deliveryService->delDelivery($delivHdr->id);
-                        $billingService->delBilling($delivHdr->billhdr_id);
-                        $deletedCount++;
-                    } catch (Exception $e) {
-                        // Log error untuk debugging
-                        Log::error('Error deleting delivery ID ' . $delivHdr->id . ': ' . $e->getMessage());
-                        throw new Exception('Gagal menghapus delivery ' . $delivHdr->tr_code . ': ' . $e->getMessage());
-                    }
-                }
+            // Gunakan DeliveryService untuk menghapus delivery
+            $deliveryService = app(DeliveryService::class);
+            $billingService = app(BillingService::class);
+            $deletedCount = 0;
 
-                // Update status OrderHdr kembali ke PRINT
-                OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::PRINT]);
+            foreach ($delivHdrs as $delivHdr) {
+                $deliveryService->delDelivery($delivHdr->id);
+                $billingService->delBilling($delivHdr->billhdr_id);
+                $deletedCount++;
+            }
 
-                DB::commit();
+            // Update status OrderHdr kembali ke PRINT
+            OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::PRINT]);
+
+            DB::commit();
 
             $this->clearSelected();
             $this->dispatch('success', "Berhasil membatalkan {$deletedCount} data pengiriman");
             $this->dispatch('refresh-page');
-            } catch (Exception $e) {
-                DB::rollBack();
-                $this->dispatch('error', 'Gagal membatalkan pengiriman: ' . $e->getMessage());
-                $this->dispatch('refresh-page');
-            }
         }
     }
 
@@ -309,7 +295,6 @@ class IndexDataTable extends BaseDataTableComponent
                 $this->dispatch('error', 'Tidak bisa membatalkan pesanan barang yang sudah dikirim');
                 return;
             }
-
 
             $orderDtls = OrderDtl::whereIn('trhdr_id', function ($query) use ($selectedTrCodes) {
                 $query->select('id')
@@ -364,7 +349,6 @@ class IndexDataTable extends BaseDataTableComponent
                 }
             }
             OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::PRINT]);
-
 
             DB::commit();
 
