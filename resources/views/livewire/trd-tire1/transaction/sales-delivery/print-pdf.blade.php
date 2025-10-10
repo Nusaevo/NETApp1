@@ -24,14 +24,20 @@
                     {{ $this->notaCounter['surat_jalan'] }}
                 </div>
                 <tr>
-                    <td style="width: 25%;">
-                        <div style="text-align: center;">
-                            <h2 style="margin: 0; text-decoration: underline; font-weight: bold; font-size: 22px;">
-                                CAHAYA TERANG</h2>
-                            <p style="margin-top: -5px;">SURABAYA</p>
-                        </div>
-                    </td>
-                    <td style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 50%;">
+                    @if ($this->isFirstShipTo())
+                        <td style="width: 25%;">
+                            <div style="text-align: center;">
+                                <h2 style="margin: 0; text-decoration: underline; font-weight: bold; font-size: 22px;">
+                                    CAHAYA TERANG</h2>
+                                <p style="margin-top: -5px;">SURABAYA</p>
+                            </div>
+                        </td>
+                    @else
+                        <td style="width: 25%;">
+                            <!-- Header disembunyikan untuk ship_to yang bukan pertama -->
+                        </td>
+                    @endif
+                    <td style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 47%;">
                         <h3 style="margin-bottom: -5px; text-decoration: underline;">
                             SURAT JALAN</h3>
                         <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
@@ -173,15 +179,21 @@
                             {{ $this->notaCounter['surat_jalan'] }}
                         </div>
                         <tr>
-                            <td style="width: 25%;">
-                                <div style="text-align: center;">
-                                    <h2
-                                        style="margin: 0; text-decoration: underline; font-weight: bold; font-size: 22px;">
-                                        CAHAYA TERANG</h2>
-                                    <p style="margin-top: -5px;">SURABAYA</p>
-                                </div>
-                            </td>
-                            <td style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 50%;">
+                            @if ($this->isFirstShipTo())
+                                <td style="width: 25%;">
+                                    <div style="text-align: center;">
+                                        <h2
+                                            style="margin: 0; text-decoration: underline; font-weight: bold; font-size: 22px;">
+                                            CAHAYA TERANG</h2>
+                                        <p style="margin-top: -5px;">SURABAYA</p>
+                                    </div>
+                                </td>
+                            @else
+                                <td style="width: 25%;">
+                                    <!-- Header disembunyikan untuk ship_to yang bukan pertama -->
+                                </td>
+                            @endif
+                            <td style="text-align: center; margin-top: 20px; vertical-align: bottom; width: 47%;">
                                 <h3 style="margin-bottom: -5px; text-decoration: underline;">SURAT JALAN</h3>
                                 <p style="margin: 0px 0;">No. {{ $this->object->tr_code }}</p>
                             </td>
@@ -190,8 +202,7 @@
                                     {{ \Carbon\Carbon::parse($this->object->tr_date)->format('d-M-Y') }}</p>
                                 <p style="margin-bottom: -8px;">Kepada Yth :</p>
                                 <p style="margin-bottom: -20px;"><strong>{{ $this->object->ship_to_name }}</strong></p>
-                                <p
-                                    style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 5px;">
+                                <p style="margin-bottom: -8px; white-space: pre-line; line-height: 1; margin-top: 5px;">
                                     {{ $this->object->ship_to_addr }}</p>
                             </td>
                         </tr>

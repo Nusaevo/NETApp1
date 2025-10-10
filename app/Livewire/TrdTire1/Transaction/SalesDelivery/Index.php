@@ -36,7 +36,7 @@ class Index extends BaseComponent
         $this->selectedOrderIds = $orderIds;
         $this->selectedItems    = $selectedItems;
         // Set default tanggal kirim ke hari ini jika belum ada
-        $this->inputs['tr_date'] = Carbon::now()->format('Y-m-d');
+        // $this->inputs['tr_date'] = Carbon::now()->format('Y-m-d');
         $this->dispatch('open-modal-delivery-date');
     }
 

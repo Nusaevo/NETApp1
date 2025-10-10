@@ -96,4 +96,37 @@ class PrintPdf extends BaseComponent
     public function onValidateAndSave()
     {
     }
+
+    /**
+     * Check if current ship_to is the first option
+     */
+    public function isFirstShipTo()
+    {
+        if (!$this->object || !$this->object->Partner) {
+            return true; // Default to show header if no object or partner
+        }
+
+        $partner = $this->object->Partner;
+
+        // Get shipping options from partner detail
+        if (!$partner->PartnerDetail || empty($partner->PartnerDetail->shipping_address)) {
+            return true; // Default to show header if no shipping options
+        }
+
+        $shipDetail = $partner->PartnerDetail->shipping_address;
+        if (is_string($shipDetail)) {
+            $shipDetail = json_decode($shipDetail, true);
+        }
+
+        if (!is_array($shipDetail) || empty($shipDetail)) {
+            return true; // Default to show header if no valid shipping options
+        }
+
+        // Get first option
+        $firstOption = reset($shipDetail);
+        $firstShipToName = $firstOption['name'] ?? '';
+
+        // Compare with current ship_to_name
+        return $this->object->ship_to_name === $firstShipToName;
+    }
 }
