@@ -39,10 +39,10 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make($this->trans("Nomor Nota"), "tr_code")
                 ->format(function ($value, $row) {
-                    if ($row->partner_id) {
+                    if ($row->partner_id && $row->OrderHdr) {
                         return '<a href="' . route($this->appCode . '.Transaction.SalesOrder.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
-                            'objectId' => encryptWithSessionKey($row->id)
+                            'objectId' => encryptWithSessionKey($row->OrderHdr->id)
                         ]) . '">' . $row->tr_code . '</a>';
                     } else {
                         return '';
