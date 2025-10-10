@@ -446,6 +446,9 @@ class Detail extends BaseComponent
                 $this->dispatch('warning', 'Nota ini tidak bisa edit, karena status sudah Completed');
                 return;
             }
+
+            // Hapus detail lama terlebih dahulu untuk mode edit
+            $this->deleteExistingDetails();
         }
 
         $warehouseType = ConfigConst::where('str1', $this->inputs['tr_type'])->first();
@@ -541,6 +544,17 @@ class Detail extends BaseComponent
 
     public function isEditOrView() {
         return $this->actionValue === 'Edit' || $this->actionValue === 'View';
+    }
+
+    protected function deleteExistingDetails()
+    {
+        if (!empty($this->object->id)) {
+            // Hapus log inventory terlebih dahulu
+            app(InventoryService::class)->delIvtLog($this->object->id);
+
+            // Hapus detail inventory
+            IvttrDtl::where('trhdr_id', $this->object->id)->delete();
+        }
     }
 
     protected function prepareBatchCode()
