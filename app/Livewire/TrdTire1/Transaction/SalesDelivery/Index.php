@@ -173,7 +173,7 @@ class Index extends BaseComponent
         // Tampilkan hasil
         if ($successCount > 0) {
             $this->dispatch('success', $successCount . ' Sales Delivery berhasil dibuat');
-            $this->dispatch('refresh-page');
+            $this->dispatch('refreshDatatable');
         }
 
         $this->dispatch('close-modal-delivery-date');

@@ -191,7 +191,8 @@ class IndexDataTable extends BaseDataTableComponent
                         if ($value) { // Hanya terapkan filter jika ada nilai yang dipilih
                             $builder->whereDate('print_date', $value)
                                    ->reorder()
-                                   ->orderBy('billing_hdrs.partner_code', 'asc');
+                                   ->orderBy('billing_hdrs.partner_code', 'asc')
+                                   ->orderBy('billing_hdrs.tr_code', 'asc');
                         }
                     }),
                 SelectFilter::make('Status Pembayaran')
