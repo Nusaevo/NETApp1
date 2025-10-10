@@ -446,7 +446,7 @@ class MaterialComponent extends BaseComponent
 
         // Query untuk mencari nomor terbesar
         $maxNumber = Material::where('code', 'like', $brandPrefix . '%')
-            ->selectRaw("MAX(CAST(SUBSTRING(code, $start) AS INTEGER)) as max_num")
+            ->selectRaw("MAX(CAST(REGEXP_REPLACE(SUBSTRING(code, $start), '[^0-9]', '', 'g') AS INTEGER)) as max_num")
             ->value('max_num');
 
         $newNumber = $maxNumber ? $maxNumber + 1 : 1;
