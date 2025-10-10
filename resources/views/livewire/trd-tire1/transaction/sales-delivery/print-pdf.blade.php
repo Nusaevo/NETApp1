@@ -20,7 +20,7 @@
             <!-- Header -->
             <table width="100%" style="margin-bottom: 5px;">
                 <!-- Counter untuk array nota -->
-                <div class="me-3" style="text-align: end">
+                <div class="me-3" style="text-align: end; margin-bottom: -15px;">
                     {{ $this->notaCounter['surat_jalan'] }}
                 </div>
                 <tr>
@@ -175,7 +175,7 @@
                     <!-- Header per page -->
                     <table width="100%" style="margin-bottom: 5px;">
                         <!-- Counter untuk array nota -->
-                        <div class="me-3" style="text-align: end">
+                        <div class="me-3" style="text-align: end; margin-bottom: -15px;">
                             {{ $this->notaCounter['surat_jalan'] }}
                         </div>
                         <tr>
