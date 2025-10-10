@@ -167,7 +167,7 @@
     <!-- Area print tetap tampil saat print -->
     <div id="print" class="d-none d-print-block p-20">
         <div style="margin: 0 auto; font-family: 'Calibri'; font-size: 16px;">
-            <div class="invoice-box" style="margin: auto; padding: 20px;">
+            <div class="invoice-box" style="margin: auto; padding: 10px;">
                 @php
                     $counter = 1;
                 @endphp
