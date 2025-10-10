@@ -22,7 +22,7 @@ class Index extends BaseComponent
     protected function onPreRender()
     {
         $this->masterService = new MasterService();
-        $this->resetFilters();
+        // $this->resetFilters();
     }
 
     // public function onSrCodeChanged() {
@@ -38,7 +38,7 @@ class Index extends BaseComponent
             return;
         }
 
-        $this->resetErrorBag();
+        // $this->resetErrorBag();
 
         $printDate = addslashes($this->selectedPrintDate);
         $query = "
@@ -61,11 +61,11 @@ class Index extends BaseComponent
         $this->results = $rows;
     }
 
-    public function resetFilters()
-    {
-        $this->selectedPrintDate = '';
-        $this->results = [];
-    }
+    // public function resetFilters()
+    // {
+    //     $this->selectedPrintDate = '';
+    //     $this->results = [];
+    // }
 
     public function render()
     {
