@@ -28,11 +28,11 @@ class OrderService
 
             $headerData['id'] = $header->id;
 
-            $details = $this->saveDetails($headerData, $detailData);
+            $this->saveDetails($headerData, $detailData);
 
             return [
                 'header' => $header,
-                'details' => $details
+                'details' => []
             ];
         } catch (Exception $e) {
             throw new Exception('Error updating order: ' . $e->getMessage());
@@ -62,6 +62,19 @@ class OrderService
         if (!isset($headerData['id']) || empty($headerData['id'])) {
             throw new Exception('Header ID tidak ditemukan. Pastikan header sudah tersimpan.');
         }
+
+        // Langkah 1: Hapus detail yang tidak ada dalam array detailData terlebih dahulu
+        $existingDetailIds = array_filter(array_column($detailData, 'id'));
+        $deletedDetails = OrderDtl::where('trhdr_id', $headerData['id'])
+            ->whereNotIn('id', $existingDetailIds)
+            ->get();
+        foreach ($deletedDetails as $deletedDetail) {
+            // Hapus ivt_logs untuk detail yang dihapus
+            $this->inventoryService->delIvtLog(0, $deletedDetail->id);
+            $deletedDetail->delete();
+        }
+
+        // Langkah 2: Update atau create detail yang tersisa
         $newDetail = null;
         $orderDetailIds = [];
         foreach ($detailData as $detail) {
@@ -69,7 +82,7 @@ class OrderService
             $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
             if (!$detail['id']) {
-                $detail['tr_seq'] = OrderDtl::getNextTrSeq($headerData['id']);
+                // Untuk item baru, gunakan tr_seq yang sudah disiapkan dari prepareDetailData
                 $newDetail = OrderDtl::create($detail);
                 if (str_starts_with($headerData['tr_code'], 'PO')) {
                     MatlUom::updLastBuyingPrice(
@@ -85,7 +98,6 @@ class OrderService
                 $existingDetail = OrderDtl::find($detail['id']);
                 if ($existingDetail) {
                     $existingDetail->fill($detail);
-                    // dd($detail,$existingDetail,$existingDetail->isDirty());
                     // Update hanya jika ada perubahan data
                     if ($existingDetail->isDirty()) {
                         $this->inventoryService->delIvtLog(0, $existingDetail->id);
@@ -103,15 +115,6 @@ class OrderService
                 }
                 $orderDetailIds[] = $existingDetail->id;
             }
-        }
-        // Hapus detail yang tidak ada dalam array detailData
-        $deletedDetails = OrderDtl::where('trhdr_id', $headerData['id'])
-            ->whereNotIn('id', $orderDetailIds)
-            ->get();
-        foreach ($deletedDetails as $deletedDetail) {
-            // Hapus ivt_logs untuk detail yang dihapus
-            $this->inventoryService->delIvtLog(0, $deletedDetail->id);
-            $deletedDetail->delete();
         }
 
     }
