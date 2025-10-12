@@ -20,15 +20,21 @@ class Index extends BaseComponent
 {
     public $selectedOrderIds = [];
     public $deliveryDate = '';
-    public $inputs = [
-        'tr_date' => '',
-        'wh_code' => '',
-    ];
+
     protected $masterService;
     public $warehouses;
     public $selectedItems = [];
     protected $listeners = [
         'openDeliveryDateModal',
+    ];
+    public $inputs = [
+        'tr_date' => '',
+        'wh_code' => '',
+    ];
+
+    public $rules = [
+        'inputs.tr_date' => 'required|date',
+        'inputs.wh_code' => 'required',
     ];
 
     public function openDeliveryDateModal($orderIds, $selectedItems)
@@ -48,11 +54,6 @@ class Index extends BaseComponent
             return;
         }
 
-        $this->validate([
-            'inputs.tr_date' => 'required|date',
-            'inputs.wh_code' => 'required',
-        ]);
-
         // Validasi tanggal kirim tidak boleh lebih besar dari tanggal sekarang
         $deliveryDate = Carbon::parse($this->inputs['tr_date']);
         $today = Carbon::now()->startOfDay();
@@ -71,6 +72,35 @@ class Index extends BaseComponent
         $successCount = 0;
         $stockErrors = [];
 
+        // Validasi stok untuk semua order terlebih dahulu
+        foreach ($selectedOrders as $order) {
+            $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
+
+            foreach ($orderDetails as $detail) {
+                $totalStock = IvtBal::where('matl_id', $detail->matl_id)
+                    ->where('wh_id', $warehouse->id)
+                    ->where('qty_oh', '>', 0)
+                    ->sum('qty_oh');
+
+                if ($totalStock < $detail->qty) {
+                    $stockError = 'Nota: ' . $order->tr_code . ' - Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . (int)$totalStock . ' - Dibutuhkan: ' . $detail->qty;
+                    $stockErrors[] = $stockError;
+                }
+            }
+        }
+
+        // Jika ada error stok, tampilkan semua error dan hentikan proses
+        if (!empty($stockErrors)) {
+            $this->dispatch('notify-swal', [
+                'type' => 'error',
+                'message' => '<strong>Stock Tidak Cukup</strong><br><br>' . implode('<br>', $stockErrors)
+            ]);
+            $this->dispatch('close-modal-delivery-date');
+            // $this->dispatch('refresh-page');
+            return;
+        }
+
+        // Jika tidak ada error stok, lanjutkan proses delivery
         foreach ($selectedOrders as $order) {
             // Persiapan array inputs
             $inputs = [
@@ -96,17 +126,6 @@ class Index extends BaseComponent
             $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
 
             foreach ($orderDetails as $detail) {
-                // Cek stok tersedia di warehouse (hanya untuk validasi)
-                $totalStock = IvtBal::where('matl_id', $detail->matl_id)
-                    ->where('wh_id', $warehouse->id)
-                    ->where('qty_oh', '>', 0)
-                    ->sum('qty_oh');
-
-                if ($totalStock < $detail->qty) {
-                    $stockErrors[] = 'Nota: ' . $order->tr_code . ' - Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . (int)$totalStock . ' - Dibutuhkan: ' . $detail->qty;
-                    continue 2;
-                }
-
                 $input_details[] = [
                     'matl_id' => $detail->matl_id,
                     'matl_code' => $detail->matl_code,
@@ -162,22 +181,13 @@ class Index extends BaseComponent
             }
         }
 
-        // Tampilkan error stok jika ada
-        if (!empty($stockErrors)) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => '<strong>Stock Tidak Cukup</strong><br><br>' . implode('<br>', $stockErrors)
-            ]);
-        }
-
-        // Tampilkan hasil
+        // Tampilkan hasil sukses
         if ($successCount > 0) {
             $this->dispatch('success', $successCount . ' Sales Delivery berhasil dibuat');
-            $this->dispatch('refreshDatatable');
         }
 
         $this->dispatch('close-modal-delivery-date');
-        // $this->dispatch('refreshDatatable');
+        $this->dispatch('refreshDatatable');
         // $this->dispatch('refresh-page');
     }
 

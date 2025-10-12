@@ -192,6 +192,7 @@
                         <x-slot name="button">
                             {{-- <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
                                 button-name="Add" /> --}}
+                            {{-- Dropdown search untuk nota dari partner --}}
                             <x-ui-button clickEvent="payItem" cssClass="btn btn-primary"
                                 button-name="Auto Pelunasan" />
                         </x-slot>

@@ -27,10 +27,8 @@ class DeliveryService
 
             $headerData['id'] = $header->id;
 
-            // dd($headerData,$detailData);
             $details = $this->saveDetails($headerData, $detailData);
 
-            // dd($header, $details);
             return [
                 'header' => $header,
                 'details' => $details
@@ -70,7 +68,6 @@ class DeliveryService
             $detail['tr_type'] = $headerData['tr_type'];
             $detail['tr_code'] = $headerData['tr_code'];
 
-            // dd($detail);
             if (!isset($detail['id']) || empty($detail['id'])) {
                 $detail['tr_seq'] = DelivPacking::getNextTrSeq($headerData['id']);
 
@@ -168,6 +165,7 @@ class DeliveryService
 
         $picking_ids = [];
         $existingPickings = DelivPicking::where('trpacking_id', $detailData['id'])->get();
+
         foreach ($pickingData as $key => $detail) {
             $picking = $existingPickings
                 ->where('trpacking_id', $detail['trpacking_id'])
@@ -176,14 +174,23 @@ class DeliveryService
                 ->where('wh_id', $detail['wh_id'])
                 ->where('batch_code', $detail['batch_code'])
                 ->first();
+
             if (!$picking) {
-                $detail['tr_seq'] = DelivPacking::where('id', $detailData['id'])->value('tr_seq');
+                // tr_seq picking = urutan picking dalam packing yang sama (1, 2, 3, dst)
+                // tr_seq2 picking = urutan picking dalam packing yang sama (1, 2, 3, dst)
+                $detail['tr_seq'] = DelivPicking::getNextTrSeq($detailData['id']);
                 $detail['tr_seq2'] = DelivPicking::getNextTrSeq($detailData['id']);
 
                 $picking = new DelivPicking();
                 $picking->fill($detail);
                 $picking->save();
+
                 $detail['id'] = $picking->id;
+
+                // Untuk ivt_logs, gunakan tr_seq dari packing
+                $packingTrSeq = DelivPacking::where('id', $detailData['id'])->value('tr_seq');
+                $detail['tr_seq'] = $packingTrSeq;
+
                 $ivtBalId = $this->inventoryService->addOnhand($headerData, $detail);
                 $picking->ivt_id = $ivtBalId;
                 $picking->save();
@@ -196,8 +203,12 @@ class DeliveryService
                 $picking->fill($detail);
                 if ($picking->isDirty()) {
                     $this->inventoryService->delIvtLog(0, $picking->id);
-                    // dd($picking, $detail);
                     $picking->save();
+
+                    // Untuk ivt_logs, gunakan tr_seq dari packing
+                    $packingTrSeq = DelivPacking::where('id', $detailData['id'])->value('tr_seq');
+                    $detail['tr_seq'] = $packingTrSeq;
+
                     $this->inventoryService->addOnhand($headerData, $detail);
                 }
                 $picking_ids[] = $picking->id;

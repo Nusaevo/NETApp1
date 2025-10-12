@@ -51,7 +51,7 @@
                                     <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
                                 </div>
                                 <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
-                                    <div style="font-weight: bold; font-size: 14px;">{{ $customerGroup['partner']->name }}</div>
+                                    <div style="font-size: 14px;">{{ $customerGroup['partner']->name }}</div>
                                     <div style="font-size: 14px;">{{ $customerGroup['partner']->address }}</div>
                                 </div>
                             </div>
