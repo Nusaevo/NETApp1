@@ -17,8 +17,10 @@
                             <x-ui-text-field label="Tanggal Akhir:" model="endCode" type="date" action="Edit" />
                         </div>
                         <div class="col-md-2">
-                            <x-ui-dropdown-select label="Supplier" model="filterPartner" :options="$this->getPartnerOptions()"
-                                action="Edit" />
+                            <x-ui-dropdown-search label="Supplier" model="filterPartner"
+                                optionValue="id" :query="$ddPartner['query']" :optionLabel="$ddPartner['optionLabel']" :placeHolder="$ddPartner['placeHolder']"
+                                :selectedValue="$filterPartner" required="false" action="Edit" enabled="true"
+                                type="int" onChanged="onPartnerChanged"/>
                         </div>
                         <div class="col-md-2">
                             <x-ui-dropdown-select label="Brand" model="filterBrand" :options="$this->getBrandOptions()" action="Edit" />
