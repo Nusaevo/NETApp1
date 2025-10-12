@@ -252,9 +252,9 @@ class Detail extends BaseComponent
                 // dd($this->inputs);
                 // $this->inputs['tax_doc_flag'] = $this->object->tax_doc_flag;
                 $this->onTaxDocFlagChanged();
+                $this->loadShippingOptions();
                 $this->inputs['tr_code'] = $this->object->tr_code;
                 $this->inputs['partner_name'] = $this->object->partner ? $this->object->partner->code : '';
-                $this->onPartnerChanged();
 
                 // Pastikan print_remarks adalah string/float, bukan array/object
                 $trDate = $this->object->tr_date ? \Carbon\Carbon::parse($this->object->tr_date) : null;
@@ -644,6 +644,29 @@ class Detail extends BaseComponent
 
         // Dispatch event untuk refresh Select2
         $this->dispatch('refreshSelect2', 'inputs_npwp_code');
+    }
+
+    public function loadShippingOptions()
+    {
+        // Muat shipping options jika ada partner_id
+        if (!empty($this->inputs['partner_id'])) {
+            $partner = Partner::find($this->inputs['partner_id']);
+            if ($partner && $partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
+                $shipDetail = $partner->PartnerDetail->shipping_address;
+                if (is_string($shipDetail)) {
+                    $shipDetail = json_decode($shipDetail, true);
+                }
+                if (is_array($shipDetail) && !empty($shipDetail)) {
+                    $this->shipOptions = array_map(function ($item) {
+                        return [
+                            'label' => $item['name'] . ' - ' . $item['address'],
+                            'value' => $item['name'],
+                            'address' => $item['address'],
+                        ];
+                    }, $shipDetail);
+                }
+            }
+        }
     }
 
     public function onPaymentTermChanged()
@@ -1060,17 +1083,16 @@ class Detail extends BaseComponent
             $this->inputs['partner_address'] = $partner->address;
             $this->inputs['partner_city'] = $partner->city;
 
-            // Simpan data ship_to dan npwp_code yang sudah ada sebelum di-reset
-            $existingShipToName = $this->inputs['ship_to_name'] ?? '';
-            $existingShipToAddr = $this->inputs['ship_to_addr'] ?? '';
-            $existingNpwpCode = $this->inputs['npwp_code'] ?? '';
-            $existingNpwpName = $this->inputs['npwp_name'] ?? '';
-            $existingNpwpAddr = $this->inputs['npwp_addr'] ?? '';
-
-            // Reset shipping info
+            // Reset shipping info completely when partner changes
             $this->inputs['ship_to_name'] = '';
             $this->inputs['ship_to_addr'] = '';
             $this->shipOptions = [];
+
+            // Reset NPWP info completely when partner changes
+            $this->inputs['npwp_code'] = '';
+            $this->inputs['npwp_name'] = '';
+            $this->inputs['npwp_addr'] = '';
+            $this->npwpOptions = [];
 
             // Handle Shipping Options
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->shipping_address)) {
@@ -1087,33 +1109,21 @@ class Detail extends BaseComponent
                         ];
                     }, $shipDetail);
 
-                    // Jika ada data ship_to yang sudah tersimpan, gunakan data tersebut
-                    if (!empty($existingShipToName)) {
-                        $this->inputs['ship_to_name'] = $existingShipToName;
-                        $this->inputs['ship_to_addr'] = $existingShipToAddr;
-                    } else {
-                        // Jika tidak ada data tersimpan, gunakan data pertama
-                        $first = reset($this->shipOptions);
-                        if ($first) {
-                            $this->inputs['ship_to_name'] = $first['value'] ?? '';
-                            $this->inputs['ship_to_addr'] = $first['address'] ?? '';
-                        }
+                    // Set default shipping address to first option
+                    $first = reset($this->shipOptions);
+                    if ($first) {
+                        $this->inputs['ship_to_name'] = $first['value'] ?? '';
+                        $this->inputs['ship_to_addr'] = $first['address'] ?? '';
                     }
                 }
             }
 
-            // Handle NPWP Options - selalu muat data wp_details dari partner yang dipilih
+            // Handle NPWP Options - load wp_details from selected partner
             if ($partner->PartnerDetail && !empty($partner->PartnerDetail->wp_details)) {
                 $wpDetails = $partner->PartnerDetail->wp_details;
                 if (is_string($wpDetails)) {
                     $wpDetails = json_decode($wpDetails, true);
                 }
-
-                // Debug: cek data wp_details yang di-load
-                // Log::info('NPWP Data loaded from partner:', [
-                //     'partner_id' => $partner->id,
-                //     'wp_details' => $wpDetails
-                // ]);
 
                 if (is_array($wpDetails) && !empty($wpDetails)) {
                     $this->npwpOptions = array_map(function ($item) {
@@ -1125,24 +1135,12 @@ class Detail extends BaseComponent
                         ];
                     }, $wpDetails);
 
-                    // Debug: cek npwpOptions yang dibuat
-                    // Log::info('NPWP Options created:', [
-                    //     'npwpOptions' => $this->npwpOptions
-                    // ]);
-
+                    // Set default NPWP to first option if tax_doc_flag is active
                     if (!empty($this->inputs['tax_doc_flag'])) {
-                        // Jika ada data NPWP yang sudah tersimpan, gunakan data tersebut
-                        if (!empty($existingNpwpCode)) {
-                            $this->inputs['npwp_code'] = $existingNpwpCode;
-                            $this->inputs['npwp_name'] = $existingNpwpName;
-                            $this->inputs['npwp_addr'] = $existingNpwpAddr;
-                        } else {
-                            // Jika tidak ada data tersimpan, gunakan data pertama
-                            $first = reset($this->npwpOptions);
-                            $this->inputs['npwp_code'] = $first['value'] ?? '';
-                            $this->inputs['npwp_name'] = $first['name'] ?? '';
-                            $this->inputs['npwp_addr'] = $first['address'] ?? '';
-                        }
+                        $first = reset($this->npwpOptions);
+                        $this->inputs['npwp_code'] = $first['value'] ?? '';
+                        $this->inputs['npwp_name'] = $first['name'] ?? '';
+                        $this->inputs['npwp_addr'] = $first['address'] ?? '';
                     }
                 }
             } else {
@@ -1156,13 +1154,6 @@ class Detail extends BaseComponent
                 if (!empty($this->inputs['tax_doc_flag'])) {
                     $this->dispatch('error', 'Partner ' . $partner->name . ' tidak memiliki NPWP. Silahkan tambahkan NPWP terlebih dahulu.');
                 }
-
-                // Debug: partner tidak memiliki wp_details
-                // Log::info('Partner has no wp_details:', [
-                //     'partner_id' => $partner->id,
-                //     'has_partner_detail' => $partner->PartnerDetail ? 'yes' : 'no',
-                //     'wp_details' => $partner->PartnerDetail ? $partner->PartnerDetail->wp_details : 'no partner detail'
-                // ]);
             }
 
             // Dispatch event untuk refresh Select2
