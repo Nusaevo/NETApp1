@@ -53,13 +53,14 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 })
                 ->html(),
-            Column::make($this->trans("supplier"), "partner_id")
-                ->format(function ($value, $row) {
-                    return '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
+                Column::make($this->trans("supplier"), "partner_id")
+                ->format(fn($v, $r) => $r->Partner?->name
+                    ? '<a href="' . route($this->appCode . '.Master.Partner.Detail', [
                         'action' => encryptWithSessionKey('Edit'),
-                        'objectId' => encryptWithSessionKey($row->partner_id)
-                    ]) . '">' . $row->Partner->name . '</a>';
-                })
+                        'objectId' => encryptWithSessionKey($r->partner_id)
+                    ]) . '">' . e($r->Partner->name) . '</a>'
+                    : ''
+                )
                 ->html(),
             Column::make('Kode Barang', 'orderdtl_codes')
                 ->label(function ($row) {

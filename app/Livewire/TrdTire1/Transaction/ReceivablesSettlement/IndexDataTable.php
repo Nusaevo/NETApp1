@@ -22,7 +22,8 @@ class IndexDataTable extends BaseDataTableComponent
     public function builder(): Builder
     {
         return PaymentHdr::with(['PaymentDtl', 'Partner', 'paymentSrc']) // Update builder
-            ->whereIn('payment_hdrs.tr_type', ['APP', 'ARP']);
+            ->whereIn('payment_hdrs.tr_type', ['APP', 'ARP'])
+            ->orderBy('payment_hdrs.tr_date', 'desc');
     }
 
     public function columns(): array
@@ -30,7 +31,6 @@ class IndexDataTable extends BaseDataTableComponent
         return [
             Column::make('Nomor Pelunasan', 'tr_code')
                 ->searchable()
-                ->sortable()
                 ->format(function ($value, $row) {
                     if ($row->partner_id) {
                         return '<a href="' . route($this->appCode . '.Transaction.ReceivablesSettlement.Detail', [
@@ -43,8 +43,7 @@ class IndexDataTable extends BaseDataTableComponent
                 })
                 ->html(),
             Column::make($this->trans("Tanggal Pelunasan"), "tr_date")
-                ->searchable()
-                ->sortable(),
+                ->searchable(),
             Column::make($this->trans("customer"), "partner_id")
                 ->format(function ($value, $row) {
                     if ($row->Partner && $row->Partner->name) {
@@ -68,8 +67,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("Total Pelunasan"), "amt_dtls")
                 ->format(function ($value, $row) {
                     return rupiah($row->amt_dtls ?? 0);
-                })
-                ->sortable(),
+                }),
             Column::make($this->trans("Lebih Bayar"), "amt_advs")
                 ->format(function ($value, $row) {
                     // Jika menggunakan saldo advance, maka lebih bayar = 0
@@ -221,7 +219,7 @@ class IndexDataTable extends BaseDataTableComponent
             DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where('payment_hdrs.tr_date', '=', $value);
             }),
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
+            TextFilter::make('Nomor Pelunasan')->filter(function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(payment_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
             TextFilter::make('Custommer')->filter(function (Builder $builder, string $value) {

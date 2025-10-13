@@ -379,7 +379,7 @@ class IndexDataTable extends BaseDataTableComponent
                 'selectedPrintDate' => $selectedPrintDate,
                 'type' => 'cetakProsesDate'
             ];
-            return redirect()->route('TrdTire1.Tax.TaxInvoice.PrintPdf', [
+            return redirect()->route($this->appCode . '.Tax.TaxInvoice.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey(''),
                 'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),
@@ -409,7 +409,7 @@ class IndexDataTable extends BaseDataTableComponent
                 'type' => 'cetakLaporanPenjualan'
             ];
 
-            return redirect()->route('TrdTire1.Transaction.PurchaseDelivery.PrintPdf', [
+            return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey(''),
                 'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),

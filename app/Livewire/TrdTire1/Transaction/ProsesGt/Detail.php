@@ -425,7 +425,7 @@ class Detail extends BaseComponent
             $this->notaCount++;
             $this->updateVersionNumber2();
             // Logika cetak nota jual
-            return redirect()->route('TrdTire1.Transaction.SalesOrder.PrintPdf', [
+            return redirect()->route($this->appCode . '.Transaction.SalesOrder.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);
@@ -440,7 +440,7 @@ class Detail extends BaseComponent
             $this->suratJalanCount++;
             $this->updateVersionNumber2();
             // Logika cetak surat jalan
-            return redirect()->route('TrdTire1.Transaction.SalesDelivery.PrintPdf', [
+            return redirect()->route($this->appCode . '.Transaction.SalesDelivery.PrintPdf', [
                 'action' => encryptWithSessionKey('Edit'),
                 'objectId' => encryptWithSessionKey($this->object->id)
             ]);        } catch (Exception $e) {
