@@ -16,15 +16,16 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_date', 'desc');
+        $this->setDefaultSort('tr_date', 'desc');direction:
     }
 
     public function builder(): Builder
     {
         return IvttrHdr::query()
             ->with(['IvttrDtl'])
-            ->where('status_code', Status::OPEN)
-            ->orWhere('status_code', Status::ACTIVE); // Include non-active records
+            ->whereIn('status_code', [Status::OPEN, Status::ACTIVE])
+            ->orderBy('updated_at', 'desc')
+            ->orderBy('tr_date', 'desc');
     }
 
     public function columns(): array
