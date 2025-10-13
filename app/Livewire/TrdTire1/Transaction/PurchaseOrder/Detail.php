@@ -65,9 +65,8 @@ class Detail extends BaseComponent
     // Validation rules for header and details
     public $rules = [
         'inputs.tr_code' => 'required',
-        'inputs.partner_id' => 'required',
+        'inputs.partner_id' => 'required|integer',
         'inputs.tax_code' => 'required',
-        // 'input_details.*.qty' => 'required',
         'input_details.*.matl_id' => 'required',
     ];
 
@@ -238,6 +237,12 @@ class Detail extends BaseComponent
             $detail['qty_uom'] = 'PCS';
             $detail['price_uom'] = 'PCS';
             $detail['qty_base'] = 1;
+
+            // Set tr_seq untuk item baru (yang belum ada id)
+            if (empty($detail['id'])) {
+                $detail['tr_seq'] = $trSeq;
+                $trSeq++;
+            }
         }
         unset($detail);
         return $detailData;
