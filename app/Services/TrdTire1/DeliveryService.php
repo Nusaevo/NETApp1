@@ -157,10 +157,6 @@ class DeliveryService
                     $qty_remaining  -= $bal->qty_oh;
                 }
             }
-            if ($qty_remaining > 0) {
-                throw new Exception('Tidak cukup stok untuk picking. Qty yang diminta: ' . $detailData['qty'] . ',
-                Qty yang tersedia: ' . ($detailData['qty'] - $qty_remaining));
-            }
         }
 
         $picking_ids = [];
