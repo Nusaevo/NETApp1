@@ -147,6 +147,7 @@
                             <th style="width: 30px; text-align: center;">Adjustment</th>
                             <th style="width: 90px; text-align: center;">Total Bayar</th>
                             <th style="width: 40px; text-align: center;">Dilunaskan</th>
+                            <th style="width: 40px; text-align: center;">Aksi</th>
                         </x-slot>
 
                         <!-- Define table rows -->
@@ -185,14 +186,33 @@
                                             onChanged="toggleLunas({{ $key }})" :action="$actionValue"
                                             enabled="true" :showLabel="false" :label="$input_detail['is_lunas'] ? 'Lunas' : 'Belum Lunas'" />
                                     </td>
+                                    <td style="text-align: center;">
+                                        @if($actionValue === 'Create')
+                                        <x-ui-button :clickEvent="'deleteNotaItem(' . $key . ')'" button-name="" loading="true"
+                                            :action="$actionValue" cssClass="btn-danger text-danger"
+                                            iconPath="delete.svg" />
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </x-slot>
 
                         <x-slot name="button">
-                            {{-- <x-ui-button clickEvent="addItem" cssClass="btn btn-primary" iconPath="add.svg"
-                                button-name="Add" /> --}}
                             {{-- Dropdown search untuk nota dari partner --}}
+                            @if(!empty($inputs['partner_id']))
+                            <div wire:key="nota-dropdown-{{ count($input_details) }}">
+                                <x-ui-dropdown-search label="Pilih Nota" model="selectedNotaId"
+                                    :query="$notaQuery"
+                                    optionValue="id" optionLabel="tr_code"
+                                    placeHolder="Pilih nota untuk ditambahkan..." :selectedValue="$selectedNotaId"
+                                    :action="$actionValue" :enabled="$isPanelEnabled" type="int"
+                                    onChanged="onNotaSelected" />
+                            </div>
+                            @else
+                            <div class="alert alert-info">
+                                <small>Pilih customer terlebih dahulu untuk menampilkan daftar nota</small>
+                            </div>
+                            @endif
                             <x-ui-button clickEvent="payItem" cssClass="btn btn-primary"
                                 button-name="Auto Pelunasan" />
                         </x-slot>
@@ -232,4 +252,13 @@
 
 <script>
     $this - > dispatch('disable-onbeforeunload');
+
+    // Reset dropdown after Livewire updates
+    document.addEventListener('livewire:updated', () => {
+        const selectElement = document.querySelector('[wire\\:model="selectedNotaId"]');
+        if (selectElement && $(selectElement).hasClass('select2-hidden-accessible')) {
+            // Reset Select2 dropdown value
+            $(selectElement).val(null).trigger('change');
+        }
+    });
 </script>

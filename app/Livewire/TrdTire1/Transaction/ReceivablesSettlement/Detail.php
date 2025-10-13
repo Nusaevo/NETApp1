@@ -69,7 +69,9 @@ class Detail extends BaseComponent
     public $input_details = [];
     public $input_advance = [];
     public $input_payments = [];
-    public $isDataLoaded = false; // Flag untuk mencegah auto pelunasan saat data dimuat
+    public $isDataLoaded = false;
+    public $selectedNotaId = null;
+    public $notaQuery = '';
 
     public $rules  = [
         'inputs.partner_id' => 'required',
@@ -595,19 +597,22 @@ class Detail extends BaseComponent
         if (!$this->isDataLoaded || $this->actionValue === 'Edit') {
             return;
         }
-        $selectedNotes = 0;
+
+        // Reset amount untuk semua nota
         foreach ($this->input_details as $key => $detail) {
             $this->input_details[$key]['amt'] = 0;
         }
-        $selectedNotes = 0;
-        foreach ($this->input_details as $key => $detail) {
-            if (!empty($detail['is_selected'])) {
-                $selectedNotes++;
-            }
+
+        // Reset advance amount juga
+        foreach ($this->input_advance as $key => $advance) {
+            $this->input_advance[$key]['amt'] = 0;
         }
-        if ($selectedNotes > 0) {
-            $this->paySelectedNotas();
-        }
+
+        // Update total amount
+        $this->updateTotalAmt();
+
+        // Tidak otomatis melakukan auto pelunasan
+        // User harus klik "Auto Pelunasan" secara manual
     }
 
     public function payItem()
@@ -820,7 +825,7 @@ class Detail extends BaseComponent
         }
 
         $this->updateTotalAmt();
-        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota menggunakan advance dan payment sesuai outstanding dan urutan jatuh tempo.');
+        $this->dispatch('success', 'Pembayaran berhasil dibagi ke semua nota sesuai urutan jatuh tempo yang paling dekat.');
     }
 
     public function isEditOrView()
@@ -867,27 +872,14 @@ class Detail extends BaseComponent
             // Set count of unpaid invoices
             $this->unpaidInvoiceCount = $outstandingBills->count();
 
-            // Jika tidak ada nota outstanding, beri warning, tapi tetap lanjutkan proses advance
+            // Clear existing nota details - user will add manually via dropdown
             $this->input_details = [];
+
             if (empty($outstandingBills)) {
-                $this->input_details[] = populateArrayFromModel(new PaymentDtl());
                 $this->dispatch('warning', "Tidak ada nota yang dilunasi untuk customer ini, namun saldo advance tetap bisa digunakan.");
             } else {
                 // Show notification about unpaid invoices count
                 $this->dispatch('info', "Customer {$partner->name} memiliki {$this->unpaidInvoiceCount} nota yang belum dilunasi.");
-                foreach ($outstandingBills as $key => $bill) {
-                    $this->input_details[] = populateArrayFromModel(new PaymentDtl());
-                    $this->input_details[$key]['billhdr_id'] = $bill->billhdr_id;
-                    $this->input_details[$key]['billhdrtr_type'] = $bill->billhdrtr_type;
-                    $this->input_details[$key]['billhdrtr_code'] = $bill->billhdrtr_code;
-                    $this->input_details[$key]['due_date'] = Carbon::parse($bill->due_date)->format('Y-m-d');
-                    $this->input_details[$key]['amt'] = 0;
-                    $this->input_details[$key]['amtbill'] = $bill->outstanding_amt;
-                    $this->input_details[$key]['outstanding_amt'] = $bill->outstanding_amt;
-                    $this->input_details[$key]['is_selected'] = false;
-                    $this->input_details[$key]['is_lunas'] = false;
-                    $this->input_details[$key]['amt_adjustment'] = 0;
-                }
             }
 
             // Pada mode Create, populate advance dari PartnerBal jika ada (hanya saat partner dipilih)
@@ -912,8 +904,48 @@ class Detail extends BaseComponent
 
             // Set flag bahwa data sudah dimuat
             $this->isDataLoaded = true;
+
+            // Update nota query untuk dropdown search
+            $this->updateNotaQuery($partner->id);
         }
         // dd($this->input_details, $this->input_advance, $this->inputs);
+    }
+
+    private function updateNotaQuery($partnerId)
+    {
+        // Get already selected nota IDs
+        $selectedNotaIds = collect($this->input_details)->pluck('billhdr_id')->filter()->toArray();
+        $excludeCondition = '';
+
+        if (!empty($selectedNotaIds)) {
+            $excludeIds = implode(',', array_map('intval', $selectedNotaIds));
+            $excludeCondition = "AND bh.id NOT IN ({$excludeIds})";
+        }
+
+        $this->notaQuery = "SELECT
+                           sub.id,
+                           sub.tr_code,
+                           sub.tr_date,
+                           sub.amt,
+                           sub.amt_reff,
+                           sub.outstanding_amt,
+                           sub.due_date
+                           FROM (
+                               SELECT
+                                   bh.id,
+                                   bh.tr_code,
+                                   bh.tr_date,
+                                   bh.amt,
+                                   bh.amt_reff,
+                                   (bh.amt - COALESCE(bh.amt_reff, 0)) outstanding_amt,
+                                   bh.tr_date + (COALESCE(bh.payment_due_days, 0) || ' days')::interval due_date
+                               FROM billing_hdrs bh
+                               WHERE
+                                   bh.partner_id = {$partnerId}
+                                   AND bh.deleted_at IS NULL
+                                   AND (bh.amt - COALESCE(bh.amt_reff, 0)) > 0
+                                   {$excludeCondition}
+                           ) sub";
     }
 
     public function toggleLunas($key)
@@ -1007,6 +1039,90 @@ class Detail extends BaseComponent
         $this->input_payments[$key]['pay_type_id'] =
             $this->paytypeOptions[array_search($payTypeCode, array_column($this->paytypeOptions, 'value'))]['id'] ?? 0;
 
+    }
+
+    public function onNotaSelected()
+    {
+        if (empty($this->selectedNotaId)) {
+            return;
+        }
+
+        // Cek apakah nota sudah ada di input_details
+        $existingNota = collect($this->input_details)->firstWhere('billhdr_id', $this->selectedNotaId);
+        if ($existingNota) {
+            $this->dispatch('warning', 'Nota ini sudah ada dalam daftar pembayaran.');
+            $this->selectedNotaId = null;
+            return;
+        }
+
+        // Ambil data nota dari database
+        $billingHdr = BillingHdr::find($this->selectedNotaId);
+        if (!$billingHdr) {
+            $this->dispatch('error', 'Nota tidak ditemukan.');
+            $this->selectedNotaId = null;
+            return;
+        }
+
+        // Hitung outstanding amount
+        $outstandingAmt = $billingHdr->amt - ($billingHdr->amt_reff ?? 0);
+        if ($outstandingAmt <= 0) {
+            $this->dispatch('warning', 'Nota ini sudah lunas atau tidak memiliki outstanding amount.');
+            $this->selectedNotaId = null;
+            return;
+        }
+
+        // Hitung due date
+        $dueDate = Carbon::parse($billingHdr->tr_date)->addDays($billingHdr->payment_due_days ?? 0)->format('Y-m-d');
+
+        // Tambahkan nota ke input_details
+        $newDetail = populateArrayFromModel(new PaymentDtl());
+        $newDetail['billhdr_id'] = $billingHdr->id;
+        $newDetail['billhdrtr_type'] = $billingHdr->tr_type;
+        $newDetail['billhdrtr_code'] = $billingHdr->tr_code;
+        $newDetail['due_date'] = $dueDate;
+        $newDetail['amt'] = 0;
+        $newDetail['amtbill'] = $outstandingAmt;
+        $newDetail['outstanding_amt'] = $outstandingAmt;
+        $newDetail['is_selected'] = false;
+        $newDetail['is_lunas'] = false;
+        $newDetail['amt_adjustment'] = 0;
+
+        $this->input_details[] = $newDetail;
+
+        // Reset selectedNotaId
+        $this->selectedNotaId = null;
+
+        // Update query to exclude newly selected nota
+        if (!empty($this->inputs['partner_id'])) {
+            $this->updateNotaQuery($this->inputs['partner_id']);
+        }
+
+        $this->dispatch('success', 'Nota berhasil ditambahkan ke daftar pembayaran.');
+    }
+
+    public function deleteNotaItem($index)
+    {
+        try {
+            if (!isset($this->input_details[$index])) {
+                throw new Exception('Nota item not found.');
+            }
+
+            // Ambil data nota yang akan dihapus untuk logging
+            $deletedNota = $this->input_details[$index];
+
+            // Hapus nota dari array
+            unset($this->input_details[$index]);
+            $this->input_details = array_values($this->input_details);
+
+            // Update query to include deleted nota back in dropdown
+            if (!empty($this->inputs['partner_id'])) {
+                $this->updateNotaQuery($this->inputs['partner_id']);
+            }
+
+            $this->dispatch('success', 'Nota ' . ($deletedNota['billhdrtr_code'] ?? '') . ' berhasil dihapus dari daftar pembayaran.');
+        } catch (Exception $e) {
+            $this->dispatch('error', 'Error menghapus nota: ' . $e->getMessage());
+        }
     }
 
     public function render()
