@@ -318,7 +318,7 @@ class IndexDataTable extends BaseDataTableComponent
                 return;
             }
 
-            return redirect()->route('TrdTire1.Transaction.ProsesGt.PrintPdf', [
+            return redirect()->route($this->appCode . '.Transaction.ProsesGt.PrintPdf', [
                 'action' => encryptWithSessionKey('Print'),
                 'objectId' => encryptWithSessionKey(json_encode($orderIds)),
                 'additionalParam' => $selectedProcessDate,

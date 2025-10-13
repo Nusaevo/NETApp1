@@ -299,6 +299,9 @@ class BaseComponent extends Component
         $this->menuName = ConfigMenu::getMenuNameByLink($menu_link);
         $this->langBasePath = str_replace('.', '/', $this->baseRenderRoute);
 
+        // Set page title with menuName
+        $this->setPageTitle();
+
         if ($this->isComponent) {
             return;
         }
@@ -315,6 +318,20 @@ class BaseComponent extends Component
         $translation = __($fullKey);
 
         return $translation === $fullKey ? $key : $translation;
+    }
+
+    /**
+     * Set page title based on menuName
+     */
+    protected function setPageTitle()
+    {
+        if (!empty($this->menuName)) {
+            $cleanTitle = strip_tags($this->menuName);
+
+            // Share with view for Blade templates
+            view()->share('pageTitle', $cleanTitle);
+            view()->share('menuName', $this->menuName);
+        }
     }
 
     protected function hasValidPermissions()
