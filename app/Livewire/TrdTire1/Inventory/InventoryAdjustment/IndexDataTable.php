@@ -16,7 +16,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function mount(): void
     {
         $this->setSearchDisabled();
-        $this->setDefaultSort('tr_date', 'desc');direction:
+        $this->setDefaultSort('tr_date', 'desc');
     }
 
     public function builder(): Builder
@@ -51,15 +51,16 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Kode Barang', 'matl_code')
                 ->label(function ($row) {
                     if ($row->IvttrDtl && $row->IvttrDtl->count() > 0) {
-                        return $row->IvttrDtl->pluck('matl_code')->filter()->first();
+                        $materialCodes = $row->IvttrDtl->pluck('matl_code')->filter()->unique()->values();
+                        return $materialCodes->count() > 0 ? $materialCodes->implode(', ') : '-';
                     }
                     return '-';
                 }),
             Column::make('Batch', 'batch_code')
                 ->label(function ($row) {
                     if ($row->IvttrDtl && $row->IvttrDtl->count() > 0) {
-                        $batch = $row->IvttrDtl->pluck('batch_code')->filter()->first();
-                        return $batch ?: '-';
+                        $batchCodes = $row->IvttrDtl->pluck('batch_code')->filter()->unique()->values();
+                        return $batchCodes->count() > 0 ? $batchCodes->implode(', ') : '-';
                     }
                     return '-';
                 }),
@@ -77,7 +78,7 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                     return '-';
                 }),
-            Column::make('Gudand Tujuan', 'wh_code')
+            Column::make('Gudang Tujuan', 'wh_code')
                 ->label(function ($row) {
                     if ($row->tr_type === 'IA') {
                         // Untuk IA, gudang tujuan dikosongkan
@@ -108,18 +109,41 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            // $this->createTextFilter('Nomor Transaksi', 'tr_code', 'Cari Nomor Transaksi', function (Builder $builder, string $value) {
-            //     $builder->where(DB::raw('UPPER(ivttr_hdrs.tr_code)'), '=', $value);
-            // }),
-            // $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
-            //     $builder->whereExists(function ($query) use ($value) {
-            //         $query->select(DB::raw(1))
-            //             ->from('deliv_dtls')
-            //             ->whereRaw('deliv_dtls.tr_code = ivttr_hdrs.tr_code')
-            //             ->where(DB::raw('UPPER(deliv_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%')
-            //             ->where('deliv_dtls.tr_type', 'PD');
-            //     });
-            // }),
+            // Filter Tanggal Periode
+            DateFilter::make('Tanggal Awal')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('tr_date', '>=', $value);
+                }),
+
+            DateFilter::make('Tanggal Akhir')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereDate('tr_date', '<=', $value);
+                }),
+
+            // Filter Nomor Transaksi
+            TextFilter::make('Nomor Transaksi')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where(DB::raw('UPPER(tr_code)'), 'like', '%' . strtoupper($value) . '%');
+                }),
+
+            TextFilter::make('Kode Barang')
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->whereExists(function ($query) use ($value) {
+                        $query->select(DB::raw(1))
+                            ->from('ivttr_dtls')
+                            ->whereRaw('ivttr_dtls.tr_code = ivttr_hdrs.tr_code')
+                            ->where(DB::raw('UPPER(ivttr_dtls.matl_code)'), 'like', '%' . strtoupper($value) . '%');
+                    });
+                }),
+            SelectFilter::make('Tipe Transaksi')
+                ->options([
+                    '' => 'Semua Transaksi',
+                    'IA' => 'IA - Adjustment',
+                    'TW' => 'TW - Transfer',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('tr_type', $value);
+                }),
         ];
     }
 }

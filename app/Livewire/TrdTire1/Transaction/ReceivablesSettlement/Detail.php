@@ -287,7 +287,7 @@ class Detail extends BaseComponent
 
                 $billingHdr = BillingHdr::find($detail->billhdr_id);
                 if ($billingHdr) {
-                    $due_date = Carbon::parse($billingHdr->tr_date)->addDays($billingHdr->payment_due_days)->format('Y-m-d');
+                    $due_date = Carbon::parse($billingHdr->tr_date)->addDays($billingHdr->payment_due_days)->format('d-m-Y');
                     $this->input_details[$key]['due_date'] = $due_date;
                     $this->input_details[$key]['amtbill'] =  $billingHdr->amt - $billingHdr->amt_reff;
                     $this->input_details[$key]['outstanding_amt'] = $billingHdr->amt - $billingHdr->amt_reff + $detail->amt;
@@ -929,6 +929,7 @@ class Detail extends BaseComponent
                            sub.amt,
                            sub.amt_reff,
                            sub.outstanding_amt,
+                           sub.outstanding_amt_formatted,
                            sub.due_date
                            FROM (
                                SELECT
@@ -938,7 +939,8 @@ class Detail extends BaseComponent
                                    bh.amt,
                                    bh.amt_reff,
                                    (bh.amt - COALESCE(bh.amt_reff, 0)) outstanding_amt,
-                                   bh.tr_date + (COALESCE(bh.payment_due_days, 0) || ' days')::interval due_date
+                                   TO_CHAR((bh.amt - COALESCE(bh.amt_reff, 0)), 'FM999,999,999,999,990') outstanding_amt_formatted,
+                                   TO_CHAR(bh.tr_date + (COALESCE(bh.payment_due_days, 0) || ' days')::interval, 'DD-MM-YYYY') due_date
                                FROM billing_hdrs bh
                                WHERE
                                    bh.partner_id = {$partnerId}

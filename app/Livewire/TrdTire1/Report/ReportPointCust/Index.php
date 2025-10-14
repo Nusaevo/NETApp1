@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\{DB, Session};
 use App\Services\TrdTire1\Master\MasterService;
 use App\Enums\Constant;
 use App\Models\TrdTire1\Master\SalesReward;
+use App\Models\Util\GenericExcelExport;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 class Index extends BaseComponent
 {
@@ -180,5 +182,96 @@ class Index extends BaseComponent
     public function resetResult()
     {
         $this->results = [];
+    }
+
+    public function downloadExcel()
+    {
+        // Pastikan ada data
+        if (empty($this->results)) {
+            $this->dispatch('notify-swal', [
+                'type' => 'warning',
+                'message' => 'Tidak ada data untuk di-export. Mohon lakukan pencarian terlebih dahulu.'
+            ]);
+            return;
+        }
+
+        try {
+            // Tentukan kolom dinamis dari hasil crosstab
+            $columns = [];
+            if (count($this->results)) {
+                $columns = array_keys((array)$this->results[0]);
+            }
+            $groupColumns = array_values(array_filter($columns, fn($c) => $c !== 'customer'));
+
+            // Header: Customer, untuk setiap grup 1 kolom gabungan "point|ban", lalu kolom Total gabungan
+            $headers = ['Customer'];
+            foreach ($groupColumns as $grpCol) {
+                $headers[] = $grpCol; // nilai sel: "point|ban"
+            }
+            $headers[] = 'Total';
+
+            // Data rows
+            $excelData = [];
+            foreach ($this->results as $row) {
+                $dataRow = [];
+                $customer = $row->customer ?? '';
+                $dataRow[] = $customer;
+
+                $rowTotalQty = 0;
+                $rowTotalPoint = 0;
+                foreach ($groupColumns as $grpCol) {
+                    $val = $row->$grpCol ?? '';
+                    $parts = explode('|', $val);
+                    $qty = isset($parts[0]) ? (int)$parts[0] : 0;   // ban
+                    $point = isset($parts[1]) ? (int)$parts[1] : 0; // point
+                    $rowTotalQty += $qty;
+                    $rowTotalPoint += $point;
+                    // format: point|ban
+                    $dataRow[] = ($point ?: 0) . '|' . ($qty ?: 0);
+                }
+                // total gabungan point|ban
+                $dataRow[] = ($rowTotalPoint ?: 0) . '|' . ($rowTotalQty ?: 0);
+                $excelData[] = $dataRow;
+            }
+
+            // Title & subtitle
+            $title = 'DATA PENJUALAN GT RADIAL per Customer';
+            $subtitleParts = [];
+            if ($this->category) {
+                $subtitleParts[] = 'Program: ' . $this->category;
+            }
+            if ($this->startCode || $this->endCode) {
+                $subtitleParts[] = 'Periode: ' . ($this->startCode ? \Carbon\Carbon::parse($this->startCode)->format('d-M-Y') : '-')
+                    . ' s/d ' . ($this->endCode ? \Carbon\Carbon::parse($this->endCode)->format('d-M-Y') : '-');
+            }
+            $subtitle = implode(' | ', $subtitleParts);
+
+            $sheets = [[
+                'name' => 'Report_Point_Customer',
+                'headers' => $headers,
+                'data' => $excelData,
+                'protectedColumns' => [],
+                'allowInsert' => false,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'titleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'subtitleAlignment' => Alignment::HORIZONTAL_LEFT,
+                'rowStyles' => [],
+            ]];
+
+            // Filename
+            $filename = 'Report_Point_Customer_';
+            $filename .= ($this->category ? str_replace(' ', '_', $this->category) : 'All');
+            if ($this->startCode || $this->endCode) {
+                $filename .= '_' . ($this->startCode ? date('Ymd', strtotime($this->startCode)) : '');
+                $filename .= '-' . ($this->endCode ? date('Ymd', strtotime($this->endCode)) : '');
+            }
+            $filename .= '.xlsx';
+
+            return (new GenericExcelExport(sheets: $sheets, filename: $filename))->download();
+        } catch (\Exception $e) {
+            $this->dispatch('error', 'Error generating Excel: ' . $e->getMessage());
+            return;
+        }
     }
 }
