@@ -21,6 +21,14 @@ class IndexDataTable extends BaseDataTableComponent
     protected $model = DelivHdr::class;
     public $bulkSelectedIds = null;
 
+    protected $listeners = ['clearSelections'];
+
+    public function clearSelections()
+    {
+        $this->clearSelected();
+        $this->bulkSelectedIds = null;
+    }
+
 
     public function mount(): void
     {

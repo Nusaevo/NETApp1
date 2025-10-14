@@ -26,6 +26,7 @@ class Index extends BaseComponent
     public $selectedItems = [];
     protected $listeners = [
         'openDeliveryDateModal',
+        'closeDeliveryDateModal',
     ];
     public $inputs = [
         'tr_date' => '',
@@ -46,12 +47,21 @@ class Index extends BaseComponent
         $this->dispatch('open-modal-delivery-date');
     }
 
+    public function closeDeliveryDateModal()
+    {
+        // Clear selections when dialog is closed
+        $this->selectedOrderIds = [];
+        $this->selectedItems = [];
+
+        // Dispatch to IndexDataTable to clear selections
+        $this->dispatch('clearSelections');
+    }
+
     public function onValidateAndSave()
     {
         // Validasi input
         if (empty($this->selectedOrderIds) || count($this->selectedOrderIds) === 0) {
-            $this->dispatch('error', 'Silakan pilih minimal satu nota untuk dikirim.');
-            return;
+            throw new Exception('Silakan pilih minimal satu nota untuk dikirim.');
         }
 
         // Validasi tanggal kirim tidak boleh lebih besar dari tanggal sekarang
@@ -91,13 +101,7 @@ class Index extends BaseComponent
 
         // Jika ada error stok, tampilkan semua error dan hentikan proses
         if (!empty($stockErrors)) {
-            $this->dispatch('notify-swal', [
-                'type' => 'error',
-                'message' => '<strong>Stock Tidak Cukup</strong><br><br>' . implode('<br>', $stockErrors)
-            ]);
-            $this->dispatch('close-modal-delivery-date');
-            // $this->dispatch('refresh-page');
-            return;
+            throw new Exception('<strong>Stock Tidak Cukup</strong><br><br>' . implode('<br>', $stockErrors));
         }
 
         // Jika tidak ada error stok, lanjutkan proses delivery
@@ -181,11 +185,14 @@ class Index extends BaseComponent
             }
         }
 
-        // Tampilkan hasil sukses
+        //Tampilkan hasil sukses
         if ($successCount > 0) {
             $this->dispatch('success', $successCount . ' Sales Delivery berhasil dibuat');
         }
 
+        // Clear selections after successful completion
+
+        $this->dispatch('clearSelections');
         $this->dispatch('close-modal-delivery-date');
         $this->dispatch('refreshDatatable');
         // $this->dispatch('refresh-page');
