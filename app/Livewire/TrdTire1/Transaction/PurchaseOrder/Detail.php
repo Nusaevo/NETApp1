@@ -65,7 +65,7 @@ class Detail extends BaseComponent
     // Validation rules for header and details
     public $rules = [
         'inputs.tr_code' => 'required',
-        'inputs.partner_id' => 'required|integer',
+        'inputs.partner_id' => 'required|min:1',
         'inputs.tax_code' => 'required',
         'input_details.*.matl_id' => 'required',
     ];
@@ -171,6 +171,12 @@ class Detail extends BaseComponent
             $this->orderService = app(OrderService::class);
         }
 
+        // Validasi duplikasi tr_code
+        $this->validateTrCodeDuplicate();
+
+        // Validasi duplikasi matl_id dalam detail
+        $this->validateMatlIdDuplicate();
+
         // Jika sudah ada delivery, hanya boleh update header
         if ($this->isDeliv) {
             // Prepare data header saja
@@ -179,7 +185,7 @@ class Detail extends BaseComponent
 
             // Simpan hanya header (tanpa update detail)
             try {
-                $result = $this->orderService->updOrder($this->object->id, $headerData, []);
+                $result = $this->orderService->saveOrder($headerData, []);
                 if (!$result) {
                     throw new Exception('Gagal mengubah Purchase Order.');
                 }
@@ -654,6 +660,46 @@ class Detail extends BaseComponent
                     break; // Jika ada satu item yang sudah delivery, maka semua nonaktif
                 }
             }
+        }
+    }
+
+    /**
+     * Validasi duplikasi tr_code
+     */
+    private function validateTrCodeDuplicate()
+    {
+        $trCode = $this->inputs['tr_code'] ?? null;
+        if (empty($trCode)) return;
+
+        $query = OrderHdr::where('tr_code', $trCode)->where('tr_type', $this->trType);
+
+        if ($this->actionValue === 'Edit' && !empty($this->object->id)) {
+            $query->where('id', '!=', $this->object->id);
+        }
+
+        if ($query->exists()) {
+            throw new Exception("Kode transaksi '{$trCode}' sudah digunakan. Silakan gunakan kode yang berbeda.");
+        }
+    }
+
+    /**
+     * Validasi duplikasi matl_id dalam detail items
+     */
+    private function validateMatlIdDuplicate()
+    {
+        if (empty($this->input_details)) return;
+
+        $matlIds = [];
+        foreach ($this->input_details as $index => $detail) {
+            $matlId = $detail['matl_id'] ?? null;
+            if (empty($matlId)) continue;
+
+            if (in_array($matlId, $matlIds)) {
+                $material = Material::find($matlId);
+                $materialName = $material ? $material->name : "ID: {$matlId}";
+                throw new Exception("Material '{$materialName}' sudah ada dalam detail. Silakan hapus salah satu atau gunakan material yang berbeda.");
+            }
+            $matlIds[] = $matlId;
         }
     }
 

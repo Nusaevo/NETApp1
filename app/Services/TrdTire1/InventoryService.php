@@ -243,30 +243,43 @@ class InventoryService
                     $ivttrDtl->fill($detail);
                     $ivttrDtl->save();
 
+                    // Set id pada detail untuk logging dan penentuan ivt_id
                     $detail['id'] = $ivttrDtl->id;
-                    $this->addOnhand($headerData, $detail);
+                    $ivtId = $this->addOnhand($headerData, $detail);
+                    // Update ivt_id pada detail yang baru dibuat
+                    $ivttrDtl->ivt_id = $ivtId;
+                    $ivttrDtl->save();
                 }
             } else if ($detail['tr_type'] === 'TW') {
                 if (!isset($detail['id']) || empty($detail['id'])) {
                     $detail['tr_seq'] = IvttrDtl::getNextTrSeq($headerData['id']);
 
+                    // Detail OUT (tr_seq negatif, qty negatif)
                     $detail1 = $detail;
                     $detail1['tr_seq'] = -$detail['tr_seq'];
                     $detail1['qty'] = -$detail['qty'];
-                    $ivttrDtl = new IvttrDtl();
-                    $ivttrDtl->fill($detail1);
-                    $ivttrDtl->save();
-                    $detail['id'] = $ivttrDtl->id;
-                    $this->addOnhand($headerData, $detail1);
+                    $ivttrDtl1 = new IvttrDtl();
+                    $ivttrDtl1->fill($detail1);
+                    $ivttrDtl1->save();
+                    // Pastikan id terpasang di detail untuk addOnhand
+                    $detail1['id'] = $ivttrDtl1->id;
+                    $detail['id'] = $ivttrDtl1->id;
+                    $ivtId1 = $this->addOnhand($headerData, $detail1);
+                    $ivttrDtl1->ivt_id = $ivtId1;
+                    $ivttrDtl1->save();
 
+                    // Detail IN (ke gudang tujuan)
                     $detail2 = $detail;
                     $detail2['wh_id'] = $detail['wh_id2'];
                     $detail2['wh_code'] = $detail['wh_code2'];
-                    $ivttrDtl = new IvttrDtl();
-                    $ivttrDtl->fill($detail2);
-                    $ivttrDtl->save();
-                    $detail['id2'] = $ivttrDtl->id;
-                    $this->addOnhand($headerData, $detail2);
+                    $ivttrDtl2 = new IvttrDtl();
+                    $ivttrDtl2->fill($detail2);
+                    $ivttrDtl2->save();
+                    $detail2['id'] = $ivttrDtl2->id;
+                    $detail['id2'] = $ivttrDtl2->id;
+                    $ivtId2 = $this->addOnhand($headerData, $detail2);
+                    $ivttrDtl2->ivt_id = $ivtId2;
+                    $ivttrDtl2->save();
                }
             }
         }
