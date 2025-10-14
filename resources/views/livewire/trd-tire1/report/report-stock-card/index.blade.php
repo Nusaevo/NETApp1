@@ -43,6 +43,7 @@
                         body {
                             background: #fff !important;
                             font-family: 'Calibri', Arial, sans-serif !important;
+                            padding-top: 10px;
                         }
                         #print .card {
                             box-shadow: none !important;
@@ -50,13 +51,13 @@
                             background: transparent !important;
                         }
                         #print .card-body {
-                            padding: 0 !important;
-                            margin: 0 !important;
+                            padding: 0 ;
+                            margin: 0 ;
                             background: transparent !important;
                         }
                         #print .container {
                             margin: 0 auto !important;
-                            padding: 0 !important;
+                            padding: 0 ;
                             max-width: none !important;
                         }
                         #print table {
@@ -98,7 +99,7 @@
                             color: #000 !important;
                         }
                         #print div[style*="max-width:2480px"] {
-                            padding: 0px 20px 20px 20px !important;
+                            padding: 20px 20px 20px 20px !important;
                             max-width: 100% !important;
                             background: transparent !important;
                         }
@@ -107,7 +108,7 @@
                 <div class="card print-page">
                     <div class="card-body">
                         <div class="container mb-3 mt-4">
-                            <div style="max-width:2480px; margin:auto; padding:5px 20px 20px 20px;">
+                            <div style="max-width:2480px; margin:auto; padding:20px 20px 20px 20px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                                     <h3 style="font-weight:bold; margin:0;">KARTU STOK</h3>
                                     {{-- <span style="font-size: 12px; color: #666;">Page 1 of 1</span> --}}
