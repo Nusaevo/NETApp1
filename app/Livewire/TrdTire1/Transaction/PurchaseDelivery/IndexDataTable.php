@@ -35,7 +35,10 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make($this->trans("date"), "tr_date")
+            Column::make($this->trans("Tgl. Terima Barang"), "tr_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '-';
+                })
                 ->searchable()
                 ->sortable(),
             // Column::make('currency', "curr_rate")
@@ -49,7 +52,10 @@ class IndexDataTable extends BaseDataTableComponent
                     ]) . '">' . $row->tr_code . '</a>';
                 })
                 ->html(),
-            Column::make($this->trans("Tanggal Surat Jalan"), "reff_date")
+            Column::make($this->trans("Tgl. Surat Jalan"), "reff_date")
+                ->format(function ($value) {
+                    return $value ? \Carbon\Carbon::parse($value)->format('d-m-Y') : '-';
+                })
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("supplier"), "partner_id")
@@ -116,15 +122,6 @@ class IndexDataTable extends BaseDataTableComponent
             $this->createTextFilter('Supplier', 'name', 'Cari Supplier', function (Builder $builder, string $value) {
                 $builder->whereHas('Partner', function ($query) use ($value) {
                     $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
-            }),
-            $this->createTextFilter('Material', 'matl_code', 'Cari Kode Material', function (Builder $builder, string $value) {
-                $builder->whereExists(function ($query) use ($value) {
-                    $query->select(DB::raw(1))
-                        ->from('deliv_packings')
-                        ->whereRaw('deliv_packings.tr_code = deliv_hdrs.tr_code')
-                        ->where(DB::raw('UPPER(deliv_packings.matl_descr)'), 'like', '%' . strtoupper($value) . '%')
-                        ->where('deliv_packings.tr_type', 'PD');
                 });
             }),
         ];

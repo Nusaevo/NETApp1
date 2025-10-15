@@ -16,6 +16,8 @@ class Index extends BaseComponent
 
     public $results = [];
     public $warehouses = [];
+    public $material_name = '';
+    public $warehouse_name = '';
     public $materialQuery = "
         SELECT m.id, m.code, m.name
         FROM materials m
@@ -39,23 +41,47 @@ class Index extends BaseComponent
         $this->start_date = '';
         $this->end_date = '';
         $this->results = [];
+        $this->material_name = '';
+        $this->warehouse_name = '';
     }
 
     public function onMaterialChanged()
     {
-        // Get material code from selected material ID
+        // Get material code and name from selected material ID
         if ($this->matl_id) {
             $material = DB::connection(Session::get('app_code'))
                 ->table('materials')
-                ->select('code')
+                ->select('code', 'name')
                 ->where('id', $this->matl_id)
                 ->first();
 
             if ($material) {
                 $this->matl_code = $material->code;
+                $this->material_name = $material->name;
             }
         } else {
             $this->matl_code = '';
+            $this->material_name = '';
+        }
+    }
+
+    public function onWarehouseChanged()
+    {
+        // Get warehouse name from selected warehouse code
+        if ($this->wh_code) {
+            $warehouse = DB::connection(Session::get('app_code'))
+                ->table('config_consts')
+                ->select('str2')
+                ->where('const_group', 'TRX_WAREHOUSE')
+                ->where('str1', $this->wh_code)
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($warehouse) {
+                $this->warehouse_name = $warehouse->str2;
+            }
+        } else {
+            $this->warehouse_name = '';
         }
     }
 
@@ -94,11 +120,12 @@ class Index extends BaseComponent
                 JOIN params p ON TRUE
                 WHERE il.wh_code = p.wh_code
                     AND il.matl_code = p.matl_code
-                    AND il.tr_type IN ('PD','SD','TWA','IA')
+                    AND il.tr_type IN ('PD','SD','TW','IA')
+                    AND il.tr_date >= DATE_TRUNC('month', p.start_date)
                     AND il.tr_date < p.start_date
                 ),
                 opening AS (
-                SELECT COALESCE(o.qty, b.qty_oh, 0)::numeric AS opening_qty
+                SELECT COALESCE(b.qty_oh, 0)::numeric + COALESCE(o.qty, 0)::numeric AS opening_qty
                 FROM (SELECT 1) x
                 LEFT JOIN opening_from_logs o ON TRUE
                 LEFT JOIN bal b ON TRUE
@@ -123,19 +150,31 @@ class Index extends BaseComponent
                     AND il.tr_type IN ('PD','SD','TW','IA')
                     AND il.tr_date BETWEEN p.start_date AND p.end_date
                 ),
+                tx_with_balance AS (
+                SELECT
+                    t.*
+                FROM tx t
+                ),
                 final_balance AS (
-                SELECT COALESCE(SUM(net_qty),0) AS closing_qty
+                SELECT
+                    (SELECT opening_qty FROM opening) + COALESCE(SUM(net_qty),0) AS closing_qty
                 FROM tx
                 )
                 SELECT
+                0 AS urut, NULL::date AS tr_date, 'Sisa Stok s/d ' || TO_CHAR(p.start_date - INTERVAL '1 day', 'DD-Mon-YYYY') AS tr_desc, NULL AS tr_code, NULL AS tr_seq, NULL AS tr_seq2, NULL AS tr_type,
+                0 AS masuk, 0 AS keluar, (SELECT opening_qty FROM opening) AS sisa
+                FROM params p
+                WHERE (SELECT opening_qty FROM opening) > 0
+                UNION ALL
+                SELECT
                 1 AS urut, t.tr_date, t.tr_desc, t.tr_code, t.tr_seq, t.tr_seq2, t.tr_type,
                 t.masuk, t.keluar, NULL AS sisa
-                FROM tx t
+                FROM tx_with_balance t
                 WHERE t.masuk > 0 OR t.keluar > 0
                 UNION ALL
                 SELECT
-                2 AS urut, NULL::date, 'Sisa Stok', NULL, NULL, NULL, NULL,
-                0, 0, (SELECT closing_qty FROM final_balance) AS sisa
+                2 AS urut, NULL::date AS tr_date, 'Sisa Stok' AS tr_desc, NULL AS tr_code, NULL AS tr_seq, NULL AS tr_seq2, NULL AS tr_type,
+                0 AS masuk, 0 AS keluar, (SELECT closing_qty FROM final_balance) AS sisa
                 ORDER BY urut, tr_date, tr_code, tr_seq, tr_seq2
             ";
 
