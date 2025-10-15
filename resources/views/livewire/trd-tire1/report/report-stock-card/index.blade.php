@@ -144,9 +144,9 @@
                                                 <td style="text-align:left; padding:4px 6px; font-size:13px; width:90px; border: 1px solid #000;">{{ fmtDate($row->tr_date ?? null) }}</td>
                                                 <td style="text-align:left; padding:4px 6px; font-size:13px; width:130px; border: 1px solid #000;">{{ $row->tr_code ?? '' }}</td>
                                                 <td style="text-align:left; padding:4px 6px; font-size:13px; border: 1px solid #000;">{{ $row->tr_desc ?? '' }}</td>
-                                                <td style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">{{ $urut === 0 || $urut === 2 ? nfmt(0) : nfmt($row->masuk ?? 0) }}</td>
-                                                <td style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">{{ $urut === 0 || $urut === 2 ? nfmt(0) : nfmt($row->keluar ?? 0) }}</td>
-                                                <td style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">{{ $urut === 0 || $urut === 2 ? nfmt($row->sisa ?? 0) : nfmt(0) }}</td>
+                                                <td style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">{{ $urut === 2 ? '' : (($row->masuk ?? 0) > 0 ? nfmt($row->masuk) : '') }}</td>
+                                                <td style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">{{ $urut === 2 ? '' : (($row->keluar ?? 0) > 0 ? nfmt($row->keluar) : '') }}</td>
+                                                <td style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">{{ $urut === 2 ? nfmt($row->sisa ?? 0) : '' }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>

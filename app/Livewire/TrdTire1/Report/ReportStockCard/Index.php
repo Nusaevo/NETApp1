@@ -117,25 +117,19 @@ class Index extends BaseComponent
                     AND il.tr_date BETWEEN p.start_date AND p.end_date
                 ),
                 final_balance AS (
-                SELECT (SELECT opening_qty FROM opening) + COALESCE(SUM(net_qty),0) AS closing_qty
+                SELECT COALESCE(SUM(net_qty),0) AS closing_qty
                 FROM tx
                 )
                 SELECT
-                0 AS urut,
-                NULL::date AS tr_date,
-                'Sisa Stok s/d ' || to_char(((SELECT start_date FROM params) - INTERVAL '1 day')::date,'DD-Mon-YYYY') AS tr_desc,
-                NULL AS tr_code, NULL AS tr_seq, NULL AS tr_seq2, NULL AS tr_type,
-                0 AS masuk, 0 AS keluar,
-                (SELECT opening_qty FROM opening) AS sisa
-                UNION ALL
-                SELECT
-                1, t.tr_date, t.tr_desc, t.tr_code, t.tr_seq, t.tr_seq2, t.tr_type,
-                t.masuk, t.keluar, NULL
+                1 AS urut, t.tr_date, t.tr_desc, t.tr_code, t.tr_seq, t.tr_seq2, t.tr_type,
+                t.masuk, t.keluar, NULL AS sisa
                 FROM tx t
+                WHERE t.masuk > 0 OR t.keluar > 0
                 UNION ALL
                 SELECT
-                2, NULL::date, 'Sisa Stok', NULL, NULL, NULL, NULL,
-                0, 0, (SELECT closing_qty FROM final_balance)
+                2 AS urut, NULL::date, 'Sisa Stok', NULL, NULL, NULL, NULL,
+                0, 0, (SELECT closing_qty FROM final_balance) AS sisa
+                WHERE (SELECT closing_qty FROM final_balance) > 0
                 ORDER BY urut, tr_date, tr_code, tr_seq, tr_seq2
             ";
 
