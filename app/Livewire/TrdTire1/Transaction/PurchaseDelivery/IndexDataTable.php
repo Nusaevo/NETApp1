@@ -49,7 +49,7 @@ class IndexDataTable extends BaseDataTableComponent
                     ]) . '">' . $row->tr_code . '</a>';
                 })
                 ->html(),
-            Column::make($this->trans("Tanggal Surat Jalan"), "tr_date")
+            Column::make($this->trans("Tanggal Surat Jalan"), "reff_date")
                 ->searchable()
                 ->sortable(),
             Column::make($this->trans("supplier"), "partner_id")
