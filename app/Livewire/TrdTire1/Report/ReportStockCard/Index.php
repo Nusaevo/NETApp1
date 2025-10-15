@@ -135,7 +135,11 @@ class Index extends BaseComponent
                     il.tr_date, il.tr_code, il.tr_seq, il.tr_seq2, il.tr_type,
                     CASE
                         WHEN il.tr_type IN ('SD', 'PD') THEN
-                            COALESCE(pt.name, il.tr_desc)
+                            COALESCE(pt.name, il.tr_desc) ||
+                            CASE
+                                WHEN pt.city IS NOT NULL AND pt.city != '' THEN '. ' || pt.city
+                                ELSE ''
+                            END
                         ELSE il.tr_desc
                     END AS tr_desc,
                     GREATEST(il.qty, 0) AS masuk,

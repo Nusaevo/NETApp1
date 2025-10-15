@@ -173,56 +173,76 @@
                                     <thead>
                                         <tr>
                                             <th
-                                                style="text-align:left; padding:4px 6px; font-weight:bold; font-size:13px; width:90px; border: 1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:13px; width:90px; border:1px solid #000;">
                                                 Tgl.</th>
                                             <th
-                                                style="text-align:left; padding:4px 6px; font-weight:bold; font-size:13px; width:130px; border: 1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:13px; width:110px; border:1px solid #000;">
                                                 No. Bukti</th>
                                             <th
-                                                style="text-align:left; padding:4px 6px; font-weight:bold; font-size:13px; border: 1px solid #000;">
+                                                style="text-align:left; padding:5px 8px; font-weight:bold; font-size:13px; width:320px; border:1px solid #000;">
                                                 KETERANGAN</th>
                                             <th
-                                                style="text-align: center; padding:4px 6px; font-weight:bold; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">
+                                                style="text-align:center; padding:5px 8px; font-weight:bold; font-size:13px; width:70px; border:1px solid #000;">
                                                 MASUK</th>
                                             <th
-                                                style="text-align: center; padding:4px 6px; font-weight:bold; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">
+                                                style="text-align:center; padding:5px 8px; font-weight:bold; font-size:13px; width:70px; border:1px solid #000;">
                                                 KELUAR</th>
                                             <th
-                                                style="text-align: center; padding:4px 6px; font-weight:bold; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">
+                                                style="text-align:center; padding:5px 8px; font-weight:bold; font-size:13px; width:80px; border:1px solid #000;">
                                                 SISA</th>
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @php
+                                            $previousDate = null; // Initialize variable to store the date of the previous row
+                                        @endphp
                                         @foreach ($results as $row)
                                             @php
                                                 $urut = $row->urut ?? null;
+                                                $currentDate = $row->tr_date ?? null;
+                                                $displayDate = '';
+
+                                                // Apply date suppression logic only for transaction rows (urut == 1)
+                                                if ($urut == 1) {
+                                                    if ($currentDate !== null && $currentDate != $previousDate) {
+                                                        $displayDate = fmtDate($currentDate);
+                                                    }
+                                                    $previousDate = $currentDate; // Update previous date for the next iteration
+                                                } else {
+                                                    // For opening (urut == 0) and closing (urut == 2) balance rows,
+                                                    // always display the date if available (which is null in this case, so it will be empty)
+                                                    // and reset previousDate to ensure the next transaction date is always shown.
+                                                    $displayDate = fmtDate($currentDate);
+                                                    $previousDate = null;
+                                                }
                                             @endphp
                                             <tr>
                                                 <td
-                                                    style="text-align:left; padding:4px 6px; font-size:13px; width:90px; border: 1px solid #000;">
-                                                    {{ fmtDate($row->tr_date ?? null) }}</td>
+                                                    style="text-align:left; padding:4px 6px; font-size:13px; width:90px; border:1px solid #000;">
+                                                    {{ $displayDate }}</td>
                                                 <td
-                                                    style="text-align:left; padding:4px 6px; font-size:13px; width:130px; border: 1px solid #000;">
+                                                    style="text-align:left; padding:4px 6px; font-size:13px; width:110px; border:1px solid #000;">
                                                     {{ $row->tr_code ?? '' }}</td>
                                                 <td
-                                                    style="text-align:left; padding:4px 6px; font-size:13px; border: 1px solid #000;">
+                                                    style="text-align:left; padding:4px 6px; font-size:13px; border:1px solid #000;">
                                                     {{ $row->tr_desc ?? '' }}</td>
                                                 <td
-                                                    style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">
+                                                    style="text-align:right; padding:4px 6px; font-size:13px; width:70px; border:1px solid #000;">
                                                     {{ $urut === 0 || $urut === 2 ? '' : (($row->masuk ?? 0) > 0 ? nfmt($row->masuk) : '') }}
                                                 </td>
                                                 <td
-                                                    style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">
+                                                    style="text-align:right; padding:4px 6px; font-size:13px; width:70px; border:1px solid #000;">
                                                     {{ $urut === 0 || $urut === 2 ? '' : (($row->keluar ?? 0) > 0 ? nfmt($row->keluar) : '') }}
                                                 </td>
                                                 <td
-                                                    style="text-align: left; padding:4px 6px; font-size:13px; width:90px; min-width:90px; border: 1px solid #000;">
+                                                    style="text-align:right; padding:4px 6px; font-size:13px; width:80px; border:1px solid #000;">
                                                     {{ $urut === 0 || $urut === 2 ? nfmt($row->sisa ?? 0) : (($row->sisa ?? 0) != 0 ? nfmt($row->sisa) : '') }}
                                                 </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
+
                             </div>
                         </div>
                     </div>
