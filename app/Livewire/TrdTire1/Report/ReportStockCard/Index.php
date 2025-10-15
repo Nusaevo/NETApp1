@@ -105,15 +105,22 @@ class Index extends BaseComponent
                 ),
                 tx AS (
                 SELECT
-                    il.tr_date, il.tr_code, il.tr_seq, il.tr_seq2, il.tr_type, il.tr_desc,
+                    il.tr_date, il.tr_code, il.tr_seq, il.tr_seq2, il.tr_type,
+                    CASE
+                        WHEN il.tr_type IN ('SD', 'PD') THEN
+                            COALESCE(pt.name, il.tr_desc)
+                        ELSE il.tr_desc
+                    END AS tr_desc,
                     GREATEST(il.qty, 0) AS masuk,
                     GREATEST(-il.qty, 0) AS keluar,
                     il.qty AS net_qty
                 FROM ivt_logs il
                 JOIN params p ON TRUE
+                LEFT JOIN deliv_hdrs dh ON il.tr_code = dh.tr_code AND il.tr_type IN ('SD', 'PD')
+                LEFT JOIN partners pt ON dh.partner_code = pt.code
                 WHERE il.wh_code = p.wh_code
                     AND il.matl_code = p.matl_code
-                    AND il.tr_type IN ('PD','SD','TWA','IA')
+                    AND il.tr_type IN ('PD','SD','TW','IA')
                     AND il.tr_date BETWEEN p.start_date AND p.end_date
                 ),
                 final_balance AS (
@@ -129,7 +136,6 @@ class Index extends BaseComponent
                 SELECT
                 2 AS urut, NULL::date, 'Sisa Stok', NULL, NULL, NULL, NULL,
                 0, 0, (SELECT closing_qty FROM final_balance) AS sisa
-                WHERE (SELECT closing_qty FROM final_balance) > 0
                 ORDER BY urut, tr_date, tr_code, tr_seq, tr_seq2
             ";
 
