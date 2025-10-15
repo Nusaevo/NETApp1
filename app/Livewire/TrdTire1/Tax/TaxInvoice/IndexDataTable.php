@@ -20,6 +20,9 @@ class IndexDataTable extends BaseDataTableComponent
     public $tax_process_date;
     public $selectedItems = [];
     public $filters = [];
+    public $bulkSelectedIds = null;
+
+    protected $listeners = ['clearSelections' => 'clearSelections'];
 
     protected $model = OrderHdr::class;
     public function mount(): void
@@ -36,6 +39,12 @@ class IndexDataTable extends BaseDataTableComponent
             ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
             ->where('order_hdrs.tax_doc_flag', 1);
     }
+
+    public function clearSelections(): void
+    {
+        $this->clearSelected();
+        $this->bulkSelectedIds = null;
+    }
     public function columns(): array
     {
         return [
@@ -45,7 +54,7 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make($this->trans("tr_type"), "tr_type")
                 ->hideIf(true)
                 ->sortable(),
-            Column::make('currency', "curr_rate")
+            Column::make('currency', from: "curr_rate")
                 ->hideIf(true)
                 ->sortable(),
             Column::make($this->trans("Nomor Nota"), "tr_code")
@@ -71,10 +80,13 @@ class IndexDataTable extends BaseDataTableComponent
                         return '';
                     }
                 })
+                ->hideIf(true)
                 ->html(),
             Column::make($this->trans('amt'), 'amt')
                 ->label(function ($row) {
-                    return rupiah($row->amt);
+                    $orderDetails = OrderDtl::where('trhdr_id', $row->id)->get();
+                    $amt = $orderDetails->sum('amt');
+                    return rupiah($amt);
                 })
                 ->sortable(),
             Column::make($this->trans('dpp'), 'amt_beforetax')
@@ -246,10 +258,8 @@ class IndexDataTable extends BaseDataTableComponent
             TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            TextFilter::make('Custommer')->filter(function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
+            TextFilter::make('Nama WP')->filter(function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(order_hdrs.npwp_name)'), 'like', '%' . strtoupper($value) . '%');
             }),
         ];
     }
@@ -259,7 +269,6 @@ class IndexDataTable extends BaseDataTableComponent
             'setProsesDate' => 'Proses Nota Baru',
             'nomorFaktur' => 'Set Nomor Faktur',
             'deleteNomorFaktur' => 'Hapus Nomor Faktur',
-            'changeNomorFaktur' => 'Ubah Nomor Faktur',
             'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
             'cetakLaporanPenjualan' => 'Cetak Laporan Penjualan',
             'transferKeCTMS' => 'Transfer ke CTMS',
@@ -291,11 +300,13 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
             ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'amt'])
+            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'tax_doc_num', 'amt'])
             ->map(function ($order) {
                 return [
+                    'id' => $order->id,
                     'nomor_nota' => $order->tr_code,
-                    'nama' => $order->Partner ? $order->Partner->name : '',
+                    'nama' => $order->npwp_name ?: '',
+                    'faktur' => $order->tax_doc_num ?: '',
                     'total_amt' => rupiah($order->amt),
                 ];
             })
@@ -314,11 +325,14 @@ class IndexDataTable extends BaseDataTableComponent
 
         $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
             ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'amt'])
+            ->get(['id', 'tr_code', 'partner_id', 'npwp_name', 'tax_doc_num', 'amt'])
             ->map(function ($order) {
                 return [
+                    'id' => $order->id,
                     'nomor_nota' => $order->tr_code,
-                    'nama' => $order->Partner ? $order->Partner->name : '',
+                    'nama' => $order->npwp_name ?: '',
+                    'npwp' => $order->npwp_code ?: '',
+                    'faktur' => $order->tax_doc_num ?: '',
                     'total_amt' => rupiah($order->amt),
                 ];
             })
@@ -327,27 +341,7 @@ class IndexDataTable extends BaseDataTableComponent
         $this->dispatch('openNomorFakturModal', orderIds: $this->getSelected(), selectedItems: $selectedItems, actionType: 'delete');
     }
 
-    public function changeNomorFaktur()
-    {
-        if (count($this->getSelected()) === 0) {
-            $this->dispatch('error', 'Tidak ada item yang dipilih.');
-            return;
-        }
 
-        $selectedItems = OrderHdr::whereIn('id', $this->getSelected())
-            ->with('Partner')
-            ->get(['id', 'tr_code', 'partner_id', 'amt'])
-            ->map(function ($order) {
-                return [
-                    'nomor_nota' => $order->tr_code,
-                    'nama' => $order->Partner ? $order->Partner->name : '',
-                    'total_amt' => rupiah($order->amt),
-                ];
-            })
-            ->toArray();
-
-        $this->dispatch('openNomorFakturModal', orderIds: $this->getSelected(), selectedItems: $selectedItems, actionType: 'change');
-    }
 
 
     public function getConfigDetails()

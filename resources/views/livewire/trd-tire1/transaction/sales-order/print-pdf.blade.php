@@ -10,64 +10,6 @@
         </div>
         <hr>
     </div>
-
-    {{-- <style>
-            @page {
-                size: A5 portrait;
-                margin: 10mm;
-            }
-
-            @media print {
-                .d-print-none {
-                    display: none !important;
-                }
-
-                body {
-                    margin: 0;
-                    padding: 0;
-                    font-family: 'Calibri', Arial, sans-serif;
-                    font-size: 16px;
-                    line-height: 1.2;
-                }
-
-                #print {
-                    width: 100%;
-                    max-width: none;
-                    margin: 0;
-                    padding: 0;
-                }
-
-                .invoice-box {
-                    max-width: none;
-                    width: 100%;
-                    margin: 0;
-                    padding: 5mm;
-                    box-sizing: border-box;
-                }
-
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    font-size: 11px;
-                }
-
-                th, td {
-                    padding: 2px 3px;
-                    border: 1px solid #000;
-                    font-size: 10px;
-                }
-
-                h2, h3 {
-                    margin: 2px 0;
-                    font-size: 16px;
-                }
-
-                p {
-                    margin: 1px 0;
-                    font-size: 10px;
-                }
-            }
-        </style> --}}
     <link rel="stylesheet" type="text/css" href="{{ asset('customs/css/invoice.css') }}">
 
     <!-- Card hanya tampil di layar, tidak saat print -->

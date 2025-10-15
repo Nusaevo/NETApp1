@@ -207,11 +207,8 @@
                                                     if ($currentDate !== null && $currentDate != $previousDate) {
                                                         $displayDate = fmtDate($currentDate);
                                                     }
-                                                    $previousDate = $currentDate; // Update previous date for the next iteration
+                                                    $previousDate = $currentDate;
                                                 } else {
-                                                    // For opening (urut == 0) and closing (urut == 2) balance rows,
-                                                    // always display the date if available (which is null in this case, so it will be empty)
-                                                    // and reset previousDate to ensure the next transaction date is always shown.
                                                     $displayDate = fmtDate($currentDate);
                                                     $previousDate = null;
                                                 }
