@@ -203,7 +203,7 @@
                             <div wire:key="nota-dropdown-{{ count($input_details) }}">
                                 <x-ui-dropdown-search label="Pilih Nota" model="selectedNotaId"
                                     :query="$notaQuery"
-                                    optionValue="id" optionLabel="tr_code"
+                                    optionValue="id" optionLabel="tr_code,outstanding_amt_formatted,due_date"
                                     placeHolder="Pilih nota untuk ditambahkan..." :selectedValue="$selectedNotaId"
                                     :action="$actionValue" :enabled="$isPanelEnabled" type="int"
                                     onChanged="onNotaSelected" />

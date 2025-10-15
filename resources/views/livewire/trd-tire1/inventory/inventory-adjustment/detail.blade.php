@@ -3,7 +3,7 @@
         <x-ui-button clickEvent="" type="Back" button-name="Back" />
     </div>
     <x-ui-page-card isForm="true"
-        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_id ? ' (#' . $this->object->tr_id . ')' : '' }}"
+        title="{{ $this->trans($actionValue) }} {!! $menuName !!} {{ $this->object->tr_code ? ' (Nomor #' . $this->object->tr_code . ')' : '' }}"
         status="{{ $this->trans($status) }}">
 
         @if ($actionValue === 'Create')
@@ -39,10 +39,14 @@
                                 <x-slot name="headers">
                                     <th style="width: 50px; text-align: center;">No</th>
                                     <th style="width: 150px; text-align: center;">Nama Barang</th>
-                                    <th style="width: 50px; text-align: center;">Kode Batch</th>
-                                    <th style="width: 50px; text-align: center;">Stock</th>
+                                    @if($inputs['tr_type'] !== 'IA')
+                                        <th style="width: 50px; text-align: center;">Kode Batch</th>
+                                        <th style="width: 50px; text-align: center;">Stock</th>
+                                    @endif
                                     <th style="width: 50px; text-align: center;">Quantity</th>
-                                    <th style="width: 50px; text-align: center;">Stock Akhir</th>
+                                    @if($inputs['tr_type'] !== 'IA')
+                                        <th style="width: 50px; text-align: center;">Stock Akhir</th>
+                                    @endif
                                     <th style="width: 70px; text-align: center;">Actions</th>
                                 </x-slot>
                                 <!-- Define table rows -->
@@ -68,30 +72,34 @@
                                                         onChanged="onMaterialChanged({{ $key }})" />
                                                 @endif
                                             </td>
-                                            <td style="text-align: center;">
-                                                <x-ui-dropdown-select type="int" label="" :options="$filteredBatchCode[$key] ?? []"
-                                                    model="input_details.{{ $key }}.batch_code"
-                                                    :selectedValue="$input_detail['batch_code'] ?? null"
-                                                    :enabled="$isPanelEnabled"
-                                                    :action="$actionValue"
-                                                    required="true"
-                                                    onChanged="onBatchCodeChanged({{ $key }})" />
-                                            </td>
-                                            <td style="text-align: center;">
-                                                <x-ui-text-field model="input_details.{{ $key }}.qty_oh"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
-                                                    required="true" enabled="false" />
-                                            </td>
+                                            @if($inputs['tr_type'] !== 'IA')
+                                                <td style="text-align: center;">
+                                                    <x-ui-dropdown-select type="int" label="" :options="$filteredBatchCode[$key] ?? []"
+                                                        model="input_details.{{ $key }}.batch_code"
+                                                        :selectedValue="$input_detail['batch_code'] ?? null"
+                                                        :enabled="$isPanelEnabled"
+                                                        :action="$actionValue"
+                                                        required="true"
+                                                        onChanged="onBatchCodeChanged({{ $key }})" />
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <x-ui-text-field model="input_details.{{ $key }}.qty_oh"
+                                                        label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
+                                                        required="true" enabled="false" />
+                                                </td>
+                                            @endif
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty"
                                                     label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
                                                     required="true" onChanged="onQtyChanged({{ $key }})" />
                                             </td>
-                                            <td style="text-align: center;">
-                                                <x-ui-text-field model="input_details.{{ $key }}.qty_end"
-                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
-                                                    required="true" enabled="false" />
-                                            </td>
+                                            @if($inputs['tr_type'] !== 'IA')
+                                                <td style="text-align: center;">
+                                                    <x-ui-text-field model="input_details.{{ $key }}.qty_end"
+                                                        label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
+                                                        required="true" enabled="false" />
+                                                </td>
+                                            @endif
                                             <td style="text-align: center;">
                                                 @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
                                                     <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"

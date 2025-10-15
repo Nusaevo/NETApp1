@@ -84,7 +84,8 @@
                                 @endforeach
                             </table>
 
-                            <!-- Total -->
+                            <!-- Total - hanya tampil jika ada lebih dari 1 item -->
+                            @if(count($customerGroup['orders']) > 1)
                             <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 2px 0; width: 30px;"></td>
@@ -96,6 +97,9 @@
                                     </td>
                                 </tr>
                             </table>
+                            @else
+                            <div style="margin-bottom: 30px;"></div>
+                            @endif
 
                             <!-- Tanda tangan -->
                             <div style="margin-top: 30px;">

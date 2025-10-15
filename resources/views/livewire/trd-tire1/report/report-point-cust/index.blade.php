@@ -26,6 +26,10 @@
                                 onclick="printReport()">
                                 <i class="fas fa-print text-primary"></i> Print
                             </button>
+                            <button type="button" class="btn btn-success text-capitalize border-0 w-100 mt-2"
+                                wire:click="downloadExcel">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -35,7 +39,6 @@
 
         <div id="print">
             <div>
-                <br>
                 <style>
                     @media print {
                         body {
@@ -55,6 +58,8 @@
                             padding: 0 !important;
                             max-width: none !important;
                         }
+                        /* Hilangkan margin bottom bawaan bootstrap saat print */
+                        .mb-5 { margin-bottom: 0 !important; }
                         #print table {
                             margin-left: auto !important;
                             margin-right: auto !important;
@@ -63,7 +68,7 @@
                         }
                         #print th, #print td {
                             padding: 4px 6px !important;
-                            font-size: 11px !important;
+                            font-size:17px !important;
                             border: 1px solid #000 !important;
                             vertical-align: middle !important;
                         }
@@ -81,7 +86,7 @@
                         }
                         /* Hilangkan margin/padding default print */
                         @page {
-                            margin: 1cm 1cm 2cm 1cm;
+                            margin: 0.5cm 1cm 0.5cm 1cm;
                             size: A4 portrait;
                         }
                         /* Sembunyikan elemen yang tidak perlu di print */
@@ -91,14 +96,14 @@
                         /* Pastikan konten tidak terpotong */
                         #print {
                             font-family: 'Calibri', Arial, sans-serif !important;
-                            font-size: 14px !important;
+                            font-size:15px !important;
                         }
                     }
                 </style>
                 <div class="card print-page">
                     <div class="card-body">
-                        <div class="container mb-5 mt-3">
-                            <div style="max-width:2480px; margin:auto; padding:20px;">
+                        <div class="container mb-5 mt-1">
+                            <div style="max-width:2480px; margin:auto;">
                                 <h4>TOKO BAN CAHAYA TERANG - SURABAYA</h4>
                                 <h3 style="text-decoration:underline; text-align:left;">
                                     DATA PENJUALAN GT RADIAL per Customer
@@ -158,11 +163,11 @@
                                         <tr>
                                             <th rowspan="2" style="border: 1px solid #000; text-align: center; padding:4px 8px; background:#f9f9f9; font-weight:bold;">Customer</th>
                                             @foreach ($groupColumns as $col)
-                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
+                                                <th style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:15px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;" rowspan="2">
                                                     {{ $col }}
                                                 </th>
                                             @endforeach
-                                            <th rowspan="2" style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:12px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;">Total</th>
+                                            <th rowspan="2" style="text-align:center; padding:4px 8px; writing-mode:vertical-lr; transform:rotate(180deg); font-size:15px; min-width:40px; border: 1px solid #000; background:#f9f9f9; font-weight:bold;">Total</th>
                                         </tr>
                                         {{-- Baris kedua header kosong karena header customer sudah dipecah --}}
                                     </thead>
@@ -187,7 +192,7 @@
                                                 $customer = $row->customer ?? '';
                                             @endphp
                                             <tr>
-                                                <td style="padding:4px 8px; border: 1px solid #000">{{ $customer }}</td>
+                                                <td style="padding:4px 8px; border: 1px solid #000; font-size: 16px;">{{ $customer }}</td>
                                                 @foreach ($groupColumns as $col)
                                                     @php
                                                         $val = $row->$col ?? '';
@@ -199,12 +204,12 @@
                                                     @endphp
                                                     <td style="text-align:center; padding:4px 8px; border: 1px solid #000">
                                                         {{ $qty ? $qty : '' }}<br>
-                                                        <span style="font-size:11px;color:#000;">{{ $point ? $point : '' }}</span>
+                                                        <span style="color:#000;">{{ $point ? $point : '' }}</span>
                                                     </td>
                                                 @endforeach
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold;">
                                                     {{ $rowTotalQty ? $rowTotalQty : '' }}<br>
-                                                    <span style="font-size:11px;color:#000;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span>
+                                                    <span style="color:#000;">{{ $rowTotalPoint ? $rowTotalPoint : '' }}</span>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -226,12 +231,12 @@
                                             @foreach ($groupColumns as $col)
                                                 <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
                                                     {{ $colTotalsQty[$col] ? $colTotalsQty[$col] : '' }}<br>
-                                                    <span style="font-size:11px;color:#000;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span>
+                                                    <span style="color:#000;">{{ $colTotals[$col] ? $colTotals[$col] : '' }}</span>
                                                 </td>
                                             @endforeach
                                             <td style="text-align:center; padding:4px 8px; border: 1px solid #000; font-weight:bold; background:#f2f2f2;">
                                                 {{ $grandTotalQty ? $grandTotalQty : '' }}<br>
-                                                <span style="font-size:11px;color:#000;">{{ $grandTotal ? $grandTotal : '' }}</span>
+                                                <span style="color:#000;">{{ $grandTotal ? $grandTotal : '' }}</span>
                                             </td>
                                         </tr>
                                     </tbody>

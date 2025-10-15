@@ -80,7 +80,7 @@ class Detail extends BaseComponent
     // Gabungan validasi untuk header dan detail (item)
     public $rules  = [
         'inputs.tr_code'       => 'required',
-        'inputs.partner_id'    => 'required',
+        'inputs.partner_id'    => 'required|min:1',
         'inputs.tax_code'      => 'required',
         'inputs.tr_date'       => 'required',
         'inputs.payment_term'  => 'required',
@@ -426,6 +426,12 @@ class Detail extends BaseComponent
         }
 
         $this->validate();
+
+        // Validasi duplikasi tr_code
+        $this->validateTrCodeDuplicate();
+
+        // Validasi duplikasi matl_id dalam detail
+        $this->validateMatlIdDuplicate();
 
         // Guard: batasi update jika sudah pernah dicetak dan user tidak berizin
         $this->updateAfterPrintPermission();
@@ -1389,6 +1395,46 @@ class Detail extends BaseComponent
         parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);
 
         $this->orderService = app(OrderService::class);
+    }
+
+    /**
+     * Validasi duplikasi tr_code
+     */
+    private function validateTrCodeDuplicate()
+    {
+        $trCode = $this->inputs['tr_code'] ?? null;
+        if (empty($trCode)) return;
+
+        $query = OrderHdr::where('tr_code', $trCode)->where('tr_type', $this->trType);
+
+        if ($this->actionValue === 'Edit' && !empty($this->object->id)) {
+            $query->where('id', '!=', $this->object->id);
+        }
+
+        if ($query->exists()) {
+            throw new Exception("Kode transaksi '{$trCode}' sudah digunakan. Silakan gunakan kode yang berbeda.");
+        }
+    }
+
+    /**
+     * Validasi duplikasi matl_id dalam detail items
+     */
+    private function validateMatlIdDuplicate()
+    {
+        if (empty($this->input_details)) return;
+
+        $matlIds = [];
+        foreach ($this->input_details as $index => $detail) {
+            $matlId = $detail['matl_id'] ?? null;
+            if (empty($matlId)) continue;
+
+            if (in_array($matlId, $matlIds)) {
+                $material = Material::find($matlId);
+                $materialName = $material ? $material->name : "ID: {$matlId}";
+                throw new Exception("Material '{$materialName}' sudah ada dalam detail. Silakan hapus salah satu atau gunakan material yang berbeda.");
+            }
+            $matlIds[] = $matlId;
+        }
     }
 
     /*

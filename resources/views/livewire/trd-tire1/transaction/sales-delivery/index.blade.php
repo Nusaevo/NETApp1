@@ -80,9 +80,9 @@
                 $('#modalDeliveryDate').modal('hide');
             });
 
-            // Handle modal hidden event
+            // Handle modal hidden event - call closeDeliveryDateModal
             $('#modalDeliveryDate').on('hidden.bs.modal', function() {
-                @this.set('deliveryDate', '');
+                @this.call('closeDeliveryDateModal');
             });
 
             // Listener untuk submit delivery date
