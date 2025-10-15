@@ -61,7 +61,7 @@
             </div>
         </x-slot>
         <x-slot name="footer">
-            <x-ui-button clickEvent="Save" button-name="Kirim" loading="true" :action="$actionValue"
+            <x-ui-button clickEvent="processDelivery" button-name="Kirim" loading="true" :action="$actionValue"
                 cssClass="btn-primary" />
         </x-slot>
     </x-ui-dialog-box>
@@ -83,11 +83,6 @@
             // Handle modal hidden event - call closeDeliveryDateModal
             $('#modalDeliveryDate').on('hidden.bs.modal', function() {
                 @this.call('closeDeliveryDateModal');
-            });
-
-            // Listener untuk submit delivery date
-            Livewire.on('onValidateAndSave', event => {
-                @this.onValidateAndSave();
             });
 
             // Listener untuk browser event refresh-page
