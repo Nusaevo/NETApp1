@@ -220,6 +220,8 @@ class IndexDataTable extends BaseDataTableComponent
                         'tr_date' => $delivery ? $delivery->tr_date : null,
                     ];
                 })
+                ->sortBy('nomor_nota')
+                ->values()
                 ->toArray();
 
             OrderHdr::whereIn('id', $this->getSelected())->update(['status_code' => Status::SHIP]);
