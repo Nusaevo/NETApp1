@@ -44,7 +44,7 @@
             <div class="card shadow-sm customer-billing" style="max-width: 800px; margin: 0 auto; @if($index > 0) margin-top: 50px; @endif">
                 <div class="card-body p-4">
                     <div class="invoice-box">
-                        <div style="margin: 0 auto; font-family: lucida console; font-size: 18px; line-height: 1.4;">
+                        <div style="margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 18px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
                                 <div style="text-align: right; font-size: 14px; margin-bottom: 10px; padding-top: 30px;">
@@ -127,7 +127,7 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: lucida console;
+            font-family: 'Courier New', Courier, monospace;
             -webkit-font-smoothing: antialiased;
             print-color-adjust: exact;
         }
