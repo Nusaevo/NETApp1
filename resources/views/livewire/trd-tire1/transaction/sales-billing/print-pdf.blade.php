@@ -44,24 +44,24 @@
             <div class="card shadow-sm customer-billing" style="max-width: 800px; margin: 0 auto; @if($index > 0) margin-top: 50px; @endif">
                 <div class="card-body p-4">
                     <div class="invoice-box">
-                        <div style="margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 18px; line-height: 1.4;">
+                        <div style="margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 19px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
-                                <div style="text-align: right; font-size: 14px; margin-bottom: 10px; padding-top: 30px;">
+                                <div style="text-align: right; font-size: 15px; margin-bottom: 10px; padding-top: 30px;">
                                     <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
                                 </div>
                                 <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
-                                    <div style="font-size: 18px;">{{ $customerGroup['partner']->name }}</div>
-                                    <div style="font-size: 18px;">{{ $customerGroup['partner']->address }}</div>
+                                    <div style="font-size: 20px;">{{ $customerGroup['partner']->name }}</div>
+                                    <div style="font-size: 20px;">{{ $customerGroup['partner']->address }}</div>
                                 </div>
                             </div>
 
                             <!-- Garis pemisah -->
-                            <div style="border-top: 1px solid #000; margin-bottom: 15px;"></div>
+                            {{-- <div style="border-top: 1px solid #000; margin-bottom: 15px;"></div> --}}
 
                             <!-- Instruksi -->
                             <div style="margin-bottom: 15px; text-align: center;">
-                                <span style="font-size: 16px;">
+                                <span style="font-size: 17px;">
                                     Mohon Periksa Nota-nota tersebut di bawah ini
                                 </span>
                             </div>
@@ -76,8 +76,8 @@
                                             Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
                                         </td>
                                         <td style="padding: 2px 5px; width: auto; white-space: nowrap;">No. {{ $order->tr_code }}</td>
-                                        <td style="padding: 2px 5px; text-align: right; width: 10px;">Rp.</td>
-                                        <td style="padding: 2px 5px; text-align: right; width: 120px;">
+                                        <td style="padding: 2px 5px; text-align: right; width: 20px; white-space: nowrap;">Rp.</td>
+                                        <td style="padding: 2px 5px; text-align: right; width: 130px; white-space: nowrap;">
                                             {{ number_format($order->amt, 2, ',', '.') }}
                                         </td>
                                     </tr>
@@ -120,9 +120,9 @@
 
     <style>
         @page {
-            size: 105mm auto;
-            margin: 5mm;
-        }
+             size: 97.5mm auto; /* dari 105mm → jadi 97.5mm */
+             margin: 5mm 0.5mm; /* top/bottom 5mm, left/right 2mm */
+         }
 
         body {
             margin: 0;
@@ -205,7 +205,8 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 background: white !important;
-                font-size: 17px !important;
+                font-size: 19px !important;
+                white-space: nowrap !important; /* full width, no wrap */
             }
 
             .invoice-box > div {
@@ -214,12 +215,14 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 background: white !important;
+                white-space: nowrap !important; /* ensure no wrapping inside */
             }
 
             /* Pastikan teks terlihat */
             .invoice-box * {
                 color: black !important;
                 background: transparent !important;
+                white-space: nowrap !important; /* enforce nowrap for all */
             }
 
             /* Page break untuk multiple customers */
