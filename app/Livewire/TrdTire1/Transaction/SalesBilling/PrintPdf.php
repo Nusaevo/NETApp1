@@ -5,14 +5,16 @@ namespace App\Livewire\TrdTire1\Transaction\SalesBilling;
 use App\Enums\TrdTire1\Status;
 use App\Livewire\Component\BaseComponent;
 use App\Models\TrdTire1\Transaction\BillingHdr;
+use Illuminate\Support\Collection;
 
 class PrintPdf extends BaseComponent
 {
     public function mount($action = null, $objectId = null, $actionValue = null, $objectIdValue = null, $additionalParam = null)
     {
         parent::mount($action, $objectId, $actionValue, $objectIdValue, $additionalParam);
+        $this->orders = collect();
     }
-    public $orders = [];
+    public Collection $orders;
     public $selectedOrderIds;
     public $groupedOrders = [];
 
@@ -32,6 +34,8 @@ class PrintPdf extends BaseComponent
                 ->whereIn('id', $this->selectedOrderIds)
                 ->where('billing_hdrs.tr_type', 'ARB')
                 ->whereIn('billing_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN])
+                ->orderBy('billing_hdrs.tr_date')
+                ->orderBy('billing_hdrs.tr_code')
                 ->get();
 
             // Group orders by customer (partner_id)

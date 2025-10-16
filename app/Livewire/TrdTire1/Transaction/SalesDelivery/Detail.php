@@ -231,110 +231,102 @@ class Detail extends BaseComponent
 
     public function onValidateAndSave()
     {
-        try {
-            // Validasi header
-            if (empty($this->inputs['tr_code']) && empty($this->inputs['reffhdrtr_code']) && empty($this->inputs['partner_id'])) {
-                $this->dispatch('error', 'Semua field header wajib diisi');
-                return;
-            }
-
-            // Cek duplikasi tr_code
-            $existingDelivery = DelivHdr::where([
-                'tr_type' => $this->trType,
-                'tr_code' => $this->inputs['tr_code']
-            ])->first();
-
-            if ($existingDelivery && $existingDelivery->id !== $this->object->id) {
-                $this->dispatch('error', 'Nomor Surat Jalan ' . $this->inputs['tr_code'] . ' sudah ada. Silakan gunakan nomor yang berbeda.');
-                return;
-            }
-
-            // Update data partner jika ada
-            if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
-                $partner = Partner::find($this->inputs['partner_id']);
-                $this->inputs['partner_code'] = $partner->code;
-            }
-            $this->inputs['tr_type'] = $this->trType;
-
-            // Update info warehouse
-            $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
-            if ($warehouse) {
-                $this->inputs['wh_id'] = $warehouse->id;
-            }
-
-            if ($this->object->isNew()) {
-                $this->object->status_code = Status::OPEN;
-            }
-
-            // Validasi detail
-            $errorItems = [];
-            foreach ($this->input_details as $key => $detail) {
-                if (isset($detail['qty']) && $detail['qty'] > $detail['qty_order']) {
-                    $errorItems[] = $detail['matl_descr'];
-                }
-            }
-            if (!empty($errorItems)) {
-                throw new Exception('Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
-            }
-
-            // Persiapkan data untuk service
-            $headerData = array_merge($this->inputs, [
-                'status_code' => $this->object->status_code
-            ]);
-
-            if ($this->actionValue === 'Edit') {
-                $headerData['id'] = $this->object->id;
-            }
-
-            $detailData = [];
-            foreach ($this->input_details as $key => $detail) {
-                $orderDtl = OrderDtl::find($detail['order_id']);
-                $material = Material::find($detail['matl_id']);
-                $orderHdr = $orderDtl ? $orderDtl->OrderHdr : null;
-
-                $detailData[] = [
-                    'tr_seq' => $key + 1,
-                    'matl_id' => $detail['matl_id'],
-                    'matl_code' => $material->code,
-                    'matl_descr' => $detail['matl_descr'] ?? $material->descr,
-                    'matl_uom' => $detail['matl_uom'] ?? $material->uom,
-                    'qty' => $detail['qty'],
-                    'wh_id' => $this->inputs['wh_id'],
-                    'wh_code' => $this->inputs['wh_code'],
-                    'reffdtl_id' => $orderDtl->id ?? null,
-                    'reffhdrtr_type' => $orderDtl ? $orderDtl->OrderHdr->tr_type : null,
-                    'reffhdrtr_code' => $orderDtl ? $orderDtl->OrderHdr->tr_code : null,
-                    'reffdtltr_seq' => $orderDtl->tr_seq ?? null,
-                    'batch_code' => $detail['batch_code'] ?? date('ymd'),
-                ];
-            }
-
-            // Panggil service untuk memproses sales delivery
-            $result = $this->deliveryService->saveDelivery($headerData, $detailData);
-            $this->object = $result['header'];
-
-            // Tambahkan pembuatan BillingHdr untuk create operation
-            if ($this->actionValue === 'Create') {
-                app(BillingService::class)->saveBilling($headerData, $detailData);
-            }
-
-            DB::commit();
-
-            $this->dispatch('success', 'Sales Delivery berhasil ' .
-                ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
-
-            return redirect()->route(
-                $this->appCode . '.Transaction.SalesDelivery.Detail',
-                [
-                    'action'   => encryptWithSessionKey('Edit'),
-                    'objectId' => encryptWithSessionKey($this->object->id),
-                ]
-            );
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
+        // Validasi header
+        if (empty($this->inputs['tr_code']) && empty($this->inputs['reffhdrtr_code']) && empty($this->inputs['partner_id'])) {
+            $this->dispatch('error', 'Semua field header wajib diisi');
+            return;
         }
+
+        // Cek duplikasi tr_code
+        $existingDelivery = DelivHdr::where([
+            'tr_type' => $this->trType,
+            'tr_code' => $this->inputs['tr_code']
+        ])->first();
+
+        if ($existingDelivery && $existingDelivery->id !== $this->object->id) {
+            $this->dispatch('error', 'Nomor Surat Jalan ' . $this->inputs['tr_code'] . ' sudah ada. Silakan gunakan nomor yang berbeda.');
+            return;
+        }
+        // Update data partner jika ada
+        if (!isNullOrEmptyNumber($this->inputs['partner_id'])) {
+            $partner = Partner::find($this->inputs['partner_id']);
+            $this->inputs['partner_code'] = $partner->code;
+        }
+        $this->inputs['tr_type'] = $this->trType;
+
+        // Update info warehouse
+        $warehouse = ConfigConst::where('str1', $this->inputs['wh_code'])->first();
+        if ($warehouse) {
+            $this->inputs['wh_id'] = $warehouse->id;
+        }
+
+        if ($this->object->isNew()) {
+            $this->object->status_code = Status::OPEN;
+        }
+
+        // Validasi detail
+        $errorItems = [];
+        foreach ($this->input_details as $key => $detail) {
+            if (isset($detail['qty']) && $detail['qty'] > $detail['qty_order']) {
+                $errorItems[] = $detail['matl_descr'];
+            }
+        }
+        if (!empty($errorItems)) {
+            $this->dispatch('error', 'Stok untuk item: ' . implode(', ', $errorItems) . ' sudah dikirim');
+            return;
+        }
+
+        // Persiapkan data untuk service
+        $headerData = array_merge($this->inputs, [
+            'status_code' => $this->object->status_code
+        ]);
+
+        if ($this->actionValue === 'Edit') {
+            $headerData['id'] = $this->object->id;
+        }
+
+        $detailData = [];
+        foreach ($this->input_details as $key => $detail) {
+            $orderDtl = OrderDtl::find($detail['order_id']);
+            $material = Material::find($detail['matl_id']);
+            $orderHdr = $orderDtl ? $orderDtl->OrderHdr : null;
+
+            $detailData[] = [
+                'tr_seq' => $key + 1,
+                'matl_id' => $detail['matl_id'],
+                'matl_code' => $material->code,
+                'matl_descr' => $detail['matl_descr'] ?? $material->descr,
+                'matl_uom' => $detail['matl_uom'] ?? $material->uom,
+                'qty' => $detail['qty'],
+                'wh_id' => $this->inputs['wh_id'],
+                'wh_code' => $this->inputs['wh_code'],
+                'reffdtl_id' => $orderDtl->id ?? null,
+                'reffhdrtr_type' => $orderDtl ? $orderDtl->OrderHdr->tr_type : null,
+                'reffhdrtr_code' => $orderDtl ? $orderDtl->OrderHdr->tr_code : null,
+                'reffdtltr_seq' => $orderDtl->tr_seq ?? null,
+                'batch_code' => $detail['batch_code'] ?? date('ymd'),
+            ];
+        }
+
+        // Panggil service untuk memproses sales delivery
+        $result = $this->deliveryService->saveDelivery($headerData, $detailData);
+        $this->object = $result['header'];
+
+        // Tambahkan pembuatan BillingHdr untuk create operation
+        if ($this->actionValue === 'Create') {
+            app(BillingService::class)->saveBilling($headerData, $detailData);
+        }
+
+        // $this->dispatch('success', 'Sales Delivery berhasil ' .
+        //     ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
+
+        return redirect()->route(
+            $this->appCode . '.Transaction.SalesDelivery.Detail',
+            [
+                'action'   => encryptWithSessionKey('Edit'),
+                'objectId' => encryptWithSessionKey($this->object->id),
+            ]
+        );
     }
 
     public function delete()

@@ -30,7 +30,7 @@ class IndexDataTable extends BaseDataTableComponent
     public function columns(): array
     {
         return [
-            Column::make($this->trans("ID"), "id"),
+            // Column::make($this->trans("ID"), "id"),
             Column::make($this->trans("Group Code"), "group_code"),
             Column::make($this->trans("Event Code"), "event_code"),
             Column::make($this->trans("Event Time"), "event_time"),

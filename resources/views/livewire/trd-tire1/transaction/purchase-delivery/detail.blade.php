@@ -19,7 +19,7 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                        type="text" :action="$actionValue" required="true" :enabled="$isPanelEnabled"
+                                        type="text" :action="$actionValue" required="true" :enabled="$isTrCodeEnabled"
                                         capslockMode="true" />
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.reff_date" type="date"
                                         :action="$actionValue" required="true" enabled="true" />
@@ -38,8 +38,6 @@
                                         optionValue="tr_code" :query="$ddPurchaseOrder['query']" :optionLabel="$ddPurchaseOrder['optionLabel']" :placeHolder="$ddPurchaseOrder['placeHolder']"
                                         :selectedValue="$inputs['reffhdrtr_code'] ?? ''" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         type="int" onChanged="onPurchaseOrderChanged($event.target.value)" />
-                                    {{-- Debug: @dump($inputs['reffhdrtr_code']) --}}
-                                    {{-- @dump($inputs['reffhdrtr_code']) --}}
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
                                         type="text" :action="$actionValue" required="false" readonly="true"
