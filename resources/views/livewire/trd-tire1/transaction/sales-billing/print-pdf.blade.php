@@ -44,15 +44,15 @@
             <div class="card shadow-sm customer-billing" style="max-width: 800px; margin: 0 auto; @if($index > 0) margin-top: 50px; @endif">
                 <div class="card-body p-4">
                     <div class="invoice-box">
-                        <div style="margin: 0 auto; font-family: Courire 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.4;">
+                        <div style="margin: 0 auto; font-family: lucida console; font-size: 14px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
                                 <div style="text-align: right; font-size: 14px; margin-bottom: 10px; padding-top: 30px;">
                                     <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
                                 </div>
                                 <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
-                                    <div style="font-size: 14px;">{{ $customerGroup['partner']->name }}</div>
-                                    <div style="font-size: 14px;">{{ $customerGroup['partner']->address }}</div>
+                                    <div style="font-size: 17px;">{{ $customerGroup['partner']->name }}</div>
+                                    <div style="font-size: 17px;">{{ $customerGroup['partner']->address }}</div>
                                 </div>
                             </div>
 
@@ -75,7 +75,7 @@
                                         <td style="padding: 2px 25px 2px 5px; width: auto; white-space: nowrap;">
                                             Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
                                         </td>
-                                        <td style="padding: 2px 5px; width: 190px;">No. {{ $order->tr_code }}</td>
+                                        <td style="padding: 2px 5px; width: auto; white-space: nowrap;">No. {{ $order->tr_code }}</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 10px;">Rp.</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 120px;">
                                             {{ number_format($order->amt, 2, ',', '.') }}
@@ -127,7 +127,7 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: Lucida Console;
+            font-family: lucida console;
             -webkit-font-smoothing: antialiased;
             print-color-adjust: exact;
         }
