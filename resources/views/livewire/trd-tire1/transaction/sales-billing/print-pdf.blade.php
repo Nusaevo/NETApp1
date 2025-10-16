@@ -44,7 +44,7 @@
             <div class="card shadow-sm customer-billing" style="max-width: 800px; margin: 0 auto; @if($index > 0) margin-top: 50px; @endif">
                 <div class="card-body p-4">
                     <div class="invoice-box">
-                        <div style="margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 19px; line-height: 1.4;">
+                        <div style="margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 18.4px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
                                 <div style="text-align: right; font-size: 15px; margin-bottom: 10px; padding-top: 30px;">
@@ -72,10 +72,10 @@
                                 @foreach ($customerGroup['orders'] as $i => $order)
                                     @php $customerTotal += $order->amt; @endphp
                                     <tr style="height: 25px;">
-                                        <td style="padding: 2px 25px 2px 5px; width: auto; white-space: nowrap;">
-                                            Tgl. {{ \Carbon\Carbon::parse($order->tr_date)->format('d-m-Y') }}
+                                        <td style="padding: 2px 10px 2px 5px; width: auto; white-space: nowrap;">
+                                            Tgl.<span style="display:inline-block;width:4px;"></span>{{ \Carbon\Carbon::parse($order->order_tr_date ?? $order->tr_date)->format('d-m-Y') }}
                                         </td>
-                                        <td style="padding: 2px 5px; width: auto; white-space: nowrap;">No. {{ $order->tr_code }}</td>
+                                        <td style="padding: 2px 5px; width: auto; white-space: nowrap;">No.<span style="display:inline-block; width:4px;"></span>{{ $order->tr_code }}</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 20px; white-space: nowrap;">Rp.</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 130px; white-space: nowrap;">
                                             {{ number_format($order->amt, 2, ',', '.') }}
@@ -121,7 +121,7 @@
     <style>
         @page {
              size: 97.5mm auto; /* dari 105mm → jadi 97.5mm */
-             margin: 5mm 0.5mm; /* top/bottom 5mm, left/right 2mm */
+             margin: 5mm 2mm; /* top/bottom 5mm, left/right 2mm */
          }
 
         body {

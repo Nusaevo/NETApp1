@@ -247,21 +247,35 @@ class IndexDataTable extends BaseDataTableComponent
                 ->whereIn('tr_code', $selectedTrCodes)
                 ->get();
 
-            if ($delivHdrs->isEmpty()) {
-                $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
-                return;
-            }
+	            if ($delivHdrs->isEmpty()) {
+	                $this->dispatch('error', 'Tidak ada data pengiriman yang dapat dibatalkan');
+	                $this->clearSelections();
+	                return;
+	            }
 
-            // Validasi billing: jika amt_reff > 0 maka tidak bisa dibatalkan
+	            // Validasi billing: jika amt_reff > 0 maka tidak bisa dibatalkan
             $billingHdrs = BillingHdr::whereIn('tr_code', $selectedTrCodes)
                 ->where('amt_reff', '>', 0)
                 ->get();
 
-            if ($billingHdrs->isNotEmpty()) {
-                $blockedTrCodes = $billingHdrs->pluck('tr_code')->toArray();
-                $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ada pembayaran');
-                return;
-            }
+	            if ($billingHdrs->isNotEmpty()) {
+	                $blockedTrCodes = $billingHdrs->pluck('tr_code')->toArray();
+	                $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ada pembayaran');
+	                $this->clearSelections();
+	                return;
+	            }
+
+	            // Validasi billing: jika print_date sudah terisi (sudah ditagih/di-print), tidak bisa dibatalkan
+	            $printedBillings = BillingHdr::whereIn('tr_code', $selectedTrCodes)
+	                ->whereNotNull('print_date')
+	                ->get();
+
+	            if ($printedBillings->isNotEmpty()) {
+	                $blockedTrCodes = $printedBillings->pluck('tr_code')->toArray();
+	                $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ditagih');
+	                $this->clearSelections();
+	                return;
+	            }
 
             // Gunakan DeliveryService untuk menghapus delivery
             $deliveryService = app(DeliveryService::class);

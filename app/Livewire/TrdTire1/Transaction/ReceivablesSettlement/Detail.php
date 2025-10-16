@@ -286,11 +286,12 @@ class Detail extends BaseComponent
                 $this->input_details[] = $detail->toArray();
 
                 $billingHdr = BillingHdr::find($detail->billhdr_id);
-                if ($billingHdr) {
-                    $due_date = Carbon::parse($billingHdr->tr_date)->addDays($billingHdr->payment_due_days)->format('d-m-Y');
-                    $this->input_details[$key]['due_date'] = $due_date;
-                    $this->input_details[$key]['amtbill'] =  $billingHdr->amt - $billingHdr->amt_reff;
-                    $this->input_details[$key]['outstanding_amt'] = $billingHdr->amt - $billingHdr->amt_reff + $detail->amt;
+				if ($billingHdr) {
+					$due_date = Carbon::parse($billingHdr->tr_date)->addDays($billingHdr->payment_due_days)->format('Y-m-d');
+					$this->input_details[$key]['due_date'] = $due_date;
+					$baseAmt = ($billingHdr->amt + ($billingHdr->amt_shipcost ?? 0)) - ($billingHdr->amt_reff ?? 0);
+					$this->input_details[$key]['amtbill'] =  $baseAmt;
+					$this->input_details[$key]['outstanding_amt'] = $baseAmt + $detail->amt;
                 }
 
                 $this->input_details[$key]['is_selected'] = false;
@@ -938,14 +939,14 @@ class Detail extends BaseComponent
                                    bh.tr_date,
                                    bh.amt,
                                    bh.amt_reff,
-                                   (bh.amt - COALESCE(bh.amt_reff, 0)) outstanding_amt,
-                                   TO_CHAR((bh.amt - COALESCE(bh.amt_reff, 0)), 'FM999,999,999,999,990') outstanding_amt_formatted,
+                                   (bh.amt + COALESCE(bh.amt_shipcost, 0) - COALESCE(bh.amt_reff, 0)) outstanding_amt,
+                                   TO_CHAR((bh.amt + COALESCE(bh.amt_shipcost, 0) - COALESCE(bh.amt_reff, 0)), 'FM999,999,999,999,990') outstanding_amt_formatted,
                                    TO_CHAR(bh.tr_date + (COALESCE(bh.payment_due_days, 0) || ' days')::interval, 'DD-MM-YYYY') due_date
                                FROM billing_hdrs bh
                                WHERE
                                    bh.partner_id = {$partnerId}
                                    AND bh.deleted_at IS NULL
-                                   AND (bh.amt - COALESCE(bh.amt_reff, 0)) > 0
+                                   AND (bh.amt + COALESCE(bh.amt_shipcost, 0) - COALESCE(bh.amt_reff, 0)) > 0
                                    {$excludeCondition}
                            ) sub";
     }
@@ -1065,8 +1066,8 @@ class Detail extends BaseComponent
             return;
         }
 
-        // Hitung outstanding amount
-        $outstandingAmt = $billingHdr->amt - ($billingHdr->amt_reff ?? 0);
+		// Hitung outstanding amount
+		$outstandingAmt = ($billingHdr->amt + ($billingHdr->amt_shipcost ?? 0)) - ($billingHdr->amt_reff ?? 0);
         if ($outstandingAmt <= 0) {
             $this->dispatch('warning', 'Nota ini sudah lunas atau tidak memiliki outstanding amount.');
             $this->selectedNotaId = null;
