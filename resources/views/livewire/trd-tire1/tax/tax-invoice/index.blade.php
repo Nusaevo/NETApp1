@@ -14,23 +14,7 @@
         </x-slot>
         <x-slot name="body">
             <div class="form-group">
-                @if($actionType !== 'delete')
-                <div class="row">
-                    <div class="col-md-12">
-                        <label for="taxDocNum">Nomor Faktur</label>
-                        <input type="number"
-                            class="form-control @error('taxDocNum') is-invalid @enderror"
-                            id="taxDocNum"
-                            wire:model="taxDocNum"
-                            placeholder="Masukkan nomor faktur">
-                        @error('taxDocNum')
-                            <div class="invalid-feedback">
-                                {{ $message ?? 'Nomor faktur harus diisi' }}
-                            </div>
-                        @enderror
-                    </div>
-                </div>
-                @else
+                @if($actionType === 'delete')
                 <div class="alert alert-warning">
                     <strong>Konfirmasi:</strong> Apakah Anda yakin ingin menghapus nomor faktur untuk nota-nota berikut?
                 </div>
@@ -39,8 +23,9 @@
                 <x-ui-table id="selectedItemsTable" padding="0px" margin="0px">
                     <x-slot name="headers">
                         <th>Nomor Nota</th>
-                        <th>Nama Customer</th>
+                        <th>Nama WP</th>
                         <th>Total Amount</th>
+                        <th>Nomor Faktur</th>
                     </x-slot>
                     <x-slot name="rows">
                         @foreach ($selectedItems as $item)
@@ -48,6 +33,14 @@
                                 <td>{{ $item['nomor_nota'] }}</td>
                                 <td>{{ $item['nama'] }}</td>
                                 <td>{{ $item['total_amt'] }}</td>
+                                <td>
+                                    @if($actionType !== 'delete')
+                                    <input type="number" class="form-control" placeholder="Nomor Faktur"
+                                        wire:model="taxDocNumInputs.{{ $item['id'] }}">
+                                    @else
+                                    <span>{{ $item['faktur'] ?? '-' }}</span>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </x-slot>
