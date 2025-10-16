@@ -44,15 +44,15 @@
             <div class="card shadow-sm customer-billing" style="max-width: 800px; margin: 0 auto; @if($index > 0) margin-top: 50px; @endif">
                 <div class="card-body p-4">
                     <div class="invoice-box">
-                        <div style="margin: 0 auto; font-family: lucida console; font-size: 14px; line-height: 1.4;">
+                        <div style="margin: 0 auto; font-family: lucida console; font-size: 18px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
                                 <div style="text-align: right; font-size: 14px; margin-bottom: 10px; padding-top: 30px;">
                                     <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
                                 </div>
                                 <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
-                                    <div style="font-size: 17px;">{{ $customerGroup['partner']->name }}</div>
-                                    <div style="font-size: 17px;">{{ $customerGroup['partner']->address }}</div>
+                                    <div style="font-size: 18px;">{{ $customerGroup['partner']->name }}</div>
+                                    <div style="font-size: 18px;">{{ $customerGroup['partner']->address }}</div>
                                 </div>
                             </div>
 
@@ -61,7 +61,7 @@
 
                             <!-- Instruksi -->
                             <div style="margin-bottom: 15px; text-align: center;">
-                                <span style="font-size: 14px;">
+                                <span style="font-size: 16px;">
                                     Mohon Periksa Nota-nota tersebut di bawah ini
                                 </span>
                             </div>
