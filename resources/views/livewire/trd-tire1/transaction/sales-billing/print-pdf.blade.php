@@ -78,7 +78,7 @@
                                         <td style="padding: 2px 2px; width: auto; white-space: nowrap;">No.<span style="display:inline-block; width:4px;"></span>{{ $order->tr_code }}</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 20px; white-space: nowrap;">Rp.</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 130px; white-space: nowrap;">
-                                            {{ number_format($order->amt, 2, ',', '.') }}
+                                            {{ number_format($order->amt, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -93,7 +93,7 @@
                                     <td style="padding: 2px 35px; width: 150px;">Jumlah:</td>
                                     <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
                                     <td style="padding: 2px 5px; text-align: right; width: 120px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000;">
-                                        {{ number_format($customerTotal, 2, ',', '.') }}
+                                        {{ number_format($customerTotal, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             </table>
