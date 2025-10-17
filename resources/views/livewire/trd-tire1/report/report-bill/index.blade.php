@@ -91,6 +91,12 @@
                 }
 
 
+                /* Specific cell styles */
+                .portrait-table .customer-name {
+                    font-size: 16px;
+                    line-height: 1.2;
+                }
+
             }
 
             @media print {
@@ -150,6 +156,12 @@
 
                 .print-table .grand-total-row td:not(:empty) {
                     border-bottom: 2px solid #000 !important;
+                }
+
+                /* Specific cell styles */
+                .print-table .customer-name {
+                    font-size: 16px;
+                    line-height: 1.2;
                 }
 
                 /* Page counter untuk menghitung halaman */
@@ -224,7 +236,7 @@
                         </tr>
                         <tr>
                             <th>TGL</th>
-                            <th style="width:100px;">NO</th>
+                            <th style="width:80px;">NO</th>
                             <th>BANK</th>
                             <th>TGL</th>
                             <th style="width: 100px;">NO. BG</th>
@@ -258,7 +270,7 @@
                                 <td style="border: 1px #000 solid; height: 20px;"></td>
                             </tr>
                             <tr style="border: 1px #000 solid;">
-                                <td rowspan="{{ count($rows) + (count($rows) > 1 ? 1 : 0) }}" style="vertical-align:top; height:24px; border: 1px #000 solid;">
+                                <td class="customer-name" rowspan="{{ count($rows) + (count($rows) > 1 ? 1 : 0) }}" style="vertical-align:top; height:24px; border: 1px #000 solid;">
                                     {{ $customer }}</td>
                                 @php $subtotal = 0; @endphp
                                 @foreach ($rows as $i => $row)
@@ -345,7 +357,7 @@
                             </tr>
                             <tr>
                                 <th>TGL</th>
-                                <th style="width:100px;">NO</th>
+                                <th style="width:80px;">NO</th>
                                 <th>BANK</th>
                                 <th>TGL</th>
                                 <th style="width: 100px;">NO. BG</th>
@@ -379,7 +391,7 @@
                                     <td style="border: 1px #000 solid; height: 20px;"></td>
                                 </tr>
                                 <tr>
-                                    <td rowspan="{{ count($rows) + (count($rows) > 1 ? 1 : 0) }}" style="vertical-align:top; height:24px;">
+                                    <td class="customer-name" rowspan="{{ count($rows) + (count($rows) > 1 ? 1 : 0) }}" style="vertical-align:top; height:24px;">
                                         {{ $customer }}</td>
                                     @php $subtotal = 0; @endphp
                                     @foreach ($rows as $i => $row)
