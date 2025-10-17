@@ -56,6 +56,20 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Num1', 'num1')->searchable()->sortable()->collapseOnTablet(),
             Column::make('Num2', 'num2')->searchable()->sortable()->collapseOnTablet(),
             Column::make('Note1', 'note1')->searchable()->sortable()->collapseOnTablet(),
+            Column::make('Group', 'group_code')
+                ->searchable()
+                ->sortable()
+                ->collapseOnTablet()
+                ->format(function ($value) {
+                    return $value ?: '-';
+                }),
+            Column::make('User', 'user_code')
+                ->searchable()
+                ->sortable()
+                ->collapseOnTablet()
+                ->format(function ($value) {
+                    return $value ?: '-';
+                }),
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
             }),

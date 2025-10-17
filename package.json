@@ -2,12 +2,34 @@
     "private": true,
     "version": "1.0.0",
     "description": "Laravel Livewire + Bootstrap Admin Panel (CDN-only)",
+    "type": "module",
     "scripts": {
         "dev": "echo 'Using CDN-only, no build needed'",
         "build": "echo 'Using CDN-only, no build needed'",
-        "hot": "echo 'Using CDN-only, no build needed'"
+        "hot": "echo 'Using CDN-only, no build needed'",
+        "mcp": "node mcp-laravel-server.js"
     },
     "devDependencies": {
         "vite": "^4.5.0"
+    },
+    "name": "netapp1",
+    "main": "mcp-laravel-server.js",
+    "directories": {
+        "doc": "docs",
+        "test": "tests"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/andrych17/NETApp1.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/andrych17/NETApp1/issues"
+    },
+    "homepage": "https://github.com/andrych17/NETApp1#readme",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.20.0"
     }
 }

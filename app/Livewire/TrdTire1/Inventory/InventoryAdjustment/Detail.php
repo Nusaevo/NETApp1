@@ -11,9 +11,9 @@ use App\Services\TrdTire1\Master\MasterService;
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Models\TrdTire1\Inventories\IvttrDtl;
 use App\Services\TrdTire1\InventoryService;
-use Illuminate\Support\Facades\{Session, DB};
+use Illuminate\Support\Facades\{Session, DB, Auth};
 use Exception;
-
+use App\Enums\Constant;
 class Detail extends BaseComponent
 {
     #region Constant Variables
@@ -43,6 +43,8 @@ class Detail extends BaseComponent
     // Material List Component Properties
     public $materials;
     public $materialQuery = "";
+    public $trTypeOptions = [];
+    public $hasAccessToTrType = true;
     public $object_detail;
     public $trhdr_id;
     public $tr_seq;
@@ -74,6 +76,66 @@ class Detail extends BaseComponent
 
     #region Populate Data methods
 
+    protected function loadTrTypeOptions()
+    {
+        $userId = Auth::id(); // Gunakan Auth::id() untuk mendapatkan user ID
+        $groupCodes = Session::get('group_codes', []); // Ambil dari session yang sudah di-set saat login
+
+        // Subquery di luar: ambil group_ids dari config_groups di SysConfig1
+        $groupIds = [];
+        if (!empty($groupCodes)) {
+            $groupIds = DB::connection(Constant::configConn())
+                ->table('config_groups')
+                ->whereIn('code', $groupCodes)
+                ->whereNull('deleted_at')
+                ->pluck('id')
+                ->toArray();
+        }
+
+        // Query untuk mendapatkan tr_type berdasarkan user_id atau group_ids
+        $query = DB::connection(Session::get('app_code'))
+            ->table('config_consts')
+            ->select('str1', 'str2') // Select both str1 (code) and str2 (description)
+            ->where('const_group', 'IVT_TRX_RIGHT')
+            ->whereNull('deleted_at')
+            ->where(function($query) use ($userId, $groupIds) {
+                $query->where('user_id', $userId);
+                // Jika ada group_ids, tambahkan kondisi untuk group
+                if (!empty($groupIds)) {
+                    $query->orWhereIn('group_id', $groupIds);
+                }
+            })
+            ->distinct()
+            ->orderBy('str1');
+
+        $results = $query->get();
+
+        // Build options array from results by splitting comma-separated values
+        $this->trTypeOptions = [];
+        $descriptions = [
+            'IA' => 'Inventory Adjustment',
+            'TW' => 'Transfer Warehouse'
+        ];
+
+        foreach ($results as $item) {
+            $codes = explode(',', $item->str1);
+
+            // Loop through each code
+            for ($i = 0; $i < count($codes); $i++) {
+                $code = trim($codes[$i]);
+                $desc = $descriptions[$code] ?? '';
+
+                $this->trTypeOptions[] = [
+                    'value' => $code,
+                    'label' => $code . ' - ' . $desc
+                ];
+            }
+        }
+
+        // Check if user has access to any tr_type
+        $this->hasAccessToTrType = count($this->trTypeOptions) > 0;
+    }
+
     protected function onPreRender()
     {
         $this->customValidationAttributes  = [
@@ -84,6 +146,9 @@ class Detail extends BaseComponent
         $this->masterService = new MasterService();
         $this->warehouses = $this->masterService->getWarehouse();
         $this->warehousesType = $this->masterService->getWarehouseType();
+
+        // Load tr_type options based on user/group permissions
+        $this->loadTrTypeOptions();
 
         if ($this->isEditOrView()) {
             if (empty($this->objectIdValue)) {

@@ -23,6 +23,10 @@ class Detail extends BaseComponent
     public $selectedApplication; // Holds the currently selected application
     public $isEnabled;
 
+    // Dropdown search queries
+    public $groupQuery = '';
+    public $userQuery = '';
+
     // Cookie management properties
     public $showCookieManagement = false;
     public $deviceTrustStatus = false;
@@ -33,13 +37,14 @@ class Detail extends BaseComponent
         'inputs.const_group' => 'required|string|min:1|max:50',
         'inputs.seq' => 'required',
         'inputs.str1' => 'string|min:1|max:50',
-        'inputs.str2' => 'string|min:1|max:50',
+        'inputs.str2' => 'string|min:1|max:50'
     ];
 
     protected $listeners = [
         'changeStatus' => 'changeStatus',
         'clearDeviceTrust' => 'clearDeviceTrust',
         'setDeviceTrust' => 'setDeviceTrust',
+        'groupChanged' => 'groupChanged',
     ];
     #endregion
 
@@ -77,7 +82,6 @@ class Detail extends BaseComponent
 
         $this->isEnabled = $this->actionValue === 'Create' ? 'true' : 'false';
 
-
         if ($this->isEditOrView()) {
             // Fetch the application based on the additionalParam
             $this->application = ConfigAppl::find($this->additionalParam);
@@ -100,6 +104,28 @@ class Detail extends BaseComponent
             }
         }
 
+        // Determine app ID from application object or selectedApplication (for Create mode)
+        // If not SysConfig1, find application by app_code from session
+        if ($this->application && $this->application->id) {
+            $appId = $this->application->id;
+        } elseif ($this->selectedApplication) {
+            $appId = $this->selectedApplication;
+        } elseif (!$this->isSysConfig1) {
+            // Jika bukan SysConfig1, cari application berdasarkan app_code dari session
+            $appCode = Session::get('app_code');
+            $appRecord = ConfigAppl::where('code', $appCode)->first();
+            $appId = $appRecord ? $appRecord->id : 0;
+        } else {
+            $appId = 0;
+        }
+
+        // Set dropdown search queries
+        // Group query: filter groups that have users in the selected application
+        $this->groupQuery = "SELECT DISTINCT cg.id, cg.code, cg.descr FROM config_groups cg INNER JOIN config_grpusers cgu ON cg.id = cgu.group_id INNER JOIN config_users cu ON cgu.user_id = cu.id WHERE cg.status_code='A' AND cg.deleted_at IS NULL AND cg.app_id = {$appId}";
+
+        // User query: show all active users
+        $this->userQuery = "SELECT id, code, name FROM config_users WHERE status_code='A' AND deleted_at IS NULL";
+
         // Check if we should show cookie management
         $this->checkCookieManagement();
     }
@@ -109,6 +135,8 @@ class Detail extends BaseComponent
         $this->reset('inputs');
         $this->selectedApplication = null;
         $this->object = new ConfigConst();
+
+        $this->dispatch('resetSelect2Dropdowns');
     }
 
     public function render()
@@ -121,18 +149,57 @@ class Detail extends BaseComponent
     #region CRUD Methods
     public function onValidateAndSave()
     {
-        $this->object->fill($this->inputs);
-        if ($this->isEditOrView()) {
-            $this->object->setConnection($this->application->code);
-        } else {
+        // Untuk Create mode dengan multi-select
+        if ($this->actionValue === 'Create' && (!empty($this->selectedGroups) || !empty($this->selectedUsers))) {
+            // Tentukan application berdasarkan selectedApplication atau app_code
             if ($this->selectedApplication) {
                 $this->application = ConfigAppl::find($this->selectedApplication);
-                $this->object->setConnection($this->application->code);
             } elseif (!$this->isSysConfig1) {
-                $this->object->setConnection(Session::get('app_code'));
+                // Jika bukan SysConfig1, cari application berdasarkan app_code dari session
+                $appCode = Session::get('app_code');
+                $this->application = ConfigAppl::where('code', $appCode)->first();
             }
+
+            // Simpan untuk setiap group yang dipilih
+            foreach ($this->selectedGroups as $groupId) {
+                $object = new ConfigConst();
+                $object->fill($this->inputs);
+                $object->group_id = $groupId;
+                $object->user_id = null;
+
+                if ($this->application) {
+                    $object->setConnection($this->application->code);
+                }
+                $object->save();
+            }
+
+            // Simpan untuk setiap user yang dipilih
+            foreach ($this->selectedUsers as $userId) {
+                $object = new ConfigConst();
+                $object->fill($this->inputs);
+                $object->user_id = $userId;
+                $object->group_id = null;
+
+                if ($this->application) {
+                    $object->setConnection($this->application->code);
+                }
+                $object->save();
+            }
+        } else {
+            // Edit mode atau Create tanpa multi-select - simpan single record
+            $this->object->fill($this->inputs);
+            if ($this->isEditOrView()) {
+                $this->object->setConnection($this->application->code);
+            } else {
+                if ($this->selectedApplication) {
+                    $this->application = ConfigAppl::find($this->selectedApplication);
+                    $this->object->setConnection($this->application->code);
+                } elseif (!$this->isSysConfig1) {
+                    $this->object->setConnection(Session::get('app_code'));
+                }
+            }
+            $this->object->save();
         }
-        $this->object->save();
     }
 
     public function changeStatus()
@@ -150,10 +217,36 @@ class Detail extends BaseComponent
 
         if ($this->application) {
             $this->object->setConnection($this->application->code);
+
+            // Reset group and user selection
+            $this->inputs['group_id'] = null;
+            $this->inputs['user_id'] = null;
         }
+
+        // Update group query with new application
+        $appId = $this->selectedApplication ?? 0;
+        $this->groupQuery = "SELECT DISTINCT cg.id, cg.code, cg.descr FROM config_groups cg INNER JOIN config_grpusers cgu ON cg.id = cgu.group_id INNER JOIN config_users cu ON cgu.user_id = cu.id WHERE cg.status_code='A' AND cg.deleted_at IS NULL AND cg.app_id = {$appId}";
+
+        // User query stays the same - show all active users
+        $this->userQuery = "SELECT id, code, name FROM config_users WHERE status_code='A' AND deleted_at IS NULL";
+
+        // Dispatch events to update specific dropdown-search components by model name
+        $this->dispatch('update-dropdown-query-inputs.group_id', query: $this->groupQuery);
+        $this->dispatch('update-dropdown-query-inputs.user_id', query: $this->userQuery);
 
         // Check cookie management after application change
         $this->checkCookieManagement();
+    }
+
+    /**
+     * Handle group selection change
+     */
+    public function groupChanged()
+    {
+        // Reset user selection when group changes
+        $this->inputs['user_id'] = null;
+
+        // User query doesn't need to change - always show all active users
     }
 
     /**

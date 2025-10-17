@@ -13,14 +13,31 @@
         @endif
         <x-ui-tab-view-content id="myTabContent" class="tab-content">
             <div class="tab-pane fade show active" id="General" role="tabpanel" aria-labelledby="general-tab">
+                @if (!$hasAccessToTrType && $actionValue === 'Create')
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="alert alert-warning" role="alert">
+                                <p class="mb-0">
+                                    Anda tidak memiliki akses untuk melakukan Inventory Adjustment atau Transfer Warehouse.
+                                    Silakan hubungi administrator untuk mendapatkan hak akses yang sesuai.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 <div class="row mt-4">
                     <div class="col-md-12">
                         <x-ui-card title="Main Information">
                             <x-ui-padding>
                                 <div class="row">
-                                    <x-ui-dropdown-select label="{{ $this->trans('Tipe transaksi') }}"
-                                        model="inputs.tr_type" :options="$warehousesType" required="true" :action="$actionValue"
-                                        onChanged="onTypeChanged($event.target.value)" :enabled="$isPanelEnabled" />
+                                    <x-ui-dropdown-select
+                                        label="{{ $this->trans('Tipe transaksi') }}"
+                                        model="inputs.tr_type"
+                                        :options="$trTypeOptions"
+                                        required="true"
+                                        :action="$actionValue"
+                                        onChanged="onTypeChanged($event.target.value)"
+                                        :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
@@ -132,12 +149,6 @@
                     </x-ui-footer>
                 </div>
                 <br>
-                {{-- <div class="col-md-12">
-                    <x-ui-card title="Order Items">
-                        @livewire($currentRoute . '.material-list-component', ['action' => $action, 'objectId' => $objectId, 'wh_code' => $inputs['wh_code'], 'tr_type' => $inputs['tr_type']])
-                    </x-ui-card>
-                </div> --}}
-
             </div>
         </x-ui-tab-view-content>
     </x-ui-page-card>
