@@ -303,8 +303,34 @@ class Detail extends BaseComponent
         $tr_type = $this->inputs['tr_type'] ?? null;
 
         if ($tr_type === 'IA') {
-            // Untuk IA, tidak perlu ambil dari IvtBal karena akan menggunakan batch_code default
+            // Untuk IA, ambil batch dari IvtBal dan tambahkan default 240101 untuk material yang tidak ada
+            $ivtBals = IvtBal::where('wh_code', $whCode)->get();
             $this->batchOptions = [];
+
+            // Ambil semua material yang ada di ivt_bal
+            $materialsInIvtBal = $ivtBals->pluck('matl_id')->unique();
+
+            foreach ($ivtBals as $bal) {
+                $this->batchOptions[$bal->matl_id][] = [
+                    'value' => $bal->batch_code,
+                    'label' => $bal->batch_code,
+                    'qty_oh' => $bal->qty_oh,
+                ];
+            }
+
+            // Untuk material yang tidak ada di ivt_bal, tambahkan default batch 240101
+            $allMaterials = Material::where('status_code', 'A')
+                ->where('deleted_at', null)
+                ->whereNotIn('id', $materialsInIvtBal)
+                ->get();
+
+            foreach ($allMaterials as $material) {
+                $this->batchOptions[$material->id][] = [
+                    'value' => '240101',
+                    'label' => '240101',
+                    'qty_oh' => 0,
+                ];
+            }
         } else {
             // Untuk TW, ambil semua kombinasi matl_id dan batch_code dari IvtBal untuk whCode
             $ivtBals = IvtBal::where('wh_code', $whCode)->get();
@@ -327,15 +353,21 @@ class Detail extends BaseComponent
         $tr_type = $this->inputs['tr_type'] ?? null;
 
         if ($tr_type === 'IA') {
-            // Untuk IA, hanya ambil dari materials tanpa join ivt_bal
+            // Untuk IA, tampilkan semua material aktif, termasuk yang tidak ada di ivt_bal
             $this->materialQuery = "
-                SELECT m.id, m.code, m.name
+                SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
                 FROM materials m
+                LEFT OUTER JOIN (
+                    select matl_id, SUM(qty_oh)::int as qty_oh,SUM(qty_fgi)::int as qty_fgi
+                    from ivt_bals
+                    where wh_code = '$whCode'
+                    group by matl_id
+                    ) b on b.matl_id = m.id
                 WHERE m.status_code = 'A'
                 AND m.deleted_at IS NULL
             ";
         } else {
-            // Untuk TW, tetap menggunakan query lama dengan join ivt_bal
+            // Untuk TW, hanya tampilkan material yang ada di ivt_bal
             $this->materialQuery = "
                 SELECT m.id, m.code, m.name, coalesce(b.qty_oh,0) qty_oh, coalesce(b.qty_fgi,0) qty_fgi
                 FROM materials m
@@ -411,11 +443,24 @@ class Detail extends BaseComponent
         $tr_type = $this->inputs['tr_type'] ?? null;
 
         if ($tr_type === 'IA') {
-            // Untuk IA, set batch_code default dan cari qty_oh
-            $this->input_details[$index]['batch_code'] = '240101';
-            $this->onBatchCodeChanged($index); // Panggil method untuk set qty_oh
+            // Untuk IA, cek apakah ada batch di ivt_bal
+            $wh_code = $this->inputs['wh_code'] ?? null;
+            $hasBatch = false;
+
+            if ($wh_code && isset($this->batchOptions[$matl_id])) {
+                // Ada batch di ivt_bal, reset untuk dipilih user
+                $this->input_details[$index]['batch_code'] = null;
+                $this->input_details[$index]['qty_oh'] = null;
+                $hasBatch = true;
+            }
+
+            if (!$hasBatch) {
+                // Tidak ada batch di ivt_bal, gunakan default 240101
+                $this->input_details[$index]['batch_code'] = '240101';
+                $this->input_details[$index]['qty_oh'] = 0; // Default stock 0 untuk material baru
+            }
         } else {
-            // Untuk TW, reset batch_code dan qty_oh
+            // Untuk TW, reset batch_code dan qty_oh, akan diisi oleh onBatchCodeChanged
             $this->input_details[$index]['batch_code'] = null;
             $this->input_details[$index]['qty_oh'] = null;
         }
@@ -432,35 +477,25 @@ class Detail extends BaseComponent
         $batch_code = $this->input_details[$index]['batch_code'] ?? null;
         $tr_type = $this->inputs['tr_type'] ?? null;
 
+        if (!isset($this->input_details[$index]['batch_code'])) {
+            $this->input_details[$index]['qty_oh'] = null;
+            return;
+        }
+
         if ($tr_type === 'IA') {
-            // Untuk IA, gunakan batch_code default 240101 jika tidak ada
-            if (!$batch_code) {
-                $batch_code = '240101';
-                $this->input_details[$index]['batch_code'] = $batch_code;
-            }
-
-            // Cari atau buat record di IvtBal
-            $wh_code = $this->inputs['wh_code'] ?? null;
-            if ($wh_code) {
-                $ivtBal = IvtBal::where('wh_code', $wh_code)
-                    ->where('matl_id', $matl_id)
-                    ->where('batch_code', $batch_code)
-                    ->first();
-
-                if ($ivtBal) {
-                    $this->input_details[$index]['qty_oh'] = $ivtBal->qty_oh;
-                } else {
-                    // Jika belum ada record, set qty_oh = 0
-                    $this->input_details[$index]['qty_oh'] = 0;
+            // Untuk IA, cek apakah ada batch di batchOptions
+            if (isset($this->batchOptions[$matl_id])) {
+                foreach ($this->batchOptions[$matl_id] as $batch) {
+                    if ($batch['value'] == $batch_code) {
+                        $this->input_details[$index]['qty_oh'] = $batch['qty_oh'];
+                        return;
+                    }
                 }
             }
+            // Jika tidak ada di batchOptions, set qty_oh = 0 (material baru)
+            $this->input_details[$index]['qty_oh'] = 0;
         } else {
             // Untuk TW, gunakan logic lama
-            if (!isset($this->input_details[$index]['batch_code'])) {
-                $this->input_details[$index]['qty_oh'] = null;
-                return;
-            }
-
             if (isset($this->batchOptions[$matl_id])) {
                 foreach ($this->batchOptions[$matl_id] as $batch) {
                     if ($batch['value'] == $batch_code) {
@@ -659,30 +694,28 @@ class Detail extends BaseComponent
             $matlUom = $material->uom ?? null;
             $matlCode = $material->code ?? null;
 
-            // Untuk IA, pastikan record IvtBal ada
-            if ($tr_type === 'IA') {
-                $existingIvtBal = IvtBal::where('wh_code', $whCodeFrom)
-                    ->where('matl_id', $matlId)
-                    ->where('batch_code', $batchCode)
-                    ->first();
+            // Untuk IA dan TW, pastikan record IvtBal ada
+            $existingIvtBal = IvtBal::where('wh_code', $whCodeFrom)
+                ->where('matl_id', $matlId)
+                ->where('batch_code', $batchCode)
+                ->first();
 
-                if (!$existingIvtBal) {
-                    // Dapatkan wh_id dari wh_code menggunakan ConfigConst
-                    $warehouse = ConfigConst::where('str1', $whCodeFrom)->first();
-                    $whId = $warehouse ? $warehouse->id : null;
+            if (!$existingIvtBal) {
+                // Dapatkan wh_id dari wh_code menggunakan ConfigConst
+                $warehouse = ConfigConst::where('str1', $whCodeFrom)->first();
+                $whId = $warehouse ? $warehouse->id : null;
 
-                    // Buat record baru di IvtBal dengan semua field yang diperlukan
-                    IvtBal::create([
-                        'wh_code' => $whCodeFrom,
-                        'wh_id' => $whId,
-                        'matl_id' => $matlId,
-                        'matl_code' => $matlCode,
-                        'matl_uom' => $matlUom,
-                        'batch_code' => $batchCode,
-                        'qty_oh' => 0,
-                        'qty_fgi' => 0,
-                    ]);
-                }
+                // Buat record baru di IvtBal dengan semua field yang diperlukan
+                IvtBal::create([
+                    'wh_code' => $whCodeFrom,
+                    'wh_id' => $whId,
+                    'matl_id' => $matlId,
+                    'matl_code' => $matlCode,
+                    'matl_uom' => $matlUom,
+                    'batch_code' => $batchCode,
+                    'qty_oh' => 0,
+                    'qty_fgi' => 0,
+                ]);
             }
 
             if ($tr_type === 'IA') {

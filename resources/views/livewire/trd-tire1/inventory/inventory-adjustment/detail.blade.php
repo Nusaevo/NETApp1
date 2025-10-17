@@ -20,7 +20,7 @@
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('Tipe transaksi') }}"
                                         model="inputs.tr_type" :options="$warehousesType" required="true" :action="$actionValue"
-                                        onChanged="onTypeChanged($event.target.value)" :enabled="$isPanelEnabled"/>
+                                        onChanged="onTypeChanged($event.target.value)" :enabled="$isPanelEnabled" />
                                     <x-ui-text-field label="Tanggal Terima Barang" model="inputs.tr_date" type="date"
                                         :action="$actionValue" required="true" />
                                     <x-ui-text-field label="Nomor Transaksi" model="inputs.tr_code" :action="$actionValue"
@@ -39,14 +39,10 @@
                                 <x-slot name="headers">
                                     <th style="width: 50px; text-align: center;">No</th>
                                     <th style="width: 150px; text-align: center;">Nama Barang</th>
-                                    @if($inputs['tr_type'] !== 'IA')
-                                        <th style="width: 50px; text-align: center;">Kode Batch</th>
-                                        <th style="width: 50px; text-align: center;">Stock</th>
-                                    @endif
+                                    <th style="width: 50px; text-align: center;">Kode Batch</th>
+                                    <th style="width: 50px; text-align: center;">Stock</th>
                                     <th style="width: 50px; text-align: center;">Quantity</th>
-                                    @if($inputs['tr_type'] !== 'IA')
-                                        <th style="width: 50px; text-align: center;">Stock Akhir</th>
-                                    @endif
+                                    <th style="width: 50px; text-align: center;">Stock Akhir</th>
                                     <th style="width: 70px; text-align: center;">Actions</th>
                                 </x-slot>
                                 <!-- Define table rows -->
@@ -55,51 +51,45 @@
                                         <tr wire:key="list{{ $input_detail['id'] ?? $key }}">
                                             <td style="text-align: center;">{{ $loop->iteration }}</td>
                                             <td>
-                                                @if($actionValue === 'Create')
+                                                @if ($actionValue === 'Create')
                                                     <x-ui-dropdown-search label=""
-                                                        model="input_details.{{ $key }}.matl_id" :query="$materialQuery"
-                                                        optionValue="id"
-                                                        optionLabel="{code};{name}"
-                                                        placeHolder="Select material..." :selectedValue="$input_detail['matl_id'] ?? ''" required="true"
-                                                        :action="$actionValue" enabled="true"
+                                                        model="input_details.{{ $key }}.matl_id"
+                                                        :query="$materialQuery" optionValue="id" optionLabel="{code};{name}"
+                                                        placeHolder="Select material..." :selectedValue="$input_detail['matl_id'] ?? ''"
+                                                        required="true" :action="$actionValue" enabled="true"
                                                         onChanged="onMaterialChanged({{ $key }}, $event.target.value)"
                                                         type="int" :enabled="$isPanelEnabled" />
                                                 @else
                                                     <x-ui-dropdown-select type="int" label=""
-                                                        model="input_details.{{ $key }}.matl_id" :selectedValue="$input_detail['matl_id']"
-                                                        :options="$filteredMaterials" required="true" :action="$actionValue"
-                                                        :enabled="$isPanelEnabled"
+                                                        model="input_details.{{ $key }}.matl_id"
+                                                        :selectedValue="$input_detail['matl_id']" :options="$filteredMaterials" required="true"
+                                                        :action="$actionValue" :enabled="$isPanelEnabled"
                                                         onChanged="onMaterialChanged({{ $key }})" />
                                                 @endif
                                             </td>
-                                            @if($inputs['tr_type'] !== 'IA')
-                                                <td style="text-align: center;">
-                                                    <x-ui-dropdown-select type="int" label="" :options="$filteredBatchCode[$key] ?? []"
-                                                        model="input_details.{{ $key }}.batch_code"
-                                                        :selectedValue="$input_detail['batch_code'] ?? null"
-                                                        :enabled="$isPanelEnabled"
-                                                        :action="$actionValue"
-                                                        required="true"
-                                                        onChanged="onBatchCodeChanged({{ $key }})" />
-                                                </td>
-                                                <td style="text-align: center;">
-                                                    <x-ui-text-field model="input_details.{{ $key }}.qty_oh"
-                                                        label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
-                                                        required="true" enabled="false" />
-                                                </td>
-                                            @endif
+                                            <td style="text-align: center;">
+                                                <x-ui-dropdown-select type="int" label=""
+                                                    :options="$filteredBatchCode[$key] ?? []"
+                                                    model="input_details.{{ $key }}.batch_code"
+                                                    :selectedValue="$input_detail['batch_code'] ?? null" :enabled="$isPanelEnabled" :action="$actionValue"
+                                                    required="true"
+                                                    onChanged="onBatchCodeChanged({{ $key }})" />
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_oh"
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
+                                                    required="true" enabled="false" />
+                                            </td>
                                             <td style="text-align: center;">
                                                 <x-ui-text-field model="input_details.{{ $key }}.qty"
                                                     label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
                                                     required="true" onChanged="onQtyChanged({{ $key }})" />
                                             </td>
-                                            @if($inputs['tr_type'] !== 'IA')
-                                                <td style="text-align: center;">
-                                                    <x-ui-text-field model="input_details.{{ $key }}.qty_end"
-                                                        label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
-                                                        required="true" enabled="false" />
-                                                </td>
-                                            @endif
+                                            <td style="text-align: center;">
+                                                <x-ui-text-field model="input_details.{{ $key }}.qty_end"
+                                                    label="" :enabled="$isPanelEnabled" :action="$actionValue" type="text"
+                                                    required="true" enabled="false" />
+                                            </td>
                                             <td style="text-align: center;">
                                                 @if (isset($input_detail['is_editable']) && $input_detail['is_editable'])
                                                     <x-ui-button :clickEvent="'deleteItem(' . $key . ')'" button-name="" loading="true"
@@ -118,8 +108,9 @@
                                 <x-slot name="button">
                                     <div class="row">
                                         <x-ui-dropdown-select label="{{ $this->trans('Gudang') }}"
-                                            model="inputs.wh_code" :options="$warehouses" required="true" :action="$actionValue"
-                                            :enabled="$isPanelEnabled" onChanged="onWarehouseChanged($event.target.value)" />
+                                            model="inputs.wh_code" :options="$warehouses" required="true"
+                                            :action="$actionValue" :enabled="$isPanelEnabled"
+                                            onChanged="onWarehouseChanged($event.target.value)" />
                                         <x-ui-dropdown-select label="{{ $this->trans('Gudang Tujuan') }}"
                                             model="inputs.wh_code2" :options="$warehouses" required="true"
                                             :enabled="$isEditWhCode2" />
