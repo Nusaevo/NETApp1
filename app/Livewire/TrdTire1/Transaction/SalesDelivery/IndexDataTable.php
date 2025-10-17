@@ -15,6 +15,7 @@ use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
 use App\Services\TrdTire1\DeliveryService;
+use App\Services\TrdTire1\AuditLogService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -41,7 +42,7 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return OrderHdr::with(['OrderDtl', 'Partner'])
             ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP])
+            ->whereIn('order_hdrs.status_code', [Status::ACTIVE, Status::PRINT, Status::OPEN, Status::PAID, Status::SHIP, Status::BILL])
             ->select('order_hdrs.*') // Pastikan semua field dari order_hdrs di-select
             ->orderBy('order_hdrs.tr_code', 'asc');
             // ->orderBy('order_hdrs.tr_date', 'desc');
@@ -283,6 +284,8 @@ class IndexDataTable extends BaseDataTableComponent
             $deletedCount = 0;
 
             foreach ($delivHdrs as $delivHdr) {
+                // Audit log for BATAL KIRIM before deletion
+                AuditLogService::createDeliveryBatalKirim($delivHdr->id);
                 $deliveryService->delDelivery($delivHdr->id);
                 $billingService->delBilling($delivHdr->billhdr_id);
                 $deletedCount++;

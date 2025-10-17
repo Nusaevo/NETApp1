@@ -95,6 +95,7 @@ class IndexDataTable extends BaseDataTableComponent
                         Status::PRINT => 'Tercetak',
                         Status::SHIP => 'Terkirim',
                         Status::CANCEL => 'Batal',
+                        Status::BILL => 'Lunas',
                     ];
                     return $statusMap[$value] ?? 'Unknown';
                 }),
@@ -163,6 +164,7 @@ class IndexDataTable extends BaseDataTableComponent
                     Status::PRINT => 'Print',
                     Status::SHIP => 'Ship',
                     Status::CANCEL => 'Cancel',
+                    Status::BILL => 'Lunas',
                 ])
                 ->filter(function ($builder, $value) {
                     if ($value !== '') { // Jika nilai tidak kosong, filter berdasarkan status_code
