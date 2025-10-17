@@ -47,12 +47,12 @@
                         <div style="margin: 0 auto; font-family: 'Lucida Console', monospace; font-size: 18.4px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
-                                <div style="text-align: right; font-size: 15px; margin-bottom: 10px; padding-top: 30px; padding-right: 7px;">
+                                <div style="text-align: right; font-size: 18px; margin-bottom: 10px; padding-top: 30px; padding-right: 20px;">
                                     <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
                                 </div>
                                 <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
                                     <div style="font-size: 20px;">{{ $customerGroup['partner']->name }}</div>
-                                    <div style="font-size: 20px;">{{ $customerGroup['partner']->address }}</div>
+                                    <div style="font-size: 20px;">{{ $customerGroup['partner']->address}}, {{ $customerGroup['partner']->city }}</div>
                                 </div>
                             </div>
 
@@ -85,7 +85,6 @@
                             </table>
 
                             <!-- Total - hanya tampil jika ada lebih dari 1 item -->
-                            @if(count($customerGroup['orders']) > 1)
                             <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
                                 <tr>
                                     <td style="padding: 2px 0; width: 30px;"></td>
@@ -97,9 +96,7 @@
                                     </td>
                                 </tr>
                             </table>
-                            @else
                             <div style="margin-bottom: 30px;"></div>
-                            @endif
 
                             <!-- Tanda tangan -->
                             <div style="margin-top: 30px;">
