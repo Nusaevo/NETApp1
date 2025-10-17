@@ -376,6 +376,28 @@
                             $(selectElement).val('{{ $blankValue }}').trigger('change');
                         }
                     });
+
+                    // Listen for query update events specific to this component
+                    Livewire.on('update-dropdown-query-{{ $model }}', (event) => {
+                        const selectElement = document.getElementById('{{ $id }}');
+                        if (selectElement) {
+                            // Update the data-query attribute with the new query
+                            const newQuery = event.query || event[0]?.query || '';
+                            selectElement.setAttribute('data-query', newQuery);
+
+                            // Clear current value
+                            $(selectElement).val('{{ $blankValue }}').trigger('change');
+                            @this.set('{{ $model }}', '{{ $blankValue }}');
+
+                            // Reinitialize Select2 with the new query
+                            if ($(selectElement).hasClass('select2-hidden-accessible')) {
+                                $(selectElement).select2('destroy');
+                            }
+                            initSelect2();
+
+                            console.log('Dropdown query updated for {{ $model }}:', newQuery.substring(0, 50) + '...');
+                        }
+                    });
                 });
             }">
 

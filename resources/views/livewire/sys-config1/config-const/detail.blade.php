@@ -13,7 +13,8 @@
                             model="selectedApplication" :options="$applications" required="true" :action="$actionValue"
                             visible="{{ $isSysConfig1 ? 'true' : 'false' }}" onChanged="applicationChanged"
                             :enabled="$isEnabled" />
-
+                    </div>
+                    <div class="row">
                         <x-ui-text-field label="Const Group" model="inputs.const_group" type="text" :action="$actionValue"
                             required="true" visible="true" placeHolder="Ex : MMATL_JEWEL_COMPONENTS"/>
                         <x-ui-text-field label="Seq" model="inputs.seq" type="number" :action="$actionValue"
@@ -30,6 +31,36 @@
                         <x-ui-text-field label="Num2" model="inputs.num2" type="number" :action="$actionValue"
                             required="false" visible="true" />
                     </div>
+
+
+
+                        <div class="row">
+                            <x-ui-dropdown-search
+                                label="Group"
+                                model="inputs.group_id"
+                                :query="$groupQuery"
+                                connection="SysConfig1"
+                                optionValue="id"
+                                optionLabel="Code: {cg.code}; Descr: {cg.descr}"
+                                placeHolder="Choose Application first."
+                                :selectedValue="$inputs['group_id'] ?? ''"
+                                required="false"
+                                :action="$actionValue"
+                                onChanged="groupChanged"
+                                type="int" />
+                            <x-ui-dropdown-search
+                                label="User"
+                                model="inputs.user_id"
+                                :query="$userQuery"
+                                connection="SysConfig1"
+                                optionValue="id"
+                                optionLabel="Code: {code}; Name: {name}"
+                                placeHolder="Search users..."
+                                :selectedValue="$inputs['user_id'] ?? ''"
+                                required="false"
+                                :action="$actionValue"
+                                type="int" />
+                        </div>
                     <x-ui-text-field label="Note1" model="inputs.note1" type="textarea" :action="$actionValue"
                         required="false" visible="true" />
 
@@ -140,6 +171,15 @@
             } else if (data.type === 'error') {
                 toastr.error(data.message);
             }
+        });
+
+        // Listen for query updates from backend
+        Livewire.on('queryUpdated', (event) => {
+            const data = Array.isArray(event) ? event[0] : event;
+            // Force Alpine to reactively update the query attributes
+            document.querySelectorAll('[wire\\:ignore]').forEach(el => {
+                el.dispatchEvent(new CustomEvent('queryUpdate', { detail: data }));
+            });
         });
 
         // Listen for cookie update events
