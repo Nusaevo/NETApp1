@@ -328,9 +328,18 @@ class BaseComponent extends Component
         if (!empty($this->menuName)) {
             $cleanTitle = strip_tags($this->menuName);
 
+            // If menuName is home, set title to Nusaevo
+            if (strtolower($cleanTitle) === 'home') {
+                $cleanTitle = 'Nusaevo';
+            }
+
             // Share with view for Blade templates
             view()->share('pageTitle', $cleanTitle);
             view()->share('menuName', $this->menuName);
+        }
+        else{
+            view()->share('pageTitle','Nusaevo');
+            view()->share('menuName', 'Nusaevo');
         }
     }
 
