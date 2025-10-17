@@ -16,7 +16,8 @@ class Index extends BaseComponent
     public $results = [];
 
     protected $listeners = [
-        'onSrCodeChanged'
+        'onSrCodeChanged',
+        'selectedPrintDate' => 'onDateChanged'
     ];
 
     protected function onPreRender()
@@ -28,6 +29,13 @@ class Index extends BaseComponent
     // public function onSrCodeChanged() {
     //     // Method ini sudah tidak dipakai karena dropdown diganti menjadi tanggal tagih
     // }
+
+    public function onDateChanged()
+    {
+        // Clear data lama saat tanggal berubah
+        $this->results = [];
+        $this->resetErrorBag();
+    }
 
     public function search()
     {

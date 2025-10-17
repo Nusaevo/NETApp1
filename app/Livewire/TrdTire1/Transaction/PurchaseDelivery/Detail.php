@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\TrdTire1\DeliveryService;
 use App\Services\TrdTire1\BillingService;
+use App\Services\TrdTire1\AuditLogService;
 use Illuminate\Support\Carbon;
 
 class Detail extends BaseComponent
@@ -363,6 +364,9 @@ class Detail extends BaseComponent
 
         // Hanya buat billing baru saat create
         if ($this->actionValue === 'Create') {
+            // Audit log: KIRIM (PD) setelah berhasil create header
+            AuditLogService::createPurchaseDeliveryKirim($this->object->id);
+
             $billingService = app(BillingService::class);
             $billingHeaderData = [
                 'id' => 0,
@@ -432,6 +436,9 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Data Purchase Delivery tidak ditemukan.');
                 return;
             }
+
+            // Audit log: BATAL KIRIM (PD)
+            AuditLogService::createPurchaseDeliveryBatalKirim($this->object->id);
 
             // Panggil service untuk hapus billing terlebih dahulu
             $billingService = app(BillingService::class);

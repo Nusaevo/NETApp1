@@ -124,7 +124,7 @@ abstract class BaseDataTableComponent extends DataTableComponent
         $this->setFilterLayout('slide-down');
         $this->setFilterSlideDownDefaultStatusEnabled();
         $this->setQueryStringStatusForSort(true);
-        $this->setSingleSortingDisabled();
+        //$this->setSingleSortingDisabled();
 
         // Enable single sorting for TrdTire apps
         $this->setSingleSortingStatus(true);

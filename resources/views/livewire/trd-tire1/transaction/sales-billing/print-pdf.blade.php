@@ -44,10 +44,10 @@
             <div class="card shadow-sm customer-billing" style="max-width: 800px; margin: 0 auto; @if($index > 0) margin-top: 50px; @endif">
                 <div class="card-body p-4">
                     <div class="invoice-box">
-                        <div style="margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 18.4px; line-height: 1.4;">
+                        <div style="margin: 0 auto; font-family: 'Lucida Console', monospace; font-size: 18.4px; line-height: 1.4;">
                             <!-- Header dengan tanggal di kanan -->
                             <div style="margin-bottom: 15px;">
-                                <div style="text-align: right; font-size: 15px; margin-bottom: 10px; padding-top: 30px;">
+                                <div style="text-align: right; font-size: 15px; margin-bottom: 10px; padding-top: 30px; padding-right: 7px;">
                                     <span>Tgl.: {{ $customerGroup['print_date'] ? \Carbon\Carbon::parse($customerGroup['print_date'])->format('d-m-Y') : '' }}</span>
                                 </div>
                                 <div style="border: 1px solid #000; padding: 10px; width: 100%; display: inline-block;">
@@ -72,13 +72,13 @@
                                 @foreach ($customerGroup['orders'] as $i => $order)
                                     @php $customerTotal += $order->amt; @endphp
                                     <tr style="height: 25px;">
-                                        <td style="padding: 2px 10px 2px 5px; width: auto; white-space: nowrap;">
+                                        <td style="padding: 2px 5px 2px 5px; width: auto; white-space: nowrap;">
                                             Tgl.<span style="display:inline-block;width:4px;"></span>{{ \Carbon\Carbon::parse($order->order_tr_date ?? $order->tr_date)->format('d-m-Y') }}
                                         </td>
-                                        <td style="padding: 2px 5px; width: auto; white-space: nowrap;">No.<span style="display:inline-block; width:4px;"></span>{{ $order->tr_code }}</td>
+                                        <td style="padding: 2px 2px; width: auto; white-space: nowrap;">No.<span style="display:inline-block; width:4px;"></span>{{ $order->tr_code }}</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 20px; white-space: nowrap;">Rp.</td>
                                         <td style="padding: 2px 5px; text-align: right; width: 130px; white-space: nowrap;">
-                                            {{ number_format($order->amt, 2, ',', '.') }}
+                                            {{ number_format($order->amt, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -93,7 +93,7 @@
                                     <td style="padding: 2px 35px; width: 150px;">Jumlah:</td>
                                     <td style="padding: 2px 5px; text-align: right; width: 30px;">Rp.</td>
                                     <td style="padding: 2px 5px; text-align: right; width: 120px; font-weight: bold; border-top: 1px solid #000; border-bottom: 1px solid #000;">
-                                        {{ number_format($customerTotal, 2, ',', '.') }}
+                                        {{ number_format($customerTotal, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             </table>
@@ -120,14 +120,14 @@
 
     <style>
         @page {
-             size: 97.5mm auto; /* dari 105mm → jadi 97.5mm */
-             margin: 5mm 2mm; /* top/bottom 5mm, left/right 2mm */
+             size: 98mm auto; /* dari 105mm → jadi 97.5mm */
+             margin: 5mm 3mm; /* top/bottom 5mm, left/right 2mm */
          }
 
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Lucida Console', monospace;
             -webkit-font-smoothing: antialiased;
             print-color-adjust: exact;
         }
