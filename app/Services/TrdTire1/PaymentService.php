@@ -7,7 +7,8 @@ use App\Models\SysConfig1\ConfigConst;
 use Illuminate\Support\Facades\{DB, Log};
 use App\Models\TrdTire1\Master\PartnerBal;
 use App\Services\SysConfig1\ConfigService;
-use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl, PartnertrHdr, PaymentAdv};
+use App\Models\TrdTire1\Transaction\{PaymentHdr, PaymentDtl, PaymentSrc, BillingHdr, BillingDtl, PartnertrHdr, PaymentAdv, OrderHdr};
+use App\Enums\TrdTire1\Status as TrdStatus;
 
 class PaymentService
 {
@@ -94,6 +95,19 @@ class PaymentService
                 $detail['partnerbal_id'] = $partnerBalId;
                 $paymentDtl->partnerbal_id = $partnerBalId;
                 $paymentDtl->save();
+
+                // Update order status to 'T' (BILL) when the related billing is fully paid
+                $billing = BillingHdr::find($detail['billhdr_id']);
+                if ($billing) {
+                    $outstanding = ($billing->amt + ($billing->amt_shipcost ?? 0)) - ($billing->amt_reff ?? 0);
+                    if ($outstanding <= 0) {
+                        $order = OrderHdr::where('tr_code', $billing->tr_code)->where('tr_type', 'SO')->first();
+                        if ($order && $order->status_code !== TrdStatus::BILL) {
+                            $order->status_code = TrdStatus::BILL;
+                            $order->save();
+                        }
+                    }
+                }
             } else {
                 $paymentDtl = $dbPaymentDtl->where('billhdr_id', $detail['billhdr_id'])->first();
                 if ($paymentDtl) {
@@ -108,6 +122,19 @@ class PaymentService
                         $detail['partnerbal_id'] = $partnerBalId;
                         $paymentDtl->partnerbal_id = $partnerBalId;
                         $paymentDtl->save();
+
+                        // Update order status to 'T' (BILL) when the related billing is fully paid
+                        $billing = BillingHdr::find($detail['billhdr_id']);
+                        if ($billing) {
+                            $outstanding = ($billing->amt + ($billing->amt_shipcost ?? 0)) - ($billing->amt_reff ?? 0);
+                            if ($outstanding <= 0) {
+                                $order = OrderHdr::where('tr_code', $billing->tr_code)->where('tr_type', 'SO')->first();
+                                if ($order && $order->status_code !== TrdStatus::BILL) {
+                                    $order->status_code = TrdStatus::BILL;
+                                    $order->save();
+                                }
+                            }
+                        }
                     }
                 }
             }

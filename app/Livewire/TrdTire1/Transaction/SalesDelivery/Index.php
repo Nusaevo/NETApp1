@@ -12,6 +12,7 @@ use App\Models\SysConfig1\ConfigConst;
 use App\Livewire\Component\BaseComponent;
 use App\Services\TrdTire1\BillingService;
 use App\Services\TrdTire1\DeliveryService;
+use App\Services\TrdTire1\AuditLogService;
 use App\Models\TrdTire1\Inventories\IvtBal;
 use App\Services\TrdTire1\Master\MasterService;
 use App\Models\TrdTire1\Transaction\{DelivDtl, DelivHdr, OrderDtl, OrderHdr};
@@ -102,11 +103,10 @@ class Index extends BaseComponent
                 foreach ($orderDetails as $detail) {
                     $totalStock = IvtBal::where('matl_id', $detail->matl_id)
                         ->where('wh_id', $warehouse->id)
-                        ->where('qty_oh', '>', 0)
                         ->sum('qty_oh');
 
                     if ($totalStock < $detail->qty) {
-                        $stockError = 'Nota: ' . $order->tr_code . ' - Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . (int)$totalStock . ' - Dibutuhkan: ' . $detail->qty;
+                        $stockError = 'Nota: ' . $order->tr_code . ' - Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.') . ' - Dibutuhkan: ' . $detail->qty;
                         $stockErrors[] = $stockError;
                     }
                 }
@@ -189,6 +189,8 @@ class Index extends BaseComponent
                     $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
 
                     if (!empty($result['header'])) {
+                        // Audit log for Sales Delivery KIRIM
+                        AuditLogService::createDeliveryKirim($result['header']->id);
                         $successCount++;
                     } else {
                         $this->dispatch('notify-swal', [

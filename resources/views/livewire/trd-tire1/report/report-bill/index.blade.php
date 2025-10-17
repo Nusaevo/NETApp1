@@ -258,7 +258,7 @@
                                 <td style="border: 1px #000 solid; height: 20px;"></td>
                             </tr>
                             <tr style="border: 1px #000 solid;">
-                                <td rowspan="{{ count($rows) + 1 }}" style="vertical-align:top; height:24px; border: 1px #000 solid;">
+                                <td rowspan="{{ count($rows) + (count($rows) > 1 ? 1 : 0) }}" style="vertical-align:top; height:24px; border: 1px #000 solid;">
                                     {{ $customer }}</td>
                                 @php $subtotal = 0; @endphp
                                 @foreach ($rows as $i => $row)
@@ -278,26 +278,21 @@
                         </tr>
                         @php $subtotal += $row->total_tagihan; @endphp
                         @endforeach
-                        {{-- Baris subtotal, pastikan kolom TGL LUNAS kosong --}}
-                        <tr class="subtotal-row">
-                            <td></td>
-                            @if(count($grouped) == 1)
-                                {{-- Jika tanggal tagih cuman ada 1 partner maka jadi blank --}}
-                                <td style="height: 30px"></td>
+                        {{-- Baris subtotal hanya tampil jika lebih dari 1 nota --}}
+                        @if(count($rows) > 1)
+                            <tr class="subtotal-row">
                                 <td></td>
-                            @else
-                                {{-- Jika lebih dari 1 partner maka tampilkan total --}}
                                 <td style="font-weight:bold; text-align:right;" colspan="1">Total :</td>
                                 <td style="text-align:right; font-weight:bold; text-decoration: underline;">
                                     {{ number_format($subtotal, 0) }}</td>
-                            @endif
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td> 
-                        </tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        @endif
                         @php $grandTotal += $subtotal; @endphp
                         @endforeach
                         <tr class="grand-total-row">
@@ -384,7 +379,7 @@
                                     <td style="border: 1px #000 solid; height: 20px;"></td>
                                 </tr>
                                 <tr>
-                                    <td rowspan="{{ count($rows) + 1 }}" style="vertical-align:top; height:24px;">
+                                    <td rowspan="{{ count($rows) + (count($rows) > 1 ? 1 : 0) }}" style="vertical-align:top; height:24px;">
                                         {{ $customer }}</td>
                                     @php $subtotal = 0; @endphp
                                     @foreach ($rows as $i => $row)
@@ -405,19 +400,21 @@
                             </tr>
                             @php $subtotal += $row->total_tagihan; @endphp
                             @endforeach
-                            {{-- Baris subtotal, pastikan kolom TGL LUNAS kosong --}}
-                            <tr class="subtotal-row">
-                                <td></td>
-                                <td style="font-weight:bold; text-align:right;" colspan="1">Total :</td>
-                                <td style="text-align:right; font-weight:bold;">
-                                    {{ number_format($subtotal, 0) }}</td>
-                                <td></td> <!-- TGL LUNAS kosong -->
-                                <td></td> <!-- BANK -->
-                                <td></td> <!-- TGL -->
-                                <td></td> <!-- NO. BG -->
-                                <td></td> <!-- JUMLAH -->
-                                <td></td> <!-- KET. -->
-                            </tr>
+                            {{-- Baris subtotal hanya tampil jika lebih dari 1 nota --}}
+                            @if(count($rows) > 1)
+                                <tr class="subtotal-row">
+                                    <td></td>
+                                    <td style="font-weight:bold; text-align:right;" colspan="1">Total :</td>
+                                    <td style="text-align:right; font-weight:bold;">
+                                        {{ number_format($subtotal, 0) }}</td>
+                                    <td></td> <!-- TGL LUNAS kosong -->
+                                    <td></td> <!-- BANK -->
+                                    <td></td> <!-- TGL -->
+                                    <td></td> <!-- NO. BG -->
+                                    <td></td> <!-- JUMLAH -->
+                                    <td></td> <!-- KET. -->
+                                </tr>
+                            @endif
                             @php $grandTotal += $subtotal; @endphp
                             @endforeach
                             {{-- Baris total tagihan, pastikan kolom TGL LUNAS kosong --}}
@@ -443,107 +440,6 @@
 </div>
 <script>
     function printReport() {
-        // Calculate total pages more accurately
-        const printContent = document.getElementById('print');
-        const table = printContent.querySelector('.print-table');
-
-        if (table) {
-            // Get table height
-            const tableHeight = table.offsetHeight;
-            // A4 height in pixels at 96dpi minus margins (10mm top + 10mm bottom = 20mm = ~76px)
-            const pageHeight = 1122 - 76; // Account for margins
-            const totalPages = Math.ceil(tableHeight / pageHeight);
-
-            // Update page info
-            const pageNumberElement = document.querySelector('.pageNumber');
-            const totalPagesElement = document.querySelector('.totalPages');
-            if (pageNumberElement && totalPagesElement) {
-                pageNumberElement.textContent = '1';
-                totalPagesElement.textContent = Math.max(1, totalPages);
-            }
-        } else {
-            // Fallback calculation
-            const contentHeight = printContent.scrollHeight;
-            const pageHeight = 1122 - 76; // Account for margins
-            const totalPages = Math.ceil(contentHeight / pageHeight);
-
-            const pageNumberElement = document.querySelector('.pageNumber');
-            const totalPagesElement = document.querySelector('.totalPages');
-            if (pageNumberElement && totalPagesElement) {
-                pageNumberElement.textContent = '1';
-                totalPagesElement.textContent = Math.max(1, totalPages);
-            }
-        }
-
-        // Print the document
         window.print();
     }
-
-    // Function to calculate and update page numbers
-    function updatePageNumbers() {
-        const printContent = document.getElementById('print');
-        const table = printContent.querySelector('.print-table');
-
-        if (table) {
-            // Get the actual height of the table including all rows
-            const tableHeight = table.offsetHeight;
-            const headerHeight = table.querySelector('thead') ? table.querySelector('thead').offsetHeight : 0;
-            const tbodyHeight = tableHeight - headerHeight;
-
-            // A4 height in pixels at 96dpi minus margins (10mm top + 10mm bottom = 20mm = ~76px)
-            // Account for header repetition on each page
-            const pageHeight = 1122 - 76; // Total page height minus margins
-            const contentHeightPerPage = pageHeight - headerHeight; // Available height for content per page
-
-            // Calculate total pages needed
-            const totalPages = Math.ceil(tbodyHeight / contentHeightPerPage);
-
-            const pageNumberElement = document.querySelector('.pageNumber');
-            const totalPagesElement = document.querySelector('.totalPages');
-            if (pageNumberElement && totalPagesElement) {
-                pageNumberElement.textContent = '1';
-                totalPagesElement.textContent = Math.max(1, totalPages);
-            }
-
-            console.log('Table height:', tableHeight);
-            console.log('Header height:', headerHeight);
-            console.log('Body height:', tbodyHeight);
-            console.log('Page height:', pageHeight);
-            console.log('Content height per page:', contentHeightPerPage);
-            console.log('Total pages:', Math.max(1, totalPages));
-        }
-    }
-
-    // Update page numbers when content changes
-    window.addEventListener('load', updatePageNumbers);
-    window.addEventListener('resize', updatePageNumbers);
-
-    // Update page numbers when Livewire updates the content
-    document.addEventListener('livewire:load', updatePageNumbers);
-    document.addEventListener('livewire:update', updatePageNumbers);
-
-    // Update page numbers after a short delay to ensure content is rendered
-    setTimeout(updatePageNumbers, 100);
-
-    window.addEventListener('beforeprint', function() {
-        // Additional setup before print if needed
-        document.body.classList.add('printing');
-        updatePageNumbers();
-    });
-
-    window.addEventListener('afterprint', function() {
-        // Cleanup after print
-        document.body.classList.remove('printing');
-        const pageNumberElement = document.querySelector('.pageNumber');
-        const totalPagesElement = document.querySelector('.totalPages');
-        if (pageNumberElement && totalPagesElement) {
-            pageNumberElement.textContent = '1';
-            totalPagesElement.textContent = '1';
-        }
-
-        // Refresh page setelah print selesai
-        setTimeout(function() {
-            window.location.reload();
-        }, 1000); // Delay 1 detik untuk memastikan print selesai
-    });
 </script>

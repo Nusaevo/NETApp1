@@ -8,6 +8,7 @@ use App\Models\TrdTire1\Transaction\DelivHdr;
 use App\Models\TrdTire1\Transaction\DelivPacking;
 use App\Models\TrdTire1\Transaction\DelivPicking;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class AuditLogService
@@ -162,6 +163,43 @@ class AuditLogService
         $reffhdrId = DelivPacking::where('trhdr_id', $deliv->id)->value('reffhdr_id');
 
         // Determine warehouse code from first picking row in this delivery
+        $firstPackingId = DelivPacking::where('trhdr_id', $deliv->id)->value('id');
+        $whCode = null;
+        if ($firstPackingId) {
+            $whCode = DelivPicking::where('trpacking_id', $firstPackingId)->value('wh_code');
+        }
+
+        $auditTrail = [
+            'nota' => $deliv->tr_code,
+            'gudang' => $whCode,
+            'tanggal kirim' => $deliv->tr_date ? Carbon::parse($deliv->tr_date)->format('Y-m-d') : null,
+            'user_id' => Auth::id() ?? 'system',
+            'event_time' => now()->toISOString(),
+        ];
+
+        return AuditLogs::create([
+            'group_code' => 'DELIVERY',
+            'event_code' => 'KIRIM',
+            'event_time' => now(),
+            'key_value' => $reffhdrId ?? $deliv->id,
+            'audit_trail' => $auditTrail,
+        ]);
+    }
+
+    /**
+     * Generalized: Create audit log for Delivery action: KIRIM (works for PD/SD)
+     *
+     * @param int $delivHdrId Delivery header ID
+     * @return \App\Models\TrdTire1\Transaction\AuditLogs|null
+     */
+    public static function createDeliveryKirim(int $delivHdrId)
+    {
+        $deliv = DelivHdr::find($delivHdrId);
+        if (!$deliv) {
+            return null;
+        }
+
+        $reffhdrId = DelivPacking::where('trhdr_id', $deliv->id)->value('reffhdr_id');
         $firstPackingId = DelivPacking::where('trhdr_id', $deliv->id)->value('id');
         $whCode = null;
         if ($firstPackingId) {
