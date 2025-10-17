@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\TrdTire1\Report\ReportDetailSO;
+namespace App\Livewire\TrdTire1\Report\ReportDetailSOFaktur;
 
 use App\Livewire\Component\BaseComponent;
 use Illuminate\Support\Facades\{DB, Session};
@@ -309,7 +309,6 @@ class Index extends BaseComponent
                 }
 
                 // Tambahkan baris sub total
-                // Tambahkan baris sub total
                 $excelData[] = [
                     '',
                     '',
@@ -326,21 +325,17 @@ class Index extends BaseComponent
                     '',
                     '',
                 ];
-                $currentRowIndex++;
 
-                // Tambahkan styling untuk subtotal
+                // Tambahkan styling untuk baris subtotal (border top dan bold)
+                // Border top dari kolom Qty sampai Total (F sampai I)
                 $rowStyles[] = [
-                    // Target baris subtotal (bukan baris berikutnya)
-                    'rowIndex' => $currentRowIndex - 1,
-                    'rangeColumns' => ['F', 'I'],
+                    'rowIndex' => $currentRowIndex,
+                    'rangeColumns' => ['F', 'I'], // Dari kolom F sampai I
                     'borderTop' => true,
-                    'bold' => true,
-                    'insertBlankRowAfter' => true,
-                    'nextRowHeight' => 8
+                    'bold' => true
                 ];
 
-                // Tidak perlu menambah baris kosong pada data; baris kosong disisipkan oleh styling
-
+                $currentRowIndex++;
             }
 
             // Buat title dan subtitle
@@ -413,4 +408,3 @@ class Index extends BaseComponent
         }
     }
 }
-

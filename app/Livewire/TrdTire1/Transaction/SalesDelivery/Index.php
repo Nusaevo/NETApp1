@@ -54,7 +54,7 @@ class Index extends BaseComponent
         $this->selectedItems = [];
 
         // Dispatch to IndexDataTable to clear selections
-        $this->dispatch('clearSelections');
+        // $this->dispatch('clearSelections');
     }
 
     public function processDelivery()

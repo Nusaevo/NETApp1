@@ -424,7 +424,7 @@ class BillingService
 
     /**
      * Ambil daftar BillingHdr yang outstanding untuk partner tertentu,
-     * hanya yang (amt - amt_reff) > 0
+     * hanya yang (amt + amt_shipcost - amt_reff) > 0
      */
     public function getOutstandingBillsByPartner($partnerId = null)
     {
@@ -433,9 +433,9 @@ class BillingService
             'tr_type as billhdrtr_type',
             'tr_code as billhdrtr_code',
             DB::raw('tr_date + make_interval(days => payment_due_days) AS due_date'),
-            DB::raw('(amt - amt_reff)::int as outstanding_amt')])
+            DB::raw('(amt + COALESCE(amt_shipcost, 0) - COALESCE(amt_reff, 0))::int as outstanding_amt')])
             ->where('partner_id', $partnerId)
-            ->whereRaw('(amt - amt_reff) > 0')
+            ->whereRaw('(amt + COALESCE(amt_shipcost, 0) - COALESCE(amt_reff, 0)) > 0')
             ->get();
 
         return $bills;

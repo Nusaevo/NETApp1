@@ -19,7 +19,7 @@
                             <x-ui-padding>
                                 <div class="row">
                                     <x-ui-text-field label="{{ $this->trans('tr_code') }}" model="inputs.tr_code"
-                                        type="text" :action="$actionValue" required="true" :enabled="$isPanelEnabled"
+                                        type="text" :action="$actionValue" required="true" :enabled="$isTrCodeEnabled"
                                         capslockMode="true" />
                                     <x-ui-text-field label="Tanggal Surat Jalan" model="inputs.reff_date" type="date"
                                         :action="$actionValue" required="true" enabled="true" />
@@ -34,20 +34,10 @@
                                     <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" model="inputs.wh_code"
                                         :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         onChanged="whCodeOnChanged($event.target.value)" />
-
-                                    @if ($actionValue === 'Edit')
-                                        <x-ui-dropdown-select label="Nota Pembelian" model="inputs.reffhdrtr_code"
-                                            :options="$purchaseOrders" required="true" :action="$actionValue"
-                                            onChanged="onPurchaseOrderChanged($event.target.value)" :enabled="$isPanelEnabled" />
-                                    @else
                                     <x-ui-dropdown-search label="Nota Pembelian" model="inputs.reffhdrtr_code"
                                         optionValue="tr_code" :query="$ddPurchaseOrder['query']" :optionLabel="$ddPurchaseOrder['optionLabel']" :placeHolder="$ddPurchaseOrder['placeHolder']"
                                         :selectedValue="$inputs['reffhdrtr_code'] ?? ''" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
                                         type="int" onChanged="onPurchaseOrderChanged($event.target.value)" />
-
-                                    @endif
-                                    {{-- Debug: @dump($inputs['reffhdrtr_code']) --}}
-                                    {{-- @dump($inputs['reffhdrtr_code']) --}}
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
                                         type="text" :action="$actionValue" required="false" readonly="true"

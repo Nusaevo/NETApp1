@@ -45,16 +45,17 @@ class Index extends BaseComponent
             SELECT
                 bh.tr_code AS no_nota,
                 bh.print_date AS tanggal_tagih,
-                bh.tr_date as tanggal_nota,
+                oh.tr_date as tanggal_nota,
                 p.name AS nama_pelanggan,
                 p.city AS kota_pelanggan,
                 bh.amt AS total_tagihan
             FROM billing_hdrs bh
+            LEFT JOIN order_hdrs oh ON oh.tr_code = bh.tr_code AND oh.tr_type = 'SO'
             JOIN partners p ON p.id = bh.partner_id
             WHERE bh.tr_type = 'ARB'
                 AND bh.deleted_at IS NULL
                 AND bh.print_date = '{$printDate}'
-            ORDER BY p.name, bh.tr_code
+            ORDER BY p.name, oh.tr_date, bh.tr_code
         ";
 
         $rows = DB::connection(Session::get('app_code'))->select($query);

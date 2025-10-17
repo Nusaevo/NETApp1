@@ -51,6 +51,8 @@ class Detail extends BaseComponent
     public $npwpOptions = [];
     protected $masterService;
     public $isPanelEnabled = "true";
+    public $isTrCodeEnabled = "true";
+    public $TestingEnabled = "false";
     public $purchaseOrders = [];
     public $ddPurchaseOrder = [
         'placeHolder' => "Ketik untuk cari purchase order ...",
@@ -102,7 +104,7 @@ class Detail extends BaseComponent
 
         if ($this->isEditOrView()) {
             $this->object = DelivHdr::withTrashed()->find($this->objectIdValue);
-            $this->isPanelEnabled = "false";
+            $this->isTrCodeEnabled = "false";
             // Populate inputs array
             $this->inputs = populateArrayFromModel($this->object);
             // $this->inputs['status_code'] = $this->object->status_Code_text;
@@ -127,11 +129,6 @@ class Detail extends BaseComponent
                 }
             }
 
-            // Debug logging for reffhdrtr_code
-            Log::info('Purchase Delivery Edit - reffhdrtr_code loaded', [
-                'reffhdrtr_code' => $this->inputs['reffhdrtr_code'] ?? 'empty',
-                'object_id' => $this->object->id ?? 'no_object'
-            ]);
             // Load partner data
             $partner = Partner::find($this->object->partner_id);
             if ($partner) {
@@ -140,19 +137,22 @@ class Detail extends BaseComponent
             }
 
             // Add existing reffhdrtr_code to purchaseOrders array for edit mode
-            if (!empty($this->inputs['reffhdrtr_code'])) {
-                $existingCode = $this->inputs['reffhdrtr_code'];
+            // if (!empty($this->inputs['reffhdrtr_code'])) {
+            //     $existingCode = $this->inputs['reffhdrtr_code'];
 
-                // Add to purchaseOrders array
-                $this->purchaseOrders[] = [
-                    'label' => $existingCode,
-                    'value' => $existingCode,
-                ];
-            }
+            //     // Add to purchaseOrders array
+            //     $this->purchaseOrders[] = [
+            //         'label' => $existingCode,
+            //         'value' => $existingCode,
+            //     ];
+            // }
 
             // Load details and purchase order details
             $this->loadDetails();
             $this->whCodeOnChanged($this->inputs['wh_code']);
+
+            // Set panel enabled state based on whether there are items
+            $this->isPanelEnabled = !empty($this->input_details) ? "false" : "true";
         }
     }
 
@@ -167,6 +167,8 @@ class Detail extends BaseComponent
         $this->inputs['wh_code'] = null;
         $this->inputs['wh_id'] = 0;
         $this->inputs['reffhdrtr_code'] = ''; // Inisialisasi key reffhdrtr_code
+        $this->isPanelEnabled = "true";
+        $this->isTrCodeEnabled = "true";
     }
 
     #endregion
@@ -205,10 +207,17 @@ class Detail extends BaseComponent
         try {
             unset($this->input_details[$index]);
 
-            // Jika tidak ada item lagi di input_details, enable kolom reffhdrtr_code dan wh_code
+            $this->input_details = array_values($this->input_details);
+
             if (empty($this->input_details)) {
-                $this->isPanelEnabled = true; // Enable warehouse and reffhdrtr_code fields
-                $this->inputs['reffhdrtr_code'] = null; // Set reffhdrtr_code to null
+                $this->isPanelEnabled = "true"; // Enable warehouse and reffhdrtr_code fields
+                // $this->TestingEnabled = "true";
+                $this->inputs['reffhdrtr_code'] = '';
+                $this->inputs['partner_id'] = 0;
+                $this->inputs['partner_name'] = null;
+                $this->inputs['partner_code'] = null;
+            } else {
+                // $this->isPanelEnabled = "false";
             }
             // $this->dispatch('success', 'Item berhasil dihapus.');
         } catch (Exception $e) {
@@ -318,83 +327,75 @@ class Detail extends BaseComponent
     public function onValidateAndSave()
     {
         // dd($this->inputs, $this->input_details);
-        try {
-            $this->validate();
+        $this->validate();
 
-            // Validasi tanggal terima barang tidak boleh lebih besar dari tanggal sekarang
-            if (!empty($this->inputs['tr_date'])) {
-                $deliveryDate = Carbon::parse($this->inputs['tr_date']);
-                $today = Carbon::now()->startOfDay();
+        // Validasi tanggal terima barang tidak boleh lebih besar dari tanggal sekarang
+        if (!empty($this->inputs['tr_date'])) {
+            $deliveryDate = Carbon::parse($this->inputs['tr_date']);
+            $today = Carbon::now()->startOfDay();
 
-                if ($deliveryDate->gt($today)) {
-                    throw new Exception('Tanggal terima barang tidak boleh lebih besar dari tanggal sekarang.');
-                }
+            if ($deliveryDate->gt($today)) {
+                throw new Exception('Tanggal terima barang tidak boleh lebih besar dari tanggal sekarang.');
             }
-
-            // Cek duplikasi tr_code
-            $existingDelivery = DelivHdr::where([
-                'tr_type' => $this->trType,
-                'tr_code' => $this->inputs['tr_code']
-            ])->first();
-
-            if ($existingDelivery && $existingDelivery->id !== $this->object->id) {
-                $this->dispatch('error', 'Nomor Surat Jalan ' . $this->inputs['tr_code'] . ' sudah ada. Silakan gunakan nomor yang berbeda.');
-                return;
-            }
-
-            if ($this->object->isNew()) {
-                $this->object->status_code = Status::OPEN;
-            }
-
-            $headerData = $this->inputs;
-            $detailData = $this->input_details;
-
-            $deliveryService = app(DeliveryService::class);
-            $result = $deliveryService->saveDelivery($headerData, $detailData);
-            $this->object = $result['header'];
-
-            // Hanya buat billing baru saat create
-            if ($this->actionValue === 'Create') {
-                $billingService = app(BillingService::class);
-                $billingHeaderData = [
-                    'id' => 0,
-                    'tr_type' => 'APB',
-                    'tr_code' => $this->inputs['tr_code'],
-                    'tr_date' => $this->inputs['tr_date'],
-                ];
-                // Ambil delivery_id dari hasil saveDelivery
-                $deliveryDetails = [];
-                if (!empty($result['header'])) {
-                    $deliveryDetails[] = [
-                        'deliv_id' => $result['header']->id,
-                    ];
-                }
-
-                $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
-
-                // Cek hasil billing
-                if (!empty($billingResult['billing_hdr'])) {
-                    // Billing berhasil dibuat
-                } else {
-                    $this->dispatch('error', 'Gagal membuat Billing untuk delivery order ' . $this->inputs['tr_code']);
-                }
-            }
-
-            $this->dispatch('success', 'Purchase Delivery berhasil ' .
-                ($this->actionValue === 'Create' ? 'disimpan' : 'diperbarui') . '.');
-
-            return redirect()->route(
-                $this->appCode . '.Transaction.PurchaseDelivery.Detail',
-                [
-                    'action'   => encryptWithSessionKey('Create'),
-                    'objectId' => encryptWithSessionKey($this->object->id),
-                ]
-            );
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw new Exception('Gagal menyimpan Purchase Delivery: ' . $e->getMessage());
-            // $this->dispatch('error', 'Gagal menyimpan data: ' . $e->getMessage());
         }
+
+        // Cek duplikasi tr_code
+        $existingDelivery = DelivHdr::where([
+            'tr_type' => $this->trType,
+            'tr_code' => $this->inputs['tr_code']
+        ])->first();
+
+        if ($existingDelivery && $existingDelivery->id !== $this->object->id) {
+            $this->dispatch('error', 'Nomor Surat Jalan ' . $this->inputs['tr_code'] . ' sudah ada. Silakan gunakan nomor yang berbeda.');
+            return;
+        }
+
+        if ($this->object->isNew()) {
+            $this->object->status_code = Status::OPEN;
+        }
+
+        $headerData = $this->inputs;
+        $detailData = $this->input_details;
+
+        $deliveryService = app(DeliveryService::class);
+        $result = $deliveryService->saveDelivery($headerData, $detailData);
+        $this->object = $result['header'];
+
+        // Hanya buat billing baru saat create
+        if ($this->actionValue === 'Create') {
+            $billingService = app(BillingService::class);
+            $billingHeaderData = [
+                'id' => 0,
+                'tr_type' => 'APB',
+                'tr_code' => $this->inputs['tr_code'],
+                'tr_date' => $this->inputs['tr_date'],
+            ];
+
+            // Ambil delivery_id dari hasil saveDelivery
+            $deliveryDetails = [];
+            if (!empty($result['header'])) {
+                $deliveryDetails[] = [
+                    'deliv_id' => $result['header']->id,
+                ];
+            }
+
+            $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
+
+            // Cek hasil billing
+            if (!empty($billingResult['billing_hdr'])) {
+                // Billing berhasil dibuat
+            } else {
+                throw new Exception('Gagal membuat Billing untuk delivery order ' . $this->inputs['tr_code']);
+            }
+        }
+
+        return redirect()->route(
+            $this->appCode . '.Transaction.PurchaseDelivery.Detail',
+            [
+                'action'   => encryptWithSessionKey($this->actionValue === 'Create' ? 'Edit' : $this->actionValue),
+                'objectId' => encryptWithSessionKey($this->object->id),
+            ]
+        );
     }
 
     public function onMaterialChanged($index, $matl_id)
