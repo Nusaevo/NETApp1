@@ -97,8 +97,8 @@
                 @page {
                     margin-top: 10mm;
                     margin-bottom: 10mm;
-                    margin-left: 10mm;
-                    margin-right: 10mm;
+                    margin-left: 5mm;
+                    margin-right: 5mm;
 
                     @top-right {
                         content: "Page " counter(page) " of " counter(pages);
@@ -281,19 +281,25 @@
                         {{-- Baris subtotal, pastikan kolom TGL LUNAS kosong --}}
                         <tr class="subtotal-row">
                             <td></td>
-                            <td style="font-weight:bold; text-align:right;" colspan="1">Total :</td>
-                            <td style="text-align:right; font-weight:bold; text-decoration: underline;">
-                                {{ number_format($subtotal, 0) }}</td>
-                            <td></td> <!-- TGL LUNAS kosong -->
-                            <td></td> <!-- BANK -->
-                            <td></td> <!-- TGL -->
-                            <td></td> <!-- NO. BG -->
-                            <td></td> <!-- JUMLAH -->
-                            <td></td> <!-- KET. -->
+                            @if(count($grouped) == 1)
+                                {{-- Jika tanggal tagih cuman ada 1 partner maka jadi blank --}}
+                                <td style="height: 30px"></td>
+                                <td></td>
+                            @else
+                                {{-- Jika lebih dari 1 partner maka tampilkan total --}}
+                                <td style="font-weight:bold; text-align:right;" colspan="1">Total :</td>
+                                <td style="text-align:right; font-weight:bold; text-decoration: underline;">
+                                    {{ number_format($subtotal, 0) }}</td>
+                            @endif
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td> 
                         </tr>
                         @php $grandTotal += $subtotal; @endphp
                         @endforeach
-                        {{-- Baris total tagihan, pastikan kolom TGL LUNAS kosong --}}
                         <tr class="grand-total-row">
                             <td colspan="2"></td>
                             <td style="font-weight:bold; text-align:right; width: auto; white-space: nowrap;">Total
