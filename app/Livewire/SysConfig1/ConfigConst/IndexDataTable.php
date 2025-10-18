@@ -4,7 +4,7 @@ namespace App\Livewire\SysConfig1\ConfigConst;
 
 use App\Livewire\Component\BaseDataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\{Column, Columns\BooleanColumn, Filters\SelectFilter};
-use App\Models\SysConfig1\{ConfigConst, ConfigAppl};
+use App\Models\SysConfig1\{ConfigConst, ConfigAppl, ConfigGroup, ConfigUser};
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\{Config, Session, DB};
 
@@ -56,19 +56,23 @@ class IndexDataTable extends BaseDataTableComponent
             Column::make('Num1', 'num1')->searchable()->sortable()->collapseOnTablet(),
             Column::make('Num2', 'num2')->searchable()->sortable()->collapseOnTablet(),
             Column::make('Note1', 'note1')->searchable()->sortable()->collapseOnTablet(),
-            Column::make('Group', 'group_code')
-                ->searchable()
-                ->sortable()
+            Column::make('Group', 'group_id')
                 ->collapseOnTablet()
-                ->format(function ($value) {
-                    return $value ?: '-';
+                ->format(function ($value, $row) {
+                    if (!$value) {
+                        return '-';
+                    }
+                    $group = ConfigGroup::on('SysConfig1')->find($value);
+                    return $group?->code ?? '-';
                 }),
-            Column::make('User', 'user_code')
-                ->searchable()
-                ->sortable()
+            Column::make('User', 'user_id')
                 ->collapseOnTablet()
-                ->format(function ($value) {
-                    return $value ?: '-';
+                ->format(function ($value, $row) {
+                    if (!$value) {
+                        return '-';
+                    }
+                    $user = ConfigUser::on('SysConfig1')->find($value);
+                    return $user?->code ?? '-';
                 }),
             BooleanColumn::make($this->trans('Status'), 'deleted_at')->setCallback(function ($value) {
                 return $value === null;
