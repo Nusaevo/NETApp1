@@ -203,12 +203,14 @@ class Index extends BaseComponent
             }
             $groupColumns = array_values(array_filter($columns, fn($c) => $c !== 'customer'));
 
-            // Header: Customer, untuk setiap grup 1 kolom gabungan "point|ban", lalu kolom Total gabungan
+            // Header: Customer, untuk setiap grup 2 kolom (Point, Qty), lalu Total Point dan Total Qty
             $headers = ['Customer'];
             foreach ($groupColumns as $grpCol) {
-                $headers[] = $grpCol; // nilai sel: "point|ban"
+                $headers[] = $grpCol . ' Point';
+                $headers[] = $grpCol . ' Qty';
             }
-            $headers[] = 'Total';
+            $headers[] = 'Total Point';
+            $headers[] = 'Total Qty';
 
             // Data rows
             $excelData = [];
@@ -222,15 +224,17 @@ class Index extends BaseComponent
                 foreach ($groupColumns as $grpCol) {
                     $val = $row->$grpCol ?? '';
                     $parts = explode('|', $val);
-                    $qty = isset($parts[0]) ? (int)$parts[0] : 0;   // ban
+                    $qty = isset($parts[0]) ? (int)$parts[0] : 0;   // qty/ban
                     $point = isset($parts[1]) ? (int)$parts[1] : 0; // point
                     $rowTotalQty += $qty;
                     $rowTotalPoint += $point;
-                    // format: point|ban
-                    $dataRow[] = ($point ?: 0) . '|' . ($qty ?: 0);
+                    // pisahkan ke 2 kolom: Point, Qty
+                    $dataRow[] = $point;
+                    $dataRow[] = $qty;
                 }
-                // total gabungan point|ban
-                $dataRow[] = ($rowTotalPoint ?: 0) . '|' . ($rowTotalQty ?: 0);
+                // total dipisah: Total Point, Total Qty
+                $dataRow[] = $rowTotalPoint ?: 0;
+                $dataRow[] = $rowTotalQty ?: 0;
                 $excelData[] = $dataRow;
             }
 

@@ -3,6 +3,7 @@
 namespace App\Models\Util;
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Protection as StyleProtection;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -166,7 +167,7 @@ class GenericExcelExport
     private function addHeaders($sheet, array $headers, array $protectedColumns, int $startRow = 1)
     {
         foreach ($headers as $index => $header) {
-            $column = chr(65 + $index);
+            $column = Coordinate::stringFromColumnIndex($index + 1);
             $cell = "{$column}{$startRow}";
 
             $sheet->setCellValue($cell, $header);
@@ -260,7 +261,7 @@ class GenericExcelExport
     private function adjustColumnWidths($sheet, array $headers)
     {
         foreach ($headers as $index => $header) {
-            $column = chr(65 + $index);
+            $column = Coordinate::stringFromColumnIndex($index + 1);
             $headerLength = mb_strlen($header ?? '');
             $minWidth = 10;
             $calculatedWidth = $headerLength + 5;

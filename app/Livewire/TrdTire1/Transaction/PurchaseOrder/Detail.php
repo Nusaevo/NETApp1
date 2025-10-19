@@ -626,6 +626,13 @@ class Detail extends BaseComponent
     public function salesTypeOnChanged()
     {
         $salesType = $this->inputs['sales_type'] ?? null;
+        // Reset detail items when sales_type changes to mirror Sales Order behavior
+        $this->input_details = [];
+
+        // Only clear tr_code when creating a new document
+        if ($this->actionValue === 'Create') {
+            $this->inputs['tr_code'] = '';
+        }
 
         if (!$salesType) {
             $this->materials = [];
