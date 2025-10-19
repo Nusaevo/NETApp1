@@ -23,8 +23,7 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        return AuditLogs::where('group_code', 'BILLING')
-            ->orderBy('event_time', 'desc');
+        return AuditLogs::orderBy('event_time', 'desc');
     }
 
     public function columns(): array

@@ -107,39 +107,24 @@ class Index extends BaseComponent
                 params(start_date, end_date, wh_code, matl_code) AS (
                 VALUES (DATE '{$startDate}', DATE '{$endDate}', '{$whCode}', '{$matlCode}')
                 ),
-                bal AS (
-                SELECT b.qty_oh
-                FROM ivt_bals b
-                JOIN params p ON TRUE
-                WHERE b.wh_code = p.wh_code AND b.matl_code = p.matl_code
-                LIMIT 1
-                ),
-                opening_from_logs AS (
-                SELECT SUM(il.qty)::numeric AS qty
+                -- Opening strictly from movements prior to start date
+                opening AS (
+                SELECT COALESCE(SUM(il.qty), 0)::numeric AS opening_qty
                 FROM ivt_logs il
                 JOIN params p ON TRUE
                 WHERE il.wh_code = p.wh_code
-                    AND il.matl_code = p.matl_code
-                    AND il.tr_type IN ('PD','SD','TW','IA')
-                    AND il.tr_date >= DATE_TRUNC('month', p.start_date)
-                    AND il.tr_date < p.start_date
+                  AND il.matl_code = p.matl_code
+                  AND il.tr_type IN ('PD','SD','TW','IA')
+                  AND il.tr_date < p.start_date
                 ),
-                opening AS (
-                SELECT COALESCE(b.qty_oh, 0)::numeric + COALESCE(o.qty, 0)::numeric AS opening_qty
-                FROM (SELECT 1) x
-                LEFT JOIN opening_from_logs o ON TRUE
-                LEFT JOIN bal b ON TRUE
-                ),
+                -- Period transactions
                 tx AS (
                 SELECT
                     il.tr_date, il.tr_code, il.tr_seq, il.tr_seq2, il.tr_type,
                     CASE
                         WHEN il.tr_type IN ('SD', 'PD') THEN
                             COALESCE(pt.name, il.tr_desc) ||
-                            CASE
-                                WHEN pt.city IS NOT NULL AND pt.city != '' THEN '. ' || pt.city
-                                ELSE ''
-                            END
+                            CASE WHEN pt.city IS NOT NULL AND pt.city != '' THEN '. ' || pt.city ELSE '' END
                         ELSE il.tr_desc
                     END AS tr_desc,
                     GREATEST(il.qty, 0) AS masuk,
@@ -150,35 +135,25 @@ class Index extends BaseComponent
                 LEFT JOIN deliv_hdrs dh ON il.tr_code = dh.tr_code AND il.tr_type IN ('SD', 'PD')
                 LEFT JOIN partners pt ON dh.partner_code = pt.code
                 WHERE il.wh_code = p.wh_code
-                    AND il.matl_code = p.matl_code
-                    AND il.tr_type IN ('PD','SD','TW','IA')
-                    AND il.tr_date BETWEEN p.start_date AND p.end_date
-                ),
-                tx_with_balance AS (
-                SELECT
-                    t.*
-                FROM tx t
-                ),
-                final_balance AS (
-                SELECT
-                    (SELECT opening_qty FROM opening) + COALESCE(SUM(net_qty),0) AS closing_qty
-                FROM tx
+                  AND il.matl_code = p.matl_code
+                  AND il.tr_type IN ('PD','SD','TW','IA')
+                  AND il.tr_date BETWEEN p.start_date AND p.end_date
                 )
                 SELECT
                 0 AS urut, NULL::date AS tr_date, 'Sisa Stok s/d ' || TO_CHAR(p.start_date - INTERVAL '1 day', 'DD-Mon-YYYY') AS tr_desc, NULL AS tr_code, NULL AS tr_seq, NULL AS tr_seq2, NULL AS tr_type,
                 0 AS masuk, 0 AS keluar, (SELECT opening_qty FROM opening) AS sisa
                 FROM params p
-                WHERE (SELECT opening_qty FROM opening) > 0
                 UNION ALL
                 SELECT
                 1 AS urut, t.tr_date, t.tr_desc, t.tr_code, t.tr_seq, t.tr_seq2, t.tr_type,
                 t.masuk, t.keluar, NULL AS sisa
-                FROM tx_with_balance t
+                FROM tx t
                 WHERE t.masuk > 0 OR t.keluar > 0
                 UNION ALL
                 SELECT
                 2 AS urut, NULL::date AS tr_date, 'Sisa Stok' AS tr_desc, NULL AS tr_code, NULL AS tr_seq, NULL AS tr_seq2, NULL AS tr_type,
-                0 AS masuk, 0 AS keluar, (SELECT closing_qty FROM final_balance) AS sisa
+                0 AS masuk, 0 AS keluar,
+                (SELECT opening_qty FROM opening) + COALESCE((SELECT SUM(net_qty) FROM tx), 0) AS sisa
                 ORDER BY urut, tr_date, tr_code, tr_seq, tr_seq2
             ";
 
