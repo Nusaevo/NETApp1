@@ -35,14 +35,86 @@ class DropdownSearchController extends Controller
     public function search(Request $request)
     {
         try {
-            // Get and sanitize search term - trim spaces and prevent space-only searches
-            $rawSearchTerm = $request->get('q', '');
-            $searchTerm = trim($rawSearchTerm);
+            // Get search term and searchOnSpace setting - don't use default value to detect null
+            $rawSearchTerm = $request->has('q') ? $request->get('q') : null;
+            $searchOnSpace = $request->get('search_on_space', 'false');
 
-            // Prevent search if user only typed spaces or empty string
-            if (empty($searchTerm)) {
-                // Return early without search - will return base query results
-                $searchTerm = '';
+            // Debug logging disabled
+            /*
+            \Log::info('Search Parameters DEBUG', [
+                'q_raw' => $rawSearchTerm,
+                'q_null' => $rawSearchTerm === null,
+                'q_empty' => $rawSearchTerm === '',
+                'q_length' => is_string($rawSearchTerm) ? strlen($rawSearchTerm) : 0,
+                'q_bytes' => is_string($rawSearchTerm) ? bin2hex($rawSearchTerm) : '',
+                'search_on_space' => $searchOnSpace,
+                'search_on_space_type' => gettype($searchOnSpace),
+                'is_space_only' => is_string($rawSearchTerm) && preg_match('/^\s+$/', $rawSearchTerm) ? 'true' : 'false',
+                'all_request_params' => $request->all()
+            ]);
+            */
+
+            // Handle search on space mode - check BEFORE trimming
+            $isSpaceOnlySearch = false;
+
+            // Fix: Lebih agresif mendeteksi spasi dengan multiple checks
+            $isOnlySpaces = preg_match('/^\s+$/', $rawSearchTerm) === 1;
+            $isEmptyAfterTrim = trim($rawSearchTerm) === '';
+            $hasOnlySpaceCharacters = $isOnlySpaces || $isEmptyAfterTrim;
+
+            // Fix: Improve searchOnSpace detection (handle string 'true' or boolean true)
+            $isSpaceEnabled = in_array($searchOnSpace, ['true', true], true);
+
+            // Fix: Empty initial search also triggers search-on-space (when q is null)
+            $isInitialEmptySearch = $rawSearchTerm === null || $rawSearchTerm === '';
+
+            // Debug logging disabled
+            /*
+            \Log::info('Space detection debug', [
+                'rawTerm' => $rawSearchTerm,
+                'rawTerm_type' => gettype($rawSearchTerm),
+                'rawLength' => is_string($rawSearchTerm) ? strlen($rawSearchTerm) : 0,
+                'rawBytes' => is_string($rawSearchTerm) ? array_map('ord', str_split($rawSearchTerm)) : [],
+                'rawHex' => is_string($rawSearchTerm) ? bin2hex($rawSearchTerm) : '',
+                'isOnlySpaces' => $isOnlySpaces,
+                'isEmptyAfterTrim' => $isEmptyAfterTrim,
+                'hasOnlySpaceCharacters' => $hasOnlySpaceCharacters,
+                'isInitialEmptySearch' => $isInitialEmptySearch,
+                'isSpaceEnabled' => $isSpaceEnabled
+            ]);
+            */
+
+            // Fix: Also activate search when dropdown is initially opened with no input (null q param)
+            if ($isSpaceEnabled && ($isInitialEmptySearch || ($hasOnlySpaceCharacters && $rawSearchTerm !== null))) {
+                // User opened dropdown or typed space(s) and searchOnSpace is enabled - search all data
+                $isSpaceOnlySearch = true;
+                $searchTerm = ''; // Empty search term will return all data
+                // Debug logging disabled
+                /*
+                \Log::info('SearchOnSpace ACTIVATED!', [
+                    'rawSearchTerm' => $rawSearchTerm,
+                    'rawLength' => strlen($rawSearchTerm),
+                    'searchOnSpace' => $searchOnSpace,
+                    'isSpaceEnabled' => $isSpaceEnabled,
+                    'hasOnlySpaceCharacters' => $hasOnlySpaceCharacters
+                ]);
+                */
+            } else {
+                // Normal processing - trim the search term
+                $searchTerm = trim($rawSearchTerm);
+                if (empty($searchTerm)) {
+                    $searchTerm = '';
+                }
+                // Debug logging disabled
+                /*
+                \Log::info('Normal search processing', [
+                    'rawSearchTerm' => $rawSearchTerm,
+                    'searchTerm' => $searchTerm,
+                    'isSpaceEnabled' => $isSpaceEnabled,
+                    'hasOnlySpaceCharacters' => $hasOnlySpaceCharacters,
+                    'isSpaceOnlySearch' => $isSpaceOnlySearch
+                ]);
+                */
             }
 
             $optionValue = $request->get('option_value', 'id');
@@ -193,8 +265,31 @@ class DropdownSearchController extends Controller
                         $modifiedQuery = $this->modifyQueryForSearch($sqlQuery, $searchTerm, $optionLabel);
                         // Execute query for regular search
                         $results = $db->select($modifiedQuery . ' LIMIT 50');
+                    } else if ($isSpaceOnlySearch) {
+                        // Space-only search - return all data with limit
+                        $finalQuery = $sqlQuery . ' LIMIT 100';
+                        // Debug logging disabled
+                        /*
+                        \Log::info('Executing space search query', [
+                            'query' => $finalQuery,
+                            'connection' => $connection,
+                            'isSpaceOnlySearch' => $isSpaceOnlySearch,
+                            'searchOnSpace' => $searchOnSpace
+                        ]);
+                        */
+                        $results = $db->select($finalQuery);
+                        // Debug logging disabled
+                        // \Log::info('Space search results', ['count' => count($results)]);
                     } else {
                         // Empty search term - return empty results to prevent showing all data
+                        // Debug logging disabled
+                        /*
+                        \Log::info('Empty search with no space-search - returning empty results', [
+                            'isSpaceOnlySearch' => $isSpaceOnlySearch,
+                            'searchOnSpace' => $searchOnSpace,
+                            'rawSearchTerm' => $rawSearchTerm
+                        ]);
+                        */
                         $results = [];
                     }
                 }                // Handle specific ID lookup (both bypass and normal)

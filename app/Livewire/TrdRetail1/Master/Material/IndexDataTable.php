@@ -176,6 +176,9 @@ class IndexDataTable extends BaseDataTableComponent
                     'deleted' => $this->trans('non_active'),
                 ])
                 ->filter(function (Builder $q, string $v) {
+                    if ($this->isFirstFilterApplied($q)) {
+                        $q->getQuery()->wheres = [];
+                    }
                     if ($v === 'active') {
                         $q->whereHas('Material', fn(Builder $m) => $m->whereNull('deleted_at'));
                     } elseif ($v === 'deleted') {
