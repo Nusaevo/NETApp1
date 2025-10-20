@@ -362,35 +362,31 @@ class Detail extends BaseComponent
         $result = $deliveryService->saveDelivery($headerData, $detailData);
         $this->object = $result['header'];
 
-        // Hanya buat billing baru saat create
         if ($this->actionValue === 'Create') {
             // Audit log: KIRIM (PD) setelah berhasil create header
             AuditLogService::createPurchaseDeliveryKirim($this->object->id);
+        }
 
-            $billingService = app(BillingService::class);
-            $billingHeaderData = [
-                'id' => 0,
-                'tr_type' => 'APB',
-                'tr_code' => $this->inputs['tr_code'],
-                'tr_date' => $this->inputs['tr_date'],
+        // Selalu sinkronkan Billing setelah Delivery tersimpan (create maupun update)
+        $billingService = app(BillingService::class);
+        $billingHeaderData = [
+            'id' => 0,
+            'tr_type' => 'APB',
+            'tr_code' => $this->inputs['tr_code'],
+            'tr_date' => $this->inputs['tr_date'],
+        ];
+
+        $deliveryDetails = [];
+        if (!empty($result['header'])) {
+            $deliveryDetails[] = [
+                'deliv_id' => $result['header']->id,
             ];
+        }
 
-            // Ambil delivery_id dari hasil saveDelivery
-            $deliveryDetails = [];
-            if (!empty($result['header'])) {
-                $deliveryDetails[] = [
-                    'deliv_id' => $result['header']->id,
-                ];
-            }
+        $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
 
-            $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
-
-            // Cek hasil billing
-            if (!empty($billingResult['billing_hdr'])) {
-                // Billing berhasil dibuat
-            } else {
-                throw new Exception('Gagal membuat Billing untuk delivery order ' . $this->inputs['tr_code']);
-            }
+        if (empty($billingResult['billing_hdr'])) {
+            throw new Exception('Gagal membuat/menyinkronkan Billing untuk delivery order ' . $this->inputs['tr_code']);
         }
 
         return redirect()->route(
