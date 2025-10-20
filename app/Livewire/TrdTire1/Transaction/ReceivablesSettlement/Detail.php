@@ -16,6 +16,7 @@ use App\Models\TrdTire1\Master\PartnerBal;
 use App\Services\SysConfig1\ConfigService;
 use App\Services\TrdTire1\PartnerTrxService;
 use App\Models\TrdTire1\Transaction\BillingHdr;
+use App\Models\TrdTire1\Transaction\OrderHdr;
 use App\Models\TrdTire1\Transaction\PaymentAdv;
 use App\Models\TrdTire1\Transaction\PaymentDtl;
 use App\Models\TrdTire1\Transaction\PaymentHdr;
@@ -287,7 +288,10 @@ class Detail extends BaseComponent
 
                 $billingHdr = BillingHdr::find($detail->billhdr_id);
 				if ($billingHdr) {
-					$due_date = Carbon::parse($billingHdr->tr_date)->addDays($billingHdr->payment_due_days)->format('Y-m-d');
+					// Get tr_date from order_hdrs instead of billing_hdrs
+					$orderHdr = OrderHdr::where('tr_code', $billingHdr->tr_code)->where('tr_type', 'SO')->first();
+					$trDate = $orderHdr ? $orderHdr->tr_date : $billingHdr->tr_date;
+					$due_date = Carbon::parse($trDate)->addDays($billingHdr->payment_due_days)->format('Y-m-d');
 					$this->input_details[$key]['due_date'] = $due_date;
 					$baseAmt = ($billingHdr->amt + ($billingHdr->amt_shipcost ?? 0)) - ($billingHdr->amt_reff ?? 0);
 					$this->input_details[$key]['amtbill'] =  $baseAmt;
@@ -936,13 +940,14 @@ class Detail extends BaseComponent
                                SELECT
                                    bh.id,
                                    bh.tr_code,
-                                   bh.tr_date,
+                                   COALESCE(oh.tr_date, bh.tr_date) as tr_date,
                                    bh.amt,
                                    bh.amt_reff,
                                    (bh.amt + COALESCE(bh.amt_shipcost, 0) - COALESCE(bh.amt_reff, 0)) outstanding_amt,
                                    TO_CHAR((bh.amt + COALESCE(bh.amt_shipcost, 0) - COALESCE(bh.amt_reff, 0)), 'FM999,999,999,999,990') outstanding_amt_formatted,
-                                   TO_CHAR(bh.tr_date + (COALESCE(bh.payment_due_days, 0) || ' days')::interval, 'DD-MM-YYYY') due_date
+                                   TO_CHAR(COALESCE(oh.tr_date, bh.tr_date) + (COALESCE(bh.payment_due_days, 0) || ' days')::interval, 'DD-MM-YYYY') due_date
                                FROM billing_hdrs bh
+                               LEFT JOIN order_hdrs oh ON bh.tr_code = oh.tr_code AND oh.tr_type = 'SO'
                                WHERE
                                    bh.partner_id = {$partnerId}
                                    AND bh.deleted_at IS NULL
@@ -1074,8 +1079,10 @@ class Detail extends BaseComponent
             return;
         }
 
-        // Hitung due date
-        $dueDate = Carbon::parse($billingHdr->tr_date)->addDays($billingHdr->payment_due_days ?? 0)->format('Y-m-d');
+        // Hitung due date - get tr_date from order_hdrs instead of billing_hdrs
+        $orderHdr = OrderHdr::where('tr_code', $billingHdr->tr_code)->where('tr_type', 'SO')->first();
+        $trDate = $orderHdr ? $orderHdr->tr_date : $billingHdr->tr_date;
+        $dueDate = Carbon::parse($trDate)->addDays($billingHdr->payment_due_days ?? 0)->format('Y-m-d');
 
         // Tambahkan nota ke input_details
         $newDetail = populateArrayFromModel(new PaymentDtl());

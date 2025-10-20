@@ -13,14 +13,6 @@ use Carbon\Carbon;
 
 class AuditLogService
 {
-    /**
-     * Create audit log for billing print date changes
-     *
-     * @param array $billingIds Array of billing IDs
-     * @param string $newPrintDate New print date
-     * @param string|null $oldPrintDate Old print date (optional)
-     * @return array Array of created audit logs
-     */
     public static function createPrintDateAuditLogs(array $billingIds, string $newPrintDate, ?string $oldPrintDate = null): array
     {
         $auditLogs = [];
@@ -58,12 +50,7 @@ class AuditLogService
         return $auditLogs;
     }
 
-    /**
-     * Create audit log for billing print action
-     *
-     * @param array $billingIds Array of billing IDs
-     * @return array Array of created audit logs
-     */
+
     public static function createPrintAuditLogs(array $billingIds): array
     {
         $auditLogs = [];
