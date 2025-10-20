@@ -17,7 +17,6 @@ use Exception;
 
 class IndexDataTable extends BaseDataTableComponent
 {
-    public $tax_process_date;
     public $selectedItems = [];
     public $filters = [];
     public $bulkSelectedIds = null;
@@ -186,49 +185,14 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function filters(): array
     {
-        $configDetails = $this->getConfigDetails();
-        $printDates = OrderHdr::select('tax_process_date')
-            ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
-            ->where('order_hdrs.tax_doc_flag', 1)
-            ->distinct()
-            ->whereNotNull('tax_process_date')
-            ->orderBy('tax_process_date', 'desc')
-            ->pluck('tax_process_date', 'tax_process_date')
-            ->toArray();
-
-        // Add "Not Selected" option for tax_process_date
-        $printDates = ['' => 'Not Selected'] + $printDates;
-
-        $masaOptions = OrderHdr::selectRaw("TO_CHAR(tr_date, 'YYYY-MM') as filter_value, TO_CHAR(tr_date, 'FMMonth-YYYY') as display_value") // Updated for PostgreSQL
-            ->where('order_hdrs.tr_type', 'SO')
-            ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
-            ->where('order_hdrs.tax_doc_flag', 1)
-            ->distinct()
-            ->orderByRaw("TO_CHAR(tr_date, 'YYYY-MM') DESC") // Sort by year-month descending (latest first)
-            ->get()
-            ->pluck('display_value', 'filter_value')
-            ->toArray();
-
-        // Add "Not Selected" option for masa
-        $masaOptions = ['' => 'Not Selected'] + $masaOptions;
-
         return [
-            SelectFilter::make('Tanggal Proses')
-                ->options($printDates)
+            DateFilter::make('Tanggal Nota Awal')
                 ->filter(function (Builder $builder, string $value) {
-                    if ($value) { // Only apply filter if a value is selected
-                        $this->filters['tax_process_date'] = $value;
-                        $builder->where('tax_process_date', $value);
-                    }
+                    $builder->whereDate('order_hdrs.tr_date', '>=', $value);
                 }),
-            SelectFilter::make('Masa')
-                ->options($masaOptions)
+            DateFilter::make('Tanggal Nota Akhir')
                 ->filter(function (Builder $builder, string $value) {
-                    if ($value) { // Only apply filter if a value is selected
-                        $this->filters['masa'] = $value; // Ensure the filter value is set
-                        $builder->whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$value]); // Filter using YYYY-MM
-                    }
+                    $builder->whereDate('order_hdrs.tr_date', '<=', $value);
                 }),
             SelectFilter::make('Nomor Faktur')
                 ->options([
@@ -252,9 +216,6 @@ class IndexDataTable extends BaseDataTableComponent
                     }
                 }),
 
-            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '=', $value);
-            }),
             TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
                 $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
             }),
@@ -266,29 +227,11 @@ class IndexDataTable extends BaseDataTableComponent
     public function bulkActions(): array
     {
         return [
-            'setProsesDate' => 'Proses Nota Baru',
             'nomorFaktur' => 'Set Nomor Faktur',
             'deleteNomorFaktur' => 'Hapus Nomor Faktur',
             'cetakProsesDate' => 'Cetak Proses Faktur Pajak',
-            'cetakLaporanPenjualan' => 'Cetak Laporan Penjualan',
             'transferKeCTMS' => 'Transfer ke CTMS',
         ];
-    }
-
-    public function setProsesDate()
-    {
-        $newDataCount = OrderHdr::whereNull('tax_process_date')->count();
-
-        if ($newDataCount === 0) {
-            $this->dispatch('error', 'Tidak ada data baru yang bisa diproses.');
-            return;
-        }
-
-        // Update semua tax_process_date yang null menjadi tanggal sekarang
-        OrderHdr::whereNull('tax_process_date')
-            ->update(['tax_process_date' => now()]);
-
-        $this->dispatch('success', 'Tanggal proses berhasil disimpan');
     }
 
     public function nomorFaktur()
@@ -344,15 +287,6 @@ class IndexDataTable extends BaseDataTableComponent
 
 
 
-    public function getConfigDetails()
-    {
-        // Method ini sudah tidak diperlukan karena nomor faktur bebas
-        return [
-            'last_cnt' => 'N/A',
-            'wrap_high' => 'N/A',
-        ];
-    }
-
     public function cetakProsesDate()
     {
         $selectedPrintDate = $this->filters['tax_process_date'] ?? null;
@@ -380,36 +314,6 @@ class IndexDataTable extends BaseDataTableComponent
             ]);
         }
         $this->dispatch('error', 'Tanggal proses belum dipilih.');
-    }
-
-    public function cetakLaporanPenjualan()
-    {
-        $selectedMasa = $this->filters['masa'] ?? null;
-        if ($selectedMasa) {
-            // Check if there are any orders for the selected masa
-            $orderCount = OrderHdr::whereRaw("TO_CHAR(tr_date, 'YYYY-MM') = ?", [$selectedMasa])
-                ->where('tr_type', 'SO')
-                ->whereNull('deleted_at')
-                ->count();
-
-            if ($orderCount === 0) {
-                $this->dispatch('error', 'Tidak ada data untuk masa yang dipilih.');
-                return;
-            }
-
-            // Use array structure with JSON encoding
-            $paramArray = [
-                'selectedMasa' => $selectedMasa,
-                'type' => 'cetakLaporanPenjualan'
-            ];
-
-            return redirect()->route($this->appCode . '.Transaction.PurchaseDelivery.PrintPdf', [
-                'action' => encryptWithSessionKey('Edit'),
-                'objectId' => encryptWithSessionKey(''),
-                'additionalParam' => encryptWithSessionKey(json_encode($paramArray)),
-            ]);
-        }
-        $this->dispatch('error', 'Masa belum dipilih.');
     }
 
     public function transferKeCTMS()
