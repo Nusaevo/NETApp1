@@ -9,13 +9,12 @@ use App\Models\SysConfig1\ConfigRight;
 use App\Models\TrdTire1\Master\GoldPriceLog;
 use App\Enums\TrdTire1\Status;
 use App\Models\TrdTire1\Master\MatlUom;
-use App\Services\TrdTire1\BillingService;
+use App\Services\TrdTire1\{AuditLogService, BillingService, DeliveryService};
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Livewire; // pastikan namespace ini diimport
 use Illuminate\Support\Facades\DB;
+use Exception;
 use Rappasoft\LaravelLivewireTables\Views\Filters\BooleanFilter;
-use App\Services\TrdTire1\DeliveryService;
-use App\Services\TrdTire1\AuditLogService;
 
 class IndexDataTable extends BaseDataTableComponent
 {
@@ -254,51 +253,115 @@ class IndexDataTable extends BaseDataTableComponent
 	                return;
 	            }
 
-	            // Validasi billing: jika amt_reff > 0 maka tidak bisa dibatalkan
-            $billingHdrs = BillingHdr::whereIn('tr_code', $selectedTrCodes)
-                ->where('amt_reff', '>', 0)
-                ->get();
-
-	            if ($billingHdrs->isNotEmpty()) {
-	                $blockedTrCodes = $billingHdrs->pluck('tr_code')->toArray();
-	                $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ada pembayaran');
-	                $this->clearSelections();
-	                return;
-	            }
-
-	            // Validasi billing: jika print_date sudah terisi (sudah ditagih/di-print), tidak bisa dibatalkan
-	            $printedBillings = BillingHdr::whereIn('tr_code', $selectedTrCodes)
-	                ->whereNotNull('print_date')
-	                ->get();
-
-	            if ($printedBillings->isNotEmpty()) {
-	                $blockedTrCodes = $printedBillings->pluck('tr_code')->toArray();
-	                $this->dispatch('error', 'Tidak dapat membatalkan pengiriman untuk nomor nota: ' . implode(', ', $blockedTrCodes) . ' karena sudah ditagih');
-	                $this->clearSelections();
-	                return;
-	            }
-
-            // Gunakan DeliveryService untuk menghapus delivery
+            // Proses setiap delivery secara individual
             $deliveryService = app(DeliveryService::class);
             $billingService = app(BillingService::class);
             $deletedCount = 0;
+            $successOrders = [];
+            $failedOrders = [];
+            $successOrderIds = [];
 
             foreach ($delivHdrs as $delivHdr) {
-                // Audit log for BATAL KIRIM before deletion
-                AuditLogService::createDeliveryBatalKirim($delivHdr->id);
-                $deliveryService->delDelivery($delivHdr->id);
-                $billingService->delBilling($delivHdr->billhdr_id);
-                $deletedCount++;
+                // Cek apakah billing sudah di-print atau sudah ada pembayaran untuk nota ini
+                $billing = BillingHdr::where('tr_code', $delivHdr->tr_code)->first();
+
+                if ($billing) {
+                    if ($billing->print_date) {
+                        // Nota ini tidak bisa dibatalkan karena sudah ditagih
+                        $failedOrders[] = [
+                            'tr_code' => $delivHdr->tr_code,
+                            'reason' => 'Sudah ditagih (print_date: ' . $billing->print_date . ')'
+                        ];
+                        continue;
+                    }
+
+                    if ($billing->amt_reff > 0) {
+                        // Nota ini tidak bisa dibatalkan karena sudah ada pembayaran
+                        $failedOrders[] = [
+                            'tr_code' => $delivHdr->tr_code,
+                            'reason' => 'Sudah ada pembayaran (amt_reff: ' . number_format($billing->amt_reff, 0, ',', '.') . ')'
+                        ];
+                        continue;
+                    }
+                }
+
+                try {
+                    // Simpan ID sebelum penghapusan untuk audit log
+                    $delivId = $delivHdr->id;
+
+                    $deliveryService->delDelivery($delivHdr->id);
+                    $billingService->delBilling($delivHdr->billhdr_id);
+
+                    // Audit log for BATAL KIRIM - hanya dibuat setelah proses berhasil
+                    // AuditLogService::createDeliveryBatalKirim($delivId);
+
+                    $successOrders[] = $delivHdr->tr_code;
+                    $successOrderIds[] = $delivHdr->order_id;
+                    $deletedCount++;
+                } catch (Exception $e) {
+                    $failedOrders[] = [
+                        'tr_code' => $delivHdr->tr_code,
+                        'reason' => 'Error: ' . $e->getMessage()
+                    ];
+                }
             }
 
-            // Update status OrderHdr kembali ke PRINT
-            OrderHdr::whereIn('id', $selectedOrderIds)->update(['status_code' => Status::PRINT]);
+            // Update status OrderHdr kembali ke PRINT hanya untuk yang berhasil
+            if (!empty($successOrderIds)) {
+                OrderHdr::whereIn('id', $successOrderIds)->update(['status_code' => Status::PRINT]);
+            }
 
             DB::commit();
 
-            $this->clearSelected();
-            $this->dispatch('success', "Berhasil membatalkan {$deletedCount} data pengiriman");
+            // Tampilkan hasil dengan detail
+            $this->showBatalKirimResults($successOrders, $failedOrders, $deletedCount);
             $this->dispatch('refresh-page');
+        }
+    }
+
+    /**
+     * Tampilkan hasil proses BATAL KIRIM dengan detail
+     */
+    private function showBatalKirimResults($successOrders, $failedOrders, $deletedCount)
+    {
+        $message = '';
+        $type = 'info';
+
+        if ($deletedCount > 0 && empty($failedOrders)) {
+            // Semua berhasil
+            $message = '<strong>Berhasil!</strong><br><br>';
+            $message .= $deletedCount . ' pengiriman berhasil dibatalkan:<br>';
+            $message .= '• ' . implode('<br>• ', $successOrders);
+            $type = 'success';
+        } elseif ($deletedCount > 0 && !empty($failedOrders)) {
+            // Sebagian berhasil
+            $message = '<strong>Hasil Proses Batal Kirim</strong><br><br>';
+            $message .= '<strong>✅ Berhasil (' . $deletedCount . ' nota):</strong><br>';
+            $message .= '• ' . implode('<br>• ', $successOrders) . '<br><br>';
+
+            $message .= '<strong>❌ Gagal (' . count($failedOrders) . ' nota):</strong><br>';
+            foreach ($failedOrders as $failed) {
+                $message .= '• ' . $failed['tr_code'] . ': ' . $failed['reason'] . '<br>';
+            }
+            $type = 'warning';
+        } elseif (empty($successOrders) && !empty($failedOrders)) {
+            // Semua gagal
+            $message = '<strong>Gagal!</strong><br><br>';
+            $message .= 'Semua nota gagal dibatalkan:<br>';
+            foreach ($failedOrders as $failed) {
+                $message .= '• ' . $failed['tr_code'] . ': ' . $failed['reason'] . '<br>';
+            }
+            $type = 'error';
+        }
+
+        $this->dispatch('notify-swal', [
+            'type' => $type,
+            'message' => $message
+        ]);
+
+        // Hanya clear selection jika semua berhasil atau semua gagal
+        if (empty($failedOrders) || empty($successOrders)) {
+            $this->clearSelected();
         }
     }
 

@@ -206,9 +206,22 @@ class Detail extends BaseComponent
     public function deleteItem($index)
     {
         try {
-            unset($this->input_details[$index]);
+            // Pastikan index valid
+            if (!isset($this->input_details[$index])) {
+                $this->dispatch('error', 'Item tidak ditemukan.');
+                return;
+            }
 
-            $this->input_details = array_values($this->input_details);
+            // Buat array baru tanpa item yang dihapus
+            $newInputDetails = [];
+            foreach ($this->input_details as $key => $detail) {
+                if ($key != $index) {
+                    $newInputDetails[] = $detail;
+                }
+            }
+
+            // Assign array baru
+            $this->input_details = $newInputDetails;
 
             if (empty($this->input_details)) {
                 $this->isPanelEnabled = "true"; // Enable warehouse and reffhdrtr_code fields
@@ -362,10 +375,10 @@ class Detail extends BaseComponent
         $result = $deliveryService->saveDelivery($headerData, $detailData);
         $this->object = $result['header'];
 
-        if ($this->actionValue === 'Create') {
-            // Audit log: KIRIM (PD) setelah berhasil create header
-            AuditLogService::createPurchaseDeliveryKirim($this->object->id);
-        }
+        // if ($this->actionValue === 'Create' && !empty($result['header'])) {
+        //     // Audit log: KIRIM (PD) setelah berhasil create header
+        //     AuditLogService::createPurchaseDeliveryKirim($this->object->id);
+        // }
 
         // Selalu sinkronkan Billing setelah Delivery tersimpan (create maupun update)
         $billingService = app(BillingService::class);
@@ -389,13 +402,24 @@ class Detail extends BaseComponent
             throw new Exception('Gagal membuat/menyinkronkan Billing untuk delivery order ' . $this->inputs['tr_code']);
         }
 
-        return redirect()->route(
-            $this->appCode . '.Transaction.PurchaseDelivery.Detail',
-            [
-                'action'   => encryptWithSessionKey($this->actionValue === 'Create' ? 'Edit' : $this->actionValue),
-                'objectId' => encryptWithSessionKey($this->object->id),
-            ]
-        );
+        // Jika mode Create, redirect ke mode Create baru (reset form)
+        if ($this->actionValue === 'Create') {
+            return redirect()->route(
+                $this->appCode . '.Transaction.PurchaseDelivery.Detail',
+                [
+                    'action'   => encryptWithSessionKey('Create'),
+                ]
+            );
+        } else {
+            // Jika mode Edit, tetap redirect ke mode Edit
+            return redirect()->route(
+                $this->appCode . '.Transaction.PurchaseDelivery.Detail',
+                [
+                    'action'   => encryptWithSessionKey($this->actionValue),
+                    'objectId' => encryptWithSessionKey($this->object->id),
+                ]
+            );
+        }
     }
 
     public function onMaterialChanged($index, $matl_id)
@@ -432,9 +456,6 @@ class Detail extends BaseComponent
                 $this->dispatch('error', 'Data Purchase Delivery tidak ditemukan.');
                 return;
             }
-
-            // Audit log: BATAL KIRIM (PD)
-            AuditLogService::createPurchaseDeliveryBatalKirim($this->object->id);
 
             // Panggil service untuk hapus billing terlebih dahulu
             $billingService = app(BillingService::class);

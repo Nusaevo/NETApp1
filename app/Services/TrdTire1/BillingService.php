@@ -134,6 +134,7 @@ class BillingService
             } else {
                 $detail['id'] = $billingOrder->id;
                 $detail['tr_seq'] = $billingOrder->tr_seq;
+                $detail['trhdr_id'] = $billingOrder->trhdr_id;
                 $billingOrder->fill($detail);
                 if ($billingOrder->isDirty()) {
                     $billingOrder->save();
