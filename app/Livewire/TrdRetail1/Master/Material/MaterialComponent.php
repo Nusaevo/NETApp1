@@ -3,7 +3,7 @@
 namespace App\Livewire\TrdRetail1\Master\Material;
 
 use App\Livewire\Component\BaseComponent;
-use Illuminate\Support\Facades\{DB};
+use Illuminate\Support\Facades\{DB, Log};
 use App\Models\TrdRetail1\Master\{Material, MatlUom};
 use App\Models\SysConfig1\ConfigSnum;
 use App\Models\Base\Attachment;
@@ -476,6 +476,62 @@ class MaterialComponent extends BaseComponent
     {
         $this->change();
         $this->loadUomDetails();
+    }
+
+    /**
+     * Override parent change() method to also handle UOM deletion/restoration
+     */
+    protected function change()
+    {
+        try {
+            $this->updateVersionNumber();
+
+            if ($this->object->deleted_at) {
+                // Restoring Material - also restore all UOMs
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code = Status::ACTIVE;
+                }
+                $this->object->deleted_at = null;
+                $this->object->save();
+
+                // Restore all UOMs for this material
+                MatlUom::withTrashed()
+                    ->where('matl_id', $this->object->id)
+                    ->restore();
+
+                // Update status for all UOMs
+                MatlUom::where('matl_id', $this->object->id)
+                    ->update(['status_code' => Status::ACTIVE]);
+
+                $messageKey = 'generic.string.enable';
+            } else {
+                // Deleting Material - also delete all UOMs
+                if (isset($this->object->status_code)) {
+                    $this->object->status_code = Status::NONACTIVE;
+                }
+                $this->object->save();
+
+                // Soft delete all UOMs for this material first
+                MatlUom::where('matl_id', $this->object->id)
+                    ->update(['status_code' => Status::NONACTIVE]);
+
+                MatlUom::where('matl_id', $this->object->id)->delete();
+
+                // Then delete the material
+                $this->object->delete();
+
+                $messageKey = 'generic.string.disable';
+            }
+
+            $this->status = Status::getStatusString($this->object->status_code);
+            $this->dispatch('success', __($messageKey));
+        } catch (Exception $e) {
+            Log::error("Method Change : " . $e->getMessage());
+            $this->rollbackVersionNumber();
+            $this->dispatch('error', __('generic.error.' . ($this->object->deleted_at ? 'enable' : 'disable'), ['message' => $e->getMessage()]));
+        }
+
+        $this->dispatch('refresh');
     }
 
     // UomListComponent methods
