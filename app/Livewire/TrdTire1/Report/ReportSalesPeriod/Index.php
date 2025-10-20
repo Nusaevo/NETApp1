@@ -23,18 +23,30 @@ class Index extends BaseComponent
 
     public function loadMasaOptions()
     {
-        $this->masaOptions = OrderHdr::selectRaw("TO_CHAR(tr_date, 'YYYY-MM') as filter_value, TO_CHAR(tr_date, 'FMMonth-YYYY') as display_value")
+        $masaData = OrderHdr::selectRaw("TO_CHAR(tr_date, 'YYYY-MM') as filter_value, TO_CHAR(tr_date, 'FMMonth-YYYY') as display_value")
             ->where('order_hdrs.tr_type', 'SO')
             ->whereIn('order_hdrs.status_code', [Status::PRINT, Status::OPEN, Status::SHIP])
             ->where('order_hdrs.tax_doc_flag', 1)
             ->distinct()
             ->orderByRaw("TO_CHAR(tr_date, 'YYYY-MM') DESC")
-            ->get()
-            ->pluck('display_value', 'filter_value')
-            ->toArray();
+            ->get();
+
+        // Convert to array format expected by ui-dropdown-select component
+        $this->masaOptions = [];
 
         // Add "Not Selected" option
-        $this->masaOptions = ['' => 'Not Selected'] + $this->masaOptions;
+        $this->masaOptions[] = [
+            'value' => '',
+            'label' => 'Not Selected'
+        ];
+
+        // Add masa options
+        foreach ($masaData as $masa) {
+            $this->masaOptions[] = [
+                'value' => $masa->filter_value,
+                'label' => $masa->display_value
+            ];
+        }
     }
 
     public function search()
