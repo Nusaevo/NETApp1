@@ -94,36 +94,39 @@ class Index extends BaseComponent
             }
 
             $successCount = 0;
+            $successOrders = [];
+            $failedOrders = [];
             $stockErrors = [];
 
-            // Validasi stok untuk semua order terlebih dahulu
+            // Proses setiap order secara individual
             foreach ($selectedOrders as $order) {
                 $orderDetails = OrderDtl::where('tr_code', $order->tr_code)->get();
+                $hasStockError = false;
+                $orderStockErrors = [];
 
+                // Validasi stok untuk order ini
                 foreach ($orderDetails as $detail) {
                     $totalStock = IvtBal::where('matl_id', $detail->matl_id)
                         ->where('wh_id', $warehouse->id)
                         ->sum('qty_oh');
 
                     if ($totalStock < $detail->qty) {
-                        $stockError = 'Nota: ' . $order->tr_code . ' - Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.') . ' - Dibutuhkan: ' . $detail->qty;
-                        $stockErrors[] = $stockError;
+                        $stockError = 'Barang: ' . $detail->matl_code . ' - Gudang: ' . $warehouse->str1 . ' - Stok: ' . rtrim(rtrim(number_format($totalStock, 3, '.', ''), '0'), '.') . ' - Dibutuhkan: ' . $detail->qty;
+                        $orderStockErrors[] = $stockError;
+                        $hasStockError = true;
                     }
                 }
-            }
 
-            // Jika ada error stok, tampilkan semua error dan hentikan proses
-            if (!empty($stockErrors)) {
-                $this->dispatch('notify-swal', [
-                    'type' => 'error',
-                    'message' => '<strong>Stock Tidak Cukup</strong><br><br>' . implode('<br>', $stockErrors)
-                ]);
-                $this->dispatch('close-modal-delivery-date');
-                return;
-            }
+                // Jika ada error stok untuk order ini, skip dan catat
+                if ($hasStockError) {
+                    $failedOrders[] = [
+                        'tr_code' => $order->tr_code,
+                        'errors' => $orderStockErrors
+                    ];
+                    continue;
+                }
 
-            // Jika tidak ada error stok, lanjutkan proses delivery
-            foreach ($selectedOrders as $order) {
+                // Jika tidak ada error stok, lanjutkan proses delivery untuk order ini
                 // Persiapan array inputs
                 $inputs = [
                     'tr_type' => 'SD',
@@ -189,37 +192,33 @@ class Index extends BaseComponent
                     $billingResult = $billingService->saveBilling($billingHeaderData, $deliveryDetails);
 
                     if (!empty($result['header'])) {
+                        // AuditLogService::createDeliveryKirim([$result['header']->id]);
                         // Audit log for Sales Delivery KIRIM
-                        AuditLogService::createDeliveryKirim($result['header']->id);
-                        $successCount++;
-                    } else {
-                        $this->dispatch('notify-swal', [
-                            'type' => 'error',
-                            'message' => 'Gagal membuat Delivery untuk order ' . $order->tr_code
-                        ]);
-                        return;
-                    }
 
-                    // Cek hasil billing
-                    if (!empty($billingResult['billing_hdr'])) {
-                        // Billing berhasil dibuat
+                        // Cek hasil billing
+                        if (!empty($billingResult['billing_hdr'])) {
+                            // Billing berhasil dibuat
+                            $successOrders[] = $order->tr_code;
+                            $successCount++;
+                        } else {
+                            // Billing gagal dibuat
+                            $failedOrders[] = [
+                                'tr_code' => $order->tr_code,
+                                'errors' => ['Gagal membuat Billing']
+                            ];
+                        }
                     } else {
-                        $this->dispatch('notify-swal', [
-                            'type' => 'error',
-                            'message' => 'Gagal membuat Billing untuk delivery order ' . $order->tr_code
-                        ]);
-                        return;
+                        // Delivery gagal dibuat
+                        $failedOrders[] = [
+                            'tr_code' => $order->tr_code,
+                            'errors' => ['Gagal membuat Delivery']
+                        ];
                     }
                 }
             }
 
-            // Tampilkan hasil sukses
-            if ($successCount > 0) {
-                $this->dispatch('notify-swal', [
-                    'type' => 'success',
-                    'message' => $successCount . ' Sales Delivery berhasil dibuat'
-                ]);
-            }
+            // Tampilkan hasil dengan detail
+            $this->showProcessResults($successOrders, $failedOrders, $successCount);
 
             // Clear selections after successful completion
             $this->dispatch('clearSelections');
@@ -233,6 +232,47 @@ class Index extends BaseComponent
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Tampilkan hasil proses delivery dengan detail
+     */
+    private function showProcessResults($successOrders, $failedOrders, $successCount)
+    {
+        $message = '';
+        $type = 'info';
+
+        if ($successCount > 0 && empty($failedOrders)) {
+            // Semua berhasil
+            $message = '<strong>Berhasil!</strong><br><br>';
+            $message .= $successCount . ' Sales Delivery berhasil dibuat:<br>';
+            $message .= '• ' . implode('<br>• ', $successOrders);
+            $type = 'success';
+        } elseif ($successCount > 0 && !empty($failedOrders)) {
+            // Sebagian berhasil
+            $message = '<strong>Hasil Proses Delivery</strong><br><br>';
+            $message .= '<strong>✅ Berhasil (' . $successCount . ' nota):</strong><br>';
+            $message .= '• ' . implode('<br>• ', $successOrders) . '<br><br>';
+
+            $message .= '<strong>❌ Gagal (' . count($failedOrders) . ' nota):</strong><br>';
+            foreach ($failedOrders as $failed) {
+                $message .= '• ' . $failed['tr_code'] . ': ' . implode(', ', $failed['errors']) . '<br>';
+            }
+            $type = 'warning';
+        } elseif (empty($successOrders) && !empty($failedOrders)) {
+            // Semua gagal
+            $message = '<strong>Gagal!</strong><br><br>';
+            $message .= 'Semua nota gagal diproses:<br>';
+            foreach ($failedOrders as $failed) {
+                $message .= '• ' . $failed['tr_code'] . ': ' . implode(', ', $failed['errors']) . '<br>';
+            }
+            $type = 'error';
+        }
+
+        $this->dispatch('notify-swal', [
+            'type' => $type,
+            'message' => $message
+        ]);
     }
 
     public function onPrerender()
