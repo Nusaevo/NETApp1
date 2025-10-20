@@ -206,7 +206,7 @@
                                     optionValue="id" optionLabel="tr_code,outstanding_amt_formatted,due_date"
                                     placeHolder="Pilih nota untuk ditambahkan..." :selectedValue="$selectedNotaId"
                                     :action="$actionValue" :enabled="$isPanelEnabled" type="int"
-                                    onChanged="onNotaSelected" />
+                                    onChanged="onNotaSelected" searchOnSpace="true"/>
                             </div>
                             @else
                             <div class="alert alert-info">

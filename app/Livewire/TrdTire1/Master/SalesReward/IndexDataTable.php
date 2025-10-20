@@ -52,6 +52,13 @@ class IndexDataTable extends BaseDataTableComponent
     {
         return [
             Column::make("Kode Program", "code")
+                ->format(function ($value, $row) {
+                    return '<a href="' . route($this->appCode . '.Master.SalesReward.Detail', [
+                        'action' => encryptWithSessionKey('Edit'),
+                        'objectId' => encryptWithSessionKey($row->id)
+                    ]) . '">' . $row->code . '</a>';
+                })
+                ->html()
                 ->sortable()
                 ->searchable()
                 ->attributes(fn() => ['class' => 'w-80px text-center']),
@@ -89,16 +96,24 @@ class IndexDataTable extends BaseDataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Tanggal Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where('order_hdrs.tr_date', '=', $value);
+            // Filter untuk Kode Program
+            $this->createTextFilter('Kode Program', 'code', 'Kode Program', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(code)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            TextFilter::make('Nomor Nota')->filter(function (Builder $builder, string $value) {
-                $builder->where(DB::raw('UPPER(order_hdrs.tr_code)'), 'like', '%' . strtoupper($value) . '%');
+
+            // Filter untuk Group
+            $this->createTextFilter('Group', 'grp', 'Group', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(grp)'), 'like', '%' . strtoupper($value) . '%');
             }),
-            TextFilter::make('Customer')->filter(function (Builder $builder, string $value) {
-                $builder->whereHas('Partner', function ($query) use ($value) {
-                    $query->where(DB::raw('UPPER(name)'), 'like', '%' . strtoupper($value) . '%');
-                });
+
+            // Filter untuk Kode Barang
+            $this->createTextFilter('Kode Barang', 'matl_code', 'Kode Barang', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(matl_code)'), 'like', '%' . strtoupper($value) . '%');
+            }),
+
+            // Filter untuk Nama Program
+            $this->createTextFilter('Nama Program', 'descrs', 'Nama Program', function (Builder $builder, string $value) {
+                $builder->where(DB::raw('UPPER(descrs)'), 'like', '%' . strtoupper($value) . '%');
             }),
         ];
     }
