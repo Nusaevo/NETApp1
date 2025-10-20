@@ -16,6 +16,7 @@ class UIDropdownSearch extends UiBaseComponent
     public $optionLabel;            // Field yang dijadikan label (misal: 'name')
     public $connection;             // Database connection (default: 'Default' - akan menggunakan session app_code)
     public $query;                  // Raw SQL query untuk pencarian data
+    public $searchOnSpace;          // Mode untuk search semua data ketika user ketik space
 
     /**
      * Create a new UiDropdownSearch component instance.
@@ -43,6 +44,7 @@ class UIDropdownSearch extends UiBaseComponent
      * @param string $connection     Database connection name. Use 'Default' to use session app_code
      * @param string $query          Raw SQL query untuk pencarian data.
      *                              Example: "SELECT id, code, name FROM partner WHERE deleted_at IS NULL"
+     * @param string $searchOnSpace   Mode untuk search semua data ketika user ketik space ('true'/'false')
      */
     public function __construct(
         $label = '',
@@ -64,7 +66,8 @@ class UIDropdownSearch extends UiBaseComponent
         $optionValue = 'id',
         $optionLabel = 'name',
         $connection = 'Default',
-        $query = ''
+        $query = '',
+        $searchOnSpace = 'false'
     ) {
         // Panggil parent untuk inisiasi umum
         parent::__construct(
@@ -91,6 +94,7 @@ class UIDropdownSearch extends UiBaseComponent
         $this->optionLabel           = $optionLabel;
         $this->connection            = $connection;
         $this->query                 = $query;
+        $this->searchOnSpace         = $searchOnSpace;
     }
 
     /**

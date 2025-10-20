@@ -25,6 +25,21 @@
     // Force SQL query processing and ensure it's a string - must not be empty
     $sqlQuery = !empty($rawQuery) ? (string)$rawQuery : '';
 
+    // Handle searchOnSpace parameter
+    $enableSearchOnSpace = isset($searchOnSpace) && ($searchOnSpace === 'true' || $searchOnSpace === true);
+
+    // Debug searchOnSpace - disabled
+    /*
+    if (isset($searchOnSpace)) {
+        \Log::info('SearchOnSpace PHP Debug', [
+            'component_id' => $id,
+            'searchOnSpace_raw' => $searchOnSpace,
+            'searchOnSpace_type' => gettype($searchOnSpace),
+            'enableSearchOnSpace' => $enableSearchOnSpace
+        ]);
+    }
+    */
+
     // Ensure we never have empty query in the output
     if (empty($sqlQuery)) {
         // \Log::warning('Empty SQL query in dropdown', ['component_id' => $id]);
@@ -62,7 +77,7 @@
                     $(selectElement).select2({
                         placeholder: '{{ $placeHolder ?? 'Select an option' }}',
                         allowClear: true,
-                        minimumInputLength: 1,
+                        minimumInputLength: {{ $enableSearchOnSpace ? '0' : '1' }},
                         width: '100%',
                         dropdownParent: $(selectElement).closest('.modal').length > 0 ? $(selectElement).closest('.modal') : $('body'),
                         // Use standard size Select2 that matches form-select
@@ -122,14 +137,56 @@
                                     // console.error('QUERY IS EMPTY! Component:', selectElement.id);
                                 }
 
+                                // Fix searchOnSpace issue - preserve actual space character
+                                let searchTerm = params.term || '';
+
+                                // Debug space characters - disabled
+                                /*
+                                if (searchTerm && $(selectElement).data('search-on-space')) {
+                                    console.log('SEARCH TERM DEBUG:', {
+                                        'raw': searchTerm,
+                                        'length': searchTerm.length,
+                                        'charCodes': Array.from(searchTerm).map(c => c.charCodeAt(0)),
+                                        'isOnlySpaces': /^\s+$/.test(searchTerm)
+                                    });
+                                }
+                                */
+
                                 // Only include the query parameter, not both query and sqlQuery
                                 const data = {
-                                    q: params.term || '',
+                                    q: searchTerm,  // Use raw search term to preserve spaces
                                     connection: $(selectElement).data('connection'),
                                     query: queryValue, // Only use one parameter name for consistency
                                     option_value: $(selectElement).data('option-value'),
                                     option_label: $(selectElement).data('option-label'),
+                                    search_on_space: String($(selectElement).data('search-on-space') || 'false'),
                                 };
+
+                                // Debug logging - disabled
+                                /*
+                                console.log('SearchOnSpace CHECK:', {
+                                    'data_attribute_raw': $(selectElement).attr('data-search-on-space'),
+                                    'data_method_result': $(selectElement).data('search-on-space'),
+                                    'data_type': typeof $(selectElement).data('search-on-space'),
+                                    'element_id': selectElement.id,
+                                    'search_term': params.term,
+                                    'search_term_length': (params.term || '').length
+                                });
+                                */
+
+                                // Fix: jQuery .data() converts 'true' string to boolean true
+                                // Debug logging - disabled
+                                /*
+                                if ($(selectElement).data('search-on-space') === true || $(selectElement).data('search-on-space') === 'true') {
+                                    console.log('SearchOnSpace DEBUG:', {
+                                        'search_term': params.term,
+                                        'search_term_length': (params.term || '').length,
+                                        'search_on_space': data.search_on_space,
+                                        'data_attribute': $(selectElement).data('search-on-space'),
+                                        'full_data': data
+                                    });
+                                }
+                                */
 
                                 // ENHANCED DEBUGGING - check if query is properly set
                                 const hasQuery = queryValue && queryValue.trim().length > 0;
@@ -164,7 +221,11 @@
                                 return 'Results could not be loaded.';
                             },
                             inputTooShort: function () {
-                                return 'Please enter 1 or more characters';
+                                @if ($enableSearchOnSpace)
+                                    return 'Type space to see all options, or start typing to search';
+                                @else
+                                    return 'Please enter 1 or more characters';
+                                @endif
                             },
                             noResults: function () {
                                 return 'No results found';
@@ -410,6 +471,7 @@
                 data-query="{{ htmlspecialchars($query, ENT_QUOTES, 'UTF-8') }}"
                 data-option-value="{{ $optionValue }}"
                 data-option-label="{{ $optionLabel }}"
+                data-search-on-space="{{ $enableSearchOnSpace ? 'true' : 'false' }}"
                 @if (!$isEnabled && ((!empty($action) && $action === 'View') || (isset($enabled) && $enabled === 'false'))) disabled @endif
                 wire:loading.attr="disabled">
                 <option value="{{ $blankValue }}" selected></option>
