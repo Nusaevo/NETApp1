@@ -32,10 +32,14 @@ class IndexDataTable extends BaseDataTableComponent
 
     public function builder(): Builder
     {
-        $query = MatlUom::withTrashed()->with('Material')->join('materials', 'materials.id', '=', 'matl_uoms.matl_id')->select('matl_uoms.*')->whereRaw('1=0');
+        $query = MatlUom::withTrashed()
+            ->with(['Material' => function ($query) {
+                $query->withTrashed()->with('Attachment');
+            }])
+            ->join('materials', 'materials.id', '=', 'matl_uoms.matl_id')
+            ->select('matl_uoms.*')->whereRaw('1=0');
         return $query;
-    }
-
+        }
     public function columns(): array
     {
         $columns = [
@@ -43,6 +47,9 @@ class IndexDataTable extends BaseDataTableComponent
 
             Column::make($this->trans('code'), 'Material.code')
                 ->format(function ($value, $row) {
+                    if (!$row->Material) {
+                        return '<span class="text-muted">Material not found</span>';
+                    }
                     return '<a href="' .
                         route($this->appCode . '.Master.Material.Detail', [
                             'action' => encryptWithSessionKey('Edit'),
@@ -59,6 +66,9 @@ class IndexDataTable extends BaseDataTableComponent
 
             Column::make($this->trans('photo'), 'Material.id')
                 ->format(function ($value, $row) {
+                    if (!$row->Material) {
+                        return '<span>' . $this->trans('no_image') . '</span>';
+                    }
                     $attachment = $row->Material->Attachment->first();
                     $url = $attachment?->getUrl();
                     return $url
@@ -87,11 +97,11 @@ class IndexDataTable extends BaseDataTableComponent
 
         $columns[] = Column::make($this->trans('action'), 'id')->format(
             fn($value, $matlUom) => view('layout.customs.data-table-action', [
-                'row' => $matlUom->Material,
+                'row' => $matlUom->Material ?: $matlUom,
                 'custom_actions' => [],
                 'enable_this_row' => true,
                 'allow_details' => false,
-                'allow_edit' => true,
+                'allow_edit' => $matlUom->Material ? true : false,
                 'allow_disable' => false,
                 'allow_delete' => false,
                 'permissions' => $this->permissions,
