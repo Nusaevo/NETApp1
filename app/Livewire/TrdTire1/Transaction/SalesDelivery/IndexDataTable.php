@@ -289,11 +289,11 @@ class IndexDataTable extends BaseDataTableComponent
                     // Simpan ID sebelum penghapusan untuk audit log
                     $delivId = $delivHdr->id;
 
+                    // Audit log for BATAL KIRIM - dibuat SEBELUM penghapusan data
+                    AuditLogService::createDeliveryBatalKirim([$delivId]);
+
                     $deliveryService->delDelivery($delivHdr->id);
                     $billingService->delBilling($delivHdr->billhdr_id);
-
-                    // Audit log for BATAL KIRIM - hanya dibuat setelah proses berhasil
-                    // AuditLogService::createDeliveryBatalKirim($delivId);
 
                     $successOrders[] = $delivHdr->tr_code;
                     $successOrderIds[] = $delivHdr->order_id;
@@ -315,7 +315,7 @@ class IndexDataTable extends BaseDataTableComponent
 
             // Tampilkan hasil dengan detail
             $this->showBatalKirimResults($successOrders, $failedOrders, $deletedCount);
-            $this->dispatch('refresh-page');
+            // $this->dispatch('refresh-page');
         }
     }
 
