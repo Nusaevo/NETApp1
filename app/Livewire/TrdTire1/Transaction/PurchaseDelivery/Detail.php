@@ -353,6 +353,15 @@ class Detail extends BaseComponent
             }
         }
 
+        // Validasi qty tidak boleh lebih dari qty_order
+        foreach ($this->input_details as $index => $detail) {
+            if (isset($detail['qty']) && isset($detail['qty_order'])) {
+                if ($detail['qty'] > $detail['qty_order']) {
+                    throw new Exception("Quantity tidak boleh lebih dari quantity belum dikirim {$detail['qty_order']} untuk item no " . ($index + 1));
+                }
+            }
+        }
+
         // Cek duplikasi tr_code
         $existingDelivery = DelivHdr::where([
             'tr_type' => $this->trType,

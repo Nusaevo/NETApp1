@@ -93,7 +93,7 @@
 
                 /* Specific cell styles */
                 .portrait-table .customer-name {
-                    font-size: 16px;
+                    font-size: 20px;
                     line-height: 1.2;
                 }
 

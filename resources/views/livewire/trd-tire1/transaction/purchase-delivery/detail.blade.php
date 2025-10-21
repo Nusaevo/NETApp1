@@ -32,11 +32,11 @@
                                 </div>
                                 <div class="row">
                                     <x-ui-dropdown-select label="{{ $this->trans('warehouse') }}" model="inputs.wh_code"
-                                        :options="$warehouses" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        :options="$warehouses" required="true" :action="$actionValue" enabled="true"
                                         onChanged="whCodeOnChanged($event.target.value)" />
                                     <x-ui-dropdown-search label="Nota Pembelian" model="inputs.reffhdrtr_code"
                                         optionValue="tr_code" :query="$ddPurchaseOrder['query']" :optionLabel="$ddPurchaseOrder['optionLabel']" :placeHolder="$ddPurchaseOrder['placeHolder']"
-                                        :selectedValue="$inputs['reffhdrtr_code'] ?? ''" required="true" :action="$actionValue" :enabled="$isPanelEnabled"
+                                        :selectedValue="$inputs['reffhdrtr_code'] ?? ''" required="true" :action="$actionValue" enabled="true"
                                         type="int" onChanged="onPurchaseOrderChanged($event.target.value)" />
                                     <!-- Display Partner Name -->
                                     <x-ui-text-field label="{{ $this->trans('supplier') }}" model="inputs.partner_name"
