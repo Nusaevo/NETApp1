@@ -168,10 +168,12 @@ class Detail extends BaseComponent
         $this->inputs['wh_code'] = null;
         $this->inputs['wh_id'] = 0;
         $this->inputs['reffhdrtr_code'] = ''; // Inisialisasi key reffhdrtr_code
+        $this->inputs['partner_id'] = null;
+        $this->inputs['partner_name'] = null;
+        $this->inputs['partner_code'] = null;
         $this->isPanelEnabled = "true";
         $this->isTrCodeEnabled = "true";
     }
-
     #endregion
 
     #region Material List Methods
@@ -308,6 +310,11 @@ class Detail extends BaseComponent
                     $index++;
                 }
             }
+        } else {
+            // Clear partner information when no purchase order is selected
+            $this->inputs['partner_id'] = null;
+            $this->inputs['partner_name'] = null;
+            $this->inputs['partner_code'] = null;
         }
     }
 

@@ -299,7 +299,7 @@ class IndexDataTable extends BaseDataTableComponent
                     $delivId = $delivHdr->id;
 
                     // Audit log for BATAL KIRIM - dibuat SEBELUM penghapusan data
-                    AuditLogService::createDeliveryBatalKirim([$delivId]);
+                    // AuditLogService::createDeliveryBatalKirim([$delivId]);
 
                     $deliveryService->delDelivery($delivHdr->id);
                     $billingService->delBilling($delivHdr->billhdr_id);
